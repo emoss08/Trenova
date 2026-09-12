@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -63,6 +64,8 @@ export function DocumentGridCard({
   onSelect,
   documentTypeName,
 }: DocumentGridCardProps) {
+  const t = useT();
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const isImage = document.fileType.toLowerCase().startsWith("image/");
@@ -113,22 +116,22 @@ export function DocumentGridCard({
         ) : isGeneratingThumbnail ? (
           <div
             className="flex flex-col items-center justify-center gap-2"
-            title="Generating thumbnail..."
+            title={t("Generating thumbnail...")}
           >
             <LoaderCircleIcon className="text-muted-foreground size-8 animate-spin" />
-            <span className="text-muted-foreground text-xs">Generating preview...</span>
+            <span className="text-muted-foreground text-xs">{t("Generating preview...")}</span>
           </div>
         ) : isPreviewUnavailable ? (
           <div
             className="flex flex-col items-center justify-center gap-2"
-            title="Preview unavailable"
+            title={t("Preview unavailable")}
           >
             <DocumentFileTypeIcon
               fileType={document.fileType}
               fileName={document.originalName}
               size="xl"
             />
-            <span className="text-muted-foreground text-xs">Preview unavailable</span>
+            <span className="text-muted-foreground text-xs">{t("Preview unavailable")}</span>
           </div>
         ) : (
           <DocumentFileTypeIcon
@@ -158,7 +161,7 @@ export function DocumentGridCard({
               onVersions(document);
             }}
           >
-            v{document.versionNumber} · View history
+            {t("v{0} · View history", document.versionNumber)}
           </button>
         )}
       </div>
@@ -189,7 +192,7 @@ export function DocumentGridCard({
                   variant="ghost"
                   size="icon-xs"
                   className="rounded-sm"
-                  aria-label="Document actions"
+                  aria-label={t("Document actions")}
                   onClick={(event) => {
                     event.stopPropagation();
                   }}
@@ -208,40 +211,40 @@ export function DocumentGridCard({
             >
               {canPreview && onPreview && (
                 <DropdownMenuItem
-                  title="Preview"
-                  description="Open the document preview"
+                  title={t("Preview")}
+                  description={t("Open the document preview")}
                   startContent={<EyeIcon className="size-3.5" />}
                   onClick={() => onPreview(document)}
                 />
               )}
               {onDownload && (
                 <DropdownMenuItem
-                  title="Download"
-                  description="Save the original file"
+                  title={t("Download")}
+                  description={t("Save the original file")}
                   startContent={<DownloadIcon className="size-3.5" />}
                   onClick={() => onDownload(document)}
                 />
               )}
               {onInspect && (
                 <DropdownMenuItem
-                  title="Inspect"
-                  description="Review extraction details"
+                  title={t("Inspect")}
+                  description={t("Review extraction details")}
                   startContent={<ScanSearchIcon className="size-3.5" />}
                   onClick={() => onInspect(document)}
                 />
               )}
               {onVersions && (
                 <DropdownMenuItem
-                  title="Versions"
-                  description="View document history"
+                  title={t("Versions")}
+                  description={t("View document history")}
                   startContent={<HistoryIcon className="size-3.5" />}
                   onClick={() => onVersions(document)}
                 />
               )}
               {onDelete && (
                 <DropdownMenuItem
-                  title="Delete"
-                  description="Remove this document"
+                  title={t("Delete")}
+                  description={t("Remove this document")}
                   color="danger"
                   startContent={<Trash2Icon className="size-3.5" />}
                   disabled={isDeleting}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -29,6 +30,8 @@ import { useDashFeatures } from "./use-dash-features";
 import { stopPlace, originStop, destinationStop, useMyLoads } from "./use-loads";
 
 export function ExpensesSection() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [submitOpen, setSubmitOpen] = useState(false);
   const expenses = useQuery({
@@ -39,7 +42,7 @@ export function ExpensesSection() {
   const cancel = useMutation({
     mutationFn: (id: string) => cancelMyExpense(id),
     onSuccess: async () => {
-      toast.success("Expense cancelled.");
+      toast.success(t("Expense cancelled."));
       await queryClient.invalidateQueries({ queryKey: ["dash-expenses"] });
     },
     onError: (error: Error) => toast.error(error.message || "We couldn't cancel that expense."),
@@ -48,10 +51,10 @@ export function ExpensesSection() {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Expenses</h2>
+        <h2 className="text-sm font-semibold">{t("Expenses")}</h2>
         <Button variant="outline" size="sm" className="h-8" onClick={() => setSubmitOpen(true)}>
           <PlusIcon className="size-3.5" />
-          Submit
+          {t("Submit")}
         </Button>
       </div>
 
@@ -62,7 +65,7 @@ export function ExpensesSection() {
           {expenses.data.map((expense) => (
             <li key={expense.id} className="px-4 py-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="min-w-0 truncate text-sm font-medium">{expense.description}</p>
+                <p className="min-w-0 truncate text-sm font-medium">{t(expense.description)}</p>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">
                   <AmountDisplay value={expense.amountMinor} currency={expense.currencyCode} />
                 </span>
@@ -70,13 +73,13 @@ export function ExpensesSection() {
               <div className="mt-1 flex items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground">
                   {formatRange(expense.incurredDate, expense.incurredDate)}
-                  {expense.receiptDocumentId ? " · Receipt attached" : ""}
+                  {expense.receiptDocumentId ? ` ${t("· Receipt attached")}` : ""}
                 </p>
                 <ExpenseStatusBadge status={expense.status} />
               </div>
               {expense.status === "Rejected" && expense.reviewNote ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Carrier note:</span>{" "}
+                  <span className="font-medium text-foreground">{t("Carrier note:")}</span>{" "}
                   {expense.reviewNote}
                 </p>
               ) : null}
@@ -88,7 +91,7 @@ export function ExpensesSection() {
                   disabled={cancel.isPending}
                   onClick={() => cancel.mutate(expense.id)}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
               ) : null}
             </li>
@@ -98,8 +101,7 @@ export function ExpensesSection() {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
           <ReceiptIcon className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Paid a lumper, tolls, or a scale out of pocket? Submit it with a photo of the receipt
-            and get it back on your next settlement.
+            {t("Paid a lumper, tolls, or a scale out of pocket? Submit it with a photo of the receipt and get it back on your next settlement.")}
           </p>
         </div>
       )}
@@ -115,6 +117,8 @@ type ExpenseSubmitDrawerProps = {
 };
 
 function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const features = useDashFeatures();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -152,7 +156,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
       return expense;
     },
     onSuccess: async () => {
-      toast.success("Expense sent — payroll will review it.");
+      toast.success(t("Expense sent — payroll will review it."));
       await queryClient.invalidateQueries({ queryKey: ["dash-expenses"] });
       reset();
       onOpenChange(false);
@@ -183,16 +187,16 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
     >
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Submit an expense</DrawerTitle>
+          <DrawerTitle>{t("Submit an expense")}</DrawerTitle>
           <DrawerDescription>
-            Approved expenses land as a reimbursement on your next settlement.
+            {t("Approved expenses land as a reimbursement on your next settlement.")}
           </DrawerDescription>
         </DrawerHeader>
 
         <div className="flex max-h-[55vh] flex-col gap-4 overflow-y-auto px-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Amount (USD)</Label>
+              <Label className="text-xs text-muted-foreground">{t("Amount (USD)")}</Label>
               <Input
                 inputMode="decimal"
                 placeholder="0.00"
@@ -201,7 +205,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Date paid</Label>
+              <Label className="text-xs text-muted-foreground">{t("Date paid")}</Label>
               <Input
                 type="date"
                 value={incurredDate}
@@ -213,14 +217,14 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="What was it for? Lumper at the receiver, tolls, scale ticket..."
+            placeholder={t("What was it for? Lumper at the receiver, tolls, scale ticket...")}
             rows={3}
             maxLength={255}
           />
 
           {loads.data && loads.data.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Load (optional)</Label>
+              <Label className="text-xs text-muted-foreground">{t("Load (optional)")}</Label>
               <div className="flex flex-wrap gap-1.5">
                 {loads.data.map((load) => (
                   <button
@@ -258,7 +262,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
               <p className="min-w-0 truncate text-sm font-medium">{receipt.name}</p>
               <button
                 type="button"
-                aria-label="Remove receipt"
+                aria-label={t("Remove receipt")}
                 className="text-muted-foreground hover:text-foreground"
                 onClick={() => setReceipt(null)}
               >
@@ -273,8 +277,8 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
             >
               <CameraIcon className="size-4" />
               {features.requireExpenseReceipt
-                ? "Add receipt photo (required)"
-                : "Add receipt photo"}
+                ? t("Add receipt photo (required)")
+                : t("Add receipt photo")}
             </Button>
           )}
         </div>
@@ -285,7 +289,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
             disabled={!canSubmit || submit.isPending}
             onClick={() => submit.mutate()}
           >
-            {submit.isPending ? "Submitting..." : "Submit expense"}
+            {submit.isPending ? t("Submitting...") : t("Submit expense")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

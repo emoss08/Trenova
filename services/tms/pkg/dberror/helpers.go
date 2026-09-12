@@ -47,7 +47,7 @@ func emitConcurrencyEvent(event ConcurrencyEvent) {
 func HandleNotFoundError(err error, entityName string) error {
 	if IsNotFoundError(err) {
 		return errortypes.NewNotFoundError(
-			fmt.Sprintf("%s not found within your organization", entityName),
+			"{0} not found within your organization", entityName,
 		)
 	}
 
@@ -67,11 +67,9 @@ func CreateVersionMismatchError(entityName, entityID string) error {
 	return errortypes.NewValidationError(
 		"version",
 		errortypes.ErrVersionMismatch,
-		fmt.Sprintf(
-			"Version mismatch. The %s (%s) has either been updated or deleted since the last request.",
-			entityName,
-			entityID,
-		),
+		"Version mismatch. The {0} ({1}) has either been updated or deleted since the last request.",
+		entityName,
+		entityID,
 	)
 }
 
@@ -84,13 +82,11 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 	return errortypes.NewValidationError(
 		"version",
 		errortypes.ErrVersionMismatch,
-		fmt.Sprintf(
-			"Version mismatch. The %s (%s) have either been updated or deleted since the last request.",
-			entityName,
-			strings.Join(
-				pulid.Map(entityIDs, func(id pulid.ID) string { return id.String() }),
-				", ",
-			),
+		"Version mismatch. The {0} ({1}) have either been updated or deleted since the last request.",
+		entityName,
+		strings.Join(
+			pulid.Map(entityIDs, func(id pulid.ID) string { return id.String() }),
+			", ",
 		),
 	)
 }

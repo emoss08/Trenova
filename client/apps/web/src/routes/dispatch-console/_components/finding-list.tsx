@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchFinding } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
 import { InfoIcon, OctagonXIcon, TriangleAlertIcon } from "lucide-react";
@@ -39,6 +40,8 @@ export function FindingList({
   className?: string;
   limit?: number;
 }) {
+  const t = useT();
+
   if (findings.length === 0) return null;
 
   const sorted = [...findings].sort(
@@ -66,7 +69,7 @@ export function FindingList({
         );
       })}
       {hidden > 0 ? (
-        <li className="text-muted-foreground pl-[22px] text-[11px]">+{hidden} more</li>
+        <li className="text-muted-foreground pl-[22px] text-[11px]">{t("+{0} more", hidden)}</li>
       ) : null}
     </ul>
   );

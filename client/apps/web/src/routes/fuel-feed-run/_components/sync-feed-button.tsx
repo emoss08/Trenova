@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { fuelCardProviderChoices } from "@/lib/choices";
 import { FUEL_FEED_RUN_LIST_KEY } from "@/lib/graphql/fuel-purchase-import";
@@ -27,6 +28,8 @@ import { toast } from "sonner";
  * leaving somebody wondering where it went.
  */
 export function SyncFeedButton() {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const { mutateAsync, isPending } = useApiMutation<FuelCardSyncResult, FuelCardProvider>({
@@ -56,9 +59,9 @@ export function SyncFeedButton() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="sm" isLoading={isPending} loadingText="Reading...">
+          <Button variant="outline" size="sm" isLoading={isPending} loadingText={t("Reading...")}>
             <RefreshCwIcon className="size-4" />
-            Sync now
+            {t("Sync now")}
           </Button>
         }
       />
@@ -68,7 +71,7 @@ export function SyncFeedButton() {
           .map((choice) => (
             <DropdownMenuItem
               key={choice.value}
-              title={choice.label}
+              title={t(choice.label)}
               onClick={() => mutateAsync(choice.value as FuelCardProvider)}
             />
           ))}

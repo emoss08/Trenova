@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DivergingBar } from "@/components/detention/detention-charts";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
@@ -41,6 +42,8 @@ function CustomerRow({
   index: number;
   scale: number;
 }) {
+  const t = useT();
+
   const losing = row.netMargin < 0;
 
   return (
@@ -57,18 +60,17 @@ function CustomerRow({
           </p>
           {losing ? (
             <Badge variant="inactive" className="text-2xs h-4 shrink-0 px-1">
-              Loss
+              {t("Loss")}
             </Badge>
           ) : null}
           {row.disputeCount > 0 ? (
             <Badge variant="outline" className="text-2xs h-4 shrink-0 px-1">
-              {row.disputeCount} disputed
+              {t("{0} disputed", row.disputeCount)}
             </Badge>
           ) : null}
         </div>
         <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-          {formatCurrency(row.billedAmount)} billed · {formatCurrency(row.driverPayAmount)} paid out
-          · {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"}
+          {t("{0} billed · {1} paid out · {2} {3}", formatCurrency(row.billedAmount), formatCurrency(row.driverPayAmount), row.stopCount, row.stopCount === 1 ? "stop" : "stops")}
         </p>
       </div>
 
@@ -104,6 +106,8 @@ export function CustomerMargin({
   onRetry: () => void;
   index: number;
 }) {
+  const t = useT();
+
   const [sort, setSort] = useState<CustomerSort>("margin");
   const [expanded, setExpanded] = useState(false);
 
@@ -121,15 +125,15 @@ export function CustomerMargin({
     <Panel
       index={index}
       icon={UsersIcon}
-      title="Customer margin"
-      description="Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants."
+      title={t("Customer margin")}
+      description={t("Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.")}
       action={
         rows.length > 1 ? (
           <SegmentedControl
             items={SORT_OPTIONS}
             value={sort}
             onValueChange={setSort}
-            aria-label="Rank customers by"
+            aria-label={t("Rank customers by")}
           />
         ) : null
       }
@@ -138,8 +142,8 @@ export function CustomerMargin({
           <div className="flex items-center justify-between gap-3">
             <p className="text-2xs text-muted-foreground tabular-nums">
               {losingCount > 0
-                ? `${losingCount} of ${rows.length} lose money on detention`
-                : "Every customer clears a positive detention margin"}
+                ? t("{0} of {1} lose money on detention", losingCount, rows.length)
+                : t("Every customer clears a positive detention margin")}
             </p>
             {hidden > 0 || expanded ? (
               <PanelExpandToggle
@@ -160,7 +164,7 @@ export function CustomerMargin({
       ) : sorted.length === 0 ? (
         <PanelEmpty
           icon={UsersIcon}
-          message="No customer accrued settled detention in this window."
+          message={t("No customer accrued settled detention in this window.")}
         />
       ) : (
         <div key={sort} className="divide-border divide-y">

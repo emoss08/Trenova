@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AxleWeight } from "@/types/loading-optimization";
 import type { RevenueContext } from "./use-loading-optimization";
@@ -24,6 +25,8 @@ export function AxleWeightDisplay({
   maxWeight: number;
   revenue?: RevenueContext | null;
 }) {
+  const t = useT();
+
   const isOverweight = totalWeight > maxWeight;
   const cargoAxles = axleWeights.filter((a) => a.axle !== "steer");
 
@@ -31,12 +34,12 @@ export function AxleWeightDisplay({
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between">
         <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-          Axle Weights
+          {t("Axle Weights")}
         </span>
         <span
           className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}
         >
-          {totalWeight.toLocaleString()} / {maxWeight.toLocaleString()} lbs
+          {t("{0} / {1} lbs", totalWeight.toLocaleString(), maxWeight.toLocaleString())}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -87,7 +90,7 @@ export function AxleWeightDisplay({
       {/* Revenue metrics inline */}
       {revenue && (
         <div className="border-border mt-2.5 flex items-center gap-4 border-t pt-2.5">
-          <span className="text-2xs text-muted-foreground font-medium">Revenue</span>
+          <span className="text-2xs text-muted-foreground font-medium">{t("Revenue")}</span>
           <span className="text-foreground text-xs font-semibold tabular-nums">
             ${revenue.revenuePerFoot.toFixed(0)}
             <span className="text-2xs text-muted-foreground font-normal">/ft</span>
@@ -100,7 +103,7 @@ export function AxleWeightDisplay({
           )}
           {revenue.emptySpaceFeet > 0 && (
             <span className="text-muted-foreground ml-auto text-xs tabular-nums">
-              {revenue.emptySpaceFeet.toFixed(0)}ft unused
+              {t("{0}ft unused", revenue.emptySpaceFeet.toFixed(0))}
             </span>
           )}
         </div>

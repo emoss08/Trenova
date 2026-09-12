@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   formatDetentionMinutes,
   type DeskFloorStats,
@@ -18,10 +19,12 @@ type DeskSummaryRailProps = {
  * the same attention.
  */
 export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
+  const t = useT();
+
   return (
     <dl className="sm:divide-border grid grid-cols-2 gap-x-6 gap-y-6 border-b p-4 pb-4 sm:grid-cols-4 sm:gap-y-0 sm:divide-x">
       <DeskMetric
-        label="Collectable now"
+        label={t("Collectable now")}
         value={<DeskMoney value={summary.amountAtRisk} />}
         sub={
           summary.total === 0
@@ -33,7 +36,7 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
         className="sm:pr-6"
       />
       <DeskMetric
-        label="Notice window"
+        label={t("Notice window")}
         value={summary.noticesDue}
         sub={
           summary.noticesDue > 0 ? "Must go out before the deadline" : "The notice queue is clear"
@@ -41,13 +44,13 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
         className="sm:px-6"
       />
       <DeskMetric
-        label="Uncollectable"
+        label={t("Uncollectable")}
         value={<DeskMoney value={summary.amountLost} precise={false} />}
         sub={`${summary.lost} ${pluralize("stop", summary.lost)} past the notice deadline`}
         className="sm:px-6"
       />
       <DeskMetric
-        label="Longest wait"
+        label={t("Longest wait")}
         value={formatDetentionMinutes(floor.longestOnSiteMinutes)}
         sub={floor.longestLocationName || "Nothing on a dock"}
         className="sm:pl-6"

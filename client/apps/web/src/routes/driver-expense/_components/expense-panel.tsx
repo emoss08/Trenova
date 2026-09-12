@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,6 +25,8 @@ export function ExpensePanel({
   mode,
   row,
 }: DataTablePanelProps<DriverExpenseRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) {
     return null;
   }
@@ -32,7 +35,7 @@ export function ExpensePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title="Driver Expense"
+      title={t("Driver Expense")}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="lg"
     >
@@ -42,6 +45,8 @@ export function ExpensePanel({
 }
 
 function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const detail = useQuery({
     queryKey: ["driver-expense-detail", expenseId],
@@ -72,7 +77,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
   if (!expense) {
     return (
       <p className="text-muted-foreground p-6 text-center text-sm">
-        This expense could not be loaded.
+        {t("This expense could not be loaded.")}
       </p>
     );
   }
@@ -89,16 +94,14 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <DriverExpenseStatusBadge status={expense.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          Incurred {formatUnixDate(expense.incurredDate)} · Submitted{" "}
-          {formatUnixDate(expense.createdAt)}
-          {expense.worker
-            ? ` by ${`${expense.worker.firstName} ${expense.worker.lastName}`.trim()}`
-            : ""}
+          {t("Incurred {0} · Submitted {1}{2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
+            ? ` ${t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())}`
+            : "")}
         </p>
-        <p className="mt-3 text-sm whitespace-pre-wrap">{expense.description}</p>
+        <p className="mt-3 text-sm whitespace-pre-wrap">{t(expense.description)}</p>
         {expense.payCode ? (
           <p className="text-muted-foreground mt-2 text-xs">
-            Pay code: <span className="font-mono">{expense.payCode.code}</span>
+            {t("Pay code:")} <span className="font-mono">{expense.payCode.code}</span>
             {expense.payCode.description ? ` — ${expense.payCode.description}` : ""}
           </p>
         ) : null}
@@ -110,22 +113,22 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           onClick={() => void handleViewReceipt(expense.receiptDocumentId!)}
         >
           <ExternalLinkIcon className="size-4" />
-          View receipt
+          {t("View receipt")}
         </Button>
       ) : (
         <p className="border-border text-muted-foreground rounded-lg border border-dashed p-3 text-center text-xs">
-          No receipt attached — consider asking the driver for one before approving.
+          {t("No receipt attached — consider asking the driver for one before approving.")}
         </p>
       )}
 
       {isTerminal ? (
         <div className="border-border rounded-lg border p-3">
-          <p className="text-muted-foreground text-xs font-medium uppercase">Review</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Review")}</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{expense.reviewNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatUnixDate(expense.reviewedAt ?? 0) || "—"}
-            {expense.reviewedBy ? ` by ${expense.reviewedBy.name}` : ""}
-            {expense.settlementLineId ? " · reimbursement applied to open settlement" : ""}
+            {expense.reviewedBy ? ` ${t("by {0}", expense.reviewedBy.name)}` : ""}
+            {expense.settlementLineId ? ` ${t("· reimbursement applied to open settlement")}` : ""}
           </p>
         </div>
       ) : (
@@ -144,6 +147,8 @@ function ReviewForm({
   onDone: () => Promise<void>;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const [approve, setApprove] = useState(true);
   const [note, setNote] = useState("");
 
@@ -166,7 +171,7 @@ function ReviewForm({
 
   return (
     <div className="border-border flex flex-col gap-4 rounded-lg border p-3">
-      <p className="text-sm font-semibold">Review this expense</p>
+      <p className="text-sm font-semibold">{t("Review this expense")}</p>
 
       <div className="grid grid-cols-2 gap-2">
         <Button
@@ -174,20 +179,20 @@ function ReviewForm({
           variant={approve ? "default" : "outline"}
           onClick={() => setApprove(true)}
         >
-          Approve &amp; reimburse
+          {t("Approve & reimburse")}
         </Button>
         <Button
           type="button"
           variant={approve ? "outline" : "default"}
           onClick={() => setApprove(false)}
         >
-          Reject
+          {t("Reject")}
         </Button>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-review-note">
-          {approve ? "Note (optional)" : "Rejection reason"}
+          {approve ? t("Note (optional)") : t("Rejection reason")}
         </Label>
         <Textarea
           id="expense-review-note"
@@ -202,13 +207,13 @@ function ReviewForm({
         />
         <p className="text-muted-foreground text-[11px]">
           {approve
-            ? "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists)."
-            : "Required — shown to the driver verbatim."}
+            ? t("Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).")
+            : t("Required — shown to the driver verbatim.")}
         </p>
       </div>
 
       <Button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}>
-        {mutation.isPending ? "Saving..." : approve ? "Approve expense" : "Reject expense"}
+        {mutation.isPending ? t("Saving...") : approve ? t("Approve expense") : t("Reject expense")}
       </Button>
     </div>
   );

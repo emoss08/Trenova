@@ -2,7 +2,6 @@ package selfserviceservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -122,7 +121,7 @@ func (s *Service) WithdrawChange(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("A %s request cannot be withdrawn", entity.Status),
+			"A {0} request cannot be withdrawn", entity.Status,
 		)
 	}
 
@@ -169,7 +168,7 @@ func (s *Service) DecideChange(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("A %s request cannot be %s", entity.Status, next),
+			"A {0} request cannot be {1}", entity.Status, next,
 		)
 	}
 

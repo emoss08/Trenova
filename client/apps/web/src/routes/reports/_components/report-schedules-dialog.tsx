@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UserMultiSelectAutocompleteField } from "@/components/autocomplete-fields";
 import { EmailChipsField } from "@/components/fields/email-chips-field";
 import { InputField } from "@/components/fields/input-field";
@@ -196,20 +197,22 @@ function CadenceSentence({
   cronExpression: string;
   timezone: string;
 }) {
+  const t = useT();
+
   const described = describeCron(cronExpression.trim());
 
   return (
     <p className="text-2xs text-muted-foreground" aria-live="polite">
       {described ? (
         <>
-          Runs <span className="text-foreground font-medium">{described.toLowerCase()}</span>
+          {t("Runs")} <span className="text-foreground font-medium">{described.toLowerCase()}</span>
           {" · "}
           {timezoneLabel(timezone)}
         </>
       ) : cronExpression.trim() ? (
-        "Custom cron cadence — the expression is validated when you save."
+        t("Custom cron cadence — the expression is validated when you save.")
       ) : (
-        "Enter a cron expression or pick a preset."
+        t("Enter a cron expression or pick a preset.")
       )}
     </p>
   );
@@ -258,6 +261,8 @@ function AlertConditionFields({
   control: Control<ScheduleFormValues>;
   measures: { value: string; label: string }[];
 }) {
+  const t = useT();
+
   const alertEnabled = useWatch({ control, name: "alertEnabled" });
   const operator = useWatch({ control, name: "alertOperator" });
   const threshold = useWatch({ control, name: "alertThreshold" });
@@ -273,12 +278,12 @@ function AlertConditionFields({
 
   return (
     <div className="border-border flex flex-col gap-3 border-t pt-3">
-      <SectionLabel>Alert</SectionLabel>
+      <SectionLabel>{t("Alert")}</SectionLabel>
       <SwitchField
         control={control}
         name="alertEnabled"
-        label="Only send when there is something to report"
-        description="Skip delivery entirely when the result does not meet your condition."
+        label={t("Only send when there is something to report")}
+        description={t("Skip delivery entirely when the result does not meet your condition.")}
         outlined
       />
       <AnimatePresence initial={false}>
@@ -296,7 +301,7 @@ function AlertConditionFields({
                 <SelectField
                   control={control}
                   name="alertColumnId"
-                  label="Watch"
+                  label={t("Watch")}
                   options={targetChoices}
                 />
               </div>
@@ -328,20 +333,30 @@ function AlertConditionFields({
             <p className="text-2xs text-muted-foreground">
               {targetsMeasure ? (
                 <>
-                  Sends only when {measureLabel} is {operatorLabel} {Number(value) || 0}.
+                  {t(
+                    "Sends only when {0} is {1} {2}.",
+                    measureLabel,
+                    operatorLabel,
+                    Number(value) || 0,
+                  )}
                 </>
               ) : (
                 <>
-                  Sends only when the report returns {operatorLabel} {Number(threshold) || 0} row
-                  {Number(threshold) === 1 ? "" : "s"}.
+                  {t(
+                    "Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.",
+                    operatorLabel,
+                    Number(threshold) || 0,
+                  )}
                 </>
               )}
             </p>
             <SwitchField
               control={control}
               name="alertSuppress"
-              label="Only alert me when it changes"
-              description="Stays quiet while the condition keeps holding, and alerts again once it clears and returns."
+              label={t("Only alert me when it changes")}
+              description={t(
+                "Stays quiet while the condition keeps holding, and alerts again once it clears and returns.",
+              )}
               outlined
             />
           </m.div>
@@ -395,6 +410,8 @@ function TimeSelect({
   minute: number;
   onChange: (next: { hour: number; minute: number }) => void;
 }) {
+  const t = useT();
+
   const options = timeOptions(hour, minute);
 
   return (
@@ -406,13 +423,13 @@ function TimeSelect({
         onChange({ hour: Math.floor(total / 60), minute: total % 60 });
       }}
     >
-      <SelectTrigger size="sm" className={pillTrigger} aria-label="Time of day">
+      <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Time of day")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-64" alignItemWithTrigger={false}>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -421,6 +438,8 @@ function TimeSelect({
 }
 
 function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
+  const t = useT();
+
   const { field } = useController({
     control,
     name: "cronExpression",
@@ -454,15 +473,15 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm">
-        <span className="text-muted-foreground">Run</span>
+        <span className="text-muted-foreground">{t("Run")}</span>
         <Select items={FREQUENCY_OPTIONS} value={tab} onValueChange={handleFrequencyChange}>
-          <SelectTrigger size="sm" className={pillTrigger} aria-label="Frequency">
+          <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Frequency")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FREQUENCY_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -470,19 +489,19 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
 
         {tab === "monthly" && (
           <>
-            <span className="text-muted-foreground">on the</span>
+            <span className="text-muted-foreground">{t("on the")}</span>
             <Select
               items={DAY_OF_MONTH_OPTIONS}
               value={String(parts.dayOfMonth)}
               onValueChange={(value) => applyParts({ ...parts, dayOfMonth: Number(value) })}
             >
-              <SelectTrigger size="sm" className={pillTrigger} aria-label="Day of month">
+              <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Day of month")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-64" alignItemWithTrigger={false}>
                 {DAY_OF_MONTH_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -516,7 +535,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
               active={parts.weekdays.includes(chip.value)}
               onClick={() => toggleWeekday(chip.value)}
             >
-              {chip.label}
+              {t(chip.label)}
             </ToggleChip>
           ))}
         </m.div>
@@ -533,7 +552,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
             control={control}
             name="cronExpression"
             placeholder="0 8 * * 1"
-            description="Five fields: minute, hour, day-of-month, month, day-of-week."
+            description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
             rules={{ required: "A cron expression is required" }}
           />
         </m.div>
@@ -543,6 +562,8 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
 }
 
 function FormatChipsField({ control }: { control: Control<ScheduleFormValues> }) {
+  const t = useT();
+
   const { field, fieldState } = useController({
     control,
     name: "formats",
@@ -553,7 +574,7 @@ function FormatChipsField({ control }: { control: Control<ScheduleFormValues> })
 
   return (
     <div className="flex flex-col gap-2.5">
-      <SectionLabel>Formats</SectionLabel>
+      <SectionLabel>{t("Formats")}</SectionLabel>
       <div className="flex flex-wrap gap-1.5">
         {REPORT_FORMAT_CHOICES.map((choice) => (
           <ToggleChip
@@ -567,7 +588,7 @@ function FormatChipsField({ control }: { control: Control<ScheduleFormValues> })
               )
             }
           >
-            {choice.label}
+            {t(choice.label)}
           </ToggleChip>
         ))}
       </div>
@@ -591,6 +612,8 @@ function ScheduleForm({
   submitLabel: string;
   measures: { value: string; label: string }[];
 }) {
+  const t = useT();
+
   const { control, handleSubmit } = useForm<ScheduleFormValues>({
     defaultValues: initialValues,
   });
@@ -607,22 +630,22 @@ function ScheduleForm({
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col gap-2.5">
-        <SectionLabel>Cadence</SectionLabel>
+        <SectionLabel>{t("Cadence")}</SectionLabel>
         <CadenceBuilder control={control} />
         <SelectField
           control={control}
           name="timezone"
-          label="Timezone"
+          label={t("Timezone")}
           groups={timezoneGroupedChoices}
           renderOption={(option) => (
             <span className="flex w-full items-center justify-between gap-3">
-              <span>{option.label}</span>
+              <span>{t(option.label)}</span>
               {option.description && (
-                <span className="text-muted-foreground text-xs">{option.description}</span>
+                <span className="text-muted-foreground text-xs">{t(option.description)}</span>
               )}
             </span>
           )}
-          placeholder="Organization default"
+          placeholder={t("Organization default")}
           isClearable
         />
         <CadenceSentence cronExpression={cronExpression} timezone={timezone} />
@@ -631,28 +654,34 @@ function ScheduleForm({
       <FormatChipsField control={control} />
 
       <div className="flex flex-col gap-3">
-        <SectionLabel>Delivery</SectionLabel>
+        <SectionLabel>{t("Delivery")}</SectionLabel>
         <EmailChipsField
           control={control}
           name="emailRecipients"
-          label="Email Recipients"
-          placeholder="Add an email and press Enter"
-          description="Each recipient gets an email with a link to the report when it completes."
+          label={t("Email Recipients")}
+          placeholder={t("Add an email and press Enter")}
+          description={t(
+            "Each recipient gets an email with a link to the report when it completes.",
+          )}
         />
         {emailRecipients.length > 0 && (
           <>
             <SwitchField
               control={control}
               name="emailInline"
-              label="Show the results in the email"
-              description="Puts the first rows in the message body, so recipients read the answer without opening a file."
+              label={t("Show the results in the email")}
+              description={t(
+                "Puts the first rows in the message body, so recipients read the answer without opening a file.",
+              )}
               outlined
             />
             <SwitchField
               control={control}
               name="emailAttach"
-              label="Attach the report file"
-              description="Attached when within the size limit; larger files are linked instead."
+              label={t("Attach the report file")}
+              description={t(
+                "Attached when within the size limit; larger files are linked instead.",
+              )}
               outlined
             />
           </>
@@ -660,9 +689,11 @@ function ScheduleForm({
         <UserMultiSelectAutocompleteField<ScheduleFormValues>
           control={control}
           name="notifyUserIds"
-          label="In-App Recipients"
-          placeholder="Search teammates..."
-          description="Teammates get an in-app notification with the download when it completes."
+          label={t("In-App Recipients")}
+          placeholder={t("Search teammates...")}
+          description={t(
+            "Teammates get an in-app notification with the download when it completes.",
+          )}
           maxCount={2}
           triggerClassName="h-7 text-xs"
         />
@@ -671,13 +702,13 @@ function ScheduleForm({
       <AlertConditionFields control={control} measures={measures} />
 
       <div className="border-border flex items-center justify-between border-t pt-3">
-        <SwitchField control={control} name="enabled" label="Enabled" />
+        <SwitchField control={control} name="enabled" label={t("Enabled")} />
         <div className="flex shrink-0 gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" size="sm" disabled={submitting}>
-            {submitting ? "Saving..." : submitLabel}
+            {submitting ? t("Saving...") : submitLabel}
           </Button>
         </div>
       </div>
@@ -686,6 +717,8 @@ function ScheduleForm({
 }
 
 function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
+  const t = useT();
+
   const emailCount = schedule.emailRecipients.length;
   const notifyCount = schedule.notifyUserIds.length;
 
@@ -693,7 +726,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
     <>
       <span className="text-muted-foreground/50">·</span>
       {emailCount === 0 && notifyCount === 0 ? (
-        <span>In-app only</span>
+        <span>{t("In-app only")}</span>
       ) : (
         <span className="flex items-center gap-2">
           {emailCount > 0 && (
@@ -709,7 +742,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
               />
               <TooltipContent side="bottom">
                 {schedule.emailRecipients.join(", ")}
-                {schedule.emailAttach ? " — file attached" : ""}
+                {schedule.emailAttach ? ` ${t("— file attached")}` : ""}
               </TooltipContent>
             </Tooltip>
           )}
@@ -724,7 +757,10 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
                 }
               />
               <TooltipContent side="bottom">
-                {notifyCount} in-app recipient{notifyCount === 1 ? "" : "s"}
+                {t(
+                  "{0, plural, one {# in-app recipient} other {# in-app recipients}}",
+                  notifyCount,
+                )}
               </TooltipContent>
             </Tooltip>
           )}
@@ -751,6 +787,8 @@ function ScheduleRow({
   deleting: boolean;
   toggling: boolean;
 }) {
+  const t = useT();
+
   const cadence = describeCron(schedule.cronExpression);
 
   return (
@@ -785,7 +823,7 @@ function ScheduleRow({
           {schedule.consecutiveFailures > 0 && (
             <Badge variant="warning" className="text-2xs h-5 gap-1">
               <TriangleAlertIcon className="size-3" />
-              {schedule.consecutiveFailures} failed
+              {t("{0} failed", schedule.consecutiveFailures)}
             </Badge>
           )}
         </div>
@@ -800,7 +838,7 @@ function ScheduleRow({
             <>
               <span className="text-muted-foreground/50">·</span>
               <span className="flex items-center gap-1">
-                Next run <HoverCardTimestamp timestamp={schedule.nextRunAt} />
+                {t("Next run")} <HoverCardTimestamp timestamp={schedule.nextRunAt} />
               </span>
             </>
           ) : null}
@@ -809,7 +847,7 @@ function ScheduleRow({
 
       <div className="flex shrink-0 items-center gap-1">
         <div className="flex gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
-          <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Edit schedule">
+          <Button variant="ghost" size="icon" onClick={onEdit} aria-label={t("Edit schedule")}>
             <PencilIcon className="size-3.5" />
           </Button>
           <Button
@@ -817,7 +855,7 @@ function ScheduleRow({
             size="icon"
             onClick={onDelete}
             disabled={deleting}
-            aria-label="Delete schedule"
+            aria-label={t("Delete schedule")}
           >
             <Trash2Icon className="text-destructive size-3.5" />
           </Button>
@@ -843,6 +881,8 @@ export function ReportSchedulesDialog({
   onOpenChange: (open: boolean) => void;
   definition: ReportDefinition | null;
 }) {
+  const t = useT();
+
   const definitionId = definition?.id;
 
   // Only aggregate columns have a grand total to watch, so a dimension is
@@ -886,7 +926,7 @@ export function ReportSchedulesDialog({
 
     const callbacks = {
       onSuccess: () => {
-        toast.success("Schedule saved");
+        toast.success(t("Schedule saved"));
         closeForm();
       },
       onError: (error: unknown) =>
@@ -916,7 +956,7 @@ export function ReportSchedulesDialog({
   const handleDelete = (schedule: ReportSchedule) => {
     setDeletingId(schedule.id);
     deleteSchedule.mutate(schedule.id, {
-      onSuccess: () => toast.success("Schedule deleted"),
+      onSuccess: () => toast.success(t("Schedule deleted")),
       onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to delete the schedule")),
       onSettled: () => setDeletingId(null),
     });
@@ -932,10 +972,11 @@ export function ReportSchedulesDialog({
     >
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Schedules{definition ? ` — ${definition.name}` : ""}</DialogTitle>
+          <DialogTitle>{t("Schedules{0}", definition ? ` — ${definition.name}` : "")}</DialogTitle>
           <DialogDescription>
-            Scheduled runs execute with your permissions. Deliver completed reports by email or
-            straight to teammates in the app.
+            {t(
+              "Scheduled runs execute with your permissions. Deliver completed reports by email or straight to teammates in the app.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">
@@ -951,9 +992,9 @@ export function ReportSchedulesDialog({
                 <CalendarClockIcon className="text-muted-foreground size-4.5" strokeWidth={1.75} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium">No schedules yet</p>
+                <p className="text-sm font-medium">{t("No schedules yet")}</p>
                 <p className="text-2xs text-muted-foreground">
-                  Run this report automatically and deliver it to your team.
+                  {t("Run this report automatically and deliver it to your team.")}
                 </p>
               </div>
             </div>
@@ -966,7 +1007,7 @@ export function ReportSchedulesDialog({
                 onSubmit={handleSubmit}
                 onCancel={closeForm}
                 submitting={updateSchedule.isPending}
-                submitLabel="Save Changes"
+                submitLabel={t("Save Changes")}
                 measures={measures}
               />
             ) : (
@@ -988,13 +1029,13 @@ export function ReportSchedulesDialog({
               onSubmit={handleSubmit}
               onCancel={closeForm}
               submitting={createSchedule.isPending}
-              submitLabel="Create Schedule"
+              submitLabel={t("Create Schedule")}
               measures={measures}
             />
           ) : (
             <Button variant="outline" onClick={() => setEditing("new")}>
               <PlusIcon className="size-4" />
-              Add Schedule
+              {t("Add Schedule")}
             </Button>
           )}
         </div>

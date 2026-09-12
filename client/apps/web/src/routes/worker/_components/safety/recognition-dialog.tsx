@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -40,6 +41,8 @@ export type RecognitionDialogProps = {
 };
 
 export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionDialogProps) {
+  const t = useT();
+
   const invalidate = useSafetyInvalidation(workerId);
   const form = useForm<RecognitionFormValues>({
     resolver: zodResolver(recognitionFormSchema) as Resolver<RecognitionFormValues>,
@@ -84,7 +87,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
         visibleToWorker: values.visibleToWorker,
       }),
     onSuccess: (saved) => {
-      toast.success("Recognition recorded", {
+      toast.success(t("Recognition recorded"), {
         description: saved.visibleToWorker
           ? "The driver will see it in Dash."
           : "Kept internal — the driver will not see it.",
@@ -98,10 +101,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record recognition</DialogTitle>
+          <DialogTitle>{t("Record recognition")}</DialogTitle>
           <DialogDescription>
-            The other half of the safety record. Visible recognition reaches the driver in Dash;
-            internal notes stay with the office.
+            {t("The other half of the safety record. Visible recognition reaches the driver in Dash; internal notes stay with the office.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -117,10 +119,10 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <SelectField<RecognitionFormValues>
                   control={control}
                   name="kind"
-                  label="Kind"
+                  label={t("Kind")}
                   options={KIND_OPTIONS}
-                  placeholder="Pick a kind"
-                  description="What the recognition is for; it is shown with the title on the safety record."
+                  placeholder={t("Pick a kind")}
+                  description={t("What the recognition is for; it is shown with the title on the safety record.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -128,9 +130,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <AutoCompleteDateField<RecognitionFormValues>
                   control={control}
                   name="occurredAt"
-                  placeholder="MM/DD/YYYY"
-                  description="The day the achievement happened; it defaults to today."
-                  label="When"
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("The day the achievement happened; it defaults to today.")}
+                  label={t("When")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -138,9 +140,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <InputField<RecognitionFormValues>
                   control={control}
                   name="title"
-                  label="Title"
-                  placeholder="e.g. One year accident-free"
-                  description="The headline on the record; it is also the subject of the driver's notification when shared."
+                  label={t("Title")}
+                  placeholder={t("e.g. One year accident-free")}
+                  description={t("The headline on the record; it is also the subject of the driver's notification when shared.")}
                   rules={{ required: true }}
                   maxLength={120}
                 />
@@ -149,9 +151,9 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <TextareaField<RecognitionFormValues>
                   control={control}
                   name="message"
-                  label="Message"
-                  placeholder="What you want the driver to read"
-                  description="Optional detail that goes out with the notification when the recognition is shared."
+                  label={t("Message")}
+                  placeholder={t("What you want the driver to read")}
+                  description={t("Optional detail that goes out with the notification when the recognition is shared.")}
                   maxLength={2000}
                 />
               </FormControl>
@@ -159,7 +161,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                 <SwitchField<RecognitionFormValues>
                   control={control}
                   name="visibleToWorker"
-                  label="Share with the driver"
+                  label={t("Share with the driver")}
                   description={
                     visible
                       ? "Sends a notification and shows on their Dash profile."
@@ -172,10 +174,10 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Saving...">
-                Record recognition
+              <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
+                {t("Record recognition")}
               </Button>
             </DialogFooter>
           </Form>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { ChevronDownIcon } from "lucide-react";
@@ -41,6 +42,8 @@ export function TextareaField<T extends FieldValues>({
   "aria-describedby": ariaDescribedBy,
   ...props
 }: TextareaFieldProps<T>) {
+  const t = useT();
+
   const inputId = `textarea-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -87,11 +90,11 @@ export function TextareaField<T extends FieldValues>({
                     <DropdownMenuTrigger
                       render={
                         <Button
-                          title="Select a preset"
+                          title={t("Select a preset")}
                           variant="ghost"
                           className="text-2xs hover:bg-background h-5 w-16 gap-1"
                         >
-                          Preset <ChevronDownIcon />
+                          {t("Preset")} <ChevronDownIcon />
                         </Button>
                       }
                       className="outline-none"
@@ -102,8 +105,8 @@ export function TextareaField<T extends FieldValues>({
                           key={preset.id}
                           onClick={() => field.onChange(preset.description)}
                           className="flex flex-col items-start gap-1 py-2"
-                          title={preset.label}
-                          description={preset.description}
+                          title={t(preset.label)}
+                          description={t(preset.description)}
                         />
                       ))}
                     </DropdownMenuContent>

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   DataTableDescription,
   DataTableLink,
@@ -169,11 +170,11 @@ export function getColumns(): ColumnDef<ServiceFailureRow>[] {
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.reasonCode.code}</span>
             <span className="text-2xs text-muted-foreground truncate">
-              {row.original.reasonCode.label}
+              {translate(row.original.reasonCode.label)}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground">Unassigned</span>
+          <span className="text-muted-foreground">{translate("Unassigned")}</span>
         ),
       size: 240,
       minSize: 200,

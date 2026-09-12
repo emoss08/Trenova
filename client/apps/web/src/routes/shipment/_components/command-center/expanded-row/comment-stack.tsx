@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -85,11 +86,14 @@ function LoadingRows() {
 }
 
 function EmptyState({ onAddComment }: { onAddComment: () => void }) {
+  const t = useT();
+
   return (
     <div className="text-muted-foreground flex flex-col items-start px-1.5 py-1 text-xs leading-snug">
       <p>
-        No comments yet. Use <span className="font-table text-foreground">@mentions</span> to ping a
-        teammate.
+        {t("No comments yet. Use")}{" "}
+        <span className="font-table text-foreground">{t("@mentions")}</span>{" "}
+        {t("to ping a teammate.")}
       </p>
       <button
         type="button"
@@ -97,13 +101,15 @@ function EmptyState({ onAddComment }: { onAddComment: () => void }) {
         onClick={onAddComment}
       >
         <PlusIcon className="size-3" />
-        Add comment
+        {t("Add comment")}
       </button>
     </div>
   );
 }
 
 export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
+  const t = useT();
+
   const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const [, setActiveTab] = useQueryState("tab", parseAsString.withDefault("details"));
   const hasShipmentId = Boolean(shipmentId);
@@ -171,7 +177,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
   return (
     <div className="min-w-0">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <h5 className="cc-label">Comments</h5>
+        <h5 className="cc-label">{t("Comments")}</h5>
         <span className="font-table text-muted-foreground text-[10px] tabular-nums">{total}</span>
       </div>
       <ScrollArea
@@ -182,7 +188,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
         {query.isLoading ? (
           <LoadingRows />
         ) : query.isError ? (
-          <p className="text-muted-foreground px-1.5 py-1 text-xs">Comments unavailable.</p>
+          <p className="text-muted-foreground px-1.5 py-1 text-xs">{t("Comments unavailable.")}</p>
         ) : allComments.length === 0 ? (
           <EmptyState onAddComment={handleAddComment} />
         ) : (
@@ -192,7 +198,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
             ))}
             {isFetchingNextPage && (
               <li className="text-muted-foreground px-1.5 py-1 text-[10px]">
-                Loading older comments...
+                {t("Loading older comments...")}
               </li>
             )}
             <li ref={observerTarget} className="h-px" />

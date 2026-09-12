@@ -1,1 +1,1 @@
-Report schedule {{ if .Disabled }}disabled{{ else }}skipped{{ end }}
+{{ if .Disabled }}{{ t "Report schedule disabled" }}{{ else }}{{ t "Report schedule skipped" }}{{ end }}

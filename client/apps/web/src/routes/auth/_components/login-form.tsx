@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -42,6 +43,8 @@ export function LoginForm({
   // for an address the user just typed.
   onForgotPassword: (emailAddress: string) => void;
 }) {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
@@ -96,18 +99,18 @@ export function LoginForm({
         }
       >
         {isDriverAudience ? (
-          "Dash is where drivers see loads and pay."
+          t("Dash is where drivers see loads and pay.")
         ) : tenantMetadata ? (
-          `Sign in to ${tenantMetadata.organizationName}`
+          t("Sign in to {0}", tenantMetadata.organizationName)
         ) : (
           <>
-            Don&apos;t have an account yet?{" "}
+            {t("Don't have an account yet?")}{" "}
             <a
               href="#"
               className="text-foreground decoration-foreground/35 hover:decoration-foreground underline underline-offset-[3px]"
               onClick={(event) => event.preventDefault()}
             >
-              Create an account
+              {t("Create an account")}
             </a>
           </>
         )}
@@ -122,17 +125,17 @@ export function LoginForm({
       {isDriverAudience ? (
         <div className="flex flex-col gap-3.5">
           <p className="text-muted-foreground m-0 text-[12.5px]">
-            Loads, settlement statements and pay — built for the phone.
+            {t("Loads, settlement statements and pay — built for the phone.")}
           </p>
           <a
             href="/dash/login"
             className="bg-foreground text-background border-foreground flex h-10 w-full items-center justify-center gap-2 rounded-[9px] border text-[13px] font-[550] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.988]"
           >
-            Continue to Dash
+            {t("Continue to Dash")}
             <ArrowRight />
           </a>
           <p className="text-subtle-foreground m-0 text-[11.5px]">
-            First time here? Use the invitation link your carrier sent you.
+            {t("First time here? Use the invitation link your carrier sent you.")}
           </p>
         </div>
       ) : (
@@ -162,7 +165,7 @@ export function LoginForm({
                     className="border-border hover:border-input flex h-[38px] items-center justify-center gap-[9px] rounded-[9px] border bg-transparent text-[12.5px] font-medium whitespace-nowrap transition-colors duration-150 hover:bg-[color-mix(in_oklch,var(--foreground)_5%,transparent)]"
                   >
                     <ProviderLogo provider={provider.provider} />
-                    Continue with {provider.name}
+                    {t("Continue with {0}", provider.name)}
                   </a>
                 ))}
               </div>
@@ -179,7 +182,7 @@ export function LoginForm({
               <AuthTextField
                 name="emailAddress"
                 control={control}
-                label="Email address"
+                label={t("Email address")}
                 type="email"
                 required
                 placeholder="name@work-email.com"
@@ -189,7 +192,7 @@ export function LoginForm({
               <AuthTextField
                 name="password"
                 control={control}
-                label="Password"
+                label={t("Password")}
                 type="password"
                 required
                 revealable
@@ -202,13 +205,13 @@ export function LoginForm({
                     onClick={() => onForgotPassword(form.getValues("emailAddress"))}
                     className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent text-[11.5px] transition-colors duration-150"
                   >
-                    Forgot?
+                    {t("Forgot?")}
                   </button>
                 }
               />
               {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-              <AuthSubmit type="submit" isLoading={isPending} loadingText="Verifying credentials">
-                Sign in
+              <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Verifying credentials")}>
+                {t("Sign in")}
               </AuthSubmit>
             </>
           )}
@@ -229,6 +232,8 @@ function AudienceToggle({
   value: AuthAudience;
   onChange: (audience: AuthAudience) => void;
 }) {
+  const t = useT();
+
   const trackRef = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, width: 0 });
 
@@ -277,7 +282,7 @@ function AudienceToggle({
           )}
         >
           <option.icon className="size-[15px]" />
-          {option.label}
+          {t(option.label)}
         </button>
       ))}
     </div>

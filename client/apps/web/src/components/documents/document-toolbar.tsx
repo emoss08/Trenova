@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -68,6 +69,8 @@ export function DocumentToolbar({
   disabled,
   className,
 }: DocumentToolbarProps) {
+  const t = useT();
+
   const toggleSortDirection = () => {
     onSortDirectionChange(sortDirection === "asc" ? "desc" : "asc");
   };
@@ -76,7 +79,7 @@ export function DocumentToolbar({
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <div className="flex-1">
         <Input
-          placeholder="Search..."
+          placeholder={t("Search...")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           leftElement={<SearchIcon className="text-muted-foreground size-4" />}
@@ -90,12 +93,12 @@ export function DocumentToolbar({
         onValueChange={(val) => onFileTypeFilterChange(val as FileTypeFilter)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select file type" />
+          <SelectValue placeholder={t("Select file type")} />
         </SelectTrigger>
         <SelectContent>
           {fileTypeOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -108,12 +111,12 @@ export function DocumentToolbar({
           onValueChange={(val) => onSortFieldChange(val as SortField)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select sort field" />
+            <SelectValue placeholder={t("Select sort field")} />
           </SelectTrigger>
           <SelectContent>
             {sortFieldOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -137,7 +140,7 @@ export function DocumentToolbar({
           variant={viewMode === "grid" ? "secondary" : "outline"}
           size="icon-sm"
           onClick={() => onViewModeChange("grid")}
-          aria-label="Grid view"
+          aria-label={t("Grid view")}
           aria-pressed={viewMode === "grid"}
         >
           <LayoutGridIcon className="size-4" />
@@ -146,7 +149,7 @@ export function DocumentToolbar({
           variant={viewMode === "list" ? "secondary" : "outline"}
           size="icon-sm"
           onClick={() => onViewModeChange("list")}
-          aria-label="List view"
+          aria-label={t("List view")}
           aria-pressed={viewMode === "list"}
         >
           <ListIcon className="size-4" />
@@ -156,7 +159,7 @@ export function DocumentToolbar({
       {onUploadClick && (
         <Button variant="secondary" size="sm" onClick={onUploadClick} disabled={disabled}>
           <UploadIcon className="size-4" />
-          Upload
+          {t("Upload")}
         </Button>
       )}
     </div>

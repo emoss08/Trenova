@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,6 +65,8 @@ type SimulationPanelProps = {
  * becomes a load on the database.
  */
 export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
+  const t = useT();
+
   const { getValues } = useFormContext<RateAgreement>();
   const queryClient = useQueryClient();
 
@@ -104,7 +107,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         queryKey: ["rate-simulations", rateAgreementId],
       });
     },
-    onError: () => toast.error("Could not start the simulation"),
+    onError: () => toast.error(t("Could not start the simulation")),
   });
 
   const { data: results } = useQuery({
@@ -123,8 +126,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
   if (!rateAgreementId) {
     return (
       <p className="text-muted-foreground text-sm">
-        Save the agreement first. A simulation replays a contract against shipments that already
-        moved, and there has to be a contract to replay.
+        {t("Save the agreement first. A simulation replays a contract against shipments that already moved, and there has to be a contract to replay.")}
       </p>
     );
   }
@@ -135,18 +137,16 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     <div className="space-y-4">
       <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
-          <p className="text-sm font-medium">Replay Historical Shipments</p>
+          <p className="text-sm font-medium">{t("Replay Historical Shipments")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Every shipment is re-rated against its own facts — the weight it had, the lane it ran,
-            the day it shipped — so the result is what would have been invoiced. Nothing it produces
-            touches a shipment.
+            {t("Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the day it shipped — so the result is what would have been invoiced. Nothing it produces touches a shipment.")}
           </p>
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-32">
             <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-              Window (Days)
+              {t("Window (Days)")}
             </label>
             <NumberFieldRoot
               value={days}
@@ -168,11 +168,11 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
             size="sm"
             onClick={() => startRun()}
             isLoading={isPending}
-            loadingText="Queueing..."
+            loadingText={t("Queueing...")}
             className="gap-1.5"
           >
             <PlayIcon className="size-3.5" />
-            Run Simulation
+            {t("Run Simulation")}
           </Button>
         </div>
       </div>
@@ -215,10 +215,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
           <FlaskConicalIcon className="text-muted-foreground mb-3 size-8" />
-          <p className="text-sm font-medium">No simulation has run yet</p>
+          <p className="text-sm font-medium">{t("No simulation has run yet")}</p>
           <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-            Run one to see what this contract would have charged for the freight you already moved —
-            before it prices a single live shipment.
+            {t("Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.")}
           </p>
         </div>
       )}
@@ -226,19 +225,18 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       {problems.length > 0 && (
         <div className="space-y-2">
           <div>
-            <p className="text-sm font-medium">Lanes That Did Nothing</p>
+            <p className="text-sm font-medium">{t("Lanes That Did Nothing")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              These are invisible in the revenue total, and they are usually why a tariff prices
-              differently from how it was written.
+              {t("These are invisible in the revenue total, and they are usually why a tariff prices differently from how it was written.")}
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Lane</TableHead>
-                  <TableHead className="text-xs">Outcome</TableHead>
-                  <TableHead className="text-xs">What That Means</TableHead>
+                  <TableHead className="text-xs">{t("Lane")}</TableHead>
+                  <TableHead className="text-xs">{t("Outcome")}</TableHead>
+                  <TableHead className="text-xs">{t("What That Means")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -271,21 +269,20 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       {results && results.length > 0 && (
         <div className="space-y-2">
           <div>
-            <p className="text-sm font-medium">Shipments This Would Have Moved</p>
+            <p className="text-sm font-medium">{t("Shipments This Would Have Moved")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              Largest increases first — the shipment that will produce the phone call is what this
-              list is for.
+              {t("Largest increases first — the shipment that will produce the phone call is what this list is for.")}
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Pro #</TableHead>
-                  <TableHead className="text-xs">Lane</TableHead>
-                  <TableHead className="text-right text-xs">Billed</TableHead>
-                  <TableHead className="text-right text-xs">Would Charge</TableHead>
-                  <TableHead className="text-right text-xs">Delta</TableHead>
+                  <TableHead className="text-xs">{t("Pro #")}</TableHead>
+                  <TableHead className="text-xs">{t("Lane")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Billed")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Would Charge")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Delta")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -319,6 +316,8 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
 /** One run's answer, in the order somebody reads it: status, verdict, numbers. */
 function SimulationReading({ simulation }: { readonly simulation: RateSimulation }) {
+  const t = useT();
+
   const progress = runProgress(simulation);
   const finished = isTerminal(simulation);
   const summary = simulation.summary;
@@ -348,27 +347,27 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
       {finished && measuredAnything(simulation) && summary && (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            <StatTile label="Shipments" value={String(summary.evaluatedCount)} />
-            <StatTile label="Changed" value={String(summary.changedCount)} />
+            <StatTile label={t("Shipments")} value={String(summary.evaluatedCount)} />
+            <StatTile label={t("Changed")} value={String(summary.changedCount)} />
             <StatTile
-              label="Increased"
+              label={t("Increased")}
               value={String(summary.increasedCount)}
               tone="text-emerald-600 dark:text-emerald-400"
             />
             <StatTile
-              label="Decreased"
+              label={t("Decreased")}
               value={String(summary.decreasedCount)}
               tone="text-red-600 dark:text-red-400"
             />
             <StatTile
-              label="Errors"
+              label={t("Errors")}
               value={String(summary.errorCount)}
               tone={summary.errorCount > 0 ? "text-destructive" : undefined}
             />
           </div>
 
           <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Total</span>
+            <span className="text-muted-foreground">{t("Total")}</span>
             <span className="font-mono font-medium tabular-nums">
               {formatCurrency(summary.beforeTotal)}
             </span>
@@ -378,8 +377,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             </span>
             <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
             <span className="text-muted-foreground ml-auto text-xs">
-              Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
-              {formatCurrency(summary.maxDecrease)}
+              {t("Max increase {0} · Max decrease {1}", formatCurrency(summary.maxIncrease), formatCurrency(summary.maxDecrease))}
             </span>
           </div>
         </>

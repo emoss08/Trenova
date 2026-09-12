@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Collapsible,
@@ -37,6 +38,8 @@ function auditEntryUrl(entryId: string) {
 }
 
 export default function AuditTab({ resourceId }: { resourceId: string }) {
+  const t = useT();
+
   const query = useInfiniteQuery({
     queryKey: [...queries.audit.history(resourceId).queryKey],
     queryFn: async ({ pageParam, signal }) =>
@@ -93,13 +96,13 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   if (query.isError) {
     return (
       <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
-        <p className="text-sm">Failed to load audit history.</p>
+        <p className="text-sm">{t("Failed to load audit history.")}</p>
         <button
           type="button"
           onClick={() => void query.refetch()}
           className="text-foreground mt-2 text-xs underline"
         >
-          Retry
+          {t("Retry")}
         </button>
       </div>
     );
@@ -108,7 +111,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   if (allEntries.length === 0) {
     return (
       <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
-        <p className="text-sm">No audit history for this resource.</p>
+        <p className="text-sm">{t("No audit history for this resource.")}</p>
       </div>
     );
   }
@@ -122,7 +125,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
       {isFetchingNextPage && (
         <div className="flex items-center justify-center py-4">
           <TextShimmer className="font-mono text-sm" duration={1}>
-            Loading more...
+            {t("Loading more...")}
           </TextShimmer>
         </div>
       )}
@@ -132,6 +135,8 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 }
 
 function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: boolean }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const date = fromUnixTime(entry.timestamp);
@@ -211,7 +216,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: 
                 to={auditEntryUrl(entry.id)}
                 className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
               >
-                View full record
+                {t("View full record")}
                 <ExternalLinkIcon className="size-3" />
               </Link>
             </div>
@@ -223,23 +228,25 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: 
 }
 
 function OperationSummary({ operation, changeCount }: { operation: string; changeCount: number }) {
+  const t = useT();
+
   if (operation === "create") {
-    return <p className="text-muted-foreground text-xs">Created this resource</p>;
+    return <p className="text-muted-foreground text-xs">{t("Created this resource")}</p>;
   }
 
   if (operation === "delete") {
-    return <p className="text-muted-foreground text-xs">Deleted this resource</p>;
+    return <p className="text-muted-foreground text-xs">{t("Deleted this resource")}</p>;
   }
 
   if (operation === "update" && changeCount > 0) {
     return (
       <p className="text-muted-foreground text-xs">
-        {changeCount} field{changeCount !== 1 ? "s" : ""} changed
+        {t("{0, plural, one {# field} other {# fields}} changed", changeCount)}
       </p>
     );
   }
 
-  return <p className="text-muted-foreground text-xs">{operationLabel(operation)} this resource</p>;
+  return <p className="text-muted-foreground text-xs">{t("{0} this resource", operationLabel(operation))}</p>;
 }
 
 function ChangeItem({ change }: { change: NormalizedAuditChange }) {

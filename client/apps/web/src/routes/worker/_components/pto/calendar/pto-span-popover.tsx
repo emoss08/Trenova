@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PTOStatusBadge, PTOTypeBadge } from "@trenova/shared/components/status-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -31,6 +32,8 @@ export type PTOSpanDetailsProps = {
 
 /** The body of the popover that opens from a bar on the calendar. */
 export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
+  const t = useT();
+
   const name = ptoWorkerName(pto);
   const days = ptoDaysOf(pto);
   const timing = ptoTiming(pto, todayUnix);
@@ -54,25 +57,25 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
       </div>
 
       <dl className="bg-accent/50 divide-border/60 divide-y rounded-lg text-xs">
-        <Fact icon={CalendarRangeIcon} label="Dates">
+        <Fact icon={CalendarRangeIcon} label={t("Dates")}>
           <span className="tabular-nums">{formatRange(pto.startDate, pto.endDate)}</span>
           <span className="text-muted-foreground ml-auto tabular-nums">
-            {days} day{days === 1 ? "" : "s"}
+            {t("{0, plural, one {# day} other {# days}}", days)}
           </span>
         </Fact>
-        <Fact icon={ClockIcon} label="Timing">
+        <Fact icon={ClockIcon} label={t("Timing")}>
           <span className={cn("flex items-center gap-1.5", TIMING_TONE_CLASS[timing.tone])}>
             <span
               className={cn("size-1.5 rounded-full", TIMING_DOT_CLASS[timing.tone])}
               aria-hidden
             />
-            {timing.label}
+            {t(timing.label)}
           </span>
         </Fact>
         {pto.balanceAfterDays != null ? (
-          <Fact icon={WalletIcon} label="Balance after">
-            <span>Balance after</span>
-            <span className="ml-auto tabular-nums">{formatPtoDays(pto.balanceAfterDays)} days</span>
+          <Fact icon={WalletIcon} label={t("Balance after")}>
+            <span>{t("Balance after")}</span>
+            <span className="ml-auto tabular-nums">{t("{0} days", formatPtoDays(pto.balanceAfterDays))}</span>
           </Fact>
         ) : null}
       </dl>
@@ -89,7 +92,7 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
           {decision.note ? <> · {decision.note}</> : null}
         </p>
       ) : pto.autoApproved ? (
-        <p className="text-muted-foreground text-[11px] leading-tight">Auto-approved by policy</p>
+        <p className="text-muted-foreground text-[11px] leading-tight">{t("Auto-approved by policy")}</p>
       ) : null}
     </div>
   );
@@ -120,13 +123,15 @@ export type PTODayListProps = {
 
 /** Everyone whose time off covers one day, for the "+N" chip a crowded week folds into. */
 export function PTODayList({ items, dayUnix }: PTODayListProps) {
+  const t = useT();
+
   const out = useMemo(() => spansOnDay(items, dayUnix), [items, dayUnix]);
 
   return (
     <div className="flex flex-col gap-1.5" data-testid="pto-day-list">
       <div className="flex items-baseline justify-between gap-2 px-0.5">
         <p className="text-sm font-medium">{formatUnixDateMedium(dayUnix)}</p>
-        <span className="text-muted-foreground text-xs tabular-nums">{out.length} out</span>
+        <span className="text-muted-foreground text-xs tabular-nums">{t("{0} out", out.length)}</span>
       </div>
       <ScrollArea className="-mx-1 px-1" viewportClassName="max-h-64" maskHeight={16}>
         <ul className="divide-border/60 divide-y">
@@ -138,8 +143,8 @@ export function PTODayList({ items, dayUnix }: PTODayListProps) {
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-xs font-medium">{ptoWorkerName(pto)}</p>
                   <p className="text-muted-foreground truncate text-[11px] tabular-nums">
-                    {meta.label} · {formatRange(pto.startDate, pto.endDate)}
-                    {pto.status === "Requested" ? " · awaiting decision" : ""}
+                    {t(meta.label)} · {formatRange(pto.startDate, pto.endDate)}
+                    {pto.status === "Requested" ? ` ${t("· awaiting decision")}` : ""}
                   </p>
                 </div>
                 <PTOActionsMenu pto={pto} className="size-5.5" />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -60,6 +61,8 @@ function DetailStat({ label, value }: { label: string; value: string | null }) {
 }
 
 function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: string }) {
+  const t = useT();
+
   const estimate = useQuery({
     queryKey: ["dash-pay-estimate", shipmentId, moveId],
     queryFn: async ({ signal }) => {
@@ -79,19 +82,21 @@ function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: s
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <p className="text-2xs font-medium text-muted-foreground uppercase">
-        Estimated pay for this load
+        {t("Estimated pay for this load")}
       </p>
       <p className="mt-1 text-2xl font-semibold tracking-tight">
         <AmountDisplay value={estimate.data.grossMinor} currency={estimate.data.currencyCode} />
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Based on your current pay plan — final pay locks in when the load completes.
+        {t("Based on your current pay plan — final pay locks in when the load completes.")}
       </p>
     </div>
   );
 }
 
 export function DashLoadDetailPage() {
+  const t = useT();
+
   const { assignmentId = "" } = useParams();
   const { load, isPending } = useLoad(assignmentId);
   const features = useDashFeatures();
@@ -110,10 +115,10 @@ export function DashLoadDetailPage() {
     return (
       <div className="flex flex-col items-start gap-4">
         <Link to="/dash/loads" className="flex items-center gap-1 text-sm text-muted-foreground">
-          <ArrowLeftIcon className="size-4" /> Loads
+          <ArrowLeftIcon className="size-4" /> {t("Loads")}
         </Link>
         <div className="w-full rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          We couldn&apos;t find that load. It may have been reassigned.
+          {t("We couldn't find that load. It may have been reassigned.")}
         </div>
       </div>
     );
@@ -132,12 +137,12 @@ export function DashLoadDetailPage() {
       className="flex flex-col gap-4"
     >
       <Link to="/dash/loads" className="flex items-center gap-1 text-sm text-muted-foreground">
-        <ArrowLeftIcon className="size-4" /> Loads
+        <ArrowLeftIcon className="size-4" /> {t("Loads")}
       </Link>
 
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-mono text-sm font-semibold">{load.proNumber || "Pending pro #"}</p>
+          <p className="font-mono text-sm font-semibold">{load.proNumber || t("Pending pro #")}</p>
           <LoadStatusBadge status={load.status} />
         </div>
         <h1 className="mt-2 text-xl font-semibold tracking-tight">
@@ -145,8 +150,8 @@ export function DashLoadDetailPage() {
           {stopPlace(destination)}
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          {load.proNumber ? <CopyChip label="PRO" value={load.proNumber} /> : null}
-          {load.bol ? <CopyChip label="BOL" value={load.bol} /> : null}
+          {load.proNumber ? <CopyChip label={t("PRO")} value={load.proNumber} /> : null}
+          {load.bol ? <CopyChip label={t("BOL")} value={load.bol} /> : null}
           {isActive && nextStop && (nextStop.addressLine || nextStop.locationName) ? (
             <a
               href={directionsUrl(nextStop)}
@@ -155,7 +160,7 @@ export function DashLoadDetailPage() {
               className="flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
             >
               <NavigationIcon className="size-3" />
-              Next stop
+              {t("Next stop")}
             </a>
           ) : null}
         </div>
@@ -168,7 +173,7 @@ export function DashLoadDetailPage() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-2xs font-medium text-muted-foreground uppercase">
-                Your pay for this load
+                {t("Your pay for this load")}
               </p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">
                 <AmountDisplay value={load.payGrossMinor} />
@@ -178,10 +183,10 @@ export function DashLoadDetailPage() {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {load.payOnHold
-              ? "This pay is on hold — check with your fleet manager."
+              ? t("This pay is on hold — check with your fleet manager.")
               : load.payStatus === "Settled"
-                ? "Paid out on a settlement — see the Pay tab."
-                : "Earned — lands on your next settlement."}
+                ? t("Paid out on a settlement — see the Pay tab.")
+                : t("Earned — lands on your next settlement.")}
           </p>
         </div>
       ) : isActive && features.showPayEstimates ? (
@@ -193,19 +198,19 @@ export function DashLoadDetailPage() {
       <LoadChat shipmentId={load.shipmentId} />
 
       <div className="grid grid-cols-2 gap-2">
-        <DetailStat label="Distance" value={formatMiles(load.distanceMiles)} />
-        <DetailStat label="Weight" value={formatWeight(load.weight)} />
-        <DetailStat label="Pieces" value={formatPieces(load.pieces)} />
-        <DetailStat label="Truck" value={load.tractorCode || null} />
-        <DetailStat label="Trailer" value={load.trailerCode || null} />
-        <DetailStat label="Role" value={load.isPrimary ? "Primary driver" : "Co-driver"} />
+        <DetailStat label={t("Distance")} value={formatMiles(load.distanceMiles)} />
+        <DetailStat label={t("Weight")} value={formatWeight(load.weight)} />
+        <DetailStat label={t("Pieces")} value={formatPieces(load.pieces)} />
+        <DetailStat label={t("Truck")} value={load.tractorCode || null} />
+        <DetailStat label={t("Trailer")} value={load.trailerCode || null} />
+        <DetailStat label={t("Role")} value={load.isPrimary ? "Primary driver" : "Co-driver"} />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Route</h2>
+          <h2 className="text-sm font-semibold">{t("Route")}</h2>
           <Badge variant="secondary">
-            {load.stops.length} stop{load.stops.length === 1 ? "" : "s"}
+            {t("{0, plural, one {# stop} other {# stops}}", load.stops.length)}
           </Badge>
         </div>
         <StopTimeline

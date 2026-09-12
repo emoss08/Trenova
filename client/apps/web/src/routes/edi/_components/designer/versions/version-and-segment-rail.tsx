@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -11,6 +12,8 @@ import { VersionStatusBadge } from "../components/designer-shared";
 import { diagnosticsForSegment } from "../utils/edi-designer-utils";
 
 export default function VersionAndSegmentRail() {
+  const t = useT();
+
   const { versions } = useSelectedTemplateDesignerData();
   const { selectedVersionId, selectedSegmentId, selectedElementPosition } =
     useSelectedTemplateDesignerIds();
@@ -23,11 +26,11 @@ export default function VersionAndSegmentRail() {
     <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] overflow-hidden border-r">
       <ScrollArea className="min-h-0 border-b" viewportClassName="min-h-0">
         <div className="bg-sidebar sticky top-0 z-10 border-b px-3 py-2">
-          <div className="text-sm font-semibold">Versions</div>
-          <div className="text-muted-foreground text-xs">{versions.length} available</div>
+          <div className="text-sm font-semibold">{t("Versions")}</div>
+          <div className="text-muted-foreground text-xs">{t("{0} available", versions.length)}</div>
         </div>
         {versions.length === 0 ? (
-          <div className="text-muted-foreground p-3 text-sm">No versions.</div>
+          <div className="text-muted-foreground p-3 text-sm">{t("No versions.")}</div>
         ) : (
           versions.map((version) => (
             <button
@@ -47,7 +50,7 @@ export default function VersionAndSegmentRail() {
                 selectedVersionId === version.id && "bg-muted",
               )}
             >
-              <span className="font-mono text-xs">v{version.versionNumber}</span>
+              <span className="font-mono text-xs">{t("v{0}", version.versionNumber)}</span>
               <VersionStatusBadge version={version} />
             </button>
           ))
@@ -55,12 +58,12 @@ export default function VersionAndSegmentRail() {
       </ScrollArea>
       <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
         <div className="bg-background sticky top-0 z-10 border-b px-3 py-2">
-          <div className="text-xs font-semibold">Segment Outline</div>
-          <div className="text-muted-foreground text-xs">{segments.length} segments</div>
+          <div className="text-xs font-semibold">{t("Segment Outline")}</div>
+          <div className="text-muted-foreground text-xs">{t("{0} segments", segments.length)}</div>
         </div>
         <ScrollArea className="min-h-0" viewportClassName="min-h-0">
           {segments.length === 0 ? (
-            <div className="text-muted-foreground p-3 text-sm">No segments in this version.</div>
+            <div className="text-muted-foreground p-3 text-sm">{t("No segments in this version.")}</div>
           ) : (
             segments.map((segment) => {
               const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);
@@ -90,7 +93,7 @@ export default function VersionAndSegmentRail() {
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-sm font-medium">{segment.segmentId}</span>
                       <Badge variant={segment.required ? "active" : "outline"}>
-                        {segment.required ? "Req" : "Opt"}
+                        {segment.required ? t("Req") : t("Opt")}
                       </Badge>
                     </span>
                     <span className="text-muted-foreground block truncate text-xs">

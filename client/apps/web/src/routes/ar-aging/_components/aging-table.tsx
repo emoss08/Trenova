@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   Table,
@@ -52,6 +53,8 @@ export function AgingTable({
   totals: ARAgingSummary["totals"];
   rows: ARAgingRow[];
 }) {
+  const t = useT();
+
   const [sorting, setSorting] = useState<SortingState>([{ id: "totalOpenMinor", desc: true }]);
 
   const columns = useMemo<ColumnDef<ARAgingRow>[]>(
@@ -172,7 +175,7 @@ export function AgingTable({
         <TableFooter className="bg-muted/40 sticky bottom-0">
           <TableRow className="hover:bg-transparent">
             <TableCell className="py-2 text-xs font-medium">
-              Totals · {rows.length} {rows.length === 1 ? "customer" : "customers"}
+              {t("Totals · {0} {1}", rows.length, rows.length === 1 ? "customer" : "customers")}
             </TableCell>
             <TableCell className="py-2 text-right">
               <AmountDisplay value={totals.currentMinor} className="text-xs font-semibold" />

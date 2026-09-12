@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -189,6 +190,8 @@ function DocumentSearch({
   onSearch: (id: string) => void;
   isLoading: boolean;
 }) {
+  const t = useT();
+
   const [input, setInput] = useState("");
 
   function handleSubmit(e: FormEvent) {
@@ -204,7 +207,7 @@ function DocumentSearch({
       <Input
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Paste a document ID to inspect..."
+        placeholder={t("Paste a document ID to inspect...")}
         className="truncate pr-18 font-mono placeholder:font-sans"
         leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
         rightElement={
@@ -214,7 +217,7 @@ function DocumentSearch({
             disabled={!input.trim() || isLoading}
             isLoading={isLoading}
           >
-            Inspect
+            {t("Inspect")}
           </Button>
         }
       />
@@ -239,6 +242,8 @@ function ActionButton({
   mutationFn: (id: string) => Promise<void>;
   onSuccess: () => void;
 }) {
+  const t = useT();
+
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
@@ -283,8 +288,8 @@ function ActionButton({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>Confirm</AlertDialogAction>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>{t("Confirm")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -292,6 +297,8 @@ function ActionButton({
 }
 
 function StatusPipeline({ doc }: { doc: Document }) {
+  const t = useT();
+
   const stages = [
     { label: "Upload", status: "Active" as const },
     { label: "Preview", status: doc.previewStatus },
@@ -309,10 +316,10 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-[10px] font-medium tracking-wide uppercase">{stage.label}</span>
+              <span className="text-[10px] font-medium tracking-wide uppercase">{t(stage.label)}</span>
             </TooltipTrigger>
             <TooltipContent>
-              {stage.label}: {stage.status}
+              {t(stage.label)}: {stage.status}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -322,6 +329,8 @@ function StatusPipeline({ doc }: { doc: Document }) {
 }
 
 function DocumentOverviewSection({ doc }: { doc: Document }) {
+  const t = useT();
+
   return (
     <section className="grid gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -340,7 +349,7 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
             <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
               <CopyableId value={doc.id} />
               <span>&middot;</span>
-              <span>{(doc.fileSize / 1024).toFixed(1)} KB</span>
+              <span>{t("{0} KB", (doc.fileSize / 1024).toFixed(1))}</span>
               <span>&middot;</span>
               <span>{doc.fileType}</span>
             </div>
@@ -350,45 +359,45 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
       </div>
 
       <div className="grid gap-2.5 md:grid-cols-4">
-        <MetadataCell label="Resource">
+        <MetadataCell label={t("Resource")}>
           <div className="flex items-center gap-1.5">
             <Badge variant="outline">{doc.resourceType}</Badge>
             <CopyableId value={doc.resourceId} />
           </div>
         </MetadataCell>
-        <MetadataCell label="Version">
-          <span className="font-mono">v{doc.versionNumber}</span>
+        <MetadataCell label={t("Version")}>
+          <span className="font-mono">{t("v{0}", doc.versionNumber)}</span>
           {doc.isCurrentVersion && (
             <Badge variant="active" className="ml-1.5">
-              Current
+              {t("Current")}
             </Badge>
           )}
         </MetadataCell>
-        <MetadataCell label="Created">
+        <MetadataCell label={t("Created")}>
           <span>{formatTimestamp(doc.createdAt)}</span>
           <span className="text-muted-foreground ml-1">{relativeTime(doc.createdAt)}</span>
         </MetadataCell>
-        <MetadataCell label="Updated">
+        <MetadataCell label={t("Updated")}>
           <span>{formatTimestamp(doc.updatedAt)}</span>
           <span className="text-muted-foreground ml-1">{relativeTime(doc.updatedAt)}</span>
         </MetadataCell>
       </div>
 
       <div className="grid gap-2.5 md:grid-cols-4">
-        <MetadataCell label="Preview Status">
+        <MetadataCell label={t("Preview Status")}>
           <Badge variant={statusVariant(doc.previewStatus)}>{doc.previewStatus}</Badge>
         </MetadataCell>
-        <MetadataCell label="Content Status">
+        <MetadataCell label={t("Content Status")}>
           <Badge variant={statusVariant(doc.contentStatus)}>{doc.contentStatus}</Badge>
         </MetadataCell>
-        <MetadataCell label="Draft Status">
+        <MetadataCell label={t("Draft Status")}>
           <Badge variant={statusVariant(doc.shipmentDraftStatus)}>{doc.shipmentDraftStatus}</Badge>
         </MetadataCell>
-        <MetadataCell label="Detected Kind">
+        <MetadataCell label={t("Detected Kind")}>
           {doc.detectedKind ? (
             <Badge variant="secondary">{doc.detectedKind}</Badge>
           ) : (
-            <span className="text-muted-foreground">Not classified</span>
+            <span className="text-muted-foreground">{t("Not classified")}</span>
           )}
         </MetadataCell>
       </div>
@@ -397,32 +406,34 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
 }
 
 function ActionsSection({ documentId, onSuccess }: { documentId: string; onSuccess: () => void }) {
+  const t = useT();
+
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={RefreshCwIcon} title="Recovery Actions" />
+      <SectionHeader icon={RefreshCwIcon} title={t("Recovery Actions")} />
       <div className="grid gap-2.5 sm:grid-cols-3">
         <ActionButton
-          label="Reextract Content"
-          detail="Re-process text and structured data"
-          description="Re-run content extraction for this document. This will re-process the document and update extracted text and structured data."
+          label={t("Reextract Content")}
+          detail={t("Re-process text and structured data")}
+          description={t("Re-run content extraction for this document. This will re-process the document and update extracted text and structured data.")}
           icon={FileSearchIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.reextract(id)}
           onSuccess={onSuccess}
         />
         <ActionButton
-          label="Regenerate Preview"
-          detail="Start a new thumbnail workflow"
-          description="Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail."
+          label={t("Regenerate Preview")}
+          detail={t("Start a new thumbnail workflow")}
+          description={t("Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail.")}
           icon={ImageIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.regeneratePreview(id)}
           onSuccess={onSuccess}
         />
         <ActionButton
-          label="Resync Search"
-          detail="Update the search index projection"
-          description="Re-sync this document's search index entry. This will update the search projection with the latest document data."
+          label={t("Resync Search")}
+          detail={t("Update the search index projection")}
+          description={t("Re-sync this document's search index entry. This will update the search projection with the latest document data.")}
           icon={RefreshCwIcon}
           documentId={documentId}
           mutationFn={(id) => apiService.documentOperationsService.resyncSearch(id)}
@@ -434,6 +445,8 @@ function ActionsSection({ documentId, onSuccess }: { documentId: string; onSucce
 }
 
 function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDraft: boolean }) {
+  const t = useT();
+
   return (
     <div className="grid gap-2.5 sm:grid-cols-2">
       <div
@@ -445,9 +458,9 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
           <FileSearchIcon className="size-4" />
         </span>
         <div>
-          <div className="text-sm font-medium">Extracted Content</div>
+          <div className="text-sm font-medium">{t("Extracted Content")}</div>
           <div className="text-muted-foreground text-[11px]">
-            {hasContent ? "Content available" : "Not extracted yet"}
+            {hasContent ? t("Content available") : t("Not extracted yet")}
           </div>
         </div>
       </div>
@@ -460,9 +473,9 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
           <LayersIcon className="size-4" />
         </span>
         <div>
-          <div className="text-sm font-medium">Shipment Draft</div>
+          <div className="text-sm font-medium">{t("Shipment Draft")}</div>
           <div className="text-muted-foreground text-[11px]">
-            {hasDraft ? "Draft available" : "No draft generated"}
+            {hasDraft ? t("Draft available") : t("No draft generated")}
           </div>
         </div>
       </div>
@@ -471,11 +484,13 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
 }
 
 function VersionsSection({ versions }: { versions: Document[] }) {
+  const t = useT();
+
   if (versions.length === 0) return null;
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={GitBranchIcon} title="Version History" count={versions.length} />
+      <SectionHeader icon={GitBranchIcon} title={t("Version History")} count={versions.length} />
       <div className="grid gap-2">
         {versions.map((v) => (
           <div
@@ -483,12 +498,12 @@ function VersionsSection({ versions }: { versions: Document[] }) {
             className={`flex items-center gap-3 rounded-lg border p-3 ${v.isCurrentVersion ? "border-brand/20 bg-brand/5" : ""}`}
           >
             <span className="bg-muted text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold">
-              v{v.versionNumber}
+              {t("v{0}", v.versionNumber)}
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <CopyableId value={v.id} />
-                {v.isCurrentVersion && <Badge variant="active">Current</Badge>}
+                {v.isCurrentVersion && <Badge variant="active">{t("Current")}</Badge>}
               </div>
               <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
                 <ClockIcon className="size-3" />
@@ -504,11 +519,13 @@ function VersionsSection({ versions }: { versions: Document[] }) {
 }
 
 function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
+  const t = useT();
+
   if (sessions.length === 0) return null;
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={UploadIcon} title="Upload Sessions" count={sessions.length} />
+      <SectionHeader icon={UploadIcon} title={t("Upload Sessions")} count={sessions.length} />
       <div className="grid gap-2">
         {sessions.map((s) => {
           const hasFailure = !!(s.failureCode || s.failureMessage);
@@ -531,7 +548,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 
               <div className="mt-2.5 grid gap-2 md:grid-cols-3">
                 <div className="text-xs">
-                  <span className="text-muted-foreground">Lineage </span>
+                  <span className="text-muted-foreground">{t("Lineage")} </span>
                   {s.lineageId ? (
                     <CopyableId value={s.lineageId} />
                   ) : (
@@ -539,7 +556,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
                   )}
                 </div>
                 <div className="text-xs">
-                  <span className="text-muted-foreground">Document </span>
+                  <span className="text-muted-foreground">{t("Document")} </span>
                   {s.documentId ? (
                     <CopyableId value={s.documentId} />
                   ) : (
@@ -547,7 +564,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
                   )}
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  Created {formatTimestamp(s.createdAt)}
+                  {t("Created {0}", formatTimestamp(s.createdAt))}
                 </div>
               </div>
 
@@ -566,11 +583,13 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 }
 
 function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
+  const t = useT();
+
   if (refs.length === 0) return null;
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={WorkflowIcon} title="Workflow References" count={refs.length} />
+      <SectionHeader icon={WorkflowIcon} title={t("Workflow References")} count={refs.length} />
       <div className="grid gap-2 sm:grid-cols-2">
         {refs.map((ref) => (
           <div
@@ -596,13 +615,15 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
 }
 
 function ErrorsBanner({ errors }: { errors: string[] }) {
+  const t = useT();
+
   if (errors.length === 0) return null;
 
   return (
     <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3">
       <div className="text-destructive flex items-center gap-2 text-sm font-medium">
         <AlertTriangleIcon className="size-4" />
-        {errors.length} {errors.length === 1 ? "error" : "errors"} detected
+        {t("{0} {1} detected", errors.length, errors.length === 1 ? "error" : "errors")}
       </div>
       <div className="mt-2 space-y-1">
         {errors.map((err, i) => (
@@ -689,6 +710,8 @@ function DiagnosticsSkeleton() {
 }
 
 export function DocumentOperationsPage() {
+  const t = useT();
+
   const [documentId, setDocumentId] = useState<string | null>(null);
 
   const diagnosticsQuery = useQuery({
@@ -701,8 +724,8 @@ export function DocumentOperationsPage() {
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Document Operations"
-        description="Inspect document lifecycle state and trigger recovery actions"
+        title={t("Document Operations")}
+        description={t("Inspect document lifecycle state and trigger recovery actions")}
       />
       <div className="p-4">
         <DocumentSearch
@@ -715,9 +738,9 @@ export function DocumentOperationsPage() {
           <div className="bg-muted flex size-14 items-center justify-center rounded-full">
             <FileSearchIcon className="text-muted-foreground size-7" />
           </div>
-          <h3 className="mt-4 text-sm font-medium">No document selected</h3>
+          <h3 className="mt-4 text-sm font-medium">{t("No document selected")}</h3>
           <p className="text-muted-foreground mt-1 max-w-[260px] text-center text-xs">
-            Paste a document ID above to view its lifecycle state and available recovery actions
+            {t("Paste a document ID above to view its lifecycle state and available recovery actions")}
           </p>
         </div>
       )}
@@ -728,11 +751,11 @@ export function DocumentOperationsPage() {
             <div className="bg-destructive/10 flex size-12 items-center justify-center rounded-full">
               <XCircleIcon className="text-destructive size-6" />
             </div>
-            <h3 className="mt-3 text-sm font-medium">Failed to load diagnostics</h3>
+            <h3 className="mt-3 text-sm font-medium">{t("Failed to load diagnostics")}</h3>
             <p className="text-muted-foreground mt-1 max-w-[300px] text-center text-xs">
               {diagnosticsQuery.error instanceof Error
                 ? diagnosticsQuery.error.message
-                : "Document not found or an unexpected error occurred"}
+                : t("Document not found or an unexpected error occurred")}
             </p>
             <Button
               variant="outline"
@@ -741,7 +764,7 @@ export function DocumentOperationsPage() {
               onClick={() => diagnosticsQuery.refetch()}
             >
               <RefreshCwIcon className="size-3" />
-              Retry
+              {t("Retry")}
             </Button>
           </CardContent>
         </Card>

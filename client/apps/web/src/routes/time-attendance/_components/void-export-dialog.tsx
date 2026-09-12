@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -37,6 +38,8 @@ export type VoidExportDialogProps = {
  * reason is required: nobody can explain the reopening afterwards otherwise.
  */
 export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<VoidPayrollExportFormValues>({
     resolver: zodResolver(voidPayrollExportFormSchema) as Resolver<VoidPayrollExportFormValues>,
@@ -58,7 +61,7 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
     resourceName: "Payroll run",
     mutationFn: (values) => voidPayrollExport({ id: run?.id ?? "", reason: values.reason }),
     onSuccess: () => {
-      toast.success("Run voided — the weeks in it are back to approved");
+      toast.success(t("Run voided — the weeks in it are back to approved"));
       void queryClient.invalidateQueries({ queryKey: [PAYROLL_EXPORTS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
       onOpenChange(false);
@@ -69,15 +72,13 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
     <Dialog open={run !== null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Void this payroll run</DialogTitle>
+          <DialogTitle>{t("Void this payroll run")}</DialogTitle>
           <DialogDescription>
-            {run
-              ? `${formatShiftDate(run.periodStart)} – ${formatShiftDate(
+            {t("{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.", run
+              ? t("{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.", formatShiftDate(run.periodStart), formatShiftDate(
                   run.periodEnd - 86400,
-                )} · ${run.timesheetCount} timesheet${run.timesheetCount === 1 ? "" : "s"}. `
-              : ""}
-            Every week in it goes back to approved so the period can be run again once whatever was
-            wrong is fixed. The run itself is kept, not deleted.
+                ), run.timesheetCount)
+              : "")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -93,19 +94,19 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
                 <TextareaField<VoidPayrollExportFormValues>
                   control={control}
                   name="reason"
-                  label="Why"
-                  placeholder="e.g. Wrong period — the Friday sheets were still open"
-                  description="Kept with the voided run so the reopened weeks can be explained later."
+                  label={t("Why")}
+                  placeholder={t("e.g. Wrong period — the Friday sheets were still open")}
+                  description={t("Kept with the voided run so the reopened weeks can be explained later.")}
                   rules={{ required: true }}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Keep it
+                {t("Keep it")}
               </Button>
               <Button type="submit" variant="destructive" isLoading={isPending}>
-                Void run
+                {t("Void run")}
               </Button>
             </DialogFooter>
           </Form>

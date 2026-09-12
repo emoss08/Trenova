@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
 import * as React from "react";
 
@@ -44,6 +45,8 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
 }) {
+  const t = useT();
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -69,7 +72,7 @@ function SheetContent({
             }
           >
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("Close")}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

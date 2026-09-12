@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useCannedReports, useReportDefinition } from "@/hooks/use-reports";
@@ -40,6 +41,8 @@ function NotFound({ what }: { what: string }) {
  * result you can sort, filter, chart, and drill into before exporting.
  */
 export function ReportExplorePage() {
+  const t = useT();
+
   const { definitionId } = useParams<{ definitionId: string }>();
   const [searchParams] = useSearchParams();
   const cannedKey = searchParams.get("canned") ?? undefined;
@@ -57,7 +60,7 @@ export function ReportExplorePage() {
       <ExploreView
         key={definition.data.id}
         name={definition.data.name}
-        description={definition.data.description}
+        description={t(definition.data.description)}
         definition={definition.data.definition}
         target={{ definitionId: definition.data.id }}
         defaultFormat={definition.data.defaultFormat}
@@ -77,7 +80,7 @@ export function ReportExplorePage() {
     <ExploreView
       key={entry.key}
       name={entry.name}
-      description={entry.description}
+      description={t(entry.description)}
       definition={entry.definition}
       target={{ cannedKey: entry.key }}
       defaultFormat={entry.defaultFormat}

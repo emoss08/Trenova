@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { purchaseQuarterLabel } from "@/lib/fuel-purchase";
 import { deleteFuelPurchase, type FuelPurchaseRow } from "@/lib/graphql/fuel-purchase";
@@ -30,14 +31,16 @@ export function DeleteFuelPurchaseDialog({
   purchase,
   onDeleted,
 }: DeleteFuelPurchaseDialogProps) {
+  const t = useT();
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (!purchase) throw new Error("No fuel purchase selected");
       return deleteFuelPurchase(purchase.id, purchase.version);
     },
     onSuccess: async () => {
-      toast.success("Purchase deleted", {
-        description: "Recompute the quarter's return to take it out of the figures.",
+      toast.success(t("Purchase deleted"), {
+        description: t("Recompute the quarter's return to take it out of the figures."),
       });
       await onDeleted();
       onOpenChange(false);
@@ -54,33 +57,28 @@ export function DeleteFuelPurchaseDialog({
           <AlertDialogMedia className="bg-destructive/10 text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete this fuel purchase?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete this fuel purchase?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {purchase ? (
               <span className="block">
-                {purchase.gallons} gallons of {purchase.fuelType.toLowerCase()} bought in{" "}
-                {purchase.jurisdiction.code} on {formatUnixDateTime(purchase.purchasedAt)}
-                {purchase.tractor?.code ? ` for tractor ${purchase.tractor.code}` : ""} will be
-                removed outright.
+                {t("{0} gallons of {1} bought in {2} on {3}{4} will be removed outright.", purchase.gallons, purchase.fuelType.toLowerCase(), purchase.jurisdiction.code, formatUnixDateTime(purchase.purchasedAt), purchase.tractor?.code ? ` ${t("for tractor {0}", purchase.tractor.code)}` : "")}
               </span>
             ) : null}
             <span className="mt-2 block">
-              A return already generated for {quarter ?? "its quarter"} keeps its figures until it
-              is recomputed, so recompute the return after deleting if the quarter is still open.
-              {purchase?.source === "CardImport"
-                ? " Importing the same statement again will record this row afresh."
-                : ""}
+              {t("A return already generated for {0} keeps its figures until it is recomputed, so recompute the return after deleting if the quarter is still open. {1}", quarter ?? t("its quarter"), purchase?.source === "CardImport"
+                ? ` ${t("Importing the same statement again will record this row afresh.")}`
+                : "")}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Keep purchase</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("Keep purchase")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             onClick={() => mutate()}
             disabled={isPending || !purchase}
           >
-            {isPending ? "Deleting..." : "Delete purchase"}
+            {isPending ? t("Deleting...") : t("Delete purchase")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

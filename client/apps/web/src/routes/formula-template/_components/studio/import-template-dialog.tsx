@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { ImportTemplatePayload, ImportTemplatesRequest } from "@/services/formula-template";
@@ -71,6 +72,8 @@ export function ImportTemplateDialog({
   onOpenChange,
   onImported,
 }: ImportTemplateDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [parsed, setParsed] = useState<ParsedImport | null>(null);
@@ -96,7 +99,7 @@ export function ImportTemplateDialog({
         handleClose();
       },
       onError: (error) => {
-        toast.error("Import failed", {
+        toast.error(t("Import failed"), {
           description: error.message || "The export could not be imported.",
         });
       },
@@ -144,11 +147,10 @@ export function ImportTemplateDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileUpIcon className="size-4" />
-            Import Templates
+            {t("Import Templates")}
           </DialogTitle>
           <DialogDescription>
-            Import a formula template export. Imported templates are created as drafts and must go
-            through review before they can price shipments.
+            {t("Import a formula template export. Imported templates are created as drafts and must go through review before they can price shipments.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -167,7 +169,7 @@ export function ImportTemplateDialog({
             className="w-full gap-2"
           >
             <UploadIcon className="size-4" />
-            {parsed ? parsed.filename : "Choose export file..."}
+            {parsed ? parsed.filename : t("Choose export file...")}
           </Button>
 
           {parseError && <p className="text-destructive text-xs">{parseError}</p>}
@@ -198,7 +200,7 @@ export function ImportTemplateDialog({
 
               <div className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
                 <Label htmlFor="rename-on-conflict" className="text-xs">
-                  Rename when a template with the same name exists
+                  {t("Rename when a template with the same name exists")}
                 </Label>
                 <Switch
                   id="rename-on-conflict"
@@ -213,7 +215,7 @@ export function ImportTemplateDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" size="sm" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
@@ -221,9 +223,9 @@ export function ImportTemplateDialog({
             onClick={handleImport}
             disabled={!parsed}
             isLoading={isPending}
-            loadingText="Importing..."
+            loadingText={t("Importing...")}
           >
-            Import
+            {t("Import")}
           </Button>
         </DialogFooter>
       </DialogContent>

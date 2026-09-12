@@ -142,7 +142,7 @@ func validateAdditionalChargeIdentifiers(ctx additionalChargeRuleContext) {
 		ctx.multiErr.Add(
 			currentPath,
 			errortypes.ErrDuplicate,
-			fmt.Sprintf("Additional charge ID duplicates %s", firstPath),
+			"Additional charge ID duplicates {0}", firstPath,
 		)
 		return
 	}

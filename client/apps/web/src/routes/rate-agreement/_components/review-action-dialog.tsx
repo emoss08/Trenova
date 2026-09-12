@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { RateAgreementReviewAction } from "@/services/rate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -121,6 +122,8 @@ export function ReviewActionDialog({
   action,
   agreement,
 }: ReviewActionDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
@@ -145,7 +148,7 @@ export function ReviewActionDialog({
     },
     onError: () => {
       toast.error(`Failed to ${action} agreement`, {
-        description: "Please try again or contact your system administrator.",
+        description: t("Please try again or contact your system administrator."),
       });
     },
   });
@@ -169,10 +172,10 @@ export function ReviewActionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
-            {config.title}
+            {t(config.title)}
             {agreement?.name && <span className="text-muted-foreground">— {agreement.name}</span>}
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>{t(config.description)}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1.5 py-2">
@@ -192,7 +195,7 @@ export function ReviewActionDialog({
             isInvalid={commentInvalid}
           />
           {commentInvalid && (
-            <p className="text-2xs text-destructive">A comment is required to {action}</p>
+            <p className="text-2xs text-destructive">{t("A comment is required to {0}", action)}</p>
           )}
         </div>
 
@@ -203,7 +206,7 @@ export function ReviewActionDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"

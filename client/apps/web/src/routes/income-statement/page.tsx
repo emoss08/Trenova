@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FinancialReportEmpty } from "@/components/accounting/accounting-empty";
 import { FinancialReportSection } from "@/components/accounting/financial-report-section";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
@@ -10,6 +11,8 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useState } from "react";
 
 export function IncomeStatementPage() {
+  const t = useT();
+
   const [periodId, setPeriodId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -30,8 +33,8 @@ export function IncomeStatementPage() {
 
         {!periodId ? (
           <FinancialReportEmpty
-            title="Pick a period"
-            description="Choose a fiscal period above and its revenue, cost of revenue, operating expenses and net income are laid out here."
+            title={t("Pick a period")}
+            description={t("Choose a fiscal period above and its revenue, cost of revenue, operating expenses and net income are laid out here.")}
           />
         ) : isLoading ? (
           <div className="space-y-4">
@@ -44,7 +47,7 @@ export function IncomeStatementPage() {
             <FinancialReportSection section={data.costOfRevenue} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">Gross Profit</span>
+              <span className="text-sm font-semibold">{t("Gross Profit")}</span>
               <AmountDisplay
                 value={data.grossProfitMinor}
                 variant="auto"
@@ -57,7 +60,7 @@ export function IncomeStatementPage() {
             <Separator />
 
             <div className="bg-primary/5 flex items-center justify-between rounded-md border px-4 py-4">
-              <span className="text-base font-bold">Net Income</span>
+              <span className="text-base font-bold">{t("Net Income")}</span>
               <AmountDisplay
                 value={data.netIncomeMinor}
                 variant="auto"

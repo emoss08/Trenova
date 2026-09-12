@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,8 @@ export function OverflowTabsList({
   className,
   moreLabel = "More",
 }: OverflowTabsListProps) {
+  const t = useT();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -101,7 +104,7 @@ export function OverflowTabsList({
             className={cn("hover:text-foreground", tab.className)}
           >
             {tab.icon ? <tab.icon className="mr-1 size-4" /> : null}
-            {tab.label}
+            {t(tab.label)}
           </TabsTab>
         ))}
         {overflowItems.length > 0 ? (
@@ -122,7 +125,7 @@ export function OverflowTabsList({
               {overflowItems.map((tab) => (
                 <DropdownMenuItem
                   key={tab.value}
-                  title={tab.label}
+                  title={t(tab.label)}
                   onClick={() => onSelect(tab.value)}
                   className={tab.className}
                   startContent={tab.icon ? <tab.icon className="size-4" /> : undefined}
@@ -145,7 +148,7 @@ export function OverflowTabsList({
           {items.map((tab) => (
             <div key={tab.value} data-measure-tab className={measureTabClassName}>
               {tab.icon ? <tab.icon className="mr-1 size-4" /> : null}
-              {tab.label}
+              {t(tab.label)}
             </div>
           ))}
           <div data-measure-more className={measureTabClassName}>

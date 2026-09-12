@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -46,6 +47,8 @@ type DialogState =
   | { kind: "violation"; violation: DotViolationRow };
 
 export default function WorkerTestingTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRecord } = usePermission(Resource.WorkerDOTTest, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerDOTTest, Operation.Update);
   const { allowed: canCancel } = usePermission(Resource.WorkerDOTTest, Operation.Cancel);
@@ -61,13 +64,13 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
   const cancelMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => cancelDotTest(id, reason),
     onSuccess: () => {
-      toast.success("Collection voided", {
-        description: "The record stays on file with the reason it was voided.",
+      toast.success(t("Collection voided"), {
+        description: t("The record stays on file with the reason it was voided."),
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not void the collection", {
+      toast.error(t("Could not void the collection"), {
         description: error.message,
       }),
   });
@@ -112,21 +115,16 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Badge variant={standing.tone}>{standing.label}</Badge>
+              <Badge variant={standing.tone}>{t(standing.label)}</Badge>
               {file.standing.returnToDuty !== "NotRequired" ? (
                 <Badge variant="secondary">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
               ) : null}
-              <InfoPopover title="Testing standing">
+              <InfoPopover title={t("Testing standing")}>
                 <p>
-                  Prohibited while an open violation is still short of return to duty, or a
-                  Clearinghouse query found violations. Awaiting result while a collection is at the
-                  lab. Clear once a negative result is on file with nothing open. Not on file when
-                  no test has been recorded.
+                  {t("Prohibited while an open violation is still short of return to duty, or a Clearinghouse query found violations. Awaiting result while a collection is at the lab. Clear once a negative result is on file with nothing open. Not on file when no test has been recorded.")}
                 </p>
                 <p>
-                  Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at
-                  work and is not a bar. The next Clearinghouse query falls due twelve months after
-                  the last answered one.
+                  {t("Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at work and is not a bar. The next Clearinghouse query falls due twelve months after the last answered one.")}
                 </p>
               </InfoPopover>
             </div>
@@ -136,10 +134,10 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             {canRecord ? (
               <>
                 <Button size="sm" onClick={() => setDialog({ kind: "test" })}>
-                  Record a collection
+                  {t("Record a collection")}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "query" })}>
-                  Log a query
+                  {t("Log a query")}
                 </Button>
               </>
             ) : null}
@@ -148,17 +146,17 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
 
         <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
           <Figure
-            label="Pre-employment test"
+            label={t("Pre-employment test")}
             value={file.standing.hasPreEmploymentTest ? "On file" : "Missing"}
             warn={!file.standing.hasPreEmploymentTest}
           />
           <Figure
-            label="Pre-employment query"
+            label={t("Pre-employment query")}
             value={file.standing.hasPreEmploymentQuery ? "On file" : "Missing"}
             warn={!file.standing.hasPreEmploymentQuery}
           />
           <Figure
-            label="Last query"
+            label={t("Last query")}
             value={
               file.standing.lastClearinghouseQueryAt
                 ? formatUnixDate(file.standing.lastClearinghouseQueryAt)
@@ -167,7 +165,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             warn={!file.standing.lastClearinghouseQueryAt}
           />
           <Figure
-            label="Next query due"
+            label={t("Next query due")}
             value={
               file.standing.nextClearinghouseQueryDue
                 ? formatUnixDate(file.standing.nextClearinghouseQueryDue)
@@ -184,7 +182,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
 
       {openViolation ? (
         <Section
-          title="Return-to-duty process"
+          title={t("Return-to-duty process")}
           action={
             canManage ? (
               <Button
@@ -192,7 +190,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                 variant="outline"
                 onClick={() => setDialog({ kind: "violation", violation: openViolation })}
               >
-                Update
+                {t("Update")}
               </Button>
             ) : null
           }
@@ -200,8 +198,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
           {openViolation.status === "FollowUp" ? (
             <Alert className="mb-2">
               <AlertDescription>
-                The driver is back on duty. Follow-up testing does not bar dispatch on its own; the
-                violation stays open here until the last follow-up test is recorded.
+                {t("The driver is back on duty. Follow-up testing does not bar dispatch on its own; the violation stays open here until the last follow-up test is recorded.")}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -215,7 +212,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Figure
-                label="SAP referred"
+                label={t("SAP referred")}
                 value={
                   openViolation.sapReferredAt
                     ? formatUnixDate(openViolation.sapReferredAt)
@@ -224,7 +221,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                 warn={!openViolation.sapReferredAt}
               />
               <Figure
-                label="Evaluation done"
+                label={t("Evaluation done")}
                 value={
                   openViolation.sapEvaluationCompletedAt
                     ? formatUnixDate(openViolation.sapEvaluationCompletedAt)
@@ -233,7 +230,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                 warn={!openViolation.sapEvaluationCompletedAt}
               />
               <Figure
-                label="Returned to duty"
+                label={t("Returned to duty")}
                 value={
                   openViolation.rtdCompletedAt
                     ? formatUnixDate(openViolation.rtdCompletedAt)
@@ -242,7 +239,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                 warn={!openViolation.rtdCompletedAt}
               />
               <Figure
-                label="Follow-up tests"
+                label={t("Follow-up tests")}
                 value={`${openViolation.followUpTestsCompleted} of ${openViolation.followUpTestCount}`}
               />
             </dl>
@@ -251,7 +248,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
       ) : null}
 
       {file.selections.length > 0 ? (
-        <Section title="Random selections outstanding">
+        <Section title={t("Random selections outstanding")}>
           <ul className="flex flex-col gap-1.5">
             {file.selections.map((entry) => (
               <li
@@ -260,7 +257,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
               >
                 <span className="flex items-center gap-2">
                   <Badge variant="warning">{randomEntryStatusLabel(entry.status)}</Badge>
-                  <span>{entry.substance === "Alcohol" ? "Alcohol" : "Controlled substances"}</span>
+                  <span>{entry.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}</span>
                 </span>
                 {canRecord ? (
                   <Button
@@ -274,7 +271,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                       })
                     }
                   >
-                    Record collection
+                    {t("Record collection")}
                   </Button>
                 ) : null}
               </li>
@@ -283,9 +280,9 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
         </Section>
       ) : null}
 
-      <Section title="Tests">
+      <Section title={t("Tests")}>
         {tests.length === 0 ? (
-          <Empty>No test is on file for this worker.</Empty>
+          <Empty>{t("No test is on file for this worker.")}</Empty>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {tests.map((test) => (
@@ -294,21 +291,21 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{dotTestTypeLabel(test.testType)}</span>
                     <span className="text-muted-foreground">
-                      {test.substance === "Alcohol" ? "Alcohol" : "Controlled substances"}
+                      {test.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}
                     </span>
                     <Badge variant={dotResultTone(test.result)}>
                       {test.result === "Pending"
                         ? dotTestStatusLabel(test.status)
                         : dotTestResultLabel(test.result)}
                     </Badge>
-                    {test.isDot ? null : <Badge variant="secondary">Non-DOT</Badge>}
+                    {test.isDot ? null : <Badge variant="secondary">{t("Non-DOT")}</Badge>}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground tabular-nums">
                       {test.collectedAt
                         ? formatUnixDate(test.collectedAt)
                         : test.scheduledAt
-                          ? `scheduled ${formatUnixDate(test.scheduledAt)}`
+                          ? t("scheduled {0}", formatUnixDate(test.scheduledAt))
                           : "—"}
                     </span>
                     {canUpdate && test.status !== "Completed" && test.status !== "Cancelled" ? (
@@ -317,7 +314,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                         variant="outline"
                         onClick={() => setDialog({ kind: "result", test })}
                       >
-                        Record result
+                        {t("Record result")}
                       </Button>
                     ) : null}
                     {canCancel && test.status !== "Completed" && test.status !== "Cancelled" ? (
@@ -332,14 +329,14 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                           })
                         }
                       >
-                        Void
+                        {t("Void")}
                       </Button>
                     ) : null}
                   </span>
                 </div>
                 {test.alcoholConcentration ? (
                   <p className="text-muted-foreground mt-1 tabular-nums">
-                    Concentration {test.alcoholConcentration}
+                    {t("Concentration {0}", test.alcoholConcentration)}
                   </p>
                 ) : null}
                 {test.reason ? <p className="text-muted-foreground mt-1">{test.reason}</p> : null}
@@ -349,9 +346,9 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
         )}
       </Section>
 
-      <Section title="Clearinghouse queries">
+      <Section title={t("Clearinghouse queries")}>
         {file.queries.length === 0 ? (
-          <Empty>No Clearinghouse query has been run for this worker.</Empty>
+          <Empty>{t("No Clearinghouse query has been run for this worker.")}</Empty>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {file.queries.map((query) => (
@@ -368,7 +365,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                   </Badge>
                   {query.violationCount > 0 ? (
                     <span className="text-muted-foreground">
-                      {query.violationCount} violation{query.violationCount === 1 ? "" : "s"}
+                      {t("{0, plural, one {# violation} other {# violations}}", query.violationCount)}
                     </span>
                   ) : null}
                 </span>
@@ -382,7 +379,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                       variant="outline"
                       onClick={() => setDialog({ kind: "answer", query })}
                     >
-                      Record answer
+                      {t("Record answer")}
                     </Button>
                   ) : null}
                 </span>
@@ -392,7 +389,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
         )}
         {pendingQuery ? (
           <p className="text-muted-foreground mt-2 text-[11px]">
-            A query logged but not answered does not restart the twelve-month clock.
+            {t("A query logged but not answered does not restart the twelve-month clock.")}
           </p>
         ) : null}
       </Section>

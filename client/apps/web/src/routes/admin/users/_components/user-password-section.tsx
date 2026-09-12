@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -10,6 +11,8 @@ import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
 export function EditModePassword({ userId, isLocked }: { userId: string; isLocked?: boolean }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -20,7 +23,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
     try {
       await resetUserPassword(userId);
       await queryClient.invalidateQueries({ queryKey: ["user", userId] });
-      toast.success("Password reset link sent");
+      toast.success(t("Password reset link sent"));
     } catch (error) {
       // Surfaces what the server actually said. The previous fixed string hid the fact
       // that this button was calling a route that did not exist.
@@ -36,9 +39,9 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
         <div className="border-destructive/30 bg-destructive/10 flex items-start gap-3 rounded-lg border p-3">
           <LockIcon className="text-destructive size-4 shrink-0" />
           <div>
-            <p className="text-destructive text-sm font-medium">Account Locked</p>
+            <p className="text-destructive text-sm font-medium">{t("Account Locked")}</p>
             <p className="text-destructive/80 text-xs">
-              This account has been locked due to too many failed login attempts.
+              {t("This account has been locked due to too many failed login attempts.")}
             </p>
           </div>
         </div>
@@ -47,18 +50,17 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <Button type="button" onClick={handleResetPassword} disabled={isResetting}>
-            {isResetting ? "Sending..." : "Send Reset Email"}
+            {isResetting ? t("Sending...") : t("Send Reset Email")}
           </Button>
           <p className="text-muted-foreground text-2xs">
-            Emails this user a single-use link to choose their own password. Their current password
-            keeps working until they use it, and you never see the new one.
+            {t("Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.")}
           </p>
           <Button
             type="button"
             variant="outline"
             onClick={() => setShowNewPassword(!showNewPassword)}
           >
-            {showNewPassword ? "Cancel" : "Set New Password"}
+            {showNewPassword ? t("Cancel") : t("Set New Password")}
           </Button>
         </div>
       </div>
@@ -73,8 +75,8 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
           <SensitiveField
             control={control}
             name="newPassword"
-            label="New Password"
-            description="Enter new password"
+            label={t("New Password")}
+            description={t("Enter new password")}
             rules={{ required: true }}
           />
         </div>

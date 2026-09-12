@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -17,6 +18,8 @@ export function EmailProfilePanel({
   mode,
   row,
 }: DataTablePanelProps<EmailProfile>) {
+  const t = useT();
+
   const form = useForm<EmailProfileFormValues>({
     resolver: zodResolver(emailProfileSchema),
     defaultValues: emailProfileDefaults,
@@ -31,7 +34,7 @@ export function EmailProfilePanel({
         form={form}
         url="/email-profiles/"
         queryKey={emailProfileQueryKey}
-        title="Email Profile"
+        title={t("Email Profile")}
         fieldKey="name"
         formComponent={<EmailProfileForm />}
       />
@@ -45,7 +48,7 @@ export function EmailProfilePanel({
       form={form}
       url="/email-profiles/"
       queryKey={emailProfileQueryKey}
-      title="Email Profile"
+      title={t("Email Profile")}
       formComponent={<EmailProfileForm />}
     />
   );

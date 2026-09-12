@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { BenefitEnrollmentListRow } from "@/lib/graphql/benefits";
 import { endingSoon, recentDeclines, startingSoon } from "@/lib/benefits-console";
@@ -30,6 +31,8 @@ function EntryList({
   entries: readonly BenefitEnrollmentListRow[];
   detail: (entry: BenefitEnrollmentListRow) => string;
 }) {
+  const t = useT();
+
   const shown = entries.slice(0, SHOWN_LIMIT);
   const hidden = entries.length - shown.length;
   return (
@@ -44,7 +47,7 @@ function EntryList({
               <span className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs font-medium">{enrollmentWorkerName(entry)}</span>
                 <span className="text-muted-foreground text-2xs shrink-0 truncate">
-                  {entry.benefitPlan?.name ?? "A plan"}
+                  {entry.benefitPlan?.name ?? t("A plan")}
                 </span>
               </span>
               <span className="text-muted-foreground text-2xs">{detail(entry)}</span>
@@ -53,7 +56,7 @@ function EntryList({
         ))}
       </ul>
       {hidden > 0 ? (
-        <p className="text-muted-foreground text-2xs border-t px-3 py-1.5">and {hidden} more</p>
+        <p className="text-muted-foreground text-2xs border-t px-3 py-1.5">{t("and {0} more", hidden)}</p>
       ) : null}
     </>
   );
@@ -71,6 +74,8 @@ type BenefitsAsideProps = {
  * the plan list, which only counts who is on a plan today.
  */
 export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideProps) {
+  const t = useT();
+
   const starting = useMemo(() => startingSoon(openEnrollments ?? [], now), [openEnrollments, now]);
   const ending = useMemo(() => endingSoon(openEnrollments ?? [], now), [openEnrollments, now]);
   const declines = useMemo(() => recentDeclines(declined ?? []), [declined]);
@@ -78,15 +83,15 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
   return (
     <aside className="flex min-w-0 flex-col gap-4">
       <SectionPanel
-        title="Starting soon"
+        title={t("Starting soon")}
         icon={<CalendarPlusIcon />}
         count={starting.length}
-        help="Cover that has been arranged but has not begun, soonest first."
+        help={t("Cover that has been arranged but has not begun, soonest first.")}
       >
         {!openEnrollments ? (
           <Loading />
         ) : starting.length === 0 ? (
-          <SectionPanelQuiet>No cover is waiting to begin.</SectionPanelQuiet>
+          <SectionPanelQuiet>{t("No cover is waiting to begin.")}</SectionPanelQuiet>
         ) : (
           <EntryList
             entries={starting}
@@ -96,15 +101,15 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
       </SectionPanel>
 
       <SectionPanel
-        title="Ending soon"
+        title={t("Ending soon")}
         icon={<CalendarClockIcon />}
         count={ending.length}
-        help="Cover with an end date inside the next thirty days, soonest first."
+        help={t("Cover with an end date inside the next thirty days, soonest first.")}
       >
         {!openEnrollments ? (
           <Loading />
         ) : ending.length === 0 ? (
-          <SectionPanelQuiet>Nothing ends in the next thirty days.</SectionPanelQuiet>
+          <SectionPanelQuiet>{t("Nothing ends in the next thirty days.")}</SectionPanelQuiet>
         ) : (
           <EntryList
             entries={ending}
@@ -116,15 +121,15 @@ export function BenefitsAside({ openEnrollments, declined, now }: BenefitsAsideP
       </SectionPanel>
 
       <SectionPanel
-        title="Recently declined"
+        title={t("Recently declined")}
         icon={<CircleSlashIcon />}
         count={declines.length}
-        help="People who waived a plan they were offered, most recent decision first."
+        help={t("People who waived a plan they were offered, most recent decision first.")}
       >
         {!declined ? (
           <Loading />
         ) : declines.length === 0 ? (
-          <SectionPanelQuiet>Nobody has declined cover.</SectionPanelQuiet>
+          <SectionPanelQuiet>{t("Nobody has declined cover.")}</SectionPanelQuiet>
         ) : (
           <EntryList
             entries={declines}

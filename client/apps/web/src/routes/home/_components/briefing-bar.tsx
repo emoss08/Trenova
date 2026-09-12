@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -140,6 +141,8 @@ export function BriefingBar({
   saving,
   onCustomize,
 }: BriefingBarProps) {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
   const clock = useUserClock();
   const chips = buildChips(attention, analytics, analyticsReady);
@@ -177,10 +180,8 @@ export function BriefingBar({
                   <CheckIcon className="text-success size-2.5" />
                 </span>
                 {analyticsReady
-                  ? `You're clear — ${analytics.activeShipments.count} ${
-                      analytics.activeShipments.count === 1 ? "load" : "loads"
-                    } moving, nothing flagged.`
-                  : "You're clear — nothing flagged."}
+                  ? t("You're clear — {0} {1} moving, nothing flagged.", analytics.activeShipments.count, analytics.activeShipments.count === 1 ? "load" : "loads")
+                  : t("You're clear — nothing flagged.")}
               </m.span>
             ) : (
               <>
@@ -190,7 +191,7 @@ export function BriefingBar({
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="text-xs font-medium"
                 >
-                  {total} {total === 1 ? "item needs" : "items need"} you
+                  {t("{0} {1} you", total, total === 1 ? t("item needs") : t("items need"))}
                 </m.span>
                 {chips.map((chip, index) => (
                   <m.span
@@ -207,7 +208,7 @@ export function BriefingBar({
                       <span className="font-table text-foreground font-medium tabular-nums">
                         {chip.count}
                       </span>
-                      <span>{chip.label}</span>
+                      <span>{t(chip.label)}</span>
                       <ArrowRightIcon className="-ml-0.5 size-2.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
                     </Link>
                   </m.span>
@@ -237,12 +238,12 @@ export function BriefingBar({
                 render={
                   <Button variant="outline" size="sm" disabled>
                     <LockIcon className="size-3.5" />
-                    Customize
+                    {t("Customize")}
                   </Button>
                 }
               />
               <TooltipContent side="bottom">
-                Your administrator manages this home screen.
+                {t("Your administrator manages this home screen.")}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -253,7 +254,7 @@ export function BriefingBar({
               disabled={!canCustomize || saving}
             >
               <LayoutGridIcon className="size-3.5" />
-              {editing ? "Done" : "Customize"}
+              {editing ? t("Done") : t("Customize")}
             </Button>
           )}
         </div>

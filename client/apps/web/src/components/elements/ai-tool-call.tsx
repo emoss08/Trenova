@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
@@ -99,6 +100,8 @@ interface AiToolCallHeaderProps {
 }
 
 function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
+  const t = useT();
+
   const { name, state, isOpen } = useToolCallContext();
 
   const stateConfig = React.useMemo(() => {
@@ -160,7 +163,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
           )}
         >
           {stateConfig.icon}
-          {stateConfig.label}
+          {t(stateConfig.label)}
         </span>
       </div>
       {children}
@@ -199,12 +202,14 @@ interface AiToolCallInputProps {
 }
 
 function AiToolCallInput({ input, className }: AiToolCallInputProps) {
+  const t = useT();
+
   const formattedJson = React.useMemo(() => JSON.stringify(input, null, 2), [input]);
 
   return (
     <div data-slot="ai-tool-call-input" className={cn("space-y-1.5", className)}>
       <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-        Input
+        {t("Input")}
       </span>
       <pre className="bg-muted/50 text-foreground overflow-x-auto rounded-md p-3 font-mono text-xs">
         {formattedJson}
@@ -219,10 +224,12 @@ interface AiToolCallOutputProps {
 }
 
 function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
+  const t = useT();
+
   return (
     <div data-slot="ai-tool-call-output" className={cn("space-y-1.5", className)}>
       <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-        Output
+        {t("Output")}
       </span>
       <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">{children}</div>
     </div>
@@ -235,10 +242,12 @@ interface AiToolCallErrorProps {
 }
 
 function AiToolCallError({ error, className }: AiToolCallErrorProps) {
+  const t = useT();
+
   return (
     <div data-slot="ai-tool-call-error" className={cn("space-y-1.5", className)}>
       <span className="text-xs font-medium tracking-wider text-red-600 uppercase dark:text-red-400">
-        Error
+        {t("Error")}
       </span>
       <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
         {error}

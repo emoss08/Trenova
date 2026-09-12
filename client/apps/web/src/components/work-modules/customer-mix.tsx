@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
@@ -40,6 +41,8 @@ const SHARE_BAR_COLORS = [
 const PICKUPS_PAGE_SIZE = 20;
 
 export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: CustomerMixProps) {
+  const t = useT();
+
   return (
     <CustomerMixSection>
       <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
@@ -49,14 +52,14 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
             className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"
           >
             <TabsTab value="customers" className="h-6 px-2 text-[11px] hover:bg-transparent">
-              Customers
+              {t("Customers")}
             </TabsTab>
             <TabsTab value="pickups" className="h-7 px-2 text-[11px] hover:bg-transparent">
-              Tomorrow&apos;s pickups
+              {t("Tomorrow's pickups")}
             </TabsTab>
           </TabsList>
           <span className="text-muted-foreground font-mono text-[10px]">
-            {customerMix.windowDays}d
+            {t("{0}d", customerMix.windowDays)}
           </span>
         </header>
         <TabsPanel value="customers" className="min-h-0 flex-1 overflow-y-auto">
@@ -75,8 +78,10 @@ function CustomerMixSection({ children }: { children: React.ReactNode }) {
 }
 
 function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
+  const t = useT();
+
   if (entries.length === 0) {
-    return <EmptyState label="No customer revenue in this window" />;
+    return <EmptyState label={t("No customer revenue in this window")} />;
   }
 
   return (
@@ -127,6 +132,8 @@ function PickupsList({
   initialData: TomorrowsPickupsCard;
   enabled: boolean;
 }) {
+  const t = useT();
+
   const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const observerTarget = useRef<HTMLLIElement>(null);
 
@@ -201,7 +208,7 @@ function PickupsList({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (pickups.length === 0) {
-    return <EmptyState label="No pickups scheduled for tomorrow" />;
+    return <EmptyState label={t("No pickups scheduled for tomorrow")} />;
   }
 
   return (
@@ -235,7 +242,7 @@ function PickupsList({
             </div>
             {pickup.status === "unassigned" || pickup.status === "tentative" ? (
               <Badge variant={PICKUP_STATUS[pickup.status].variant}>
-                {PICKUP_STATUS[pickup.status].label}
+                {t(PICKUP_STATUS[pickup.status].label)}
               </Badge>
             ) : (
               <span className="text-muted-foreground max-w-20 truncate font-mono text-[10px]">
@@ -248,7 +255,7 @@ function PickupsList({
       {isFetchingNextPage && (
         <li className="flex items-center justify-center py-3">
           <TextShimmer className="font-mono text-[11px]" duration={1}>
-            Loading more...
+            {t("Loading more...")}
           </TextShimmer>
         </li>
       )}

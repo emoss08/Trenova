@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FiscalPeriodAutocompleteField,
   FiscalYearAutocompleteField,
@@ -18,6 +19,8 @@ type SelectorFormValues = {
 };
 
 export function FiscalPeriodSelector({ value, onChange, className }: FiscalPeriodSelectorProps) {
+  const t = useT();
+
   const [selectedYearId, setSelectedYearId] = useState<string | null>(null);
 
   const form = useForm<SelectorFormValues>({
@@ -38,8 +41,8 @@ export function FiscalPeriodSelector({ value, onChange, className }: FiscalPerio
         <FiscalYearAutocompleteField
           control={form.control}
           name="fiscalYearId"
-          label="Fiscal Year"
-          placeholder="Select fiscal year"
+          label={t("Fiscal Year")}
+          placeholder={t("Select fiscal year")}
           onOptionChange={(option) => {
             const yearId = option?.id ?? null;
             setSelectedYearId(yearId);
@@ -50,9 +53,9 @@ export function FiscalPeriodSelector({ value, onChange, className }: FiscalPerio
       <div className="w-[240px]">
         <FiscalPeriodAutocompleteField
           control={form.control}
-          label="Fiscal Period"
+          label={t("Fiscal Period")}
           name="fiscalPeriodId"
-          placeholder="Select period"
+          placeholder={t("Select period")}
           extraSearchParams={periodSearchParams}
           onOptionChange={(option) => {
             if (option?.id) {

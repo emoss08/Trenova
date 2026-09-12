@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -100,6 +101,8 @@ function TrainingCourseCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<TrainingCourseFormValues>({
     resolver: zodResolver(trainingCourseFormSchema) as Resolver<TrainingCourseFormValues>,
     defaultValues: buildTrainingCourseDefaults(null),
@@ -109,8 +112,8 @@ function TrainingCourseCreatePanel({
     <FormCreatePanel<TrainingCourseFormValues, TrainingCourseRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Training Course"
-      description="Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes."
+      title={t("Training Course")}
+      description={t("Add a course workers can be assigned, and decide whether it is required, how it is taken, and what passes.")}
       queryKey={TRAINING_COURSE_LIST_KEY}
       form={form}
       size="lg"
@@ -132,6 +135,8 @@ function TrainingCourseEditPanel({
   onOpenChange: (open: boolean) => void;
   row: TrainingCourseRow;
 }) {
+  const t = useT();
+
   const formRow = {
     ...row,
     ...buildTrainingCourseDefaults(row),
@@ -146,7 +151,7 @@ function TrainingCourseEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Training Course"
+      title={t("Training Course")}
       fieldKey="code"
       queryKey={TRAINING_COURSE_LIST_KEY}
       form={form}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -71,6 +72,8 @@ function VersionList({
   ruleSetId: string;
   onSelectVersion: (id: string) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
@@ -90,7 +93,7 @@ function VersionList({
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.versions._def,
       });
-      toast.success("Draft version created (auto-numbered by server)");
+      toast.success(t("Draft version created (auto-numbered by server)"));
       if (data.id) onSelectVersion(data.id);
     },
     onError: (error) => {
@@ -112,7 +115,7 @@ function VersionList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-muted-foreground text-sm font-medium">
-          {sortedVersions.length} version{sortedVersions.length !== 1 ? "s" : ""}
+          {t("{0, plural, one {# version} other {# versions}}", sortedVersions.length)}
         </h3>
         {canCreate && (
           <Button
@@ -123,7 +126,7 @@ function VersionList({
             disabled={createMutation.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {createMutation.isPending ? "Creating..." : "New Draft"}
+            {createMutation.isPending ? t("Creating...") : t("New Draft")}
           </Button>
         )}
       </div>
@@ -134,10 +137,9 @@ function VersionList({
             <GitBranchIcon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium">No versions yet</p>
+            <p className="text-sm font-medium">{t("No versions yet")}</p>
             <p className="text-muted-foreground max-w-xs text-xs">
-              Versions define how documents are parsed. Each version contains match criteria, field
-              extraction rules, and stop definitions. Create a draft to get started.
+              {t("Versions define how documents are parsed. Each version contains match criteria, field extraction rules, and stop definitions. Create a draft to get started.")}
             </p>
           </div>
         </div>
@@ -158,8 +160,8 @@ function VersionList({
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Version {v.versionNumber}</span>
-                  {v.label && <span className="text-muted-foreground text-xs">{v.label}</span>}
+                  <span className="text-sm font-medium">{t("Version {0}", v.versionNumber)}</span>
+                  {v.label && <span className="text-muted-foreground text-xs">{t(v.label)}</span>}
                 </div>
                 <div className="text-muted-foreground flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1">
@@ -168,11 +170,11 @@ function VersionList({
                   </span>
                   <span className="flex items-center gap-1">
                     <TextIcon className="size-3" />
-                    {fieldCount} field{fieldCount !== 1 ? "s" : ""}
+                    {t("{0, plural, one {# field} other {# fields}}", fieldCount)}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPinIcon className="size-3" />
-                    {stopCount} stop{stopCount !== 1 ? "s" : ""}
+                    {t("{0, plural, one {# stop} other {# stops}}", stopCount)}
                   </span>
                 </div>
               </div>

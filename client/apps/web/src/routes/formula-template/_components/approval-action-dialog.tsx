@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -104,6 +105,8 @@ export function ApprovalActionDialog({
   action,
   template,
 }: ApprovalActionDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
@@ -181,10 +184,10 @@ export function ApprovalActionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
-            {config.title}
+            {t(config.title)}
             {template?.name && <span className="text-muted-foreground">— {template.name}</span>}
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>{t(config.description)}</DialogDescription>
         </DialogHeader>
 
         {gated && open && template?.id && (
@@ -218,8 +221,8 @@ export function ApprovalActionDialog({
           {commentInvalid && (
             <p className="text-2xs text-destructive">
               {action === "reject"
-                ? "A comment is required to reject"
-                : "Say what needs to change before sending it back"}
+                ? t("A comment is required to reject")
+                : t("Say what needs to change before sending it back")}
             </p>
           )}
         </div>
@@ -240,7 +243,7 @@ export function ApprovalActionDialog({
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             size="sm"

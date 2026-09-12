@@ -121,8 +121,8 @@ func TestCreateVersionMismatchError(t *testing.T) {
 	require.True(t, errors.As(result, &ve))
 	assert.Equal(t, "version", ve.Field)
 	assert.Equal(t, errortypes.ErrVersionMismatch, ve.Code)
-	assert.Contains(t, ve.Message, "Shipment")
-	assert.Contains(t, ve.Message, "ship_123")
+	assert.Contains(t, ve.Error(), "Shipment")
+	assert.Contains(t, ve.Error(), "ship_123")
 }
 
 func TestCreateVersionMismatchErrorEmitsConcurrencyEvent(t *testing.T) {
@@ -154,10 +154,10 @@ func TestCreateBulkVersionMismatchError(t *testing.T) {
 	require.True(t, errors.As(result, &ve))
 	assert.Equal(t, "version", ve.Field)
 	assert.Equal(t, errortypes.ErrVersionMismatch, ve.Code)
-	assert.Contains(t, ve.Message, "Order")
-	assert.Contains(t, ve.Message, "id_001")
-	assert.Contains(t, ve.Message, "id_002")
-	assert.Contains(t, ve.Message, "id_003")
+	assert.Contains(t, ve.Error(), "Order")
+	assert.Contains(t, ve.Error(), "id_001")
+	assert.Contains(t, ve.Error(), "id_002")
+	assert.Contains(t, ve.Error(), "id_003")
 }
 
 func TestCreateBulkVersionMismatchErrorEmitsConcurrencyEvent(t *testing.T) {
@@ -291,7 +291,7 @@ func TestCheckBulkRowsAffected(t *testing.T) {
 				var ve *errortypes.Error
 				require.True(t, errors.As(err, &ve))
 				assert.Equal(t, errortypes.ErrVersionMismatch, ve.Code)
-				assert.Contains(t, ve.Message, "id_001")
+				assert.Contains(t, ve.Error(), "id_001")
 			}
 		})
 	}

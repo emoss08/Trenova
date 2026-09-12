@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   Collapsible,
@@ -114,6 +115,8 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
 }
 
 export function ActivityOnlineIndicator() {
+  const t = useT();
+
   const { onlineUserIDs } = useOnlineUsers();
 
   if (onlineUserIDs.size === 0) {
@@ -123,7 +126,7 @@ export function ActivityOnlineIndicator() {
   return (
     <span className="text-2xs text-muted-foreground flex items-center gap-1.5 normal-case">
       <span className="bg-success size-1.5 rounded-full" />
-      {onlineUserIDs.size} online
+      {t("{0} online", onlineUserIDs.size)}
     </span>
   );
 }
@@ -213,6 +216,8 @@ export function ActivityFeed({
   emptyState?: "message" | "hidden";
   heading?: React.ReactNode;
 }) {
+  const t = useT();
+
   const { data: preferences } = useSidebarPreferences();
   const feed = useActivityFeed(preferences?.activity.pageSize, true);
 
@@ -222,7 +227,7 @@ export function ActivityFeed({
     }
     return (
       <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-        {feed.isUnavailable ? "Activity is not available right now." : "Nothing has happened yet."}
+        {feed.isUnavailable ? t("Activity is not available right now.") : t("Nothing has happened yet.")}
       </p>
     );
   }
@@ -242,6 +247,8 @@ export function ActivityFeed({
 }
 
 export function ActivitySection() {
+  const t = useT();
+
   const { data: preferences } = useSidebarPreferences();
   const [openOverride, setOpenOverride] = useState<boolean | null>(null);
   const open = openOverride ?? preferences?.activity.defaultOpen ?? true;
@@ -261,7 +268,7 @@ export function ActivitySection() {
                 {...props}
                 className="group text-2xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold tracking-wider uppercase transition-colors select-none"
               >
-                <span>Recent Activity</span>
+                <span>{t("Recent Activity")}</span>
                 <ChevronRightIcon
                   className={cn("size-3 shrink-0 transition-transform", open && "rotate-90")}
                 />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -40,6 +41,8 @@ function buildWebhookUrl(webhookToken: string | undefined): string | null {
 }
 
 export function SamsaraConfigurationContent({ open }: { open: boolean }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
 
@@ -89,7 +92,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     onSuccess: async () => {
       setValue("configuration.token", "");
       setValue("configuration.webhookSecret", "");
-      toast.success("Samsara integration updated");
+      toast.success(t("Samsara integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config("Samsara").queryKey,
@@ -104,17 +107,17 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     mutationFn: () => apiService.integrationService.testConnection("Samsara"),
     onSuccess: () => {
       setValue("enabled", true, { shouldDirty: true });
-      toast.success("Samsara connection successful");
+      toast.success(t("Samsara connection successful"));
     },
     onError: (error) => {
       if (error instanceof ApiRequestError) {
-        toast.error("Samsara connection test failed", {
+        toast.error(t("Samsara connection test failed"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
 
-      toast.error("Samsara connection test failed");
+      toast.error(t("Samsara connection test failed"));
     },
   });
 
@@ -124,7 +127,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     }
     await navigator.clipboard.writeText(webhookUrl);
     setCopied(true);
-    toast.success("Webhook URL copied to clipboard");
+    toast.success(t("Webhook URL copied to clipboard"));
     setTimeout(() => setCopied(false), 1500);
   };
 
@@ -153,9 +156,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   return (
     <div className="space-y-4">
       <div className="border-border flex flex-col border-b p-4 leading-tight">
-        <p className="text-2xl font-semibold">Samsara Configuration</p>
+        <p className="text-2xl font-semibold">{t("Samsara Configuration")}</p>
         <span className="text-muted-foreground text-sm">
-          Configure your Samsara integration settings for this organization.
+          {t("Configure your Samsara integration settings for this organization.")}
         </span>
       </div>
       <section className="px-4">
@@ -164,9 +167,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
             <FormControl cols="full">
               <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
                 <div>
-                  <Label htmlFor="samsara-enabled">Enable Samsara</Label>
+                  <Label htmlFor="samsara-enabled">{t("Enable Samsara")}</Label>
                   <p className="text-muted-foreground text-xs">
-                    Explicitly toggle integration state for this business unit.
+                    {t("Explicitly toggle integration state for this business unit.")}
                   </p>
                 </div>
                 <Controller
@@ -186,7 +189,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               <InputField
                 name="configuration.baseUrl"
                 control={control}
-                label="Base URL (optional)"
+                label={t("Base URL (optional)")}
                 placeholder="https://api.samsara.com"
               />
             </FormControl>
@@ -203,17 +206,16 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               <FormControl cols="full">
                 <Alert variant="warning">
                   <AlertTriangleIcon />
-                  <AlertTitle>Token required</AlertTitle>
-                  <AlertDescription>Provide a token before enabling Samsara.</AlertDescription>
+                  <AlertTitle>{t("Token required")}</AlertTitle>
+                  <AlertDescription>{t("Provide a token before enabling Samsara.")}</AlertDescription>
                 </Alert>
               </FormControl>
             )}
             <FormControl cols="full">
               <div className="border-border flex flex-col gap-0.5 border-t pt-4">
-                <p className="text-sm font-semibold">Webhooks</p>
+                <p className="text-sm font-semibold">{t("Webhooks")}</p>
                 <p className="text-muted-foreground text-xs">
-                  Receive real-time vehicle and driver events from Samsara instead of waiting on
-                  polling.
+                  {t("Receive real-time vehicle and driver events from Samsara instead of waiting on polling.")}
                 </p>
               </div>
             </FormControl>
@@ -226,13 +228,13 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                 }`}
                 autoComplete="off"
                 placeholder={hasWebhookSecret ? "********" : "Enter Samsara webhook signing secret"}
-                description="Base64 signing secret from Samsara's webhook configuration, used to verify the X-Samsara-Signature header on incoming events."
+                description={t("Base64 signing secret from Samsara's webhook configuration, used to verify the X-Samsara-Signature header on incoming events.")}
               />
             </FormControl>
             <FormControl cols="full">
               {webhookUrl ? (
                 <div className="flex flex-col gap-1.5">
-                  <Label>Webhook Endpoint</Label>
+                  <Label>{t("Webhook Endpoint")}</Label>
                   <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-2">
                     <p className="min-w-0 flex-1 truncate font-mono text-xs">{webhookUrl}</p>
                     <Button
@@ -247,16 +249,16 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                       ) : (
                         <CopyIcon className="size-3.5" />
                       )}
-                      <span className="sr-only">Copy webhook URL</span>
+                      <span className="sr-only">{t("Copy webhook URL")}</span>
                     </Button>
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    Point Samsara&apos;s webhook at this URL. It is unique to your organization.
+                    {t("Point Samsara's webhook at this URL. It is unique to your organization.")}
                   </p>
                 </div>
               ) : (
                 <p className="text-muted-foreground text-xs">
-                  Save the configuration to generate your webhook endpoint.
+                  {t("Save the configuration to generate your webhook endpoint.")}
                 </p>
               )}
             </FormControl>
@@ -269,7 +271,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                   loadingText={saveMutation.isPending ? "Saving..." : "Testing..."}
                   disabled={configQuery.isLoading}
                 >
-                  Save Configuration
+                  {t("Save Configuration")}
                 </Button>
               </div>
             </FormControl>

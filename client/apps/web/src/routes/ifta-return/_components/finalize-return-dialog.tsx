@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { finalizeIftaReturn } from "@/lib/graphql/ifta-return";
 import {
   linesMissingRates,
@@ -37,14 +38,16 @@ export function FinalizeReturnDialog({
   ret,
   period,
 }: FinalizeReturnDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const missing = linesMissingRates(ret.lines);
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => finalizeIftaReturn(ret.id, ret.version),
     onSuccess: async () => {
-      toast.success("Return finalized", {
-        description: "The worksheet is locked. Reopening it takes a reason, which is audited.",
+      toast.success(t("Return finalized"), {
+        description: t("The worksheet is locked. Reopening it takes a reason, which is audited."),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -59,17 +62,14 @@ export function FinalizeReturnDialog({
           <AlertDialogMedia className="bg-info/10 text-info">
             <LockIcon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Finalize the {quarterLabel(period)} return?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Finalize the {0} return?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>
             <span className="block">
-              The return is recomputed one last time and then locked: its figures stop moving with
-              the miles, fuel and rates on file, so it is the record you file from. Reopening it
-              afterwards takes a reason, which is kept with the return.
+              {t("The return is recomputed one last time and then locked: its figures stop moving with the miles, fuel and rates on file, so it is the record you file from. Reopening it afterwards takes a reason, which is kept with the return.")}
             </span>
             {missing.length > 0 ? (
               <span className="mt-2 block">
-                {missing.length} member {pluralize("line", missing.length)} has no published rate,
-                so finalizing is refused. Publish the missing rates, recompute, then finalize.
+                {t("{0} member {1} has no published rate, so finalizing is refused. Publish the missing rates, recompute, then finalize.", missing.length, pluralize("line", missing.length))}
               </span>
             ) : null}
           </AlertDialogDescription>
@@ -78,7 +78,7 @@ export function FinalizeReturnDialog({
           <ul className="mt-3 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border p-2">
             {missing.map((line) => (
               <li key={line.id} className="flex items-center gap-2 text-xs">
-                <Badge variant="inactive">No rate</Badge>
+                <Badge variant="inactive">{t("No rate")}</Badge>
                 <span className="font-medium">{line.jurisdiction.code}</span>
                 <span className="text-muted-foreground">{line.jurisdiction.name}</span>
                 <span className="text-muted-foreground">
@@ -89,9 +89,9 @@ export function FinalizeReturnDialog({
           </ul>
         ) : null}
         <AlertDialogFooter className="mt-4">
-          <AlertDialogCancel disabled={isPending}>Keep it a draft</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("Keep it a draft")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => mutate()} disabled={isPending || missing.length > 0}>
-            {isPending ? "Finalizing..." : "Finalize return"}
+            {isPending ? t("Finalizing...") : t("Finalize return")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

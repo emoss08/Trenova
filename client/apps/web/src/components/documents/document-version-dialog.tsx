@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -28,15 +29,19 @@ interface DocumentVersionDialogProps {
 }
 
 function PreviewBadge({ status }: { status: string }) {
+  const t = useT();
+
   const variant = status === "Ready" ? "teal" : status === "Pending" ? "warning" : "outline";
   return (
     <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
-      Preview {status}
+      {t("Preview {0}", status)}
     </Badge>
   );
 }
 
 function ContentBadge({ status }: { status: string }) {
+  const t = useT();
+
   const variant =
     status === "Indexed" || status === "Extracted"
       ? "teal"
@@ -45,7 +50,7 @@ function ContentBadge({ status }: { status: string }) {
         : "outline";
   return (
     <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
-      Text {status}
+      {t("Text {0}", status)}
     </Badge>
   );
 }
@@ -106,12 +111,14 @@ function buildComparison(selected: Document, current: Document): CompareField[] 
 }
 
 function VersionCompare({ selected, current }: { selected: Document; current: Document }) {
+  const t = useT();
+
   const fields = buildComparison(selected, current);
 
   if (fields.length === 0) {
     return (
       <p className="text-muted-foreground text-xs italic">
-        No metadata differences from the current version.
+        {t("No metadata differences from the current version.")}
       </p>
     );
   }
@@ -121,14 +128,14 @@ function VersionCompare({ selected, current }: { selected: Document; current: Do
       <thead>
         <tr className="text-muted-foreground">
           <th className="pb-1.5 text-left font-medium" />
-          <th className="pb-1.5 text-left font-medium">This Version</th>
-          <th className="pb-1.5 text-left font-medium">Current</th>
+          <th className="pb-1.5 text-left font-medium">{t("This Version")}</th>
+          <th className="pb-1.5 text-left font-medium">{t("Current")}</th>
         </tr>
       </thead>
       <tbody className="divide-border divide-y">
         {fields.map((f) => (
           <tr key={f.label}>
-            <td className="text-muted-foreground py-1 pr-3">{f.label}</td>
+            <td className="text-muted-foreground py-1 pr-3">{t(f.label)}</td>
             <td className="py-1 pr-3">{f.selected}</td>
             <td className="text-muted-foreground py-1">{f.current}</td>
           </tr>
@@ -162,6 +169,8 @@ export function DocumentVersionDialog({
   onRestore,
   onUploadNewVersion,
 }: DocumentVersionDialogProps) {
+  const t = useT();
+
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<Document | null>(null);
 
@@ -189,21 +198,21 @@ export function DocumentVersionDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HistoryIcon className="size-4" />
-              Version History
+              {t("Version History")}
             </DialogTitle>
             <DialogDescription>
-              {document ? document.originalName : "Document versions"}
+              {document ? document.originalName : t("Document versions")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             {isLoading ? (
               <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
-                Loading versions...
+                {t("Loading versions...")}
               </div>
             ) : versions.length === 0 ? (
               <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
-                No versions found for this document.
+                {t("No versions found for this document.")}
               </div>
             ) : (
               <>
@@ -212,8 +221,8 @@ export function DocumentVersionDialog({
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{currentVersion.originalName}</span>
-                        <Badge variant="teal">v{currentVersion.versionNumber}</Badge>
-                        <Badge variant="info">Current</Badge>
+                        <Badge variant="teal">{t("v{0}", currentVersion.versionNumber)}</Badge>
+                        <Badge variant="info">{t("Current")}</Badge>
                       </div>
                       <p className="text-muted-foreground text-sm">
                         {formatToUserTimezone(currentVersion.createdAt)} &middot;{" "}
@@ -229,7 +238,7 @@ export function DocumentVersionDialog({
                     <div className="flex items-center gap-3">
                       <Separator className="flex-1" />
                       <span className="text-muted-foreground text-xs font-medium">
-                        Previous Versions
+                        {t("Previous Versions")}
                       </span>
                       <Separator className="flex-1" />
                     </div>
@@ -246,7 +255,9 @@ export function DocumentVersionDialog({
                             >
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium">{version.originalName}</span>
-                                <Badge variant="secondary">v{version.versionNumber}</Badge>
+                                <Badge variant="secondary">
+                                  {t("v{0}", version.versionNumber)}
+                                </Badge>
                                 <ChevronDownIcon
                                   className={`text-muted-foreground size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                                 />
@@ -265,7 +276,7 @@ export function DocumentVersionDialog({
                               disabled={isRestoring}
                             >
                               <RotateCcwIcon className="mr-1.5 size-3.5" />
-                              Restore
+                              {t("Restore")}
                             </Button>
                           </div>
 
@@ -287,7 +298,7 @@ export function DocumentVersionDialog({
             {document && (
               <Button variant="outline" onClick={() => onUploadNewVersion(document)}>
                 <UploadIcon className="size-4" />
-                Upload New Version
+                {t("Upload New Version")}
               </Button>
             )}
           </DialogFooter>

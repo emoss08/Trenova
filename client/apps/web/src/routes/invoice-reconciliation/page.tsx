@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import {
@@ -33,6 +34,8 @@ const statusChoices = [
 ];
 
 export function InvoiceReconciliationPage() {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(invoiceReconciliationSearchParamsParser);
   const { item: selectedExceptionId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
@@ -81,16 +84,16 @@ export function InvoiceReconciliationPage() {
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
           <SummaryCard
-            label="Open Exceptions"
+            label={t("Open Exceptions")}
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
           <SummaryCard
-            label="Pending Approvals"
+            label={t("Pending Approvals")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
           <SummaryCard
-            label="Batches In Flight"
+            label={t("Batches In Flight")}
             value={String(summaryQuery.data?.batchesInFlight ?? 0)}
           />
         </div>
@@ -101,7 +104,7 @@ export function InvoiceReconciliationPage() {
             <Input
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
-              placeholder="Search invoice, customer, exception reason..."
+              placeholder={t("Search invoice, customer, exception reason...")}
               className="h-8 text-xs"
             />
             <Select
@@ -112,13 +115,13 @@ export function InvoiceReconciliationPage() {
               }
             >
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("All statuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {statusChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -170,7 +173,7 @@ export function InvoiceReconciliationPage() {
                   </div>
                   <p className="mt-3 text-sm">{row.reason}</p>
                   <p className="text-muted-foreground mt-2 text-xs">
-                    Amount: {formatCurrency(Number(row.amount))}
+                    {t("Amount: {0}", formatCurrency(Number(row.amount)))}
                   </p>
                 </button>
               ))}
@@ -183,8 +186,8 @@ export function InvoiceReconciliationPage() {
           {!selectedRow ? (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick an exception from the list to trace it back to the adjustment and invoices it came from."
+              title={t("Nothing open")}
+              description={t("Pick an exception from the list to trace it back to the adjustment and invoices it came from.")}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -199,21 +202,21 @@ export function InvoiceReconciliationPage() {
                   <CardDescription>{selectedRow.customerName}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 pt-4 md:grid-cols-2">
-                  <Metric label="Status" value={selectedRow.status} />
-                  <Metric label="Amount" value={formatCurrency(Number(selectedRow.amount))} />
-                  <Metric label="Adjustment Kind" value={selectedRow.adjustmentKind} />
-                  <Metric label="Adjustment Status" value={selectedRow.adjustmentStatus} />
+                  <Metric label={t("Status")} value={selectedRow.status} />
+                  <Metric label={t("Amount")} value={formatCurrency(Number(selectedRow.amount))} />
+                  <Metric label={t("Adjustment Kind")} value={selectedRow.adjustmentKind} />
+                  <Metric label={t("Adjustment Status")} value={selectedRow.adjustmentStatus} />
                   <Metric
-                    label="Requested By"
+                    label={t("Requested By")}
                     value={selectedRow.submittedByName || selectedRow.submittedById || "Unknown"}
                   />
-                  <Metric label="Submitted At" value={formatTimestamp(selectedRow.submittedAt)} />
+                  <Metric label={t("Submitted At")} value={formatTimestamp(selectedRow.submittedAt)} />
                   <Metric
-                    label="Policy Source"
+                    label={t("Policy Source")}
                     value={selectedRow.policySource || "Policy-controlled"}
                   />
                   <Metric
-                    label="Finance Notes"
+                    label={t("Finance Notes")}
                     value={selectedRow.financeNotes || "No finance notes recorded"}
                   />
                 </CardContent>
@@ -221,30 +224,30 @@ export function InvoiceReconciliationPage() {
 
               <Card>
                 <CardHeader className="border-b">
-                  <CardTitle>Linked Artifacts</CardTitle>
+                  <CardTitle>{t("Linked Artifacts")}</CardTitle>
                   <CardDescription>
-                    Jump directly into the related billing and invoice surfaces.
+                    {t("Jump directly into the related billing and invoice surfaces.")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2 pt-4">
                   <LinkButton to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}>
-                    Original Invoice
+                    {t("Original Invoice")}
                   </LinkButton>
                   {selectedRow.creditMemoInvoiceId ? (
                     <LinkButton to={`/billing/invoices?item=${selectedRow.creditMemoInvoiceId}`}>
-                      Credit Memo
+                      {t("Credit Memo")}
                     </LinkButton>
                   ) : null}
                   {selectedRow.replacementInvoiceId ? (
                     <LinkButton to={`/billing/invoices?item=${selectedRow.replacementInvoiceId}`}>
-                      Replacement Invoice
+                      {t("Replacement Invoice")}
                     </LinkButton>
                   ) : null}
                   {selectedRow.rebillQueueItemId ? (
                     <LinkButton
                       to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
                     >
-                      Rebill Queue Item
+                      {t("Rebill Queue Item")}
                     </LinkButton>
                   ) : null}
                 </CardContent>
@@ -252,9 +255,9 @@ export function InvoiceReconciliationPage() {
 
               <Card>
                 <CardHeader className="border-b">
-                  <CardTitle>Adjustment Detail</CardTitle>
+                  <CardTitle>{t("Adjustment Detail")}</CardTitle>
                   <CardDescription>
-                    Line-level credit and rebill values that created the exception.
+                    {t("Line-level credit and rebill values that created the exception.")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
@@ -262,17 +265,17 @@ export function InvoiceReconciliationPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted/40 text-muted-foreground text-left">
                         <tr>
-                          <th className="px-4 py-3">Line</th>
-                          <th className="px-4 py-3">Description</th>
-                          <th className="px-4 py-3 text-right">Credit</th>
-                          <th className="px-4 py-3 text-right">Rebill</th>
+                          <th className="px-4 py-3">{t("Line")}</th>
+                          <th className="px-4 py-3">{t("Description")}</th>
+                          <th className="px-4 py-3 text-right">{t("Credit")}</th>
+                          <th className="px-4 py-3 text-right">{t("Rebill")}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {detailQuery.data.lines.map((line) => (
                           <tr key={line.id} className="border-t">
                             <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                            <td className="px-4 py-3">{line.description}</td>
+                            <td className="px-4 py-3">{t(line.description)}</td>
                             <td className="px-4 py-3 text-right">
                               {formatCurrency(Number(line.creditAmount))}
                             </td>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -90,6 +91,8 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const index = useMemo(() => buildCatalogIndex(catalog), [catalog]);
 
@@ -137,7 +140,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
     const aggregations = aggregationsForField(selection.field);
     const kind = selection.crossesToMany ? "measure" : "dimension";
     if (kind === "measure" && aggregations.length === 0) {
-      toast.error("This field crosses a to-many relationship and has no legal aggregations");
+      toast.error(t("This field crosses a to-many relationship and has no legal aggregations"));
       return;
     }
     setIR((prev) => ({
@@ -173,7 +176,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         {
           onSuccess: () => {
             setSaveOpen(false);
-            toast.success("Report saved");
+            toast.success(t("Report saved"));
           },
           onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to save the report")),
         },
@@ -182,7 +185,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       createDefinition.mutate(input, {
         onSuccess: (created) => {
           setSaveOpen(false);
-          toast.success("Report created");
+          toast.success(t("Report created"));
           void navigate(`/reports/builder/${created.id}`, { replace: true });
         },
         onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to create the report")),
@@ -198,7 +201,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           size="icon"
           className="size-7"
           render={<Link to="/reports" />}
-          aria-label="Back to reports"
+          aria-label={t("Back to reports")}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -206,12 +209,12 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           <input
             value={meta.name}
             onChange={(event) => setMeta((prev) => ({ ...prev, name: event.target.value }))}
-            placeholder="Untitled report"
+            placeholder={t("Untitled report")}
             className="placeholder:text-muted-foreground/60 hover:bg-muted/60 focus:bg-muted/60 max-w-80 min-w-0 flex-1 truncate rounded-md bg-transparent px-1.5 py-1 text-sm font-medium transition-colors outline-none"
           />
           {definition?.status === "needs_attention" && (
             <Badge variant="warning" className="shrink-0">
-              Needs Attention
+              {t("Needs Attention")}
             </Badge>
           )}
         </div>
@@ -224,7 +227,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
             disabled={definition.status !== "active"}
           >
             <PlayIcon className="size-3.5" />
-            Run
+            {t("Run")}
           </Button>
         )}
         <Button
@@ -234,7 +237,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           disabled={ir.columns.length === 0}
         >
           <SaveIcon className="size-3.5" />
-          Save
+          {t("Save")}
         </Button>
       </header>
 
@@ -242,7 +245,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         <div className="border-border flex items-start gap-2 border-b bg-amber-500/5 px-4 py-2 text-xs">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="flex flex-col gap-0.5">
-            <p className="font-medium">This report needs attention</p>
+            <p className="font-medium">{t("This report needs attention")}</p>
             {definition.diagnostics.map((diagnostic, i) => (
               <p key={i} className="text-muted-foreground">
                 {diagnostic}
@@ -259,7 +262,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
           <aside className="border-border flex min-h-0 flex-col border-r">
             <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
               <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-                {entity?.label ?? ir.entity} Fields
+                {t("{0} Fields", entity?.label ?? ir.entity)}
               </span>
             </div>
             <div className="min-h-0 flex-1 p-2.5">
@@ -302,7 +305,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {tab.label}
+                  {t(tab.label)}
                   {tabCounts[tab.key] > 0 && (
                     <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1 tabular-nums">
                       {tabCounts[tab.key]}
@@ -337,7 +340,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                   {inspectorTab === "filters" && (
                     <div className="flex flex-col gap-4">
                       <div>
-                        <SectionLabel>Row Filters</SectionLabel>
+                        <SectionLabel>{t("Row Filters")}</SectionLabel>
                         <FiltersPanel
                           index={index}
                           ir={ir}
@@ -346,7 +349,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                         />
                       </div>
                       <div>
-                        <SectionLabel>Measure Filters</SectionLabel>
+                        <SectionLabel>{t("Measure Filters")}</SectionLabel>
                         <HavingPanel
                           index={index}
                           ir={ir}
@@ -365,7 +368,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                   {inspectorTab === "options" && (
                     <div className="flex flex-col gap-4">
                       <div>
-                        <SectionLabel>Sort, Limit & Totals</SectionLabel>
+                        <SectionLabel>{t("Sort, Limit & Totals")}</SectionLabel>
                         <SortLimitPanel
                           index={index}
                           ir={ir}
@@ -375,7 +378,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                         />
                       </div>
                       <div>
-                        <SectionLabel>Pivot</SectionLabel>
+                        <SectionLabel>{t("Pivot")}</SectionLabel>
                         <PivotPanel
                           index={index}
                           ir={ir}

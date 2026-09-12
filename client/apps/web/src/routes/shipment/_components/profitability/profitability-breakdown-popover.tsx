@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { toneVar } from "@/components/kpi/tone";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { queries } from "@/lib/queries";
@@ -79,6 +80,8 @@ function BreakdownSkeleton() {
 type ProfitabilityData = ShipmentProfitabilityQuery["shipmentProfitability"];
 
 function BreakdownContent({ data }: { data: ProfitabilityData }) {
+  const t = useT();
+
   const revenue = parseDecimal(data.revenue);
   const profit = parseDecimal(data.profit);
   const marginPct = data.marginPercent !== null ? parseDecimal(data.marginPercent) : null;
@@ -90,14 +93,18 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
     <>
       <div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">Cost Estimate</p>
+          <p className="text-sm font-medium">{t("Cost Estimate")}</p>
           <Badge variant="secondary" className="text-2xs">
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>
         </div>
         <p className="text-muted-foreground mt-0.5 text-xs">
-          {data.totalMiles.toFixed(0)} mi total · {data.loadedMiles.toFixed(0)} loaded ·{" "}
-          {data.deadheadMiles.toFixed(0)} empty
+          {t(
+            "{0} mi total · {1} loaded · {2} empty",
+            data.totalMiles.toFixed(0),
+            data.loadedMiles.toFixed(0),
+            data.deadheadMiles.toFixed(0),
+          )}
         </p>
       </div>
 
@@ -105,8 +112,9 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
         <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            Some moves are missing distance — the estimate only covers moves with a calculated
-            distance.
+            {t(
+              "Some moves are missing distance — the estimate only covers moves with a calculated distance.",
+            )}
           </span>
         </div>
       )}
@@ -122,7 +130,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="text-muted-foreground truncate">{line.name}</span>
                 <Badge variant="outline" className={badge.className}>
-                  {badge.label}
+                  {t(badge.label)}
                 </Badge>
               </span>
               <span className="shrink-0 font-medium tabular-nums">
@@ -140,31 +148,31 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
 
       <div className="space-y-1.5">
         <DetailRow
-          label="Estimated cost"
+          label={t("Estimated cost")}
           value={formatCurrency(parseDecimal(data.estimatedCost))}
         />
-        <DetailRow label="Revenue" value={formatCurrency(revenue)} />
+        <DetailRow label={t("Revenue")} value={formatCurrency(revenue)} />
         <DetailRow
-          label="Profit"
+          label={t("Profit")}
           value={formatCurrency(profit)}
           valueStyle={{ color: toneVar(profitTone) }}
         />
         {marginPct !== null && (
           <DetailRow
-            label="Margin"
+            label={t("Margin")}
             value={formatPercent(marginPct)}
             valueStyle={{ color: toneVar(getMarginTone(marginPct, targetPct)) }}
           />
         )}
         {data.breakEvenRpm !== null && data.breakEvenRpm !== undefined && (
           <DetailRow
-            label="Break-even RPM"
+            label={t("Break-even RPM")}
             value={formatPerMile(parseDecimal(data.breakEvenRpm))}
           />
         )}
         {data.revenuePerLoadedMile !== null && data.revenuePerLoadedMile !== undefined && (
           <DetailRow
-            label="Actual RPM"
+            label={t("Actual RPM")}
             value={formatPerMile(parseDecimal(data.revenuePerLoadedMile))}
           />
         )}
@@ -177,8 +185,10 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       </div>
 
       <p className="text-2xs text-muted-foreground">
-        Estimated from your cost profile as of {data.profile.asOfDate}. Rates come from industry
-        benchmarks unless overridden, mapped to GL actuals, or resolved from a live fuel index.
+        {t(
+          "Estimated from your cost profile as of {0}. Rates come from industry benchmarks unless overridden, mapped to GL actuals, or resolved from a live fuel index.",
+          data.profile.asOfDate,
+        )}
       </p>
     </>
   );

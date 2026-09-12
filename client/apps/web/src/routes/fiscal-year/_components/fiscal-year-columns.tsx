@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -16,7 +17,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
       cell: ({ row }) => {
         const choice = fiscalYearStatusChoices.find((c) => c.value === row.original.status);
         if (!choice) return row.original.status;
-        return <DataTableColorColumn text={choice.label} color={choice.color} />;
+        return <DataTableColorColumn text={translate(choice.label)} color={choice.color} />;
       },
       size: 120,
       minSize: 100,
@@ -88,7 +89,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={100} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,

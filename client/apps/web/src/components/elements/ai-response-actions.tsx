@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { Check, Copy, RefreshCw, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
@@ -28,6 +29,8 @@ export function AiResponseActions({
   compact = false,
   className,
 }: AiResponseActionsProps) {
+  const t = useT();
+
   const [copied, setCopied] = React.useState(false);
   const [feedback, setFeedback] = React.useState<FeedbackType>(null);
 
@@ -54,7 +57,7 @@ export function AiResponseActions({
     <div
       data-slot="ai-response-actions"
       role="toolbar"
-      aria-label="Response actions"
+      aria-label={t("Response actions")}
       className={cn(
         "bg-background inline-flex items-center gap-1 rounded-lg border p-1",
         className,
@@ -80,7 +83,7 @@ export function AiResponseActions({
             )}
           </TooltipTrigger>
           <TooltipContent>
-            <p>{copied ? "Copied!" : "Copy"}</p>
+            <p>{copied ? t("Copied!") : t("Copy")}</p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -94,14 +97,14 @@ export function AiResponseActions({
                 size="icon"
                 className={buttonSize}
                 onClick={onRegenerate}
-                aria-label="Regenerate response"
+                aria-label={t("Regenerate response")}
               />
             }
           >
             <RefreshCw className={iconSize} />
           </TooltipTrigger>
           <TooltipContent>
-            <p>Regenerate</p>
+            <p>{t("Regenerate")}</p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -119,7 +122,7 @@ export function AiResponseActions({
                     feedback === "positive" && "bg-green-100 text-green-600 dark:bg-green-900/30",
                   )}
                   onClick={() => handleFeedback("positive")}
-                  aria-label="Rate positive"
+                  aria-label={t("Rate positive")}
                   aria-pressed={feedback === "positive"}
                 />
               }
@@ -127,7 +130,7 @@ export function AiResponseActions({
               <ThumbsUp className={iconSize} />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Good response</p>
+              <p>{t("Good response")}</p>
             </TooltipContent>
           </Tooltip>
 
@@ -142,7 +145,7 @@ export function AiResponseActions({
                     feedback === "negative" && "bg-red-100 text-red-600 dark:bg-red-900/30",
                   )}
                   onClick={() => handleFeedback("negative")}
-                  aria-label="Rate negative"
+                  aria-label={t("Rate negative")}
                   aria-pressed={feedback === "negative"}
                 />
               }
@@ -150,7 +153,7 @@ export function AiResponseActions({
               <ThumbsDown className={iconSize} />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Bad response</p>
+              <p>{t("Bad response")}</p>
             </TooltipContent>
           </Tooltip>
         </>
@@ -165,14 +168,14 @@ export function AiResponseActions({
                 size="icon"
                 className={buttonSize}
                 onClick={onShare}
-                aria-label="Share response"
+                aria-label={t("Share response")}
               />
             }
           >
             <Share2 className={iconSize} />
           </TooltipTrigger>
           <TooltipContent>
-            <p>Share</p>
+            <p>{t("Share")}</p>
           </TooltipContent>
         </Tooltip>
       )}

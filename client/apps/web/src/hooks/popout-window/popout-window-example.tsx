@@ -4,10 +4,13 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 // Example usage of the improved popout window manager
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { usePopoutWindow } from "./use-popout-window";
 
 export function PopoutWindowExample() {
+  const t = useT();
+
   const {
     isPopout,
     activeWindows,
@@ -22,8 +25,8 @@ export function PopoutWindowExample() {
   if (isPopout) {
     return (
       <div className="p-4">
-        <h2>This is a popout window!</h2>
-        <Button onClick={() => window.close()}>Close Window</Button>
+        <h2>{t("This is a popout window!")}</h2>
+        <Button onClick={() => window.close()}>{t("Close Window")}</Button>
       </div>
     );
   }
@@ -31,7 +34,7 @@ export function PopoutWindowExample() {
   // Main window content
   return (
     <div className="space-y-4">
-      <h2>Popout Window Manager Example</h2>
+      <h2>{t("Popout Window Manager Example")}</h2>
 
       <div className="flex gap-2">
         <Button
@@ -51,7 +54,7 @@ export function PopoutWindowExample() {
             );
           }}
         >
-          Open Create Modal
+          {t("Open Create Modal")}
         </Button>
 
         <Button
@@ -71,7 +74,7 @@ export function PopoutWindowExample() {
             );
           }}
         >
-          Open Edit Modal
+          {t("Open Edit Modal")}
         </Button>
 
         <Button
@@ -90,32 +93,32 @@ export function PopoutWindowExample() {
             );
           }}
         >
-          Open Shipments
+          {t("Open Shipments")}
         </Button>
       </div>
 
       {hasOpenWindows && (
         <div className="rounded border p-4">
-          <h3>Active Windows ({activeWindows.length})</h3>
+          <h3>{t("Active Windows ({0})", activeWindows.length)}</h3>
           <div className="mt-2 space-y-2">
             {activeWindows.map((windowId) => (
               <div key={windowId} className="flex items-center justify-between">
                 <span className="text-sm">{windowId}</span>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => focusPopout(windowId)}>
-                    Focus
+                    {t("Focus")}
                   </Button>
                   <Button
                     size="sm"
                     onClick={() => sendMessage(windowId, "test-message", { hello: "world" })}
                   >
-                    Send Message
+                    {t("Send Message")}
                   </Button>
                 </div>
               </div>
             ))}
             <Button onClick={closeAllPopouts} variant="destructive" className="mt-2">
-              Close All Windows
+              {t("Close All Windows")}
             </Button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import type { SafetyScorecard } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -40,6 +41,8 @@ export function SafetyScorecardCard({
   onRecordEvent,
   onRecognise,
 }: SafetyScorecardCardProps) {
+  const t = useT();
+
   const meta = safetyRatingMeta(scorecard.rating as SafetyRating);
   const quiet = scorecard.daysSinceLastEvent;
 
@@ -47,18 +50,14 @@ export function SafetyScorecardCard({
     <div data-testid="safety-scorecard" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">Safety</h3>
-          <Badge variant={meta.badgeVariant}>{meta.label}</Badge>
-          <InfoPopover title="Safety score">
+          <h3 className="text-sm font-semibold">{t("Safety")}</h3>
+          <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
+          <InfoPopover title={t("Safety score")}>
             <p>
-              The score starts at 100 and loses 5 for each active point, 10 for each preventable
-              accident, 15 for each out-of-service order and 5 for each disciplinary action still
-              active. Event counts cover the last twelve months.
+              {t("The score starts at 100 and loses 5 for each active point, 10 for each preventable accident, 15 for each out-of-service order and 5 for each disciplinary action still active. Event counts cover the last twelve months.")}
             </p>
             <p>
-              Points stay active for two years from the date of the event, then roll off. The rating
-              turns to Watch at 6 active points or a score under 75, and to At risk at 10 points or
-              a score under 50.
+              {t("Points stay active for two years from the date of the event, then roll off. The rating turns to Watch at 6 active points or a score under 75, and to At risk at 10 points or a score under 50.")}
             </p>
           </InfoPopover>
         </div>
@@ -66,13 +65,13 @@ export function SafetyScorecardCard({
           {canRecognise ? (
             <Button size="sm" variant="outline" onClick={onRecognise}>
               <AwardIcon className="size-3.5" />
-              Add recognition
+              {t("Add recognition")}
             </Button>
           ) : null}
           {canRecord ? (
             <Button size="sm" onClick={onRecordEvent}>
               <PlusIcon className="size-3.5" />
-              Record event
+              {t("Record event")}
             </Button>
           ) : null}
         </div>
@@ -80,14 +79,14 @@ export function SafetyScorecardCard({
 
       <div className="grid grid-cols-2 gap-3">
         <Metric
-          label="Score"
+          label={t("Score")}
           icon={GaugeIcon}
           value={String(scorecard.score)}
           unit="of 100"
-          sub="From the last two years of events"
+          sub={t("From the last two years of events")}
         />
         <Metric
-          label="Active points"
+          label={t("Active points")}
           icon={TargetIcon}
           value={String(scorecard.activePoints)}
           unit="pts"
@@ -100,7 +99,7 @@ export function SafetyScorecardCard({
           />
         </Metric>
         <Metric
-          label="Inspections"
+          label={t("Inspections")}
           icon={ClipboardCheckIcon}
           value={
             scorecard.inspections > 0
@@ -111,7 +110,7 @@ export function SafetyScorecardCard({
           sub={summariseInspections(scorecard)}
         />
         <Metric
-          label="Quiet for"
+          label={t("Quiet for")}
           icon={CalendarCheckIcon}
           value={quiet == null ? "—" : `${quiet} days`}
           sub={
@@ -123,20 +122,19 @@ export function SafetyScorecardCard({
       </div>
 
       <dl className="flex flex-wrap gap-x-6 gap-y-2 rounded-lg border px-4 py-3 text-xs">
-        <Count label="Accidents" value={scorecard.accidents} />
-        <Count label="Preventable" value={scorecard.preventableAccidents} />
-        <Count label="Citations" value={scorecard.citations} />
-        <Count label="Out of service" value={scorecard.outOfServiceOrders} />
-        <Count label="Open" value={scorecard.openEvents} />
-        <Count label="Recognition" value={scorecard.recognitions} />
+        <Count label={t("Accidents")} value={scorecard.accidents} />
+        <Count label={t("Preventable")} value={scorecard.preventableAccidents} />
+        <Count label={t("Citations")} value={scorecard.citations} />
+        <Count label={t("Out of service")} value={scorecard.outOfServiceOrders} />
+        <Count label={t("Open")} value={scorecard.openEvents} />
+        <Count label={t("Recognition")} value={scorecard.recognitions} />
         {scorecard.highestDiscipline ? (
           <div className="ml-auto flex flex-col">
-            <dt className="text-2xs text-muted-foreground uppercase">Discipline</dt>
+            <dt className="text-2xs text-muted-foreground uppercase">{t("Discipline")}</dt>
             <dd className="font-medium tabular-nums">
-              {scorecard.activeDiscipline} active, highest{" "}
-              {DISCIPLINARY_LEVEL_LABELS[
+              {t("{0} active, highest {1}", scorecard.activeDiscipline, DISCIPLINARY_LEVEL_LABELS[
                 scorecard.highestDiscipline as DisciplinaryLevel
-              ]?.toLowerCase() ?? scorecard.highestDiscipline}
+              ]?.toLowerCase() ?? scorecard.highestDiscipline)}
             </dd>
           </div>
         ) : null}

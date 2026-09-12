@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AiToolCall,
   AiToolCallContent,
@@ -102,6 +103,8 @@ function SuggestionButton({
   onSend: (text: string) => Promise<void>;
   onAction?: (action: string) => void;
 }) {
+  const t = useT();
+
   const [isInputOpen, setIsInputOpen] = useState(false);
   const [inputVal, setInputVal] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -132,7 +135,7 @@ function SuggestionButton({
               }}
               disabled={!selectedDate}
             >
-              {suggestion.submitLabel || "Confirm"}
+              {suggestion.submitLabel || t("Confirm")}
             </Button>
             <Button
               variant="ghost"
@@ -143,7 +146,7 @@ function SuggestionButton({
                 setSelectedDate(undefined);
               }}
             >
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
         </div>
@@ -156,7 +159,7 @@ function SuggestionButton({
         onClick={() => setIsInputOpen(true)}
         className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -168,7 +171,7 @@ function SuggestionButton({
         onClick={() => onAction?.(suggestion.action!)}
         className="text-2xs rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-left font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -209,7 +212,7 @@ function SuggestionButton({
             }}
             disabled={!inputVal.trim()}
           >
-            {suggestion.submitLabel || "Confirm"}
+            {suggestion.submitLabel || t("Confirm")}
           </Button>
         </div>
       );
@@ -224,7 +227,7 @@ function SuggestionButton({
         }}
         className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
-        {suggestion.label}
+        {t(suggestion.label)}
       </button>
     );
   }
@@ -235,19 +238,21 @@ function SuggestionButton({
       onClick={() => void onSend(suggestion.prompt)}
       className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border px-2.5 py-1.5 text-left transition-colors"
     >
-      {suggestion.label}
+      {t(suggestion.label)}
     </button>
   );
 }
 
 function ToolResultSummary({ result, name }: { result: string; name: string }) {
+  const t = useT();
+
   try {
     const data = JSON.parse(result);
 
     if (name === "search_customers" && data.customers) {
       const customers = data.customers as Array<{ id: string; name: string }>;
       if (customers.length === 0)
-        return <span className="text-muted-foreground">No customers found</span>;
+        return <span className="text-muted-foreground">{t("No customers found")}</span>;
       return (
         <div className="space-y-1">
           {customers.map((c) => (
@@ -255,7 +260,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
               {c.name}
             </div>
           ))}
-          <div className="text-2xs text-muted-foreground">{data.total} total</div>
+          <div className="text-2xs text-muted-foreground">{t("{0} total", data.total)}</div>
         </div>
       );
     }
@@ -283,7 +288,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
         | undefined;
       const locations = (exactLocations?.length ? exactLocations : fallbackLocations) ?? [];
       if (locations.length === 0)
-        return <span className="text-muted-foreground">No locations found</span>;
+        return <span className="text-muted-foreground">{t("No locations found")}</span>;
       const label = data.noExactMatch ? "Available locations:" : "";
       return (
         <div className="space-y-1">
@@ -301,7 +306,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_service_types" && data.serviceTypes) {
       const types = data.serviceTypes as Array<{ id: string; name: string; code: string }>;
       if (types.length === 0)
-        return <span className="text-muted-foreground">No service types found</span>;
+        return <span className="text-muted-foreground">{t("No service types found")}</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
@@ -316,7 +321,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_shipment_types" && data.shipmentTypes) {
       const types = data.shipmentTypes as Array<{ id: string; name: string }>;
       if (types.length === 0)
-        return <span className="text-muted-foreground">No shipment types found</span>;
+        return <span className="text-muted-foreground">{t("No shipment types found")}</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
@@ -331,7 +336,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (name === "search_formula_templates" && data.formulaTemplates) {
       const templates = data.formulaTemplates as Array<{ id: string; name: string }>;
       if (templates.length === 0)
-        return <span className="text-muted-foreground">No rating methods found</span>;
+        return <span className="text-muted-foreground">{t("No rating methods found")}</span>;
       return (
         <div className="space-y-1">
           {templates.map((t) => (
@@ -344,13 +349,9 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     }
 
     if (data.accepted)
-      return <span className="text-2xs text-emerald-500">Accepted: {data.accepted}</span>;
+      return <span className="text-2xs text-emerald-500">{t("Accepted: {0}", data.accepted)}</span>;
     if (data.set)
-      return (
-        <span className="text-2xs">
-          Set {data.set} = {data.value}
-        </span>
-      );
+      return <span className="text-2xs">{t("Set {0} = {1}", data.set, data.value)}</span>;
     if (data.set_required) {
       const label = data.entity_id
         ? `Set to ${data.label || data.entity_id}`
@@ -380,6 +381,8 @@ export default function AIActivityPanel({
   onClearCreateError,
   requiredFieldValues,
 }: AIActivityPanelProps) {
+  const t = useT();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>("Active");
@@ -810,11 +813,13 @@ export default function AIActivityPanel({
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
           <SparklesIcon className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">AI Assistant</span>
+          <span className="text-xs font-medium">{t("AI Assistant")}</span>
         </div>
         <div className="mt-2">
           <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
-            <span>{isReady ? "Ready to create" : `${4 - filledRequired} fields remaining`}</span>
+            <span>
+              {isReady ? t("Ready to create") : t("{0} fields remaining", 4 - filledRequired)}
+            </span>
           </div>
           <div className="bg-muted h-0.5 overflow-hidden rounded-full">
             <m.div
@@ -834,10 +839,10 @@ export default function AIActivityPanel({
               <InfoIcon className="text-muted-foreground size-3" />
               <span className="text-2xs text-muted-foreground">
                 {conversationStatus === "Completed" && statusReason === "shipment_created"
-                  ? "This import has been completed."
+                  ? t("This import has been completed.")
                   : conversationStatus === "Superseded"
-                    ? "This conversation was superseded by a re-extraction."
-                    : "This conversation is no longer active."}
+                    ? t("This conversation was superseded by a re-extraction.")
+                    : t("This conversation is no longer active.")}
               </span>
             </div>
           )}
@@ -850,7 +855,7 @@ export default function AIActivityPanel({
             >
               <CheckCircle2Icon className="size-3 text-emerald-500" />
               <span className="text-2xs text-emerald-600 dark:text-emerald-400">
-                Ready to create shipment
+                {t("Ready to create shipment")}
               </span>
             </m.div>
           )}
@@ -907,7 +912,7 @@ export default function AIActivityPanel({
                     msg.text.length === 0 &&
                     msg.toolCalls?.length === 0 && (
                       <TextShimmer as="span" className="text-[13px]" duration={2}>
-                        Thinking
+                        {t("Thinking")}
                       </TextShimmer>
                     )}
 

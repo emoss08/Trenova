@@ -540,16 +540,16 @@ func (s *Service) ValidateLookupTables(
 			multiErr.Add(
 				"expression",
 				errortypes.ErrInvalid,
-				"Rate table "+table+
-					" has two axes — address it with lookup2(table, rowKey, colKey)",
+				"Rate table {0} has two axes — address it with lookup2(table, rowKey, colKey)",
+				table,
 			)
 			continue
 		}
 		multiErr.Add(
 			"expression",
 			errortypes.ErrInvalid,
-			"Unknown rate table: "+table+
-				" — a lookup table is an active rate matrix with a single axis",
+			"Unknown rate table: {0} — a lookup table is an active rate matrix with a single axis",
+			table,
 		)
 	}
 
@@ -561,16 +561,15 @@ func (s *Service) ValidateLookupTables(
 			multiErr.Add(
 				"expression",
 				errortypes.ErrInvalid,
-				"Rate table "+table+
-					" has a single axis — address it with lookup(table, key)",
+				"Rate table {0} has a single axis — address it with lookup(table, key)", table,
 			)
 			continue
 		}
 		multiErr.Add(
 			"expression",
 			errortypes.ErrInvalid,
-			"Unknown rate table: "+table+
-				" — lookup2 addresses an active rate matrix with exactly two axes",
+			"Unknown rate table: {0} — lookup2 addresses an active rate matrix with exactly two axes",
+			table,
 		)
 	}
 

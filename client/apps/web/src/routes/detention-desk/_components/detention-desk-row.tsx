@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import {
@@ -33,6 +34,8 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
   isSelected,
   onOpen,
 }: DetentionDeskRowProps) {
+  const t = useT();
+
   const { occurrence } = entry;
   const styles = URGENCY_STYLES[entry.urgency];
   const sendNotice = useSendDetentionNotice(occurrence.id);
@@ -86,9 +89,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       <div className="hidden w-44 shrink-0 md:block">
         <DeskClockTrack entry={entry} nowSeconds={nowSeconds} />
         <p className="text-2xs text-muted-foreground mt-1.5 truncate leading-none tabular-nums">
-          {formatDetentionMinutes(onSiteMinutes)} on site · free{" "}
-          {entry.minutesUntilFreeEnds > 0 ? "ends" : "ended"}{" "}
-          {formatUnixTime(occurrence.freeTimeExpiresAt)}
+          {t("{0} on site · free {1} {2}", formatDetentionMinutes(onSiteMinutes), entry.minutesUntilFreeEnds > 0 ? "ends" : "ended", formatUnixTime(occurrence.freeTimeExpiresAt))}
         </p>
       </div>
 
@@ -99,9 +100,9 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
           <>
             <span
               className={cn("flex-1 truncate text-xs tabular-nums", styles.text)}
-              title="Send the customer notice before this deadline or the charge stops being collectable"
+              title={t("Send the customer notice before this deadline or the charge stops being collectable")}
             >
-              Notice {formatCountdown(entry.minutesUntilNoticeDue)}
+              {t("Notice {0}", formatCountdown(entry.minutesUntilNoticeDue))}
             </span>
             {entry.noticeWindowOpen && (
               <Button
@@ -109,13 +110,13 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
                 variant="outline"
                 className="text-2xs"
                 isLoading={sendNotice.isPending}
-                loadingText="Sending"
+                loadingText={t("Sending")}
                 onClick={(event) => {
                   event.stopPropagation();
                   sendNotice.mutate(undefined);
                 }}
               >
-                Send
+                {t("Send")}
               </Button>
             )}
           </>
@@ -134,8 +135,8 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
         />
         <p className="text-2xs text-muted-foreground leading-tight tabular-nums">
           {occurrence.roundedMinutes > 0
-            ? `${formatDetentionMinutes(occurrence.roundedMinutes)} billable`
-            : "free time"}
+            ? t("{0} billable", formatDetentionMinutes(occurrence.roundedMinutes))
+            : t("free time")}
         </p>
       </div>
 

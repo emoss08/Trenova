@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
@@ -31,6 +32,8 @@ export function RateMatrixPanel({
   mode,
   row,
 }: DataTablePanelProps<RateMatrixRow>) {
+  const t = useT();
+
   const form = useForm<RateMatrix>({
     resolver: zodResolver(rateMatrixSchema) as Resolver<RateMatrix>,
     defaultValues: DEFAULT_MATRIX as RateMatrix,
@@ -81,7 +84,7 @@ export function RateMatrixPanel({
         form={form}
         size="xl"
         queryKey="rate-matrix-list"
-        title="Rate Matrix"
+        title={t("Rate Matrix")}
         fieldKey="name"
         formTabs={formTabs}
         isRecordLoading={isLoading || !isSeated}
@@ -104,8 +107,8 @@ export function RateMatrixPanel({
       form={form}
       size="xl"
       queryKey="rate-matrix-list"
-      title="Rate Matrix"
-      description="Enter a published tariff as the grid it was published as, and point any lane at it."
+      title={t("Rate Matrix")}
+      description={t("Enter a published tariff as the grid it was published as, and point any lane at it.")}
       formTabs={formTabs}
       mutationFn={(values) => apiService.rateMatrixService.create(values)}
     />

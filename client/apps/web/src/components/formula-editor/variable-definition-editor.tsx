@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
@@ -64,6 +65,8 @@ export function VariableDefinitionEditor({
   register,
   className,
 }: VariableDefinitionEditorProps) {
+  const t = useT();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "variableDefinitions",
@@ -87,15 +90,15 @@ export function VariableDefinitionEditor({
             <Variable className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">Custom Variables</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Custom Variables")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              Define additional variables for your formula
+              {t("Define additional variables for your formula")}
             </p>
           </div>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
           <Plus className="size-3.5" />
-          Add
+          {t("Add")}
         </Button>
       </CardHeader>
       <CardContent className="p-4">
@@ -104,9 +107,9 @@ export function VariableDefinitionEditor({
             <div className="bg-muted flex size-12 items-center justify-center rounded-full">
               <Variable className="text-muted-foreground size-5" />
             </div>
-            <p className="mt-3 text-sm font-medium">No custom variables</p>
+            <p className="mt-3 text-sm font-medium">{t("No custom variables")}</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              Add custom variables to use in your formula expression
+              {t("Add custom variables to use in your formula expression")}
             </p>
             <Button
               type="button"
@@ -116,7 +119,7 @@ export function VariableDefinitionEditor({
               className="mt-4 gap-1.5"
             >
               <Plus className="size-3.5" />
-              Add Variable
+              {t("Add Variable")}
             </Button>
           </div>
         ) : (
@@ -148,6 +151,8 @@ function VariableDefinitionRow({
   register: UseFormRegister<FormWithVariables>;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const variableType = useWatch({
     control,
     name: `variableDefinitions.${index}.type`,
@@ -178,7 +183,7 @@ function VariableDefinitionRow({
     <div className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors">
       <div className="col-span-3">
         <label htmlFor={nameId} className="text-muted-foreground mb-1.5 block text-xs font-medium">
-          Name
+          {t("Name")}
         </label>
         <Input
           id={nameId}
@@ -192,7 +197,7 @@ function VariableDefinitionRow({
 
       <div className="col-span-2">
         <SelectField
-          label="Type"
+          label={t("Type")}
           name={`variableDefinitions.${index}.type` as any}
           control={control as any}
           options={VARIABLE_TYPES}
@@ -204,7 +209,7 @@ function VariableDefinitionRow({
           htmlFor={defaultId}
           className="text-muted-foreground mb-1.5 block text-xs font-medium"
         >
-          Default
+          {t("Default")}
         </label>
         <Input
           id={defaultId}
@@ -227,12 +232,12 @@ function VariableDefinitionRow({
           htmlFor={descriptionId}
           className="text-muted-foreground mb-1.5 block text-xs font-medium"
         >
-          Description
+          {t("Description")}
         </label>
         <Input
           id={descriptionId}
           {...register(`variableDefinitions.${index}.description`)}
-          placeholder="Optional description"
+          placeholder={t("Optional description")}
           className="h-8 text-sm"
         />
       </div>
@@ -243,7 +248,7 @@ function VariableDefinitionRow({
           variant="ghost"
           size="sm"
           onClick={onRemove}
-          aria-label="Remove variable"
+          aria-label={t("Remove variable")}
           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
         >
           <Trash2 className="size-4" />

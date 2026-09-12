@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   BanknoteIcon,
   BarChart3Icon,
@@ -24,6 +25,8 @@ const QUICK_LINKS = [
 ] as const;
 
 export function AccountingQuickLinks() {
+  const t = useT();
+
   return (
     <div className="flex flex-wrap gap-1.5">
       {QUICK_LINKS.map((link) => (
@@ -33,7 +36,7 @@ export function AccountingQuickLinks() {
           className="bg-card text-muted-foreground hover:bg-muted hover:text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors"
         >
           <link.icon className="size-3.5" />
-          {link.label}
+          {t(link.label)}
         </Link>
       ))}
     </div>

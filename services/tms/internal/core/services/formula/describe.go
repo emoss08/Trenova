@@ -22,7 +22,7 @@ func (s *Service) DescribeSchema(
 		return nil, errortypes.NewValidationError(
 			"schemaId",
 			errortypes.ErrInvalid,
-			"Unknown formula schema: "+schemaID,
+			"Unknown formula schema: {0}", schemaID,
 		)
 	}
 

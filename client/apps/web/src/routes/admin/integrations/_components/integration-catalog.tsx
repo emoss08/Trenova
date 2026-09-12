@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -131,6 +132,8 @@ type CatalogItemCardProps = {
 };
 
 function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCardProps) {
+  const t = useT();
+
   const logoSize = getCatalogLogoSize(item.type);
 
   return (
@@ -155,7 +158,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
                       href={link.url}
                       className="hover:text-foreground inline-flex items-center gap-1"
                     >
-                      {link.label}
+                      {t(link.label)}
                     </ExternalLink>
                   ))}
                 </div>
@@ -180,7 +183,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
               )}
             </div>
           </div>
-          <CatalogItemDescription description={item.description} />
+          <CatalogItemDescription description={t(item.description)} />
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="border-border/80 flex items-center justify-between gap-2 border-t pt-3">
@@ -208,6 +211,8 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
 }
 
 export function IntegrationCatalogCard() {
+  const t = useT();
+
   const { theme } = useTheme();
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
 
@@ -280,7 +285,7 @@ export function IntegrationCatalogCard() {
           <div className="mt-4 flex flex-row items-center gap-1.5">
             <div className="flex shrink-0 flex-row items-center gap-0 text-center text-sm">
               <div className="border-input bg-muted text-muted-foreground flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 px-1 font-medium focus:z-10">
-                Sort By
+                {t("Sort By")}
               </div>
               <Select
                 items={sortOptions}
@@ -294,7 +299,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {sortOptions.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -314,7 +319,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {categoryOptions.map((category) => (
                       <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                        {t(category.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -334,7 +339,7 @@ export function IntegrationCatalogCard() {
                   <SelectGroup>
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {t(option.label)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -347,12 +352,12 @@ export function IntegrationCatalogCard() {
           {catalogQuery.isLoading && (
             <div className="text-muted-foreground inline-flex items-center gap-2 text-sm">
               <Spinner className="size-4" />
-              Loading integration catalog...
+              {t("Loading integration catalog...")}
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length === 0 && (
             <div className="border-border bg-muted/20 text-muted-foreground rounded-md border p-4 text-sm">
-              No integrations match your current search and filter.
+              {t("No integrations match your current search and filter.")}
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length > 0 && (
@@ -361,7 +366,7 @@ export function IntegrationCatalogCard() {
                 <section key={group.key} className="space-y-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                      {group.label}
+                      {t(group.label)}
                     </h2>
                     <span className="text-muted-foreground/70 text-xs">
                       {group.items.length}{" "}

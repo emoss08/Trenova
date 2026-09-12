@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -50,6 +51,8 @@ export function AssignPolicyDialog({
   currentPolicyId,
   onAssigned,
 }: AssignPolicyDialogProps) {
+  const t = useT();
+
   const { data: policies = [], isLoading } = useQuery({
     queryKey: [PTO_POLICY_OPTIONS_KEY],
     queryFn: ({ signal }) => fetchPtoPolicyOptions({ signal }),
@@ -124,11 +127,11 @@ export function AssignPolicyDialog({
     onSuccess: (result) => {
       const failure = result.failures[0];
       if (failure) {
-        toast.error("Policy not assigned", { description: failure.error });
+        toast.error(t("Policy not assigned"), { description: failure.error });
         return;
       }
-      toast.success("Policy assigned", {
-        description: "Accruals start from the effective date on the next nightly run.",
+      toast.success(t("Policy assigned"), {
+        description: t("Accruals start from the effective date on the next nightly run."),
       });
       onAssigned?.();
       onOpenChange(false);
@@ -146,11 +149,11 @@ export function AssignPolicyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{currentPolicyId ? "Change PTO Policy" : "Assign PTO Policy"}</DialogTitle>
+          <DialogTitle>{currentPolicyId ? t("Change PTO Policy") : t("Assign PTO Policy")}</DialogTitle>
           <DialogDescription>
             {currentPolicyId
-              ? "The current assignment ends the day before the new one starts. Balances carry across unchanged."
-              : "Enrol this worker in a policy so their time off accrues and is tracked."}
+              ? t("The current assignment ends the day before the new one starts. Balances carry across unchanged.")
+              : t("Enrol this worker in a policy so their time off accrues and is tracked.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -166,19 +169,19 @@ export function AssignPolicyDialog({
                 <SelectField<AssignPTOPolicyFormValues>
                   control={control}
                   name="ptoPolicyId"
-                  label="Policy"
+                  label={t("Policy")}
                   options={policyOptions}
                   rules={{ required: true }}
                   placeholder={isLoading ? "Loading policies..." : "Pick a policy"}
-                  description="Decides how time off accrues and which PTO types are tracked."
+                  description={t("Decides how time off accrues and which PTO types are tracked.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <AutoCompleteDateField<AssignPTOPolicyFormValues>
                   control={control}
                   name="effectiveFrom"
-                  label="Effective from"
-                  placeholder="Today"
+                  label={t("Effective from")}
+                  placeholder={t("Today")}
                   rules={{ required: true }}
                   description={
                     currentPolicyId
@@ -190,9 +193,9 @@ export function AssignPolicyDialog({
               {openingArray.fields.length > 0 ? (
                 <FormControl cols="full">
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm font-medium">Opening balances</p>
+                    <p className="text-sm font-medium">{t("Opening balances")}</p>
                     <p className="text-muted-foreground text-xs">
-                      Days the worker already has banked. Posted once as an opening balance.
+                      {t("Days the worker already has banked. Posted once as an opening balance.")}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {openingArray.fields.map((field, index) => (
@@ -205,7 +208,7 @@ export function AssignPolicyDialog({
                               ?.label ?? field.ptoType
                           }
                           placeholder="0"
-                          description="Posted on the effective date; leave 0 for none."
+                          description={t("Posted on the effective date; leave 0 for none.")}
                         />
                       ))}
                     </div>
@@ -216,24 +219,24 @@ export function AssignPolicyDialog({
                 <TextareaField<AssignPTOPolicyFormValues>
                   control={control}
                   name="note"
-                  label="Assignment note"
-                  placeholder="e.g. Moved to the regional driver policy"
+                  label={t("Assignment note")}
+                  placeholder={t("e.g. Moved to the regional driver policy")}
                   maxLength={255}
-                  description="Optional; kept on the assignment record."
+                  description={t("Optional; kept on the assignment record.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="button"
                 onClick={() => void handleSubmit(onSubmit)()}
                 isLoading={isPending}
-                loadingText="Assigning..."
+                loadingText={t("Assigning...")}
               >
-                Assign Policy
+                {t("Assign Policy")}
               </Button>
             </DialogFooter>
           </Form>

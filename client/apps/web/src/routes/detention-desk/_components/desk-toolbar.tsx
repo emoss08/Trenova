@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -43,6 +44,8 @@ export function DeskToolbar({
   onSort,
   onSearch,
 }: DeskToolbarProps) {
+  const t = useT();
+
   const searchRef = useRef<HTMLInputElement>(null);
 
   // "/" is the standard reach for search, but only when the keystroke is not
@@ -74,7 +77,7 @@ export function DeskToolbar({
 
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b px-4">
-      <div role="tablist" aria-label="Detention lane" className="flex items-center gap-4">
+      <div role="tablist" aria-label={t("Detention lane")} className="flex items-center gap-4">
         {DESK_FILTERS.map((filter) => {
           const isActive = filter.id === lane;
           const count = laneCounts[filter.id];
@@ -97,7 +100,7 @@ export function DeskToolbar({
                   : "text-muted-foreground hover:text-foreground border-transparent",
               )}
             >
-              {filter.label}
+              {t(filter.label)}
               <span className="text-muted-foreground ml-1.5 tabular-nums">{count}</span>
             </button>
           );
@@ -115,8 +118,8 @@ export function DeskToolbar({
               onSearch("");
             }
           }}
-          placeholder="Search facility, customer, PRO"
-          aria-label="Search the detention desk"
+          placeholder={t("Search facility, customer, PRO")}
+          aria-label={t("Search the detention desk")}
           inputContainerClassName="w-56"
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           rightElement={
@@ -125,7 +128,7 @@ export function DeskToolbar({
                 type="button"
                 variant="outline"
                 size="icon-xs"
-                aria-label="Clear search"
+                aria-label={t("Clear search")}
                 onClick={() => onSearch("")}
               >
                 <XIcon className="size-3" />
@@ -144,7 +147,7 @@ export function DeskToolbar({
                 size="sm"
                 className="text-muted-foreground hover:text-foreground gap-1 px-2 text-xs"
               >
-                {activeSort.label}
+                {t(activeSort.label)}
                 <ChevronDownIcon className="size-3" />
               </Button>
             }
@@ -157,7 +160,7 @@ export function DeskToolbar({
               {DESK_SORTS.map((option) => (
                 <DropdownMenuRadioItem key={option.id} value={option.id}>
                   <span className="flex flex-col">
-                    <span>{option.label}</span>
+                    <span>{t(option.label)}</span>
                     <span className="text-2xs text-muted-foreground">{option.hint}</span>
                   </span>
                 </DropdownMenuRadioItem>

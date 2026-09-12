@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { type BenefitPlanRow } from "@/lib/graphql/benefits";
 import { costTotals, defaultPlanYear, emptyActivePlans, planYearsOf } from "@/lib/benefits-console";
@@ -24,6 +25,8 @@ import {
 const EMPTY_PLANS: BenefitPlanRow[] = [];
 
 export default function BenefitsConsole() {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.BenefitPlan, Operation.Read);
   const { allowed: canCreate } = usePermission(Resource.BenefitPlan, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.BenefitPlan, Operation.Update);
@@ -70,7 +73,7 @@ export default function BenefitsConsole() {
     return (
       <div className="flex flex-col">
         <BenefitsEmpty
-          title="No plans yet"
+          title={t("No plans yet")}
           description={
             "A plan needs a pay code so a contribution can be categorised on a settlement. " +
             "Add one, then put workers on it from their Benefits tab."
@@ -103,23 +106,21 @@ export default function BenefitsConsole() {
               items={yearItems}
               value={String(planYear)}
               onValueChange={(value) => setChosenYear(Number(value))}
-              aria-label="Plan year"
+              aria-label={t("Plan year")}
             />
           ) : (
-            <span className="text-sm font-medium tabular-nums">Plan year {planYear}</span>
+            <span className="text-sm font-medium tabular-nums">{t("Plan year {0}", planYear)}</span>
           )}
           <p className="text-muted-foreground text-xs">
-            Each plan year is its own row, so repricing next year never restates what somebody was
-            charged this year.
-            {empty.length > 0
-              ? ` ${empty.length} active plan${empty.length === 1 ? " has" : "s have"} nobody on ${empty.length === 1 ? "it" : "them"}.`
-              : ""}
+            {t("Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}", empty.length > 0
+              ? ` ${t("{0} active plan{1} nobody on {2}.", empty.length, empty.length === 1 ? " has" : t("s have"), empty.length === 1 ? "it" : "them")}`
+              : "")}
           </p>
         </div>
         {canCreate ? (
           <Button size="sm" onClick={() => setDialog({ plan: null })}>
             <PlusIcon className="size-3.5" />
-            Add a plan
+            {t("Add a plan")}
           </Button>
         ) : null}
       </div>
@@ -129,7 +130,7 @@ export default function BenefitsConsole() {
           {yearPlans.length === 0 ? (
             <BenefitsEmpty
               title={`No plans for ${planYear}`}
-              description="Every plan year is priced on its own, so a year with nothing on offer stays empty until a plan is added for it."
+              description={t("Every plan year is priced on its own, so a year with nothing on offer stays empty until a plan is added for it.")}
               onAddPlan={canCreate ? () => setDialog({ plan: null }) : undefined}
             />
           ) : (

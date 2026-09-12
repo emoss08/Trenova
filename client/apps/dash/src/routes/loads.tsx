@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import type { PortalLoadScope } from "@trenova/graphql/generated/graphql";
@@ -7,6 +8,8 @@ import { LoadCard } from "../_components/load-card";
 import { useMyLoads } from "../_components/use-loads";
 
 function LoadList({ scope }: { scope: PortalLoadScope }) {
+  const t = useT();
+
   const loads = useMyLoads(scope);
 
   if (loads.isPending) {
@@ -23,7 +26,7 @@ function LoadList({ scope }: { scope: PortalLoadScope }) {
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
         <TruckIcon className="size-6 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          {scope === "Active" ? "No active or upcoming loads." : "No completed loads yet."}
+          {scope === "Active" ? t("No active or upcoming loads.") : t("No completed loads yet.")}
         </p>
       </div>
     );
@@ -39,15 +42,17 @@ function LoadList({ scope }: { scope: PortalLoadScope }) {
 }
 
 export function DashLoadsPage() {
+  const t = useT();
+
   const [tab, setTab] = useState("active");
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">Loads</h1>
+      <h1 className="text-xl font-semibold tracking-tight">{t("Loads")}</h1>
       <Tabs value={tab} onValueChange={(value) => setTab(value as string)}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTab value="active">Active</TabsTab>
-          <TabsTab value="history">History</TabsTab>
+          <TabsTab value="active">{t("Active")}</TabsTab>
+          <TabsTab value="history">{t("History")}</TabsTab>
         </TabsList>
         <TabsPanel value="active" className="mt-3">
           <LoadList scope="Active" />

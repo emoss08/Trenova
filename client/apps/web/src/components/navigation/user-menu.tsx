@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -44,12 +45,14 @@ function UserSettingsDialogSkeleton({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>Manage your preferences and security.</DialogDescription>
+          <DialogTitle>{t("Settings")}</DialogTitle>
+          <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>
         </DialogHeader>
         <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
           <Skeleton className="size-14 shrink-0 rounded-md" />
@@ -83,6 +86,8 @@ function UserSettingsDialogSkeleton({
  * for a name; the full menu is unchanged.
  */
 export function UserMenu({ compact = false }: { compact?: boolean }) {
+  const t = useT();
+
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -179,12 +184,12 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              title="Profile"
+              title={t("Profile")}
               startContent={<User className="size-4" />}
               onClick={() => void navigate("/profile")}
             />
             <DropdownMenuItem
-              title="Settings"
+              title={t("Settings")}
               startContent={<Settings className="size-4" />}
               onClick={() => {
                 setSettingsMounted(true);
@@ -195,7 +200,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <Palette className="mr-2 size-4" />
-                <span>Switch Theme</span>
+                <span>{t("Switch Theme")}</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent sideOffset={5}>
@@ -204,28 +209,28 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
                     onCheckedChange={() => setTheme("light")}
                     className="cursor-pointer"
                   >
-                    Light
+                    {t("Light")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={theme === "dark"}
                     onCheckedChange={() => setTheme("dark")}
                     className="cursor-pointer"
                   >
-                    Dark
+                    {t("Dark")}
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem
                     checked={theme === "system"}
                     onCheckedChange={() => setTheme("system")}
                     className="cursor-pointer"
                   >
-                    System
+                    {t("System")}
                   </DropdownMenuCheckboxItem>
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              title="Log out"
+              title={t("Log out")}
               startContent={<LogOut className="size-4" />}
               onClick={() => void handleLogout()}
             />

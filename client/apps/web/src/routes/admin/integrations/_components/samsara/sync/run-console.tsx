@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -34,6 +35,8 @@ function formatTerminalTimestamp(msTimestamp: number): string {
 }
 
 export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: boolean }) {
+  const t = useT();
+
   const [logLines, setLogLines] = useSamsaraSyncStore.use("logLines");
 
   const handleCopyLogs = async () => {
@@ -46,9 +49,9 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
           )
           .join("\n"),
       );
-      toast.success("Console logs copied");
+      toast.success(t("Console logs copied"));
     } catch {
-      toast.error("Failed to copy logs");
+      toast.error(t("Failed to copy logs"));
     }
   };
 
@@ -57,10 +60,10 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
       <div className="border-border bg-sidebar flex items-center justify-between border-b px-3 py-2">
         <div className="text-foreground inline-flex items-center gap-2 text-xs font-medium">
           <TerminalIcon className="size-3.5" />
-          Run Console
+          {t("Run Console")}
           {isWorkflowRunning && (
             <Badge variant="active" className="ml-2">
-              Live
+              {t("Live")}
             </Badge>
           )}
         </div>
@@ -72,7 +75,7 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
             disabled={logLines.length === 0}
           >
             <CopyIcon className="size-3.5" />
-            Copy
+            {t("Copy")}
           </Button>
           <Button
             size="sm"
@@ -81,14 +84,14 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
             disabled={logLines.length === 0}
           >
             <Trash2Icon className="size-3.5" />
-            Clear
+            {t("Clear")}
           </Button>
         </div>
       </div>
       <ScrollArea className="h-64 px-3 py-2 font-mono text-xs leading-5">
         {logLines.length === 0 ? (
           <p className="text-foreground/50">
-            No log lines yet. Start a sync to stream workflow updates.
+            {t("No log lines yet. Start a sync to stream workflow updates.")}
           </p>
         ) : (
           <div className="space-y-0.5">

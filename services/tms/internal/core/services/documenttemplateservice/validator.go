@@ -186,9 +186,12 @@ func newKindRegisteredRule(
 			}
 
 			if _, ok := registry.Get(entity.Kind); !ok {
-				multiErr.Add(fieldKind, errortypes.ErrInvalid, fmt.Sprintf(
-					"%q is not a template kind this system can render", entity.Kind,
-				))
+				multiErr.Add(
+					fieldKind,
+					errortypes.ErrInvalid,
+					"\"{0}\" is not a template kind this system can render",
+					entity.Kind,
+				)
 			}
 
 			return nil
@@ -284,10 +287,12 @@ func (v *Validator) ValidateVersion(
 	// Page setup on a message is not harmless noise: it would show a page-size
 	// control in the editor for something that is never printed.
 	if !def.Paged && (entity.PageSize != "" || entity.Orientation != "") {
-		channelErr.Add("pageSize", errortypes.ErrInvalid, fmt.Sprintf(
-			"%s is a message, not a document, so it has no page setup",
+		channelErr.Add(
+			"pageSize",
+			errortypes.ErrInvalid,
+			"{0} is a message, not a document, so it has no page setup",
 			def.DisplayName,
-		))
+		)
 	}
 
 	return mergeErrors(multiErr, channelErr)
@@ -305,17 +310,23 @@ func (v *Validator) checkChannelsBelong(
 	if entity.Subject != "" &&
 		!def.HasChannel(documenttemplate.ChannelSubject) &&
 		!def.HasChannel(documenttemplate.ChannelNotificationTitle) {
-		multiErr.Add("subject", errortypes.ErrInvalid, fmt.Sprintf(
-			"%s does not have a subject line", def.DisplayName,
-		))
+		multiErr.Add(
+			"subject",
+			errortypes.ErrInvalid,
+			"{0} does not have a subject line",
+			def.DisplayName,
+		)
 	}
 
 	if entity.BodyText != "" &&
 		!def.HasChannel(documenttemplate.ChannelEmailText) &&
 		!def.HasChannel(documenttemplate.ChannelNotificationBody) {
-		multiErr.Add("bodyText", errortypes.ErrInvalid, fmt.Sprintf(
-			"%s does not have a plain-text body", def.DisplayName,
-		))
+		multiErr.Add(
+			"bodyText",
+			errortypes.ErrInvalid,
+			"{0} does not have a plain-text body",
+			def.DisplayName,
+		)
 	}
 
 	if entity.CSSContent != "" && !def.HasChannel(documenttemplate.ChannelPDF) {
@@ -327,10 +338,12 @@ func (v *Validator) checkChannelsBelong(
 
 	if (entity.HeaderHTML != "" || entity.FooterHTML != "") &&
 		!def.HasChannel(documenttemplate.ChannelPDF) {
-		multiErr.Add("headerHtml", errortypes.ErrInvalid, fmt.Sprintf(
-			"%s is not printed, so it has no running header or footer",
+		multiErr.Add(
+			"headerHtml",
+			errortypes.ErrInvalid,
+			"{0} is not printed, so it has no running header or footer",
 			def.DisplayName,
-		))
+		)
 	}
 }
 
@@ -356,16 +369,21 @@ func (v *Validator) ValidateAssignment(
 	def, ok := v.registry.Get(template.Kind)
 	switch {
 	case !ok:
-		scopeErr.Add("templateId", errortypes.ErrInvalid, fmt.Sprintf(
-			"%q is not a template kind this system can render", template.Kind,
-		))
+		scopeErr.Add(
+			"templateId",
+			errortypes.ErrInvalid,
+			"\"{0}\" is not a template kind this system can render",
+			template.Kind,
+		)
 	case !def.CustomerScoped:
 		// Assigning a kind with no customer in scope would look like it worked
 		// and then never fire on any render.
-		scopeErr.Add(fieldKind, errortypes.ErrInvalid, fmt.Sprintf(
-			"%s is not sent per customer, so assigning it to one has no effect",
+		scopeErr.Add(
+			fieldKind,
+			errortypes.ErrInvalid,
+			"{0} is not sent per customer, so assigning it to one has no effect",
 			def.DisplayName,
-		))
+		)
 	}
 
 	if !template.HasActiveVersion() {

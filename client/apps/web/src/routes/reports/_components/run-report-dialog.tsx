@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -52,6 +53,8 @@ export function RunReportDialog({
   parameters,
   initialParams,
 }: RunReportDialogProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const runReport = useRunReport();
   const [format, setFormat] = useState(defaultFormat || "csv");
@@ -135,10 +138,11 @@ export function RunReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
-          <DialogTitle>Run {reportName}</DialogTitle>
+          <DialogTitle>{t("Run {0}", reportName)}</DialogTitle>
           <DialogDescription>
-            The report is generated in the background — you&apos;ll be notified when it&apos;s ready
-            to download.
+            {t(
+              "The report is generated in the background — you'll be notified when it's ready to download.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -162,7 +166,7 @@ export function RunReportDialog({
             />
           ))}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="report-run-format">Format</Label>
+            <Label htmlFor="report-run-format">{t("Format")}</Label>
             <Select
               value={format}
               onValueChange={(value) => {
@@ -171,12 +175,12 @@ export function RunReportDialog({
               items={REPORT_FORMAT_CHOICES}
             >
               <SelectTrigger className="w-full" id="report-run-format">
-                <SelectValue placeholder="Select format" />
+                <SelectValue placeholder={t("Select format")} />
               </SelectTrigger>
               <SelectContent>
                 {REPORT_FORMAT_CHOICES.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -185,13 +189,13 @@ export function RunReportDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={runReport.isPending || missingRequired.length > 0}
           >
-            {runReport.isPending ? "Queuing..." : "Run Report"}
+            {runReport.isPending ? t("Queuing...") : t("Run Report")}
           </Button>
         </DialogFooter>
       </DialogContent>

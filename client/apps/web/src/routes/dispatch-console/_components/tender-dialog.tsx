@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -75,6 +76,8 @@ const SPOT_MODE_ITEMS: { value: SpotTenderMode; label: string; caption: string }
 ];
 
 function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
+  const t = useT();
+
   const entries = [...(guide.entries ?? [])].sort((a, b) => a.rank - b.rank);
 
   return (
@@ -82,7 +85,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-medium">{guide.name}</span>
         <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
-          {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? "Unranked"}
+          {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? t("Unranked")}
         </Badge>
         <span className="text-muted-foreground text-[10px]">{formatRoutingGuideLane(guide)}</span>
       </div>
@@ -96,7 +99,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
               #{entry.rank}
             </Badge>
             <span className="truncate text-[11px] font-medium">
-              {entry.carrier?.name ?? "Unknown carrier"}
+              {entry.carrier?.name ?? t("Unknown carrier")}
             </span>
           </div>
           <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
@@ -108,7 +111,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
       ))}
       {entries.length === 0 && (
         <p className="text-muted-foreground py-2 text-center text-[11px]">
-          This guide has no carrier entries.
+          {t("This guide has no carrier entries.")}
         </p>
       )}
     </div>
@@ -126,6 +129,8 @@ function formatScreeningEntry(entry: GuideEntryScreening): string {
  * swap, so a dispatcher never loses the list of carriers that were passed over.
  */
 function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
+  const t = useT();
+
   const hasSkipped = screening.skipped.length > 0;
   const hasWarned = screening.warned.length > 0;
   if (!hasSkipped && !hasWarned) return null;
@@ -134,7 +139,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
     <Alert variant="warning" className="mb-3">
       <TriangleAlertIcon />
       <AlertTitle>
-        {hasSkipped ? "Some carriers were not offered" : "Some carriers were offered with warnings"}
+        {hasSkipped ? t("Some carriers were not offered") : t("Some carriers were offered with warnings")}
       </AlertTitle>
       <AlertDescription>
         {hasSkipped && (
@@ -149,7 +154,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
         {hasWarned && (
           <div className="mt-1 flex flex-col gap-0.5">
             <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-              Offered with warnings
+              {t("Offered with warnings")}
             </span>
             <ul className="flex flex-col gap-0.5">
               {screening.warned.map((entry) => (
@@ -174,6 +179,8 @@ function WaterfallTab({
   actions: DispatchActions;
   onScreening: (screening: GuideScreeningSummary | null) => void;
 }) {
+  const t = useT();
+
   const [overrideGuideId, setOverrideGuideId] = useState("");
 
   const matchInput = useMemo(
@@ -224,35 +231,34 @@ function WaterfallTab({
         <>
           {!usingOverride && (
             <p className="text-muted-foreground text-[11px]">
-              Matched from this move&apos;s lane. Offers go out to each carrier in rank order until
-              one accepts.
+              {t("Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.")}
             </p>
           )}
           <GuideEntriesPreview guide={selectedGuide} />
         </>
       ) : (
         <p className="text-muted-foreground py-2 text-[11px]">
-          No routing guide matches this lane. Pick one explicitly below, or{" "}
+          {t("No routing guide matches this lane. Pick one explicitly below, or")}{" "}
           <Link to="/dispatch/routing-guides" className="underline">
-            create a routing guide
+            {t("create a routing guide")}
           </Link>{" "}
-          for it.
+          {t("for it.")}
         </p>
       )}
 
       <div className="flex flex-col gap-1">
         <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-          Override guide
+          {t("Override guide")}
         </span>
         <Select
           value={overrideGuideId}
           onValueChange={(value) => setOverrideGuideId(!value || value === "auto" ? "" : value)}
         >
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder="Use the matched guide" />
+            <SelectValue placeholder={t("Use the matched guide")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="auto">Use the matched guide</SelectItem>
+            <SelectItem value="auto">{t("Use the matched guide")}</SelectItem>
             {(guideOptions ?? []).map((guide) => (
               <SelectItem key={guide.id} value={guide.id}>
                 {guide.name} · {formatRoutingGuideLane(guide)}
@@ -267,10 +273,10 @@ function WaterfallTab({
           type="button"
           disabled={!selectedGuide || (selectedGuide.entries?.length ?? 0) === 0}
           isLoading={actions.isTendering}
-          loadingText="Starting..."
+          loadingText={t("Starting...")}
           onClick={startWaterfall}
         >
-          Start waterfall
+          {t("Start waterfall")}
         </Button>
       </div>
     </div>
@@ -278,6 +284,8 @@ function WaterfallTab({
 }
 
 function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: DispatchActions }) {
+  const t = useT();
+
   const [overridePrompt, setOverridePrompt] = useState<{
     message: string;
     values: SpotTenderPayload;
@@ -341,13 +349,13 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
           value={(mode as SpotTenderMode) ?? "SpotBroadcast"}
           onValueChange={(value) => setValue("mode", value, { shouldDirty: true })}
           fullWidth
-          aria-label="Spot tender mode"
+          aria-label={t("Spot tender mode")}
         />
 
         {fields.map((field, index) => (
           <div key={field.id} className="rounded-md border p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium">Carrier {index + 1}</p>
+              <p className="text-xs font-medium">{t("Carrier {0}", index + 1)}</p>
               <Button
                 type="button"
                 size="sm"
@@ -356,7 +364,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 disabled={fields.length === 1}
                 onClick={() => remove(index)}
               >
-                Remove
+                {t("Remove")}
               </Button>
             </div>
 
@@ -365,8 +373,8 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <CarrierAutocompleteField
                   control={control}
                   name={`lines.${index}.carrierId`}
-                  label="Carrier"
-                  placeholder="Select carrier"
+                  label={t("Carrier")}
+                  placeholder={t("Select carrier")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -374,8 +382,8 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <SelectField
                   control={control}
                   name={`lines.${index}.rateMethod`}
-                  label="Rate Method"
-                  placeholder="Select method"
+                  label={t("Rate Method")}
+                  placeholder={t("Select method")}
                   rules={{ required: true }}
                   options={carrierRateMethodChoices}
                 />
@@ -384,7 +392,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <NumberField
                   control={control}
                   name={`lines.${index}.rate`}
-                  label="Rate"
+                  label={t("Rate")}
                   placeholder="1500.00"
                   sideText="$"
                   decimalScale={2}
@@ -395,8 +403,8 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <SelectField
                   control={control}
                   name={`lines.${index}.offerTtlSeconds`}
-                  label="Offer Expiry"
-                  placeholder="Select expiry"
+                  label={t("Offer Expiry")}
+                  placeholder={t("Select expiry")}
                   rules={{ required: true }}
                   options={offerTtlChoices}
                 />
@@ -405,8 +413,8 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                 <SelectField
                   control={control}
                   name={`lines.${index}.channel`}
-                  label="Channel"
-                  placeholder="Select channel"
+                  label={t("Channel")}
+                  placeholder={t("Select channel")}
                   rules={{ required: true }}
                   options={tenderChannelChoices}
                 />
@@ -416,9 +424,9 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   <InputField
                     control={control}
                     name={`lines.${index}.email`}
-                    label="Email Override"
-                    placeholder="dispatch@carrier.com"
-                    description="Optional — defaults to the carrier's tender contact."
+                    label={t("Email Override")}
+                    placeholder={t("dispatch@carrier.com")}
+                    description={t("Optional — defaults to the carrier's tender contact.")}
                   />
                 </FormControl>
               )}
@@ -429,7 +437,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
         {overridePrompt && (
           <Alert variant="warning">
             <TriangleAlertIcon />
-            <AlertTitle>Insurance warnings</AlertTitle>
+            <AlertTitle>{t("Insurance warnings")}</AlertTitle>
             <AlertDescription>
               <p>{overridePrompt.message}</p>
               <div className="mt-2 flex gap-2">
@@ -439,16 +447,16 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   variant="outline"
                   onClick={() => setOverridePrompt(null)}
                 >
-                  Review carriers
+                  {t("Review carriers")}
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   isLoading={actions.isTendering}
-                  loadingText="Sending..."
+                  loadingText={t("Sending...")}
                   onClick={() => void confirmOverride()}
                 >
-                  Send anyway
+                  {t("Send anyway")}
                 </Button>
               </div>
             </AlertDescription>
@@ -462,10 +470,10 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
             variant="outline"
             onClick={() => append({ ...emptySpotTenderLine })}
           >
-            Add carrier
+            {t("Add carrier")}
           </Button>
-          <Button type="submit" isLoading={actions.isTendering} loadingText="Sending...">
-            Send offers
+          <Button type="submit" isLoading={actions.isTendering} loadingText={t("Sending...")}>
+            {t("Send offers")}
           </Button>
         </div>
       </div>
@@ -487,6 +495,8 @@ export function TenderDialog({
   actions: DispatchActions;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const { data: liveTender, isLoading } = useQuery({
     ...dispatchConsoleQueries.liveTender(move.moveId),
   });
@@ -505,7 +515,7 @@ export function TenderDialog({
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[680px]">
         <DialogHeader>
-          <DialogTitle>{liveTender ? "Live Tender" : "Tender to Carriers"}</DialogTitle>
+          <DialogTitle>{liveTender ? t("Live Tender") : t("Tender to Carriers")}</DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}
             {move.destinationState}
@@ -530,8 +540,8 @@ export function TenderDialog({
           ) : (
             <Tabs defaultValue="waterfall">
               <TabsList className="mb-3">
-                <TabsTrigger value="waterfall">Waterfall</TabsTrigger>
-                <TabsTrigger value="spot">Spot</TabsTrigger>
+                <TabsTrigger value="waterfall">{t("Waterfall")}</TabsTrigger>
+                <TabsTrigger value="spot">{t("Spot")}</TabsTrigger>
               </TabsList>
               <TabsContent value="waterfall">
                 <WaterfallTab move={move} actions={actions} onScreening={setScreening} />

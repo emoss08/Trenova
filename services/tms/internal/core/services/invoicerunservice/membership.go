@@ -187,7 +187,7 @@ func unknownItem(id pulid.ID) error {
 	return errortypes.NewValidationError(
 		"itemId",
 		errortypes.ErrInvalid,
-		"Shipment "+id.String()+" is not on this run",
+		"Shipment {0} is not on this run", id.String(),
 	)
 }
 
@@ -195,6 +195,6 @@ func unknownGroup(id pulid.ID) error {
 	return errortypes.NewValidationError(
 		"targetGroupId",
 		errortypes.ErrInvalid,
-		"Group "+id.String()+" is not on this run",
+		"Group {0} is not on this run", id.String(),
 	)
 }

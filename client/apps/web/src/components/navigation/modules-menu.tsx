@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomizeSidebarDialog } from "@/components/navigation/customize-sidebar-dialog";
 import { AttentionCountBadge } from "@/components/navigation/sidebar-chrome";
 import {
@@ -36,6 +37,8 @@ function ModuleItem({
   attention: ModuleAttention | undefined;
   onNavigate: () => void;
 }) {
+  const t = useT();
+
   return (
     <Link
       to={view.landingPath}
@@ -51,7 +54,7 @@ function ModuleItem({
         </span>
         {view.module.description && (
           <span className="text-muted-foreground mt-0.5 line-clamp-2 text-2xs leading-snug">
-            {view.module.description}
+            {t(view.module.description)}
           </span>
         )}
       </span>
@@ -72,10 +75,12 @@ function DomainColumn({
   activeModuleId: ModuleId | null;
   onNavigate: () => void;
 }) {
+  const t = useT();
+
   return (
     <div className="border-border flex min-w-0 flex-col gap-0.5 px-2 pt-3 pb-2.5 first:pl-3 not-first:border-l">
       <span className="text-muted-foreground px-1.5 pb-1.5 text-xs font-medium tracking-wide select-none uppercase">
-        {domain.label}
+        {t(domain.label)}
       </span>
       {domain.modules.map((module) => {
         const view = views.get(module.id);
@@ -142,6 +147,8 @@ function ShortcutsColumn({
   showPinned: boolean;
   onNavigate: () => void;
 }) {
+  const t = useT();
+
   const { pathname } = useLocation();
   const { data: favorites } = useQuery({ ...queries.pageFavorite.all(), enabled: showPinned });
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
@@ -157,13 +164,13 @@ function ShortcutsColumn({
         onNavigate={onNavigate}
         icon={<HomeIcon className="size-3.5 shrink-0" strokeWidth={1.75} />}
       >
-        Home
+        {t("Home")}
       </SideRow>
       {showPinned && (
         <div className="flex flex-col gap-0.5">
-          <SideHeading>Pinned</SideHeading>
+          <SideHeading>{t("Pinned")}</SideHeading>
           {pinned.length === 0 ? (
-            <SideEmpty>Star a page from its header to keep it here.</SideEmpty>
+            <SideEmpty>{t("Star a page from its header to keep it here.")}</SideEmpty>
           ) : (
             pinned.map((favorite) => (
               <SideRow
@@ -179,9 +186,9 @@ function ShortcutsColumn({
         </div>
       )}
       <div className="flex flex-col gap-0.5">
-        <SideHeading>Recent</SideHeading>
+        <SideHeading>{t("Recent")}</SideHeading>
         {recentPages.length === 0 ? (
-          <SideEmpty>Pages you open show up here.</SideEmpty>
+          <SideEmpty>{t("Pages you open show up here.")}</SideEmpty>
         ) : (
           recentPages.map((page) => (
             <SideRow
@@ -192,7 +199,7 @@ function ShortcutsColumn({
                 <ClockIcon className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
               }
             >
-              {page.title}
+              {t(page.title)}
             </SideRow>
           ))
         )}
@@ -218,6 +225,8 @@ export function ModulesMenu({
   align?: "start" | "end";
   sideOffset?: number;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const { settings, domains, views, activeModule, attention, hiddenSections } =
@@ -235,7 +244,7 @@ export function ModulesMenu({
         className="w-[min(60rem,calc(100vw-1.5rem))] gap-0 overflow-hidden rounded-lg p-0"
       >
         <nav
-          aria-label="Modules"
+          aria-label={t("Modules")}
           className="grid"
           style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr)) 13rem` }}
         >
@@ -265,7 +274,7 @@ export function ModulesMenu({
               )}
             >
               <SettingsIcon className="size-3" strokeWidth={1.75} />
-              Organization settings
+              {t("Organization settings")}
             </Link>
           )}
           <CustomizeSidebarDialog
@@ -275,12 +284,12 @@ export function ModulesMenu({
                 className="text-foreground hover:text-nav-active-foreground focus-visible:ring-ring/50 flex items-center gap-1.5 rounded-sm transition-colors outline-none focus-visible:ring-2"
               >
                 <SlidersHorizontalIcon className="size-3" strokeWidth={1.75} />
-                Customize navigation
+                {t("Customize navigation")}
               </button>
             }
           />
           <span className="ml-auto hidden items-center gap-1.5 sm:flex">
-            Type a page name in <Kbd>{formatShortcut("K")}</Kbd> to jump anywhere
+            {t("Type a page name in")} <Kbd>{formatShortcut("K")}</Kbd> {t("to jump anywhere")}
           </span>
         </div>
       </PopoverContent>

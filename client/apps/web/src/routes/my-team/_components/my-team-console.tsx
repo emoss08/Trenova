@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   classifyMembers,
@@ -22,6 +23,8 @@ import { TeamSummaryStrip } from "./team-summary";
 const EMPTY_DELEGATIONS: never[] = [];
 
 export default function MyTeamConsole() {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.Worker, Operation.Read);
   const { allowed: canReadCover } = usePermission(Resource.ApprovalDelegation, Operation.Read);
   const userId = useAuthStore((state) => state.user?.id);
@@ -56,7 +59,7 @@ export default function MyTeamConsole() {
   if (teamQuery.isError) {
     return (
       <div className="text-destructive rounded-lg border border-dashed p-4 text-sm">
-        Your team could not be loaded. {teamQuery.error.message}
+        {t("Your team could not be loaded. {0}", teamQuery.error.message)}
       </div>
     );
   }
@@ -65,7 +68,7 @@ export default function MyTeamConsole() {
     return (
       <div className="flex flex-col gap-4">
         <MyTeamEmpty
-          title="Nobody reports to you yet"
+          title={t("Nobody reports to you yet")}
           description={
             "A worker joins your team when their record names you as their manager, " +
             "when you manage the terminal they are in, or while a manager has handed " +

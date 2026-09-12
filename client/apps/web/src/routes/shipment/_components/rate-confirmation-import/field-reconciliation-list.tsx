@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
@@ -73,6 +74,8 @@ export function FieldReconciliationList({
   onEdit,
   onReset,
 }: FieldReconciliationListProps) {
+  const t = useT();
+
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (label: string) => {
@@ -119,7 +122,9 @@ export function FieldReconciliationList({
   if (groupedSections.length === 0 && ungroupedFields.length === 0) {
     return (
       <div className="text-muted-foreground/50 px-4 py-6 text-center text-xs">
-        {showIssuesOnly ? "All fields accepted. No issues to review." : "No fields extracted."}
+        {showIssuesOnly
+          ? t("All fields accepted. No issues to review.")
+          : t("No fields extracted.")}
       </div>
     );
   }
@@ -131,7 +136,7 @@ export function FieldReconciliationList({
         return (
           <div key={section.label} className="mb-1">
             <SectionHeader
-              label={section.label}
+              label={t(section.label)}
               issueCount={section.issueCount}
               collapsed={collapsed}
               onToggle={() => toggleSection(section.label)}
@@ -157,7 +162,7 @@ export function FieldReconciliationList({
       {ungroupedFields.length > 0 && (
         <div className="mb-1">
           <SectionHeader
-            label="Other"
+            label={t("Other")}
             issueCount={
               ungroupedFields.filter(
                 (f) =>

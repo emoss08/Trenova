@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
@@ -62,6 +63,8 @@ function emptyEnrollment(): BenefitEnrollmentFormValues {
 }
 
 export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<BenefitEnrollmentFormValues>({
     resolver: zodResolver(benefitEnrollmentFormSchema) as Resolver<BenefitEnrollmentFormValues>,
@@ -127,10 +130,9 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Enroll or decline</DialogTitle>
+          <DialogTitle>{t("Enroll or decline")}</DialogTitle>
           <DialogDescription>
-            Enrolling opens a settlement deduction for the employee contribution. Declining records
-            the decision and takes nothing.
+            {t("Enrolling opens a settlement deduction for the employee contribution. Declining records the decision and takes nothing.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -146,40 +148,40 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                 <SelectField<BenefitEnrollmentFormValues>
                   control={control}
                   name="benefitPlanId"
-                  label="Plan"
+                  label={t("Plan")}
                   options={planOptions}
                   rules={{ required: true }}
-                  placeholder="Pick a plan"
-                  description="The plan they are joining or declining; only plans open for enrollment are listed."
+                  placeholder={t("Pick a plan")}
+                  description={t("The plan they are joining or declining; only plans open for enrollment are listed.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<BenefitEnrollmentFormValues>
                   control={control}
                   name="coverageTier"
-                  label="Coverage"
+                  label={t("Coverage")}
                   options={TIER_OPTIONS}
                   isReadOnly={waive}
-                  placeholder="Pick a tier"
-                  description="The plan's employee price is scaled for a wider tier."
+                  placeholder={t("Pick a tier")}
+                  description={t("The plan's employee price is scaled for a wider tier.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<BenefitEnrollmentFormValues>
                   control={control}
                   name="effectiveFrom"
-                  label="Effective from"
+                  label={t("Effective from")}
                   rules={{ required: true }}
-                  placeholder="e.g. First of next month"
-                  description="The day the cover starts; the deduction is taken from the first settlement on or after it."
+                  placeholder={t("e.g. First of next month")}
+                  description={t("The day the cover starts; the deduction is taken from the first settlement on or after it.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<BenefitEnrollmentFormValues>
                   control={control}
                   name="waive"
-                  label="They declined the cover"
-                  description="Recorded rather than left blank: declined and nobody-asked are different facts at audit."
+                  label={t("They declined the cover")}
+                  description={t("Recorded rather than left blank: declined and nobody-asked are different facts at audit.")}
                 />
               </FormControl>
               {waive ? (
@@ -187,10 +189,10 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   <InputField<BenefitEnrollmentFormValues>
                     control={control}
                     name="waivedReason"
-                    label="Why"
-                    placeholder="e.g. Covered by a spouse's plan"
+                    label={t("Why")}
+                    placeholder={t("e.g. Covered by a spouse's plan")}
                     rules={{ required: true }}
-                    description="Kept on the enrollment as the record of why the cover was declined."
+                    description={t("Kept on the enrollment as the record of why the cover was declined.")}
                   />
                 </FormControl>
               ) : (
@@ -199,16 +201,15 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                     <MoneyField<BenefitEnrollmentFormValues>
                       control={control}
                       name="employeeCostMinor"
-                      label="Employee cost per period"
+                      label={t("Employee cost per period")}
                       placeholder="0.00"
-                      description="Leave empty to take the plan's own arithmetic for the tier."
+                      description={t("Leave empty to take the plan's own arithmetic for the tier.")}
                     />
                   </FormControl>
                   <FormControl cols="full">
                     <Alert variant="info">
                       <AlertDescription>
-                        The price is copied onto the enrollment, so repricing the plan next year
-                        cannot restate what they were charged this year.
+                        {t("The price is copied onto the enrollment, so repricing the plan next year cannot restate what they were charged this year.")}
                       </AlertDescription>
                     </Alert>
                   </FormControl>
@@ -218,19 +219,19 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                 <TextareaField<BenefitEnrollmentFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Enrolled during open enrollment"
-                  description="Kept with the enrollment and shown on the worker's benefits record."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Enrolled during open enrollment")}
+                  description={t("Kept with the enrollment and shown on the worker's benefits record.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {waive ? "Record" : "Enroll"}
+                {waive ? t("Record") : t("Enroll")}
               </Button>
             </DialogFooter>
           </Form>

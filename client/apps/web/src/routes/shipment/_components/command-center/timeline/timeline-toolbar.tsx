@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import {
@@ -78,6 +79,8 @@ export function TimelineToolbar({
   onDensityChange,
   onToggleCollapseAll,
 }: TimelineToolbarProps) {
+  const t = useT();
+
   const [calendarOpen, setCalendarOpen] = useState(false);
   const isCompact = density === "compact";
 
@@ -88,8 +91,8 @@ export function TimelineToolbar({
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Previous period"
-          title="Previous period (←)"
+          aria-label={t("Previous period")}
+          title={t("Previous period (←)")}
           onClick={() => onShift(-1)}
         >
           <ChevronLeftIcon className="size-3.5" />
@@ -98,18 +101,18 @@ export function TimelineToolbar({
           type="button"
           variant="outline"
           size="xxs"
-          title="Jump to today (T)"
+          title={t("Jump to today (T)")}
           onClick={onToday}
           disabled={isTodayAnchor(anchor)}
         >
-          Today
+          {t("Today")}
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Next period"
-          title="Next period (→)"
+          aria-label={t("Next period")}
+          title={t("Next period (→)")}
           onClick={() => onShift(1)}
         >
           <ChevronRightIcon className="size-3.5" />
@@ -119,7 +122,7 @@ export function TimelineToolbar({
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
           className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
-          aria-label="Jump to date"
+          aria-label={t("Jump to date")}
         >
           <CalendarIcon className="text-muted-foreground size-3" />
           {formatRangeLabel(anchor, zoom)}
@@ -141,7 +144,7 @@ export function TimelineToolbar({
 
       <div
         role="group"
-        aria-label="Timeline zoom"
+        aria-label={t("Timeline zoom")}
         className="border-border inline-flex overflow-hidden rounded-md border"
       >
         {ZOOM_OPTIONS.map((option, index) => (
@@ -158,7 +161,7 @@ export function TimelineToolbar({
                 : "bg-background text-muted-foreground hover:text-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
@@ -171,7 +174,7 @@ export function TimelineToolbar({
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Sort rows"
+                aria-label={t("Sort rows")}
                 title={`Sort · ${SORT_OPTIONS.find((o) => o.id === sort)?.label}`}
               />
             }
@@ -185,7 +188,7 @@ export function TimelineToolbar({
             >
               {SORT_OPTIONS.map((option) => (
                 <DropdownMenuRadioItem key={option.id} value={option.id}>
-                  {option.label}
+                  {t(option.label)}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -223,16 +226,16 @@ export function TimelineToolbar({
         {isFetching && (
           <span className="text-muted-foreground inline-flex items-center gap-1 text-[10px]">
             <Spinner className="size-3" />
-            Refreshing
+            {t("Refreshing")}
           </span>
         )}
         {truncated && (
           <span
             className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px]"
-            title="Narrow the window or filters to see everything at once."
+            title={t("Narrow the window or filters to see everything at once.")}
           >
             <TriangleAlertIcon className="size-3" />
-            Showing first {shipmentCount} of {totalCount} shipments
+            {t("Showing first {0} of {1} shipments", shipmentCount, totalCount)}
           </span>
         )}
         <div className="hidden items-center gap-2.5 md:flex">
@@ -242,12 +245,12 @@ export function TimelineToolbar({
               className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
             >
               <span className={cn("size-1.5 rounded-full", item.dotClass)} />
-              {item.label}
+              {t(item.label)}
             </span>
           ))}
         </div>
         <p className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
-          {barCount} {barCount === 1 ? "load" : "loads"} in view
+          {t("{0} {1} in view", barCount, barCount === 1 ? "load" : "loads")}
         </p>
       </div>
     </div>

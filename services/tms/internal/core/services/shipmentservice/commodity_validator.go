@@ -91,7 +91,7 @@ func validateShipmentCommodityIdentifiers(ctx commodityRuleContext) {
 		ctx.multiErr.Add(
 			currentPath,
 			errortypes.ErrDuplicate,
-			fmt.Sprintf("Shipment commodity ID duplicates %s", firstPath),
+			"Shipment commodity ID duplicates {0}", firstPath,
 		)
 		return
 	}

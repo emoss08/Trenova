@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -51,6 +52,8 @@ export function BillingQueueDocumentsTab({
   isEditable?: boolean;
   context?: "billing-queue" | "invoice";
 }) {
+  const t = useT();
+
   const [uploadOpen, setUploadOpen] = useState(false);
   const [replacingLineageId, setReplacingLineageId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -101,10 +104,10 @@ export function BillingQueueDocumentsTab({
     mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       invalidateAll();
-      toast.success("Document deleted");
+      toast.success(t("Document deleted"));
     },
     onError: () => {
-      toast.error("Failed to delete document");
+      toast.error(t("Failed to delete document"));
     },
   });
 
@@ -174,7 +177,7 @@ export function BillingQueueDocumentsTab({
                     variant="outline"
                     onClick={() => handleUploadForRequirement(req)}
                   >
-                    Upload
+                    {t("Upload")}
                   </Button>
                 )}
               </div>
@@ -188,13 +191,13 @@ export function BillingQueueDocumentsTab({
             <DocumentTypeAutocompleteField
               control={docTypeForm.control}
               name="documentTypeId"
-              placeholder="Document type (optional)"
+              placeholder={t("Document type (optional)")}
               clearable
             />
           </div>
           <Button size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
             <UploadIcon className="size-3.5" />
-            Upload
+            {t("Upload")}
           </Button>
         </div>
       )}
@@ -268,7 +271,7 @@ export function BillingQueueDocumentsTab({
                           }
                         />
                         <TooltipContent side="top" sideOffset={10}>
-                          Replace
+                          {t("Replace")}
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
@@ -287,7 +290,7 @@ export function BillingQueueDocumentsTab({
                           }
                         />
                         <TooltipContent side="top" sideOffset={10}>
-                          Delete
+                          {t("Delete")}
                         </TooltipContent>
                       </Tooltip>
                     </div>

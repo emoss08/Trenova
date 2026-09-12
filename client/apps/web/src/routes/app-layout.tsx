@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { SidebarLayout } from "@/components/navigation";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
@@ -23,6 +24,8 @@ import { RoleSelection, resolveAuthorizedRoles } from "./auth/_components/role-s
  * receipt carries three rows instead of four rather than a row that can never fill.
  */
 function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
   const authorizedRoles = resolveAuthorizedRoles(manifest);
   const organizationName = manifest.availableOrgs.find(
@@ -40,7 +43,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
 
   return (
     <>
-      <Metadata title="Select roles" description="Choose the roles to activate for this session" />
+      <Metadata title={t("Select roles")} description={t("Choose the roles to activate for this session")} />
       <AuthShell step="role" receipt={receipt}>
         <AuthCard stepKey="role">
           <RoleSelection
@@ -63,6 +66,8 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
  * skip to. The gate exists so the user is told why, not to be the thing stopping them.
  */
 function PasswordChangeGate() {
+  const t = useT();
+
   const user = useAuthStore((state) => state.user);
 
   const receipt: CredentialReceipt = {
@@ -75,7 +80,7 @@ function PasswordChangeGate() {
 
   return (
     <>
-      <Metadata title="Change password" description="Choose a new password to continue" />
+      <Metadata title={t("Change password")} description={t("Choose a new password to continue")} />
       <AuthShell step="login" receipt={receipt}>
         <AuthCard stepKey="change-password">
           <ChangePasswordForm />

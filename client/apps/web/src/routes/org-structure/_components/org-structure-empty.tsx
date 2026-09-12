@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -39,6 +40,8 @@ export function OrgStructureEmpty({
   onAddPosition,
   className,
 }: OrgStructureEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -48,7 +51,7 @@ export function OrgStructureEmpty({
         onAddPosition ? (
           <Button variant="outline" size="sm" onClick={onAddPosition}>
             <PlusIcon className="size-3.5" />
-            Add a position
+            {t("Add a position")}
           </Button>
         ) : null
       }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
 import type { EDIDocumentPreview } from "@trenova/shared/types/edi";
 import type { Extension } from "@codemirror/state";
@@ -27,6 +28,8 @@ export default function PreviewInspectorSheet({
   onTabChange: (tab: InspectorTab) => void;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
+
   const inspectMutation = useInspectX12Mutation();
   const { mutate } = inspectMutation;
   const context = useMemo(
@@ -50,13 +53,13 @@ export default function PreviewInspectorSheet({
       <SheetContent className="w-[min(1280px,calc(100vw-2rem))] gap-0 p-0 sm:max-w-none">
         <InspectorHeader context={context} fallbackTitle="Preview inspection" />
         {!preview || !context ? (
-          <InspectorState state="empty" message="Preview output is unavailable." />
+          <InspectorState state="empty" message={t("Preview output is unavailable.")} />
         ) : inspectMutation.isPending ? (
-          <InspectorState state="loading" message="Inspecting preview output." />
+          <InspectorState state="loading" message={t("Inspecting preview output.")} />
         ) : inspectMutation.isError ? (
           <InspectorState state="error" message={inspectionErrorMessage(inspectMutation.error)} />
         ) : !inspection ? (
-          <InspectorState state="empty" message="Inspection output is unavailable." />
+          <InspectorState state="empty" message={t("Inspection output is unavailable.")} />
         ) : (
           <InspectorTabs
             context={context}

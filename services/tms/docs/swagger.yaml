@@ -9324,6 +9324,8 @@ definitions:
                 type: string
             id:
                 type: string
+            locale:
+                type: string
             loginSlug:
                 type: string
             logoUrl:
@@ -9634,6 +9636,8 @@ definitions:
                 type: boolean
             lastLoginAt:
                 type: integer
+            locale:
+                type: string
             memberships:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.OrganizationMembership'
@@ -14946,6 +14950,8 @@ definitions:
         type: object
     internal_api_handlers_userhandler.UpdateMySettingsRequest:
         properties:
+            locale:
+                type: string
             timeFormat:
                 $ref: '#/definitions/github_com_emoss08_trenova_pkg_domaintypes.TimeFormat'
             timezone:

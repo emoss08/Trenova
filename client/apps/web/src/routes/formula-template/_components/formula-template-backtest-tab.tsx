@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EntityRedirectLink } from "@/components/link";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
@@ -72,28 +73,30 @@ const VERSION_PICKER_LIMIT = 100;
 const SHIPMENTS_BASE_URL = "/shipment-management/shipments";
 
 function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
+  const t = useT();
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <StatTile label="Shipments" value={`${summary.evaluatedCount}/${summary.shipmentCount}`} />
-        <StatTile label="Changed" value={String(summary.changedCount)} />
+        <StatTile label={t("Shipments")} value={`${summary.evaluatedCount}/${summary.shipmentCount}`} />
+        <StatTile label={t("Changed")} value={String(summary.changedCount)} />
         <StatTile
-          label="Increased"
+          label={t("Increased")}
           value={String(summary.increasedCount)}
           tone="text-emerald-600 dark:text-emerald-400"
         />
         <StatTile
-          label="Decreased"
+          label={t("Decreased")}
           value={String(summary.decreasedCount)}
           tone="text-red-600 dark:text-red-400"
         />
         <StatTile
-          label="Clamped"
+          label={t("Clamped")}
           value={String(summary.guardrailCount)}
           tone={summary.guardrailCount > 0 ? "text-blue-600 dark:text-blue-400" : undefined}
         />
         <StatTile
-          label="Failed"
+          label={t("Failed")}
           value={String(summary.errorCount)}
           tone={summary.errorCount > 0 ? "text-destructive" : undefined}
         />
@@ -101,17 +104,14 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
 
       {summary.errorCount > 0 && (
         <p className="text-muted-foreground text-xs">
-          {summary.currentErrorCount > 0 &&
-            `${summary.currentErrorCount} could not be re-rated with the current template`}
-          {summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · "}
-          {summary.candidateErrorCount > 0 &&
-            `${summary.candidateErrorCount} failed under the candidate`}
-          . Failed shipments are excluded from the totals below.
+          {t("{0} {1} {2} . Failed shipments are excluded from the totals below.", summary.currentErrorCount > 0 &&
+            t("{0} could not be re-rated with the current template", summary.currentErrorCount), summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · ", summary.candidateErrorCount > 0 &&
+            t("{0} failed under the candidate", summary.candidateErrorCount))}
         </p>
       )}
 
       <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-        <span className="text-muted-foreground">Total</span>
+        <span className="text-muted-foreground">{t("Total")}</span>
         <span className="font-mono font-medium tabular-nums">
           {formatCurrency(summary.currentTotal)}
         </span>
@@ -121,8 +121,7 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         </span>
         <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
         <span className="text-muted-foreground ml-auto text-xs">
-          Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
-          {formatCurrency(summary.maxDecrease)}
+          {t("Max increase {0} · Max decrease {1}", formatCurrency(summary.maxIncrease), formatCurrency(summary.maxDecrease))}
         </span>
       </div>
     </div>
@@ -130,6 +129,8 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
 }
 
 function BacktestResultRow({ result }: { result: BacktestResult }) {
+  const t = useT();
+
   const hasError = !!result.currentError || !!result.candidateError;
 
   return (
@@ -173,7 +174,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
                 render={<ShieldIcon className="size-3.5 text-blue-500 dark:text-blue-400" />}
               />
               <TooltipContent side="left" className="text-xs">
-                Guardrail clamped the candidate amount
+                {t("Guardrail clamped the candidate amount")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -183,8 +184,8 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
                 render={<AlertTriangleIcon className="text-destructive size-3.5" />}
               />
               <TooltipContent side="left" className="max-w-72 text-xs">
-                {result.currentError && <p>Current: {result.currentError}</p>}
-                {result.candidateError && <p>Candidate: {result.candidateError}</p>}
+                {result.currentError && <p>{t("Current: {0}", result.currentError)}</p>}
+                {result.candidateError && <p>{t("Candidate: {0}", result.candidateError)}</p>}
               </TooltipContent>
             </Tooltip>
           )}
@@ -203,6 +204,8 @@ function VersionPicker({
   value: number;
   onChange: (versionNumber: number) => void;
 }) {
+  const t = useT();
+
   const versions = useQuery({
     ...queries.formulaTemplate.versions(templateId, VERSION_PICKER_LIMIT),
     staleTime: 30_000,
@@ -212,7 +215,7 @@ function VersionPicker({
 
   return (
     <div className="w-64">
-      <label className="text-muted-foreground mb-1.5 block text-xs font-medium">Version</label>
+      <label className="text-muted-foreground mb-1.5 block text-xs font-medium">{t("Version")}</label>
       <Select
         value={hasSelected ? String(value) : ""}
         onValueChange={(next) => {
@@ -220,7 +223,7 @@ function VersionPicker({
         }}
         disabled={versions.isPending || options.length === 0}
       >
-        <SelectTrigger className="h-8 w-full text-xs" aria-label="Backtest version">
+        <SelectTrigger className="h-8 w-full text-xs" aria-label={t("Backtest version")}>
           <SelectValue
             placeholder={
               versions.isPending
@@ -247,6 +250,8 @@ export default function FormulaTemplateBacktestTab({
   form,
   template,
 }: FormulaTemplateBacktestTabProps) {
+  const t = useT();
+
   const [source, setSource] = useState<CandidateSource>("editor");
   const [versionNumber, setVersionNumber] = useState<number>(template?.currentVersionNumber ?? 1);
   const [limit, setLimit] = useState<number>(50);
@@ -260,8 +265,8 @@ export default function FormulaTemplateBacktestTab({
         limit,
       }),
     onError: () => {
-      toast.error("Backtest failed", {
-        description: "Please try again or contact your system administrator.",
+      toast.error(t("Backtest failed"), {
+        description: t("Please try again or contact your system administrator."),
       });
     },
   });
@@ -280,10 +285,9 @@ export default function FormulaTemplateBacktestTab({
     <div className="space-y-4">
       <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
-          <p className="text-sm font-medium">Backtest Candidate</p>
+          <p className="text-sm font-medium">{t("Backtest Candidate")}</p>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Re-rate recent shipments priced by this template and compare against their current
-            amounts. Nothing is saved.
+            {t("Re-rate recent shipments priced by this template and compare against their current amounts. Nothing is saved.")}
           </p>
         </div>
 
@@ -300,8 +304,8 @@ export default function FormulaTemplateBacktestTab({
                   : "border-border bg-background hover:bg-muted/50",
               )}
             >
-              <p className="text-xs font-medium">{option.label}</p>
-              <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
+              <p className="text-xs font-medium">{t(option.label)}</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">{t(option.description)}</p>
             </button>
           ))}
         </div>
@@ -316,7 +320,7 @@ export default function FormulaTemplateBacktestTab({
           )}
           <div className="w-32">
             <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-              Shipment Limit
+              {t("Shipment Limit")}
             </label>
             <NumberFieldRoot
               value={limit}
@@ -337,11 +341,11 @@ export default function FormulaTemplateBacktestTab({
             onClick={() => mutation.mutate()}
             disabled={!canRun}
             isLoading={mutation.isPending}
-            loadingText="Running..."
+            loadingText={t("Running...")}
             className="gap-1.5"
           >
             <PlayIcon className="size-3.5" />
-            Run Backtest
+            {t("Run Backtest")}
           </Button>
         </div>
       </div>
@@ -352,9 +356,7 @@ export default function FormulaTemplateBacktestTab({
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-muted-foreground text-xs">
-              {mutation.data.results.length} shipment
-              {mutation.data.results.length === 1 ? "" : "s"} re-rated. Click a Pro # to open the
-              shipment.
+              {t("{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.", mutation.data.results.length)}
             </p>
             <Button
               type="button"
@@ -365,7 +367,7 @@ export default function FormulaTemplateBacktestTab({
               className="gap-1.5"
             >
               <DownloadIcon className="size-3.5" />
-              Export CSV
+              {t("Export CSV")}
             </Button>
           </div>
 
@@ -373,10 +375,10 @@ export default function FormulaTemplateBacktestTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Pro #</TableHead>
-                  <TableHead className="text-right text-xs">Current</TableHead>
-                  <TableHead className="text-right text-xs">Candidate</TableHead>
-                  <TableHead className="text-right text-xs">Delta</TableHead>
+                  <TableHead className="text-xs">{t("Pro #")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Current")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Candidate")}</TableHead>
+                  <TableHead className="text-right text-xs">{t("Delta")}</TableHead>
                   <TableHead className="w-16" />
                 </TableRow>
               </TableHeader>
@@ -387,7 +389,7 @@ export default function FormulaTemplateBacktestTab({
                       colSpan={5}
                       className="text-muted-foreground py-8 text-center text-sm"
                     >
-                      No shipments have been rated with this template yet
+                      {t("No shipments have been rated with this template yet")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -403,13 +405,12 @@ export default function FormulaTemplateBacktestTab({
         !mutation.isPending && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
             <HistoryIcon className="text-muted-foreground mb-3 size-8" />
-            <p className="text-sm font-medium">No backtest results yet</p>
+            <p className="text-sm font-medium">{t("No backtest results yet")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              Run a backtest to preview how the candidate expression would change charges on
-              shipments already rated by this template.
+              {t("Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.")}
               {template?.currentVersionNumber ? (
                 <Badge variant="outline" className="text-2xs ml-1 font-mono">
-                  head v{template.currentVersionNumber}
+                  {t("head v{0}", template.currentVersionNumber)}
                 </Badge>
               ) : null}
             </p>

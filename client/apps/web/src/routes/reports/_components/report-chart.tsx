@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ChartContainer,
   ChartLegend,
@@ -285,13 +286,15 @@ function KpiTile({
   indexes,
   className,
 }: ReportChartProps & { indexes: Map<string, number> }) {
+  const t = useT();
+
   const seriesId = chart.seriesIds?.[0];
   const byId = new Map(columns.map((column) => [column.id, column]));
   const column = seriesId ? byId.get(seriesId) : undefined;
   const columnIndex = seriesId ? indexes.get(seriesId) : undefined;
 
   if (!column || columnIndex === undefined) {
-    return <EmptyChart message="Choose the measure this KPI shows." />;
+    return <EmptyChart message={t("Choose the measure this KPI shows.")} />;
   }
 
   const row = rows[0] ?? [];
@@ -330,7 +333,9 @@ function KpiTile({
             <TrendingDownIcon className="size-3.5" />
           )}
           {(delta * 100).toFixed(1)}%
-          <span className="text-muted-foreground">vs {compareColumn?.label ?? "previous"}</span>
+          <span className="text-muted-foreground">
+            {t("vs {0}", compareColumn?.label ?? "previous")}
+          </span>
         </p>
       )}
       {attainment !== null && (
@@ -342,7 +347,7 @@ function KpiTile({
             />
           </div>
           <p className="text-2xs text-muted-foreground tabular-nums">
-            {(attainment * 100).toFixed(0)}% of {chart.goal?.label || "target"}
+            {t("{0}% of {1}", (attainment * 100).toFixed(0), chart.goal?.label || "target")}
           </p>
         </div>
       )}
@@ -351,6 +356,8 @@ function KpiTile({
 }
 
 export function ReportChart(props: ReportChartProps) {
+  const t = useT();
+
   const { chart, columns, rows, className, categorySelect } = props;
   const indexes = useMemo(() => columnIndexMap(columns), [columns]);
   const points = useMemo(
@@ -371,10 +378,10 @@ export function ReportChart(props: ReportChartProps) {
     return <ReportMap chart={chart} columns={columns} rows={rows} className={className} />;
   }
   if (seriesIds.length === 0) {
-    return <EmptyChart message="Choose at least one measure to plot." />;
+    return <EmptyChart message={t("Choose at least one measure to plot.")} />;
   }
   if (points.length === 0) {
-    return <EmptyChart message="This report returned no rows to plot." />;
+    return <EmptyChart message={t("This report returned no rows to plot.")} />;
   }
 
   const legend = !chart.hideLegend && seriesIds.length > 1;

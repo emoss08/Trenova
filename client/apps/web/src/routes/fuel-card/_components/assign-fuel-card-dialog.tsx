@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   TractorAutocompleteField,
   WorkerAutocompleteField,
@@ -44,6 +45,8 @@ export function AssignFuelCardDialog({
   card,
   onAssigned,
 }: AssignFuelCardDialogProps) {
+  const t = useT();
+
   const form = useForm<AssignFuelCardValues>({
     defaultValues: { assignedTractorId: "", assignedWorkerId: "" },
   });
@@ -83,8 +86,8 @@ export function AssignFuelCardDialog({
       });
     },
     onSuccess: async () => {
-      toast.success("Card assigned", {
-        description: "Purchases on this card will match to what it is assigned to.",
+      toast.success(t("Card assigned"), {
+        description: t("Purchases on this card will match to what it is assigned to."),
       });
       onOpenChange(false);
       await onAssigned();
@@ -95,10 +98,9 @@ export function AssignFuelCardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign card {card ? maskedCardNumber(card.lastFour) : ""}</DialogTitle>
+          <DialogTitle>{t("Assign card {0}", card ? maskedCardNumber(card.lastFour) : "")}</DialogTitle>
           <DialogDescription>
-            Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving
-            both empty puts it back in the unassigned list.
+            {t("Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving both empty puts it back in the unassigned list.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -108,8 +110,8 @@ export function AssignFuelCardDialog({
                 <TractorAutocompleteField
                   name="assignedTractorId"
                   control={control}
-                  label="Tractor"
-                  placeholder="Select a tractor"
+                  label={t("Tractor")}
+                  placeholder={t("Select a tractor")}
                   clearable
                 />
               </FormControl>
@@ -117,18 +119,18 @@ export function AssignFuelCardDialog({
                 <WorkerAutocompleteField
                   name="assignedWorkerId"
                   control={control}
-                  label="Driver"
-                  placeholder="Select a driver"
+                  label={t("Driver")}
+                  placeholder={t("Select a driver")}
                   clearable
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Assigning...">
-                Assign
+              <Button type="submit" isLoading={isPending} loadingText={t("Assigning...")}>
+                {t("Assign")}
               </Button>
             </DialogFooter>
           </Form>

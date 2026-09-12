@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -76,6 +77,8 @@ const emptyOrganizationDefaults: OrganizationSettings = {
 };
 
 export default function OrganizationSettingsForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
 
@@ -154,14 +157,14 @@ export default function OrganizationSettingsForm() {
   if (!organizationId) {
     return (
       <div className="text-muted-foreground py-8 text-sm">
-        No active organization found for this session.
+        {t("No active organization found for this session.")}
       </div>
     );
   }
 
   if (organizationQuery.isLoading) {
     return (
-      <div className="text-muted-foreground py-8 text-sm">Loading organization settings...</div>
+      <div className="text-muted-foreground py-8 text-sm">{t("Loading organization settings...")}</div>
     );
   }
 
@@ -174,15 +177,15 @@ export default function OrganizationSettingsForm() {
       <TabsList variant="underline">
         <TabsTab value="general">
           <Building2Icon size={16} />
-          General
+          {t("General")}
         </TabsTab>
         <TabsTab value="security">
           <ShieldIcon size={16} />
-          Security
+          {t("Security")}
         </TabsTab>
         <TabsTab value="billing-usage">
           <CreditCardIcon size={16} />
-          Billing & Usage
+          {t("Billing & Usage")}
         </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
@@ -194,7 +197,7 @@ export default function OrganizationSettingsForm() {
               <OperatingModelForm />
               <ComplianceForm />
               <AddressForm />
-              <FormSaveDock saveButtonContent="Save Changes" />
+              <FormSaveDock saveButtonContent={t("Save Changes")} />
             </Form>
           </FormProvider>
         </Activity>
@@ -220,6 +223,8 @@ function LogoForm({
   organizationId: string;
   onLogoUpdated: (updatedOrganization: OrganizationSettings) => Promise<void>;
 }) {
+  const t = useT();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -257,12 +262,12 @@ function LogoForm({
       setPendingFile(selectedFile);
       setIsCropOpen(true);
     } catch (error) {
-      toast.error("Unsupported logo file", {
+      toast.error(t("Unsupported logo file"), {
         description:
           error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
       });
     }
-  }, []);
+  }, [t]);
 
   const handleLogoUpload = useCallback(
     async (file: File) => {
@@ -271,9 +276,9 @@ function LogoForm({
         file,
       );
       await onLogoUpdated(updatedOrganization);
-      toast.success("Organization logo updated");
+      toast.success(t("Organization logo updated"));
     },
-    [onLogoUpdated, organizationId],
+    [onLogoUpdated, organizationId, t],
   );
 
   const handleRemoveLogo = useCallback(async () => {
@@ -285,21 +290,21 @@ function LogoForm({
     try {
       const updated = await apiService.organizationService.deleteLogo(organizationId);
       await onLogoUpdated(updated);
-      toast.success("Organization logo removed");
+      toast.success(t("Organization logo removed"));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to remove logo";
-      toast.error("Failed to remove logo", { description: message });
+      toast.error(t("Failed to remove logo"), { description: message });
     }
 
     setIsRemovingLogo(false);
-  }, [isRemovingLogo, onLogoUpdated, organizationId]);
+  }, [isRemovingLogo, onLogoUpdated, organizationId, t]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Organization Branding</CardTitle>
+        <CardTitle>{t("Organization Branding")}</CardTitle>
         <CardDescription>
-          Upload and manage your organization logo used across the application.
+          {t("Upload and manage your organization logo used across the application.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -308,11 +313,11 @@ function LogoForm({
             {displayLogoURL ? (
               <img
                 src={displayLogoURL}
-                alt="Organization logo"
+                alt={t("Organization logo")}
                 className="h-full w-full rounded-md object-cover"
               />
             ) : (
-              <span className="text-muted-foreground text-xs">No logo</span>
+              <span className="text-muted-foreground text-xs">{t("No logo")}</span>
             )}
             {displayLogoURL ? (
               <button
@@ -320,8 +325,8 @@ function LogoForm({
                 onClick={handleRemoveLogo}
                 disabled={isRemovingLogo}
                 className="bg-background/95 text-foreground hover:bg-muted absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Remove logo"
-                title="Remove logo"
+                aria-label={t("Remove logo")}
+                title={t("Remove logo")}
               >
                 <CircleXIcon className="size-4" />
               </button>
@@ -335,7 +340,7 @@ function LogoForm({
             disabled={isRemovingLogo}
           >
             <UploadIcon className="size-4" />
-            Upload Logo
+            {t("Upload Logo")}
           </Button>
           <input
             ref={fileInputRef}
@@ -350,10 +355,10 @@ function LogoForm({
       <ImageCropUploadDialog
         open={isCropOpen}
         file={pendingFile}
-        title="Crop Organization Logo"
-        description="Adjust the visible bounds before uploading your organization logo."
+        title={t("Crop Organization Logo")}
+        description={t("Adjust the visible bounds before uploading your organization logo.")}
         {...organizationLogoCropConfig}
-        confirmLabel="Upload Logo"
+        confirmLabel={t("Upload Logo")}
         onClose={() => {
           setIsCropOpen(false);
           setPendingFile(null);
@@ -365,15 +370,16 @@ function LogoForm({
 }
 
 function GeneralForm() {
+  const t = useT();
+
   const { control } = useFormContext<OrganizationSettings>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Organization Details</CardTitle>
+        <CardTitle>{t("Organization Details")}</CardTitle>
         <CardDescription>
-          Core business identifiers and operational settings that define your organization profile
-          in the system.
+          {t("Core business identifiers and operational settings that define your organization profile in the system.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -383,8 +389,8 @@ function GeneralForm() {
               control={control}
               name="name"
               rules={{ required: true }}
-              label="Name"
-              placeholder="Enter organization name"
+              label={t("Name")}
+              placeholder={t("Enter organization name")}
             />
           </FormControl>
           <FormControl cols="full">
@@ -392,14 +398,14 @@ function GeneralForm() {
               control={control}
               rules={{ required: true }}
               name="timezone"
-              label="Timezone"
-              placeholder="Select timezone"
+              label={t("Timezone")}
+              placeholder={t("Select timezone")}
               groups={timezoneGroupedChoices}
               renderOption={(option) => (
                 <span className="flex w-full items-center justify-between gap-3">
-                  <span>{option.label}</span>
+                  <span>{t(option.label)}</span>
                   {option.description && (
-                    <span className="text-muted-foreground text-xs">{option.description}</span>
+                    <span className="text-muted-foreground text-xs">{t(option.description)}</span>
                   )}
                 </span>
               )}
@@ -409,9 +415,9 @@ function GeneralForm() {
             <InputField
               control={control}
               name="loginSlug"
-              label="Tenant Login Slug"
+              label={t("Tenant Login Slug")}
               placeholder="acme-logistics"
-              description="Used for tenant sign-in URLs such as /login/acme-logistics."
+              description={t("Used for tenant sign-in URLs such as /login/acme-logistics.")}
             />
           </FormControl>
         </FormGroup>
@@ -427,6 +433,8 @@ const OPERATING_MODEL_PRESETS: SegmentedControlItem<OrganizationCapabilityPreset
 ];
 
 function OperatingModelForm() {
+  const t = useT();
+
   const { control, setValue } = useFormContext<OrganizationSettings>();
   const brokerageEnabled = useWatch({ control, name: "brokerageEnabled" });
   const assetOperationsEnabled = useWatch({ control, name: "assetOperationsEnabled" });
@@ -460,27 +468,24 @@ function OperatingModelForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Operating Model</CardTitle>
+        <CardTitle>{t("Operating Model")}</CardTitle>
         <CardDescription>
-          Tailors the menus to the freight this organization actually moves. This controls
-          visibility only — it hides features from menus and navigation. It does not restrict
-          permissions or API access, and it never changes existing records.
+          {t("Tailors the menus to the freight this organization actually moves. This controls visibility only — it hides features from menus and navigation. It does not restrict permissions or API access, and it never changes existing records.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Preset</span>
+            <span className="text-sm font-medium">{t("Preset")}</span>
             <SegmentedControl
-              aria-label="Operating model preset"
+              aria-label={t("Operating model preset")}
               items={OPERATING_MODEL_PRESETS}
               value={preset}
               onValueChange={applyPreset}
               fullWidth
             />
             <span className="text-2xs text-muted-foreground">
-              A preset simply sets the two switches below. Adjust either one on its own for a
-              combination the presets do not cover.
+              {t("A preset simply sets the two switches below. Adjust either one on its own for a combination the presets do not cover.")}
             </span>
           </div>
           <FormGroup cols={1}>
@@ -488,16 +493,16 @@ function OperatingModelForm() {
               <SwitchField
                 control={control}
                 name="brokerageEnabled"
-                label="Brokerage Features"
-                description="Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access."
+                label={t("Brokerage Features")}
+                description={t("Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.")}
               />
             </FormControl>
             <FormControl>
               <SwitchField
                 control={control}
                 name="assetOperationsEnabled"
-                label="Asset Operations"
-                description="Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet."
+                label={t("Asset Operations")}
+                description={t("Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet.")}
               />
             </FormControl>
           </FormGroup>
@@ -508,14 +513,16 @@ function OperatingModelForm() {
 }
 
 function ComplianceForm() {
+  const t = useT();
+
   const { control } = useFormContext<OrganizationSettings>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Regulatory Compliance</CardTitle>
+        <CardTitle>{t("Regulatory Compliance")}</CardTitle>
         <CardDescription>
-          Regulatory identifiers required for operations and reporting.
+          {t("Regulatory identifiers required for operations and reporting.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -525,8 +532,8 @@ function ComplianceForm() {
               control={control}
               name="scacCode"
               rules={{ required: true }}
-              label="SCAC Code"
-              placeholder="Enter SCAC code"
+              label={t("SCAC Code")}
+              placeholder={t("Enter SCAC code")}
             />
           </FormControl>
           <FormControl>
@@ -534,12 +541,12 @@ function ComplianceForm() {
               control={control}
               name="dotNumber"
               rules={{ required: true }}
-              label="DOT Number"
-              placeholder="Enter DOT number"
+              label={t("DOT Number")}
+              placeholder={t("Enter DOT number")}
             />
           </FormControl>
           <FormControl>
-            <InputField control={control} name="taxId" label="Tax ID" placeholder="Enter Tax ID" />
+            <InputField control={control} name="taxId" label={t("Tax ID")} placeholder={t("Enter Tax ID")} />
           </FormControl>
         </FormGroup>
       </CardContent>
@@ -548,14 +555,16 @@ function ComplianceForm() {
 }
 
 function AddressForm() {
+  const t = useT();
+
   const { control } = useFormContext<OrganizationSettings>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registered Address</CardTitle>
+        <CardTitle>{t("Registered Address")}</CardTitle>
         <CardDescription>
-          Legal headquarters location used for correspondence and compliance.
+          {t("Legal headquarters location used for correspondence and compliance.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -565,16 +574,16 @@ function AddressForm() {
               control={control}
               name="addressLine1"
               rules={{ required: true }}
-              label="Address Line 1"
-              placeholder="Enter address"
+              label={t("Address Line 1")}
+              placeholder={t("Enter address")}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               control={control}
               name="addressLine2"
-              label="Suite/Unit"
-              placeholder="Enter suite or unit number"
+              label={t("Suite/Unit")}
+              placeholder={t("Enter suite or unit number")}
             />
           </FormControl>
           <FormControl cols={1}>
@@ -582,8 +591,8 @@ function AddressForm() {
               control={control}
               name="city"
               rules={{ required: true }}
-              label="City"
-              placeholder="Enter city"
+              label={t("City")}
+              placeholder={t("Enter city")}
             />
           </FormControl>
           <FormControl cols={1}>
@@ -591,8 +600,8 @@ function AddressForm() {
               control={control}
               name="stateId"
               rules={{ required: true }}
-              label="State"
-              placeholder="State"
+              label={t("State")}
+              placeholder={t("State")}
             />
           </FormControl>
           <FormControl cols={2}>
@@ -600,8 +609,8 @@ function AddressForm() {
               control={control}
               name="postalCode"
               rules={{ required: true }}
-              label="ZIP Code"
-              placeholder="Enter ZIP code"
+              label={t("ZIP Code")}
+              placeholder={t("Enter ZIP code")}
             />
           </FormControl>
         </FormGroup>

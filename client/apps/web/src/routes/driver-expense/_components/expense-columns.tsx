@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
@@ -15,8 +17,10 @@ export const expenseStatusMeta: Record<string, { label: string; variant: BadgeVa
 };
 
 export function DriverExpenseStatusBadge({ status }: { status: string }) {
+  const t = useT();
+
   const meta = expenseStatusMeta[status] ?? { label: status, variant: "secondary" as const };
-  return <Badge variant={meta.variant}>{meta.label}</Badge>;
+  return <Badge variant={meta.variant}>{t(meta.label)}</Badge>;
 }
 
 function workerName(row: DriverExpenseRow): string {
@@ -56,7 +60,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
       header: "Description",
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
-          {row.original.description}
+          {translate(row.original.description)}
         </span>
       ),
       size: 300,
@@ -76,7 +80,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
       header: "Receipt",
       cell: ({ row }) =>
         row.original.receiptDocumentId ? (
-          <Badge variant="secondary">Attached</Badge>
+          <Badge variant="secondary">{translate("Attached")}</Badge>
         ) : (
           <span className="text-muted-foreground text-xs">—</span>
         ),

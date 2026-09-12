@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Checkbox } from "@/components/animate-ui/components/base/checkbox";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
@@ -61,6 +62,8 @@ function sanitizeAccountingControlForSubmit(values: AccountingControl): Accounti
 }
 
 export default function AccountingControlForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.accountingControl.get(),
   });
@@ -98,7 +101,7 @@ export default function AccountingControlForm() {
           <DriverSettlementPostingCard />
           <PeriodAndReconciliationCard />
           <CurrencyAndAccountsCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -106,15 +109,16 @@ export default function AccountingControlForm() {
 }
 
 function RecognitionPolicyCard() {
+  const t = useT();
+
   const { control } = useFormContext<AccountingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recognition Policy</CardTitle>
+        <CardTitle>{t("Recognition Policy")}</CardTitle>
         <CardDescription>
-          Define the organization accounting basis and the revenue and expense recognition policies
-          that must remain compatible with that basis.
+          {t("Define the organization accounting basis and the revenue and expense recognition policies that must remain compatible with that basis.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -123,8 +127,8 @@ function RecognitionPolicyCard() {
             <SelectField
               control={control}
               name="accountingBasis"
-              label="Accounting Basis"
-              description="Sets the organization’s primary accounting basis and constrains the valid recognition policies."
+              label={t("Accounting Basis")}
+              description={t("Sets the organization’s primary accounting basis and constrains the valid recognition policies.")}
               options={accountingBasisChoices}
               rules={{ required: true }}
             />
@@ -133,8 +137,8 @@ function RecognitionPolicyCard() {
             <SelectField
               control={control}
               name="revenueRecognitionPolicy"
-              label="Revenue Recognition Policy"
-              description="Defines the event that recognizes revenue for organization-controlled accounting entries."
+              label={t("Revenue Recognition Policy")}
+              description={t("Defines the event that recognizes revenue for organization-controlled accounting entries.")}
               options={revenueRecognitionPolicyChoices}
               rules={{ required: true }}
             />
@@ -143,8 +147,8 @@ function RecognitionPolicyCard() {
             <SelectField
               control={control}
               name="expenseRecognitionPolicy"
-              label="Expense Recognition Policy"
-              description="Defines the event that recognizes expense for organization-controlled accounting entries."
+              label={t("Expense Recognition Policy")}
+              description={t("Defines the event that recognizes expense for organization-controlled accounting entries.")}
               options={expenseRecognitionPolicyChoices}
               rules={{ required: true }}
             />
@@ -156,6 +160,8 @@ function RecognitionPolicyCard() {
 }
 
 function JournalPolicyCard() {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<AccountingControl>();
   const journalPostingMode = useWatch({ control, name: "journalPostingMode" });
   const autoPostSourceEvents = useWatch({ control, name: "autoPostSourceEvents" }) ?? [];
@@ -172,10 +178,9 @@ function JournalPolicyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Journal Policy</CardTitle>
+        <CardTitle>{t("Journal Policy")}</CardTitle>
         <CardDescription>
-          Configure automatic journal creation, manual journal policy, and the chart-of-account
-          defaults required for accounting automation.
+          {t("Configure automatic journal creation, manual journal policy, and the chart-of-account defaults required for accounting automation.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -184,8 +189,8 @@ function JournalPolicyCard() {
             <SelectField
               control={control}
               name="journalPostingMode"
-              label="Journal Posting Mode"
-              description="Controls whether journals are created only by explicit user action or automatically from configured source events."
+              label={t("Journal Posting Mode")}
+              description={t("Controls whether journals are created only by explicit user action or automatically from configured source events.")}
               options={journalPostingModeChoices}
               rules={{ required: true }}
             />
@@ -193,10 +198,9 @@ function JournalPolicyCard() {
           {journalPostingMode === "Automatic" && (
             <FormControl className="max-w-[720px]">
               <div className="flex flex-col gap-3">
-                <Label className="text-sm font-medium">Auto-Post Source Events</Label>
+                <Label className="text-sm font-medium">{t("Auto-Post Source Events")}</Label>
                 <p className="text-muted-foreground text-sm">
-                  Select the posted business events that are allowed to generate journal entries
-                  automatically.
+                  {t("Select the posted business events that are allowed to generate journal entries automatically.")}
                 </p>
                 <FormGroup cols={2}>
                   {journalSourceEventChoices.map((option) => {
@@ -210,7 +214,7 @@ function JournalPolicyCard() {
                             toggleEvent(option.value, Boolean(nextChecked))
                           }
                         />
-                        <span>{option.label}</span>
+                        <span>{t(option.label)}</span>
                       </label>
                     );
                   })}
@@ -222,8 +226,8 @@ function JournalPolicyCard() {
             <SelectField
               control={control}
               name="manualJournalEntryPolicy"
-              label="Manual Journal Entry Policy"
-              description="Defines whether users may create manual journals broadly, only for adjustments, or not at all."
+              label={t("Manual Journal Entry Policy")}
+              description={t("Defines whether users may create manual journals broadly, only for adjustments, or not at all.")}
               options={manualJournalEntryPolicyChoices}
               rules={{ required: true }}
             />
@@ -232,8 +236,8 @@ function JournalPolicyCard() {
             <SwitchField
               control={control}
               name="requireManualJeApproval"
-              label="Require Manual JE Approval"
-              description="Requires approval before an allowed manual journal entry can be finalized."
+              label={t("Require Manual JE Approval")}
+              description={t("Requires approval before an allowed manual journal entry can be finalized.")}
               position="left"
             />
           </FormControl>
@@ -241,8 +245,8 @@ function JournalPolicyCard() {
             <SelectField
               control={control}
               name="journalReversalPolicy"
-              label="Journal Reversal Policy"
-              description="Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked."
+              label={t("Journal Reversal Policy")}
+              description={t("Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked.")}
               options={journalReversalPolicyChoices}
               rules={{ required: true }}
             />
@@ -251,9 +255,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultRevenueAccountId"
-              label="Default Revenue Account"
-              placeholder="Select revenue account"
-              description="Default GL account used when automatic journal posting creates revenue entries."
+              label={t("Default Revenue Account")}
+              placeholder={t("Select revenue account")}
+              description={t("Default GL account used when automatic journal posting creates revenue entries.")}
               clearable
             />
           </FormControl>
@@ -261,9 +265,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultCashAccountId"
-              label="Default Cash Account"
-              placeholder="Select cash account"
-              description="GL account debited when customer payments are posted. Required to record customer payments."
+              label={t("Default Cash Account")}
+              placeholder={t("Select cash account")}
+              description={t("GL account debited when customer payments are posted. Required to record customer payments.")}
               clearable
             />
           </FormControl>
@@ -271,9 +275,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultUnappliedCashAccountId"
-              label="Default Unapplied Cash Account"
-              placeholder="Select unapplied cash account"
-              description="Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments."
+              label={t("Default Unapplied Cash Account")}
+              placeholder={t("Select unapplied cash account")}
+              description={t("Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments.")}
               clearable
             />
           </FormControl>
@@ -281,9 +285,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultExpenseAccountId"
-              label="Default Expense Account"
-              placeholder="Select expense account"
-              description="Default GL account used when automatic journal posting creates expense entries."
+              label={t("Default Expense Account")}
+              placeholder={t("Select expense account")}
+              description={t("Default GL account used when automatic journal posting creates expense entries.")}
               clearable
             />
           </FormControl>
@@ -291,9 +295,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultArAccountId"
-              label="Default AR Account"
-              placeholder="Select AR account"
-              description="Default accounts receivable account for invoice-related journal posting."
+              label={t("Default AR Account")}
+              placeholder={t("Select AR account")}
+              description={t("Default accounts receivable account for invoice-related journal posting.")}
               clearable
             />
           </FormControl>
@@ -301,9 +305,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultApAccountId"
-              label="Default AP Account"
-              placeholder="Select AP account"
-              description="Default accounts payable account for vendor-bill-related journal posting."
+              label={t("Default AP Account")}
+              placeholder={t("Select AP account")}
+              description={t("Default accounts payable account for vendor-bill-related journal posting.")}
               clearable
             />
           </FormControl>
@@ -311,9 +315,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultTaxLiabilityAccountId"
-              label="Default Tax Liability Account"
-              placeholder="Select tax liability account"
-              description="Default liability account used when tax amounts are posted from accounting flows."
+              label={t("Default Tax Liability Account")}
+              placeholder={t("Select tax liability account")}
+              description={t("Default liability account used when tax amounts are posted from accounting flows.")}
               clearable
             />
           </FormControl>
@@ -321,9 +325,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultWriteOffAccountId"
-              label="Default Write-Off Account"
-              placeholder="Select write-off account"
-              description="Default account used when approved write-offs are booked through adjustment workflows."
+              label={t("Default Write-Off Account")}
+              placeholder={t("Select write-off account")}
+              description={t("Default account used when approved write-offs are booked through adjustment workflows.")}
               clearable
             />
           </FormControl>
@@ -331,9 +335,9 @@ function JournalPolicyCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultRetainedEarningsAccountId"
-              label="Default Retained Earnings Account"
-              placeholder="Select retained earnings account"
-              description="Default retained earnings account used by closing and equity-related accounting processes."
+              label={t("Default Retained Earnings Account")}
+              placeholder={t("Select retained earnings account")}
+              description={t("Default retained earnings account used by closing and equity-related accounting processes.")}
               clearable
             />
           </FormControl>
@@ -344,16 +348,16 @@ function JournalPolicyCard() {
 }
 
 function DriverSettlementPostingCard() {
+  const t = useT();
+
   const { control } = useFormContext<AccountingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Driver Settlement Posting</CardTitle>
+        <CardTitle>{t("Driver Settlement Posting")}</CardTitle>
         <CardDescription>
-          GL accounts used when driver settlements post to the ledger. These allocations feed the
-          DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects
-          actual driver pay.
+          {t("GL accounts used when driver settlements post to the ledger. These allocations feed the DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects actual driver pay.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -362,9 +366,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultDriverPayExpenseAccountId"
-              label="Driver Pay Expense Account"
-              placeholder="Select driver pay expense account"
-              description="Expense account debited for company-driver earnings when a settlement posts. Required to post settlements."
+              label={t("Driver Pay Expense Account")}
+              placeholder={t("Select driver pay expense account")}
+              description={t("Expense account debited for company-driver earnings when a settlement posts. Required to post settlements.")}
               clearable
             />
           </FormControl>
@@ -372,9 +376,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultPurchasedTransportationAccountId"
-              label="Purchased Transportation Account"
-              placeholder="Select purchased transportation account"
-              description="Expense account debited for owner-operator earnings instead of driver pay expense. Required to post owner-operator settlements."
+              label={t("Purchased Transportation Account")}
+              placeholder={t("Select purchased transportation account")}
+              description={t("Expense account debited for owner-operator earnings instead of driver pay expense. Required to post owner-operator settlements.")}
               clearable
             />
           </FormControl>
@@ -382,9 +386,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultDriverReimbursementAccountId"
-              label="Driver Reimbursement Account"
-              placeholder="Select reimbursement account"
-              description="Expense account debited for non-taxable reimbursements such as per diem and stipends; falls back to the driver pay expense account when unset."
+              label={t("Driver Reimbursement Account")}
+              placeholder={t("Select reimbursement account")}
+              description={t("Expense account debited for non-taxable reimbursements such as per diem and stipends; falls back to the driver pay expense account when unset.")}
               clearable
             />
           </FormControl>
@@ -392,9 +396,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultSettlementsPayableAccountId"
-              label="Settlements Payable Account"
-              placeholder="Select settlements payable account"
-              description="Liability account credited for the net pay owed to the driver until the settlement is paid. Required to post settlements."
+              label={t("Settlements Payable Account")}
+              placeholder={t("Select settlements payable account")}
+              description={t("Liability account credited for the net pay owed to the driver until the settlement is paid. Required to post settlements.")}
               clearable
             />
           </FormControl>
@@ -402,9 +406,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultDriverAdvanceAccountId"
-              label="Driver Advance Receivable Account"
-              placeholder="Select advance receivable account"
-              description="Asset account tracking outstanding driver advances; credited when advances are recovered and debited for negative-balance carry-forwards."
+              label={t("Driver Advance Receivable Account")}
+              placeholder={t("Select advance receivable account")}
+              description={t("Asset account tracking outstanding driver advances; credited when advances are recovered and debited for negative-balance carry-forwards.")}
               clearable
             />
           </FormControl>
@@ -412,9 +416,9 @@ function DriverSettlementPostingCard() {
             <GLAccountAutocompleteField
               control={control}
               name="defaultEscrowLiabilityAccountId"
-              label="Escrow Liability Account"
-              placeholder="Select escrow liability account"
-              description="Liability account credited for driver escrow contributions withheld from settlements."
+              label={t("Escrow Liability Account")}
+              placeholder={t("Select escrow liability account")}
+              description={t("Liability account credited for driver escrow contributions withheld from settlements.")}
               clearable
             />
           </FormControl>
@@ -425,16 +429,17 @@ function DriverSettlementPostingCard() {
 }
 
 function PeriodAndReconciliationCard() {
+  const t = useT();
+
   const { control } = useFormContext<AccountingControl>();
   const reconciliationMode = useWatch({ control, name: "reconciliationMode" });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Period And Reconciliation</CardTitle>
+        <CardTitle>{t("Period And Reconciliation")}</CardTitle>
         <CardDescription>
-          Define period-close automation, posting restrictions for locked and closed periods, and
-          how reconciliation exceptions affect posting and close.
+          {t("Define period-close automation, posting restrictions for locked and closed periods, and how reconciliation exceptions affect posting and close.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -443,8 +448,8 @@ function PeriodAndReconciliationCard() {
             <SelectField
               control={control}
               name="periodCloseMode"
-              label="Period Close Mode"
-              description="Controls whether accounting periods are closed manually or by a scheduled system job."
+              label={t("Period Close Mode")}
+              description={t("Controls whether accounting periods are closed manually or by a scheduled system job.")}
               options={periodCloseModeChoices}
               rules={{ required: true }}
             />
@@ -453,8 +458,8 @@ function PeriodAndReconciliationCard() {
             <SwitchField
               control={control}
               name="requirePeriodCloseApproval"
-              label="Require Period Close Approval"
-              description="Requires an approval step before a manually closed period can be finalized."
+              label={t("Require Period Close Approval")}
+              description={t("Requires an approval step before a manually closed period can be finalized.")}
               position="left"
             />
           </FormControl>
@@ -462,8 +467,8 @@ function PeriodAndReconciliationCard() {
             <SelectField
               control={control}
               name="lockedPeriodPostingPolicy"
-              label="Locked Period Posting Policy"
-              description="Defines how the system handles posting attempts into a locked accounting period."
+              label={t("Locked Period Posting Policy")}
+              description={t("Defines how the system handles posting attempts into a locked accounting period.")}
               options={lockedPeriodPostingPolicyChoices}
               rules={{ required: true }}
             />
@@ -472,8 +477,8 @@ function PeriodAndReconciliationCard() {
             <SelectField
               control={control}
               name="closedPeriodPostingPolicy"
-              label="Closed Period Posting Policy"
-              description="Defines whether posting to a closed period requires reopening or is redirected to the next open period."
+              label={t("Closed Period Posting Policy")}
+              description={t("Defines whether posting to a closed period requires reopening or is redirected to the next open period.")}
               options={closedPeriodPostingPolicyChoices}
               rules={{ required: true }}
             />
@@ -482,8 +487,8 @@ function PeriodAndReconciliationCard() {
             <SelectField
               control={control}
               name="reconciliationMode"
-              label="Reconciliation Mode"
-              description="Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting."
+              label={t("Reconciliation Mode")}
+              description={t("Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting.")}
               options={reconciliationModeChoices}
               rules={{ required: true }}
             />
@@ -493,8 +498,8 @@ function PeriodAndReconciliationCard() {
               <NumberField
                 control={control}
                 name="reconciliationToleranceAmount"
-                label="Reconciliation Tolerance Amount"
-                description="Maximum allowed discrepancy amount before the configured reconciliation response applies."
+                label={t("Reconciliation Tolerance Amount")}
+                description={t("Maximum allowed discrepancy amount before the configured reconciliation response applies.")}
                 rules={{ required: true }}
               />
             </FormControl>
@@ -503,8 +508,8 @@ function PeriodAndReconciliationCard() {
             <SwitchField
               control={control}
               name="requireReconciliationToClose"
-              label="Require Reconciliation To Close"
-              description="Prevents period close while unresolved reconciliation discrepancies remain open."
+              label={t("Require Reconciliation To Close")}
+              description={t("Prevents period close while unresolved reconciliation discrepancies remain open.")}
               position="left"
             />
           </FormControl>
@@ -512,8 +517,8 @@ function PeriodAndReconciliationCard() {
             <SwitchField
               control={control}
               name="notifyOnReconciliationException"
-              label="Notify On Reconciliation Exception"
-              description="Sends notifications when a reconciliation discrepancy is recorded."
+              label={t("Notify On Reconciliation Exception")}
+              description={t("Sends notifications when a reconciliation discrepancy is recorded.")}
               position="left"
             />
           </FormControl>
@@ -524,6 +529,8 @@ function PeriodAndReconciliationCard() {
 }
 
 function CurrencyAndAccountsCard() {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<AccountingControl>();
   const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
   const currencyMode = useWatch({ control, name: "currencyMode" });
@@ -567,9 +574,9 @@ function CurrencyAndAccountsCard() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Currency Settings</CardTitle>
+          <CardTitle>{t("Currency Settings")}</CardTitle>
           <CardDescription>
-            Configure the accounting currency mode and functional currency for financial reporting.
+            {t("Configure the accounting currency mode and functional currency for financial reporting.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="max-w-prose">
@@ -589,8 +596,8 @@ function CurrencyAndAccountsCard() {
               <SelectField
                 control={control}
                 name="currencyMode"
-                label="Currency Mode"
-                description="Determines whether the organization operates in a single functional currency or supports foreign-currency transactions."
+                label={t("Currency Mode")}
+                description={t("Determines whether the organization operates in a single functional currency or supports foreign-currency transactions.")}
                 options={currencyModeChoices}
                 rules={{ required: true }}
               />
@@ -599,8 +606,8 @@ function CurrencyAndAccountsCard() {
               <SelectField
                 control={control}
                 name="functionalCurrencyCode"
-                label="Functional Currency"
-                description="Base currency used for organization accounting and financial reporting."
+                label={t("Functional Currency")}
+                description={t("Base currency used for organization accounting and financial reporting.")}
                 options={currencyChoices}
                 rules={{ required: true }}
               />
@@ -608,18 +615,17 @@ function CurrencyAndAccountsCard() {
             {isMultiCurrency && showCurrencyPolicy && (
               <>
                 <div className="flex flex-col gap-1 border-t pt-4">
-                  <h3 className="text-sm font-medium">Currency Policy</h3>
+                  <h3 className="text-sm font-medium">{t("Currency Policy")}</h3>
                   <p className="text-muted-foreground text-sm">
-                    Configure exchange-rate date selection, override handling, and realized FX
-                    accounts.
+                    {t("Configure exchange-rate date selection, override handling, and realized FX accounts.")}
                   </p>
                 </div>
                 <FormControl className="max-w-[420px]">
                   <SelectField
                     control={control}
                     name="exchangeRateDatePolicy"
-                    label="Exchange Rate Date Policy"
-                    description="Determines which date is used to select the exchange rate for multi-currency accounting."
+                    label={t("Exchange Rate Date Policy")}
+                    description={t("Determines which date is used to select the exchange rate for multi-currency accounting.")}
                     options={exchangeRateDatePolicyChoices}
                     rules={{ required: true }}
                   />
@@ -628,8 +634,8 @@ function CurrencyAndAccountsCard() {
                   <SelectField
                     control={control}
                     name="exchangeRateOverridePolicy"
-                    label="Exchange Rate Override Policy"
-                    description="Controls whether users may override exchange rates and whether those overrides require approval."
+                    label={t("Exchange Rate Override Policy")}
+                    description={t("Controls whether users may override exchange rates and whether those overrides require approval.")}
                     options={exchangeRateOverridePolicyChoices}
                     rules={{ required: true }}
                   />
@@ -638,9 +644,9 @@ function CurrencyAndAccountsCard() {
                   <GLAccountAutocompleteField
                     control={control}
                     name="realizedFxGainAccountId"
-                    label="Realized FX Gain Account"
-                    placeholder="Select FX gain account"
-                    description="Default account for realized foreign exchange gains in multi-currency accounting."
+                    label={t("Realized FX Gain Account")}
+                    placeholder={t("Select FX gain account")}
+                    description={t("Default account for realized foreign exchange gains in multi-currency accounting.")}
                     clearable
                   />
                 </FormControl>
@@ -648,9 +654,9 @@ function CurrencyAndAccountsCard() {
                   <GLAccountAutocompleteField
                     control={control}
                     name="realizedFxLossAccountId"
-                    label="Realized FX Loss Account"
-                    placeholder="Select FX loss account"
-                    description="Default account for realized foreign exchange losses in multi-currency accounting."
+                    label={t("Realized FX Loss Account")}
+                    placeholder={t("Select FX loss account")}
+                    description={t("Default account for realized foreign exchange losses in multi-currency accounting.")}
                     clearable
                   />
                 </FormControl>
@@ -684,6 +690,8 @@ function OANDAReadinessPanel({
   ready: boolean;
   onConfigure: () => void;
 }) {
+  const t = useT();
+
   const title = ready ? "OANDA connected" : "OANDA required";
   let description = "Connect OANDA to unlock multi-currency exchange-rate policy fields.";
   if (loading) {
@@ -720,7 +728,7 @@ function OANDAReadinessPanel({
           title={!canReadIntegrations ? "Integration permission required" : "Configure OANDA"}
         >
           <Settings2 className="size-4" />
-          Configure
+          {t("Configure")}
         </Button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -81,6 +82,8 @@ function OpenEscrowPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<OpenEscrowAccountFormValues>({
     resolver: zodResolver(openEscrowAccountFormSchema) as Resolver<OpenEscrowAccountFormValues>,
     defaultValues: { workerId: "", targetAmount: 0, annualInterestRate: null, openedDate: null },
@@ -91,8 +94,8 @@ function OpenEscrowPanel({
     <FormCreatePanel<OpenEscrowAccountFormValues, EscrowAccountRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Escrow Account"
-      description="One active escrow account per driver; contributions flow in from settlements via a recurring deduction."
+      title={t("Escrow Account")}
+      description={t("One active escrow account per driver; contributions flow in from settlements via a recurring deduction.")}
       queryKey="escrow-account-list"
       form={form}
       formComponent={
@@ -101,33 +104,33 @@ function OpenEscrowPanel({
             <WorkerAutocompleteField
               control={control}
               name="workerId"
-              label="Driver"
-              placeholder="Select owner-operator"
+              label={t("Driver")}
+              placeholder={t("Select owner-operator")}
               ownerOperatorsOnly
               rules={{ required: true }}
-              description="Only owner-operators are listed — contractors and drivers on an owner-operator pay profile."
+              description={t("Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="targetAmount"
-              label="Funding Target"
+              label={t("Funding Target")}
               decimalScale={2}
               fixedDecimalScale
-              sideText="USD"
-              description="Contributions stop automatically once the balance reaches this target."
+              sideText={t("USD")}
+              description={t("Contributions stop automatically once the balance reaches this target.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="annualInterestRate"
-              label="Annual Interest Rate"
+              label={t("Annual Interest Rate")}
               decimalScale={2}
               fixedDecimalScale
               sideText="%"
-              description="Defaults to your settlement control rate. Interest accrues at least quarterly."
+              description={t("Defaults to your settlement control rate. Interest accrues at least quarterly.")}
             />
           </FormControl>
         </FormGroup>
@@ -147,6 +150,8 @@ function OpenEscrowPanel({
 }
 
 function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
@@ -171,7 +176,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
         description: adjustDescription.trim(),
       }),
     onSuccess: () => {
-      toast.success("Escrow adjustment recorded");
+      toast.success(t("Escrow adjustment recorded"));
       setAdjustOpen(false);
       setAdjustAmount("");
       setAdjustDescription("");
@@ -183,7 +188,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
   const closeMutation = useMutation({
     mutationFn: () => closeEscrowAccount(accountId),
     onSuccess: () => {
-      toast.success("Escrow account closed; remaining balance refunded");
+      toast.success(t("Escrow account closed; remaining balance refunded"));
       setCloseOpen(false);
       invalidate();
       onClose();
@@ -211,13 +216,12 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       <div className="flex flex-wrap items-center gap-2">
         <EscrowAccountStatusBadge status={account.status as EscrowAccountStatus} />
         <span className="text-muted-foreground text-xs">
-          Opened {formatDate(account.openedDate)}
-          {account.closedDate ? ` · Closed ${formatDate(account.closedDate)}` : ""}
+          {t("Opened {0}{1}", formatDate(account.openedDate), account.closedDate ? ` ${t("· Closed {0}", formatDate(account.closedDate))}` : "")}
         </span>
         {account.status === "Active" && (
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setAdjustOpen(true)}>
-              Record Adjustment
+              {t("Record Adjustment")}
             </Button>
             <Button
               size="sm"
@@ -225,7 +229,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
               className="text-red-600 dark:text-red-400"
               onClick={() => setCloseOpen(true)}
             >
-              Close Account
+              {t("Close Account")}
             </Button>
           </div>
         )}
@@ -233,13 +237,13 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
 
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Balance</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Balance")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Target</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Target")}</p>
           <p className="mt-1 text-sm font-semibold">
             {account.targetAmountMinor > 0 ? (
               <AmountDisplay value={account.targetAmountMinor} currency={account.currencyCode} />
@@ -249,10 +253,10 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Interest Rate</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Interest Rate")}</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
             {Number(account.annualInterestRate) > 0
-              ? `${Number(account.annualInterestRate).toFixed(2)}% / yr`
+              ? t("{0}% / yr", Number(account.annualInterestRate).toFixed(2))
               : "—"}
           </p>
         </div>
@@ -260,24 +264,24 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
 
       <div>
         <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-          Transaction Ledger
+          {t("Transaction Ledger")}
         </h4>
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2 font-medium">Date</th>
-                <th className="px-3 py-2 font-medium">Type</th>
-                <th className="px-3 py-2 font-medium">Description</th>
-                <th className="px-3 py-2 text-right font-medium">Amount</th>
-                <th className="px-3 py-2 text-right font-medium">Balance</th>
+                <th className="px-3 py-2 font-medium">{t("Date")}</th>
+                <th className="px-3 py-2 font-medium">{t("Type")}</th>
+                <th className="px-3 py-2 font-medium">{t("Description")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Amount")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Balance")}</th>
               </tr>
             </thead>
             <tbody>
               {(account.transactions ?? []).length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-muted-foreground px-3 py-4 text-center">
-                    No transactions yet
+                    {t("No transactions yet")}
                   </td>
                 </tr>
               )}
@@ -302,18 +306,16 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </table>
         </div>
         <p className="text-muted-foreground mt-2 text-[11px]">
-          This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR
-          376.12(k); interest accrues at least quarterly.
+          {t("This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR 376.12(k); interest accrues at least quarterly.")}
         </p>
       </div>
 
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record escrow adjustment</DialogTitle>
+            <DialogTitle>{t("Record escrow adjustment")}</DialogTitle>
             <DialogDescription>
-              Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid
-              from escrow).
+              {t("Positive amounts add to the balance; negative amounts apply funds (e.g. a repair paid from escrow).")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
@@ -321,34 +323,33 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
               <Input
                 value={adjustAmount}
                 onChange={(e) => setAdjustAmount(e.target.value)}
-                placeholder="Amount (e.g. 250.00 or -400.00)"
+                placeholder={t("Amount (e.g. 250.00 or -400.00)")}
                 inputMode="decimal"
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
-                Dollars, not cents; positive deposits into escrow, negative applies funds out.
+                {t("Dollars, not cents; positive deposits into escrow, negative applies funds out.")}
               </p>
             </div>
             <div>
               <Input
                 value={adjustDescription}
                 onChange={(e) => setAdjustDescription(e.target.value)}
-                placeholder="Description (required)"
+                placeholder={t("Description (required)")}
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
-                Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow
-                transaction to be accounted for.
+                {t("Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow transaction to be accounted for.")}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdjustOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               disabled={!adjustValid || adjustMutation.isPending}
               onClick={() => adjustMutation.mutate()}
             >
-              Record
+              {t("Record")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -357,23 +358,22 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Close escrow account</DialogTitle>
+            <DialogTitle>{t("Close escrow account")}</DialogTitle>
             <DialogDescription>
-              The remaining balance of{" "}
-              <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} /> will be
-              refunded to the driver as a ledger entry. This cannot be undone.
+              {t("The remaining balance of")}{" "}
+              <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} /> {t("will be refunded to the driver as a ledger entry. This cannot be undone.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCloseOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="destructive"
               disabled={closeMutation.isPending}
               onClick={() => closeMutation.mutate()}
             >
-              Close Account
+              {t("Close Account")}
             </Button>
           </DialogFooter>
         </DialogContent>

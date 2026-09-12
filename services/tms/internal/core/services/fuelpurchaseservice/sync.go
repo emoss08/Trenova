@@ -70,7 +70,7 @@ func (s *Service) SyncFeed(
 	}
 	if feed == nil {
 		return nil, errortypes.NewBusinessError(
-			req.Provider.Label() + " is not connected for this organization",
+			"{0} is not connected for this organization", req.Provider.Label(),
 		)
 	}
 

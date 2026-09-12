@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -56,6 +57,8 @@ export function NotificationItem({
   actions: NotificationItemActions;
   onNavigate: (link: string) => void;
 }) {
+  const t = useT();
+
   const descriptor = getNotificationDescriptor(notification.eventType);
   const link = getNotificationLink(notification);
   const isUnread = notification.readAt === null;
@@ -118,7 +121,7 @@ export function NotificationItem({
               isUnread ? "text-foreground font-medium" : "text-muted-foreground",
             )}
           >
-            {notification.title}
+            {t(notification.title)}
           </p>
           <span className="flex shrink-0 items-center gap-1.5">
             <span className="text-2xs text-muted-foreground/60 whitespace-nowrap tabular-nums">
@@ -146,24 +149,24 @@ export function NotificationItem({
         )}
       >
         {isArchived ? (
-          <ItemAction label="Restore" onClick={() => actions.restore([notification.id])}>
+          <ItemAction label={t("Restore")} onClick={() => actions.restore([notification.id])}>
             <ArchiveRestoreIcon className="size-3" />
           </ItemAction>
         ) : (
           <>
             {isUnread ? (
-              <ItemAction label="Mark as read" onClick={() => actions.markRead([notification.id])}>
+              <ItemAction label={t("Mark as read")} onClick={() => actions.markRead([notification.id])}>
                 <CheckIcon className="size-3" />
               </ItemAction>
             ) : (
               <ItemAction
-                label="Mark as unread"
+                label={t("Mark as unread")}
                 onClick={() => actions.markUnread([notification.id])}
               >
                 <MailIcon className="size-3" />
               </ItemAction>
             )}
-            <ItemAction label="Archive" onClick={() => actions.archive([notification.id])}>
+            <ItemAction label={t("Archive")} onClick={() => actions.archive([notification.id])}>
               <ArchiveIcon className="size-3" />
             </ItemAction>
           </>

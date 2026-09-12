@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -50,6 +51,8 @@ function emptyDelegation(): DelegationFormValues {
 }
 
 export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm<DelegationFormValues>({
     resolver: zodResolver(delegationFormSchema) as Resolver<DelegationFormValues>,
@@ -81,9 +84,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
         reason: values.reason ?? undefined,
       }),
     onSuccess: () => {
-      toast.success("Cover arranged", {
+      toast.success(t("Cover arranged"), {
         description:
-          "They can now approve what you can approve, for the people you manage — and nothing beyond that.",
+          t("They can now approve what you can approve, for the people you manage — and nothing beyond that."),
       });
       void queryClient.invalidateQueries({ queryKey: [APPROVAL_DELEGATIONS_KEY] });
       onOpenChange(false);
@@ -94,10 +97,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Arrange cover</DialogTitle>
+          <DialogTitle>{t("Arrange cover")}</DialogTitle>
           <DialogDescription>
-            Hand your approvals to somebody else while you are away. Cover widens what they can act
-            on; it never widens what you could approve yourself.
+            {t("Hand your approvals to somebody else while you are away. Cover widens what they can act on; it never widens what you could approve yourself.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -113,9 +115,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <UserAutocompleteField<DelegationFormValues>
                   control={control}
                   name="delegateId"
-                  label="Who is covering"
-                  placeholder="Select a colleague"
-                  description="The colleague who approves in your place while the cover runs."
+                  label={t("Who is covering")}
+                  placeholder={t("Select a colleague")}
+                  description={t("The colleague who approves in your place while the cover runs.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -123,10 +125,10 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <SelectField<DelegationFormValues>
                   control={control}
                   name="scope"
-                  label="What they can approve"
+                  label={t("What they can approve")}
                   options={SCOPE_OPTIONS}
-                  placeholder="Pick what is covered"
-                  description="Limits the cover to one kind of approval, or hands over all of them."
+                  placeholder={t("Pick what is covered")}
+                  description={t("Limits the cover to one kind of approval, or hands over all of them.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -134,9 +136,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <AutoCompleteDateField<DelegationFormValues>
                   control={control}
                   name="startsAt"
-                  label="From"
-                  placeholder="e.g. Today"
-                  description="The first day they can approve on your behalf."
+                  label={t("From")}
+                  placeholder={t("e.g. Today")}
+                  description={t("The first day they can approve on your behalf.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -144,17 +146,16 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <AutoCompleteDateField<DelegationFormValues>
                   control={control}
                   name="endsAt"
-                  label="Until"
-                  placeholder="e.g. Next Friday"
-                  description="The last day of cover; approvals come back to you after it."
+                  label={t("Until")}
+                  placeholder={t("e.g. Next Friday")}
+                  description={t("The last day of cover; approvals come back to you after it.")}
                 />
               </FormControl>
               {endsAt ? null : (
                 <FormControl cols="full">
                   <Alert variant="warning">
                     <AlertDescription>
-                      With no end date this runs until you call it back. Set one if you are covering
-                      a specific absence.
+                      {t("With no end date this runs until you call it back. Set one if you are covering a specific absence.")}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -163,18 +164,18 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <InputField<DelegationFormValues>
                   control={control}
                   name="reason"
-                  label="Why"
-                  placeholder="e.g. Annual leave"
-                  description="Kept with the delegation so an approval made under it can be explained."
+                  label={t("Why")}
+                  placeholder={t("e.g. Annual leave")}
+                  description={t("Kept with the delegation so an approval made under it can be explained.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Arrange
+                {t("Arrange")}
               </Button>
             </DialogFooter>
           </Form>

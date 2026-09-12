@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
@@ -39,6 +40,8 @@ const STATUS_FILTERS: Array<{ label: string; value: BankReceiptStatus }> = [
 ];
 
 export function BankReceiptPage() {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(bankReceiptSearchParams);
   const { item: selectedReceiptId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
@@ -122,22 +125,22 @@ export function BankReceiptPage() {
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
           <SummaryCard
-            label="Imported"
+            label={t("Imported")}
             value={String(summaryQuery.data?.importedCount ?? 0)}
             amount={summaryQuery.data?.importedAmount}
           />
           <SummaryCard
-            label="Matched"
+            label={t("Matched")}
             value={String(summaryQuery.data?.matchedCount ?? 0)}
             amount={summaryQuery.data?.matchedAmount}
           />
           <SummaryCard
-            label="Exceptions"
+            label={t("Exceptions")}
             value={String(summaryQuery.data?.exceptionCount ?? 0)}
             amount={summaryQuery.data?.exceptionAmount}
           />
           <SummaryCard
-            label="Active Work Items"
+            label={t("Active Work Items")}
             value={String(summaryQuery.data?.activeWorkItemCount ?? 0)}
           />
         </div>
@@ -148,7 +151,7 @@ export function BankReceiptPage() {
             <Input
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
-              placeholder="Search reference, memo..."
+              placeholder={t("Search reference, memo...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
@@ -160,13 +163,13 @@ export function BankReceiptPage() {
               }
             >
               <SelectTrigger className="h-7 text-xs">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder={t("All statuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">{t("All statuses")}</SelectItem>
                 {STATUS_FILTERS.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -233,7 +236,7 @@ export function BankReceiptPage() {
               {isFetchingNextPage ? (
                 <div className="flex items-center justify-center py-4">
                   <TextShimmer className="font-mono text-sm" duration={1}>
-                    Loading more...
+                    {t("Loading more...")}
                   </TextShimmer>
                 </div>
               ) : null}
@@ -247,8 +250,8 @@ export function BankReceiptPage() {
           {!selectedRow ? (
             <BillingDetailUnselected
               layout="cards"
-              title="Nothing open"
-              description="Pick a receipt from the list to see its details and the payments it could be matched to."
+              title={t("Nothing open")}
+              description={t("Pick a receipt from the list to see its details and the payments it could be matched to.")}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -271,6 +274,8 @@ function ReceiptDetail({
   receipt: BankReceipt;
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
+  const t = useT();
+
   const suggestionsQuery = useQuery({
     ...queries.bankReceipt.suggestions(receipt.id!),
     enabled: receipt.status !== "Matched" && Boolean(receipt.id),
@@ -281,9 +286,9 @@ function ReceiptDetail({
       apiService.bankReceiptService.match(receipt.id!, customerPaymentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["bankReceipt"] });
-      toast.success("Receipt matched to payment");
+      toast.success(t("Receipt matched to payment"));
     },
-    onError: () => toast.error("Failed to match receipt"),
+    onError: () => toast.error(t("Failed to match receipt")),
   });
 
   return (
@@ -303,26 +308,26 @@ function ReceiptDetail({
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
           <div className="bg-card rounded-lg border p-3">
-            <SectionLabel>Receipt Details</SectionLabel>
+            <SectionLabel>{t("Receipt Details")}</SectionLabel>
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-              <PropertyCell label="Reference">
+              <PropertyCell label={t("Reference")}>
                 <span className="text-xs font-medium">{receipt.referenceNumber}</span>
               </PropertyCell>
-              <PropertyCell label="Date">
+              <PropertyCell label={t("Date")}>
                 <span className="text-xs font-medium">
                   {formatReceiptDate(receipt.receiptDate)}
                 </span>
               </PropertyCell>
-              <PropertyCell label="Amount">
+              <PropertyCell label={t("Amount")}>
                 <AmountDisplay value={receipt.amountMinor} className="text-xs font-medium" />
               </PropertyCell>
-              <PropertyCell label="Status">
+              <PropertyCell label={t("Status")}>
                 <AccountingStatusBadge status={receipt.status} />
               </PropertyCell>
             </div>
             {receipt.memo ? (
               <div className="mt-2.5">
-                <PropertyCell label="Memo">
+                <PropertyCell label={t("Memo")}>
                   <p className="text-muted-foreground mt-0.5 text-xs">{receipt.memo}</p>
                 </PropertyCell>
               </div>
@@ -333,7 +338,7 @@ function ReceiptDetail({
             <div className="rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
               <div className="flex items-center gap-1.5">
                 <TriangleAlertIcon className="size-3.5 text-red-600 dark:text-red-400" />
-                <SectionLabel>Exception Reason</SectionLabel>
+                <SectionLabel>{t("Exception Reason")}</SectionLabel>
               </div>
               <p className="mt-1.5 text-xs text-red-700 dark:text-red-300">
                 {receipt.exceptionReason}
@@ -345,15 +350,15 @@ function ReceiptDetail({
             <div className="rounded-lg border border-green-200 bg-green-50/50 p-3 dark:border-green-900/50 dark:bg-green-950/20">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
-                <SectionLabel>Matched Payment</SectionLabel>
+                <SectionLabel>{t("Matched Payment")}</SectionLabel>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-                <PropertyCell label="Payment ID">
+                <PropertyCell label={t("Payment ID")}>
                   <span className="font-mono text-xs font-medium">
-                    {receipt.matchedCustomerPaymentId ?? "N/A"}
+                    {receipt.matchedCustomerPaymentId ?? t("N/A")}
                   </span>
                 </PropertyCell>
-                <PropertyCell label="Matched At">
+                <PropertyCell label={t("Matched At")}>
                   <span className="text-xs font-medium">
                     {formatUnixDateTime(receipt.matchedAt)}
                   </span>
@@ -369,10 +374,10 @@ function ReceiptDetail({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <LinkIcon className="text-muted-foreground size-3.5" />
-                  <SectionLabel>Match Suggestions</SectionLabel>
+                  <SectionLabel>{t("Match Suggestions")}</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (
-                  <Badge variant="secondary">{suggestionsQuery.data.length} found</Badge>
+                  <Badge variant="secondary">{t("{0} found", suggestionsQuery.data.length)}</Badge>
                 ) : null}
               </div>
               <div className="mt-2">
@@ -384,7 +389,7 @@ function ReceiptDetail({
                   </div>
                 ) : !suggestionsQuery.data || suggestionsQuery.data.length === 0 ? (
                   <p className="text-muted-foreground py-4 text-center text-xs">
-                    No match suggestions available.
+                    {t("No match suggestions available.")}
                   </p>
                 ) : (
                   <SuggestionTable
@@ -411,16 +416,18 @@ function SuggestionTable({
   onMatch: (customerPaymentId: string) => void;
   isMatching: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="overflow-hidden rounded-md border">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 text-muted-foreground text-left">
           <tr>
-            <th className="px-3 py-2 text-xs font-medium">Reference</th>
-            <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
-            <th className="px-3 py-2 text-right text-xs font-medium">Score</th>
-            <th className="px-3 py-2 text-xs font-medium">Reason</th>
-            <th className="px-3 py-2 text-right text-xs font-medium">Action</th>
+            <th className="px-3 py-2 text-xs font-medium">{t("Reference")}</th>
+            <th className="px-3 py-2 text-right text-xs font-medium">{t("Amount")}</th>
+            <th className="px-3 py-2 text-right text-xs font-medium">{t("Score")}</th>
+            <th className="px-3 py-2 text-xs font-medium">{t("Reason")}</th>
+            <th className="px-3 py-2 text-right text-xs font-medium">{t("Action")}</th>
           </tr>
         </thead>
         <tbody>
@@ -447,7 +454,7 @@ function SuggestionTable({
                   onClick={() => onMatch(suggestion.customerPaymentId)}
                   disabled={isMatching}
                 >
-                  Match
+                  {t("Match")}
                 </Button>
               </td>
             </tr>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
@@ -13,12 +14,14 @@ export const AuditTimeline = memo(function AuditTimeline({
   records: ProvisioningAuditRecord[];
   isLoading: boolean;
 }) {
+  const t = useT();
+
   return (
     <div className="bg-background rounded-lg border">
       <PanelHeader
         icon={<ActivityIcon />}
-        title="Provisioning audit"
-        description="Recent user and group synchronization events."
+        title={t("Provisioning audit")}
+        description={t("Recent user and group synchronization events.")}
       />
       <div className="divide-y">
         {isLoading ? (
@@ -46,8 +49,8 @@ export const AuditTimeline = memo(function AuditTimeline({
         ) : (
           <EmptyState
             icon={<ActivityIcon />}
-            label="No provisioning events"
-            description="SCIM activity will appear after your directory starts syncing."
+            label={t("No provisioning events")}
+            description={t("SCIM activity will appear after your directory starts syncing.")}
             compact
           />
         )}

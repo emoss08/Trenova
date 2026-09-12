@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import Highlight from "@trenova/shared/components/highlight";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { CommandItem } from "@trenova/shared/components/ui/command";
@@ -42,6 +43,8 @@ export function ShipmentResultItem({
   onSelect: () => void;
   onPreview?: (id: string) => void;
 }) {
+  const t = useT();
+
   const meta = hit.metadata;
   return (
     <ResultItemContainer
@@ -75,7 +78,7 @@ export function ShipmentResultItem({
           )}
           {meta?.bol && (
             <p className="max-w-[140px] truncate">
-              <span className="opacity-70">BOL</span>
+              <span className="opacity-70">{t("BOL")}</span>
               <span className="ml-1">
                 <Highlight highlight={searchValue} text={meta.bol} />
               </span>
@@ -105,6 +108,8 @@ export function CustomerResultItem({
   searchValue: string;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const meta = hit.metadata;
   return (
     <ResultItemContainer
@@ -114,7 +119,7 @@ export function CustomerResultItem({
       <User className="size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-sm font-medium">
-          <Highlight highlight={searchValue} text={hit.title} />
+          <Highlight highlight={searchValue} text={t(hit.title)} />
         </p>
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.code && (
@@ -146,6 +151,8 @@ export function WorkerResultItem({
   searchValue: string;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const meta = hit.metadata;
   return (
     <ResultItemContainer
@@ -155,7 +162,7 @@ export function WorkerResultItem({
       <Users className="size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-sm font-medium">
-          <Highlight highlight={searchValue} text={hit.title} />
+          <Highlight highlight={searchValue} text={t(hit.title)} />
         </p>
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.workerType && (
@@ -184,6 +191,8 @@ export function DocumentResultItem({
   searchValue: string;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const meta = hit.metadata;
   return (
     <ResultItemContainer
@@ -193,7 +202,7 @@ export function DocumentResultItem({
       <FileText className="size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-sm font-medium">
-          <Highlight highlight={searchValue} text={hit.title} />
+          <Highlight highlight={searchValue} text={t(hit.title)} />
         </p>
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.documentType && (
@@ -222,6 +231,8 @@ export function GenericResultItem({
   searchValue: string;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const Icon = entityIcons[hit.entityType] ?? Search;
   return (
     <ResultItemContainer
@@ -231,7 +242,7 @@ export function GenericResultItem({
       <Icon className="size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="truncate text-sm font-medium">
-          <Highlight highlight={searchValue} text={hit.title} />
+          <Highlight highlight={searchValue} text={t(hit.title)} />
         </p>
         {hit.subtitle && (
           <p className="text-2xs text-muted-foreground truncate">

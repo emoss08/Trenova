@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -27,6 +28,8 @@ import { RolePageLayout } from "../../_components/role-builder-layout";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
 
 export function RoleEditPage() {
+  const t = useT();
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -84,7 +87,7 @@ export function RoleEditPage() {
       return response;
     },
     onSuccess: () => {
-      toast.success("Role updated successfully");
+      toast.success(t("Role updated successfully"));
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void queryClient.invalidateQueries({ queryKey: ["role", id] });
       void navigate("/admin/roles");
@@ -118,7 +121,7 @@ export function RoleEditPage() {
   if (!role) {
     return (
       <div className="bg-background flex h-screen items-center justify-center">
-        <p className="text-muted-foreground">Role not found</p>
+        <p className="text-muted-foreground">{t("Role not found")}</p>
       </div>
     );
   }
@@ -128,7 +131,7 @@ export function RoleEditPage() {
       <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
         <AlertTriangleIcon className="size-4 shrink-0 text-amber-500" />
         <p className="text-xs text-amber-600 dark:text-amber-400">
-          This is a system role. Some properties may be restricted.
+          {t("This is a system role. Some properties may be restricted.")}
         </p>
       </div>
     </div>
@@ -140,7 +143,7 @@ export function RoleEditPage() {
         <RolePageLayout
           title={`Edit ${role.name}`}
           isSubmitting={isSubmitting}
-          submitLabel="Save Changes"
+          submitLabel={t("Save Changes")}
           onSubmit={onSubmit}
           onCancel={handleCancel}
           permissionCount={permissions.length}
@@ -148,8 +151,8 @@ export function RoleEditPage() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
-              <CardDescription>Basic information for this role</CardDescription>
+              <CardTitle>{t("Role Details")}</CardTitle>
+              <CardDescription>{t("Basic information for this role")}</CardDescription>
             </CardHeader>
             <CardContent>
               <FormGroup cols={2}>
@@ -158,8 +161,8 @@ export function RoleEditPage() {
                     control={control}
                     rules={{ required: true }}
                     name="name"
-                    label="Name"
-                    placeholder="e.g., Dispatcher, Billing Clerk"
+                    label={t("Name")}
+                    placeholder={t("e.g., Dispatcher, Billing Clerk")}
                     disabled={role.isSystem}
                   />
                 </FormControl>
@@ -168,8 +171,8 @@ export function RoleEditPage() {
                     control={control}
                     rules={{ required: true }}
                     name="maxSensitivity"
-                    label="Max Sensitivity"
-                    description="Highest sensitivity level this role can access"
+                    label={t("Max Sensitivity")}
+                    description={t("Highest sensitivity level this role can access")}
                     options={fieldSensitivityChoices}
                     isReadOnly={role.isSystem}
                   />
@@ -178,8 +181,8 @@ export function RoleEditPage() {
                   <TextareaField
                     control={control}
                     name="description"
-                    label="Description"
-                    placeholder="Describe what this role is for..."
+                    label={t("Description")}
+                    placeholder={t("Describe what this role is for...")}
                     disabled={role.isSystem}
                   />
                 </FormControl>
@@ -189,8 +192,8 @@ export function RoleEditPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Permissions</CardTitle>
-              <CardDescription>Configure resource access and operations</CardDescription>
+              <CardTitle>{t("Permissions")}</CardTitle>
+              <CardDescription>{t("Configure resource access and operations")}</CardDescription>
             </CardHeader>
             <CardContent>
               <RolePermissionMatrix

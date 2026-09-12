@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -117,6 +118,8 @@ export function ShikiJsonBlock({
   searchable?: boolean;
   copyPath?: boolean;
 }) {
+  const t = useT();
+
   const resolvedTheme = useResolvedTheme();
   const [baseHtml, setBaseHtml] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -221,7 +224,7 @@ export function ShikiJsonBlock({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search JSON..."
+              placeholder={t("Search JSON...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-6 bg-transparent text-xs"
             />
@@ -253,7 +256,7 @@ export function ShikiJsonBlock({
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search JSON..."
+            placeholder={t("Search JSON...")}
             leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             rightElement={
               debouncedQuery ? (
@@ -267,7 +270,7 @@ export function ShikiJsonBlock({
         )}
         {copyPath && (
           <span className="text-muted-foreground shrink-0 text-[10px]">
-            Click line to copy path
+            {t("Click line to copy path")}
           </span>
         )}
       </div>

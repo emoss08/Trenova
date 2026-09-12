@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent } from "@trenova/shared/components/ui/popover";
@@ -53,6 +54,8 @@ export function BarDetailPopover({
   onViewInTable,
   onReassign,
 }: BarDetailPopoverProps) {
+  const t = useT();
+
   if (!bar || !anchor) return null;
 
   const shipment = bar.shipment;
@@ -72,10 +75,10 @@ export function BarDetailPopover({
         <div className="border-border flex items-start justify-between gap-2 border-b px-3 py-2">
           <div className="flex min-w-0 flex-col">
             <span className="font-table truncate text-[12px] font-semibold tabular-nums">
-              {shipment.proNumber ?? shipment.bol ?? "Shipment"}
+              {shipment.proNumber ?? shipment.bol ?? t("Shipment")}
             </span>
             <span className="text-muted-foreground truncate text-[10.5px]">
-              {shipment.customer?.name ?? "No customer"}
+              {shipment.customer?.name ?? t("No customer")}
             </span>
           </div>
           <ShipmentStatusBadge status={shipment.status} />
@@ -91,8 +94,12 @@ export function BarDetailPopover({
             )}
           >
             <TimerIcon className="size-3 shrink-0" />
-            Dwelling {formatDurationFromSeconds(bar.dwell.seconds)} at {bar.dwell.locationName}
-            {bar.dwell.severity === "critical" && " · detention risk"}
+            {t(
+              "Dwelling {0} at {1}{2}",
+              formatDurationFromSeconds(bar.dwell.seconds),
+              bar.dwell.locationName,
+              bar.dwell.severity === "critical" && ` ${t("· detention risk")}`,
+            )}
           </div>
         )}
 
@@ -102,7 +109,7 @@ export function BarDetailPopover({
               {origin?.code ?? "—"} → {dest?.code ?? "—"}
             </span>
             <span className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
-              {formatCurrency(revenue)} · {miles}mi
+              {t("{0} · {1}mi", formatCurrency(revenue), miles)}
             </span>
           </div>
           <ol className="flex flex-col gap-1">
@@ -134,21 +141,21 @@ export function BarDetailPopover({
           </ol>
           <p className="font-table text-muted-foreground text-[10px] tabular-nums">
             {carrierName
-              ? `Carrier: ${carrierName}`
+              ? t("Carrier: {0}", carrierName)
               : workerName
                 ? `${workerName}${tractorCode ? ` · ${tractorCode}` : ""}`
-                : "Unassigned"}
+                : t("Unassigned")}
           </p>
         </div>
 
         <div className="border-border flex items-center gap-1 border-t px-2 py-1.5">
           <Button type="button" variant="ghost" size="xs" onClick={() => onEdit(bar)}>
             <PencilIcon className="size-3" />
-            Open
+            {t("Open")}
           </Button>
           <Button type="button" variant="ghost" size="xs" onClick={() => onViewInTable(bar)}>
             <TableIcon className="size-3" />
-            View in table
+            {t("View in table")}
           </Button>
           {onReassign && (
             <Button
@@ -159,7 +166,7 @@ export function BarDetailPopover({
               onClick={() => onReassign(bar)}
             >
               <ArrowLeftRightIcon className="size-3" />
-              {bar.assignment || bar.carrierAssignment ? "Reassign" : "Assign"}
+              {bar.assignment || bar.carrierAssignment ? t("Reassign") : t("Assign")}
             </Button>
           )}
         </div>

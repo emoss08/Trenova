@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Accordion,
   AccordionHeader,
@@ -109,6 +110,8 @@ export function RolePermissionBuilder({
   permissions,
   onPermissionsChange,
 }: RolePermissionBuilderProps) {
+  const t = useT();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -298,10 +301,10 @@ export function RolePermissionBuilder({
     <div className="space-y-5">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">Start with a template</h3>
+          <h3 className="text-sm font-medium">{t("Start with a template")}</h3>
           {grantedCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {grantedCount} resource{grantedCount !== 1 ? "s" : ""} granted
+              {t("{0, plural, one {# resource} other {# resources}} granted", grantedCount)}
             </Badge>
           )}
         </div>
@@ -327,7 +330,7 @@ export function RolePermissionBuilder({
               </div>
               <span className="text-xs font-medium">{template.name}</span>
               <span className="text-muted-foreground text-[10px] leading-tight">
-                {template.description}
+                {t(template.description)}
               </span>
             </button>
           ))}
@@ -339,7 +342,7 @@ export function RolePermissionBuilder({
           <div className="relative flex-1">
             <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
             <Input
-              placeholder="Search resources..."
+              placeholder={t("Search resources...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 pl-9"
@@ -359,7 +362,7 @@ export function RolePermissionBuilder({
         <div className="bg-card max-h-[400px] overflow-y-auto rounded-lg border p-1">
           {filteredCategories.length === 0 ? (
             <div className="text-muted-foreground py-8 text-center text-sm">
-              No resources found matching &ldquo;{searchQuery}&rdquo;
+              {t("No resources found matching “{0}”", searchQuery)}
             </div>
           ) : (
             <Accordion value={expandedCategories} onValueChange={handleExpandedChange} multiple>
@@ -399,6 +402,8 @@ function CategorySection({
   onDataScopeChange,
   onQuickAction,
 }: CategorySectionProps) {
+  const t = useT();
+
   const grantedInCategory = category.resources.filter((r) => permissionMap.has(r.resource)).length;
 
   return (
@@ -412,7 +417,7 @@ function CategorySection({
           </div>
           {grantedInCategory > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {grantedInCategory} granted
+              {t("{0} granted", grantedInCategory)}
             </Badge>
           )}
         </AccordionTrigger>
@@ -453,6 +458,8 @@ function ResourceRow({
   onDataScopeChange,
   onQuickAction,
 }: ResourceRowProps) {
+  const t = useT();
+
   const isGranted = !!permission;
   const [showDetails, setShowDetails] = useState(false);
 
@@ -482,15 +489,15 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
                   {isFullAccess
-                    ? "Full Access"
+                    ? t("Full Access")
                     : isViewOnly
-                      ? "View Only"
+                      ? t("View Only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}
             </div>
             {resource.description && (
-              <p className="text-muted-foreground truncate text-xs">{resource.description}</p>
+              <p className="text-muted-foreground truncate text-xs">{t(resource.description)}</p>
             )}
           </div>
           {isGranted && (
@@ -517,7 +524,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>View Only</TooltipContent>
+            <TooltipContent>{t("View Only")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
@@ -533,7 +540,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>Full Access</TooltipContent>
+            <TooltipContent>{t("Full Access")}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -562,7 +569,7 @@ function ResourceRow({
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">Scope:</span>
+            <span className="text-muted-foreground text-xs">{t("Scope:")}</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}
@@ -573,7 +580,7 @@ function ResourceRow({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

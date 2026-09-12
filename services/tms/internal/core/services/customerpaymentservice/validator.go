@@ -3,7 +3,6 @@ package customerpaymentservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -171,7 +170,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		settlementMinor := app.AppliedAmountMinor + app.ShortPayAmountMinor
 		if settlementMinor > openBalanceMinor {
 			me.WithIndex("applications", idx).
-				Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount plus short pay exceeds invoice open balance by %d minor units", settlementMinor-openBalanceMinor))
+				Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount plus short pay exceeds invoice open balance by {0} minor units", settlementMinor-openBalanceMinor)
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
@@ -350,7 +349,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		settlementMinor := app.AppliedAmountMinor + app.ShortPayAmountMinor
 		if settlementMinor > openBalanceMinor {
 			me.WithIndex("applications", idx).
-				Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount plus short pay exceeds invoice open balance by %d minor units", settlementMinor-openBalanceMinor))
+				Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount plus short pay exceeds invoice open balance by {0} minor units", settlementMinor-openBalanceMinor)
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)

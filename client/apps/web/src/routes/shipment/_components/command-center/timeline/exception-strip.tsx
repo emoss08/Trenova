@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ChevronLeftIcon,
@@ -60,18 +61,20 @@ export function ExceptionStrip({
   onFocusChange,
   onStep,
 }: ExceptionStripProps) {
+  const t = useT();
+
   const visibleChips = CHIP_CONFIG.filter((chip) => exceptions[chip.id] > 0 || chip.id === focus);
   const allClear = visibleChips.length === 0;
 
   return (
     <div className="border-border bg-muted/30 flex min-h-7 flex-wrap items-center gap-1.5 border-b px-3 py-1">
       <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
-        Attention
+        {t("Attention")}
       </span>
       {allClear ? (
         <span className="text-muted-foreground inline-flex items-center gap-1 text-[10.5px]">
           <CircleCheckIcon className="text-success size-3" />
-          All clear in this window
+          {t("All clear in this window")}
         </span>
       ) : (
         visibleChips.map(({ id, label, tone, Icon }) => {
@@ -99,11 +102,11 @@ export function ExceptionStrip({
       {focus && (
         <div className="ml-auto flex items-center gap-0.5">
           <span className="font-table text-muted-foreground mr-1 text-[10px] tabular-nums">
-            {matchCount === 0 ? "No matches" : `${matchIndex + 1} / ${matchCount}`}
+            {matchCount === 0 ? t("No matches") : `${matchIndex + 1} / ${matchCount}`}
           </span>
           <button
             type="button"
-            aria-label="Previous match"
+            aria-label={t("Previous match")}
             disabled={matchCount === 0}
             onClick={() => onStep(-1)}
             className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
@@ -112,7 +115,7 @@ export function ExceptionStrip({
           </button>
           <button
             type="button"
-            aria-label="Next match"
+            aria-label={t("Next match")}
             disabled={matchCount === 0}
             onClick={() => onStep(1)}
             className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
@@ -121,7 +124,7 @@ export function ExceptionStrip({
           </button>
           <button
             type="button"
-            aria-label="Clear focus"
+            aria-label={t("Clear focus")}
             onClick={() => onFocusChange(null)}
             className="text-muted-foreground hover:bg-muted hover:text-foreground ml-0.5 flex size-5 items-center justify-center rounded transition-colors"
           >

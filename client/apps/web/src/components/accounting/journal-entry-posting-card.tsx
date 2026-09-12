@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
@@ -33,6 +34,8 @@ export function JournalEntryPostingCard({
   entry: PostingEntry;
   defaultOpen?: boolean;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(defaultOpen);
   const isBalanced = entry.totalDebit === entry.totalCredit;
 
@@ -66,11 +69,11 @@ export function JournalEntryPostingCard({
         </Link>
         <Badge variant="outline">{entry.entryType}</Badge>
         <AccountingStatusBadge status={entry.status} />
-        {entry.isReversal ? <Badge variant="orange">Reversal</Badge> : null}
+        {entry.isReversal ? <Badge variant="orange">{t("Reversal")}</Badge> : null}
         {!isBalanced ? (
           <span className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
             <TriangleAlertIcon className="size-3" />
-            Out of balance
+            {t("Out of balance")}
           </span>
         ) : null}
         <span className="text-muted-foreground ml-auto flex items-center gap-3 text-xs tabular-nums">
@@ -81,7 +84,7 @@ export function JournalEntryPostingCard({
       {open ? (
         <div className="border-t px-3 pt-2.5 pb-3">
           {entry.description ? (
-            <p className="text-muted-foreground mb-2 text-xs">{entry.description}</p>
+            <p className="text-muted-foreground mb-2 text-xs">{t(entry.description)}</p>
           ) : null}
           {entry.lines?.length ? (
             <JournalLineItemsTable
@@ -90,7 +93,7 @@ export function JournalEntryPostingCard({
               totalCredit={entry.totalCredit}
             />
           ) : (
-            <p className="text-muted-foreground text-xs">No line detail available.</p>
+            <p className="text-muted-foreground text-xs">{t("No line detail available.")}</p>
           )}
         </div>
       ) : null}

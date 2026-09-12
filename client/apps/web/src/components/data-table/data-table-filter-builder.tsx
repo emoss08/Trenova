@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -58,6 +59,8 @@ export default function DataTableFilterBuilder<TData extends RowData>({
   filters,
   onFiltersChange,
 }: DataTableFilterBuilderProps<TData>) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const filterableColumns = useMemo<FilterableColumn[]>(() => {
@@ -259,7 +262,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
         render={
           <Button variant="outline" size="sm">
             <FilterIcon className="size-3.5" />
-            Filter
+            {t("Filter")}
             {totalFilters > 0 && (
               <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {totalFilters}
@@ -275,14 +278,14 @@ export default function DataTableFilterBuilder<TData extends RowData>({
         {filters.length === 0 ? (
           <div className="flex flex-col items-start gap-3 p-3">
             <div className="flex flex-col items-start">
-              <h3 className="text-xl font-semibold">No filters applied</h3>
+              <h3 className="text-xl font-semibold">{t("No filters applied")}</h3>
               <p className="text-muted-foreground text-sm">
-                Add filters to narrow down your results.
+                {t("Add filters to narrow down your results.")}
               </p>
             </div>
             <Button onClick={handleAddFilter} disabled={filterableColumns.length === 0}>
               <PlusIcon className="size-3.5" />
-              Add Filter
+              {t("Add Filter")}
             </Button>
           </div>
         ) : (
@@ -325,7 +328,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 disabled={filterableColumns.length === 0}
               >
                 <PlusIcon className="size-3.5" />
-                Add Filter
+                {t("Add Filter")}
               </Button>
               <Button
                 variant="outline"
@@ -333,11 +336,11 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 disabled={filterableColumns.length === 0}
               >
                 <FolderPlusIcon className="size-3.5" />
-                Add Filter Group
+                {t("Add Filter Group")}
               </Button>
               {filters.length > 0 && (
                 <Button variant="ghost" onClick={handleResetFilters}>
-                  Reset Filters
+                  {t("Reset Filters")}
                 </Button>
               )}
             </div>
@@ -373,12 +376,14 @@ function FilterGroupRow({
   onRemoveGroup,
   onAddFilter,
 }: FilterGroupRowProps) {
+  const t = useT();
+
   return (
     <div className="flex w-full flex-col gap-1">
       <div className="flex items-start gap-2">
         {index === 0 ? (
           <span className="text-muted-foreground flex h-7 w-12 shrink-0 items-center text-sm">
-            Where
+            {t("Where")}
           </span>
         ) : (
           <Select
@@ -386,7 +391,7 @@ function FilterGroupRow({
             onValueChange={(val) => onConnectorChange(group.id, val as FilterConnector)}
           >
             <SelectTrigger className="w-18">
-              <SelectValue placeholder="Select Connector">
+              <SelectValue placeholder={t("Select Connector")}>
                 {getConnectorLabel(group.connector)}
               </SelectValue>
             </SelectTrigger>
@@ -425,7 +430,7 @@ function FilterGroupRow({
             onClick={() => onAddFilter(group.id)}
           >
             <PlusIcon className="mr-1 size-3" />
-            Add Filter to group
+            {t("Add Filter to group")}
           </Button>
         </div>
 
@@ -465,6 +470,8 @@ function FilterRow({
   onRemove,
   isNested = false,
 }: FilterRowProps) {
+  const t = useT();
+
   const operators = getOperatorsForVariant(filter.filterType);
   const needsValue = operatorRequiresValue(filter.operator);
 
@@ -472,7 +479,7 @@ function FilterRow({
     <div className="flex items-center gap-2">
       {index === 0 ? (
         <span className="text-muted-foreground w-12 shrink-0 text-sm">
-          {isNested ? "" : "Where"}
+          {isNested ? "" : t("Where")}
         </span>
       ) : (
         <Select
@@ -496,13 +503,13 @@ function FilterRow({
 
       <Select value={filter.field} onValueChange={(val) => onFieldChange(filter.id, val ?? "")}>
         <SelectTrigger className="w-28">
-          <SelectValue>{filter.label}</SelectValue>
+          <SelectValue>{t(filter.label)}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
             {columns.map((col) => (
               <SelectItem key={col.id} value={col.id}>
-                {col.label}
+                {t(col.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -553,6 +560,8 @@ type FilterValueInputProps = {
 };
 
 function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
+  const t = useT();
+
   const { filterType, operator, value, filterOptions } = filter;
 
   const selectedValue = filterOptions?.find((option) => option.value === value)?.label;
@@ -571,15 +580,15 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               {selectedLabels.length > 0
                 ? selectedLabels.length === 1
                   ? selectedLabels[0]
-                  : `${selectedLabels.length} Selected`
-                : "Select Values"}
+                  : t("{0} Selected", selectedLabels.length)
+                : t("Select Values")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="w-auto">
             <SelectGroup>
               {filterOptions.map((option) => (
                 <SelectItem key={String(option.value)} value={option.value as string}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -597,7 +606,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
           <SelectGroup>
             {filterOptions.map((option) => (
               <SelectItem key={String(option.value)} value={option.value as string}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -610,7 +619,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
     return (
       <div className="bg-background flex h-7 items-center gap-2 rounded-md border px-2.5">
         <Switch checked={value === true} onCheckedChange={(checked) => onChange(checked)} />
-        <span className="text-sm">{value === true ? "Yes" : "No"}</span>
+        <span className="text-sm">{value === true ? t("Yes") : t("No")}</span>
       </div>
     );
   }
@@ -623,7 +632,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
           min={1}
           value={(value as number) || ""}
           onChange={(e) => onChange(Number(e.target.value) || 1)}
-          placeholder="Days"
+          placeholder={t("Days")}
         />
       );
     }
@@ -651,7 +660,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
                       `${formatUnixDate(dateValue.from)} - ${formatUnixDate(dateValue.to)}`,
                       13,
                     )
-                  : "Pick date range"}
+                  : t("Pick date range")}
               </Button>
             }
           />
@@ -692,7 +701,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               )}
             >
               <CalendarIcon className="mr-2 size-4" />
-              {typeof value === "number" ? formatUnixDate(value) : "Pick date"}
+              {typeof value === "number" ? formatUnixDate(value) : t("Pick date")}
             </Button>
           }
         />
@@ -713,7 +722,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
         type="number"
         value={(value as number) || ""}
         onChange={(e) => onChange(Number(e.target.value))}
-        placeholder="Value"
+        placeholder={t("Value")}
       />
     );
   }
@@ -723,7 +732,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
       type="text"
       value={(value as string) || ""}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Value"
+      placeholder={t("Value")}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentFileTypeIcon } from "@/components/documents/document-file-type-icon";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -69,6 +70,8 @@ function UploadChip({
   onRetry: () => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const isActive = upload.status === "uploading" || upload.status === "pending";
   const isError = upload.status === "error";
 
@@ -89,7 +92,7 @@ function UploadChip({
         <span className="block truncate text-xs font-medium">{upload.file.name}</span>
         <span className={cn("text-2xs block", isError ? "text-red-500" : "text-muted-foreground")}>
           {isError
-            ? (upload.error ?? "Upload failed")
+            ? (upload.error ?? t("Upload failed"))
             : isActive
               ? `${Math.round(upload.progress)}%`
               : formatFileSize(upload.file.size)}

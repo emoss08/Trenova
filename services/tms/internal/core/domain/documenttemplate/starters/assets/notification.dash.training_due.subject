@@ -1,1 +1,1 @@
-{{ if .Renewal }}{{ .CourseName }} renewal due{{ else if gt .DueInDays 0 }}{{ .CourseName }} training due in {{ .DueInDays }} days{{ else if eq .DueInDays 0 }}{{ .CourseName }} training due today{{ else }}{{ .CourseName }} training overdue{{ end }}
+{{ if .Renewal }}{{ t "{0} renewal due" .CourseName }}{{ else if gt .DueInDays 0 }}{{ t "{0} training due in {1, plural, one {# day} other {# days}}" .CourseName .DueInDays }}{{ else if eq .DueInDays 0 }}{{ t "{0} training due today" .CourseName }}{{ else }}{{ t "{0} training overdue" .CourseName }}{{ end }}

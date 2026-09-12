@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerChecklistItemRow } from "@/lib/graphql/worker-checklist";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -72,6 +73,8 @@ export function ChecklistItemRow({
   onNotApplicable,
   onReopen,
 }: ChecklistItemRowProps) {
+  const t = useT();
+
   const status = item.status as ChecklistItemStatus;
   const kind = item.kind as ChecklistItemKind;
   const Icon = CHECKLIST_ITEM_KIND_ICONS[kind];
@@ -152,29 +155,29 @@ export function ChecklistItemRow({
               status !== "Pending" && status !== "Done" && "line-through",
             )}
           >
-            {item.label}
+            {t(item.label)}
           </span>
           {!item.required ? (
-            <span className="text-2xs text-muted-foreground uppercase">Optional</span>
+            <span className="text-2xs text-muted-foreground uppercase">{t("Optional")}</span>
           ) : null}
           {auto ? (
-            <Badge variant="outline" title="Completes itself from evidence">
-              Auto
+            <Badge variant="outline" title={t("Completes itself from evidence")}>
+              {t("Auto")}
             </Badge>
           ) : null}
           {status !== "Pending" ? (
             <Badge variant={STATUS_BADGE[status]}>{CHECKLIST_ITEM_STATUS_LABELS[status]}</Badge>
           ) : null}
-          {pending && item.overdue ? <Badge variant="inactive">Overdue</Badge> : null}
+          {pending && item.overdue ? <Badge variant="inactive">{t("Overdue")}</Badge> : null}
         </div>
         {item.description ? (
-          <p className="text-muted-foreground text-xs">{item.description}</p>
+          <p className="text-muted-foreground text-xs">{t(item.description)}</p>
         ) : null}
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
           <span>{CHECKLIST_ITEM_KIND_LABELS[kind]}</span>
           {pending && item.dueAt ? (
             <span>
-              · {item.overdue ? "Due since" : "Due"} {formatUnixDateMedium(item.dueAt)}
+              · {item.overdue ? t("Due since") : t("Due")} {formatUnixDateMedium(item.dueAt)}
             </span>
           ) : null}
           {line ? <span>· {line}</span> : null}

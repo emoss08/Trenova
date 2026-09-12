@@ -31,12 +31,16 @@ type Session struct {
 	// MustChangePassword is copied off the user at login so every later request can be
 	// gated without another user lookup. It is refreshed on the next sign-in, which is
 	// the only moment it can change for a session that already exists.
-	MustChangePassword bool         `json:"mustChangePassword"`
-	LastAccessedAt     int64        `json:"lastAccessedAt"`
-	ExpiresAt          int64        `json:"expiresAt"`
-	CreatedAt          int64        `json:"createdAt"`
-	UpdatedAt          int64        `json:"updatedAt"`
-	User               *tenant.User `json:"user"`
+	MustChangePassword bool `json:"mustChangePassword"`
+	// Locale is copied off the user for the same reason as MustChangePassword: every
+	// request needs it to render errors, and a session already in flight must not pay for
+	// a user lookup to find out what language to answer in.
+	Locale         string       `json:"locale,omitempty"`
+	LastAccessedAt int64        `json:"lastAccessedAt"`
+	ExpiresAt      int64        `json:"expiresAt"`
+	CreatedAt      int64        `json:"createdAt"`
+	UpdatedAt      int64        `json:"updatedAt"`
+	User           *tenant.User `json:"user"`
 }
 
 type NewSessionRequest struct {
@@ -53,6 +57,7 @@ type NewSessionRequest struct {
 	RiskDecisionID        pulid.ID
 	IsPortalUser          bool
 	MustChangePassword    bool
+	Locale                string
 }
 
 func NewSession(req *NewSessionRequest) *Session {
@@ -87,6 +92,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		RiskDecisionID:        req.RiskDecisionID,
 		IsPortalUser:          req.IsPortalUser,
 		MustChangePassword:    req.MustChangePassword,
+		Locale:                req.Locale,
 		LastAccessedAt:        now,
 		ExpiresAt:             req.ExpiresAt,
 		CreatedAt:             now,

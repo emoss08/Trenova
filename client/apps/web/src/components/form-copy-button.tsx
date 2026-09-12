@@ -1,9 +1,12 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 export function FormCopyButton({ rowId }: { rowId: string }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -22,7 +25,7 @@ export function FormCopyButton({ rowId }: { rowId: string }) {
           </Button>
         }
       />
-      <TooltipContent>Copy Row ID</TooltipContent>
+      <TooltipContent>{t("Copy Row ID")}</TooltipContent>
     </Tooltip>
   );
 }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { PerformanceReviewRow } from "@/lib/graphql/performance-review";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -58,6 +59,8 @@ export function ReviewCard({
   onClose,
   onDelete,
 }: ReviewCardProps) {
+  const t = useT();
+
   const status = review.status as PerformanceReviewStatus;
   const isDraft = status === "Draft";
   const isSubmitted = status === "Submitted";
@@ -70,7 +73,7 @@ export function ReviewCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{review.title}</p>
+          <p className="text-sm font-semibold">{t(review.title)}</p>
           <p className="text-muted-foreground text-[11px]">
             {formatUnixDate(review.periodStart)} – {formatUnixDate(review.periodEnd)}
             {review.reviewer?.name ? ` · ${review.reviewer.name}` : ""}
@@ -95,7 +98,7 @@ export function ReviewCard({
         <ul className="flex flex-col gap-1.5">
           {review.ratings.map((rating) => (
             <li key={rating.key} className="flex items-center gap-2 text-xs">
-              <span className="min-w-40 truncate">{rating.label}</span>
+              <span className="min-w-40 truncate">{t(rating.label)}</span>
               <span className="flex items-center gap-0.5" aria-hidden>
                 {[1, 2, 3, 4, 5].map((mark) => (
                   <span
@@ -111,7 +114,7 @@ export function ReviewCard({
               </span>
               <span className="text-muted-foreground tabular-nums">
                 {rating.score == null
-                  ? "Not rated"
+                  ? t("Not rated")
                   : `${rating.score} — ${REVIEW_SCORE_LABELS[rating.score] ?? ""}`}
               </span>
               {rating.comment ? (
@@ -129,12 +132,12 @@ export function ReviewCard({
           {review.goals.map((goal) => (
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="text-muted-foreground size-3.5" />
-              <span>{goal.title}</span>
+              <span>{t(goal.title)}</span>
               <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
               {goal.dueAt ? (
-                <span className="text-muted-foreground">by {formatUnixDate(goal.dueAt)}</span>
+                <span className="text-muted-foreground">{t("by {0}", formatUnixDate(goal.dueAt))}</span>
               ) : null}
             </li>
           ))}
@@ -143,14 +146,14 @@ export function ReviewCard({
 
       {review.workerComment ? (
         <p className="bg-muted/40 rounded-md px-2.5 py-1.5 text-xs">
-          <span className="font-medium">The worker replied: </span>
+          <span className="font-medium">{t("The worker replied:")} </span>
           {review.workerComment}
         </p>
       ) : null}
 
       {isClosed && review.nextReviewAt ? (
         <p className="text-muted-foreground text-[11px]">
-          Next review due {formatUnixDate(review.nextReviewAt)}.
+          {t("Next review due {0}.", formatUnixDate(review.nextReviewAt))}
         </p>
       ) : null}
 
@@ -158,25 +161,25 @@ export function ReviewCard({
         {isDraft && permissions.canUpdate ? (
           <Button size="sm" variant="outline" disabled={busy} onClick={() => onEdit(review)}>
             <PencilIcon className="size-3.5" />
-            Edit
+            {t("Edit")}
           </Button>
         ) : null}
         {isDraft && permissions.canSubmit ? (
           <Button size="sm" disabled={busy} onClick={() => onSubmit(review)}>
             <SendIcon className="size-3.5" />
-            Submit
+            {t("Submit")}
           </Button>
         ) : null}
         {isSubmitted && permissions.canClose ? (
           <Button size="sm" variant="outline" disabled={busy} onClick={() => onReopen(review)}>
             <RotateCcwIcon className="size-3.5" />
-            Reopen
+            {t("Reopen")}
           </Button>
         ) : null}
         {(isSubmitted || status === "Acknowledged") && permissions.canClose ? (
           <Button size="sm" disabled={busy} onClick={() => onClose(review)}>
             <CheckCircle2Icon className="size-3.5" />
-            Close review
+            {t("Close review")}
           </Button>
         ) : null}
         {isDraft && permissions.canDelete ? (

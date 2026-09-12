@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   AlertDialog,
@@ -27,6 +28,8 @@ import { DistanceOverridePanel } from "./distance-override-panel";
 const distanceOverrideService = new DistanceOverrideService();
 
 export default function DistanceOverrideTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedOverride, setSelectedOverride] = useState<DistanceOverrideRow | null>(null);
@@ -36,7 +39,7 @@ export default function DistanceOverrideTable() {
       await distanceOverrideService.delete(id);
     },
     onSuccess: () => {
-      toast.success("Distance override deleted");
+      toast.success(t("Distance override deleted"));
       void queryClient.invalidateQueries({
         queryKey: ["distance-override-list"],
       });
@@ -44,7 +47,7 @@ export default function DistanceOverrideTable() {
       setSelectedOverride(null);
     },
     onError: (error) => {
-      toast.error("Failed to delete distance override", {
+      toast.error(t("Failed to delete distance override"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -87,13 +90,13 @@ export default function DistanceOverrideTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete Distance Override</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete Distance Override")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this distance override? This action cannot be undone.
+              {t("Are you sure you want to delete this distance override? This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -104,7 +107,7 @@ export default function DistanceOverrideTable() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

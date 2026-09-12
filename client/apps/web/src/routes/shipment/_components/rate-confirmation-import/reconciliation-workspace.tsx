@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -74,6 +75,8 @@ export default function ReconciliationWorkspace({
   lastCreateError,
   onClearCreateError,
 }: ReconciliationWorkspaceProps) {
+  const t = useT();
+
   const [showIssuesOnly, setShowIssuesOnly] = useState(false);
 
   return (
@@ -100,7 +103,7 @@ export default function ReconciliationWorkspace({
               <div className="border-b">
                 <div className="px-3 pt-2 pb-1">
                   <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
-                    Required Details
+                    {t("Required Details")}
                   </span>
                 </div>
                 <RequiredFieldsSection
@@ -112,7 +115,7 @@ export default function ReconciliationWorkspace({
               <div className="border-b">
                 <div className="px-3 pt-3 pb-1">
                   <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
-                    Extracted Fields
+                    {t("Extracted Fields")}
                   </span>
                 </div>
                 <FieldReconciliationList
@@ -128,7 +131,7 @@ export default function ReconciliationWorkspace({
                 <div>
                   <div className="px-3 pt-3 pb-1">
                     <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
-                      Stops
+                      {t("Stops")}
                     </span>
                   </div>
                   <div className="space-y-2 px-3 py-2">
@@ -150,7 +153,9 @@ export default function ReconciliationWorkspace({
               <div className="text-muted-foreground text-xs">
                 {counts.total} fields
                 {issueCount > 0 && (
-                  <span className="ml-1 text-amber-500">&middot; {issueCount} need attention</span>
+                  <span className="ml-1 text-amber-500">
+                    {t("· {0} need attention", issueCount)}
+                  </span>
                 )}
               </div>
               <Button
@@ -159,7 +164,7 @@ export default function ReconciliationWorkspace({
                 disabled={isCreating || !canCreateShipment}
               >
                 {isCreating && <LoaderCircleIcon className="size-3.5 animate-spin" />}
-                Create Shipment
+                {t("Create Shipment")}
               </Button>
             </div>
           </div>

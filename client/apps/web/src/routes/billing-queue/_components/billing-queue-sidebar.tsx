@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
@@ -48,6 +49,8 @@ function PresetSelector({
   selectedPresetId: string | null;
   onSelect: (value: string) => void;
 }) {
+  const t = useT();
+
   return (
     <div className="flex-1">
       <Autocomplete<BillingQueueFilterPreset, FieldValues>
@@ -57,7 +60,7 @@ function PresetSelector({
         getOptionValue={(preset) => preset.id}
         getDisplayValue={(preset) => preset.name}
         renderOption={(preset) => <span className="text-xs">{preset.name}</span>}
-        placeholder="Select preset..."
+        placeholder={t("Select preset...")}
         clearable
         triggerClassName="h-7 text-xs"
       />
@@ -72,6 +75,8 @@ export function BillingQueueSidebar({
   selectedItemId: string | null;
   onSelectItem: (id: string) => void;
 }) {
+  const t = useT();
+
   const [searchParams, setSearchParams] = useQueryStates(queueSidebarSearchParamsParser);
   const {
     status: statusFilter,
@@ -104,10 +109,10 @@ export function BillingQueueSidebar({
         queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY],
       });
       void setSearchParams({ preset: null });
-      toast.success("Filter preset deleted");
+      toast.success(t("Filter preset deleted"));
     },
     onError: () => {
-      toast.error("Failed to delete filter preset");
+      toast.error(t("Failed to delete filter preset"));
     },
   });
 
@@ -156,7 +161,7 @@ export function BillingQueueSidebar({
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
     },
     onError: () => {
-      toast.error("Failed to update status");
+      toast.error(t("Failed to update status"));
     },
   });
 
@@ -213,7 +218,7 @@ export function BillingQueueSidebar({
         <Popover>
           <div className="flex items-center gap-1">
             <Input
-              placeholder="Search PRO, BOL..."
+              placeholder={t("Search PRO, BOL...")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(e) => void setSearchParams({ query: e.target.value })}
@@ -224,7 +229,7 @@ export function BillingQueueSidebar({
               render={
                 <Button size="xs" variant="outline" className="relative h-7 shrink-0 gap-1 px-2">
                   <FilterIcon className="size-3" />
-                  <span className="text-xs">Filters</span>
+                  <span className="text-xs">{t("Filters")}</span>
                   {activeFilterCount > 0 && (
                     <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-[10px] font-medium">
                       {activeFilterCount}
@@ -237,18 +242,18 @@ export function BillingQueueSidebar({
           <PopoverContent sideOffset={4} className="dark w-100 p-3">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">Filters</span>
+                <span className="text-xs font-medium">{t("Filters")}</span>
                 {hasActiveFilters && (
                   <Button size="xs" variant="ghost" onClick={clearFilters} className="h-5 px-1">
                     <XIcon className="mr-0.5 size-3" />
-                    <span className="text-xs">Clear all</span>
+                    <span className="text-xs">{t("Clear all")}</span>
                   </Button>
                 )}
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex flex-row gap-2">
                   <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-[11px]">Status</p>
+                    <p className="text-muted-foreground text-[11px]">{t("Status")}</p>
                     <Select
                       value={statusFilter ?? "all"}
                       items={billingQueueStatusChoices}
@@ -257,20 +262,20 @@ export function BillingQueueSidebar({
                       }
                     >
                       <SelectTrigger className="h-7 w-37.5 text-xs">
-                        <SelectValue placeholder="All statuses" />
+                        <SelectValue placeholder={t("All statuses")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="all">{t("All Statuses")}</SelectItem>
                         {billingQueueStatusChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
-                            {choice.label}
+                            {t(choice.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-[11px]">Bill Type</p>
+                    <p className="text-muted-foreground text-[11px]">{t("Bill Type")}</p>
                     <Select
                       value={billTypeFilter ?? "all"}
                       items={billTypeChoices}
@@ -281,13 +286,13 @@ export function BillingQueueSidebar({
                       }
                     >
                       <SelectTrigger className="h-7 w-37.5 text-xs">
-                        <SelectValue placeholder="All bill types" />
+                        <SelectValue placeholder={t("All bill types")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Bill Types</SelectItem>
+                        <SelectItem value="all">{t("All Bill Types")}</SelectItem>
                         {billTypeChoices.map((choice) => (
                           <SelectItem key={choice.value} value={choice.value}>
-                            {choice.label}
+                            {t(choice.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -295,12 +300,12 @@ export function BillingQueueSidebar({
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-[11px]">Assigned Billers</p>
+                  <p className="text-muted-foreground text-[11px]">{t("Assigned Billers")}</p>
                   <MultiSelectAutocomplete<User>
                     link="/users/select-options/"
-                    label="Billers"
+                    label={t("Billers")}
                     className="text-foreground"
-                    placeholder="All billers"
+                    placeholder={t("All billers")}
                     values={billerFilter}
                     onChange={(values) =>
                       void setSearchParams({
@@ -324,9 +329,9 @@ export function BillingQueueSidebar({
                     }
                   />
                   <div className="space-y-0.5">
-                    <p className="text-xs font-medium">Include posted items</p>
+                    <p className="text-xs font-medium">{t("Include posted items")}</p>
                     <p className="text-muted-foreground text-[11px]">
-                      Show historical queue records that already produced a posted invoice.
+                      {t("Show historical queue records that already produced a posted invoice.")}
                     </p>
                   </div>
                 </label>
@@ -343,7 +348,7 @@ export function BillingQueueSidebar({
                     size="xs"
                     variant="ghost"
                     onClick={() => setSavePresetOpen(true)}
-                    title="Save current filters as preset"
+                    title={t("Save current filters as preset")}
                   >
                     <SaveIcon className="size-3" />
                   </Button>
@@ -353,7 +358,7 @@ export function BillingQueueSidebar({
                     size="xs"
                     variant="ghost"
                     onClick={() => deletePreset(selectedPresetId)}
-                    title="Delete selected preset"
+                    title={t("Delete selected preset")}
                   >
                     <Trash2Icon className="size-3" />
                   </Button>
@@ -367,7 +372,7 @@ export function BillingQueueSidebar({
         <div className="flex flex-col gap-1.5 p-2">
           {isLoading && (
             <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
-              Loading...
+              {t("Loading...")}
             </div>
           )}
           {!isLoading && items.length === 0 && (

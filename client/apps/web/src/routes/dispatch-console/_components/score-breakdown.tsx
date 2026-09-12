@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchScoreFactor } from "@/lib/graphql/dispatch-console";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
@@ -20,6 +21,8 @@ export function ScoreBreakdown({
   factors: readonly DispatchScoreFactor[];
   className?: string;
 }) {
+  const t = useT();
+
   const [showFlat, setShowFlat] = useState(false);
   const reducedMotion = useReducedMotion();
 
@@ -32,7 +35,7 @@ export function ScoreBreakdown({
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
           <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-            Match score
+            {t("Match score")}
           </span>
           <span className="flex items-baseline gap-1">
             <span
@@ -54,7 +57,7 @@ export function ScoreBreakdown({
       </div>
 
       {factors.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">Not enough data to score this pairing.</p>
+        <p className="text-muted-foreground text-[11px]">{t("Not enough data to score this pairing.")}</p>
       ) : (
         <>
           <ul className="flex flex-col gap-2">
@@ -81,14 +84,14 @@ export function ScoreBreakdown({
                   className={cn("size-3 transition-transform", showFlat && "rotate-180")}
                   aria-hidden
                 />
-                {flat.length} factor{flat.length === 1 ? "" : "s"} contributed nothing
+                {t("{0, plural, one {# factor} other {# factors}} contributed nothing", flat.length)}
               </button>
               {showFlat ? (
                 <ul className="border-border flex flex-col gap-1.5 border-l pl-3">
                   {flat.map((factor) => (
                     <li key={factor.key} className="flex flex-col gap-px">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-muted-foreground text-[11px]">{factor.label}</span>
+                        <span className="text-muted-foreground text-[11px]">{t(factor.label)}</span>
                         <span className="text-muted-foreground/60 text-[10px] tabular-nums">
                           +0.0
                         </span>
@@ -119,12 +122,14 @@ function FactorRow({
   index: number;
   reducedMotion: boolean;
 }) {
+  const t = useT();
+
   const share = maxContribution > 0 ? (factor.contribution / maxContribution) * 100 : 0;
 
   return (
     <li className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] font-medium">{factor.label}</span>
+        <span className="text-[11px] font-medium">{t(factor.label)}</span>
         <span className="text-muted-foreground text-[11px] font-medium tabular-nums">
           +{factor.contribution.toFixed(1)}
         </span>

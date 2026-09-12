@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { runBulkAction } from "@/lib/bulk-run";
 import {
@@ -16,6 +17,8 @@ import { earningStatusInput, getColumns } from "./earning-columns";
 import { EarningPanel } from "./earning-panel";
 
 export default function EarningsTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -23,7 +26,7 @@ export default function EarningsTable() {
     async (rows: RecurringEarningRow[], status: string) => {
       const eligible = rows.filter((row) => row.status !== "Completed" && row.status !== status);
       if (eligible.length === 0) {
-        toast.info("No selected earnings can move to that status.");
+        toast.info(t("No selected earnings can move to that status."));
         return;
       }
       await runBulkAction(
@@ -33,7 +36,7 @@ export default function EarningsTable() {
       );
       await queryClient.invalidateQueries({ queryKey: ["recurring-earning-list"] });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<RecurringEarningRow>[]>(

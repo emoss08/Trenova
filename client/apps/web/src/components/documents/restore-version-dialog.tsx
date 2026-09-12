@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,8 @@ export function RestoreVersionDialog({
   isRestoring,
   onConfirm,
 }: RestoreVersionDialogProps) {
+  const t = useT();
+
   if (!versionToRestore || !currentVersion) return null;
 
   return (
@@ -40,10 +43,15 @@ export function RestoreVersionDialog({
           <AlertDialogMedia>
             <RotateCcwIcon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Restore Version {versionToRestore.versionNumber}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("Restore Version {0}", versionToRestore.versionNumber)}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This will make version {versionToRestore.versionNumber} the current version, replacing
-            version {currentVersion.versionNumber}.
+            {t(
+              "This will make version {0} the current version, replacing version {1}.",
+              versionToRestore.versionNumber,
+              currentVersion.versionNumber,
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -52,25 +60,25 @@ export function RestoreVersionDialog({
             <thead>
               <tr className="text-muted-foreground">
                 <th className="pb-2 text-left font-medium" />
-                <th className="pb-2 text-left font-medium">Restoring</th>
-                <th className="pb-2 text-left font-medium">Current</th>
+                <th className="pb-2 text-left font-medium">{t("Restoring")}</th>
+                <th className="pb-2 text-left font-medium">{t("Current")}</th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
               <tr>
-                <td className="text-muted-foreground py-1.5 pr-3">File</td>
+                <td className="text-muted-foreground py-1.5 pr-3">{t("File")}</td>
                 <td className="py-1.5 pr-3 font-medium">{versionToRestore.originalName}</td>
                 <td className="text-muted-foreground py-1.5">{currentVersion.originalName}</td>
               </tr>
               <tr>
-                <td className="text-muted-foreground py-1.5 pr-3">Size</td>
+                <td className="text-muted-foreground py-1.5 pr-3">{t("Size")}</td>
                 <td className="py-1.5 pr-3">{formatFileSize(versionToRestore.fileSize)}</td>
                 <td className="text-muted-foreground py-1.5">
                   {formatFileSize(currentVersion.fileSize)}
                 </td>
               </tr>
               <tr>
-                <td className="text-muted-foreground py-1.5 pr-3">Uploaded</td>
+                <td className="text-muted-foreground py-1.5 pr-3">{t("Uploaded")}</td>
                 <td className="py-1.5 pr-3">{formatUnixDateMedium(versionToRestore.createdAt)}</td>
                 <td className="text-muted-foreground py-1.5">
                   {formatUnixDateMedium(currentVersion.createdAt)}
@@ -81,10 +89,10 @@ export function RestoreVersionDialog({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={isRestoring}>
             {isRestoring && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-            Restore
+            {t("Restore")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

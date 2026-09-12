@@ -153,7 +153,7 @@ func (r *CapabilityRule) validateParameters(multiErr *errortypes.MultiError) {
 	for name := range r.Parameters {
 		if _, ok := known[name]; !ok {
 			multiErr.Add("parameters", errortypes.ErrInvalid,
-				"Parameter "+name+" is not accepted by "+def.Label)
+				"Parameter {0} is not accepted by {1}", name, def.Label)
 		}
 	}
 
@@ -163,7 +163,7 @@ func (r *CapabilityRule) validateParameters(multiErr *errortypes.MultiError) {
 		}
 		if _, ok := r.resolveParam(param.Name); !ok {
 			multiErr.Add("parameters", errortypes.ErrRequired,
-				param.Label+" is required for "+def.Label)
+				"{0} is required for {1}", param.Label, def.Label)
 		}
 	}
 
@@ -186,9 +186,13 @@ func (r *CapabilityRule) validateOverrideReason(multiErr *errortypes.MultiError)
 	}
 
 	if r.OverrideReason == "" {
-		multiErr.Add("overrideReason", errortypes.ErrRequired,
-			"Explain why "+def.Label+" differs from the recommended "+
-				string(def.DefaultEnforcement)+" enforcement")
+		multiErr.Add(
+			"overrideReason",
+			errortypes.ErrRequired,
+			"Explain why {0} differs from the recommended {1} enforcement",
+			def.Label,
+			string(def.DefaultEnforcement),
+		)
 	}
 }
 

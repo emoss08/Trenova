@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import {
@@ -129,6 +130,8 @@ function FuelPurchaseCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const resolver = useFuelPurchaseResolver();
   const form = useForm<FuelPurchaseFormValues>({
     resolver,
@@ -139,8 +142,8 @@ function FuelPurchaseCreatePanel({
     <FormCreatePanel<FuelPurchaseFormValues, FuelPurchaseRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Fuel Purchase"
-      description="Record fuel bought for a tractor. The purchase is a tax record: its gallons and the jurisdiction they were bought in feed the quarterly IFTA return."
+      title={t("Fuel Purchase")}
+      description={t("Record fuel bought for a tractor. The purchase is a tax record: its gallons and the jurisdiction they were bought in feed the quarterly IFTA return.")}
       queryKey={FUEL_PURCHASE_LIST_KEY}
       form={form}
       size="lg"
@@ -162,6 +165,8 @@ function FuelPurchaseEditPanel({
   onOpenChange: (open: boolean) => void;
   row: FuelPurchaseRow;
 }) {
+  const t = useT();
+
   const resolver = useFuelPurchaseResolver();
   const formRow = {
     ...row,
@@ -193,11 +198,10 @@ function FuelPurchaseEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Fuel Purchase"
+      title={t("Fuel Purchase")}
       titleComponent={(record) => (
         <span>
-          {record.tractor?.code ? `${record.tractor.code} · ` : ""}
-          {record.jurisdiction.code} · {record.gallons} gal
+          {t("{0}{1} · {2} gal", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.gallons)}
         </span>
       )}
       queryKey={FUEL_PURCHASE_LIST_KEY}

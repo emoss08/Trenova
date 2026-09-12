@@ -1,1 +1,1 @@
-Time off {{ if .Approved }}approved{{ else }}denied{{ end }}
+{{ if .Approved }}{{ t "Time off approved" }}{{ else }}{{ t "Time off denied" }}{{ end }}

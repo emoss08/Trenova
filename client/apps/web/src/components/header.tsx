@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NotificationSheet } from "@/components/notification-center/notification-sheet";
 import {
   Breadcrumb,
@@ -45,6 +46,8 @@ export function Header() {
 }
 
 export function HistoryNavigation() {
+  const t = useT();
+
   const { canGoBack, canGoForward, goBack, goForward } = useHistoryNavigation();
 
   return (
@@ -58,13 +61,13 @@ export function HistoryNavigation() {
               size="icon-xs"
               onClick={goBack}
               disabled={!canGoBack}
-              aria-label="Go back"
+              aria-label={t("Go back")}
             >
               <ChevronLeft className="size-3.5" />
             </Button>
           }
         />
-        <TooltipContent>Go back</TooltipContent>
+        <TooltipContent>{t("Go back")}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger
@@ -75,13 +78,13 @@ export function HistoryNavigation() {
               size="icon-xs"
               onClick={goForward}
               disabled={!canGoForward}
-              aria-label="Go forward"
+              aria-label={t("Go forward")}
             >
               <ChevronRight className="size-3.5" />
             </Button>
           }
         />
-        <TooltipContent>Go forward</TooltipContent>
+        <TooltipContent>{t("Go forward")}</TooltipContent>
       </Tooltip>
     </div>
   );
@@ -98,6 +101,8 @@ function NavActions() {
 }
 
 export function FavoriteToggle({ className }: { className?: string }) {
+  const t = useT();
+
   const location = useLocation();
   const breadcrumbs = useBreadcrumbs();
   const pageUrl = location.pathname;
@@ -146,7 +151,7 @@ export function FavoriteToggle({ className }: { className?: string }) {
           className={cn("size-3 transition-colors", isFavorited && "fill-amber-400 text-amber-400")}
         />
       </TooltipTrigger>
-      <TooltipContent>{isFavorited ? "Remove from favorites" : "Add to favorites"}</TooltipContent>
+      <TooltipContent>{isFavorited ? t("Remove from favorites") : t("Add to favorites")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -156,6 +161,8 @@ export function FavoriteToggle({ className }: { className?: string }) {
  * provides, the last one as plain text.
  */
 export function HeaderBreadcrumbs() {
+  const t = useT();
+
   const navigation = useNavigation();
   const breadcrumbs = useBreadcrumbs();
   const isLoading = navigation.state === "loading";
@@ -171,7 +178,7 @@ export function HeaderBreadcrumbs() {
               isLoading ? "opacity-50" : "",
             )}
           >
-            Home
+            {t("Home")}
           </BreadcrumbLink>
         </BreadcrumbItem>
         {breadcrumbs.length > 0 && <BreadcrumbSeparator />}

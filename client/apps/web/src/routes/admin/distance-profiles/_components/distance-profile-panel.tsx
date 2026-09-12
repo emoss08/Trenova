@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DistanceProfileRow } from "@/lib/graphql/distance-profile-table";
@@ -34,6 +35,8 @@ export function DistanceProfilePanel({
   mode,
   row,
 }: DataTablePanelProps<DistanceProfileRow>) {
+  const t = useT();
+
   const form = useForm<DistanceProfile>({
     resolver: zodResolver(distanceProfileSchema),
     defaultValues,
@@ -48,7 +51,7 @@ export function DistanceProfilePanel({
         form={form}
         url="/distance-profiles/"
         queryKey="distance-profile-list"
-        title="Distance Profile"
+        title={t("Distance Profile")}
         fieldKey="name"
         formComponent={<DistanceProfileForm />}
       />
@@ -62,7 +65,7 @@ export function DistanceProfilePanel({
       form={form}
       url="/distance-profiles/"
       queryKey="distance-profile-list"
-      title="Distance Profile"
+      title={t("Distance Profile")}
       formComponent={<DistanceProfileForm />}
     />
   );

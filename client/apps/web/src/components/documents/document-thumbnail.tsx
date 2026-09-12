@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DocumentPreviewStatus } from "@trenova/shared/types/document";
 import {
@@ -44,6 +45,8 @@ export function DocumentThumbnail({
   className,
   size = "md",
 }: DocumentThumbnailProps) {
+  const t = useT();
+
   const iconType = fileType.toLowerCase();
   const [imageError, setImageError] = useState(false);
   const canHaveThumbnail = supportsThumbnail(fileType);
@@ -73,7 +76,7 @@ export function DocumentThumbnail({
           sizeClasses[size],
           className,
         )}
-        title="Generating thumbnail..."
+        title={t("Generating thumbnail...")}
       >
         <LoaderCircleIcon className={cn("text-muted-foreground animate-spin", iconSizes[size])} />
       </div>

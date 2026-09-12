@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { documentContentUrl } from "@/services/document";
 import { apiService } from "@/services/api";
 import { RateConfirmationStatusBadge } from "@trenova/shared/components/status-badge";
@@ -34,6 +35,8 @@ export function RateConfirmationActions({
   moveId: string;
   carrierAssignmentId: string;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
@@ -81,41 +84,40 @@ export function RateConfirmationActions({
   });
 
   if (isLoading) {
-    return <p className="text-2xs text-muted-foreground">Loading rate confirmations…</p>;
+    return <p className="text-2xs text-muted-foreground">{t("Loading rate confirmations…")}</p>;
   }
 
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-2xs text-muted-foreground font-medium uppercase">Rate Con</span>
+        <span className="text-2xs text-muted-foreground font-medium uppercase">{t("Rate Con")}</span>
         {latest ? (
           <>
             <RateConfirmationStatusBadge status={latest.status} />
             <span className="text-2xs text-muted-foreground tabular-nums">
-              rev {latest.revision}
+              {t("rev {0}", latest.revision)}
             </span>
             {latest.generatedVia === "TenderAcceptance" && (
               <Badge
                 variant="outline"
                 className="max-h-5 text-[10px]"
-                title="Generated automatically when the carrier accepted the tender"
+                title={t("Generated automatically when the carrier accepted the tender")}
               >
-                Auto-issued from tender
+                {t("Auto-issued from tender")}
               </Badge>
             )}
             {latest.status === "Confirmed" && latest.confirmedVia && (
               <Badge
                 variant="outline"
                 className="max-h-5 text-[10px]"
-                title="How the carrier's confirmation was captured"
+                title={t("How the carrier's confirmation was captured")}
               >
                 {RATE_CONFIRMATION_VIA_LABEL[latest.confirmedVia]}
               </Badge>
             )}
             {latest.status === "Confirmed" && latest.confirmedByName && (
               <span className="text-2xs text-muted-foreground">
-                by {latest.confirmedByName}
-                {latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : ""}
+                {t("by {0}{1}", latest.confirmedByName, latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "")}
               </span>
             )}
             {latest.status === "Voided" && latest.voidReason && (
@@ -123,7 +125,7 @@ export function RateConfirmationActions({
             )}
           </>
         ) : (
-          <span className="text-2xs text-muted-foreground">None generated</span>
+          <span className="text-2xs text-muted-foreground">{t("None generated")}</span>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-1">
@@ -141,7 +143,7 @@ export function RateConfirmationActions({
           }
         >
           <RefreshCcwIcon className="size-3" aria-hidden />
-          {latest && latest.status !== "Voided" ? "Regenerate" : "Generate"}
+          {latest && latest.status !== "Voided" ? t("Regenerate") : t("Generate")}
         </Button>
         {latest && (latest.status === "Generated" || latest.status === "Sent") && (
           <>
@@ -152,10 +154,10 @@ export function RateConfirmationActions({
               className="h-6 px-2 text-[10px]"
               disabled={sendMutation.isPending}
               onClick={() => sendMutation.mutate(latest.id)}
-              title="Email the rate confirmation to the carrier's rate confirmation contacts"
+              title={t("Email the rate confirmation to the carrier's rate confirmation contacts")}
             >
               <MailIcon className="size-3" aria-hidden />
-              {latest.status === "Sent" ? "Resend" : "Send"}
+              {latest.status === "Sent" ? t("Resend") : t("Send")}
             </Button>
             <Button
               type="button"
@@ -163,10 +165,10 @@ export function RateConfirmationActions({
               variant="outline"
               className="h-6 px-2 text-[10px]"
               onClick={() => setConfirmOpen(true)}
-              title="Record that the carrier confirmed this rate"
+              title={t("Record that the carrier confirmed this rate")}
             >
               <FileCheck2Icon className="size-3" aria-hidden />
-              Mark Confirmed
+              {t("Mark Confirmed")}
             </Button>
           </>
         )}
@@ -179,7 +181,7 @@ export function RateConfirmationActions({
             onClick={() => setVoidOpen(true)}
           >
             <XIcon className="size-3" aria-hidden />
-            Void
+            {t("Void")}
           </Button>
         )}
         {latest?.documentId && (
@@ -188,10 +190,10 @@ export function RateConfirmationActions({
             target="_blank"
             rel="noreferrer"
             className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-[10px] font-medium"
-            title="Open the filed rate confirmation document"
+            title={t("Open the filed rate confirmation document")}
           >
             <FileTextIcon className="size-3" aria-hidden />
-            View PDF
+            {t("View PDF")}
           </a>
         )}
       </div>
@@ -226,13 +228,15 @@ function MarkConfirmedDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [confirmedByName, setConfirmedByName] = useState("");
 
   const mutation = useMutation({
     mutationFn: () =>
       apiService.rateConfirmationService.confirm(rateConfirmation.id, confirmedByName.trim()),
     onSuccess: () => {
-      toast.success("Rate confirmation marked confirmed");
+      toast.success(t("Rate confirmation marked confirmed"));
       setConfirmedByName("");
       onOpenChange(false);
       onChanged();
@@ -244,26 +248,25 @@ function MarkConfirmedDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mark rate confirmation confirmed</DialogTitle>
+          <DialogTitle>{t("Mark rate confirmation confirmed")}</DialogTitle>
           <DialogDescription>
-            Records who at the carrier confirmed revision {rateConfirmation.revision} — from a
-            signed copy, email reply, or phone confirmation.
+            {t("Records who at the carrier confirmed revision {0} — from a signed copy, email reply, or phone confirmation.", rateConfirmation.revision)}
           </DialogDescription>
         </DialogHeader>
         <Input
           value={confirmedByName}
           onChange={(event) => setConfirmedByName(event.target.value)}
-          placeholder="Confirmed by (name at the carrier)"
+          placeholder={t("Confirmed by (name at the carrier)")}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={!confirmedByName.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            Mark Confirmed
+            {t("Mark Confirmed")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -282,12 +285,14 @@ function VoidRateConfirmationDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({
     mutationFn: () => apiService.rateConfirmationService.void(rateConfirmation.id, reason.trim()),
     onSuccess: () => {
-      toast.success("Rate confirmation voided");
+      toast.success(t("Rate confirmation voided"));
       setReason("");
       onOpenChange(false);
       onChanged();
@@ -299,28 +304,27 @@ function VoidRateConfirmationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Void rate confirmation</DialogTitle>
+          <DialogTitle>{t("Void rate confirmation")}</DialogTitle>
           <DialogDescription>
-            Voids revision {rateConfirmation.revision}. Generate again to file a fresh revision with
-            the current buy rate.
+            {t("Voids revision {0}. Generate again to file a fresh revision with the current buy rate.", rateConfirmation.revision)}
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={reason}
           onChange={(event) => setReason(event.target.value)}
-          placeholder="Reason (required)"
+          placeholder={t("Reason (required)")}
           rows={3}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant="destructive"
             disabled={!reason.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            Void
+            {t("Void")}
           </Button>
         </DialogFooter>
       </DialogContent>

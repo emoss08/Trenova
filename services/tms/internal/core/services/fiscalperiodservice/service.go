@@ -3,7 +3,6 @@ package fiscalperiodservice
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
@@ -708,7 +707,7 @@ func (s *Service) validateClose(
 		multiErr.Add(
 			"fiscalYearId",
 			errortypes.ErrSystemError,
-			fmt.Sprintf("Failed to validate sequential close: %v", err),
+			"Failed to validate sequential close: {0}", err,
 		)
 		return multiErr
 	}
@@ -726,10 +725,7 @@ func (s *Service) validateCloseWithPeriods(
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Only Open fiscal periods can be closed. Current status: %s",
-				entity.Status,
-			),
+			"Only Open fiscal periods can be closed. Current status: {0}", entity.Status,
 		)
 		return multiErr
 	}
@@ -740,11 +736,9 @@ func (s *Service) validateCloseWithPeriods(
 				multiErr.Add(
 					"status",
 					errortypes.ErrInvalid,
-					fmt.Sprintf(
-						"Cannot close period %d: period %d is still open. Close periods sequentially.",
-						entity.PeriodNumber,
-						p.PeriodNumber,
-					),
+					"Cannot close period {0}: period {1} is still open. Close periods sequentially.",
+					entity.PeriodNumber,
+					p.PeriodNumber,
 				)
 				break
 			}
@@ -800,7 +794,7 @@ func (s *Service) validateReopen(
 		multiErr.Add(
 			"fiscalYearId",
 			errortypes.ErrSystemError,
-			fmt.Sprintf("Failed to validate reopen order: %v", err),
+			"Failed to validate reopen order: {0}", err,
 		)
 		return multiErr
 	}
@@ -818,10 +812,7 @@ func (s *Service) validateReopenWithPeriods(
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Only Closed fiscal periods can be reopened. Current status: %s",
-				entity.Status,
-			),
+			"Only Closed fiscal periods can be reopened. Current status: {0}", entity.Status,
 		)
 		return multiErr
 	}
@@ -832,11 +823,9 @@ func (s *Service) validateReopenWithPeriods(
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalid,
-				fmt.Sprintf(
-					"Cannot reopen period %d: period %d is already closed. Reopen periods in reverse order.",
-					entity.PeriodNumber,
-					p.PeriodNumber,
-				),
+				"Cannot reopen period {0}: period {1} is already closed. Reopen periods in reverse order.",
+				entity.PeriodNumber,
+				p.PeriodNumber,
 			)
 			break
 		}
@@ -856,10 +845,7 @@ func (s *Service) validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.Mu
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Only Open fiscal periods can be locked. Current status: %s",
-				entity.Status,
-			),
+			"Only Open fiscal periods can be locked. Current status: {0}", entity.Status,
 		)
 	}
 
@@ -877,10 +863,7 @@ func (s *Service) validateUnlock(entity *fiscalperiod.FiscalPeriod) *errortypes.
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Only Locked fiscal periods can be unlocked. Current status: %s",
-				entity.Status,
-			),
+			"Only Locked fiscal periods can be unlocked. Current status: {0}", entity.Status,
 		)
 	}
 

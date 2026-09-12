@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -21,6 +22,8 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 const numberFormatter = new Intl.NumberFormat();
 export function BillingUsageTab() {
+  const t = useT();
+
   const summaryQuery = useQuery({
     ...queries.platformBilling.summary(),
   });
@@ -38,8 +41,8 @@ export function BillingUsageTab() {
     return (
       <Alert variant="destructive">
         <CircleAlertIcon className="size-4" />
-        <AlertTitle>Unable to load billing status</AlertTitle>
-        <AlertDescription>The subscription and usage summary could not be loaded.</AlertDescription>
+        <AlertTitle>{t("Unable to load billing status")}</AlertTitle>
+        <AlertDescription>{t("The subscription and usage summary could not be loaded.")}</AlertDescription>
       </Alert>
     );
   }
@@ -53,7 +56,7 @@ export function BillingUsageTab() {
       {!summary.active ? (
         <Alert variant="warning">
           <CircleAlertIcon className="size-4" />
-          <AlertTitle>Access is not active</AlertTitle>
+          <AlertTitle>{t("Access is not active")}</AlertTitle>
           <AlertDescription>{formatReason(summary.reason)}</AlertDescription>
         </Alert>
       ) : null}
@@ -61,21 +64,21 @@ export function BillingUsageTab() {
       <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           icon={ShieldCheckIcon}
-          label="Access State"
+          label={t("Access State")}
           value={summary.active ? "Active" : "Blocked"}
           detail={formatReason(summary.reason)}
           tone={summary.active ? "active" : "inactive"}
         />
         <SummaryCard
           icon={KeyRoundIcon}
-          label="Plan"
+          label={t("Plan")}
           value={summary.plan?.name ?? "Not assigned"}
           detail={summary.plan?.key ?? "No plan key"}
           tone="info"
         />
         <SummaryCard
           icon={CheckCircle2Icon}
-          label="Features"
+          label={t("Features")}
           value={numberFormatter.format(allowedFeatures)}
           detail={
             deniedFeatures > 0
@@ -86,7 +89,7 @@ export function BillingUsageTab() {
         />
         <SummaryCard
           icon={GaugeIcon}
-          label="Tracked Usage"
+          label={t("Tracked Usage")}
           value={numberFormatter.format(trackedMeters)}
           detail={formatPeriod(
             summary.subscription?.currentPeriodStart,
@@ -99,7 +102,7 @@ export function BillingUsageTab() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
         <Card className="rounded-md">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
-            <CardTitle className="text-sm font-semibold">Usage This Period</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Usage This Period")}</CardTitle>
             <Button
               variant="outline"
               size="sm"
@@ -107,7 +110,7 @@ export function BillingUsageTab() {
               disabled={summaryQuery.isFetching}
             >
               <RefreshCcwIcon className="size-3.5" />
-              Refresh
+              {t("Refresh")}
             </Button>
           </CardHeader>
           <CardContent>
@@ -120,8 +123,8 @@ export function BillingUsageTab() {
             ) : (
               <EmptyState
                 icon={ActivityIcon}
-                title="No metered usage"
-                description="This tenant does not have any metered usage configured."
+                title={t("No metered usage")}
+                description={t("This tenant does not have any metered usage configured.")}
               />
             )}
           </CardContent>
@@ -129,7 +132,7 @@ export function BillingUsageTab() {
 
         <Card className="rounded-md">
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">Enabled Features</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("Enabled Features")}</CardTitle>
           </CardHeader>
           <CardContent>
             {summary.features.length > 0 ? (
@@ -143,7 +146,7 @@ export function BillingUsageTab() {
                       {formatCatalogKey(feature.featureKey)}
                     </span>
                     <Badge variant={feature.allowed ? "active" : "inactive"}>
-                      {feature.allowed ? "Enabled" : "Denied"}
+                      {feature.allowed ? t("Enabled") : t("Denied")}
                     </Badge>
                   </div>
                 ))}
@@ -151,8 +154,8 @@ export function BillingUsageTab() {
             ) : (
               <EmptyState
                 icon={ShieldCheckIcon}
-                title="No feature data"
-                description="No entitlement records were returned for this tenant."
+                title={t("No feature data")}
+                description={t("No entitlement records were returned for this tenant.")}
               />
             )}
           </CardContent>
@@ -175,6 +178,8 @@ function SummaryCard({
   detail: string;
   tone: "active" | "inactive" | "info" | "teal" | "orange";
 }) {
+  const t = useT();
+
   return (
     <Card className="rounded-md">
       <CardContent className="flex min-h-24 items-center gap-3 p-3">
@@ -184,7 +189,7 @@ function SummaryCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground text-xs font-medium">{label}</p>
-            <Badge variant={tone}>{tone === "inactive" ? "Needs action" : "Current"}</Badge>
+            <Badge variant={tone}>{tone === "inactive" ? t("Needs action") : t("Current")}</Badge>
           </div>
           <p className="mt-1 truncate text-lg font-semibold">{value}</p>
           <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
@@ -195,6 +200,8 @@ function SummaryCard({
 }
 
 function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
+  const t = useT();
+
   const limited = usage.limit > 0;
   const percent = limited ? Math.min(Math.round((usage.used / usage.limit) * 100), 100) : 0;
 
@@ -207,7 +214,7 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
             {formatPeriod(usage.windowStart, usage.windowEnd)}
           </p>
         </div>
-        <Badge variant={limited ? "info" : "active"}>{limited ? `${percent}%` : "Unlimited"}</Badge>
+        <Badge variant={limited ? "info" : "active"}>{limited ? `${percent}%` : t("Unlimited")}</Badge>
       </div>
 
       <div className="mt-4">
@@ -224,13 +231,13 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-        <UsageStat label="Used" value={formatUsageValue(usage.used, usage.unit)} />
+        <UsageStat label={t("Used")} value={formatUsageValue(usage.used, usage.unit)} />
         <UsageStat
-          label="Limit"
+          label={t("Limit")}
           value={limited ? formatUsageValue(usage.limit, usage.unit) : "Unlimited"}
         />
         <UsageStat
-          label="Remaining"
+          label={t("Remaining")}
           value={limited ? formatUsageValue(usage.remaining, usage.unit) : "Unlimited"}
         />
       </div>

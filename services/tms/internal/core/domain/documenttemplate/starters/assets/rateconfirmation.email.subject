@@ -1,1 +1,1 @@
-Rate confirmation — shipment {{ .ShipmentProNumber }}{{ if .RevisionLabel }} ({{ .RevisionLabel }}){{ end }} — {{ .CompanyName }}
+{{ if .RevisionLabel }}{{ t "Rate confirmation — shipment {0} ({1}) — {2}" .ShipmentProNumber .RevisionLabel .CompanyName }}{{ else }}{{ t "Rate confirmation — shipment {0} — {1}" .ShipmentProNumber .CompanyName }}{{ end }}

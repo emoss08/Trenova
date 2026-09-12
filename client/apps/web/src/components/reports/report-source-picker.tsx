@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   useCannedReports,
   useReportDefinition,
@@ -60,6 +61,8 @@ export function ReportSourcePicker({
   labelledBy,
   className,
 }: ReportSourcePickerProps) {
+  const t = useT();
+
   const [tab, setTab] = useState<Tab>(() => initialTab(value));
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
@@ -154,7 +157,7 @@ export function ReportSourcePicker({
     >
       <div className="border-border/70 flex flex-col gap-2 border-b p-2">
         <SegmentedControl
-          aria-label="Where the report comes from"
+          aria-label={t("Where the report comes from")}
           fullWidth
           value={tab}
           onValueChange={setTab}
@@ -174,7 +177,7 @@ export function ReportSourcePicker({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Clear search"
+                aria-label={t("Clear search")}
                 className="size-6"
                 onClick={() => setSearch("")}
               >
@@ -194,13 +197,13 @@ export function ReportSourcePicker({
       >
         {error ? (
           <PickerMessage>
-            <p className="text-destructive text-xs">Could not load reports.</p>
+            <p className="text-destructive text-xs">{t("Could not load reports.")}</p>
             <Button
               size="sm"
               variant="outline"
               onClick={() => void (savedTab ? definitions.refetch() : canned.refetch())}
             >
-              Retry
+              {t("Retry")}
             </Button>
           </PickerMessage>
         ) : loading ? (
@@ -212,18 +215,18 @@ export function ReportSourcePicker({
         ) : rows.length === 0 ? (
           <PickerMessage>
             <p className="text-xs font-medium">
-              {search.trim() === "" ? "Nothing here yet" : "Nothing matches"}
+              {search.trim() === "" ? t("Nothing here yet") : t("Nothing matches")}
             </p>
             <p className="text-muted-foreground text-center text-xs">
               {search.trim() === ""
                 ? savedTab
-                  ? "You have no saved reports yet. Build one in Reports, or pick from the gallery."
-                  : "The report gallery is empty on this deployment."
-                : `No report matches “${search.trim()}”.`}
+                  ? t("You have no saved reports yet. Build one in Reports, or pick from the gallery.")
+                  : t("The report gallery is empty on this deployment.")
+                : t("No report matches “{0}”.", search.trim())}
             </p>
             {search.trim() !== "" && (
               <Button size="sm" variant="outline" onClick={() => setSearch("")}>
-                Clear search
+                {t("Clear search")}
               </Button>
             )}
           </PickerMessage>
@@ -244,10 +247,10 @@ export function ReportSourcePicker({
                 {isFetchingNextPage ? (
                   <>
                     <Spinner className="size-3" />
-                    Loading more
+                    {t("Loading more")}
                   </>
                 ) : (
-                  "Load more"
+                  t("Load more")
                 )}
               </Button>
             )}
@@ -274,6 +277,8 @@ function toSavedRow(
 }
 
 function PickerRow({ row }: { row: Row }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -297,7 +302,7 @@ function PickerRow({ row }: { row: Row }) {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-xs font-medium">{row.name}</span>
         {row.description && (
-          <span className="text-muted-foreground truncate text-[11px]">{row.description}</span>
+          <span className="text-muted-foreground truncate text-[11px]">{t(row.description)}</span>
         )}
       </span>
       {row.meta && (

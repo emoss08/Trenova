@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LazyImage } from "@/components/image";
 import {
   DropdownMenu,
@@ -62,6 +63,8 @@ function OrgLogo({
  * name rides a tooltip instead.
  */
 export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
+  const t = useT();
+
   const { data: organizations, isLoading } = useQuery(queries.userOrganization.all());
   const switchMutation = useSwitchOrganization();
 
@@ -118,7 +121,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
         isSwitching={switchMutation.isPending}
       />
       <span className="min-w-0 flex-1 truncate text-left text-sm font-semibold">
-        {currentOrg?.name ?? "Trenova"}
+        {currentOrg?.name ?? t("Trenova")}
       </span>
     </>
   );
@@ -174,7 +177,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
         </Tooltip>
         <DropdownMenuContent side="right" align="start" sideOffset={10} className="w-60">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("Switch Organization")}</DropdownMenuLabel>
             {organizations?.map((org) => (
               <DropdownMenuItem
                 key={org.id}
@@ -212,7 +215,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="start" sideOffset={6} className="w-60">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("Switch Organization")}</DropdownMenuLabel>
           {organizations?.map((org) => (
             <DropdownMenuItem
               key={org.id}

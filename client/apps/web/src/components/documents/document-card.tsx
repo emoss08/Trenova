@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -44,6 +45,8 @@ export function DocumentCard({
   onSelect,
   documentTypeName,
 }: DocumentCardProps) {
+  const t = useT();
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const isImage = document.fileType.toLowerCase().startsWith("image/");
   const canPreview = isImage || document.fileType === "application/pdf";
@@ -122,23 +125,24 @@ export function DocumentCard({
                 variant="secondary"
                 className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-[10px]"
               >
-                <HistoryIcon className="mr-0.5 size-3" />v{document.versionNumber}
+                <HistoryIcon className="mr-0.5 size-3" />
+                {t("v{0}", document.versionNumber)}
               </Badge>
             </button>
           )}
           {document.contentStatus === "Extracting" && (
             <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
-              Extracting text
+              {t("Extracting text")}
             </Badge>
           )}
           {document.contentStatus === "Failed" && (
             <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
-              Extraction failed
+              {t("Extraction failed")}
             </Badge>
           )}
           {document.shipmentDraftStatus === "Ready" && (
             <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
-              Shipment draft ready
+              {t("Shipment draft ready")}
             </Badge>
           )}
         </div>
@@ -150,7 +154,7 @@ export function DocumentCard({
             variant="ghost"
             size="icon-sm"
             onClick={() => onPreview(document)}
-            aria-label="Preview document"
+            aria-label={t("Preview document")}
           >
             <EyeIcon className="size-4" />
           </Button>
@@ -160,7 +164,7 @@ export function DocumentCard({
             variant="ghost"
             size="icon-sm"
             onClick={() => onDownload(document)}
-            aria-label="Download document"
+            aria-label={t("Download document")}
           >
             <DownloadIcon className="size-4" />
           </Button>
@@ -170,7 +174,7 @@ export function DocumentCard({
             variant="ghost"
             size="icon-sm"
             onClick={() => onInspect(document)}
-            aria-label="Inspect document intelligence"
+            aria-label={t("Inspect document intelligence")}
           >
             <BrainCircuitIcon className="size-4" />
           </Button>
@@ -180,7 +184,7 @@ export function DocumentCard({
             variant="ghost"
             size="icon-sm"
             onClick={() => onVersions(document)}
-            aria-label="View document versions"
+            aria-label={t("View document versions")}
           >
             <HistoryIcon className="size-4" />
           </Button>
@@ -191,7 +195,7 @@ export function DocumentCard({
             size="icon-sm"
             onClick={() => onDelete(document)}
             disabled={isDeleting}
-            aria-label="Delete document"
+            aria-label={t("Delete document")}
           >
             <Trash2Icon className="text-destructive size-4" />
           </Button>

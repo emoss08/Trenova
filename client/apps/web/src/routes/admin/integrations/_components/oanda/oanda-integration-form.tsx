@@ -1,6 +1,7 @@
 const oandaLogoLight = "/integrations/logos/oanada-light.svg";
 const oandaLogoDark = "/integrations/logos/oanada-dark.svg";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -43,6 +44,8 @@ const rateTypeOptions = [
 ];
 
 export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -87,7 +90,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
     form,
     resourceName: "OANDA exchange-rate configuration",
     onSuccess: async () => {
-      toast.success("OANDA exchange-rate integration updated");
+      toast.success(t("OANDA exchange-rate integration updated"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config(INTEGRATION_TYPE).queryKey,
@@ -102,13 +105,13 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
   const testConnectionMutation = useMutation({
     mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
     onSuccess: async () => {
-      toast.success("OANDA connection successful");
+      toast.success(t("OANDA connection successful"));
       await queryClient.invalidateQueries({
         queryKey: queries.integration.catalog().queryKey,
       });
     },
     onError: () => {
-      toast.error("OANDA connection test failed");
+      toast.error(t("OANDA connection test failed"));
     },
   });
 
@@ -120,9 +123,9 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
           <FormControl cols="full">
             <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
-                <Label htmlFor="oanda-enabled">Enable OANDA FX</Label>
+                <Label htmlFor="oanda-enabled">{t("Enable OANDA FX")}</Label>
                 <p className="text-muted-foreground text-xs">
-                  Toggle settlement-grade FX data for this business unit.
+                  {t("Toggle settlement-grade FX data for this business unit.")}
                 </p>
               </div>
               <Controller
@@ -151,7 +154,7 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
             <InputField
               name="configuration.baseUrl"
               control={control}
-              label="Base URL"
+              label={t("Base URL")}
               autoComplete="off"
               placeholder="https://exchange-rates-api.oanda.com"
             />
@@ -160,15 +163,15 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
             <SelectField
               name="configuration.defaultRateType"
               control={control}
-              label="Default Rate Type"
+              label={t("Default Rate Type")}
               options={rateTypeOptions}
-              placeholder="Select rate type"
+              placeholder={t("Select rate type")}
             />
           </FormControl>
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -177,19 +180,19 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
               size="sm"
               onClick={() => testConnectionMutation.mutateAsync()}
               isLoading={testConnectionMutation.isPending}
-              loadingText="Testing..."
+              loadingText={t("Testing...")}
               disabled={configQuery.isLoading || saveMutation.isPending}
             >
-              Test Connection
+              {t("Test Connection")}
             </Button>
             <Button
               size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              Save Changes
+              {t("Save Changes")}
             </Button>
           </div>
         </DialogFooter>
@@ -199,6 +202,8 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
 }
 
 function OANDAExchangeRatesFormHeader() {
+  const t = useT();
+
   const { theme } = useTheme();
   const logo = theme === "dark" ? oandaLogoDark : oandaLogoLight;
 
@@ -211,17 +216,17 @@ function OANDAExchangeRatesFormHeader() {
           <div className="bg-muted-foreground size-1 rounded-full" />
           <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
-        <LazyImage src={logo} alt="OANDA Logo" className="h-8 max-w-24 object-contain" />
+        <LazyImage src={logo} alt={t("OANDA Logo")} className="h-8 max-w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with OANDA Exchange Rates</h3>
+        <h3 className="text-lg font-semibold">{t("Connect with OANDA Exchange Rates")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">Midpoint is used by default for quotes.</p>
+          <p className="text-muted-foreground text-xs">{t("Midpoint is used by default for quotes.")}</p>
           <ExternalLink
             href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/"
             className="text-xs"
           >
-            OANDA FXDS
+            {t("OANDA FXDS")}
           </ExternalLink>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
@@ -67,6 +68,8 @@ function PayCodeCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<PayCodeFormValues>({
     resolver: zodResolver(payCodeFormSchema) as Resolver<PayCodeFormValues>,
     defaultValues: buildDefaults(null),
@@ -76,8 +79,8 @@ function PayCodeCreatePanel({
     <FormCreatePanel<PayCodeFormValues, PayCodeRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Pay Code"
-      description="Define a carrier-specific earning or deduction code, its settlement behavior, and where it posts in the GL."
+      title={t("Pay Code")}
+      description={t("Define a carrier-specific earning or deduction code, its settlement behavior, and where it posts in the GL.")}
       queryKey="pay-code-list"
       form={form}
       formComponent={<PayCodeForm isEdit={false} isSystem={false} />}
@@ -101,6 +104,8 @@ function PayCodeEditPanel({
   onOpenChange: (open: boolean) => void;
   row: PayCodeRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildDefaults(row) } as unknown as PayCodeRow &
     Record<string, unknown>;
   const form = useForm<PayCodeFormValues>({
@@ -113,7 +118,7 @@ function PayCodeEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Pay Code"
+      title={t("Pay Code")}
       fieldKey="code"
       queryKey="pay-code-list"
       form={form}
@@ -132,6 +137,8 @@ function PayCodeEditPanel({
 }
 
 function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<PayCodeFormValues>();
   const direction = useWatch({ control, name: "direction" });
 
@@ -142,32 +149,32 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
           <SelectField
             control={control}
             name="direction"
-            label="Direction"
+            label={t("Direction")}
             options={payCodeDirectionChoices}
             rules={{ required: true }}
             isReadOnly={isEdit}
-            description="Earning codes add pay to settlements; deduction codes withhold it. Fixed after creation."
+            description={t("Earning codes add pay to settlements; deduction codes withhold it. Fixed after creation.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="code"
-            label="Code"
-            placeholder="e.g. CHAINPAY"
+            label={t("Code")}
+            placeholder={t("e.g. CHAINPAY")}
             rules={{ required: true }}
             disabled={isSystem}
-            description="Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores."
+            description={t("Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores.")}
           />
         </FormControl>
         <FormControl className={isEdit ? undefined : "col-span-2"}>
           <InputField
             control={control}
             name="name"
-            label="Name"
-            placeholder="e.g. Chain-Up Pay"
+            label={t("Name")}
+            placeholder={t("e.g. Chain-Up Pay")}
             rules={{ required: true }}
-            description="Human-readable label displayed next to the code throughout the app."
+            description={t("Human-readable label displayed next to the code throughout the app.")}
           />
         </FormControl>
         {isEdit && (
@@ -175,10 +182,10 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
-              description="Inactive codes stay on historical records but disappear from new-entry dropdowns."
+              description={t("Inactive codes stay on historical records but disappear from new-entry dropdowns.")}
             />
           </FormControl>
         )}
@@ -186,18 +193,18 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
           <InputField
             control={control}
             name="description"
-            label="Description"
-            placeholder="Optional note about when this code applies"
-            description="Optional internal note explaining when and how the code should be used."
+            label={t("Description")}
+            placeholder={t("Optional note about when this code applies")}
+            description={t("Optional internal note explaining when and how the code should be used.")}
           />
         </FormControl>
         <FormControl className="col-span-2">
           <GLAccountAutocompleteField
             control={control}
             name="glAccountId"
-            label="GL Account"
-            placeholder="Select GL account"
-            description="Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults."
+            label={t("GL Account")}
+            placeholder={t("Select GL account")}
+            description={t("Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.")}
             clearable
           />
         </FormControl>
@@ -205,11 +212,11 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
           <NumberField
             control={control}
             name="defaultAmount"
-            label="Default Amount"
+            label={t("Default Amount")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
-            description="Prefills the amount when creating recurring earnings or deductions with this code."
+            sideText={t("USD")}
+            description={t("Prefills the amount when creating recurring earnings or deductions with this code.")}
           />
         </FormControl>
         {direction === "Earning" && (
@@ -218,8 +225,8 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
               <SwitchField
                 control={control}
                 name="taxable"
-                label="Taxable"
-                description="Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements."
+                label={t("Taxable")}
+                description={t("Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements.")}
                 position="left"
               />
             </FormControl>
@@ -227,8 +234,8 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
               <SwitchField
                 control={control}
                 name="countsTowardGuarantee"
-                label="Counts Toward Guaranteed Minimum"
-                description="When off, pay under this code is ignored when checking a driver's guaranteed period minimum."
+                label={t("Counts Toward Guaranteed Minimum")}
+                description={t("When off, pay under this code is ignored when checking a driver's guaranteed period minimum.")}
                 position="left"
               />
             </FormControl>

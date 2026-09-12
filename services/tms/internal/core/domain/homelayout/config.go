@@ -53,14 +53,14 @@ func validateWidgetConfig(
 		validateText(multiErr, config.Text, fieldPath+".config.text")
 	default:
 		multiErr.Add(fieldPath+".config", errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown widget configuration kind %q", kind))
+			"Unknown widget configuration kind \"{0}\"", kind)
 	}
 }
 
 func validateLimit(multiErr *errortypes.MultiError, limit int, fieldPath string) {
 	if limit < 0 || limit > MaxWidgetLimit {
 		multiErr.Add(fieldPath+".config.limit", errortypes.ErrInvalid,
-			fmt.Sprintf("Row limit must be between 0 and %d", MaxWidgetLimit))
+			"Row limit must be between 0 and {0}", MaxWidgetLimit)
 	}
 }
 
@@ -70,7 +70,7 @@ func validateMetric(multiErr *errortypes.MultiError, metric, fieldPath string) {
 		multiErr.Add(fieldPath, errortypes.ErrRequired, "Choose the metric this widget shows")
 	case !metricExists(metric):
 		multiErr.Add(fieldPath, errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown metric: %s", metric))
+			"Unknown metric: {0}", metric)
 	}
 }
 
@@ -82,7 +82,7 @@ func validateMetricRow(multiErr *errortypes.MultiError, metrics []string, fieldP
 	}
 	if len(metrics) > MaxKPIRowMetrics {
 		multiErr.Add(fieldPath+".config.metrics", errortypes.ErrInvalid,
-			fmt.Sprintf("A metric strip holds at most %d metrics", MaxKPIRowMetrics))
+			"A metric strip holds at most {0} metrics", MaxKPIRowMetrics)
 		return
 	}
 
@@ -92,12 +92,12 @@ func validateMetricRow(multiErr *errortypes.MultiError, metrics []string, fieldP
 
 		if !metricExists(metric) {
 			multiErr.Add(metricPath, errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown metric: %s", metric))
+				"Unknown metric: {0}", metric)
 			continue
 		}
 		if _, dup := seen[metric]; dup {
 			multiErr.Add(metricPath, errortypes.ErrDuplicate,
-				fmt.Sprintf("Duplicate metric: %s", metric))
+				"Duplicate metric: {0}", metric)
 			continue
 		}
 		seen[metric] = struct{}{}
@@ -107,7 +107,7 @@ func validateMetricRow(multiErr *errortypes.MultiError, metrics []string, fieldP
 func validateWindowDays(multiErr *errortypes.MultiError, windowDays int, fieldPath string) {
 	if windowDays < 0 || windowDays > MaxWindowDays {
 		multiErr.Add(fieldPath+".config.windowDays", errortypes.ErrInvalid,
-			fmt.Sprintf("Window must be between 0 and %d days", MaxWindowDays))
+			"Window must be between 0 and {0} days", MaxWindowDays)
 	}
 }
 
@@ -139,7 +139,7 @@ func validateText(multiErr *errortypes.MultiError, text, fieldPath string) {
 		multiErr.Add(fieldPath, errortypes.ErrRequired, "Write the announcement")
 	case utf8.RuneCountInString(text) > MaxAnnouncementLength:
 		multiErr.Add(fieldPath, errortypes.ErrInvalidLength,
-			fmt.Sprintf("An announcement is at most %d characters", MaxAnnouncementLength))
+			"An announcement is at most {0} characters", MaxAnnouncementLength)
 	}
 }
 

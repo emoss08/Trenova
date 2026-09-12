@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
@@ -18,6 +19,8 @@ import { toast } from "sonner";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 
 export function FormulaStudioCreatePage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useBreadcrumbLabel("New Formula Template");
@@ -45,8 +48,8 @@ export function FormulaStudioCreatePage() {
       return api.post<FormulaTemplate>("/formula-templates/", values);
     },
     onSuccess: async (created) => {
-      toast.success("Formula template created", {
-        description: "It starts as a draft. Submit it for review when it is ready.",
+      toast.success(t("Formula template created"), {
+        description: t("It starts as a draft. Submit it for review when it is ready."),
       });
       await invalidateFormulaTemplate(queryClient);
       // Reset onto the saved record before navigating so the unsaved-changes

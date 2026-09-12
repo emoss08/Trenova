@@ -74,7 +74,7 @@ func (f *Factory) ProviderOfType(
 		return samsaraprovider.New(client), nil
 	default:
 		return nil, errortypes.NewBusinessError(
-			string(typ) + " is not a supported telematics provider",
+			"{0} is not a supported telematics provider", string(typ),
 		)
 	}
 }

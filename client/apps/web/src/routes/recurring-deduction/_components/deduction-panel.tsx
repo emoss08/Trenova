@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -99,6 +100,8 @@ function DeductionCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<RecurringDeductionFormValues>({
     resolver: zodResolver(recurringDeductionFormSchema) as Resolver<RecurringDeductionFormValues>,
     defaultValues: buildDefaults(null),
@@ -108,8 +111,8 @@ function DeductionCreatePanel({
     <FormCreatePanel<RecurringDeductionFormValues, RecurringDeductionRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Recurring Deduction"
-      description="Applied automatically to each qualifying settlement until its end date or cap."
+      title={t("Recurring Deduction")}
+      description={t("Applied automatically to each qualifying settlement until its end date or cap.")}
       queryKey="recurring-deduction-list"
       form={form}
       formComponent={<DeductionForm isEdit={false} />}
@@ -133,6 +136,8 @@ function DeductionEditPanel({
   onOpenChange: (open: boolean) => void;
   row: RecurringDeductionRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildDefaults(row) } as unknown as RecurringDeductionRow &
     Record<string, unknown>;
   const form = useForm<RecurringDeductionFormValues>({
@@ -145,7 +150,7 @@ function DeductionEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Recurring Deduction"
+      title={t("Recurring Deduction")}
       fieldKey="description"
       queryKey="recurring-deduction-list"
       form={form}
@@ -165,6 +170,8 @@ function DeductionEditPanel({
 }
 
 function DeductionForm({ isEdit }: { isEdit: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<RecurringDeductionFormValues>();
   useDefaultAmountPrefill(control);
   const escrowContribution = useWatch({ control, name: "escrowContribution" });
@@ -176,10 +183,10 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
           <WorkerAutocompleteField
             control={control}
             name="workerId"
-            label="Driver"
-            placeholder="Select driver"
+            label={t("Driver")}
+            placeholder={t("Select driver")}
             rules={{ required: true }}
-            description="The driver whose settlements this deduction is withheld from."
+            description={t("The driver whose settlements this deduction is withheld from.")}
           />
         </FormControl>
         <FormControl>
@@ -187,17 +194,17 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="payCodeId"
             direction="Deduction"
-            description="Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped."
+            description={t("Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name="frequency"
-            label="Frequency"
+            label={t("Frequency")}
             options={recurringDeductionFrequencyChoices}
             rules={{ required: true }}
-            description="Every settlement withholds each cycle; monthly withholds only on the first settlement of each month."
+            description={t("Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.")}
           />
         </FormControl>
         {isEdit && (
@@ -205,10 +212,10 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={recurringDeductionStatusChoices}
               rules={{ required: true }}
-              description="Pause to skip upcoming settlements without losing history; completed deductions stop permanently."
+              description={t("Pause to skip upcoming settlements without losing history; completed deductions stop permanently.")}
             />
           </FormControl>
         )}
@@ -216,67 +223,66 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
           <InputField
             control={control}
             name="description"
-            label="Description"
-            placeholder="e.g. Occupational accident insurance"
+            label={t("Description")}
+            placeholder={t("e.g. Occupational accident insurance")}
             rules={{ required: true }}
-            description="Shown verbatim on the driver's settlement statement, so make it recognizable."
+            description={t("Shown verbatim on the driver's settlement statement, so make it recognizable.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="amount"
-            label="Amount per Application"
+            label={t("Amount per Application")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
+            sideText={t("USD")}
             rules={{ required: true }}
-            description="The amount withheld each time the deduction applies to a settlement."
+            description={t("The amount withheld each time the deduction applies to a settlement.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="totalCap"
-            label="Total Cap"
+            label={t("Total Cap")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
-            description="Deduction stops automatically once this lifetime total is reached."
+            sideText={t("USD")}
+            description={t("Deduction stops automatically once this lifetime total is reached.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="startDate"
-            label="Start Date"
+            label={t("Start Date")}
             rules={{ required: true }}
-            description="The deduction begins applying to settlements whose period ends after this date."
+            description={t("The deduction begins applying to settlements whose period ends after this date.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="endDate"
-            label="End Date"
-            description="Optional last day the deduction applies; leave blank for open-ended."
+            label={t("End Date")}
+            description={t("Optional last day the deduction applies; leave blank for open-ended.")}
           />
         </FormControl>
         <FormControl className="col-span-2">
           <SwitchField
             control={control}
             name="escrowContribution"
-            label="Contribute to Escrow Account"
+            label={t("Contribute to Escrow Account")}
             disabled={isEdit}
-            description="Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target."
+            description={t("Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target.")}
             position="left"
           />
         </FormControl>
       </FormGroup>
       {escrowContribution && !isEdit && (
         <p className="text-muted-foreground text-xs">
-          The deduction links to the driver&apos;s active escrow account when saved. Open an escrow
-          account for the driver first if one doesn&apos;t exist.
+          {t("The deduction links to the driver's active escrow account when saved. Open an escrow account for the driver first if one doesn't exist.")}
         </p>
       )}
     </div>

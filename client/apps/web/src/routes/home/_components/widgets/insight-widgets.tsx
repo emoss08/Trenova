@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomerMix } from "@/components/work-modules/customer-mix";
 import { LaneHeatmap } from "@/components/work-modules/lane-heatmap";
 import { WidgetNeedsSetup, WidgetShell, WidgetSkeleton } from "../widget-shell";
@@ -5,12 +6,14 @@ import { HomeReportTile } from "../home-report-tile";
 import type { WidgetProps } from "../widget-registry";
 
 export function ReportWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const { definitionId, cannedKey, chartId, columnId, limit } = widget.config;
 
   if (!definitionId && !cannedKey) {
     return (
       <WidgetShell title={widget.title || "Report"} scroll={false}>
-        <WidgetNeedsSetup message="Choose the report this tile shows." />
+        <WidgetNeedsSetup message={t("Choose the report this tile shows.")} />
       </WidgetShell>
     );
   }
@@ -28,10 +31,12 @@ export function ReportWidget({ widget }: WidgetProps) {
 }
 
 export function DashboardLinkWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   if (!widget.config.dashboardId) {
     return (
       <WidgetShell title={widget.title || "Dashboard"} scroll={false}>
-        <WidgetNeedsSetup message="Choose the dashboard this tile links to." />
+        <WidgetNeedsSetup message={t("Choose the dashboard this tile links to.")} />
       </WidgetShell>
     );
   }
@@ -40,13 +45,13 @@ export function DashboardLinkWidget({ widget }: WidgetProps) {
     <WidgetShell
       title={widget.title || "Dashboard"}
       href={`/reports/dashboards/${widget.config.dashboardId}`}
-      hrefLabel="Open dashboard"
+      hrefLabel={t("Open dashboard")}
       scroll={false}
     >
       <div className="flex flex-1 flex-col items-start justify-center gap-1">
-        <span className="text-sm font-medium">{widget.title || "Saved dashboard"}</span>
+        <span className="text-sm font-medium">{widget.title || t("Saved dashboard")}</span>
         <span className="text-2xs text-muted-foreground">
-          Every tile, filter, and parameter as you left it.
+          {t("Every tile, filter, and parameter as you left it.")}
         </span>
       </div>
     </WidgetShell>

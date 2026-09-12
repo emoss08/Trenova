@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -22,6 +23,8 @@ import { useQuery } from "@tanstack/react-query";
  * not started drawing on.
  */
 export function LeaveCard() {
+  const t = useT();
+
   const leave = useQuery({
     queryKey: ["dash-leave"],
     queryFn: ({ signal }) => fetchMyLeave({ signal }),
@@ -43,34 +46,31 @@ export function LeaveCard() {
     <div className="border-border bg-card rounded-2xl border p-4" data-testid="leave-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">Family &amp; medical leave</p>
+          <p className="text-sm font-semibold">{t("Family & medical leave")}</p>
           <p className="text-muted-foreground text-xs">
-            {measurementMethodLabel(entitlement.method)} ·{" "}
-            {formatUnixDateMedium(entitlement.window.from)} to{" "}
-            {formatUnixDateMedium(entitlement.window.through)}
+            {t("{0} · {1} to {2}", measurementMethodLabel(entitlement.method), formatUnixDateMedium(entitlement.window.from), formatUnixDateMedium(entitlement.window.through))}
           </p>
         </div>
-        {entitlement.exhausted ? <Badge variant="inactive">Used up</Badge> : null}
+        {entitlement.exhausted ? <Badge variant="inactive">{t("Used up")}</Badge> : null}
       </div>
 
       <p className="mt-3 text-2xl font-semibold tabular-nums">
         {formatLeaveHours(entitlement.remainingHours)}
-        <span className="text-muted-foreground ml-1 text-xs font-normal">hours left</span>
+        <span className="text-muted-foreground ml-1 text-xs font-normal">{t("hours left")}</span>
       </p>
       <p className="text-muted-foreground text-xs">
-        {formatLeaveHours(entitlement.remainingWeeks)} of {formatLeaveHours(entitlement.totalWeeks)}{" "}
-        weeks
+        {t("{0} of {1} weeks", formatLeaveHours(entitlement.remainingWeeks), formatLeaveHours(entitlement.totalWeeks))}
       </p>
       <Progress value={usedPercent} className="mt-2" />
 
       {owing.length > 0 ? (
         <p className="border-warning/40 bg-warning/10 text-warning-foreground mt-3 rounded-lg border px-3 py-2 text-xs">
           {owing.length === 1
-            ? "Your carrier is waiting on a medical certification."
-            : `Your carrier is waiting on ${owing.length} medical certifications.`}{" "}
+            ? t("Your carrier is waiting on a medical certification.")
+            : t("Your carrier is waiting on {0} medical certifications.", owing.length)}{" "}
           {owing.some((row) => row.certificationLate)
-            ? "One is past its deadline — leave can be denied once it is."
-            : "Send it in before the deadline on the request."}
+            ? t("One is past its deadline — leave can be denied once it is.")
+            : t("Send it in before the deadline on the request.")}
         </p>
       ) : null}
 
@@ -82,23 +82,19 @@ export function LeaveCard() {
               <Badge variant={leaveCaseStatusTone(row.status)}>
                 {leaveCaseStatusLabel(row.status)}
               </Badge>
-              {row.fmlaDesignated ? <Badge variant="info">Counts as FMLA</Badge> : null}
+              {row.fmlaDesignated ? <Badge variant="info">{t("Counts as FMLA")}</Badge> : null}
               <Badge variant="secondary">{leaveFrequencyLabel(row.frequency)}</Badge>
             </div>
             <p className="text-muted-foreground mt-0.5">
-              {formatUnixDateMedium(row.startsAt)}
-              {row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : " – ongoing"} ·{" "}
-              {formatLeaveHours(row.hoursUsed)} h taken
-              {row.hoursCharged !== row.hoursUsed
-                ? ` (${formatLeaveHours(row.hoursCharged)} h counted)`
-                : ""}
+              {t("{0} {1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : ` ${t("– ongoing")}`, formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
+                ? ` ${t("({0} h counted)", formatLeaveHours(row.hoursCharged))}`
+                : "")}
             </p>
             {row.certificationStatus === "NotRequired" ? null : (
               <p className="text-muted-foreground mt-0.5">
-                Certification {certificationStatusLabel(row.certificationStatus).toLowerCase()}
-                {row.certificationDueAt
-                  ? ` · due ${formatUnixDateMedium(row.certificationDueAt)}`
-                  : ""}
+                {t("Certification {0}{1}", certificationStatusLabel(row.certificationStatus).toLowerCase(), row.certificationDueAt
+                  ? ` ${t("· due {0}", formatUnixDateMedium(row.certificationDueAt))}`
+                  : "")}
               </p>
             )}
           </li>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 
 export const TREND_RANGE_OPTIONS = [
@@ -13,6 +14,8 @@ export function RangeToggle({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const t = useT();
+
   return (
     <div className="flex gap-1">
       {TREND_RANGE_OPTIONS.map((option) => (
@@ -24,7 +27,7 @@ export function RangeToggle({
           onClick={() => onChange(option.value)}
           className="h-7 px-2 text-xs"
         >
-          {option.label}
+          {t(option.label)}
         </Button>
       ))}
     </div>

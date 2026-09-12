@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import {
@@ -30,6 +31,8 @@ export function InboundFilePanel({
   onOpenChange,
   row,
 }: DataTablePanelProps<EDIInboundFileRow>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -43,10 +46,10 @@ export function InboundFilePanel({
   const reprocessMutation = useApiMutation({
     mutationFn: (fileId: string) => apiService.ediService.reprocessInboundFile(fileId),
     onSuccess: async () => {
-      toast.success("Inbound file reprocessed");
+      toast.success(t("Inbound file reprocessed"));
       await invalidateEDIInboundFiles(queryClient, row?.id);
     },
-    onError: () => toast.error("Failed to reprocess inbound file"),
+    onError: () => toast.error(t("Failed to reprocess inbound file")),
   });
 
   if (!detail) return null;
@@ -63,7 +66,7 @@ export function InboundFilePanel({
       footer={
         <div className="flex w-full items-center justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t("Close")}
           </Button>
           {canReprocess && (
             <Button
@@ -71,54 +74,54 @@ export function InboundFilePanel({
               isLoading={reprocessMutation.isPending}
               onClick={() => reprocessMutation.mutate(detail.id)}
             >
-              Reprocess File
+              {t("Reprocess File")}
             </Button>
           )}
         </div>
       }
     >
       <div className="flex min-h-0 flex-col gap-3">
-        <DetailSection title="Processing">
-          <DetailField label="Status">
+        <DetailSection title={t("Processing")}>
+          <DetailField label={t("Status")}>
             <EDIInboundFileStatusBadge status={detail.status} />
           </DetailField>
-          <DetailField label="Transactions">{detail.transactionCount}</DetailField>
-          <DetailField label="Processed At">
+          <DetailField label={t("Transactions")}>{detail.transactionCount}</DetailField>
+          <DetailField label={t("Processed At")}>
             {detail.processedAt ? formatToUserTimezone(detail.processedAt) : "—"}
           </DetailField>
-          <DetailField label="ISA Control Number">
+          <DetailField label={t("ISA Control Number")}>
             <span className="font-mono text-xs">{detail.interchangeControlNumber || "—"}</span>
           </DetailField>
           {detail.failureReason && (
-            <DetailField label="Processing Notes" fullWidth>
+            <DetailField label={t("Processing Notes")} fullWidth>
               <span className="text-destructive text-xs">{detail.failureReason}</span>
             </DetailField>
           )}
         </DetailSection>
-        <DetailSection title="Source">
-          <DetailField label="Partner">
+        <DetailSection title={t("Source")}>
+          <DetailField label={t("Partner")}>
             <EDIPartnerRef partner={detail.partner} />
           </DetailField>
-          <DetailField label="Method">
+          <DetailField label={t("Method")}>
             <Badge variant="outline">{detail.method}</Badge>
           </DetailField>
-          <DetailField label="Remote Path" fullWidth>
+          <DetailField label={t("Remote Path")} fullWidth>
             <span className="font-mono text-xs">{detail.remotePath}</span>
           </DetailField>
-          <DetailField label="ISA Sender">
+          <DetailField label={t("ISA Sender")}>
             <span className="font-mono text-xs">
               {detail.isaSenderQualifier || "—"}:{detail.isaSenderId || "—"}
             </span>
           </DetailField>
-          <DetailField label="ISA Receiver">
+          <DetailField label={t("ISA Receiver")}>
             <span className="font-mono text-xs">
               {detail.isaReceiverQualifier || "—"}:{detail.isaReceiverId || "—"}
             </span>
           </DetailField>
-          <DetailField label="Size">
+          <DetailField label={t("Size")}>
             {detail.sizeBytes > 0 ? formatFileSize(detail.sizeBytes) : "—"}
           </DetailField>
-          <DetailField label="Checksum" fullWidth>
+          <DetailField label={t("Checksum")} fullWidth>
             <span className="font-mono text-xs break-all">{detail.checksum}</span>
           </DetailField>
         </DetailSection>
@@ -133,7 +136,7 @@ export function InboundFilePanel({
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{message.transactionSet}</Badge>
                     <span className="text-muted-foreground font-mono text-xs">
-                      ST {message.transactionControlNumber || "—"}
+                      {t("ST {0}", message.transactionControlNumber || "—")}
                     </span>
                   </div>
                   <EDIMessageAckStatusBadge status={message.ackStatus ?? "NotExpected"} />
@@ -143,7 +146,7 @@ export function InboundFilePanel({
           </DetailSection>
         )}
         {file?.rawContent && (
-          <DetailSection title="Raw Content" fullWidth>
+          <DetailSection title={t("Raw Content")} fullWidth>
             <EDIRawContent content={file.rawContent} />
           </DetailSection>
         )}

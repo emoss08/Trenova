@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -17,6 +18,8 @@ export default function FormattedViewTab({
   diagnostics: EDIInspectionDiagnostic[];
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
+
   const { copy } = useCopyToClipboard();
 
   return (
@@ -28,7 +31,7 @@ export default function FormattedViewTab({
           onClick={() => void copy(inspection.formatted, { withToast: true })}
         >
           <CopyIcon className="size-4" />
-          Copy formatted
+          {t("Copy formatted")}
         </Button>
       </div>
       <div className="min-h-0 overflow-auto rounded-md border">
@@ -44,8 +47,8 @@ export default function FormattedViewTab({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                 <span className="text-sm">{segment.name}</span>
-                {isControlSegment(segment) ? <Badge variant="outline">Control</Badge> : null}
-                {segment.malformed ? <Badge variant="inactive">Malformed</Badge> : null}
+                {isControlSegment(segment) ? <Badge variant="outline">{t("Control")}</Badge> : null}
+                {segment.malformed ? <Badge variant="inactive">{t("Malformed")}</Badge> : null}
                 {segmentDiagnostics.length > 0 ? (
                   <Badge variant="warning">{segmentDiagnostics.length}</Badge>
                 ) : null}
@@ -66,10 +69,10 @@ export default function FormattedViewTab({
                         {segment.segmentId}
                         {String(element.position).padStart(2, "0")}
                       </span>
-                      <span className="truncate">{element.label}</span>
+                      <span className="truncate">{t(element.label)}</span>
                       <span className="font-mono wrap-break-word">
                         {element.empty ? (
-                          <span className="text-muted-foreground">[empty]</span>
+                          <span className="text-muted-foreground">{t("[empty]")}</span>
                         ) : (
                           element.value
                         )}

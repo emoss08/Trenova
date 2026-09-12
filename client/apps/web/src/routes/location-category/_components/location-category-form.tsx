@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -9,6 +10,8 @@ import type { LocationCategory } from "@/types/location-category";
 import { useFormContext } from "react-hook-form";
 
 export function LocationCategoryForm() {
+  const t = useT();
+
   const { control } = useFormContext<LocationCategory>();
 
   return (
@@ -18,9 +21,9 @@ export function LocationCategoryForm() {
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Name"
-          description="The name of the location category"
+          label={t("Name")}
+          placeholder={t("Name")}
+          description={t("The name of the location category")}
           maxLength={100}
         />
       </FormControl>
@@ -29,9 +32,9 @@ export function LocationCategoryForm() {
           control={control}
           rules={{ required: true }}
           name="type"
-          label="Type"
-          placeholder="Type"
-          description="The type of location category"
+          label={t("Type")}
+          placeholder={t("Type")}
+          description={t("The type of location category")}
           options={locationCategoryTypeChoices}
         />
       </FormControl>
@@ -39,9 +42,9 @@ export function LocationCategoryForm() {
         <SelectField
           control={control}
           name="facilityType"
-          label="Facility Type"
-          placeholder="Facility Type"
-          description="The facility type of the location category"
+          label={t("Facility Type")}
+          placeholder={t("Facility Type")}
+          description={t("The facility type of the location category")}
           options={facilityTypeChoices}
           isClearable
         />
@@ -50,49 +53,49 @@ export function LocationCategoryForm() {
         <ColorField
           control={control}
           name="color"
-          label="Color"
-          description="The color of the location category"
+          label={t("Color")}
+          description={t("The color of the location category")}
         />
       </FormControl>
       <FormControl cols="full">
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="The description of the location category"
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("The description of the location category")}
         />
       </FormControl>
       <FormControl>
         <SwitchField
           control={control}
           name="hasSecureParking"
-          label="Secure Parking"
-          description="Whether this location has secure parking"
+          label={t("Secure Parking")}
+          description={t("Whether this location has secure parking")}
         />
       </FormControl>
       <FormControl>
         <SwitchField
           control={control}
           name="requiresAppointment"
-          label="Requires Appointment"
-          description="Whether this location requires an appointment"
+          label={t("Requires Appointment")}
+          description={t("Whether this location requires an appointment")}
         />
       </FormControl>
       <FormControl>
         <SwitchField
           control={control}
           name="allowsOvernight"
-          label="Allows Overnight"
-          description="Whether this location allows overnight stays"
+          label={t("Allows Overnight")}
+          description={t("Whether this location allows overnight stays")}
         />
       </FormControl>
       <FormControl>
         <SwitchField
           control={control}
           name="hasRestroom"
-          label="Has Restroom"
-          description="Whether this location has restroom facilities"
+          label={t("Has Restroom")}
+          description={t("Whether this location has restroom facilities")}
         />
       </FormControl>
     </FormGroup>

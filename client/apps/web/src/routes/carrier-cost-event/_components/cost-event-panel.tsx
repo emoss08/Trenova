@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { CarrierCostEventStatusBadge } from "@trenova/shared/components/status-badge";
@@ -16,6 +17,8 @@ export function CostEventPanel({
   mode,
   row,
 }: DataTablePanelProps<CarrierCostEventRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) return null;
 
   return (
@@ -37,31 +40,31 @@ export function CostEventPanel({
           <table className="w-full text-xs">
             <tbody>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">Type</td>
+                <td className="px-3 py-2 font-medium">{t("Type")}</td>
                 <td className="px-3 py-2 text-right">
                   {costEventTypeLabel(row.eventType as CarrierCostEventType)}
                 </td>
               </tr>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">Description</td>
+                <td className="px-3 py-2 font-medium">{t("Description")}</td>
                 <td className="px-3 py-2 text-right">{row.description || "—"}</td>
               </tr>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">Accrued</td>
+                <td className="px-3 py-2 font-medium">{t("Accrued")}</td>
                 <td className="px-3 py-2 text-right">{formatSettlementDate(row.eventDate)}</td>
               </tr>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">Pro Number</td>
+                <td className="px-3 py-2 font-medium">{t("Pro Number")}</td>
                 <td className="px-3 py-2 text-right font-mono">{row.proNumber || "—"}</td>
               </tr>
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium">Settlement</td>
+                <td className="px-3 py-2 font-medium">{t("Settlement")}</td>
                 <td className="px-3 py-2 text-right font-mono">
-                  {row.settlementId || "Unsettled"}
+                  {row.settlementId || t("Unsettled")}
                 </td>
               </tr>
               <tr className="bg-muted/30">
-                <td className="px-3 py-2 font-semibold">Amount</td>
+                <td className="px-3 py-2 font-semibold">{t("Amount")}</td>
                 <td className="px-3 py-2 text-right font-semibold">
                   <AmountDisplay
                     value={row.amountMinor}
@@ -74,8 +77,7 @@ export function CostEventPanel({
           </table>
         </div>
         <p className="text-muted-foreground text-[11px]">
-          Cost events accrue automatically when a carrier-covered shipment reaches your configured
-          pay trigger and are locked once attached to a settlement.
+          {t("Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.")}
         </p>
       </div>
     </DataTablePanelContainer>

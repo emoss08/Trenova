@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel, type FormTabConfig } from "@/components/tabbed-form-edit-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -36,13 +38,13 @@ function notifyConnectionTestResult(result: EDIConnectionTestResult) {
   if (result.success) {
     const warnings = describe(["warning"]);
     if (warnings) {
-      toast.warning("Connection test passed with warnings", { description: warnings });
+      toast.warning(translate("Connection test passed with warnings"), { description: warnings });
       return;
     }
-    toast.success("Connection test passed", { description: describe(["passed"]) });
+    toast.success(translate("Connection test passed"), { description: describe(["passed"]) });
     return;
   }
-  toast.error("Connection test failed", { description: describe(["failed", "warning"]) });
+  toast.error(translate("Connection test failed"), { description: describe(["failed", "warning"]) });
 }
 
 type CommunicationProfileEditRow = CommunicationProfileFormValues &
@@ -54,6 +56,8 @@ export function CommunicationProfilePanel({
   mode,
   row,
 }: DataTablePanelProps<EDICommunicationProfileRow>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const profile = mode === "edit" ? row : null;
   const form = useForm<CommunicationProfileFormValues>({
@@ -70,7 +74,7 @@ export function CommunicationProfilePanel({
       return apiService.ediService.testProfileConnection(profile.id);
     },
     onSuccess: (result) => notifyConnectionTestResult(result),
-    onError: () => toast.error("The connection test could not be run"),
+    onError: () => toast.error(t("The connection test could not be run")),
   });
 
   const formTabs = useMemo<FormTabConfig[]>(
@@ -109,7 +113,7 @@ export function CommunicationProfilePanel({
         form={form}
         url="/edi/communication-profiles/"
         queryKey="edi-communication-profile-list"
-        title="Communication Profile"
+        title={t("Communication Profile")}
         fieldKey="name"
         size="xl"
         formTabs={formTabs}
@@ -128,7 +132,7 @@ export function CommunicationProfilePanel({
                   : "Verify certificates, credentials, and endpoint reachability"
               }
             >
-              Test Connection
+              {t("Test Connection")}
             </Button>
           ) : undefined
         }
@@ -151,8 +155,8 @@ export function CommunicationProfilePanel({
       form={form}
       url="/edi/communication-profiles/"
       queryKey="edi-communication-profile-list"
-      title="Communication Profile"
-      description="Configure the transport profile and envelope values used for this organization."
+      title={t("Communication Profile")}
+      description={t("Configure the transport profile and envelope values used for this organization.")}
       size="xl"
       formTabs={formTabs}
       mutationFn={async (values) => {

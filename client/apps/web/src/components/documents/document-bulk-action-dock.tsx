@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -21,6 +22,8 @@ export function DocumentBulkActionDock({
   onSelectAll,
   isDeleting = false,
 }: DocumentBulkActionDockProps) {
+  const t = useT();
+
   const allSelected = selectedCount === totalCount;
 
   return (
@@ -44,13 +47,13 @@ export function DocumentBulkActionDock({
                     onClick={onClearSelection}
                   >
                     <span className="text-background text-sm font-medium tabular-nums">
-                      {selectedCount} selected
+                      {t("{0} selected", selectedCount)}
                     </span>{" "}
                     <XIcon className="text-background size-3" />
                   </Button>
                 }
               />
-              <TooltipContent sideOffset={10}>Clear selection</TooltipContent>
+              <TooltipContent sideOffset={10}>{t("Clear selection")}</TooltipContent>
             </Tooltip>
             <div className="flex items-center gap-1 pl-1">
               {!allSelected && (
@@ -61,7 +64,7 @@ export function DocumentBulkActionDock({
                   onClick={onSelectAll}
                 >
                   <CheckCheckIcon className="size-4" />
-                  Select All
+                  {t("Select All")}
                 </Button>
               )}
               <Button
@@ -72,7 +75,7 @@ export function DocumentBulkActionDock({
                 onClick={onDelete}
               >
                 {isDeleting ? <Spinner /> : <Trash2Icon className="size-4" />}
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isDeleting ? t("Deleting...") : t("Delete")}
               </Button>
             </div>
           </div>

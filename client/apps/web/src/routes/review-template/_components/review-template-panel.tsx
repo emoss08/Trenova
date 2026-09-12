@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -86,6 +87,8 @@ function ReviewTemplateCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<ReviewTemplateFormValues>({
     resolver: zodResolver(reviewTemplateFormSchema) as Resolver<ReviewTemplateFormValues>,
     defaultValues: buildReviewTemplateDefaults(null),
@@ -95,8 +98,8 @@ function ReviewTemplateCreatePanel({
     <FormCreatePanel<ReviewTemplateFormValues, ReviewTemplateRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Review Template"
-      description="Decide what a review rates, how much each item counts, and how often the review comes round."
+      title={t("Review Template")}
+      description={t("Decide what a review rates, how much each item counts, and how often the review comes round.")}
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       form={form}
       size="lg"
@@ -118,6 +121,8 @@ function ReviewTemplateEditPanel({
   onOpenChange: (open: boolean) => void;
   row: ReviewTemplateRow;
 }) {
+  const t = useT();
+
   const formRow = {
     ...row,
     ...buildReviewTemplateDefaults(row),
@@ -132,7 +137,7 @@ function ReviewTemplateEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Review Template"
+      title={t("Review Template")}
       fieldKey="code"
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       form={form}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -7,6 +8,8 @@ import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import { useFormContext } from "react-hook-form";
 
 export function EquipmentManufacturerForm() {
+  const t = useT();
+
   const { control } = useFormContext<EquipmentManufacturer>();
 
   return (
@@ -16,9 +19,9 @@ export function EquipmentManufacturerForm() {
           control={control}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="The status of the equipment manufacturer"
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("The status of the equipment manufacturer")}
           options={statusChoices}
         />
       </FormControl>
@@ -27,9 +30,9 @@ export function EquipmentManufacturerForm() {
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Name"
-          description="The name of the equipment manufacturer"
+          label={t("Name")}
+          placeholder={t("Name")}
+          description={t("The name of the equipment manufacturer")}
           maxLength={100}
         />
       </FormControl>
@@ -37,9 +40,9 @@ export function EquipmentManufacturerForm() {
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="The description of the equipment manufacturer"
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("The description of the equipment manufacturer")}
         />
       </FormControl>
     </FormGroup>

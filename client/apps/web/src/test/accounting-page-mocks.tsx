@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
@@ -15,9 +16,11 @@ export function PageLayoutStub({
   pageHeaderProps: { title: string; actions?: ReactNode };
   children: ReactNode;
 }) {
+  const t = useT();
+
   return (
     <div>
-      <h1>{pageHeaderProps.title}</h1>
+      <h1>{t(pageHeaderProps.title)}</h1>
       {pageHeaderProps.actions}
       {children}
     </div>

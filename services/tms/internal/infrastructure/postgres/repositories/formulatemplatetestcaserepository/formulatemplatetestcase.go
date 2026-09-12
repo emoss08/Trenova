@@ -2,7 +2,6 @@ package formulatemplatetestcaserepository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -177,6 +176,6 @@ func duplicateScenarioName(name string) error {
 	return errortypes.NewValidationError(
 		"name",
 		errortypes.ErrDuplicate,
-		fmt.Sprintf("A scenario named %q already exists on this template", name),
+		"A scenario named \"{0}\" already exists on this template", name,
 	)
 }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import { FormSection } from "@trenova/shared/components/ui/form";
@@ -15,6 +16,8 @@ import { MoveCard } from "./move-card";
 type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
 
 export default function ShipmentMoveDetails() {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const shipmentID = useWatch({ control, name: "id" });
   const {
@@ -84,8 +87,8 @@ export default function ShipmentMoveDetails() {
   return (
     <>
       <FormSection
-        title="Move Details"
-        description="Execution legs and stop sequences for this shipment"
+        title={t("Move Details")}
+        description={t("Execution legs and stop sequences for this shipment")}
         className="border-border border-t pt-4"
         action={
           <div className="flex items-center gap-1.5">
@@ -96,7 +99,7 @@ export default function ShipmentMoveDetails() {
             <CapabilityExplainer profile={profile} field="moves" />
             <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
               <PlusIcon className="size-3" />
-              Add Move
+              {t("Add Move")}
             </Button>
           </div>
         }
@@ -118,9 +121,9 @@ export default function ShipmentMoveDetails() {
         {moveFields.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
             <TruckIcon className="text-muted-foreground/40 mb-2 size-6" />
-            <p className="text-muted-foreground text-sm font-medium">No moves yet</p>
+            <p className="text-muted-foreground text-sm font-medium">{t("No moves yet")}</p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              Add a move to define the route for this shipment
+              {t("Add a move to define the route for this shipment")}
             </p>
             <Button
               type="button"
@@ -130,7 +133,7 @@ export default function ShipmentMoveDetails() {
               onClick={handleAddMove}
             >
               <PlusIcon className="size-3" />
-              Add First Move
+              {t("Add First Move")}
             </Button>
           </div>
         )}

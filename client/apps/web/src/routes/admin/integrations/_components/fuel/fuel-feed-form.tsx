@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -60,6 +61,8 @@ export function FuelFeedForm({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const configQuery = useQuery({
     ...queries.integration.config(vendor.integrationType),
@@ -142,10 +145,10 @@ export function FuelFeedForm({
                 <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
                   <div>
                     <Label htmlFor={`${vendor.integrationType}-enabled`}>
-                      Enable {vendor.name}
+                      {t("Enable {0}", vendor.name)}
                     </Label>
                     <p className="text-muted-foreground text-xs">
-                      Read transactions on a schedule and post the ones that resolve.
+                      {t("Read transactions on a schedule and post the ones that resolve.")}
                     </p>
                   </div>
                   <Switch
@@ -168,7 +171,7 @@ export function FuelFeedForm({
         </FormGroup>
         <DialogFooter className="flex flex-row items-center sm:justify-between">
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -177,19 +180,19 @@ export function FuelFeedForm({
               size="sm"
               onClick={() => testConnectionMutation.mutateAsync()}
               isLoading={testConnectionMutation.isPending}
-              loadingText="Testing..."
+              loadingText={t("Testing...")}
               disabled={configQuery.isLoading || saveMutation.isPending}
             >
-              Test Connection
+              {t("Test Connection")}
             </Button>
             <Button
               size="sm"
               type="submit"
               isLoading={saveMutation.isPending}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               disabled={configQuery.isLoading}
             >
-              Save Changes
+              {t("Save Changes")}
             </Button>
           </div>
         </DialogFooter>

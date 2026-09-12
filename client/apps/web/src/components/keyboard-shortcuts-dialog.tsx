@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,8 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import { useState } from "react";
 
 export function KeyboardShortcutsDialog() {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   useHotkey(
@@ -28,9 +31,9 @@ export function KeyboardShortcutsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle>{t("Keyboard Shortcuts")}</DialogTitle>
           <DialogDescription>
-            Available keyboard shortcuts throughout the application.
+            {t("Available keyboard shortcuts throughout the application.")}
           </DialogDescription>
         </DialogHeader>
         <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
@@ -38,7 +41,7 @@ export function KeyboardShortcutsDialog() {
             {keybindGroups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
                 <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                  {group.label}
+                  {t(group.label)}
                 </h3>
                 <div className="flex flex-col">
                   {group.keybinds.map((keybind) => (
@@ -47,8 +50,8 @@ export function KeyboardShortcutsDialog() {
                       className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
                     >
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">{keybind.label}</span>
-                        <span className="text-muted-foreground text-xs">{keybind.description}</span>
+                        <span className="text-sm font-medium">{t(keybind.label)}</span>
+                        <span className="text-muted-foreground text-xs">{t(keybind.description)}</span>
                       </div>
                       <KbdGroup>
                         {keybind.keys.map((key) => (

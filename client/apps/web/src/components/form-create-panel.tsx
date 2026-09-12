@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
@@ -61,6 +62,8 @@ export function FormCreatePanel<
   useDock = false,
   mutationFn,
 }: FormCreatePanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
   const { isPopout, closePopout } = usePopoutWindow();
@@ -107,7 +110,7 @@ export function FormCreatePanel<
         return api.post<TMutationData>(url, values);
       },
       onSuccess: (_data, variables) => {
-        toast.success("Changes have been saved.", {
+        toast.success(t("Changes have been saved."), {
           description: `${title} created successfully`,
         });
         void queryClient.invalidateQueries({ queryKey: [queryKey] });
@@ -181,14 +184,14 @@ export function FormCreatePanel<
         useDock ? undefined : (
           <>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <SplitButton
               options={SAVE_OPTIONS}
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               formId="panel-create-form"
             />
           </>

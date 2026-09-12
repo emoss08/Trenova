@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiInfoPopover, type KpiInfoRow } from "@/components/kpi/kpi-info-popover";
 import { StatTile } from "@/components/stat-tile";
 import {
@@ -67,29 +68,31 @@ function statusFacts(ret: IftaReturnView): string {
 }
 
 export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
+  const t = useT();
+
   const net = netPosition(ret.netDue);
 
   return (
     <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-5">
       <StatTile
-        label="Total miles"
+        label={t("Total miles")}
         value={formatIftaMeasure(ret.totalMiles, IFTA_MILES_DISPLAY_SCALE)}
         sub={`${formatIftaMeasure(ret.totalTaxableMiles, IFTA_MILES_DISPLAY_SCALE)} taxable`}
-        hint="Every mile attributed to a jurisdiction on a completed move in the quarter, plus manual entries."
+        hint={t("Every mile attributed to a jurisdiction on a completed move in the quarter, plus manual entries.")}
       />
       <StatTile
-        label="Tax-paid gallons"
+        label={t("Tax-paid gallons")}
         value={formatIftaMeasure(ret.totalTaxPaidGallons, IFTA_GALLONS_SCALE)}
         sub={`of ${formatIftaMeasure(ret.totalGallons, IFTA_GALLONS_SCALE)} bought`}
-        hint="Gallons bought with the fuel tax already paid at the pump. Untaxed purchases count toward the fleet total but earn no credit."
+        hint={t("Gallons bought with the fuel tax already paid at the pump. Untaxed purchases count toward the fleet total but earn no credit.")}
       />
       <StatTile
-        label="Fleet MPG"
+        label={t("Fleet MPG")}
         value={
           <div className="flex items-start gap-1.5">
             <div className="flex flex-col gap-0.5">
               {ret.fleetMpgByFuelType.length === 0 ? (
-                <span className="text-muted-foreground text-xs font-normal">No miles run</span>
+                <span className="text-muted-foreground text-xs font-normal">{t("No miles run")}</span>
               ) : (
                 ret.fleetMpgByFuelType.map((entry) => (
                   <span key={entry.fuelType} className="tabular-nums">
@@ -100,14 +103,14 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
                 ))
               )}
             </div>
-            <KpiInfoPopover title="Fleet MPG" description={MPG_EXPLANATION} rows={mpgRows(ret)} />
+            <KpiInfoPopover title={t("Fleet MPG")} description={MPG_EXPLANATION} rows={mpgRows(ret)} />
           </div>
         }
-        sub="Miles ÷ gallons, per fuel type"
+        sub={t("Miles ÷ gallons, per fuel type")}
         hint={MPG_EXPLANATION}
       />
       <StatTile
-        label={net.label}
+        label={t(net.label)}
         value={formatIftaMoney(net.magnitude, ret.currencyCode)}
         sub={`${formatIftaMeasure(ret.taxDue, IFTA_MONEY_SCALE)} tax + ${formatIftaMeasure(ret.surchargeDue, IFTA_MONEY_SCALE)} surcharge, in ${ret.currencyCode}`}
         tone={net.isCredit ? "info" : "warn"}
@@ -118,10 +121,10 @@ export function ReturnSummaryStrip({ ret }: { ret: IftaReturnView }) {
         }
       />
       <StatTile
-        label="Status"
+        label={t("Status")}
         value={ret.status}
         sub={statusFacts(ret)}
-        hint="Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment."
+        hint={t("Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.")}
       />
     </div>
   );

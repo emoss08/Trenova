@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ActiveEditorProvider,
   useActiveEditorInsert,
@@ -78,6 +79,8 @@ function FormulaStudioBody({
   onSave,
   onTemplateChanged,
 }: FormulaStudioProps) {
+  const t = useT();
+
   const form = useFormContext<FormulaTemplateFormValues>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -188,13 +191,13 @@ function FormulaStudioBody({
       const exportData = buildTemplateExport(template, { testCases });
       const filename = getExportFilename(template, false);
       downloadJson(exportData, filename);
-      toast.success("Template exported", { description: filename });
+      toast.success(t("Template exported"), { description: filename });
     } catch {
-      toast.error("Export failed", {
-        description: "Could not export the template. Please try again.",
+      toast.error(t("Export failed"), {
+        description: t("Could not export the template. Please try again."),
       });
     }
-  }, [template]);
+  }, [template, t]);
 
   const previewPane = (
     <StudioPreviewPane preview={preview} onPinScenario={template ? handlePinScenario : undefined} />

@@ -203,7 +203,7 @@ func enforceMarginFloor(
 	}
 
 	return errortypes.NewBusinessError(
-		"This assignment is outside the contract's margin terms: " + verdict.Explanation,
+		"This assignment is outside the contract's margin terms: {0}", verdict.Explanation,
 	)
 }
 

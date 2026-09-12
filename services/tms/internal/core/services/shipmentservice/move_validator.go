@@ -69,7 +69,7 @@ func validateMoveIdentifiers(ctx moveRuleContext) {
 			ctx.multiErr.Add(
 				moveFieldPath(ctx.moveIndex, "id"),
 				errortypes.ErrDuplicate,
-				fmt.Sprintf("Move ID duplicates moves[%d].id", firstIndex),
+				"Move ID duplicates moves[{0}].id", firstIndex,
 			)
 		} else {
 			ctx.seenMoveIDs[ctx.move.ID] = ctx.moveIndex
@@ -102,7 +102,7 @@ func validateMoveSequence(ctx moveRuleContext) {
 		ctx.multiErr.Add(
 			moveFieldPath(ctx.moveIndex, "sequence"),
 			errortypes.ErrDuplicate,
-			fmt.Sprintf("Move sequence duplicates moves[%d].sequence", firstIndex),
+			"Move sequence duplicates moves[{0}].sequence", firstIndex,
 		)
 		return
 	}

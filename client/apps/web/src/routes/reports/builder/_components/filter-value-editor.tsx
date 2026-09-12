@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -52,6 +53,8 @@ function EnumMultiSelect({
   value: unknown;
   onChange: (value: unknown) => void;
 }) {
+  const t = useT();
+
   const selected = Array.isArray(value) ? (value as string[]) : [];
   const byValue = new Map(field.enumValues.map((choice) => [choice.value, choice.label]));
 
@@ -90,7 +93,7 @@ function EnumMultiSelect({
                 ))}
               </span>
             ) : (
-              <span className="text-muted-foreground">Select values...</span>
+              <span className="text-muted-foreground">{t("Select values...")}</span>
             )}
             <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
           </Button>
@@ -110,7 +113,7 @@ function EnumMultiSelect({
                   )
                 }
               />
-              {choice.label}
+              {t(choice.label)}
             </label>
           ))}
         </div>
@@ -137,6 +140,8 @@ export function FilterValueEditor({
   onChange,
   refEntityKey,
 }: FilterValueEditorProps) {
+  const t = useT();
+
   const choice = operatorChoice(operator);
   if (!choice || !choice.requiresValue || !field) return null;
 
@@ -158,7 +163,7 @@ export function FilterValueEditor({
         type="number"
         min={1}
         value={typeof value === "number" ? String(value) : ""}
-        placeholder="Days"
+        placeholder={t("Days")}
         onChange={(event) => {
           const parsed = Number.parseInt(event.target.value, 10);
           onChange(Number.isNaN(parsed) ? undefined : parsed);
@@ -187,7 +192,7 @@ export function FilterValueEditor({
       <Input
         className="h-7"
         value={joined}
-        placeholder="Comma-separated values"
+        placeholder={t("Comma-separated values")}
         onChange={(event) => {
           const values = event.target.value
             .split(",")
@@ -226,12 +231,12 @@ export function FilterValueEditor({
         }))}
       >
         <SelectTrigger className="h-7">
-          <SelectValue placeholder="Select value" />
+          <SelectValue placeholder={t("Select value")} />
         </SelectTrigger>
         <SelectContent>
           {field.enumValues.map((enumValue) => (
             <SelectItem key={enumValue.value} value={enumValue.value}>
-              {enumValue.label}
+              {t(enumValue.label)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -249,11 +254,11 @@ export function FilterValueEditor({
         items={BOOL_CHOICES}
       >
         <SelectTrigger className="h-7">
-          <SelectValue placeholder="Select" />
+          <SelectValue placeholder={t("Select")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="true">Yes</SelectItem>
-          <SelectItem value="false">No</SelectItem>
+          <SelectItem value="true">{t("Yes")}</SelectItem>
+          <SelectItem value="false">{t("No")}</SelectItem>
         </SelectContent>
       </Select>
     );
@@ -287,7 +292,7 @@ export function FilterValueEditor({
     <Input
       className="h-7"
       value={typeof value === "string" ? value : ""}
-      placeholder="Value"
+      placeholder={t("Value")}
       onChange={(event) => onChange(event.target.value || undefined)}
     />
   );

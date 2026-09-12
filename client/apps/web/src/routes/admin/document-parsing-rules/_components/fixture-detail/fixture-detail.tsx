@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormSection, FormGroup, FormControl } from "@trenova/shared/components/ui/form";
@@ -62,6 +63,8 @@ function FixtureForm({
   onBack: () => void;
   onDeleted: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canDelete } = usePermission(Resource.DocumentParsingRule, Operation.Delete);
 
@@ -103,7 +106,7 @@ function FixtureForm({
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.fixtures._def,
       });
-      toast.success("Fixture deleted");
+      toast.success(t("Fixture deleted"));
       onDeleted();
     },
   });
@@ -137,18 +140,18 @@ function FixtureForm({
                 />
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Fixture</AlertDialogTitle>
+                    <AlertDialogTitle>{t("Delete Fixture")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete &quot;{fixture.name}&quot;.
+                      {t("This will permanently delete \"{0}\".", fixture.name)}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => deleteMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Delete
+                      {t("Delete")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -157,42 +160,42 @@ function FixtureForm({
           </div>
 
           <FormSection
-            title="Fixture Details"
-            description="Identify this fixture with a name and optional metadata used during provider matching."
+            title={t("Fixture Details")}
+            description={t("Identify this fixture with a name and optional metadata used during provider matching.")}
           >
             <FormGroup cols={2}>
               <FormControl>
-                <InputField control={control} name="name" label="Name" rules={{ required: true }} />
+                <InputField control={control} name="name" label={t("Name")} rules={{ required: true }} />
               </FormControl>
               <FormControl>
                 <InputField
                   control={control}
                   name="fileName"
-                  label="File Name"
-                  placeholder="e.g. rate_confirmation.pdf"
+                  label={t("File Name")}
+                  placeholder={t("e.g. rate_confirmation.pdf")}
                 />
               </FormControl>
               <FormControl>
                 <InputField
                   control={control}
                   name="providerFingerprint"
-                  label="Provider Fingerprint"
-                  placeholder="e.g. ch_robinson"
+                  label={t("Provider Fingerprint")}
+                  placeholder={t("e.g. ch_robinson")}
                 />
               </FormControl>
               <FormControl cols={2}>
-                <TextareaField control={control} name="description" label="Description" />
+                <TextareaField control={control} name="description" label={t("Description")} />
               </FormControl>
             </FormGroup>
           </FormSection>
 
           <FormSection
-            title="Text Snapshot"
-            description="The full extracted text of the document. This is the primary input the parser operates on during simulation."
+            title={t("Text Snapshot")}
+            description={t("The full extracted text of the document. This is the primary input the parser operates on during simulation.")}
             action={
               lineCount > 0 ? (
                 <Badge variant="outline" className="font-normal">
-                  {lineCount} line{lineCount !== 1 ? "s" : ""}
+                  {t("{0, plural, one {# line} other {# lines}}", lineCount)}
                 </Badge>
               ) : undefined
             }
@@ -200,17 +203,17 @@ function FixtureForm({
             <TextareaField
               control={control}
               name="textSnapshot"
-              label="Full Document Text"
-              placeholder="Paste the full document text here..."
+              label={t("Full Document Text")}
+              placeholder={t("Paste the full document text here...")}
               rules={{ required: true }}
               className="font-mono text-xs"
             />
           </FormSection>
 
           <FormSection
-            title="Page Snapshots"
+            title={t("Page Snapshots")}
             titleCount={pageFields.length}
-            description="Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot."
+            description={t("Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.")}
             action={
               <Button
                 type="button"
@@ -225,7 +228,7 @@ function FixtureForm({
                 }
               >
                 <PlusIcon className="size-3.5" />
-                Add Page
+                {t("Add Page")}
               </Button>
             }
           >
@@ -234,7 +237,7 @@ function FixtureForm({
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
                   <FileTextIcon className="text-muted-foreground size-5" />
                   <p className="text-muted-foreground text-xs">
-                    No page snapshots defined. Add pages if the document has page-specific content.
+                    {t("No page snapshots defined. Add pages if the document has page-specific content.")}
                   </p>
                 </div>
               )}
@@ -242,7 +245,7 @@ function FixtureForm({
                 <div className="mb-2 flex flex-wrap gap-1">
                   {pageFields.map((pf, idx) => (
                     <Badge key={pf.id} variant="secondary" className="font-mono text-xs">
-                      Page {pf.pageNumber || idx + 1}
+                      {t("Page {0}", pf.pageNumber || idx + 1)}
                     </Badge>
                   ))}
                 </div>
@@ -251,7 +254,7 @@ function FixtureForm({
                 <Collapsible key={pf.id}>
                   <div className="rounded-md border">
                     <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm">
-                      <span>Page {pf.pageNumber || idx + 1}</span>
+                      <span>{t("Page {0}", pf.pageNumber || idx + 1)}</span>
                       <div className="flex items-center gap-1">
                         <Button
                           type="button"
@@ -273,12 +276,12 @@ function FixtureForm({
                         <NumberField
                           control={control}
                           name={`pageSnapshots.${idx}.pageNumber`}
-                          label="Page Number"
+                          label={t("Page Number")}
                         />
                         <TextareaField
                           control={control}
                           name={`pageSnapshots.${idx}.text`}
-                          label="Page Text"
+                          label={t("Page Text")}
                           className="font-mono text-xs"
                         />
                       </div>
@@ -291,7 +294,7 @@ function FixtureForm({
 
           <AssertionsEditor />
 
-          <FormSaveDock saveButtonContent="Save Fixture" />
+          <FormSaveDock saveButtonContent={t("Save Fixture")} />
         </div>
       </Form>
     </FormProvider>

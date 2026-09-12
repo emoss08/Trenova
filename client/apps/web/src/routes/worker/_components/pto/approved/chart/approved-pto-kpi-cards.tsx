@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { MetricSkeleton } from "@/components/metric-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import type { LucideIcon } from "lucide-react";
@@ -17,6 +18,8 @@ export function ApprovedPTOKPICards({
   requestedLoading: boolean;
   requestedError: boolean;
 }) {
+  const t = useT();
+
   if (chartLoading && requestedLoading) {
     return <MetricSkeleton />;
   }
@@ -24,32 +27,32 @@ export function ApprovedPTOKPICards({
   return (
     <div className="mb-3 grid shrink-0 grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
       <MetricCard
-        label="Approved PTO Days"
+        label={t("Approved PTO Days")}
         value={metrics.approvedPtoDays.toLocaleString()}
-        detail="Daily occupancy total"
+        detail={t("Daily occupancy total")}
         icon={CalendarCheck2}
       />
       <MetricCard
-        label="Requested PTO Requests"
+        label={t("Requested PTO Requests")}
         value={requestedError ? "--" : requestedCount.toLocaleString()}
-        detail="Pending approvals in range"
+        detail={t("Pending approvals in range")}
         icon={CalendarClock}
       />
       <MetricCard
-        label="Workers With Approved PTO"
+        label={t("Workers With Approved PTO")}
         value={metrics.workersWithApprovedPTO.toLocaleString()}
-        detail="Unique workers in range"
+        detail={t("Unique workers in range")}
         icon={Users}
       />
       <MetricCard
-        label="Peak Day Occupancy"
+        label={t("Peak Day Occupancy")}
         value={metrics.peakDay.occupancy.toLocaleString()}
         detail={metrics.peakDay.dateLabel ?? "No peak day"}
         icon={TrendingUp}
       />
       {requestedError && !requestedLoading && (
         <p className="border-border text-muted-foreground col-span-full rounded-md border border-dashed px-2.5 py-2 text-xs">
-          Requested PTO metric is temporarily unavailable.
+          {t("Requested PTO metric is temporarily unavailable.")}
         </p>
       )}
     </div>

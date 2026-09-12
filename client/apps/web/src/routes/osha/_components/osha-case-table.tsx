@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import type { OshaLogCase } from "@/lib/graphql/worker-injury";
 import {
@@ -76,6 +77,8 @@ export function OshaCaseTable({
   onEdit,
   onDelete,
 }: OshaCaseTableProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
@@ -97,15 +100,16 @@ export function OshaCaseTable({
   }, []);
 
   return (
-    <section aria-label="Form 300" className="flex min-w-0 flex-col gap-3">
+    <section aria-label={t("Form 300")} className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-sm font-medium">
-            Log of work-related injuries and illnesses, {year}
+            {t("Log of work-related injuries and illnesses, {0}", year)}
           </h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Form 300. {cases.length === 1 ? "One case" : `${cases.length} cases`} recorded; case
-            numbers restart each January. A case is recorded from the worker&apos;s safety tab.
+            {cases.length === 1
+              ? t("Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.")
+              : t("Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.", cases.length)}
           </p>
         </div>
         {cases.length > 0 ? (
@@ -114,14 +118,14 @@ export function OshaCaseTable({
               items={filterItems}
               value={filter}
               onValueChange={onFilterChange}
-              aria-label="Which cases"
+              aria-label={t("Which cases")}
             />
             <Input
               type="search"
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Name, injury or place"
-              aria-label="Search the log"
+              placeholder={t("Name, injury or place")}
+              aria-label={t("Search the log")}
               leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               inputContainerClassName="w-52"
             />
@@ -140,8 +144,8 @@ export function OshaCaseTable({
         />
       ) : rows.length === 0 ? (
         <OshaEmptyLog
-          title="No case matches"
-          description="Nothing in the log fits that search and filter together."
+          title={t("No case matches")}
+          description={t("Nothing in the log fits that search and filter together.")}
           action={{
             label: "Show every case",
             onClick: () => {
@@ -155,24 +159,24 @@ export function OshaCaseTable({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-20">Case</TableHead>
-                <TableHead>Employee</TableHead>
-                <TableHead className="w-24">Date</TableHead>
-                <TableHead>Where it happened</TableHead>
-                <TableHead>What happened</TableHead>
-                <TableHead className="w-16 text-center">Column</TableHead>
+                <TableHead className="w-20">{t("Case")}</TableHead>
+                <TableHead>{t("Employee")}</TableHead>
+                <TableHead className="w-24">{t("Date")}</TableHead>
+                <TableHead>{t("Where it happened")}</TableHead>
+                <TableHead>{t("What happened")}</TableHead>
+                <TableHead className="w-16 text-center">{t("Column")}</TableHead>
                 <TableHead className="w-16 text-right">
                   <span className="inline-flex items-center gap-1">
-                    <FormMark>K</FormMark>Away
+                    <FormMark>K</FormMark>{t("Away")}
                   </span>
                 </TableHead>
                 <TableHead className="w-20 text-right">
                   <span className="inline-flex items-center gap-1">
-                    <FormMark>L</FormMark>Restricted
+                    <FormMark>L</FormMark>{t("Restricted")}
                   </span>
                 </TableHead>
-                <TableHead className="w-36">Type</TableHead>
-                <TableHead className="w-24">Status</TableHead>
+                <TableHead className="w-36">{t("Type")}</TableHead>
+                <TableHead className="w-24">{t("Status")}</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -250,14 +254,14 @@ export function OshaCaseTable({
                               render={
                                 <span
                                   className="text-muted-foreground inline-flex"
-                                  aria-label="Privacy case"
+                                  aria-label={t("Privacy case")}
                                 />
                               }
                             >
                               <LockIcon className="size-3" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              Privacy case: the name is withheld from the posted log.
+                              {t("Privacy case: the name is withheld from the posted log.")}
                             </TooltipContent>
                           </Tooltip>
                         ) : null}
@@ -268,11 +272,11 @@ export function OshaCaseTable({
                     </td>
                     <td className="max-w-40 truncate px-2 py-2 align-middle">
                       {entry.location?.trim() || (
-                        <span className="text-muted-foreground/70">Not given</span>
+                        <span className="text-muted-foreground/70">{t("Not given")}</span>
                       )}
                     </td>
                     <td className="max-w-64 px-2 py-2 align-middle">
-                      <span className="block truncate">{entry.description}</span>
+                      <span className="block truncate">{t(entry.description)}</span>
                       {entry.bodyPart?.trim() ? (
                         <span className="text-muted-foreground block truncate text-2xs">
                           {entry.bodyPart.trim()}
@@ -292,7 +296,7 @@ export function OshaCaseTable({
                           variant="secondary"
                           title={caseClassificationLabel(entry.classification)}
                         >
-                          Off the log
+                          {t("Off the log")}
                         </Badge>
                       )}
                     </td>
@@ -321,13 +325,13 @@ export function OshaCaseTable({
                     <td className="px-2 py-2 align-middle">
                       <span className="flex flex-col items-start gap-0.5">
                         {entry.status === "Open" ? (
-                          <Badge variant="warning">Open</Badge>
+                          <Badge variant="warning">{t("Open")}</Badge>
                         ) : (
-                          <span className="text-muted-foreground">Closed</span>
+                          <span className="text-muted-foreground">{t("Closed")}</span>
                         )}
                         {entry.claimStatus !== "NotFiled" ? (
                           <span className="text-muted-foreground text-2xs">
-                            Claim {claimStatusLabel(entry.claimStatus).toLowerCase()}
+                            {t("Claim {0}", claimStatusLabel(entry.claimStatus).toLowerCase())}
                           </span>
                         ) : null}
                       </span>

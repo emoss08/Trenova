@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   JournalEntryPostingCard,
@@ -78,6 +79,8 @@ function computeAccountNets(entries: PostingEntry[]): AccountNet[] {
 }
 
 export function SourceDrillDownPage() {
+  const t = useT();
+
   const { type, sourceId } = useParams<{ type: string; sourceId: string }>();
   const navigate = useNavigate();
   const sourceLabel = humanizeSourceType(type ?? "");
@@ -115,7 +118,7 @@ export function SourceDrillDownPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
             <ArrowLeftIcon className="size-3.5" />
-            Back
+            {t("Back")}
           </Button>
           <SourceDrillDownLink
             sourceType={type!}
@@ -140,7 +143,7 @@ export function SourceDrillDownPage() {
           </>
         ) : postings.length === 0 ? (
           <EmptyTable
-            title="Nothing posted"
+            title={t("Nothing posted")}
             description={`Nothing has been posted to the general ledger for this ${sourceLabel.toLowerCase()} yet. Its entries appear here, account by account, once it posts.`}
             columns={POSTING_COLUMNS}
           />
@@ -149,35 +152,35 @@ export function SourceDrillDownPage() {
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
               <SummaryTile
                 index={0}
-                label="Journal Entries"
+                label={t("Journal Entries")}
                 value={String(postings.length)}
                 detail={summary.hasReversal ? "includes reversal" : "original posting"}
               />
               <SummaryTile
                 index={1}
-                label="Total Debits"
+                label={t("Total Debits")}
                 value={<AmountDisplay value={summary.totalDebit} />}
               />
               <SummaryTile
                 index={2}
-                label="Total Credits"
+                label={t("Total Credits")}
                 value={<AmountDisplay value={summary.totalCredit} />}
               />
               <SummaryTile
                 index={3}
-                label="Ledger Status"
+                label={t("Ledger Status")}
                 value={
                   summary.fullyReversed ? (
                     <span className="inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-400">
-                      Fully reversed
+                      {t("Fully reversed")}
                     </span>
                   ) : summary.allBalanced ? (
                     <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2Icon className="size-4" />
-                      Balanced
+                      {t("Balanced")}
                     </span>
                   ) : (
-                    <span className="text-red-600 dark:text-red-400">Out of balance</span>
+                    <span className="text-red-600 dark:text-red-400">{t("Out of balance")}</span>
                   )
                 }
                 detail={
@@ -192,19 +195,19 @@ export function SourceDrillDownPage() {
               <Card className="gap-0 rounded-md py-0">
                 <CardContent className="px-0">
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <p className="text-sm font-medium">Net impact by account</p>
+                    <p className="text-sm font-medium">{t("Net impact by account")}</p>
                     <p className="text-muted-foreground text-xs">
-                      across {postings.length} entries
+                      {t("across {0} entries", postings.length)}
                     </p>
                   </div>
                   <div className="overflow-hidden border-t">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50 text-muted-foreground text-left">
                         <tr>
-                          <th className="px-4 py-2 text-xs font-medium">Account</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium">Debits</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium">Credits</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium">Net</th>
+                          <th className="px-4 py-2 text-xs font-medium">{t("Account")}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium">{t("Debits")}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium">{t("Credits")}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium">{t("Net")}</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Label } from "@trenova/shared/components/ui/label";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps, GenericSelectOption } from "@trenova/shared/types/fields";
@@ -23,6 +24,8 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
   description,
   options,
 }: MultiCheckboxFieldProps<T, TValue>) {
+  const t = useT();
+
   const groupId = `multi-checkbox-${name}`;
 
   return (
@@ -67,7 +70,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
                       onCheckedChange={(state) => toggle(option.value, state === true)}
                     />
                     <Label htmlFor={optionId} className="cursor-pointer text-xs font-normal">
-                      {option.label}
+                      {t(option.label)}
                     </Label>
                   </div>
                 );

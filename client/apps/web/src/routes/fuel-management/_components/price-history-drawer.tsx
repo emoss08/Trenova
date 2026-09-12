@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -38,6 +39,8 @@ export function PriceHistoryDrawer({
   entry: FuelDashboardEntry | null;
   onOpenChange: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const indexId = entry?.index.id ?? "";
   const isCustom = entry?.index.source === "Custom";
@@ -63,13 +66,13 @@ export function PriceHistoryDrawer({
     mutationFn: () =>
       addFuelIndexPrice({ fuelIndexId: indexId, priceDate: newDate, price: newPrice }),
     onSuccess: () => {
-      toast.success("Weekly price added");
+      toast.success(t("Weekly price added"));
       setNewPrice("");
       invalidate();
     },
     onError: () => {
-      toast.error("Could not add the price", {
-        description: "Check the date (one price per week) and value",
+      toast.error(t("Could not add the price"), {
+        description: t("Check the date (one price per week) and value"),
       });
     },
   });
@@ -77,11 +80,11 @@ export function PriceHistoryDrawer({
   const { mutate: removePrice } = useMutation({
     mutationFn: (id: string) => deleteFuelIndexPrice(id),
     onSuccess: () => {
-      toast.success("Price removed");
+      toast.success(t("Price removed"));
       invalidate();
     },
     onError: () => {
-      toast.error("Automatically ingested prices cannot be deleted");
+      toast.error(t("Automatically ingested prices cannot be deleted"));
     },
   });
 
@@ -92,15 +95,15 @@ export function PriceHistoryDrawer({
           <SheetTitle>{entry?.index.name}</SheetTitle>
           <SheetDescription>
             {isCustom
-              ? "Manually entered weekly prices — enter the Monday date each price is effective for"
-              : "Weekly DOE prices ingested automatically from the EIA API"}
+              ? t("Manually entered weekly prices — enter the Monday date each price is effective for")
+              : t("Weekly DOE prices ingested automatically from the EIA API")}
           </SheetDescription>
         </SheetHeader>
 
         {isCustom && (
           <div className="bg-muted/30 flex items-end gap-2 rounded-lg border p-3">
             <div className="flex-1 space-y-1">
-              <Label className="text-xs">Week (Monday)</Label>
+              <Label className="text-xs">{t("Week (Monday)")}</Label>
               <Input
                 type="date"
                 value={newDate}
@@ -108,7 +111,7 @@ export function PriceHistoryDrawer({
               />
             </div>
             <div className="flex-1 space-y-1">
-              <Label className="text-xs">Price ($/gal)</Label>
+              <Label className="text-xs">{t("Price ($/gal)")}</Label>
               <Input
                 value={newPrice}
                 onChange={(event) => setNewPrice(event.target.value)}
@@ -124,7 +127,7 @@ export function PriceHistoryDrawer({
               className="gap-1"
             >
               <Plus className="size-3.5" />
-              Add
+              {t("Add")}
             </Button>
           </div>
         )}
@@ -138,15 +141,15 @@ export function PriceHistoryDrawer({
             </div>
           ) : !history || history.length === 0 ? (
             <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-              No prices recorded yet
+              {t("No prices recorded yet")}
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/80 sticky top-0 backdrop-blur">
                 <tr className="text-muted-foreground text-left text-xs">
-                  <th className="px-3 py-2 font-medium">Week</th>
-                  <th className="px-3 py-2 font-medium">Price</th>
-                  <th className="px-3 py-2 font-medium">Source</th>
+                  <th className="px-3 py-2 font-medium">{t("Week")}</th>
+                  <th className="px-3 py-2 font-medium">{t("Price")}</th>
+                  <th className="px-3 py-2 font-medium">{t("Source")}</th>
                   <th className="px-3 py-2" />
                 </tr>
               </thead>
@@ -160,7 +163,7 @@ export function PriceHistoryDrawer({
                         variant={price.isManual ? "outline" : "secondary"}
                         className="text-2xs"
                       >
-                        {price.isManual ? "Manual" : "EIA"}
+                        {price.isManual ? t("Manual") : t("EIA")}
                       </Badge>
                     </td>
                     <td className="px-3 py-1.5 text-right">

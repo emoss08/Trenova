@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   EDIConnectionAutocompleteField,
   EDIPartnerAutocompleteField,
@@ -22,20 +23,22 @@ import {
 import { EDIEmptyState } from "./edi-panel-primitives";
 
 export function OverviewTab() {
+  const t = useT();
+
   const { control } = useFormContext<CommunicationProfileFormValues>();
   const method = useWatch({ control, name: "method" });
 
   return (
     <div className="space-y-3">
-      <FormSection title="Profile Identity">
+      <FormSection title={t("Profile Identity")}>
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="Profile name"
-              description="Unique name for this profile."
+              label={t("Name")}
+              placeholder={t("Profile name")}
+              description={t("Unique name for this profile.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -43,9 +46,9 @@ export function OverviewTab() {
             <SelectField
               control={control}
               name="method"
-              label="Method"
+              label={t("Method")}
               options={communicationProfileMethodOptions}
-              description="The method used to communicate with the trading partner."
+              description={t("The method used to communicate with the trading partner.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -53,9 +56,9 @@ export function OverviewTab() {
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
-              description="The status of this profile."
+              description={t("The status of this profile.")}
               rules={{ required: true }}
             />
           </FormControl>
@@ -63,9 +66,9 @@ export function OverviewTab() {
             <EDIPartnerAutocompleteField
               control={control}
               name="ediPartnerId"
-              label="Partner"
-              placeholder="Select partner"
-              description="Trading partner this transport profile delivers documents for."
+              label={t("Partner")}
+              placeholder={t("Select partner")}
+              description={t("Trading partner this transport profile delivers documents for.")}
               clearable
             />
           </FormControl>
@@ -73,23 +76,23 @@ export function OverviewTab() {
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Operational notes for this profile"
-              description="Additional notes about this profile."
+              label={t("Description")}
+              placeholder={t("Operational notes for this profile")}
+              description={t("Additional notes about this profile.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       {method === "Internal" && (
-        <FormSection title="Internal Routing" className="bg-muted/20 rounded-md border p-3">
+        <FormSection title={t("Internal Routing")} className="bg-muted/20 rounded-md border p-3">
           <FormGroup cols={2}>
             <FormControl>
               <EDIConnectionAutocompleteField
                 control={control}
                 name="ediConnectionId"
-                label="Connection"
-                placeholder="Select connection"
-                description="Accepted organization connection this profile routes through."
+                label={t("Connection")}
+                placeholder={t("Select connection")}
+                description={t("Accepted organization connection this profile routes through.")}
                 clearable
               />
             </FormControl>
@@ -97,9 +100,9 @@ export function OverviewTab() {
               <OrganizationAutocompleteField
                 control={control}
                 name="config.connectedOrganizationId"
-                label="Connected Organization"
-                placeholder="Select organization"
-                description="Organization that receives documents delivered over this profile."
+                label={t("Connected Organization")}
+                placeholder={t("Select organization")}
+                description={t("Organization that receives documents delivered over this profile.")}
                 clearable
               />
             </FormControl>
@@ -123,13 +126,15 @@ export function TransportTab() {
 }
 
 export function EnvelopeTab() {
+  const t = useT();
+
   const { control } = useFormContext<CommunicationProfileFormValues>();
   const method = useWatch({ control, name: "method" });
 
   return (
     <div className="space-y-3">
       {method === "Internal" ? (
-        <EDIEmptyState message="Internal profiles use organization routing and do not require X12 interchange identifiers." />
+        <EDIEmptyState message={t("Internal profiles use organization routing and do not require X12 interchange identifiers.")} />
       ) : (
         <X12EnvelopeFields control={control} />
       )}

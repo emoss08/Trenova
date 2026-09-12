@@ -74,7 +74,7 @@ func validateCharts(v *validatedDef, multiErr *errortypes.MultiError) {
 	}
 	if len(charts) > report.MaxCharts {
 		multiErr.Add("definition.charts", errortypes.ErrInvalid,
-			fmt.Sprintf("A report can carry at most %d charts", report.MaxCharts))
+			"A report can carry at most {0} charts", report.MaxCharts)
 		return
 	}
 
@@ -97,7 +97,7 @@ func validateCharts(v *validatedDef, multiErr *errortypes.MultiError) {
 
 		if !chart.Type.IsValid() {
 			multiErr.Add(fieldPath+".type", errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown chart type %q", chart.Type))
+				"Unknown chart type \"{0}\"", chart.Type)
 			continue
 		}
 
@@ -134,7 +134,7 @@ func validateChartAxes(
 				"A scatter plot needs a measure on the horizontal axis")
 		case !ok:
 			multiErr.Add(fieldPath+".xColumnId", errortypes.ErrInvalid,
-				fmt.Sprintf("Chart references unknown column %q", chart.XColumnID))
+				"Chart references unknown column \"{0}\"", chart.XColumnID)
 		case role.isDim:
 			multiErr.Add(fieldPath+".xColumnId", errortypes.ErrInvalid,
 				"A scatter plot needs a measure on the horizontal axis, not a grouping column")
@@ -147,7 +147,7 @@ func validateChartAxes(
 				"Choose the column that groups this chart")
 		case !ok:
 			multiErr.Add(fieldPath+".xColumnId", errortypes.ErrInvalid,
-				fmt.Sprintf("Chart references unknown column %q", chart.XColumnID))
+				"Chart references unknown column \"{0}\"", chart.XColumnID)
 		case !role.isDim:
 			multiErr.Add(fieldPath+".xColumnId", errortypes.ErrInvalid,
 				"Charts group by a dimension column, not by a measure")
@@ -178,10 +178,10 @@ func validateChartCoordinates(
 		switch {
 		case coordinate.id == "":
 			multiErr.Add(fieldPath+coordinate.field, errortypes.ErrRequired,
-				fmt.Sprintf("A map needs a %s column", coordinate.label))
+				"A map needs a {0} column", coordinate.label)
 		case !ok:
 			multiErr.Add(fieldPath+coordinate.field, errortypes.ErrInvalid,
-				fmt.Sprintf("Chart references unknown column %q", coordinate.id))
+				"Chart references unknown column \"{0}\"", coordinate.id)
 		case role.isDim:
 			// A coordinate grouped as a dimension still carries a usable
 			// number, which is how "one pin per stop" is expressed.
@@ -197,7 +197,7 @@ func validateChartCoordinates(
 	if chart.LabelColumnID != "" {
 		if _, ok := roles[chart.LabelColumnID]; !ok {
 			multiErr.Add(fieldPath+".labelColumnId", errortypes.ErrInvalid,
-				fmt.Sprintf("Chart references unknown column %q", chart.LabelColumnID))
+				"Chart references unknown column \"{0}\"", chart.LabelColumnID)
 		}
 	}
 }
@@ -220,12 +220,12 @@ func validateChartSeries(
 	}
 	if len(chart.SeriesIDs) > report.MaxChartSeries {
 		multiErr.Add(fieldPath+".seriesIds", errortypes.ErrInvalid,
-			fmt.Sprintf("A chart can plot at most %d measures", report.MaxChartSeries))
+			"A chart can plot at most {0} measures", report.MaxChartSeries)
 		return
 	}
 	if chart.Type.SingleSeries() && len(chart.SeriesIDs) > 1 {
 		multiErr.Add(fieldPath+".seriesIds", errortypes.ErrInvalid,
-			fmt.Sprintf("A %s chart plots exactly one measure", chart.Type))
+			"A {0} chart plots exactly one measure", chart.Type)
 		return
 	}
 
@@ -233,7 +233,7 @@ func validateChartSeries(
 	for _, id := range chart.SeriesIDs {
 		if seen[id] {
 			multiErr.Add(fieldPath+".seriesIds", errortypes.ErrInvalid,
-				fmt.Sprintf("Measure %q is plotted twice", id))
+				"Measure \"{0}\" is plotted twice", id)
 			continue
 		}
 		seen[id] = true
@@ -241,12 +241,12 @@ func validateChartSeries(
 		role, ok := roles[id]
 		if !ok {
 			multiErr.Add(fieldPath+".seriesIds", errortypes.ErrInvalid,
-				fmt.Sprintf("Chart references unknown column %q", id))
+				"Chart references unknown column \"{0}\"", id)
 			continue
 		}
 		if role.isDim {
 			multiErr.Add(fieldPath+".seriesIds", errortypes.ErrInvalid,
-				fmt.Sprintf("%q is a grouping column and cannot be plotted as a measure", id))
+				"\"{0}\" is a grouping column and cannot be plotted as a measure", id)
 		}
 	}
 }
@@ -261,10 +261,7 @@ func validateChartOptions(
 		multiErr.Add(
 			fieldPath+".limit",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Chart category limit must be between 0 and %d",
-				report.MaxChartCategory,
-			),
+			"Chart category limit must be between 0 and {0}", report.MaxChartCategory,
 		)
 	}
 
@@ -274,8 +271,7 @@ func validateChartOptions(
 				"Only KPI tiles show a comparison value")
 		} else if role, ok := roles[chart.CompareID]; !ok || role.isDim {
 			multiErr.Add(fieldPath+".compareId", errortypes.ErrInvalid,
-				fmt.Sprintf("Comparison column %q is not a measure this report returns",
-					chart.CompareID))
+				"Comparison column \"{0}\" is not a measure this report returns", chart.CompareID)
 		}
 	}
 
@@ -305,6 +301,6 @@ func validateChartGoal(
 	}
 	if role, ok := roles[goal.ColumnID]; !ok || role.isDim {
 		multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid,
-			fmt.Sprintf("Target column %q is not a measure this report returns", goal.ColumnID))
+			"Target column \"{0}\" is not a measure this report returns", goal.ColumnID)
 	}
 }

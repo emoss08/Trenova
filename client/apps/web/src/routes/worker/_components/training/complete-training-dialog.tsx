@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -48,6 +49,8 @@ export function CompleteTrainingDialog({
   record,
   courseId,
 }: CompleteTrainingDialogProps) {
+  const t = useT();
+
   const invalidate = useTrainingInvalidation(workerId);
   const coursesQuery = useQuery({
     queryKey: [TRAINING_COURSES_KEY],
@@ -141,11 +144,11 @@ export function CompleteTrainingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record a result</DialogTitle>
+          <DialogTitle>{t("Record a result")}</DialogTitle>
           <DialogDescription>
             {scored
-              ? `Scored course — ${Number(selected?.passingScore).toFixed(0)}% or better passes. A fail closes the assignment; assign it again for a retake.`
-              : "Marks the course complete on the date given. Recurring courses get their expiry from the course's validity."}
+              ? t("Scored course — {0}% or better passes. A fail closes the assignment; assign it again for a retake.", Number(selected?.passingScore).toFixed(0))
+              : t("Marks the course complete on the date given. Recurring courses get their expiry from the course's validity.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -161,8 +164,8 @@ export function CompleteTrainingDialog({
                 <SelectField<CompleteTrainingFormValues>
                   control={control}
                   name="courseId"
-                  label="Course"
-                  placeholder="Select a course"
+                  label={t("Course")}
+                  placeholder={t("Select a course")}
                   options={
                     record?.course
                       ? [{ value: record.course.id, label: record.course.name }]
@@ -181,17 +184,17 @@ export function CompleteTrainingDialog({
                 <AutoCompleteDateField<CompleteTrainingFormValues>
                   control={control}
                   name="completedAt"
-                  label="Completed"
-                  placeholder="Today"
+                  label={t("Completed")}
+                  placeholder={t("Today")}
                   rules={{ required: true }}
-                  description="The day the course was finished; any expiry is counted from it."
+                  description={t("The day the course was finished; any expiry is counted from it.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<CompleteTrainingFormValues>
                   control={control}
                   name="score"
-                  label="Score"
+                  label={t("Score")}
                   placeholder={scored ? "e.g. 92" : "Optional"}
                   sideText="%"
                   rules={{ required: scored }}
@@ -210,24 +213,24 @@ export function CompleteTrainingDialog({
                 <TextareaField<CompleteTrainingFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Instructor, session, certificate number"
+                  label={t("Notes")}
+                  placeholder={t("Instructor, session, certificate number")}
                   maxLength={1000}
-                  description="Kept on the record with the result."
+                  description={t("Kept on the record with the result.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 variant={projected === "fail" ? "destructive" : "default"}
                 isLoading={isPending}
-                loadingText="Saving..."
+                loadingText={t("Saving...")}
               >
-                {projected === "fail" ? "Record fail" : "Record result"}
+                {projected === "fail" ? t("Record fail") : t("Record result")}
               </Button>
             </DialogFooter>
           </Form>

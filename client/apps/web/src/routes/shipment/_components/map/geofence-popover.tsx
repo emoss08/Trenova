@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import type { Location } from "@trenova/shared/types/location";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
@@ -37,6 +38,8 @@ export function GeofencePopover({
   location: Location | null;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const addressTail = location ? buildAddressLine(location) : "";
   const center = geofenceAnchor(geofence);
 
@@ -60,14 +63,16 @@ export function GeofencePopover({
               type="button"
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground rounded"
-              aria-label="Close geofence info"
+              aria-label={t("Close geofence info")}
             >
               <XIcon className="size-3.5" />
             </button>
           </div>
 
           {location?.description && (
-            <p className="text-2xs text-muted-foreground leading-relaxed">{location.description}</p>
+            <p className="text-2xs text-muted-foreground leading-relaxed">
+              {t(location.description)}
+            </p>
           )}
 
           {location && (location.addressLine1 || addressTail) && (
@@ -91,13 +96,13 @@ export function GeofencePopover({
               <Separator />
               <div className="text-2xs grid grid-cols-2 gap-2 tabular-nums">
                 <div className="flex flex-col">
-                  <span className="text-muted-foreground">Latitude</span>
+                  <span className="text-muted-foreground">{t("Latitude")}</span>
                   <span className="text-foreground">
                     {location.latitude != null ? formatCoord(location.latitude) : "—"}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-muted-foreground">Longitude</span>
+                  <span className="text-muted-foreground">{t("Longitude")}</span>
                   <span className="text-foreground">
                     {location.longitude != null ? formatCoord(location.longitude) : "—"}
                   </span>

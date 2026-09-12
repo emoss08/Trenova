@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TestDataEditor } from "@/components/formula-editor/test-data-editor";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -82,6 +83,8 @@ export function ScenarioDialog({
   isSaving,
   onSave,
 }: ScenarioDialogProps) {
+  const t = useT();
+
   const [draft, setDraft] = useState<ScenarioDraft>(() => draftFromCase(editing, prefill));
   const [error, setError] = useState<string | null>(null);
 
@@ -140,11 +143,10 @@ export function ScenarioDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FlaskConicalIcon className="size-4" />
-            {editing ? "Edit Scenario" : "New Scenario"}
+            {editing ? t("Edit Scenario") : t("New Scenario")}
           </DialogTitle>
           <DialogDescription>
-            A scenario pins the charge this formula must produce for a known set of inputs. It
-            re-runs on demand and must pass before the template can be approved.
+            {t("A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -153,19 +155,19 @@ export function ScenarioDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="scenario-name" className="text-xs">
-                  Name
+                  {t("Name")}
                 </Label>
                 <Input
                   id="scenario-name"
                   value={draft.name}
                   onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))}
-                  placeholder="500 mile hazmat load"
+                  placeholder={t("500 mile hazmat load")}
                   className="h-8"
                 />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="scenario-description" className="text-xs">
-                  Description
+                  {t("Description")}
                 </Label>
                 <Input
                   id="scenario-description"
@@ -173,7 +175,7 @@ export function ScenarioDialog({
                   onChange={(event) =>
                     setDraft((prev) => ({ ...prev, description: event.target.value }))
                   }
-                  placeholder="Optional"
+                  placeholder={t("Optional")}
                   className="h-8"
                 />
               </div>
@@ -182,7 +184,7 @@ export function ScenarioDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="scenario-expected" className="text-xs">
-                  Expected charge ($)
+                  {t("Expected charge ($)")}
                 </Label>
                 <Input
                   id="scenario-expected"
@@ -197,7 +199,7 @@ export function ScenarioDialog({
               </div>
               <div className="space-y-1">
                 <Label htmlFor="scenario-tolerance" className="text-xs">
-                  Tolerance ($)
+                  {t("Tolerance ($)")}
                 </Label>
                 <Input
                   id="scenario-tolerance"
@@ -221,13 +223,12 @@ export function ScenarioDialog({
                 className="gap-1.5"
               >
                 <SparklesIcon className="size-3" />
-                Use current sample data
-                {currentSample.result != null && ` (${formatCurrency(currentSample.result)})`}
+                {t("Use current sample data {0}", currentSample.result != null && ` (${formatCurrency(currentSample.result)})`)}
               </Button>
             )}
 
             <div className="space-y-1">
-              <Label className="text-xs">Input values</Label>
+              <Label className="text-xs">{t("Input values")}</Label>
               <TestDataEditor
                 values={draft.variables}
                 onChange={(variables) => setDraft((prev) => ({ ...prev, variables }))}
@@ -242,16 +243,16 @@ export function ScenarioDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
             size="sm"
             onClick={handleSave}
             isLoading={isSaving}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
           >
-            {editing ? "Save Scenario" : "Add Scenario"}
+            {editing ? t("Save Scenario") : t("Add Scenario")}
           </Button>
         </DialogFooter>
       </DialogContent>

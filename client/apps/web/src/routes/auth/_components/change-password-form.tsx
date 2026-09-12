@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -37,6 +38,8 @@ export type ForcedChangePasswordRequest = z.infer<typeof forcedChangePasswordSch
  * nothing to skip to; the screen simply matches what the server already enforces.
  */
 export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
+  const t = useT();
+
   const setUser = useAuthStore((state) => state.setUser);
 
   const form = useForm<ForcedChangePasswordRequest>({
@@ -63,8 +66,8 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
   return (
     <AuthCardBody>
       <StepCrumbs left="Password required" right="Secure sign-in" />
-      <StepHeading title="Choose a new password">
-        Your account is set to require a password change before you can continue.
+      <StepHeading title={t("Choose a new password")}>
+        {t("Your account is set to require a password change before you can continue.")}
       </StepHeading>
 
       <form
@@ -82,7 +85,7 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
         <AuthTextField
           name="currentPassword"
           control={control}
-          label="Current password"
+          label={t("Current password")}
           type="password"
           required
           revealable
@@ -93,18 +96,18 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
         <AuthTextField
           name="newPassword"
           control={control}
-          label="New password"
+          label={t("New password")}
           type="password"
           required
           revealable
-          placeholder="At least 8 characters"
+          placeholder={t("At least 8 characters")}
           autoComplete="new-password"
           disabled={isPending}
         />
         <AuthTextField
           name="confirmPassword"
           control={control}
-          label="Confirm new password"
+          label={t("Confirm new password")}
           type="password"
           required
           revealable
@@ -113,8 +116,8 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
           disabled={isPending}
         />
         {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText="Updating password">
-          Update password
+        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Updating password")}>
+          {t("Update password")}
         </AuthSubmit>
       </form>
     </AuthCardBody>

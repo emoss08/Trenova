@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BorderBeam } from "@trenova/shared/components/ui/border-beam";
 import { Button } from "@trenova/shared/components/ui/button";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
@@ -152,6 +153,8 @@ export function ProcessingPhase({
   isRetrying,
   onReplaceFile,
 }: ProcessingPhaseProps) {
+  const t = useT();
+
   const steps = getSteps(doc, draft);
   const errorMessage = getErrorMessage(doc, draft);
   const hasFailed = !!errorMessage;
@@ -172,10 +175,12 @@ export function ProcessingPhase({
             <div className="text-center">
               {!hasFailed ? (
                 <TextShimmer as="span" className="text-[13px] font-medium" duration={2.5}>
-                  Analyzing rate confirmation
+                  {t("Analyzing rate confirmation")}
                 </TextShimmer>
               ) : (
-                <span className="text-destructive text-[13px] font-medium">Extraction failed</span>
+                <span className="text-destructive text-[13px] font-medium">
+                  {t("Extraction failed")}
+                </span>
               )}
               {fileName && (
                 <m.p
@@ -230,7 +235,7 @@ export function ProcessingPhase({
                           step.state === "error" && "text-destructive",
                         )}
                       >
-                        {step.label}
+                        {t(step.label)}
                       </span>
                     </div>
                   </m.div>
@@ -254,10 +259,10 @@ export function ProcessingPhase({
                     disabled={isRetrying}
                   >
                     {isRetrying && <LoaderCircleIcon className="size-3.5 animate-spin" />}
-                    Retry
+                    {t("Retry")}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={onReplaceFile}>
-                    Replace file
+                    {t("Replace file")}
                   </Button>
                 </div>
               </m.div>
@@ -272,7 +277,7 @@ export function ProcessingPhase({
             transition={{ delay: 0.6 }}
             className="text-2xs text-muted-foreground/40 mt-4 text-center"
           >
-            This usually takes a few seconds
+            {t("This usually takes a few seconds")}
           </m.p>
         )}
       </m.div>

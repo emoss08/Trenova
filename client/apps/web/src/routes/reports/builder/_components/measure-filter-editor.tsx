@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
@@ -61,6 +62,8 @@ function ScopedFieldPicker({
   label: string;
   onSelect: (ref: { path?: string[]; field: string }, fieldType: string) => void;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const scoped = column.ref ? pathCrossesToMany(index, ir.entity, column.ref.path) : false;
   const scopeEntity = scoped ? resolvePathEntity(index, ir.entity, column.ref?.path) : undefined;
@@ -83,7 +86,7 @@ function ScopedFieldPicker({
         {scoped && scopeEntity ? (
           <div className="flex h-full min-h-0 flex-col gap-1">
             <p className="text-2xs text-muted-foreground px-1 pb-1">
-              {scopeEntity.pluralLabel} fields
+              {t("{0} fields", scopeEntity.pluralLabel)}
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto">
               {scopeEntity.fields
@@ -101,7 +104,7 @@ function ScopedFieldPicker({
                       })
                     }
                   >
-                    <span className="truncate">{field.label}</span>
+                    <span className="truncate">{t(field.label)}</span>
                   </button>
                 ))}
             </div>
@@ -121,6 +124,8 @@ function ScopedFieldPicker({
 }
 
 export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilterEditorProps) {
+  const t = useT();
+
   const group = column.filter ?? { op: "and", filters: [] };
   const filters = group.filters ?? [];
 
@@ -153,7 +158,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
       <div className="flex items-center gap-2">
         <FilterIcon className="text-muted-foreground size-3" />
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Only count
+          {t("Only count")}
         </span>
         {filterCount(column.filter) > 1 && (
           <Select
@@ -167,22 +172,21 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="and">Match all</SelectItem>
-              <SelectItem value="or">Match any</SelectItem>
+              <SelectItem value="and">{t("Match all")}</SelectItem>
+              <SelectItem value="or">{t("Match any")}</SelectItem>
             </SelectContent>
           </Select>
         )}
         <div className="flex-1" />
         <Button variant="ghost" size="sm" className="h-6" onClick={addFilter}>
           <PlusIcon className="size-3.5" />
-          Condition
+          {t("Condition")}
         </Button>
       </div>
 
       {filters.length === 0 ? (
         <p className="text-2xs text-muted-foreground">
-          This measure counts every matching record. Add a condition to make it a subset — the other
-          columns keep their full totals.
+          {t("This measure counts every matching record. Add a condition to make it a subset — the other columns keep their full totals.")}
         </p>
       ) : (
         filters.map((filter, filterIndex) => {
@@ -219,7 +223,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
                 <SelectContent>
                   {operators.map((op) => (
                     <SelectItem key={op.value} value={op.value}>
-                      {op.label}
+                      {t(op.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -236,7 +240,7 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
                 size="icon"
                 className="size-6"
                 onClick={() => setFilters(filters.filter((_, i) => i !== filterIndex))}
-                aria-label="Remove condition"
+                aria-label={t("Remove condition")}
               >
                 <XIcon className="size-3.5" />
               </Button>

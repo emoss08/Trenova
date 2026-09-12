@@ -71,7 +71,7 @@ func (l *Layout) Validate(multiErr *errortypes.MultiError, fieldPrefix string) {
 
 	if len(l.Widgets) > MaxWidgets {
 		multiErr.Add(fieldPrefix+".widgets", errortypes.ErrInvalid,
-			fmt.Sprintf("A home screen holds at most %d widgets", MaxWidgets))
+			"A home screen holds at most {0} widgets", MaxWidgets)
 		return
 	}
 
@@ -140,7 +140,7 @@ func validateWidget(
 	definition, ok := widgetDefinition(widget.Key)
 	if !ok {
 		multiErr.Add(fieldPath+".key", errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown widget: %s", widget.Key))
+			"Unknown widget: {0}", widget.Key)
 		return
 	}
 
@@ -155,14 +155,24 @@ func validateWidgetGeometry(
 	fieldPath string,
 ) {
 	if widget.W < definition.MinW || widget.W > definition.MaxW {
-		multiErr.Add(fieldPath+".w", errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be between %d and %d columns wide",
-				definition.Label, definition.MinW, definition.MaxW))
+		multiErr.Add(
+			fieldPath+".w",
+			errortypes.ErrInvalid,
+			"{0} must be between {1} and {2} columns wide",
+			definition.Label,
+			definition.MinW,
+			definition.MaxW,
+		)
 	}
 	if widget.H < definition.MinH || widget.H > definition.MaxH {
-		multiErr.Add(fieldPath+".h", errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be between %d and %d rows tall",
-				definition.Label, definition.MinH, definition.MaxH))
+		multiErr.Add(
+			fieldPath+".h",
+			errortypes.ErrInvalid,
+			"{0} must be between {1} and {2} rows tall",
+			definition.Label,
+			definition.MinH,
+			definition.MaxH,
+		)
 	}
 }
 
@@ -180,7 +190,7 @@ type Document struct {
 func (d *Document) Validate(multiErr *errortypes.MultiError) {
 	if d.SchemaVersion != DocumentSchemaVersion {
 		multiErr.Add("schemaVersion", errortypes.ErrInvalid,
-			fmt.Sprintf("Schema version must be %d", DocumentSchemaVersion))
+			"Schema version must be {0}", DocumentSchemaVersion)
 	}
 
 	if !d.Mode.IsValid() {
@@ -189,7 +199,7 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 
 	if !densityAllowed(d.Density) {
 		multiErr.Add("density", errortypes.ErrInvalid,
-			fmt.Sprintf("Density must be one of %v", Densities()))
+			"Density must be one of {0}", Densities())
 	}
 
 	if d.Mode == ModeCustom {

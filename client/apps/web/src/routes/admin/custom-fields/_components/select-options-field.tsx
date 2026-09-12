@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -11,6 +12,8 @@ interface SelectOptionsFieldProps {
 }
 
 export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
+  const t = useT();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: "options",
@@ -18,8 +21,8 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
 
   return (
     <FormSection
-      title="Options"
-      description="Define the available options for this select field"
+      title={t("Options")}
+      description={t("Define the available options for this select field")}
       action={
         <Button
           type="button"
@@ -28,13 +31,13 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
           onClick={() => append({ value: "", label: "", color: "", description: "" })}
         >
           <PlusIcon className="size-3" />
-          Add Option
+          {t("Add Option")}
         </Button>
       }
     >
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No options defined. Add at least one option for select fields.
+          {t("No options defined. Add at least one option for select fields.")}
         </p>
       )}
       <div className="space-y-2">
@@ -43,16 +46,16 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
             <InputField
               control={control}
               name={`options.${index}.value`}
-              label="Value"
+              label={t("Value")}
               placeholder="value"
             />
             <InputField
               control={control}
               name={`options.${index}.label`}
-              label="Label"
-              placeholder="Display Label"
+              label={t("Label")}
+              placeholder={t("Display Label")}
             />
-            <ColorField control={control} name={`options.${index}.color`} label="Color" />
+            <ColorField control={control} name={`options.${index}.color`} label={t("Color")} />
             <div className="pb-0.5">
               <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                 <TrashIcon className="text-destructive size-4" />

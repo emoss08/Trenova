@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useCannedReports, useForkCannedReport } from "@/hooks/use-reports";
@@ -43,6 +44,8 @@ function CannedReportCard({
   onCustomize: () => void;
   customizing: boolean;
 }) {
+  const t = useT();
+
   return (
     <ReportCard index={index}>
       <div className="flex items-start gap-3">
@@ -50,11 +53,11 @@ function CannedReportCard({
           <div className="flex items-center gap-1.5">
             <h3 className="truncate text-sm font-medium">{report.name}</h3>
             <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-0.5">
-              v{report.version}
+              {t("v{0}", report.version)}
             </span>
           </div>
           <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
-            {report.description}
+            {t(report.description)}
           </p>
         </div>
       </div>
@@ -68,7 +71,7 @@ function CannedReportCard({
             render={<Link to={`/reports/explore?canned=${encodeURIComponent(report.key)}`} />}
           >
             <TableIcon className="size-3" />
-            Explore
+            {t("Explore")}
           </Button>
           {canCustomize && (
             <Button
@@ -79,13 +82,13 @@ function CannedReportCard({
               disabled={customizing}
             >
               <PencilRulerIcon className="size-3" />
-              {customizing ? "Copying..." : "Customize"}
+              {customizing ? t("Copying...") : t("Customize")}
             </Button>
           )}
           {canRun && (
             <Button size="sm" variant="outline" className="text-2xs h-6 gap-1 px-2" onClick={onRun}>
               <PlayIcon className="size-3" />
-              Run
+              {t("Run")}
             </Button>
           )}
         </div>
@@ -105,6 +108,8 @@ export function CannedGallery({
   category: string;
   onClearFilters: () => void;
 }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const { data: cannedReports, isLoading } = useCannedReports();
   const forkCanned = useForkCannedReport();
@@ -182,7 +187,11 @@ export function CannedGallery({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader label={group.label} count={group.items.length} noun="report" />
+              <CategoryGroupHeader
+                label={t(group.label)}
+                count={group.items.length}
+                noun="report"
+              />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((report, indexInGroup) => (
                   <CannedReportCard

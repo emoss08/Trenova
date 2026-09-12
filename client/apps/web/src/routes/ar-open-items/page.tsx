@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AgingDistributionBar,
   type AgingBucketTotals,
@@ -46,6 +47,8 @@ function bucketize(daysPastDue: number): keyof AgingBucketTotals {
 }
 
 export function AROpenItemsPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -131,7 +134,7 @@ export function AROpenItemsPage() {
             onClick={() => void navigate("/accounting/ar/payments?panelType=create")}
           >
             <HandCoinsIcon className="size-4" />
-            Record Payment
+            {t("Record Payment")}
           </Button>
         ) : undefined,
       }}
@@ -143,8 +146,8 @@ export function AROpenItemsPage() {
             <CustomerAutocompleteField
               control={filterForm.control}
               name="customerId"
-              label="Customer"
-              placeholder="All customers"
+              label={t("Customer")}
+              placeholder={t("All customers")}
               clearable
             />
           </div>
@@ -152,8 +155,8 @@ export function AROpenItemsPage() {
             <AutoCompleteDateField
               control={filterForm.control}
               name="asOfDate"
-              label="As of Date"
-              placeholder="Today"
+              label={t("As of Date")}
+              placeholder={t("Today")}
               clearable
             />
           </div>
@@ -170,27 +173,27 @@ export function AROpenItemsPage() {
           </>
         ) : isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            Failed to load open items. Try refreshing the page.
+            {t("Failed to load open items. Try refreshing the page.")}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
               <SummaryCard
                 index={0}
-                label="Total Open"
+                label={t("Total Open")}
                 value={formatCurrency(stats.totals.totalOpenMinor / 100)}
                 detail={`${openItems.length} ${openItems.length === 1 ? "item" : "items"}`}
               />
               <SummaryCard
                 index={1}
-                label="Current"
+                label={t("Current")}
                 value={formatCurrency(stats.currentAmount / 100)}
                 detail={`${stats.currentCount} items`}
                 valueClassName="text-emerald-600 dark:text-emerald-400"
               />
               <SummaryCard
                 index={2}
-                label="Overdue"
+                label={t("Overdue")}
                 value={formatCurrency(stats.overdueAmount / 100)}
                 detail={`${stats.overdueCount} items`}
                 valueClassName={
@@ -199,15 +202,15 @@ export function AROpenItemsPage() {
               />
               <SummaryCard
                 index={3}
-                label="Avg Age"
+                label={t("Avg Age")}
                 value={`${stats.avgAgeDays.toFixed(0)}d`}
-                detail="weighted by open $"
+                detail={t("weighted by open $")}
               />
               <SummaryCard
                 index={4}
-                label="Count"
+                label={t("Count")}
                 value={String(openItems.length)}
-                detail="open invoices"
+                detail={t("open invoices")}
               />
             </div>
 
@@ -228,11 +231,11 @@ export function AROpenItemsPage() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium tabular-nums">
-                    {selection.items.length} selected · {formatCurrency(selection.totalOpen / 100)}
+                    {t("{0} selected · {1}", selection.items.length, formatCurrency(selection.totalOpen / 100))}
                   </span>
                   {!selection.singleCustomerId ? (
                     <span className="text-muted-foreground text-xs">
-                      Select invoices from a single customer to apply a payment
+                      {t("Select invoices from a single customer to apply a payment")}
                     </span>
                   ) : null}
                 </div>
@@ -244,7 +247,7 @@ export function AROpenItemsPage() {
                     className="h-7 text-xs"
                   >
                     <XIcon className="size-3.5" />
-                    Clear
+                    {t("Clear")}
                   </Button>
                   {canRecordPayment ? (
                     <Button
@@ -254,7 +257,7 @@ export function AROpenItemsPage() {
                       className="h-7 text-xs"
                     >
                       <HandCoinsIcon className="size-3.5" />
-                      Apply Payment
+                      {t("Apply Payment")}
                     </Button>
                   ) : null}
                 </div>

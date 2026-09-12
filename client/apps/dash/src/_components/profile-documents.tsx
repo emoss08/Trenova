@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -15,6 +16,8 @@ import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
 
 export function ProfileDocuments() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const features = useDashFeatures();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +37,7 @@ export function ProfileDocuments() {
   const upload = useMutation({
     mutationFn: (file: File) => uploadMyProfileDocument(file, documentTypeId ?? undefined),
     onSuccess: async () => {
-      toast.success("Document uploaded — your carrier will see it in your file.");
+      toast.success(t("Document uploaded — your carrier will see it in your file."));
       setPendingFile(null);
       setDocumentTypeId(null);
       await queryClient.invalidateQueries({ queryKey: ["dash-profile-documents"] });
@@ -55,7 +58,7 @@ export function ProfileDocuments() {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <IdCardIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">My documents</h2>
+          <h2 className="text-sm font-semibold">{t("My documents")}</h2>
         </div>
         {!pendingFile && features.allowProfileDocumentUpload ? (
           <Button
@@ -65,7 +68,7 @@ export function ProfileDocuments() {
             onClick={() => fileInputRef.current?.click()}
           >
             <CameraIcon className="size-3.5" />
-            Add
+            {t("Add")}
           </Button>
         ) : null}
       </div>
@@ -85,7 +88,7 @@ export function ProfileDocuments() {
             <p className="min-w-0 truncate text-sm font-medium">{pendingFile.name}</p>
             <button
               type="button"
-              aria-label="Cancel upload"
+              aria-label={t("Cancel upload")}
               className="text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setPendingFile(null);
@@ -123,7 +126,7 @@ export function ProfileDocuments() {
             onClick={() => upload.mutate(pendingFile)}
           >
             <PaperclipIcon className="size-3.5" />
-            {upload.isPending ? "Uploading..." : "Upload"}
+            {upload.isPending ? t("Uploading...") : t("Upload")}
           </Button>
         </div>
       ) : null}
@@ -148,8 +151,7 @@ export function ProfileDocuments() {
         </ul>
       ) : !pendingFile && features.allowProfileDocumentUpload ? (
         <p className="text-xs text-muted-foreground">
-          Snap photos of your CDL, medical card, and anything else your carrier needs for your
-          qualification file — front and back for cards.
+          {t("Snap photos of your CDL, medical card, and anything else your carrier needs for your qualification file — front and back for cards.")}
         </p>
       ) : null}
     </div>

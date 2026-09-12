@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehiclePosition } from "@/lib/graphql/telematics";
 import { queries } from "@/lib/queries";
 import { formatTimeAgo } from "@/lib/time-utils";
@@ -196,6 +197,8 @@ function VehicleDetailCard({
   now: number;
   onClose: () => void;
 }) {
+  const t = useT();
+
   return (
     <AdvancedMarker
       position={{ lat: position.latitude, lng: position.longitude }}
@@ -211,7 +214,7 @@ function VehicleDetailCard({
                 {position.tractorCode}
                 {stale && (
                   <span className="bg-warning/15 text-warning rounded px-1 py-px text-[8.5px] font-bold tracking-wide uppercase">
-                    Stale
+                    {t("Stale")}
                   </span>
                 )}
               </span>
@@ -227,7 +230,7 @@ function VehicleDetailCard({
                 type="button"
                 onClick={onClose}
                 className="text-muted-foreground hover:text-foreground rounded"
-                aria-label="Close vehicle info"
+                aria-label={t("Close vehicle info")}
               >
                 <XIcon className="size-3.5" />
               </button>
@@ -242,16 +245,16 @@ function VehicleDetailCard({
             )}
           >
             <div className="flex flex-col">
-              <span className="text-muted-foreground">Speed</span>
-              <span className="text-foreground">{Math.round(position.speedMph)} mph</span>
+              <span className="text-muted-foreground">{t("Speed")}</span>
+              <span className="text-foreground">{t("{0} mph", Math.round(position.speedMph))}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-muted-foreground">Engine</span>
+              <span className="text-muted-foreground">{t("Engine")}</span>
               <span className="text-foreground">{engineStateLabel(position.engineState)}</span>
             </div>
             {position.fuelPercent != null && (
               <div className="flex flex-col">
-                <span className="text-muted-foreground">Fuel</span>
+                <span className="text-muted-foreground">{t("Fuel")}</span>
                 <span className="text-foreground">{Math.round(position.fuelPercent)}%</span>
               </div>
             )}
@@ -271,8 +274,11 @@ function VehicleDetailCard({
 
           <Separator />
           <span className="font-table text-2xs text-muted-foreground tabular-nums">
-            Updated {formatTimeAgo(position.recordedAt * 1000, now)}
-            {stale && " · position may be out of date"}
+            {t(
+              "Updated {0}{1}",
+              formatTimeAgo(position.recordedAt * 1000, now),
+              stale && ` ${t("· position may be out of date")}`,
+            )}
           </span>
         </div>
       </div>

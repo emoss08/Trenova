@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { SequenceConfig, SequenceConfigDocument, SequenceType } from "@/types/sequence-config";
 import { RotateCcwIcon } from "lucide-react";
@@ -22,6 +23,8 @@ type PanelProps = {
 };
 
 export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
+  const t = useT();
+
   const { setValue, getValues } = useFormContext<SequenceConfigDocument>();
 
   const handleReset = () => {
@@ -56,7 +59,7 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
           <RotateCcwIcon className="size-3.5" />
-          Reset to default
+          {t("Reset to default")}
         </Button>
       </div>
 

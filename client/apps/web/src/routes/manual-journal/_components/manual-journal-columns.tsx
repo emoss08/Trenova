@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { manualJournalStatusChoices } from "@/lib/choices";
@@ -39,7 +40,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournalRow>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <span className="line-clamp-1 text-xs">{row.original.description}</span>,
+      cell: ({ row }) => <span className="line-clamp-1 text-xs">{translate(row.original.description)}</span>,
       meta: {
         apiField: "description",
         label: "Description",

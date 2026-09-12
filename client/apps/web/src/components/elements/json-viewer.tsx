@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { cn } from "@trenova/shared/lib/utils";
@@ -245,13 +246,15 @@ export function JsonViewer({
   maxDepth = 10,
   className,
 }: JsonViewerProps) {
+  const t = useT();
+
   const [searchQuery, setSearchQuery] = React.useState("");
 
   return (
     <div
       data-slot="json-viewer"
       role="tree"
-      aria-label="JSON data"
+      aria-label={t("JSON data")}
       className={cn("font-mono text-sm", className)}
     >
       {searchable && (
@@ -260,7 +263,7 @@ export function JsonViewer({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..."
+            placeholder={t("Search...")}
             className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
           />
         </div>

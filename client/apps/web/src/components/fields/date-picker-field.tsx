@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -14,6 +15,8 @@ type DatePickerFieldProps = {
 };
 
 export function DatePickerField({ date, setDate }: DatePickerFieldProps) {
+  const t = useT();
+
   const handleDateSelect = useCallback(
     (newDate: Date | undefined) => {
       setDate(fromUserWallClock(newDate));
@@ -30,7 +33,7 @@ export function DatePickerField({ date, setDate }: DatePickerFieldProps) {
             className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
           >
             <CalendarIcon />
-            {date ? format(date, "PPP") : <span>Pick a date</span>}
+            {date ? format(date, "PPP") : <span>{t("Pick a date")}</span>}
           </Button>
         }
       />

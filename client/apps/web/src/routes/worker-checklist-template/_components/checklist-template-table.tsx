@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
@@ -19,6 +20,8 @@ import { getColumns } from "./checklist-template-columns";
 import { ChecklistTemplatePanel } from "./checklist-template-panel";
 
 export default function ChecklistTemplateTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const { allowed: canArchive } = usePermission(
@@ -47,7 +50,7 @@ export default function ChecklistTemplateTable() {
     async (rows: readonly WorkerChecklistTemplateRow[]) => {
       const eligible = rows.filter((row) => row.status === "Active");
       if (eligible.length === 0) {
-        toast.info("Only active templates can be deactivated.");
+        toast.info(t("Only active templates can be deactivated."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -60,14 +63,14 @@ export default function ChecklistTemplateTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const restoreRows = useCallback(
     async (rows: readonly WorkerChecklistTemplateRow[]) => {
       const eligible = rows.filter((row) => row.status === "Inactive");
       if (eligible.length === 0) {
-        toast.info("Only inactive templates can be restored.");
+        toast.info(t("Only inactive templates can be restored."));
         return;
       }
       const outcome = await settleAll(eligible, (row) =>
@@ -80,7 +83,7 @@ export default function ChecklistTemplateTable() {
       });
       await invalidate();
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const dockActions = useMemo<DockAction<WorkerChecklistTemplateRow>[]>(() => {

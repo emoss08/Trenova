@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
 import {
@@ -85,6 +86,8 @@ export function KeyHint({ children }: { children: ReactNode }) {
 }
 
 export function AuthTray({ onBack, hints }: { onBack: () => void; hints: ReactNode }) {
+  const t = useT();
+
   return (
     <div className="text-subtle-foreground mt-3.5 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
       <button
@@ -93,7 +96,7 @@ export function AuthTray({ onBack, hints }: { onBack: () => void; hints: ReactNo
         className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1.5 text-[12px] transition-colors duration-150"
       >
         <BackArrow />
-        Back
+        {t("Back")}
       </button>
       <span className="hidden items-center gap-1.5 sm:flex">{hints}</span>
     </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Dialog,
@@ -30,6 +31,8 @@ export function VersionCompareDialog({
   fromVersion,
   toVersion,
 }: VersionCompareDialogProps) {
+  const t = useT();
+
   const { data, isLoading, error } = useQuery({
     ...queries.formulaTemplate.versionDiff(templateId, fromVersion, toVersion),
     enabled: open,
@@ -40,13 +43,13 @@ export function VersionCompareDialog({
       <DialogContent className="max-h-[80vh] max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Compare Versions
+            {t("Compare Versions")}
             <Badge variant="outline" className="font-mono">
-              v{fromVersion} → v{toVersion}
+              {t("v{0} → v{1}", fromVersion, toVersion)}
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            {data?.changeCount ?? 0} change{data?.changeCount !== 1 ? "s" : ""} detected
+            {t("{0, plural, one {# change} other {# changes}} detected", data?.changeCount ?? 0)}
           </DialogDescription>
         </DialogHeader>
 
@@ -55,12 +58,12 @@ export function VersionCompareDialog({
             <ComparisonSkeleton />
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground">Failed to load comparison. Please try again.</p>
+              <p className="text-muted-foreground">{t("Failed to load comparison. Please try again.")}</p>
             </div>
           ) : data?.changeCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <RefreshCwIcon className="text-muted-foreground mb-4 size-12" />
-              <p className="text-muted-foreground">No changes between versions</p>
+              <p className="text-muted-foreground">{t("No changes between versions")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -81,6 +84,8 @@ type ChangeItemProps = {
 };
 
 function ChangeItem({ path, change }: ChangeItemProps) {
+  const t = useT();
+
   const getChangeIcon = () => {
     switch (change.type) {
       case "created":
@@ -142,13 +147,13 @@ function ChangeItem({ path, change }: ChangeItemProps) {
         ) : change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">Before</span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Before")}</span>
               <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
                 {formatValue(change.from)}
               </pre>
             </div>
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">After</span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("After")}</span>
               <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
                 {formatValue(change.to)}
               </pre>
@@ -156,14 +161,14 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         ) : change.type === "created" ? (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">Added</span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Added")}</span>
             <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
               {formatValue(change.to)}
             </pre>
           </div>
         ) : (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">Removed</span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Removed")}</span>
             <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
               {formatValue(change.from)}
             </pre>

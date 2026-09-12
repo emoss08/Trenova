@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -31,6 +32,8 @@ import { FiscalPeriodStatusActions } from "./fiscal-period-dialog-content";
 export type FiscalPeriodAction = "close" | "reopen" | "lock" | "unlock";
 
 export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[] }) {
+  const t = useT();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<FiscalPeriod | null>(null);
   const [selectedAction, setSelectedAction] = useState<FiscalPeriodAction | null>(null);
@@ -46,7 +49,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
       <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
         <CalendarIcon className="text-muted-foreground size-8" />
         <p className="text-muted-foreground text-sm">
-          No fiscal periods found for this fiscal year.
+          {t("No fiscal periods found for this fiscal year.")}
         </p>
       </div>
     );
@@ -59,10 +62,10 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
       <Table containerClassName="max-h-[300px]">
         <TableHeader className="sticky top-0 z-30">
           <TableRow>
-            <TableHead>Status</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Date Range</TableHead>
+            <TableHead>{t("Status")}</TableHead>
+            <TableHead>{t("Name")}</TableHead>
+            <TableHead>{t("Type")}</TableHead>
+            <TableHead>{t("Date Range")}</TableHead>
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
@@ -81,7 +84,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
               <TableRow key={period.id}>
                 <TableCell>
                   {statusChoice ? (
-                    <DataTableColorColumn text={statusChoice.label} color={statusChoice.color} />
+                    <DataTableColorColumn text={t(statusChoice.label)} color={statusChoice.color} />
                   ) : (
                     period.status
                   )}
@@ -89,7 +92,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
                 <TableCell className="text-sm font-medium">{period.name}</TableCell>
                 <TableCell>
                   {typeChoice ? (
-                    <DataTableColorColumn text={typeChoice.label} color={typeChoice.color} />
+                    <DataTableColorColumn text={t(typeChoice.label)} color={typeChoice.color} />
                   ) : (
                     period.periodType
                   )}
@@ -122,7 +125,7 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
                           <DropdownMenuItem
                             key={action.id}
                             startContent={<action.icon className="size-4" />}
-                            title={action.label}
+                            title={t(action.label)}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAction(period, action.id);

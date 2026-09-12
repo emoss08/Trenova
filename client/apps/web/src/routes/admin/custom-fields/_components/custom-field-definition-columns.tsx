@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -86,7 +87,7 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
       header: "Required",
       cell: ({ row }) => (
         <Badge variant={row.original.isRequired ? "active" : "inactive"}>
-          {row.original.isRequired ? "Yes" : "No"}
+          {row.original.isRequired ? translate("Yes") : translate("No")}
         </Badge>
       ),
       size: 100,
@@ -96,7 +97,7 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
       header: "Active",
       cell: ({ row }) => (
         <Badge variant={row.original.isActive ? "active" : "inactive"}>
-          {row.original.isActive ? "Active" : "Inactive"}
+          {row.original.isActive ? translate("Active") : translate("Inactive")}
         </Badge>
       ),
       size: 100,

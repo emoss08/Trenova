@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -25,6 +26,8 @@ type VersionsTabProps = {
  * it moves when somebody renegotiates the contract, not when they touch a lane.
  */
 export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
+  const t = useT();
+
   const { data: versions } = useQuery({
     queryKey: ["rate-agreement-versions", rateAgreementId],
     queryFn: () => apiService.rateAgreementService.listVersions(rateAgreementId as string),
@@ -34,8 +37,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
   if (!rateAgreementId) {
     return (
       <p className="text-muted-foreground text-sm">
-        Save the agreement first. Versions record the terms as they stood, and there are no terms
-        until there is a contract.
+        {t("Save the agreement first. Versions record the terms as they stood, and there are no terms until there is a contract.")}
       </p>
     );
   }
@@ -44,10 +46,9 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
         <ClockIcon className="text-muted-foreground mb-3 size-8" />
-        <p className="text-sm font-medium">No versions recorded yet</p>
+        <p className="text-sm font-medium">{t("No versions recorded yet")}</p>
         <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-          A version is written when the negotiated header terms change, so a dispute can always read
-          the contract as it stood on a date.
+          {t("A version is written when the negotiated header terms change, so a dispute can always read the contract as it stood on a date.")}
         </p>
       </div>
     );
@@ -58,9 +59,9 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16 text-xs">Version</TableHead>
-            <TableHead className="text-xs">In Force</TableHead>
-            <TableHead className="text-xs">What Changed</TableHead>
+            <TableHead className="w-16 text-xs">{t("Version")}</TableHead>
+            <TableHead className="text-xs">{t("In Force")}</TableHead>
+            <TableHead className="text-xs">{t("What Changed")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,7 +69,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
             <TableRow key={version.id ?? version.versionNumber}>
               <TableCell>
                 <Badge variant="outline" className="text-2xs font-mono">
-                  v{version.versionNumber}
+                  {t("v{0}", version.versionNumber)}
                 </Badge>
               </TableCell>
               <TableCell className="text-xs whitespace-nowrap">

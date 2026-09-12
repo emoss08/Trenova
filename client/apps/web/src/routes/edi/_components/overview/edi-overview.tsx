@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ediWindowHasTraffic } from "@/lib/edi-summary";
@@ -34,18 +35,20 @@ function windowInWords(sinceHours: number): string {
 }
 
 export function EDIOverview() {
+  const t = useT();
+
   const [sinceHours, setSinceHours] = useState<number | undefined>(24);
   const { data, isLoading, isError } = useEDISummary(sinceHours);
   const scorecardsQuery = useEDIPartnerScorecards(sinceHours);
   const volumeQuery = useEDIVolumeSeries(sinceHours);
 
   if (isLoading) {
-    return <ComponentLoader message="Loading EDI operations summary" />;
+    return <ComponentLoader message={t("Loading EDI operations summary")} />;
   }
   if (isError || !data) {
     return (
       <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-        The EDI operations summary could not be loaded. Retry shortly or check the API logs.
+        {t("The EDI operations summary could not be loaded. Retry shortly or check the API logs.")}
       </div>
     );
   }
@@ -66,7 +69,7 @@ export function EDIOverview() {
     <div className="flex flex-col gap-6 p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-muted-foreground text-xs">
-          Counts, trends, and partner scorecards for the selected window.
+          {t("Counts, trends, and partner scorecards for the selected window.")}
         </p>
         <div className="bg-background flex items-center gap-1 rounded-md border p-0.5">
           {TIME_RANGE_OPTIONS.map((option) => (
@@ -78,7 +81,7 @@ export function EDIOverview() {
               className="h-6 px-2 text-xs"
               onClick={() => setSinceHours(option.sinceHours)}
             >
-              {option.label}
+              {t(option.label)}
             </Button>
           ))}
         </div>
@@ -96,40 +99,40 @@ export function EDIOverview() {
       ) : (
         <>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Needs attention</h2>
+            <h2 className="text-sm font-semibold">{t("Needs attention")}</h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <Link to="/edi/messages">
                 <InfoTile
-                  label="Dead-lettered messages"
+                  label={t("Dead-lettered messages")}
                   value={deadLettered}
-                  hint="Outbound deliveries that exhausted retries"
+                  hint={t("Outbound deliveries that exhausted retries")}
                   size="kpi"
                   emphasizeWhenPositive
                 />
               </Link>
               <Link to="/edi/inbound-files">
                 <InfoTile
-                  label="Quarantined files"
+                  label={t("Quarantined files")}
                   value={quarantined}
-                  hint="Inbound files that failed processing"
+                  hint={t("Inbound files that failed processing")}
                   size="kpi"
                   emphasizeWhenPositive
                 />
               </Link>
               <Link to="/edi/transfers/inbound">
                 <InfoTile
-                  label="Stuck transfers"
+                  label={t("Stuck transfers")}
                   value={mappingRequired}
-                  hint="Inbound tenders waiting on mappings"
+                  hint={t("Inbound tenders waiting on mappings")}
                   size="kpi"
                   emphasizeWhenPositive
                 />
               </Link>
               <Link to="/edi/messages">
                 <InfoTile
-                  label="Overdue acknowledgments"
+                  label={t("Overdue acknowledgments")}
                   value={summary.overdueAckCount}
-                  hint="Pending 997/999 past the expected window"
+                  hint={t("Pending 997/999 past the expected window")}
                   size="kpi"
                   emphasizeWhenPositive
                 />
@@ -137,57 +140,57 @@ export function EDIOverview() {
             </div>
           </section>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Pipeline state</h2>
+            <h2 className="text-sm font-semibold">{t("Pipeline state")}</h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               <Link to="/edi/messages">
                 <InfoTile
-                  label="Failed deliveries"
+                  label={t("Failed deliveries")}
                   value={failedDeliveries}
-                  hint="Retrying with backoff"
+                  hint={t("Retrying with backoff")}
                   size="kpi"
                 />
               </Link>
               <Link to="/edi/inbound-files">
                 <InfoTile
-                  label="Partially processed files"
+                  label={t("Partially processed files")}
                   value={partiallyProcessed}
-                  hint="Processed with warnings or failures"
+                  hint={t("Processed with warnings or failures")}
                   size="kpi"
                 />
               </Link>
               <Link to="/edi/transfers/inbound">
                 <InfoTile
-                  label="Pending approval"
+                  label={t("Pending approval")}
                   value={pendingApproval}
-                  hint="Inbound tenders awaiting review"
+                  hint={t("Inbound tenders awaiting review")}
                   size="kpi"
                 />
               </Link>
               <Link to="/edi/messages">
                 <InfoTile
-                  label="Rejected acknowledgments"
+                  label={t("Rejected acknowledgments")}
                   value={rejectedAcks}
-                  hint="Partners rejected our documents"
+                  hint={t("Partners rejected our documents")}
                   size="kpi"
                 />
               </Link>
             </div>
           </section>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Trends</h2>
+            <h2 className="text-sm font-semibold">{t("Trends")}</h2>
             {volumeQuery.isError ? (
               <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-                The volume trend could not be loaded.
+                {t("The volume trend could not be loaded.")}
               </div>
             ) : (
               <EDITrendCharts points={volumeQuery.data?.ediVolumeSeries ?? []} />
             )}
           </section>
           <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Partner scorecards</h2>
+            <h2 className="text-sm font-semibold">{t("Partner scorecards")}</h2>
             {scorecardsQuery.isError ? (
               <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-                Partner scorecards could not be loaded.
+                {t("Partner scorecards could not be loaded.")}
               </div>
             ) : (
               <EDIPartnerScorecards scorecards={scorecardsQuery.data?.ediPartnerScorecards ?? []} />
@@ -196,25 +199,25 @@ export function EDIOverview() {
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">
-                Recent failures
+                {t("Recent failures")}
                 {summary.attentionItems.length > 0 && (
                   <span className="text-muted-foreground ml-2 text-xs font-normal">
-                    showing the {summary.attentionItems.length} most recent
+                    {t("showing the {0} most recent", summary.attentionItems.length)}
                   </span>
                 )}
               </h2>
               <div className="flex items-center gap-3 text-xs">
                 <Link to="/edi/messages" className="text-muted-foreground hover:underline">
-                  View all messages
+                  {t("View all messages")}
                 </Link>
                 <Link to="/edi/inbound-files" className="text-muted-foreground hover:underline">
-                  View all inbound files
+                  {t("View all inbound files")}
                 </Link>
               </div>
             </div>
             {summary.attentionItems.length === 0 ? (
               <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-                No dead-lettered messages or quarantined files. The pipeline is healthy.
+                {t("No dead-lettered messages or quarantined files. The pipeline is healthy.")}
               </div>
             ) : (
               <div className="bg-background flex flex-col divide-y rounded-md border">
@@ -231,6 +234,8 @@ export function EDIOverview() {
 }
 
 function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
+  const t = useT();
+
   const isMessage = item.kind === "Message";
   const target = isMessage
     ? `/edi/messages?panelType=edit&panelEntityId=${item.id}`
@@ -242,7 +247,7 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">
-            {isMessage ? "Dead-lettered message" : "Quarantined file"}
+            {isMessage ? t("Dead-lettered message") : t("Quarantined file")}
           </Badge>
           {item.reference && <span className="truncate text-sm font-medium">{item.reference}</span>}
           {item.partnerName && (

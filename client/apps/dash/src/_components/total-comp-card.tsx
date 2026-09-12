@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -16,6 +17,8 @@ import { useQuery } from "@tanstack/react-query";
  * gave them.
  */
 export function TotalCompCard() {
+  const t = useT();
+
   const total = useQuery({
     queryKey: ["dash-total-comp"],
     queryFn: ({ signal }) => fetchMyTotalCompensation({ signal }),
@@ -37,8 +40,8 @@ export function TotalCompCard() {
     <div className="border-border bg-card rounded-2xl border p-4" data-testid="total-comp-card">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold">Total compensation</p>
-          <p className="text-muted-foreground text-xs">Plan year {data.planYear}</p>
+          <p className="text-sm font-semibold">{t("Total compensation")}</p>
+          <p className="text-muted-foreground text-xs">{t("Plan year {0}", data.planYear)}</p>
         </div>
       </div>
 
@@ -46,17 +49,14 @@ export function TotalCompCard() {
         {formatMinor(data.totalCompensationMinor)}
       </p>
       <p className="text-muted-foreground text-xs">
-        {formatMinor(data.grossPayMinor)} paid
-        {data.employerBenefitMinor > 0
-          ? ` · ${formatMinor(data.employerBenefitMinor)} the company puts in`
-          : ""}
-        {share > 0 ? ` · ${share}% of it is benefits` : ""}
+        {t("{0} paid {1} {2}", formatMinor(data.grossPayMinor), data.employerBenefitMinor > 0
+          ? ` ${t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))}`
+          : "", share > 0 ? ` ${t("· {0}% of it is benefits", share)}` : "")}
       </p>
 
       {data.employeeBenefitMinor > 0 ? (
         <p className="text-muted-foreground mt-2 text-xs">
-          You contribute {formatMinor(data.employeeBenefitMinor)} a period. That is not counted in
-          the figure above — it is money you paid, not money the job gave you.
+          {t("You contribute {0} a period. That is not counted in the figure above — it is money you paid, not money the job gave you.", formatMinor(data.employeeBenefitMinor))}
         </p>
       ) : null}
 
@@ -66,7 +66,7 @@ export function TotalCompCard() {
             <li key={enrollment.id} className="flex items-center justify-between gap-2 text-xs">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate font-medium">
-                  {enrollment.benefitPlan?.name ?? "Cover"}
+                  {enrollment.benefitPlan?.name ?? t("Cover")}
                 </span>
                 {enrollment.benefitPlan ? (
                   <Badge variant="secondary">
@@ -78,8 +78,7 @@ export function TotalCompCard() {
                 </span>
               </span>
               <span className="text-muted-foreground shrink-0 tabular-nums">
-                {formatMinor(enrollment.employeeCostMinor)} you ·{" "}
-                {formatMinor(enrollment.employerCostMinor)} them
+                {t("{0} you · {1} them", formatMinor(enrollment.employeeCostMinor), formatMinor(enrollment.employerCostMinor))}
               </span>
             </li>
           ))}

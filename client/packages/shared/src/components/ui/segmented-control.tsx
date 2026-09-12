@@ -52,6 +52,7 @@ export function SegmentedControl<TValue extends string>({
   className,
   ...props
 }: SegmentedControlProps<TValue>) {
+
   const trackRef = useRef<HTMLDivElement>(null);
   const segmentRefs = useRef(new Map<string, HTMLButtonElement>());
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);

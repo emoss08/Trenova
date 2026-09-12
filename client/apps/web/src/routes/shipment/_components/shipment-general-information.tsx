@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import {
@@ -15,10 +16,12 @@ import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 function Inner({ children }: { children: React.ReactNode }) {
+  const t = useT();
+
   return (
     <FormSection
-      title="General Information"
-      description="Basic information about the shipment"
+      title={t("General Information")}
+      description={t("Basic information about the shipment")}
       className="border-border border-t pt-4"
     >
       {children}
@@ -27,6 +30,8 @@ function Inner({ children }: { children: React.ReactNode }) {
 }
 
 export default function ShipmentGeneralInformation() {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
 
@@ -51,10 +56,10 @@ export default function ShipmentGeneralInformation() {
         <NumberField
           control={control}
           name="temperatureMin"
-          description="The minimum temperature for the shipment."
-          label="Temperature Min"
-          placeholder="Enter Temperature Min"
-          sideText="°F"
+          description={t("The minimum temperature for the shipment.")}
+          label={t("Temperature Min")}
+          placeholder={t("Enter Temperature Min")}
+          sideText={t("°F")}
           rules={{ required }}
         />
       ),
@@ -66,10 +71,10 @@ export default function ShipmentGeneralInformation() {
         <NumberField
           control={control}
           name="temperatureMax"
-          label="Temperature Max"
-          description="The maximum temperature for the shipment."
-          placeholder="Enter Temperature Max"
-          sideText="°F"
+          label={t("Temperature Max")}
+          description={t("The maximum temperature for the shipment.")}
+          placeholder={t("Enter Temperature Max")}
+          sideText={t("°F")}
           rules={{ required }}
         />
       ),
@@ -84,6 +89,8 @@ export default function ShipmentGeneralInformation() {
 }
 
 export function BOLField() {
+  const t = useT();
+
   const { control, setError, clearErrors, getFieldState } = useFormContext<Shipment>();
   const shipmentId = useWatch({ control, name: "id" });
 
@@ -144,10 +151,10 @@ export function BOLField() {
     <InputField
       control={control}
       name="bol"
-      label="BOL"
+      label={t("BOL")}
       rules={{ required: bolRequired }}
-      description="The BOL is the bill of lading number for the shipment."
-      placeholder="Enter BOL"
+      description={t("The BOL is the bill of lading number for the shipment.")}
+      placeholder={t("Enter BOL")}
       maxLength={100}
     />
   );

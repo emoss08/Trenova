@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,8 @@ type UnsavedChangesGuardProps = {
 // tab close) get the browser's native prompt via beforeunload — the browser
 // does not let a page substitute its own dialog there.
 export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
+  const t = useT();
+
   const shouldBlock = useCallback<BlockerFunction>(
     ({ currentLocation, nextLocation }) =>
       when && currentLocation.pathname !== nextLocation.pathname,
@@ -58,10 +61,10 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold">
-            Discard unsaved changes?
+            {t("Discard unsaved changes?")}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            You have unsaved changes that will be lost if you leave this page.
+            {t("You have unsaved changes that will be lost if you leave this page.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -72,7 +75,7 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
               if (blocker.state === "blocked") blocker.reset();
             }}
           >
-            Stay
+            {t("Stay")}
           </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
@@ -81,7 +84,7 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
               if (blocker.state === "blocked") blocker.proceed();
             }}
           >
-            Discard changes
+            {t("Discard changes")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

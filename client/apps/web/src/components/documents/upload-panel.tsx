@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
@@ -123,6 +124,8 @@ function UploadItem({
   onRetry?: (id: string) => void;
   onRemove?: (id: string) => void;
 }) {
+  const t = useT();
+
   const { id, file, progress, status, error, errorType, retryCount } = upload;
   const canRetry = (retryCount ?? 0) < MAX_RETRIES;
 
@@ -151,25 +154,29 @@ function UploadItem({
             </>
           )}
           {status === "processing" && (
-            <span className="text-muted-foreground text-xs">Compressing...</span>
+            <span className="text-muted-foreground text-xs">{t("Compressing...")}</span>
           )}
           {status === "uploaded" && (
-            <span className="text-muted-foreground text-xs">Uploaded, waiting...</span>
+            <span className="text-muted-foreground text-xs">{t("Uploaded, waiting...")}</span>
           )}
           {status === "verifying" && (
-            <span className="text-muted-foreground text-xs">Verifying...</span>
+            <span className="text-muted-foreground text-xs">{t("Verifying...")}</span>
           )}
-          {status === "paused" && <span className="text-muted-foreground text-xs">Paused</span>}
+          {status === "paused" && (
+            <span className="text-muted-foreground text-xs">{t("Paused")}</span>
+          )}
           {status === "retrying" && (
-            <span className="text-muted-foreground text-xs">Retrying...</span>
+            <span className="text-muted-foreground text-xs">{t("Retrying...")}</span>
           )}
           {status === "completing" && (
-            <span className="text-muted-foreground text-xs">Finalizing...</span>
+            <span className="text-muted-foreground text-xs">{t("Finalizing...")}</span>
           )}
-          {status === "quarantined" && <span className="text-xs text-red-400">Quarantined</span>}
+          {status === "quarantined" && (
+            <span className="text-xs text-red-400">{t("Quarantined")}</span>
+          )}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
-              {retryCount && retryCount > 0 ? `Retrying (${retryCount})...` : "Waiting..."}
+              {retryCount && retryCount > 0 ? t("Retrying ({0})...", retryCount) : t("Waiting...")}
             </span>
           )}
           {status === "success" && (
@@ -201,7 +208,7 @@ function UploadItem({
                 size="icon-xs"
                 onClick={() => onRetry(id)}
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Retry upload"
+                title={t("Retry upload")}
               >
                 <RotateCcwIcon className="size-3.5" />
               </Button>
@@ -212,7 +219,7 @@ function UploadItem({
                 size="icon-xs"
                 onClick={() => onRemove(id)}
                 className="text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Remove"
+                title={t("Remove")}
               >
                 <XIcon className="size-3.5" />
               </Button>
@@ -260,6 +267,8 @@ function FullDropzone({
   supportedFormatsLabel: string;
   maxFileSizeLabel: string;
 }) {
+  const t = useT();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -339,11 +348,11 @@ function FullDropzone({
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled}
       >
-        Select files
+        {t("Select files")}
       </Button>
-      <p className="text-muted-foreground mt-2 text-sm">or drag and drop them here</p>
+      <p className="text-muted-foreground mt-2 text-sm">{t("or drag and drop them here")}</p>
       <p className="text-muted-foreground mt-3 text-xs">
-        {supportedFormatsLabel}, up to {maxFileSizeLabel}
+        {t("{0}, up to {1}", supportedFormatsLabel, maxFileSizeLabel)}
       </p>
       <input
         ref={fileInputRef}
@@ -380,6 +389,8 @@ export function UploadPanel({
   maxFileSizeLabel = "50 MB",
   description,
 }: UploadPanelProps) {
+  const t = useT();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [filter, setFilter] = useState<UploadFilter>("all");
@@ -500,7 +511,7 @@ export function UploadPanel({
         >
           {isDraggingOver && (
             <div className="border-primary bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed">
-              <p className="text-primary text-sm font-medium">Drop files to add</p>
+              <p className="text-primary text-sm font-medium">{t("Drop files to add")}</p>
             </div>
           )}
 
@@ -514,7 +525,7 @@ export function UploadPanel({
                   onClick={onClearCompleted}
                   className="text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-2 text-xs"
                 >
-                  Clear
+                  {t("Clear")}
                 </Button>
               )}
               {hasUploads && (
@@ -576,7 +587,7 @@ export function UploadPanel({
                               : "text-muted-foreground hover:bg-muted hover:text-foreground",
                           )}
                         >
-                          {tab.label}
+                          {t(tab.label)}
                           {tab.count > 0 && <span className="ml-1">({tab.count})</span>}
                         </button>
                       ))}
@@ -585,7 +596,7 @@ export function UploadPanel({
                       <div className="space-y-1.5">
                         {filteredUploads.length === 0 ? (
                           <p className="text-muted-foreground py-4 text-center text-xs">
-                            No uploads in this category
+                            {t("No uploads in this category")}
                           </p>
                         ) : (
                           filteredUploads.map((upload) => (
@@ -620,8 +631,8 @@ export function UploadPanel({
             <div className="border-border bg-muted/50 flex items-center justify-between border-t px-3 py-2">
               <span className="text-muted-foreground text-xs">
                 {activeCount > 0
-                  ? `Uploading ${activeCount} file${activeCount > 1 ? "s" : ""}...`
-                  : `${counts.completed} completed`}
+                  ? t("Uploading {0, plural, one {# file} other {# files}}...", activeCount)
+                  : t("{0} completed", counts.completed)}
               </span>
               <Button
                 variant="outline"
@@ -631,7 +642,7 @@ export function UploadPanel({
                 className="text-foreground"
               >
                 <PlusIcon className="size-3.5" />
-                Add
+                {t("Add")}
               </Button>
               <input
                 ref={fileInputRef}

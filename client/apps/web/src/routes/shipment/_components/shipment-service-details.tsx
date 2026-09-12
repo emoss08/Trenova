@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   EquipmentTypeAutocompleteField,
   ServiceTypeAutocompleteField,
@@ -24,10 +25,12 @@ export default function ShipmentServiceDetails() {
 }
 
 function ShipmentServiceDetailsInner({ children }: { children: React.ReactNode }) {
+  const t = useT();
+
   return (
     <FormSection
-      title="Service & Classification"
-      description="Shipment type, service level, and equipment requirements"
+      title={t("Service & Classification")}
+      description={t("Shipment type, service level, and equipment requirements")}
     >
       {children}
     </FormSection>
@@ -35,6 +38,8 @@ function ShipmentServiceDetailsInner({ children }: { children: React.ReactNode }
 }
 
 function ShipmentServiceDetailsForm() {
+  const t = useT();
+
   const { control } = useFormContext<Shipment>();
   const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
 
@@ -48,9 +53,9 @@ function ShipmentServiceDetailsForm() {
           control={control}
           name="serviceTypeId"
           rules={{ required: true }}
-          label="Service Type"
-          placeholder="Select Service Type"
-          description="Select the service type for the shipment."
+          label={t("Service Type")}
+          placeholder={t("Select Service Type")}
+          description={t("Select the service type for the shipment.")}
         />
       ),
     },
@@ -61,9 +66,9 @@ function ShipmentServiceDetailsForm() {
           control={control}
           name="shipmentTypeId"
           rules={{ required: true }}
-          label="Shipment Type"
-          placeholder="Select Shipment Type"
-          description="Select the shipment type for the shipment."
+          label={t("Shipment Type")}
+          placeholder={t("Select Shipment Type")}
+          description={t("Select the shipment type for the shipment.")}
         />
       ),
     },
@@ -73,9 +78,11 @@ function ShipmentServiceDetailsForm() {
         <EquipmentTypeAutocompleteField
           control={control}
           name="tractorTypeId"
-          label="Tractor Type"
-          placeholder="Select Tractor Type"
-          description="Select the type of tractor used, considering any special requirements (e.g., refrigeration)."
+          label={t("Tractor Type")}
+          placeholder={t("Select Tractor Type")}
+          description={t(
+            "Select the type of tractor used, considering any special requirements (e.g., refrigeration).",
+          )}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
           }}
@@ -92,9 +99,11 @@ function ShipmentServiceDetailsForm() {
         <EquipmentTypeAutocompleteField
           control={control}
           name="trailerTypeId"
-          label="Trailer Type"
-          placeholder="Select Trailer Type"
-          description="Select the type of trailer used, considering any special requirements (e.g., refrigeration)."
+          label={t("Trailer Type")}
+          placeholder={t("Select Trailer Type")}
+          description={t(
+            "Select the type of trailer used, considering any special requirements (e.g., refrigeration).",
+          )}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
           }}

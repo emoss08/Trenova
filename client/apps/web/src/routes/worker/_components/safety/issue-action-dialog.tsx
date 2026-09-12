@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -53,6 +54,8 @@ export function IssueActionDialog({
   suggestedLevel,
   safetyEventId,
 }: IssueActionDialogProps) {
+  const t = useT();
+
   const invalidate = useSafetyInvalidation(workerId);
   const form = useForm<IssueActionFormValues>({
     resolver: zodResolver(issueActionFormSchema) as Resolver<IssueActionFormValues>,
@@ -127,10 +130,9 @@ export function IssueActionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Issue a disciplinary action</DialogTitle>
+          <DialogTitle>{t("Issue a disciplinary action")}</DialogTitle>
           <DialogDescription>
-            The ladder suggests the next rung from what is still active. Actions roll off after a
-            year unless you set another date; terminations never do.
+            {t("The ladder suggests the next rung from what is still active. Actions roll off after a year unless you set another date; terminations never do.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -146,10 +148,10 @@ export function IssueActionDialog({
                 <SelectField<IssueActionFormValues>
                   control={control}
                   name="level"
-                  label="Level"
+                  label={t("Level")}
                   options={LEVEL_OPTIONS}
-                  placeholder="Pick a level"
-                  description="Preset to the next rung from what is still active; choose another if the conduct warrants it."
+                  placeholder={t("Pick a level")}
+                  description={t("Preset to the next rung from what is still active; choose another if the conduct warrants it.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -157,10 +159,9 @@ export function IssueActionDialog({
                 <FormControl cols="full">
                   <Alert variant="destructive" className="py-2">
                     <TriangleAlertIcon className="size-4" />
-                    <AlertTitle>This ends employment</AlertTitle>
+                    <AlertTitle>{t("This ends employment")}</AlertTitle>
                     <AlertDescription>
-                      A termination closes PTO and pay assignments, cancels upcoming time off, and
-                      takes the worker off the dispatch board.
+                      {t("A termination closes PTO and pay assignments, cancels upcoming time off, and takes the worker off the dispatch board.")}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -169,9 +170,9 @@ export function IssueActionDialog({
                 <TextareaField<IssueActionFormValues>
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="What the worker is being disciplined for"
-                  description="Sent to the driver in the notification and copied onto the timeline event for a suspension or termination."
+                  label={t("Reason")}
+                  placeholder={t("What the worker is being disciplined for")}
+                  description={t("Sent to the driver in the notification and copied onto the timeline event for a suspension or termination.")}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -180,9 +181,9 @@ export function IssueActionDialog({
                 <TextareaField<IssueActionFormValues>
                   control={control}
                   name="details"
-                  label="Details"
-                  placeholder="Context, prior conversations, what happens next"
-                  description="Internal context kept on the action; it is not sent to the driver."
+                  label={t("Details")}
+                  placeholder={t("Context, prior conversations, what happens next")}
+                  description={t("Internal context kept on the action; it is not sent to the driver.")}
                   maxLength={4000}
                 />
               </FormControl>
@@ -191,9 +192,9 @@ export function IssueActionDialog({
                   <NumberField<IssueActionFormValues>
                     control={control}
                     name="suspensionDays"
-                    placeholder="e.g. 3"
-                    label="Suspension length"
-                    description="How many days the driver is off duty for this suspension."
+                    placeholder={t("e.g. 3")}
+                    label={t("Suspension length")}
+                    description={t("How many days the driver is off duty for this suspension.")}
                     sideText="days"
                     min={1}
                     rules={{ required: true }}
@@ -204,7 +205,7 @@ export function IssueActionDialog({
                 <AutoCompleteDateField<IssueActionFormValues>
                   control={control}
                   name="expiresAt"
-                  label="Rolls off"
+                  label={t("Rolls off")}
                   placeholder={meta.endsEmployment ? "Never" : "One year from today"}
                   description={
                     meta.endsEmployment
@@ -218,7 +219,7 @@ export function IssueActionDialog({
                   <SwitchField<IssueActionFormValues>
                     control={control}
                     name="recordEmploymentEvent"
-                    label="Record it on the timeline"
+                    label={t("Record it on the timeline")}
                     description={
                       meta.endsEmployment
                         ? "Records a Terminated event so PTO, pay and dispatch follow."
@@ -232,15 +233,15 @@ export function IssueActionDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 variant={meta.endsEmployment ? "destructive" : "default"}
                 isLoading={isPending}
-                loadingText="Issuing..."
+                loadingText={t("Issuing...")}
               >
-                Issue {meta.label.toLowerCase()}
+                {t("Issue {0}", meta.label.toLowerCase())}
               </Button>
             </DialogFooter>
           </Form>

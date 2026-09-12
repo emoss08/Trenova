@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
@@ -36,6 +37,8 @@ export const SIDEBAR_VARIANT_OPTIONS: readonly SidebarVariantOption[] = [
  * Lives inside the user menu so the previous layout stays one click away.
  */
 export function SidebarLayoutSubmenu() {
+  const t = useT();
+
   const variant = useNavigationStore((state) => state.sidebarVariant);
   const setVariant = useNavigationStore((state) => state.setSidebarVariant);
 
@@ -43,7 +46,7 @@ export function SidebarLayoutSubmenu() {
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
         <PanelsTopLeftIcon className="mr-2 size-4" />
-        <span>Sidebar layout</span>
+        <span>{t("Sidebar layout")}</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
         <DropdownMenuSubContent sideOffset={5} className="w-64">
@@ -62,8 +65,8 @@ export function SidebarLayoutSubmenu() {
                 className="cursor-pointer"
               >
                 <span className="flex flex-col">
-                  <span className="text-sm">{option.label}</span>
-                  <span className="text-2xs text-muted-foreground">{option.description}</span>
+                  <span className="text-sm">{t(option.label)}</span>
+                  <span className="text-2xs text-muted-foreground">{t(option.description)}</span>
                 </span>
               </DropdownMenuRadioItem>
             ))}

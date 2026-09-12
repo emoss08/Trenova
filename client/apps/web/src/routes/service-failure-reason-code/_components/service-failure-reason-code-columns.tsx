@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -107,7 +108,7 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={90} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={90} />
       ),
       size: 320,
       minSize: 260,

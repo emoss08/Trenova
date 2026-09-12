@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SidebarNavLink, SidebarSectionLabel } from "@/components/navigation/sidebar-primitives";
 import {
   ATTENTION_TONE_DOT_CLASSES,
@@ -26,6 +27,8 @@ function AttentionRow({
   count: number;
   currentPath: string;
 }) {
+  const t = useT();
+
   const hasWork = count > 0;
 
   return (
@@ -36,7 +39,7 @@ function AttentionRow({
           hasWork ? ATTENTION_TONE_DOT_CLASSES[row.tone] : "bg-muted-foreground/40",
         )}
       />
-      <span className="min-w-0 flex-1 truncate">{row.label}</span>
+      <span className="min-w-0 flex-1 truncate">{t(row.label)}</span>
       <span className="text-2xs text-muted-foreground/70">{row.module}</span>
       <Badge
         variant={hasWork ? TONE_BADGE_VARIANTS[row.tone] : "secondary"}
@@ -49,6 +52,8 @@ function AttentionRow({
 }
 
 export function AttentionSection() {
+  const t = useT();
+
   const { pathname } = useLocation();
   const { rows, isLoading } = useAttentionRows();
 
@@ -58,7 +63,7 @@ export function AttentionSection() {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <SidebarSectionLabel>Needs Attention</SidebarSectionLabel>
+      <SidebarSectionLabel>{t("Needs Attention")}</SidebarSectionLabel>
       {isLoading
         ? Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full rounded-md" />

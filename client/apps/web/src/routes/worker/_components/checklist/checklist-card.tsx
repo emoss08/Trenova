@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerChecklistItemRow, WorkerChecklistRow } from "@/lib/graphql/worker-checklist";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -41,6 +42,8 @@ export function ChecklistCard({
   onReopen,
   onCancel,
 }: ChecklistCardProps) {
+  const t = useT();
+
   const groups = useMemo(() => groupByOwner(checklist.items), [checklist.items]);
   const { progress } = checklist;
   const open = checklist.status === "Open";
@@ -59,21 +62,17 @@ export function ChecklistCard({
                 {CHECKLIST_KIND_LABELS[checklist.kind as ChecklistKind] ?? checklist.kind}
               </Badge>
               {checklist.status === "Completed" ? (
-                <Badge variant="active">Completed</Badge>
+                <Badge variant="active">{t("Completed")}</Badge>
               ) : checklist.status === "Cancelled" ? (
-                <Badge variant="inactive">Cancelled</Badge>
+                <Badge variant="inactive">{t("Cancelled")}</Badge>
               ) : null}
             </div>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              Started {formatUnixDateMedium(checklist.startedAt)}
-              {checklist.startedBy?.name ? ` by ${checklist.startedBy.name}` : ""}
-              {checklist.dueAt && open ? ` · due ${formatUnixDateMedium(checklist.dueAt)}` : ""}
-              {checklist.completedAt
-                ? ` · completed ${formatUnixDateMedium(checklist.completedAt)}`
-                : ""}
-              {checklist.cancelledAt
-                ? ` · cancelled ${formatUnixDateMedium(checklist.cancelledAt)}${checklist.cancelReason ? ` — ${checklist.cancelReason}` : ""}`
-                : ""}
+              {t("Started {0}{1}{2}{3}{4}", formatUnixDateMedium(checklist.startedAt), checklist.startedBy?.name ? ` ${t("by {0}", checklist.startedBy.name)}` : "", checklist.dueAt && open ? ` ${t("· due {0}", formatUnixDateMedium(checklist.dueAt))}` : "", checklist.completedAt
+                ? ` ${t("· completed {0}", formatUnixDateMedium(checklist.completedAt))}`
+                : "", checklist.cancelledAt
+                ? ` ${t("· cancelled {0}{1}", formatUnixDateMedium(checklist.cancelledAt), checklist.cancelReason ? ` — ${checklist.cancelReason}` : "")}`
+                : "")}
             </p>
           </div>
           {open && permissions.canCancel ? (
@@ -85,7 +84,7 @@ export function ChecklistCard({
               onClick={() => onCancel(checklist)}
             >
               <XIcon className="size-3.5" />
-              Cancel
+              {t("Cancel")}
             </Button>
           ) : null}
         </div>
@@ -98,12 +97,12 @@ export function ChecklistCard({
             <Progress value={progress.percent} className="h-1.5" />
             <p className="text-muted-foreground flex flex-wrap gap-x-3 text-xs tabular-nums">
               <span className="text-foreground font-medium">
-                {progress.requiredDone}/{progress.requiredTotal} required
+                {t("{0}/{1} required", progress.requiredDone, progress.requiredTotal)}
               </span>
               <span>
-                {progress.settled} of {progress.total} settled
+                {t("{0} of {1} settled", progress.settled, progress.total)}
               </span>
-              {progress.overdue > 0 && open ? <span>{progress.overdue} overdue</span> : null}
+              {progress.overdue > 0 && open ? <span>{t("{0} overdue", progress.overdue)}</span> : null}
             </p>
           </div>
         </div>
@@ -111,8 +110,7 @@ export function ChecklistCard({
         {open && checklist.kind === "Onboarding" ? (
           <Alert>
             <AlertDescription>
-              When the last required item is settled this checklist closes on its own and the worker
-              is marked qualified.
+              {t("When the last required item is settled this checklist closes on its own and the worker is marked qualified.")}
             </AlertDescription>
           </Alert>
         ) : null}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -66,6 +67,8 @@ export function HolidayDialog({
   presetDate,
   onSaved,
 }: HolidayDialogProps) {
+  const t = useT();
+
   const isEdit = Boolean(entry);
   const form = useForm<OrgHolidayFormValues>({
     resolver: zodResolver(orgHolidayFormSchema) as Resolver<OrgHolidayFormValues>,
@@ -120,10 +123,9 @@ export function HolidayDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit date" : "Add a date"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit date") : t("Add a date")}</DialogTitle>
           <DialogDescription>
-            Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from
-            being requested on that day.
+            {t("Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -139,9 +141,9 @@ export function HolidayDialog({
                 <InputField<OrgHolidayFormValues>
                   control={control}
                   name="name"
-                  label="Name"
+                  label={t("Name")}
                   placeholder={kind === "Blackout" ? "e.g. Peak season freeze" : "e.g. Labor Day"}
-                  description="How the date is listed on the calendar."
+                  description={t("How the date is listed on the calendar.")}
                   rules={{ required: true }}
                   maxLength={100}
                 />
@@ -150,8 +152,8 @@ export function HolidayDialog({
                 <AutoCompleteDateField<OrgHolidayFormValues>
                   control={control}
                   name="holidayDate"
-                  label="Date"
-                  placeholder="e.g. Jul 4"
+                  label={t("Date")}
+                  placeholder={t("e.g. Jul 4")}
                   rules={{ required: true }}
                   description={
                     storedDate
@@ -166,9 +168,9 @@ export function HolidayDialog({
                 <SelectField<OrgHolidayFormValues>
                   control={control}
                   name="kind"
-                  label="Kind"
+                  label={t("Kind")}
                   options={KIND_OPTIONS}
-                  placeholder="Choose a kind"
+                  placeholder={t("Choose a kind")}
                   rules={{ required: true }}
                   description={ORG_HOLIDAY_KIND_HINTS[kind ?? "Holiday"]}
                 />
@@ -177,8 +179,8 @@ export function HolidayDialog({
                 <SwitchField<OrgHolidayFormValues>
                   control={control}
                   name="recursAnnually"
-                  label="Repeats every year"
-                  description="On, the date is observed on the same day every year; off for one-off dates such as a single-year freeze."
+                  label={t("Repeats every year")}
+                  description={t("On, the date is observed on the same day every year; off for one-off dates such as a single-year freeze.")}
                   position="left"
                   outlined
                 />
@@ -187,19 +189,19 @@ export function HolidayDialog({
                 <TextareaField<OrgHolidayFormValues>
                   control={control}
                   name="description"
-                  label="Note"
-                  placeholder="e.g. Office closed; dispatch runs a skeleton crew"
-                  description="Optional context shown beside the date on the calendar."
+                  label={t("Note")}
+                  placeholder={t("e.g. Office closed; dispatch runs a skeleton crew")}
+                  description={t("Optional context shown beside the date on the calendar.")}
                   maxLength={500}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Saving...">
-                {isEdit ? "Save changes" : "Add date"}
+              <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
+                {isEdit ? t("Save changes") : t("Add date")}
               </Button>
             </DialogFooter>
           </Form>

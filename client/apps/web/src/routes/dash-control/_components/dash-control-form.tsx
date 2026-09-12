@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -31,6 +32,8 @@ const CADENCE_OPTIONS = (["Immediate", "Daily", "Weekly"] as const).map((value) 
 const WEEKDAY_OPTIONS = WEEKDAY_LABELS.map((label, value) => ({ value: String(value), label }));
 
 export default function DashControlForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["dash-control"],
@@ -73,7 +76,7 @@ export default function DashControlForm() {
         driverDigestWeekday: Number(values.driverDigestWeekday),
       }),
     onSuccess: (_, values) => {
-      toast.success("Dash control updated — drivers see the change immediately");
+      toast.success(t("Dash control updated — drivers see the change immediately"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["dash-control"] });
     },
@@ -95,7 +98,7 @@ export default function DashControlForm() {
           <MoneyCard />
           <ProfileCard />
           <AlertsCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -103,15 +106,16 @@ export default function DashControlForm() {
 }
 
 function LoadWorkflowCard() {
+  const t = useT();
+
   const { control } = useFormContext<DashControlFormValues>();
   const requireAck = useWatch({ control, name: "requireLoadAcknowledgment" });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Load Workflow</CardTitle>
+        <CardTitle>{t("Load Workflow")}</CardTitle>
         <CardDescription>
-          What drivers can do on their assigned loads. Everything here is enforced server-side —
-          turning a toggle off removes the feature from Dash immediately.
+          {t("What drivers can do on their assigned loads. Everything here is enforced server-side — turning a toggle off removes the feature from Dash immediately.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,41 +124,41 @@ function LoadWorkflowCard() {
             <SwitchField
               control={control}
               name="requireLoadAcknowledgment"
-              label="Load Acceptance"
-              description="Drivers see an accept/decline card on new assignments so dispatch knows the load was received."
+              label={t("Load Acceptance")}
+              description={t("Drivers see an accept/decline card on new assignments so dispatch knows the load was received.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowLoadRefusals"
-              label="Allow Declines"
+              label={t("Allow Declines")}
               disabled={!requireAck}
-              description="Drivers may decline a load with a reason. Turn off for forced dispatch — drivers can only acknowledge."
+              description={t("Drivers may decline a load with a reason. Turn off for forced dispatch — drivers can only acknowledge.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowStopActions"
-              label="Self-Service Arrive / Depart"
-              description="Drivers record their own arrivals and departures at stops, driving move status and detention math."
+              label={t("Self-Service Arrive / Depart")}
+              description={t("Drivers record their own arrivals and departures at stops, driving move status and detention math.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowLoadDocumentUpload"
-              label="POD / BOL Upload"
-              description="Drivers photograph and upload signed paperwork straight from the cab."
+              label={t("POD / BOL Upload")}
+              description={t("Drivers photograph and upload signed paperwork straight from the cab.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowLoadComments"
-              label="Load Messaging"
-              description="Drivers can send messages on load chat. Reading dispatch notes is always allowed."
+              label={t("Load Messaging")}
+              description={t("Drivers can send messages on load chat. Reading dispatch notes is always allowed.")}
             />
           </FormControl>
         </FormGroup>
@@ -164,15 +168,16 @@ function LoadWorkflowCard() {
 }
 
 function PayVisibilityCard() {
+  const t = useT();
+
   const { control } = useFormContext<DashControlFormValues>();
   const showLoadPay = useWatch({ control, name: "showLoadPay" });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pay Visibility</CardTitle>
+        <CardTitle>{t("Pay Visibility")}</CardTitle>
         <CardDescription>
-          Settlement statements are always visible to drivers — these toggles only control per-load
-          pay detail shown before settlement.
+          {t("Settlement statements are always visible to drivers — these toggles only control per-load pay detail shown before settlement.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -181,17 +186,17 @@ function PayVisibilityCard() {
             <SwitchField
               control={control}
               name="showLoadPay"
-              label="Per-Load Pay"
-              description="Show what each load pays and recent pay events as they accrue."
+              label={t("Per-Load Pay")}
+              description={t("Show what each load pays and recent pay events as they accrue.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="showPayEstimates"
-              label="Pay Estimates"
+              label={t("Pay Estimates")}
               disabled={!showLoadPay}
-              description="Show an estimated payout on active loads before pay accrues, based on the driver's pay plan."
+              description={t("Show an estimated payout on active loads before pay accrues, based on the driver's pay plan.")}
             />
           </FormControl>
         </FormGroup>
@@ -201,14 +206,16 @@ function PayVisibilityCard() {
 }
 
 function MoneyCard() {
+  const t = useT();
+
   const { control } = useFormContext<DashControlFormValues>();
   const allowExpenses = useWatch({ control, name: "allowExpenseSubmission" });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Expenses &amp; Disputes</CardTitle>
+        <CardTitle>{t("Expenses & Disputes")}</CardTitle>
         <CardDescription>
-          Driver-initiated money workflows — reimbursements and settlement challenges.
+          {t("Driver-initiated money workflows — reimbursements and settlement challenges.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -217,25 +224,25 @@ function MoneyCard() {
             <SwitchField
               control={control}
               name="allowExpenseSubmission"
-              label="Expense Submission"
-              description="Drivers submit out-of-pocket expenses (lumpers, tolls, scales) for reimbursement review."
+              label={t("Expense Submission")}
+              description={t("Drivers submit out-of-pocket expenses (lumpers, tolls, scales) for reimbursement review.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="requireExpenseReceipt"
-              label="Require Receipts"
+              label={t("Require Receipts")}
               disabled={!allowExpenses}
-              description="Expenses cannot be approved until a receipt photo is attached."
+              description={t("Expenses cannot be approved until a receipt photo is attached.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowSettlementDisputes"
-              label="Settlement Disputes"
-              description="Drivers can flag a statement or line item for review from Dash."
+              label={t("Settlement Disputes")}
+              description={t("Drivers can flag a statement or line item for review from Dash.")}
             />
           </FormControl>
         </FormGroup>
@@ -245,14 +252,15 @@ function MoneyCard() {
 }
 
 function ProfileCard() {
+  const t = useT();
+
   const { control } = useFormContext<DashControlFormValues>();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile Self-Service</CardTitle>
+        <CardTitle>{t("Profile Self-Service")}</CardTitle>
         <CardDescription>
-          What drivers can maintain on their own record. Compliance dates (CDL, medical) are always
-          carrier-controlled regardless of these settings.
+          {t("What drivers can maintain on their own record. Compliance dates (CDL, medical) are always carrier-controlled regardless of these settings.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -261,32 +269,32 @@ function ProfileCard() {
             <SwitchField
               control={control}
               name="allowProfileDocumentUpload"
-              label="Qualification Document Upload"
-              description="Drivers upload renewed CDLs, medical cards, and other DQ-file documents from their phone."
+              label={t("Qualification Document Upload")}
+              description={t("Drivers upload renewed CDLs, medical cards, and other DQ-file documents from their phone.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowContactInfoEdit"
-              label="Contact Info Edits"
-              description="Drivers keep their own phone, address, and emergency contact current."
+              label={t("Contact Info Edits")}
+              description={t("Drivers keep their own phone, address, and emergency contact current.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="requireContactChangeApproval"
-              label="Approve Contact Edits"
-              description="A driver's edit waits on the office as a change request instead of landing straight on the record."
+              label={t("Approve Contact Edits")}
+              description={t("A driver's edit waits on the office as a change request instead of landing straight on the record.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="allowPtoRequests"
-              label="Time-Off Requests"
-              description="Drivers request PTO from Dash; requests land in the existing approval workflow."
+              label={t("Time-Off Requests")}
+              description={t("Drivers request PTO from Dash; requests land in the existing approval workflow.")}
             />
           </FormControl>
         </FormGroup>
@@ -296,6 +304,8 @@ function ProfileCard() {
 }
 
 function AlertsCard() {
+  const t = useT();
+
   const { control } = useFormContext<DashControlFormValues>();
   const detentionAlerts = useWatch({ control, name: "enableDetentionAlerts" });
   const reminders = useWatch({ control, name: "sendCredentialReminders" });
@@ -303,9 +313,9 @@ function AlertsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reminders &amp; Alerts</CardTitle>
+        <CardTitle>{t("Reminders & Alerts")}</CardTitle>
         <CardDescription>
-          Automated notifications driven by driver activity and credential dates.
+          {t("Automated notifications driven by driver activity and credential dates.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -314,46 +324,46 @@ function AlertsCard() {
             <SwitchField
               control={control}
               name="sendCredentialReminders"
-              label="Credential Expiry Reminders"
-              description="Push drivers reminders at 30/14/3 days before a credential expires. Compliance always gets expired-credential alerts."
+              label={t("Credential Expiry Reminders")}
+              description={t("Push drivers reminders at 30/14/3 days before a credential expires. Compliance always gets expired-credential alerts.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="driverDigestCadence"
-              label="How Drivers Are Told"
+              label={t("How Drivers Are Told")}
               options={CADENCE_OPTIONS}
               isReadOnly={!reminders}
-              description="Bundle everything a driver owes into one notice instead of one each. The per-obligation reminders are suppressed while a round-up is in use, so nobody is told twice."
+              description={t("Bundle everything a driver owes into one notice instead of one each. The per-obligation reminders are suppressed while a round-up is in use, so nobody is told twice.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="driverDigestWeekday"
-              label="Weekly Round-Up Day"
+              label={t("Weekly Round-Up Day")}
               options={WEEKDAY_OPTIONS}
               isReadOnly={cadence !== "Weekly"}
-              description="The day the weekly notice goes out. A weekly round-up looks a fortnight ahead so nothing falls due in the gap between two of them."
+              description={t("The day the weekly notice goes out. A weekly round-up looks a fortnight ahead so nothing falls due in the gap between two of them.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="enableDetentionAlerts"
-              label="Detention Alerts"
-              description="Alert dispatch when a driver dwells at a stop beyond the threshold — a billing candidate for detention accessorials."
+              label={t("Detention Alerts")}
+              description={t("Alert dispatch when a driver dwells at a stop beyond the threshold — a billing candidate for detention accessorials.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="detentionAlertThresholdMinutes"
-              label="Detention Threshold (minutes)"
+              label={t("Detention Threshold (minutes)")}
               disabled={!detentionAlerts}
               rules={{ required: detentionAlerts }}
-              description="Dwell time beyond which a stop is flagged. 120 minutes is the common free-time convention."
+              description={t("Dwell time beyond which a stop is flagged. 120 minutes is the common free-time convention.")}
             />
           </FormControl>
         </FormGroup>

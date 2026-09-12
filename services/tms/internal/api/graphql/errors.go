@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -40,8 +41,9 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 			return gqlErr
 		}
 
+		locale := i18n.FromContext(ctx)
 		problemType := classifier.Classify(err)
-		gqlErr.Message = sanitizer.SanitizeMessage(err, problemType)
+		gqlErr.Message = sanitizer.SanitizeMessage(err, problemType).Localize(locale)
 		gqlErr.Extensions = map[string]any{
 			"code":    string(errorCode(err, problemType)),
 			"type":    baseURI + string(problemType),
@@ -52,7 +54,7 @@ func newErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
 			gqlErr.Extensions["params"] = params
 		}
 		if validationErrors := sanitizer.ExtractErrors(err); len(validationErrors) > 0 {
-			gqlErr.Extensions["errors"] = validationErrors
+			gqlErr.Extensions["errors"] = helpers.LocalizeErrors(locale, validationErrors)
 		}
 
 		return gqlErr

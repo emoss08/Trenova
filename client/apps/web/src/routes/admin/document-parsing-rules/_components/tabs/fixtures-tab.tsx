@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -63,6 +64,8 @@ function FixtureList({
   ruleSetId: string;
   onSelectFixture: (id: string) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
@@ -77,7 +80,7 @@ function FixtureList({
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.fixtures._def,
       });
-      toast.success("Fixture created");
+      toast.success(t("Fixture created"));
       if (data.id) onSelectFixture(data.id);
     },
     onError: (error) => {
@@ -99,7 +102,7 @@ function FixtureList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-muted-foreground text-sm font-medium">
-          {fixtures?.length ?? 0} fixture{(fixtures?.length ?? 0) !== 1 ? "s" : ""}
+          {t("{0, plural, one {# fixture} other {# fixtures}}", fixtures?.length ?? 0)}
         </h3>
         {canCreate && (
           <Button
@@ -110,7 +113,7 @@ function FixtureList({
             disabled={createMutation.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {createMutation.isPending ? "Creating..." : "New Fixture"}
+            {createMutation.isPending ? t("Creating...") : t("New Fixture")}
           </Button>
         )}
       </div>
@@ -121,10 +124,9 @@ function FixtureList({
             <FlaskConicalIcon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium">No fixtures yet</p>
+            <p className="text-sm font-medium">{t("No fixtures yet")}</p>
             <p className="text-muted-foreground max-w-xs text-xs">
-              Fixtures are sample documents with expected extraction results. They let you validate
-              that rules produce the correct fields and stops before publishing.
+              {t("Fixtures are sample documents with expected extraction results. They let you validate that rules produce the correct fields and stops before publishing.")}
             </p>
           </div>
         </div>
@@ -150,7 +152,7 @@ function FixtureList({
                 </div>
                 {assertionCount > 0 && (
                   <p className="text-muted-foreground text-xs">
-                    {assertionCount} assertion{assertionCount !== 1 ? "s" : ""}
+                    {t("{0, plural, one {# assertion} other {# assertions}}", assertionCount)}
                   </p>
                 )}
               </div>

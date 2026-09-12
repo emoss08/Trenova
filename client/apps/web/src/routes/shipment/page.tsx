@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -48,6 +49,8 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 };
 
 export function ShipmentsPage() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const [summary, setSummary] = useState<CommandCenterTableSummary | null>(null);
@@ -91,7 +94,7 @@ export function ShipmentsPage() {
           <>
             {summary && (
               <div
-                aria-label="Live shipment count"
+                aria-label={t("Live shipment count")}
                 title={`Updated ${formatDateInUserTimezone(new Date(summary.dataUpdatedAt), {
                   hour: "numeric",
                   minute: "2-digit",
@@ -100,12 +103,12 @@ export function ShipmentsPage() {
                 className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[10px] tabular-nums"
               >
                 <span className="bg-success size-1 rounded-full" />
-                Live · {formattedCount}
+                {t("Live · {0}", formattedCount)}
               </div>
             )}
             {currentOrg && (
               <span className="font-table text-muted-foreground text-[10px] tabular-nums">
-                org · {currentOrg.name}
+                {t("org · {0}", currentOrg.name)}
               </span>
             )}
           </>
@@ -118,15 +121,15 @@ export function ShipmentsPage() {
               size="sm"
               onClick={handleRefresh}
               isLoading={isRefreshing}
-              loadingText="Refreshing"
+              loadingText={t("Refreshing")}
             >
               <RefreshCwIcon className="size-3.5" />
-              Refresh
+              {t("Refresh")}
             </Button>
             {canCreateShipment && (
               <Button type="button" size="sm" onClick={handleCreateShipment}>
                 <PlusIcon className="size-3.5" />
-                New Shipment
+                {t("New Shipment")}
               </Button>
             )}
           </>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import type { WorkerRecognitionRow } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -18,17 +19,19 @@ type RecognitionListProps = {
  * driver's Dash as kudos.
  */
 export function RecognitionList({ recognitions, canDelete, busy, onDelete }: RecognitionListProps) {
+  const t = useT();
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">Recognition</h4>
+        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{t("Recognition")}</h4>
         <p className="text-muted-foreground truncate text-xs">
-          Visible entries show up as kudos in the driver&apos;s Dash.
+          {t("Visible entries show up as kudos in the driver's Dash.")}
         </p>
       </div>
       {recognitions.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          Nothing recorded yet
+          {t("Nothing recorded yet")}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -43,7 +46,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
                   <AwardIcon className="size-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{recognition.title}</p>
+                  <p className="truncate text-sm font-medium">{t(recognition.title)}</p>
                   <p className="text-muted-foreground text-xs">
                     {formatUnixDate(recognition.occurredAt)}
                     {recognition.awardedBy?.name ? ` · ${recognition.awardedBy.name}` : ""}
@@ -75,7 +78,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
                 {!recognition.visibleToWorker ? (
                   <Badge variant="secondary">
                     <EyeOffIcon />
-                    Internal
+                    {t("Internal")}
                   </Badge>
                 ) : null}
               </div>

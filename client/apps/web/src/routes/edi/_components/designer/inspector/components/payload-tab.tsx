@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
@@ -16,6 +17,8 @@ export default function PayloadTab({
   context: InspectorContext;
   editorTheme: ReturnType<typeof useEditorTheme>;
 }) {
+  const t = useT();
+
   const { copy } = useCopyToClipboard();
   const payloadJson = useMemo(
     () => JSON.stringify(context.payload?.value ?? {}, null, 2),
@@ -31,7 +34,7 @@ export default function PayloadTab({
           onClick={() => void copy(payloadJson, { withToast: true })}
         >
           <CopyIcon className="size-4" />
-          Copy
+          {t("Copy")}
         </Button>
         <Button
           type="button"
@@ -44,7 +47,7 @@ export default function PayloadTab({
           }
         >
           <DownloadIcon className="size-4" />
-          Download
+          {t("Download")}
         </Button>
       </div>
       <CodeMirror

@@ -115,7 +115,7 @@ func validateStopIdentifiers(ctx stopRuleContext) {
 		ctx.multiErr.Add(
 			currentPath,
 			errortypes.ErrDuplicate,
-			fmt.Sprintf("Stop ID duplicates %s", firstPath),
+			"Stop ID duplicates {0}", firstPath,
 		)
 		return
 	}
@@ -128,11 +128,7 @@ func validateStopSequence(ctx stopRuleContext) {
 		ctx.multiErr.Add(
 			stopFieldPath(ctx.moveIndex, ctx.stopIndex, "sequence"),
 			errortypes.ErrDuplicate,
-			fmt.Sprintf(
-				"Stop sequence duplicates moves[%d].stops[%d].sequence",
-				ctx.moveIndex,
-				firstIndex,
-			),
+			"Stop sequence duplicates moves[{0}].stops[{1}].sequence", ctx.moveIndex, firstIndex,
 		)
 		return
 	}

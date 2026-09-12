@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -46,6 +47,8 @@ export function DashboardSettingsDialog({
   candidates,
   onSave,
 }: DashboardSettingsDialogProps) {
+  const t = useT();
+
   const [tab, setTab] = useState<SettingsTab>("filters");
   const [filters, setFilters] = useState<ReportDashboardFilter[]>(layout.filters ?? []);
   const [parameters, setParameters] = useState<ReportParameterDef[]>(layout.parameters ?? []);
@@ -67,10 +70,9 @@ export function DashboardSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Dashboard controls</DialogTitle>
+          <DialogTitle>{t("Dashboard controls")}</DialogTitle>
           <DialogDescription>
-            Filters narrow every tile built on the same data. Parameters answer a question a report
-            asks for by name, like a lookback window.
+            {t("Filters narrow every tile built on the same data. Parameters answer a question a report asks for by name, like a lookback window.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -87,7 +89,7 @@ export function DashboardSettingsDialog({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {entry.label}
+              {t(entry.label)}
               {tab === entry.key && (
                 <span className="bg-primary absolute inset-x-1 -bottom-px h-0.5 rounded-full" />
               )}
@@ -106,20 +108,20 @@ export function DashboardSettingsDialog({
                 onChange={setFilters}
               />
             ) : (
-              <p className="text-muted-foreground px-2 py-4 text-center text-sm">Loading fields…</p>
+              <p className="text-muted-foreground px-2 py-4 text-center text-sm">{t("Loading fields…")}</p>
             )
           ) : (
             <ParametersPanel
               parameters={parameters}
               onChange={setParameters}
-              emptyMessage="Parameters feed a value into reports that declare one with the same name."
+              emptyMessage={t("Parameters feed a value into reports that declare one with the same name.")}
             />
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -127,7 +129,7 @@ export function DashboardSettingsDialog({
               onOpenChange(false);
             }}
           >
-            Apply
+            {t("Apply")}
           </Button>
         </DialogFooter>
       </DialogContent>

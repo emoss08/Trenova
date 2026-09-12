@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -73,6 +74,8 @@ export function EDITestCasesPage() {
 }
 
 function EDIPage({ kind }: { kind: EDIPageKind }) {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
@@ -83,7 +86,7 @@ function EDIPage({ kind }: { kind: EDIPageKind }) {
     >
       <DataTableLazyComponent
         fallback={
-          kind === "designer" ? <ComponentLoader message="Loading Template Designer" /> : undefined
+          kind === "designer" ? <ComponentLoader message={t("Loading Template Designer")} /> : undefined
         }
       >
         <Table kind={kind} />

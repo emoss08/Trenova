@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import { Label } from "@trenova/shared/components/ui/label";
@@ -16,6 +17,8 @@ function calcCurrentPeriod(date: Date | undefined) {
 }
 
 export function TimePicker({ date, setDate }: TimePickerDemoProps) {
+  const t = useT();
+
   const currentPeriod = calcCurrentPeriod(date);
   const [period, setPeriod] = React.useState<Period>(currentPeriod);
 
@@ -33,7 +36,7 @@ export function TimePicker({ date, setDate }: TimePickerDemoProps) {
   return (
     <div className="flex justify-center gap-2">
       <div className="grid gap-1 text-center">
-        <Label className="text-xs">Hours</Label>
+        <Label className="text-xs">{t("Hours")}</Label>
         <TimePickerInput
           id="hours"
           picker="12hours"
@@ -45,7 +48,7 @@ export function TimePicker({ date, setDate }: TimePickerDemoProps) {
         />
       </div>
       <div className="grid gap-1 text-center">
-        <Label className="text-xs">Minutes</Label>
+        <Label className="text-xs">{t("Minutes")}</Label>
         <TimePickerInput
           picker="minutes"
           id="minutes"
@@ -57,7 +60,7 @@ export function TimePicker({ date, setDate }: TimePickerDemoProps) {
         />
       </div>
       <div className="grid gap-1 text-center">
-        <Label className="text-xs">Period</Label>
+        <Label className="text-xs">{t("Period")}</Label>
         <TimePeriodSelect
           period={period}
           setPeriod={setPeriod}

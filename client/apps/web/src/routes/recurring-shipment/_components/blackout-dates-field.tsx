@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -55,6 +56,8 @@ type BlackoutDateRowProps = {
 };
 
 function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRowProps) {
+  const t = useT();
+
   const parsed = fromISODateString(date);
   const label = parsed ? format(parsed, "MMM d") : date;
 
@@ -72,7 +75,7 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
           {holidayName}
         </Badge>
       )}
-      {isPast && <span className="text-2xs text-muted-foreground">Past</span>}
+      {isPast && <span className="text-2xs text-muted-foreground">{t("Past")}</span>}
       <Button
         type="button"
         variant="ghost"
@@ -96,6 +99,8 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
  * one-click preset instead of eleven trips through a date picker.
  */
 export function BlackoutDatesField() {
+  const t = useT();
+
   const { control } = useFormContext<RecurringShipment>();
   const { field, fieldState } = useController({ control, name: "blackoutDates" });
 
@@ -163,8 +168,8 @@ export function BlackoutDatesField() {
 
   return (
     <FieldWrapper
-      label="Blackout Dates"
-      description="Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment."
+      label={t("Blackout Dates")}
+      description={t("Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.")}
       error={fieldState.error?.message}
     >
       <div className="border-input bg-muted/30 overflow-hidden rounded-lg border">
@@ -174,7 +179,7 @@ export function BlackoutDatesField() {
               render={
                 <Button type="button" variant="outline" size="sm" className="h-7">
                   <CalendarPlusIcon className="size-3.5" />
-                  Select days
+                  {t("Select days")}
                 </Button>
               }
             />
@@ -192,7 +197,7 @@ export function BlackoutDatesField() {
                 showOutsideDays={false}
               />
               <p className="border-border text-2xs text-muted-foreground border-t px-3 py-2">
-                Click a day to block it, click it again to unblock.
+                {t("Click a day to block it, click it again to unblock.")}
               </p>
             </PopoverContent>
           </Popover>
@@ -208,14 +213,14 @@ export function BlackoutDatesField() {
                   disabled={atCapacity}
                 >
                   <SparklesIcon className="size-3.5" />
-                  Holidays
+                  {t("Holidays")}
                   <ChevronDownIcon className="text-muted-foreground size-3.5" />
                 </Button>
               }
             />
             <DropdownMenuContent align="start">
               <DropdownMenuGroup>
-                <DropdownMenuLabel>Add US federal holidays</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("Add US federal holidays")}</DropdownMenuLabel>
                 {holidayYears.map(({ year, missing }) => (
                   <DropdownMenuItem
                     key={year}
@@ -230,7 +235,7 @@ export function BlackoutDatesField() {
           </DropdownMenu>
 
           <span className="text-2xs text-muted-foreground ml-auto pr-1 tabular-nums">
-            {atCapacity ? `Limit ${MAX_BLACKOUT_DATES} reached` : `${dates.length} blocked`}
+            {atCapacity ? t("Limit {0} reached", MAX_BLACKOUT_DATES) : t("{0} blocked", dates.length)}
           </span>
           {dates.length > 0 && (
             <Button
@@ -240,16 +245,16 @@ export function BlackoutDatesField() {
               className="text-muted-foreground hover:text-foreground h-7"
               onClick={() => commit([])}
             >
-              Clear
+              {t("Clear")}
             </Button>
           )}
         </div>
 
         {dates.length === 0 ? (
           <div className="flex flex-col items-center gap-0.5 px-3 py-6 text-center">
-            <p className="text-sm">No days blocked</p>
+            <p className="text-sm">{t("No days blocked")}</p>
             <p className="text-2xs text-muted-foreground">
-              Every scheduled occurrence generates a shipment.
+              {t("Every scheduled occurrence generates a shipment.")}
             </p>
           </div>
         ) : (
@@ -257,8 +262,7 @@ export function BlackoutDatesField() {
             {pastDates.length > 0 && (
               <div className="border-border flex items-center gap-2 border-b px-2.5 py-1.5">
                 <span className="text-2xs text-muted-foreground">
-                  {pastDates.length} {pastDates.length === 1 ? "day has" : "days have"} already
-                  passed and no longer affect the schedule.
+                  {t("{0} {1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? t("day has") : t("days have"))}
                 </span>
                 <Button
                   type="button"
@@ -267,7 +271,7 @@ export function BlackoutDatesField() {
                   className="text-2xs ml-auto h-6"
                   onClick={() => commit(dates.filter((date) => date >= todayISO))}
                 >
-                  Remove
+                  {t("Remove")}
                 </Button>
               </div>
             )}

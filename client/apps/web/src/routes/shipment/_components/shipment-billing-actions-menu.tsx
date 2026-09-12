@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -11,6 +12,8 @@ import type { Shipment } from "@trenova/shared/types/shipment";
 import { ChevronDownIcon, ReceiptTextIcon } from "lucide-react";
 
 export function ShipmentBillingActionsMenu({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const billingActions = useShipmentBillingActions();
   const { pending, run } = usePendingActions();
 
@@ -29,12 +32,12 @@ export function ShipmentBillingActionsMenu({ shipment }: { shipment: Shipment })
             variant="outline"
             size="sm"
             isLoading={isRunning}
-            loadingText="Billing"
+            loadingText={t("Billing")}
           />
         }
       >
         <ReceiptTextIcon className="size-4" />
-        Billing
+        {t("Billing")}
         <ChevronDownIcon className="size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4} className="min-w-56">

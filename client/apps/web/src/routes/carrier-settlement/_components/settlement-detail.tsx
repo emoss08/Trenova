@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   CarrierInvoiceMatchStatusBadge,
@@ -122,14 +123,16 @@ export function CarrierSettlementDetail({
 }
 
 function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const isTerminal = settlement.status === "Paid" || settlement.status === "Voided";
 
   return (
     <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
       <p className="text-muted-foreground text-[11px]">
         {isTerminal
-          ? "This settlement is finalized and shown here for record-keeping."
-          : "This is a read-only view — process, adjust, or pay this settlement from the workspace."}
+          ? t("This settlement is finalized and shown here for record-keeping.")
+          : t("This is a read-only view — process, adjust, or pay this settlement from the workspace.")}
       </p>
       {!isTerminal && (
         <Link
@@ -137,7 +140,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRight className="size-3.5" />
-          Open in Workspace
+          {t("Open in Workspace")}
         </Link>
       )}
     </div>
@@ -145,6 +148,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
 }
 
 function SettlementSummary({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -156,26 +161,24 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           </span>
         )}
         <span className="text-muted-foreground ml-auto text-xs">
-          {formatSettlementDate(settlement.periodStart)} –{" "}
-          {formatSettlementDate(settlement.periodEnd)} · pays{" "}
-          {formatSettlementDate(settlement.payDate)}
+          {t("{0} – {1} · pays {2}", formatSettlementDate(settlement.periodStart), formatSettlementDate(settlement.periodEnd), formatSettlementDate(settlement.payDate))}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryTile label="Gross Cost">
+        <SummaryTile label={t("Gross Cost")}>
           <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
         </SummaryTile>
-        <SummaryTile label="Adjustments">
+        <SummaryTile label={t("Adjustments")}>
           <AmountDisplay
             value={settlement.adjustmentsMinor}
             variant="auto"
             currency={settlement.currencyCode}
           />
         </SummaryTile>
-        <SummaryTile label="Loads">
+        <SummaryTile label={t("Loads")}>
           <span className="tabular-nums">{settlement.shipmentCount}</span>
         </SummaryTile>
-        <SummaryTile label="Net Payable" highlight>
+        <SummaryTile label={t("Net Payable")} highlight>
           <AmountDisplay
             value={settlement.netPayableMinor}
             variant="positive"
@@ -222,6 +225,8 @@ function SettlementActions({
   onChanged: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -265,7 +270,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("submit")}>
             <Send className="size-3.5" />
-            Submit for Approval
+            {t("Submit for Approval")}
           </Button>
           <Button
             size="sm"
@@ -274,7 +279,7 @@ function SettlementActions({
             onClick={() => runAction.mutate("recalculate")}
           >
             <RefreshCcw className="size-3.5" />
-            Recalculate
+            {t("Recalculate")}
           </Button>
         </>
       )}
@@ -282,7 +287,7 @@ function SettlementActions({
         <>
           <Button size="sm" disabled={busy} onClick={() => runAction.mutate("approve")}>
             <CheckCheck className="size-3.5" />
-            Approve
+            {t("Approve")}
           </Button>
           <Button
             size="sm"
@@ -291,20 +296,20 @@ function SettlementActions({
             onClick={() => setReasonAction("reject")}
           >
             <Undo2 className="size-3.5" />
-            Reject
+            {t("Reject")}
           </Button>
         </>
       )}
       {status === "Approved" && (
         <Button size="sm" disabled={busy} onClick={() => runAction.mutate("post")}>
           <CheckCheck className="size-3.5" />
-          Post to GL
+          {t("Post to GL")}
         </Button>
       )}
       {status === "Posted" && (
         <Button size="sm" disabled={busy} onClick={() => setPayDialogOpen(true)}>
           <CircleDollarSign className="size-3.5" />
-          Mark Paid
+          {t("Mark Paid")}
         </Button>
       )}
       {(status === "Draft" || status === "PendingApproval") && (
@@ -315,7 +320,7 @@ function SettlementActions({
           onClick={() => setAdjustDialogOpen(true)}
         >
           <Plus className="size-3.5" />
-          Add Adjustment
+          {t("Add Adjustment")}
         </Button>
       )}
       {settlement.batchId && <BatchCsvExportButton batchId={settlement.batchId} />}
@@ -328,7 +333,7 @@ function SettlementActions({
           onClick={() => setReasonAction("void")}
         >
           <X className="size-3.5" />
-          Void
+          {t("Void")}
         </Button>
       )}
 
@@ -351,11 +356,11 @@ function SettlementActions({
         onChanged={onChanged}
       />
       {status === "Voided" && settlement.voidReason && (
-        <span className="text-muted-foreground text-xs">Voided: {settlement.voidReason}</span>
+        <span className="text-muted-foreground text-xs">{t("Voided: {0}", settlement.voidReason)}</span>
       )}
       <span className="sr-only">
         <Button variant="ghost" onClick={onClose}>
-          Close
+          {t("Close")}
         </Button>
       </span>
     </div>
@@ -363,6 +368,8 @@ function SettlementActions({
 }
 
 function BatchCsvExportButton({ batchId }: { batchId: string }) {
+  const t = useT();
+
   const exportMutation = useMutation({
     mutationFn: () => exportCarrierSettlementBatchCsv(batchId),
     onSuccess: (csv) => {
@@ -373,7 +380,7 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
       anchor.download = `carrier-settlement-batch-${batchId}.csv`;
       anchor.click();
       URL.revokeObjectURL(url);
-      toast.success("Remittance CSV downloaded");
+      toast.success(t("Remittance CSV downloaded"));
     },
     onError: (error: Error) => toast.error(error.message || "Export failed"),
   });
@@ -384,10 +391,10 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
       variant="outline"
       disabled={exportMutation.isPending}
       onClick={() => exportMutation.mutate()}
-      title="Download the remittance CSV for this settlement's batch"
+      title={t("Download the remittance CSV for this settlement's batch")}
     >
       <Download className="size-3.5" />
-      Batch CSV
+      {t("Batch CSV")}
     </Button>
   );
 }
@@ -403,6 +410,8 @@ function ReasonDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({
@@ -423,29 +432,29 @@ function ReasonDialog({
     <Dialog open={action != null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{action === "reject" ? "Reject settlement" : "Void settlement"}</DialogTitle>
+          <DialogTitle>{action === "reject" ? t("Reject settlement") : t("Void settlement")}</DialogTitle>
           <DialogDescription>
             {action === "reject"
-              ? "The settlement will return to draft for corrections."
-              : "Voiding releases cost events back to the accrual pool and reverses any GL postings."}
+              ? t("The settlement will return to draft for corrections.")
+              : t("Voiding releases cost events back to the accrual pool and reverses any GL postings.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (required)"
+          placeholder={t("Reason (required)")}
           rows={3}
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant={action === "void" ? "destructive" : "default"}
             disabled={!reason.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {action === "reject" ? "Reject" : "Void"}
+            {action === "reject" ? t("Reject") : t("Void")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -464,6 +473,8 @@ function MarkPaidDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [paymentMethod, setPaymentMethod] = useState(() =>
     settlement.carrier?.paymentMethod === "ACHManual" ? "ACHManual" : "Check",
   );
@@ -477,7 +488,7 @@ function MarkPaidDialog({
         paymentReference: paymentReference || undefined,
       }),
     onSuccess: () => {
-      toast.success("Settlement marked paid — cash journal and ledger payment recorded");
+      toast.success(t("Settlement marked paid — cash journal and ledger payment recorded"));
       onOpenChange(false);
       onChanged();
     },
@@ -488,17 +499,16 @@ function MarkPaidDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mark settlement paid</DialogTitle>
+          <DialogTitle>{t("Mark settlement paid")}</DialogTitle>
           <DialogDescription>
-            Records the disbursement to the carrier and posts the cash journal (debit accounts
-            payable, credit cash) plus the ledger payment entry.
+            {t("Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div>
-            <p className="mb-1 text-xs font-medium">Payment method</p>
+            <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
             <p className="text-muted-foreground mb-1 text-[11px]">
-              How the payable was remitted — defaults to the carrier&apos;s preferred method.
+              {t("How the payable was remitted — defaults to the carrier's preferred method.")}
             </p>
             <div className="flex gap-2">
               {[
@@ -512,29 +522,29 @@ function MarkPaidDialog({
                   variant={paymentMethod === method.value ? "default" : "outline"}
                   onClick={() => setPaymentMethod(method.value)}
                 >
-                  {method.label}
+                  {t(method.label)}
                 </Button>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-1 text-xs font-medium">Reference</p>
+            <p className="mb-1 text-xs font-medium">{t("Reference")}</p>
             <Input
               value={paymentReference}
               onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="Check number / ACH trace (optional)"
+              placeholder={t("Check number / ACH trace (optional)")}
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              The check number or ACH trace so the payment reconciles against the bank.
+              {t("The check number or ACH trace so the payment reconciles against the bank.")}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-            Mark Paid
+            {t("Mark Paid")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -553,6 +563,8 @@ function AddAdjustmentDialog({
   onOpenChange: (open: boolean) => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
 
@@ -567,7 +579,7 @@ function AddAdjustmentDialog({
         amountMinor: Math.round(parsedAmount * 100),
       }),
     onSuccess: () => {
-      toast.success("Adjustment added");
+      toast.success(t("Adjustment added"));
       setDescription("");
       setAmount("");
       onOpenChange(false);
@@ -580,10 +592,9 @@ function AddAdjustmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add manual adjustment</DialogTitle>
+          <DialogTitle>{t("Add manual adjustment")}</DialogTitle>
           <DialogDescription>
-            Positive amounts add cost owed to the carrier (detention, lumper); negative amounts
-            deduct (damage claim, advance recovery).
+            {t("Positive amounts add cost owed to the carrier (detention, lumper); negative amounts deduct (damage claim, advance recovery).")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
@@ -591,30 +602,30 @@ function AddAdjustmentDialog({
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description (e.g. Detention - Chicago 6/12)"
+              placeholder={t("Description (e.g. Detention - Chicago 6/12)")}
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Appears as the line item on the carrier&apos;s statement — say what and when.
+              {t("Appears as the line item on the carrier's statement — say what and when.")}
             </p>
           </div>
           <div>
             <Input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Amount (e.g. 150.00 or -75.00)"
+              placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Dollars, not cents; positive increases the payable, negative reduces it.
+              {t("Dollars, not cents; positive increases the payable, negative reduces it.")}
             </p>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button disabled={!valid || mutation.isPending} onClick={() => mutation.mutate()}>
-            Add Adjustment
+            {t("Add Adjustment")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -631,6 +642,8 @@ function SettlementLines({
   onChanged: () => void;
   readOnly?: boolean;
 }) {
+  const t = useT();
+
   const grouped = useMemo(() => {
     const groups = new Map<string, CarrierSettlementLineRow[]>();
     for (const line of settlement.lines ?? []) {
@@ -650,14 +663,14 @@ function SettlementLines({
     mutationFn: (lineId: string) =>
       removeCarrierSettlementAdjustment({ settlementId: settlement.id, lineId }),
     onSuccess: () => {
-      toast.success("Adjustment removed");
+      toast.success(t("Adjustment removed"));
       onChanged();
     },
     onError: (error: Error) => toast.error(error.message || "Failed to remove adjustment"),
   });
 
   if (grouped.length === 0) {
-    return <p className="text-muted-foreground text-sm">This settlement has no line items.</p>;
+    return <p className="text-muted-foreground text-sm">{t("This settlement has no line items.")}</p>;
   }
 
   return (
@@ -678,7 +691,7 @@ function SettlementLines({
                   {lines.map((line) => (
                     <tr key={line.id ?? `${line.lineNumber}`} className="border-b last:border-b-0">
                       <td className="px-3 py-2">
-                        <span className="font-medium">{line.description}</span>
+                        <span className="font-medium">{t(line.description)}</span>
                         {line.proNumber && (
                           <span className="text-muted-foreground ml-2 font-mono">
                             {line.proNumber}
@@ -687,7 +700,7 @@ function SettlementLines({
                       </td>
                       <td className="text-muted-foreground px-3 py-2 text-right">
                         {line.costEventId ? (
-                          <span title="Traced back to the accrued cost event">cost event</span>
+                          <span title={t("Traced back to the accrued cost event")}>{t("cost event")}</span>
                         ) : null}
                       </td>
                       <td className="w-28 px-3 py-2 text-right">
@@ -706,7 +719,7 @@ function SettlementLines({
                               className="size-6"
                               disabled={removeMutation.isPending}
                               onClick={() => removeMutation.mutate(line.id)}
-                              aria-label="Remove adjustment"
+                              aria-label={t("Remove adjustment")}
                             >
                               <X className="size-3" />
                             </Button>
@@ -726,6 +739,8 @@ function SettlementLines({
 }
 
 function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const carrier = settlement.carrier;
   if (!carrier) return null;
 
@@ -741,11 +756,11 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-        Remittance
+        {t("Remittance")}
       </h4>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <p className="text-muted-foreground text-[11px]">Remit to</p>
+          <p className="text-muted-foreground text-[11px]">{t("Remit to")}</p>
           {remitLines.length > 0 ? (
             remitLines.map((line) => (
               <p key={line} className="text-xs font-medium">
@@ -754,22 +769,22 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             ))
           ) : (
             <p className="text-muted-foreground text-xs">
-              No remit-to address on file — set it on the carrier record.
+              {t("No remit-to address on file — set it on the carrier record.")}
             </p>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
           <div>
-            <p className="text-muted-foreground text-[11px]">Payment method</p>
+            <p className="text-muted-foreground text-[11px]">{t("Payment method")}</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
-                (carrier.paymentMethod === "ACHManual" ? "ACH (Manual)" : carrier.paymentMethod)}
+                (carrier.paymentMethod === "ACHManual" ? t("ACH (Manual)") : carrier.paymentMethod)}
               {settlement.paymentReference ? ` · ${settlement.paymentReference}` : ""}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-[11px]">Payment terms</p>
-            <p className="text-xs font-medium">Net {carrier.paymentTermDays} days</p>
+            <p className="text-muted-foreground text-[11px]">{t("Payment terms")}</p>
+            <p className="text-xs font-medium">{t("Net {0} days", carrier.paymentTermDays)}</p>
           </div>
         </div>
       </div>
@@ -778,6 +793,8 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
 }
 
 function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const moveIds = useMemo(() => {
     const ids = new Set<string>();
     for (const line of settlement.lines ?? []) {
@@ -804,13 +821,13 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
   return (
     <div>
       <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
-        Rate Confirmations
+        {t("Rate Confirmations")}
       </h4>
       {isLoading ? (
         <Skeleton className="h-10 w-full" />
       ) : active.length === 0 ? (
         <p className="text-muted-foreground text-[11px]">
-          No rate confirmations on the covered moves.
+          {t("No rate confirmations on the covered moves.")}
         </p>
       ) : (
         <ul className="flex flex-col gap-1">
@@ -820,10 +837,10 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
               className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
             >
               <RateConfirmationStatusBadge status={rateCon.status} />
-              <span className="text-muted-foreground tabular-nums">rev {rateCon.revision}</span>
+              <span className="text-muted-foreground tabular-nums">{t("rev {0}", rateCon.revision)}</span>
               {rateCon.confirmedByName && (
                 <span className="text-muted-foreground truncate">
-                  confirmed by {rateCon.confirmedByName}
+                  {t("confirmed by {0}", rateCon.confirmedByName)}
                 </span>
               )}
               {rateCon.documentId && (
@@ -834,7 +851,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
                   className="ml-auto inline-flex items-center gap-1 font-medium hover:underline"
                 >
                   <FileText className="size-3" aria-hidden />
-                  View PDF
+                  {t("View PDF")}
                 </a>
               )}
             </li>
@@ -846,6 +863,8 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
 }
 
 function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     queryKey: ["carrier-settlement-invoice-matches", settlement.carrierId],
     queryFn: ({ signal }) =>
@@ -866,7 +885,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
   return (
     <div>
       <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
-        Invoice Matches
+        {t("Invoice Matches")}
       </h4>
       <ul className="flex flex-col gap-1">
         {matches.map((match) => (
@@ -875,7 +894,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
             className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
           >
             <CarrierInvoiceMatchStatusBadge status={match.status} />
-            <span className="font-mono">{match.invoiceNumber || "No invoice #"}</span>
+            <span className="font-mono">{match.invoiceNumber || t("No invoice #")}</span>
             <span className="text-muted-foreground">
               billed <AmountDisplay value={match.invoiceTotalMinor} currency={match.currencyCode} />
             </span>
@@ -885,7 +904,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
                   "ml-auto inline-flex rounded-full px-1.5 py-px text-[10px] font-medium",
                   "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
                 )}
-                title="Invoice total minus the expected buy rate"
+                title={t("Invoice total minus the expected buy rate")}
               >
                 variance{" "}
                 <AmountDisplay
@@ -903,6 +922,8 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
 }
 
 function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }) {
+  const t = useT();
+
   const events = [
     { label: "Created", at: settlement.createdAt },
     { label: "Submitted", at: settlement.submittedAt },
@@ -924,12 +945,12 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
   return (
     <div className="border-t pt-3">
       <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-        History
+        {t("History")}
       </h4>
       <ol className="flex flex-col gap-1">
         {events.map((event) => (
           <li key={event.label} className="flex justify-between text-xs">
-            <span>{event.label}</span>
+            <span>{t(event.label)}</span>
             <span className="text-muted-foreground">{formatSettlementDate(event.at)}</span>
           </li>
         ))}

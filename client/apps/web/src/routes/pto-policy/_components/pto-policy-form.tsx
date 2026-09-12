@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -60,6 +61,8 @@ export function PTOPolicyForm({
   isEdit: boolean;
   openAssignmentCount?: number;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<PTOPolicyFormValues>();
   const rulesArray = useFieldArray({ control, name: "rules" });
   const allowNegative = useWatch({ control, name: "allowNegative" });
@@ -68,38 +71,38 @@ export function PTOPolicyForm({
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="General"
-          hint="Name and code identify the policy on worker records and reports."
+          title={t("General")}
+          hint={t("Name and code identify the policy on worker records and reports.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="e.g. STD-DRIVER"
+              label={t("Code")}
+              placeholder={t("e.g. STD-DRIVER")}
               rules={{ required: true }}
-              description="Short unique identifier. Uppercase letters, digits, and dashes."
+              description={t("Short unique identifier. Uppercase letters, digits, and dashes.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="e.g. Standard Driver"
+              label={t("Name")}
+              placeholder={t("e.g. Standard Driver")}
               rules={{ required: true }}
-              description="Shown on worker records, assignments and PTO reports."
+              description={t("Shown on worker records, assignments and PTO reports.")}
             />
           </FormControl>
           <FormControl cols="full">
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={POLICY_STATUS_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a status"
+              placeholder={t("Select a status")}
               description={
                 isEdit && openAssignmentCount > 0
                   ? `${openAssignmentCount} worker${openAssignmentCount === 1 ? " is" : "s are"} assigned; reassign them before deactivating.`
@@ -111,8 +114,8 @@ export function PTOPolicyForm({
             <SwitchField
               control={control}
               name="isDefault"
-              label="Default for new hires"
-              description="New workers are enrolled in this policy from their hire date."
+              label={t("Default for new hires")}
+              description={t("New workers are enrolled in this policy from their hire date.")}
               position="left"
               outlined
             />
@@ -121,10 +124,10 @@ export function PTOPolicyForm({
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Who this policy covers and anything unusual about it"
+              label={t("Description")}
+              placeholder={t("Who this policy covers and anything unusual about it")}
               maxLength={1000}
-              description="Optional notes for whoever assigns or maintains the policy."
+              description={t("Optional notes for whoever assigns or maintains the policy.")}
             />
           </FormControl>
         </FormGroup>
@@ -132,38 +135,38 @@ export function PTOPolicyForm({
 
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="Year & counting"
-          hint="Controls when the policy year rolls over and how request days are counted."
+          title={t("Year & counting")}
+          hint={t("Controls when the policy year rolls over and how request days are counted.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
               control={control}
               name="yearBasis"
-              label="Policy year"
+              label={t("Policy year")}
               options={YEAR_BASIS_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a year basis"
-              description="Carryover caps, expiries, and annual grants apply at the start of this year."
+              placeholder={t("Select a year basis")}
+              description={t("Carryover caps, expiries, and annual grants apply at the start of this year.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="waitingPeriodDays"
-              label="Waiting period"
+              label={t("Waiting period")}
               sideText="days"
               min={0}
               placeholder="90"
-              description="Days after hire before any accrual starts. Skipped periods are not back-filled."
+              description={t("Days after hire before any accrual starts. Skipped periods are not back-filled.")}
             />
           </FormControl>
           <FormControl className="col-span-2">
             <SwitchField
               control={control}
               name="countWeekends"
-              label="Count weekends"
-              description="On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays."
+              label={t("Count weekends")}
+              description={t("On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.")}
               position="left"
               outlined
             />
@@ -174,8 +177,8 @@ export function PTOPolicyForm({
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <SectionTitle
-            title="Accrual rules"
-            hint="One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance."
+            title={t("Accrual rules")}
+            hint={t("One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance.")}
           />
           <Button
             type="button"
@@ -195,16 +198,14 @@ export function PTOPolicyForm({
             }
           >
             <PlusIcon className="size-3.5" />
-            Add type
+            {t("Add type")}
           </Button>
         </div>
         <Alert variant="default">
           <InfoIcon className="size-4" />
-          <AlertTitle>Rule changes apply going forward</AlertTitle>
+          <AlertTitle>{t("Rule changes apply going forward")}</AlertTitle>
           <AlertDescription>
-            Accruals are posted once per period. Changing an amount, cap or tier affects periods
-            that have not been posted yet; days already in a worker&apos;s ledger are not
-            recalculated.
+            {t("Accruals are posted once per period. Changing an amount, cap or tier affects periods that have not been posted yet; days already in a worker's ledger are not recalculated.")}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -220,16 +221,16 @@ export function PTOPolicyForm({
 
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="Enforcement"
-          hint="Whether requests are blocked when a balance runs out, and whether dispatch must approve them."
+          title={t("Enforcement")}
+          hint={t("Whether requests are blocked when a balance runs out, and whether dispatch must approve them.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <SwitchField
               control={control}
               name="requiresApproval"
-              label="Requires approval"
-              description="Off auto-approves requests and books the days immediately."
+              label={t("Requires approval")}
+              description={t("Off auto-approves requests and books the days immediately.")}
               position="left"
               outlined
             />
@@ -238,8 +239,8 @@ export function PTOPolicyForm({
             <SwitchField
               control={control}
               name="enforceBalance"
-              label="Enforce balance"
-              description="Off keeps balances informational — requests are never blocked."
+              label={t("Enforce balance")}
+              description={t("Off keeps balances informational — requests are never blocked.")}
               position="left"
               outlined
             />
@@ -248,8 +249,8 @@ export function PTOPolicyForm({
             <SwitchField
               control={control}
               name="allowNegative"
-              label="Allow negative balance"
-              description="Lets a request go below zero down to the floor set here."
+              label={t("Allow negative balance")}
+              description={t("Lets a request go below zero down to the floor set here.")}
               position="left"
               outlined
             />
@@ -259,9 +260,9 @@ export function PTOPolicyForm({
               <InputField
                 control={control}
                 name="negativeFloorDays"
-                label="Negative floor"
+                label={t("Negative floor")}
                 placeholder="-3"
-                description="Lowest balance a request may leave, e.g. -3."
+                description={t("Lowest balance a request may leave, e.g. -3.")}
               />
             </FormControl>
           ) : null}
@@ -272,6 +273,8 @@ export function PTOPolicyForm({
 }
 
 function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) {
+  const t = useT();
+
   const { control } = useFormContext<PTOPolicyFormValues>();
   const method = useWatch({ control, name: `rules.${index}.accrualMethod` });
   const tiersArray = useFieldArray({ control, name: `rules.${index}.tiers` });
@@ -280,7 +283,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-muted-foreground text-[11px] font-medium uppercase">Rule {index + 1}</p>
+        <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Rule {0}", index + 1)}</p>
         {onRemove ? (
           <Button
             type="button"
@@ -299,21 +302,21 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
           <SelectField
             control={control}
             name={`rules.${index}.ptoType`}
-            label="PTO type"
+            label={t("PTO type")}
             options={ptoTypeChoices}
             rules={{ required: true }}
-            placeholder="Select a PTO type"
-            description="The kind of time off this rule accrues and tracks a balance for."
+            placeholder={t("Select a PTO type")}
+            description={t("The kind of time off this rule accrues and tracks a balance for.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name={`rules.${index}.accrualMethod`}
-            label="Accrual"
+            label={t("Accrual")}
             options={ACCRUAL_METHOD_OPTIONS}
             rules={{ required: true }}
-            placeholder="Select an accrual method"
+            placeholder={t("Select an accrual method")}
             description={
               method === "PerPayPeriod"
                 ? "Follows the settlement pay period calendar."
@@ -328,47 +331,47 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             label={amountLabel(method)}
             placeholder="0.83"
             disabled={!accrues}
-            description="Days a worker earns per period; balances are kept in days."
+            description={t("Days a worker earns per period; balances are kept in days.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name={`rules.${index}.maxBalanceDays`}
-            label="Max balance"
-            placeholder="Unlimited"
-            description="Accruals stop at this balance."
+            label={t("Max balance")}
+            placeholder={t("Unlimited")}
+            description={t("Accruals stop at this balance.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name={`rules.${index}.carryoverCapDays`}
-            label="Carryover cap"
-            placeholder="Unlimited"
-            description="Days kept at year start. 0 = use it or lose it."
+            label={t("Carryover cap")}
+            placeholder={t("Unlimited")}
+            description={t("Days kept at year start. 0 = use it or lose it.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name={`rules.${index}.carryoverExpiryDays`}
-            label="Carryover expires"
+            label={t("Carryover expires")}
             sideText="days"
             min={0}
             placeholder="90"
-            description="Carried days expire this many days into the new year. 0 = never."
+            description={t("Carried days expire this many days into the new year. 0 = never.")}
           />
         </FormControl>
         <FormControl cols="full">
           <SelectField
             control={control}
             name={`rules.${index}.onTermination`}
-            label="When employment ends"
+            label={t("When employment ends")}
             options={TERMINATION_OPTIONS}
             rules={{ required: true }}
-            placeholder="Select an action"
-            description="Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date."
+            placeholder={t("Select an action")}
+            description={t("Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date.")}
           />
         </FormControl>
       </FormGroup>
@@ -376,11 +379,11 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
       <div className="mt-3 border-t pt-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-xs font-medium">Tenure tiers</p>
+            <p className="text-xs font-medium">{t("Tenure tiers")}</p>
             <p className="text-muted-foreground text-[11px]">
               {accrues
-                ? "Raise the accrual once a worker has served long enough. The highest tier they qualify for wins."
-                : "Tiers need an accruing rule."}
+                ? t("Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.")
+                : t("Tiers need an accruing rule.")}
             </p>
           </div>
           <Button
@@ -398,14 +401,13 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             }}
           >
             <PlusIcon className="size-3.5" />
-            Add tier
+            {t("Add tier")}
           </Button>
         </div>
         {tiersArray.fields.length > 0 ? (
           <div className="mt-2 flex flex-col gap-2">
             <p className="text-muted-foreground text-[11px]">
-              After: months of service before the tier applies. Amount: replaces the base accrual
-              from then on. Max balance: overrides the rule&apos;s cap; leave empty to inherit it.
+              {t("After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.")}
             </p>
             {tiersArray.fields.map((tier, tierIndex) => (
               <div
@@ -415,7 +417,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
                 <NumberField
                   control={control}
                   name={`rules.${index}.tiers.${tierIndex}.minMonths`}
-                  label="After"
+                  label={t("After")}
                   sideText="months"
                   min={1}
                   placeholder="12"
@@ -429,8 +431,8 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
                 <InputField
                   control={control}
                   name={`rules.${index}.tiers.${tierIndex}.maxBalanceDays`}
-                  label="Max balance"
-                  placeholder="Inherit"
+                  label={t("Max balance")}
+                  placeholder={t("Inherit")}
                 />
                 <Button
                   type="button"

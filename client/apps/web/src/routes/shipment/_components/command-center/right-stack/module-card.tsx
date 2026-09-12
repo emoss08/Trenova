@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -26,6 +27,8 @@ const COUNT_CLASS: Record<NonNullable<Props["countTone"]>, string> = {
 };
 
 export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, children }: Props) {
+  const t = useT();
+
   const hide = useRightStackStore.use.hide();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -79,7 +82,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
                 </Button>
               }
             />
-            <TooltipContent side="left">Hide Panel</TooltipContent>
+            <TooltipContent side="left">{t("Hide Panel")}</TooltipContent>
           </Tooltip>
         </div>
       </header>

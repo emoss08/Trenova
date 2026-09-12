@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   HEADCOUNT_KEY,
@@ -30,6 +31,8 @@ const EMPTY_POSITIONS: JobPositionRow[] = [];
 type DialogState = { position: JobPositionRow | null; reportsTo: string | null };
 
 export default function OrgStructureConsole() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.JobPosition, Operation.Read);
   const { allowed: canCreate } = usePermission(Resource.JobPosition, Operation.Create);
@@ -81,7 +84,7 @@ export default function OrgStructureConsole() {
       void queryClient.invalidateQueries({ queryKey: [JOB_POSITIONS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [HEADCOUNT_KEY] });
     },
-    onError: (error: Error) => toast.error("Could not move it", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Could not move it"), { description: error.message }),
   });
 
   const positions = positionsResult.data ?? EMPTY_POSITIONS;
@@ -123,7 +126,7 @@ export default function OrgStructureConsole() {
 
       {noRoster ? (
         <OrgStructureEmpty
-          title="Nothing to count yet"
+          title={t("Nothing to count yet")}
           description={
             "Positions are the titles the roster is counted by. Add one, then give workers a " +
             "position from their record and the chart fills in."
@@ -135,7 +138,7 @@ export default function OrgStructureConsole() {
           <div className="flex min-w-0 flex-col gap-4">
             {positions.length === 0 ? (
               <OrgStructureEmpty
-                title="No positions yet"
+                title={t("No positions yet")}
                 description={
                   "Until there are, the roster can only be counted by terminal. Add one, then " +
                   "give workers a position from their record and the chart fills in."

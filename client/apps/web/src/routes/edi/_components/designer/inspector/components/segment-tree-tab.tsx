@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -28,6 +29,8 @@ export default function SegmentTreeTab({
   selectedSegmentIndex: number;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
+  const t = useT();
+
   const selectedSegment =
     inspection.segments.find((segment) => segment.index === selectedSegmentIndex) ??
     inspection.segments[0];
@@ -53,7 +56,7 @@ export default function SegmentTreeTab({
                     {segment.index}
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
-                  {isControlSegment(segment) ? <Badge variant="outline">Control</Badge> : null}
+                  {isControlSegment(segment) ? <Badge variant="outline">{t("Control")}</Badge> : null}
                 </span>
                 <span className="text-muted-foreground block truncate pl-10 text-xs">
                   {segment.name}
@@ -77,7 +80,7 @@ export default function SegmentTreeTab({
       {selectedSegment ? (
         <SegmentDetail segment={selectedSegment} diagnostics={diagnostics} />
       ) : (
-        <div className="text-muted-foreground rounded-md border p-4 text-sm">Select a segment.</div>
+        <div className="text-muted-foreground rounded-md border p-4 text-sm">{t("Select a segment.")}</div>
       )}
     </div>
   );
@@ -90,6 +93,8 @@ function SegmentDetail({
   segment: EDIX12Segment;
   diagnostics: EDIInspectionDiagnostic[];
 }) {
+  const t = useT();
+
   const { copy } = useCopyToClipboard();
   const segmentDiagnostics = diagnosticsForX12Segment(diagnostics, segment);
 
@@ -101,7 +106,7 @@ function SegmentDetail({
             {segment.segmentId}
           </Badge>
           <div className="text-sm font-semibold">{segment.name}</div>
-          {segment.malformed ? <Badge variant="inactive">Malformed</Badge> : null}
+          {segment.malformed ? <Badge variant="inactive">{t("Malformed")}</Badge> : null}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <code className="bg-muted rounded-sm px-2 py-1 text-xs wrap-break-word">
@@ -114,7 +119,7 @@ function SegmentDetail({
             onClick={() => void copy(segment.raw, { withToast: true })}
           >
             <CopyIcon className="size-3.5" />
-            Copy segment
+            {t("Copy segment")}
           </Button>
         </div>
       </div>
@@ -122,11 +127,11 @@ function SegmentDetail({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20">Element</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead className="w-28">Usage</TableHead>
-              <TableHead className="w-24">Issues</TableHead>
+              <TableHead className="w-20">{t("Element")}</TableHead>
+              <TableHead>{t("Name")}</TableHead>
+              <TableHead>{t("Value")}</TableHead>
+              <TableHead className="w-28">{t("Usage")}</TableHead>
+              <TableHead className="w-24">{t("Issues")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -142,9 +147,9 @@ function SegmentDetail({
                     {segment.segmentId}
                     {String(element.position).padStart(2, "0")}
                   </TableCell>
-                  <TableCell>{element.label}</TableCell>
+                  <TableCell>{t(element.label)}</TableCell>
                   <TableCell className="font-mono text-xs wrap-break-word">
-                    <div>{element.empty ? "[empty]" : element.value}</div>
+                    <div>{element.empty ? t("[empty]") : element.value}</div>
                     {element.components.length > 1 ? (
                       <div className="text-muted-foreground mt-1">
                         {element.components
@@ -157,7 +162,7 @@ function SegmentDetail({
                   </TableCell>
                   <TableCell>
                     <Badge variant={element.required ? "warning" : "outline"}>
-                      {element.required ? "Required" : "Optional"}
+                      {element.required ? t("Required") : t("Optional")}
                     </Badge>
                   </TableCell>
                   <TableCell>

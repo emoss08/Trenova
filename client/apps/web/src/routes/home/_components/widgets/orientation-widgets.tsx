@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { buildCommandHref } from "@/components/command-palette/route-command-data";
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
@@ -18,6 +19,8 @@ import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget
 import type { WidgetProps } from "../widget-registry";
 
 export function QuickActionsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const { data: preferences } = useSidebarPreferences();
 
@@ -42,18 +45,18 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
   return (
     <WidgetShell title={widget.title || "Quick Actions"}>
       {actions.length === 0 ? (
-        <WidgetEmpty>Pick your quick actions from the sidebar settings.</WidgetEmpty>
+        <WidgetEmpty>{t("Pick your quick actions from the sidebar settings.")}</WidgetEmpty>
       ) : (
         <div className="grid grid-cols-2 gap-1.5">
           {actions.map(({ definition, icon: Icon, href }) => (
             <Link
               key={definition.id}
               to={href}
-              title={definition.description}
+              title={t(definition.description)}
               className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
             >
               <Icon className="size-3 shrink-0" />
-              <span className="truncate">{definition.label}</span>
+              <span className="truncate">{t(definition.label)}</span>
             </Link>
           ))}
         </div>
@@ -63,6 +66,8 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
 }
 
 export function FavoritesWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const { data: favorites, isLoading } = useQuery(queries.pageFavorite.all());
 
   return (
@@ -73,7 +78,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
       {isLoading ? (
         <WidgetSkeleton />
       ) : !favorites || favorites.length === 0 ? (
-        <WidgetEmpty>Star a page to pin it here.</WidgetEmpty>
+        <WidgetEmpty>{t("Star a page to pin it here.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {favorites.map((favorite) => (
@@ -98,6 +103,8 @@ export function FavoritesWidget({ widget }: WidgetProps) {
  * is the difference between "what happened" and "where was I".
  */
 function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean }) {
+  const t = useT();
+
   // Ask for more than we show when filtering to this user: the stream is
   // organization-wide, so a page of it may hold only a few of their entries.
   const { data: entries, isLoading } = useRecentActivityInfinite(mineOnly ? limit * 3 : limit);
@@ -113,7 +120,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
   if (rows.length === 0) {
     return (
       <WidgetEmpty>
-        {mineOnly ? "Nothing to jump back into yet." : "No recent activity."}
+        {mineOnly ? t("Nothing to jump back into yet.") : t("No recent activity.")}
       </WidgetEmpty>
     );
   }
@@ -124,7 +131,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
         <div key={entry.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-xs">
-              <span className="font-medium">{entry.user?.name ?? "Someone"}</span>{" "}
+              <span className="font-medium">{entry.user?.name ?? t("Someone")}</span>{" "}
               <span className="text-muted-foreground">{entry.operation}</span>{" "}
               <span className="text-muted-foreground">{entry.resource}</span>
             </span>
@@ -142,11 +149,13 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
 }
 
 export function ActivityWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   return (
     <WidgetShell
       title={widget.title || "Activity"}
       href="/admin/audit-logs"
-      hrefLabel="Open audit log"
+      hrefLabel={t("Open audit log")}
     >
       <ActivityRows limit={widget.config.limit ?? 10} mineOnly={false} />
     </WidgetShell>
@@ -167,6 +176,8 @@ export function JumpBackInWidget({ widget }: WidgetProps) {
  * than pretending one list exists.
  */
 export function SavedViewsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const targets = [
     { label: "Shipment board views", href: "/shipment-management/shipments" },
     { label: "Report views", href: "/reports" },
@@ -182,7 +193,7 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
             to={target.href}
             className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
           >
-            {target.label}
+            {t(target.label)}
           </Link>
         ))}
       </div>
@@ -191,6 +202,8 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
 }
 
 export function NotificationsWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const limit = widget.config.limit ?? 8;
   const { data: notifications, isLoading } = useQuery({
     ...queries.notification.feed({ first: limit, unreadOnly: true }),
@@ -208,12 +221,12 @@ export function NotificationsWidget({ widget }: WidgetProps) {
       {isLoading ? (
         <WidgetSkeleton />
       ) : !notifications || notifications.length === 0 ? (
-        <WidgetEmpty>You&rsquo;re all caught up.</WidgetEmpty>
+        <WidgetEmpty>{t("You’re all caught up.")}</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-0.5">
           {notifications.map((notification) => (
             <div key={notification.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
-              <span className="truncate text-xs font-medium">{notification.title}</span>
+              <span className="truncate text-xs font-medium">{t(notification.title)}</span>
               <span className="text-muted-foreground truncate text-[10px]">
                 {notification.message}
               </span>

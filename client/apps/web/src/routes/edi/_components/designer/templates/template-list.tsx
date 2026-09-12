@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormEditModal } from "@/components/form-edit-modal";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,6 +25,8 @@ import { useForm } from "react-hook-form";
 import { CreateTemplateForm } from "./create-template-form";
 
 export default function TemplateList() {
+  const t = useT();
+
   const templatesQuery = useTemplateDesignerTemplateListInfiniteQuery();
   const templates = useMemo(
     () => templatesQuery.data?.pages.flatMap((page) => page.results) ?? [],
@@ -75,30 +78,30 @@ export default function TemplateList() {
       {templatesQuery.isLoading ? (
         <div className="flex justify-center p-3">
           <TextShimmer className="font-mono text-xs" duration={1}>
-            Loading templates...
+            {t("Loading templates...")}
           </TextShimmer>
         </div>
       ) : null}
       {templatesQuery.isError ? (
         <div className="flex flex-col items-center gap-2 p-3 text-center">
-          <span className="text-destructive text-sm">Failed to load templates.</span>
+          <span className="text-destructive text-sm">{t("Failed to load templates.")}</span>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => void templatesQuery.refetch()}
           >
-            Retry
+            {t("Retry")}
           </Button>
         </div>
       ) : null}
       {!templatesQuery.isLoading && templates.length === 0 ? (
-        <div className="text-muted-foreground p-3 text-sm">No matching templates.</div>
+        <div className="text-muted-foreground p-3 text-sm">{t("No matching templates.")}</div>
       ) : null}
       {isFetchingNextPage ? (
         <div className="flex justify-center p-3">
           <TextShimmer className="font-mono text-xs" duration={1}>
-            Loading more...
+            {t("Loading more...")}
           </TextShimmer>
         </div>
       ) : null}
@@ -116,6 +119,8 @@ function TemplateListItem({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
@@ -135,7 +140,7 @@ function TemplateListItem({
             </Badge>
           </div>
           <div className="text-muted-foreground mt-1 text-xs">
-            {template.transactionSet} {template.direction} / {template.versions.length} versions
+            {t("{0} {1} / {2} versions", template.transactionSet, template.direction, template.versions.length)}
           </div>
         </button>
         <Tooltip>
@@ -153,7 +158,7 @@ function TemplateListItem({
               </Button>
             }
           />
-          <TooltipContent>Edit template</TooltipContent>
+          <TooltipContent>{t("Edit template")}</TooltipContent>
         </Tooltip>
       </div>
       <TemplateEditDialog
@@ -174,6 +179,8 @@ function TemplateEditDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(ediTemplateSchema),
@@ -188,7 +195,7 @@ function TemplateEditDialog({
       form={form}
       url="/edi/templates/"
       queryKey="templates"
-      title="EDI Template"
+      title={t("EDI Template")}
       fieldKey="name"
       className="sm:max-w-120"
       formComponent={<CreateTemplateForm mode="edit" />}

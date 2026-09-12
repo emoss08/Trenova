@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   HoverCard,
@@ -18,6 +19,8 @@ type PreviewProps = {
 };
 
 export const SequencePreview = memo(function SequencePreview({ index, showTokens }: PreviewProps) {
+  const t = useT();
+
   const config = useWatch<SequenceConfigDocument, `configs.${number}`>({
     name: `configs.${index}` as const,
   }) as SequenceConfig | undefined;
@@ -40,7 +43,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
     <div className="border-border bg-muted/30 rounded-lg border px-4 py-3.5">
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-          Live Preview
+          {t("Live Preview")}
         </span>
         <div className="flex items-center gap-1">
           {showTokens ? (
@@ -49,12 +52,12 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
                 render={
                   <Button type="button" variant="ghost" size="xs" className="gap-1.5">
                     <InfoIcon className="size-3.5" />
-                    Tokens
+                    {t("Tokens")}
                   </Button>
                 }
               />
               <HoverCardContent align="end" className="w-64">
-                <div className="mb-1.5 text-xs font-medium">Custom format tokens</div>
+                <div className="mb-1.5 text-xs font-medium">{t("Custom format tokens")}</div>
                 <ul className="text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                   {tokenLegend.map(({ token, label }) => (
                     <li key={token} className="flex items-center gap-1.5">
@@ -81,7 +84,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
             ) : (
               <CopyIcon className="size-3.5" />
             )}
-            {copied ? "Copied" : "Copy"}
+            {copied ? t("Copied") : t("Copy")}
           </Button>
         </div>
       </div>
@@ -89,7 +92,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
         {preview || "—"}
       </code>
       <p className="text-muted-foreground mt-1.5 text-xs">
-        Representative sample — actual values increment sequentially.
+        {t("Representative sample — actual values increment sequentially.")}
       </p>
     </div>
   );

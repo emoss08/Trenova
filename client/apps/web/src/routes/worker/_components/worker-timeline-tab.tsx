@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -40,6 +41,8 @@ export default function WorkerTimelineTab({
   workerId: string;
   worker: EmploymentSheetWorker;
 }) {
+  const t = useT();
+
   const { allowed: canRecord } = usePermission(Resource.WorkerEmploymentEvent, Operation.Create);
   const { allowed: canAmend } = usePermission(Resource.WorkerEmploymentEvent, Operation.Update);
   const [kind, setKind] = useState<KindFilter>("all");
@@ -86,18 +89,15 @@ export default function WorkerTimelineTab({
         <div className="flex items-center gap-1.5">
           <p className="text-muted-foreground text-xs">
             {events.length === 0
-              ? "Nothing recorded yet."
-              : `${visible.length} of ${events.length} event${events.length === 1 ? "" : "s"} shown.`}
+              ? t("Nothing recorded yet.")
+              : t("{0} of {1, plural, one {# event} other {# events}} shown.", visible.length, events.length)}
           </p>
-          <InfoPopover title="Employment events">
+          <InfoPopover title={t("Employment events")}>
             <p>
-              Recording an event is the only way a worker&apos;s employment status moves. A leave or
-              suspension takes them off the dispatch board, a termination ends employment and closes
-              their PTO and pay assignments, a rehire reopens it.
+              {t("Recording an event is the only way a worker's employment status moves. A leave or suspension takes them off the dispatch board, a termination ends employment and closes their PTO and pay assignments, a rehire reopens it.")}
             </p>
             <p>
-              Amending an event corrects what was written and never replays those effects: a
-              corrected termination date does not move the worker&apos;s termination date.
+              {t("Amending an event corrects what was written and never replays those effects: a corrected termination date does not move the worker's termination date.")}
             </p>
           </InfoPopover>
         </div>
@@ -108,13 +108,13 @@ export default function WorkerTimelineTab({
               items={kindOptions}
               onValueChange={(value) => setKind(value as KindFilter)}
             >
-              <SelectTrigger className="h-7 w-40 text-xs" aria-label="Filter by event kind">
+              <SelectTrigger className="h-7 w-40 text-xs" aria-label={t("Filter by event kind")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {kindOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -123,7 +123,7 @@ export default function WorkerTimelineTab({
           {canRecord ? (
             <Button size="sm" onClick={() => setSheet({ mode: "record" })}>
               <PlusIcon className="size-3.5" />
-              Record event
+              {t("Record event")}
             </Button>
           ) : null}
         </div>
@@ -132,7 +132,7 @@ export default function WorkerTimelineTab({
       {visible.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
           <HistoryIcon className="size-5" />
-          {events.length === 0 ? "No employment events yet" : "Nothing matches the selected kinds"}
+          {events.length === 0 ? t("No employment events yet") : t("Nothing matches the selected kinds")}
         </div>
       ) : (
         <TimelineList

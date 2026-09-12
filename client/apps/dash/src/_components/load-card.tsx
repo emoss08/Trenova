@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatRange, formatUnixTime } from "@trenova/shared/lib/date";
@@ -62,6 +63,8 @@ export function LoadPayChip({ load }: { load: PortalLoad }) {
 }
 
 export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number }) {
+  const t = useT();
+
   const origin = originStop(load);
   const destination = destinationStop(load);
   const meta = [
@@ -85,7 +88,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
         >
           <div className="flex items-center justify-between gap-2">
             <p className="truncate font-mono text-sm font-semibold">
-              {load.proNumber || "Pending pro #"}
+              {load.proNumber || t("Pending pro #")}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               <LoadPayChip load={load} />
@@ -104,7 +107,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
               <ArrowRightIcon className="size-4 text-muted-foreground" />
               {load.stops.length > 2 ? (
                 <span className="text-2xs text-muted-foreground">
-                  +{load.stops.length - 2} stop{load.stops.length - 2 === 1 ? "" : "s"}
+                  {t("+{0, plural, one {# stop} other {# stops}}", load.stops.length - 2)}
                 </span>
               ) : null}
             </div>
@@ -138,6 +141,8 @@ export function StopTimeline({
   showDirections?: boolean;
   moveId?: string;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const checkIn = useMutation({
     mutationFn: ({ stopId, action }: { stopId: string; action: PortalStopAction }) =>
@@ -208,7 +213,7 @@ export function StopTimeline({
                       : "bg-green-600 text-white",
                   )}
                 >
-                  {checkIn.isPending ? "Saving..." : action === "Arrive" ? "Arrive" : "Depart"}
+                  {checkIn.isPending ? t("Saving...") : action === "Arrive" ? t("Arrive") : t("Depart")}
                 </button>
               ) : null}
               {showDirections && (stop.addressLine || stop.locationName) && !isDone ? (
@@ -219,7 +224,7 @@ export function StopTimeline({
                   onClick={(event) => event.stopPropagation()}
                   className="mt-1 shrink-0 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
                 >
-                  Directions
+                  {t("Directions")}
                 </a>
               ) : null}
             </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import type { WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -78,6 +79,8 @@ export function SafetyEventRow({
   onDelete,
   onDiscipline,
 }: SafetyEventRowProps) {
+  const t = useT();
+
   const status = event.status as SafetyEventStatus;
   const isClosed = status === "Closed";
   const Icon = KIND_ICONS[event.kind] ?? ZapIcon;
@@ -181,7 +184,7 @@ export function SafetyEventRow({
               </Badge>
               {event.activePoints > 0 ? (
                 <Badge variant="outline" className="tabular-nums">
-                  {event.activePoints} pt{event.activePoints === 1 ? "" : "s"}
+                  {t("{0, plural, one {# pt} other {# pts}}", event.activePoints)}
                 </Badge>
               ) : null}
             </div>
@@ -189,25 +192,25 @@ export function SafetyEventRow({
               {formatUnixDate(event.occurredAt)}
               {event.location ? ` · ${event.location}` : ""}
               {event.referenceNumber ? ` · ${event.referenceNumber}` : ""}
-              {event.recordedBy?.name ? ` · recorded by ${event.recordedBy.name}` : ""}
+              {event.recordedBy?.name ? ` ${t("· recorded by {0}", event.recordedBy.name)}` : ""}
             </p>
           </div>
           <RowActionsMenu label={`Actions for ${headline}`} actions={actions} />
         </div>
 
-        <p className="text-sm">{event.description}</p>
+        <p className="text-sm">{t(event.description)}</p>
 
         {event.fineAmount || event.costAmount || event.pointsExpireAt || event.document ? (
           <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
-            {event.fineAmount ? <span>Fine ${event.fineAmount}</span> : null}
-            {event.costAmount ? <span>Cost ${event.costAmount}</span> : null}
+            {event.fineAmount ? <span>{t("Fine ${0}", event.fineAmount)}</span> : null}
+            {event.costAmount ? <span>{t("Cost ${0}", event.costAmount)}</span> : null}
             {event.pointsExpireAt && event.activePoints > 0 ? (
-              <span>Points roll off {formatUnixDate(event.pointsExpireAt)}</span>
+              <span>{t("Points roll off {0}", formatUnixDate(event.pointsExpireAt))}</span>
             ) : null}
             {event.document ? (
               <span className="flex items-center gap-1">
                 <FileCheckIcon className="size-3" />
-                Document on file
+                {t("Document on file")}
               </span>
             ) : null}
           </p>
@@ -215,7 +218,7 @@ export function SafetyEventRow({
 
         {isClosed && event.resolution ? (
           <p className="bg-muted/30 rounded-lg border px-3 py-2 text-xs">
-            <span className="font-medium">Resolved: </span>
+            <span className="font-medium">{t("Resolved:")} </span>
             {event.resolution}
             {event.closedBy?.name ? (
               <span className="text-muted-foreground">

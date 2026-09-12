@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DriverPayEventStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -35,6 +37,8 @@ export function invalidatePayEventQueries(queryClient: ReturnType<typeof useQuer
 }
 
 function HoldControls({ row }: { row: DriverPayEventRow }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -46,7 +50,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
     setPending(true);
     try {
       await releaseDriverPayEvent(row.id);
-      toast.success("Hold released — the event will settle normally");
+      toast.success(t("Hold released — the event will settle normally"));
       invalidatePayEventQueries(queryClient);
     } catch (error) {
       toast.error((error as Error).message || "Failed to release hold");
@@ -59,7 +63,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
     setPending(true);
     try {
       await holdDriverPayEvent({ payEventId: row.id, reason: reason.trim() });
-      toast.success("Pay event held — it will skip settlement generation until released");
+      toast.success(t("Pay event held — it will skip settlement generation until released"));
       setDialogOpen(false);
       setReason("");
       invalidatePayEventQueries(queryClient);
@@ -79,7 +83,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         className="inline-flex cursor-pointer rounded-full bg-blue-100 px-1.5 py-px text-[10px] font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
         title={`On hold: ${row.holdReason}. Click to release so the event settles normally.`}
       >
-        Held
+        {t("Held")}
       </button>
     );
   }
@@ -91,31 +95,30 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         disabled={pending}
         onClick={() => setDialogOpen(true)}
         className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center rounded-full px-1 py-px opacity-0 transition-opacity group-hover/row:opacity-100"
-        title="Hold this pay event — it skips settlement generation until released"
-        aria-label="Hold pay event"
+        title={t("Hold this pay event — it skips settlement generation until released")}
+        aria-label={t("Hold pay event")}
       >
         <PauseIcon className="size-3" />
       </button>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Hold pay event</DialogTitle>
+            <DialogTitle>{t("Hold pay event")}</DialogTitle>
             <DialogDescription>
-              Held pay skips settlement generation and auto-attach until you release it. The reason
-              is shown to anyone reviewing the driver&apos;s pay.
+              {t("Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="e.g. Awaiting signed BOL from the shipper"
+            placeholder={t("e.g. Awaiting signed BOL from the shipper")}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button disabled={reason.trim() === "" || pending} onClick={() => void hold()}>
-              Hold Pay
+              {t("Hold Pay")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -170,7 +173,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       accessorKey: "totalMiles",
-      header: () => <div className="text-right">Miles</div>,
+      header: () => <div className="text-right">{translate("Miles")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">
           {Number(row.original.totalMiles).toLocaleString()}
@@ -194,7 +197,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       accessorKey: "grossAmountMinor",
-      header: () => <div className="text-right">Gross Pay</div>,
+      header: () => <div className="text-right">{translate("Gross Pay")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

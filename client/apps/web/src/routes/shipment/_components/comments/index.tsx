@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { MessageScrollerProvider } from "@trenova/shared/components/ui/message-scroller";
 import { TooltipProvider } from "@trenova/shared/components/ui/tooltip";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -28,6 +29,8 @@ import { TypingIndicator } from "./typing-indicator";
 import { ViewersStack } from "./viewers-stack";
 
 export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+
   const currentUser = useAuthStore((s) => s.user);
   const connectionState = useRealtimeStore((s) => s.connectionState);
 
@@ -178,7 +181,7 @@ export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string
           {connectionState !== "connected" && (
             <div className="border-border text-2xs text-muted-foreground flex items-center gap-1.5 border-t bg-amber-500/5 px-4 py-1">
               <WifiOffIcon className="size-3" />
-              Live updates paused — reconnecting…
+              {t("Live updates paused — reconnecting…")}
             </div>
           )}
           <div className="flex items-center justify-between gap-2 pr-4">

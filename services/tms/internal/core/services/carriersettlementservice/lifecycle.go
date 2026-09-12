@@ -21,7 +21,7 @@ func transitionError(from, to carriersettlement.Status) error {
 	return errortypes.NewValidationError(
 		"status",
 		errortypes.ErrInvalidOperation,
-		"Cannot transition carrier settlement from "+from.String()+" to "+to.String(),
+		"Cannot transition carrier settlement from {0} to {1}", from.String(), to.String(),
 	)
 }
 

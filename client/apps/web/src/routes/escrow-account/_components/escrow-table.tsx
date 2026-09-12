@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -24,6 +25,8 @@ import { getColumns } from "./escrow-columns";
 import { EscrowPanel } from "./escrow-panel";
 
 export default function EscrowTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const [closeRows, setCloseRows] = useState<EscrowAccountRow[]>([]);
@@ -32,11 +35,11 @@ export default function EscrowTable() {
   const openCloseDialog = useCallback((rows: EscrowAccountRow[]) => {
     const eligible = rows.filter((row) => row.status === "Active");
     if (eligible.length === 0) {
-      toast.info("Every selected escrow account is already closed.");
+      toast.info(t("Every selected escrow account is already closed."));
       return;
     }
     setCloseRows(eligible);
-  }, []);
+  }, [t]);
 
   const confirmClose = useCallback(async () => {
     setPending(true);
@@ -83,25 +86,23 @@ export default function EscrowTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Close {closeRows.length} escrow account{closeRows.length === 1 ? "" : "s"}
+              {t("Close {0, plural, one {# escrow account} other {# escrow accounts}}", closeRows.length)}
             </DialogTitle>
             <DialogDescription>
-              Closed accounts stop accepting contributions and accruing interest. Refund or apply
-              each balance first — accounts holding funds cannot be closed.
+              {t("Closed accounts stop accepting contributions and accruing interest. Refund or apply each balance first — accounts holding funds cannot be closed.")}
             </DialogDescription>
           </DialogHeader>
           {withBalance > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400">
-              {withBalance} selected account{withBalance === 1 ? " still holds" : "s still hold"} a
-              balance and will fail to close until the funds are refunded or applied.
+              {t("{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.", withBalance, withBalance === 1 ? ` ${t("still holds")}` : t("s still hold"))}
             </p>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setCloseRows([])}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button variant="destructive" disabled={pending} onClick={() => void confirmClose()}>
-              Close Accounts
+              {t("Close Accounts")}
             </Button>
           </DialogFooter>
         </DialogContent>

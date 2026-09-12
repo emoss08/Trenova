@@ -1,1 +1,1 @@
-{{ if .AuthorName }}{{ .AuthorName }}{{ else }}A teammate{{ end }} mentioned you{{ if .ShipmentProNumber }} on {{ .ShipmentProNumber }}{{ end }}
+{{ if .AuthorName }}{{ if .ShipmentProNumber }}{{ t "{0} mentioned you on {1}" .AuthorName .ShipmentProNumber }}{{ else }}{{ t "{0} mentioned you" .AuthorName }}{{ end }}{{ else }}{{ if .ShipmentProNumber }}{{ t "A teammate mentioned you on {0}" .ShipmentProNumber }}{{ else }}{{ t "A teammate mentioned you" }}{{ end }}{{ end }}

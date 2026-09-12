@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   AlertDialog,
@@ -27,6 +28,8 @@ const storedMileageService = new StoredMileageService();
 const columns = getColumns();
 
 export default function StoredMileageTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const selectedMileageRef = useRef<StoredMileageRow | null>(null);
@@ -36,13 +39,13 @@ export default function StoredMileageTable() {
       await storedMileageService.delete(id);
     },
     onSuccess: () => {
-      toast.success("Stored mileage deactivated");
+      toast.success(t("Stored mileage deactivated"));
       void queryClient.invalidateQueries({ queryKey: ["stored-mileage-list"] });
       setDeleteDialogOpen(false);
       selectedMileageRef.current = null;
     },
     onError: (error) => {
-      toast.error("Failed to deactivate stored mileage", {
+      toast.error(t("Failed to deactivate stored mileage"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -88,13 +91,13 @@ export default function StoredMileageTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Deactivate Stored Mileage</AlertDialogTitle>
+            <AlertDialogTitle>{t("Deactivate Stored Mileage")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This keeps the record for audit/history but removes it from future mileage lookups.
+              {t("This keeps the record for audit/history but removes it from future mileage lookups.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -105,7 +108,7 @@ export default function StoredMileageTable() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Deactivate
+              {t("Deactivate")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

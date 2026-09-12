@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -83,6 +84,8 @@ function defaultsFor(pool: RandomPoolRow | null): RandomPoolFormValues {
 }
 
 export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(pool);
   const form = useForm<RandomPoolFormValues>({
@@ -137,10 +140,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit pool" : "New random testing pool"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit pool") : t("New random testing pool")}</DialogTitle>
           <DialogDescription>
-            The rates are annual. Each round draws its share of them, rounded up so a year of rounds
-            cannot finish under the minimum.
+            {t("The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -156,9 +158,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <InputField<RandomPoolFormValues>
                   control={control}
                   name="code"
-                  label="Code"
-                  placeholder="DOT"
-                  description="A short identifier that must be unique across your pools; it is saved in upper case."
+                  label={t("Code")}
+                  placeholder={t("DOT")}
+                  description={t("A short identifier that must be unique across your pools; it is saved in upper case.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -166,9 +168,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <InputField<RandomPoolFormValues>
                   control={control}
                   name="name"
-                  label="Name"
-                  placeholder="e.g. DOT safety-sensitive drivers"
-                  description="How the pool is referred to on rounds and reports."
+                  label={t("Name")}
+                  placeholder={t("e.g. DOT safety-sensitive drivers")}
+                  description={t("How the pool is referred to on rounds and reports.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -176,9 +178,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <TextareaField<RandomPoolFormValues>
                   control={control}
                   name="description"
-                  label="Description"
-                  placeholder="e.g. Every CDL holder who drives for the company"
-                  description="Optional notes on who the pool covers and why."
+                  label={t("Description")}
+                  placeholder={t("e.g. Every CDL holder who drives for the company")}
+                  description={t("Optional notes on who the pool covers and why.")}
                   maxLength={2000}
                 />
               </FormControl>
@@ -186,10 +188,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <SelectField<RandomPoolFormValues>
                   control={control}
                   name="status"
-                  label="Status"
+                  label={t("Status")}
                   options={statusChoices}
-                  placeholder="Pick a status"
-                  description="Whether the pool is in use; an inactive pool stays on record with its past rounds."
+                  placeholder={t("Pick a status")}
+                  description={t("Whether the pool is in use; an inactive pool stays on record with its past rounds.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -197,10 +199,10 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <SelectField<RandomPoolFormValues>
                   control={control}
                   name="period"
-                  label="Draw every"
+                  label={t("Draw every")}
                   options={PERIOD_OPTIONS}
-                  placeholder="Pick a period"
-                  description="How often a round is drawn; each round takes its share of the annual rate."
+                  placeholder={t("Pick a period")}
+                  description={t("How often a round is drawn; each round takes its share of the annual rate.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -208,7 +210,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <NumberField<RandomPoolFormValues>
                   control={control}
                   name="drugRatePercent"
-                  label="Drug rate (% a year)"
+                  label={t("Drug rate (% a year)")}
                   placeholder="50"
                   description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_DRUG_RATE}% for drugs (49 CFR 382.305).`}
                   rules={{ required: true }}
@@ -218,7 +220,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <NumberField<RandomPoolFormValues>
                   control={control}
                   name="alcoholRatePercent"
-                  label="Alcohol rate (% a year)"
+                  label={t("Alcohol rate (% a year)")}
                   placeholder="10"
                   description={`Annual rate as a percentage of the pool; FMCSA requires at least ${DOT_MINIMUM_ALCOHOL_RATE}% for alcohol (49 CFR 382.305).`}
                   rules={{ required: true }}
@@ -228,35 +230,35 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <MultiCheckboxField<RandomPoolFormValues, DriverType>
                   control={control}
                   name="includedDriverTypes"
-                  label="Driver types"
+                  label={t("Driver types")}
                   options={driverTypeChoices}
-                  description="Leave every box clear to include all safety-sensitive drivers."
+                  description={t("Leave every box clear to include all safety-sensitive drivers.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<RandomPoolFormValues>
                   control={control}
                   name="isDefault"
-                  label="Default pool"
-                  description="The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it."
+                  label={t("Default pool")}
+                  description={t("The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <Alert variant={belowMinimum ? "destructive" : "default"}>
                   <AlertDescription>
                     {belowMinimum
-                      ? `Below the FMCSA minimums of ${DOT_MINIMUM_DRUG_RATE}% drug and ${DOT_MINIMUM_ALCOHOL_RATE}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.`
-                      : `Over ${EXAMPLE_POOL_SIZE} drivers, each round would draw about ${exampleDrug} for drug testing and ${exampleAlcohol} for alcohol.`}
+                      ? t("Below the FMCSA minimums of {0}% drug and {1}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.", DOT_MINIMUM_DRUG_RATE, DOT_MINIMUM_ALCOHOL_RATE)
+                      : t("Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.", EXAMPLE_POOL_SIZE, exampleDrug, exampleAlcohol)}
                   </AlertDescription>
                 </Alert>
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Create"}
+                {isEdit ? t("Save") : t("Create")}
               </Button>
             </DialogFooter>
           </Form>

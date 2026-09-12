@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -36,6 +38,8 @@ function ScriptPresetPicker({
   disabled?: boolean;
   onApply: (preset: EDIScriptPreset) => void;
 }) {
+  const t = useT();
+
   if (presets.length === 0) return null;
   return (
     <div className="bg-muted/20 space-y-2 rounded-md border p-2">
@@ -51,9 +55,9 @@ function ScriptPresetPicker({
           >
             <CopyPlusIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
             <span className="min-w-0">
-              <span className="block text-xs font-medium">{preset.label}</span>
+              <span className="block text-xs font-medium">{t(preset.label)}</span>
               <span className="text-muted-foreground block text-xs leading-snug">
-                {preset.description}
+                {t(preset.description)}
               </span>
             </span>
           </button>
@@ -64,6 +68,8 @@ function ScriptPresetPicker({
 }
 
 function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isLoading: boolean }) {
+  const t = useT();
+
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("overview");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(1);
@@ -77,15 +83,14 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
       <div className="grid h-full flex-1 grid-cols-[minmax(0,1fr)_300px] gap-2 p-3">
         <div className="bg-foreground grid grid-rows-[auto_minmax(0,1fr)] rounded-md">
           <div className="border-background/10 text-background flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs">
-            <span>Preview render</span>
+            <span>{t("Preview render")}</span>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               {preview ? (
                 <span className="font-mono">
-                  ISA {preview.interchangeControlNumber} / GS {preview.groupControlNumber} / ST{" "}
-                  {preview.transactionControlNumber} provisional
+                  {t("ISA {0} / GS {1} / ST {2} provisional", preview.interchangeControlNumber, preview.groupControlNumber, preview.transactionControlNumber)}
                 </span>
               ) : (
-                <span>Control numbers are provisional until Generate archives the message.</span>
+                <span>{t("Control numbers are provisional until Generate archives the message.")}</span>
               )}
               <Button
                 type="button"
@@ -96,13 +101,13 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
                 className="border-background/10 bg-foreground text-background hover:bg-background/20 h-7 text-xs"
               >
                 <SearchIcon className="size-3.5" />
-                Inspect
+                {t("Inspect")}
               </Button>
             </div>
           </div>
           <ScrollArea className="min-h-0" viewportClassName="min-h-0">
             <pre className="text-background p-3 font-mono text-xs">
-              {isLoading ? "Rendering preview..." : previewContent}
+              {isLoading ? t("Rendering preview...") : previewContent}
             </pre>
           </ScrollArea>
         </div>
@@ -134,6 +139,8 @@ function DiagnosticsList({
   diagnostics: EDIDiagnostic[];
   onSelect?: (diagnostic: EDIDiagnostic) => void;
 }) {
+  const t = useT();
+
   const grouped = {
     Error: diagnostics.filter((diagnostic) => diagnostic.severity === "Error"),
     Warning: diagnostics.filter((diagnostic) => diagnostic.severity === "Warning"),
@@ -142,7 +149,7 @@ function DiagnosticsList({
   return (
     <div className="h-full p-3">
       {diagnostics.length === 0 ? (
-        <div className="text-muted-foreground text-sm">No diagnostics.</div>
+        <div className="text-muted-foreground text-sm">{t("No diagnostics.")}</div>
       ) : (
         (Object.keys(grouped) as Array<keyof typeof grouped>).map((severity) =>
           grouped[severity].length > 0 ? (
@@ -209,9 +216,11 @@ function ReadOnlyBanner({ reason }: { reason: string }) {
 }
 
 function VersionStatusBadge({ version }: { version: EDITemplateVersion }) {
+  const t = useT();
+
   const variant =
     version.status === "Active" ? "active" : version.status === "Draft" ? "warning" : "outline";
-  return <Badge variant={variant}>{version.isActive ? "Active" : version.status}</Badge>;
+  return <Badge variant={variant}>{version.isActive ? t("Active") : version.status}</Badge>;
 }
 
 function InputBlock({
@@ -331,7 +340,7 @@ function parseSettings(value: string): Record<string, unknown> {
       return parsed as Record<string, unknown>;
     }
   } catch {
-    toast.error("Partner settings must be valid JSON");
+    toast.error(translate("Partner settings must be valid JSON"));
   }
   return {};
 }
@@ -339,7 +348,7 @@ function parseSettings(value: string): Record<string, unknown> {
 function parsePayload(value: string) {
   const result = parseEDIDocumentPayload(value);
   if (!result.ok) {
-    toast.error("Payload must be valid JSON");
+    toast.error(translate("Payload must be valid JSON"));
   }
   return result;
 }

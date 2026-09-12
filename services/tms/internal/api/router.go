@@ -563,6 +563,7 @@ func (r *Router) setupMiddleware() {
 			}),
 		),
 	)
+	r.s.router.Use(middleware.NewLocaleMiddleware().Resolve())
 	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())
@@ -714,6 +715,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(middleware.NewLocaleMiddleware().Resolve())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
 	// After RequireAuth, which is what puts the flag in the context, and before any
 	// handler: a session that owes a password change may only reach the endpoints that

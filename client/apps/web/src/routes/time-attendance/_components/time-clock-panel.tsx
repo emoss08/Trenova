@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -89,6 +90,8 @@ export function TimeClockPanel({
   teamOnly,
   onTeamOnlyChange,
 }: TimeClockPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRecord } = usePermission(Resource.Timesheet, Operation.Create);
   const { allowed: canCorrect } = usePermission(Resource.Timesheet, Operation.Update);
@@ -137,7 +140,7 @@ export function TimeClockPanel({
     resourceName: "Punch",
     mutationFn: () => clockIn({ workerId }),
     onSuccess: () => {
-      toast.success("Clocked in");
+      toast.success(t("Clocked in"));
       invalidate();
     },
   });
@@ -152,7 +155,7 @@ export function TimeClockPanel({
     resourceName: "Punch",
     mutationFn: () => clockOut({ workerId }),
     onSuccess: () => {
-      toast.success("Clocked out");
+      toast.success(t("Clocked out"));
       invalidate();
     },
   });
@@ -162,10 +165,10 @@ export function TimeClockPanel({
   const boardPunchOut = useMutation({
     mutationFn: (id: string) => clockOut({ workerId: id }),
     onSuccess: (_data, id) => {
-      toast.success("Clocked out");
+      toast.success(t("Clocked out"));
       invalidateWorker(id);
     },
-    onError: (error: Error) => toast.error("Could not clock out", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Could not clock out"), { description: error.message }),
   });
 
   const entry = openEntry.data;
@@ -195,10 +198,9 @@ export function TimeClockPanel({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-medium">Clock</h3>
+          <h3 className="text-sm font-medium">{t("Clock")}</h3>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Pick a worker, or choose somebody from the board, to work their clock and see the last
-            two weeks of punches.
+            {t("Pick a worker, or choose somebody from the board, to work their clock and see the last two weeks of punches.")}
           </p>
         </div>
         <div className="w-full sm:w-72">
@@ -209,8 +211,8 @@ export function TimeClockPanel({
                   <WorkerAutocompleteField<PickerValues>
                     control={form.control}
                     name="workerId"
-                    label="Worker"
-                    placeholder="Who is on the clock"
+                    label={t("Worker")}
+                    placeholder={t("Who is on the clock")}
                     clearable
                   />
                 </FormControl>
@@ -241,7 +243,7 @@ export function TimeClockPanel({
                 <Skeleton className="h-36 w-full rounded-lg" />
               </div>
             ) : (
-              <section aria-label="Clock" className="flex flex-col gap-4 p-4">
+              <section aria-label={t("Clock")} className="flex flex-col gap-4 p-4">
                 <div className="flex items-center gap-4">
                   <span
                     className={cn(
@@ -259,14 +261,14 @@ export function TimeClockPanel({
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className="cc-label">{entry ? "On the clock" : "Off the clock"}</p>
+                    <p className="cc-label">{entry ? t("On the clock") : t("Off the clock")}</p>
                     <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
                       {entry ? formatHours(running) : formatHours(weekMinutes)}
                     </p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {entry
-                        ? `Since ${formatPunchInstant(entry.clockedInAt)}`
-                        : `${formatHours(weekMinutes)} paid this week so far`}
+                        ? t("Since {0}", formatPunchInstant(entry.clockedInAt))
+                        : t("{0} paid this week so far", formatHours(weekMinutes))}
                     </p>
                   </div>
                 </div>
@@ -274,16 +276,16 @@ export function TimeClockPanel({
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="flex items-center gap-1.5">
-                      <span className="font-medium">This week</span>
+                      <span className="font-medium">{t("This week")}</span>
                       {weekSheet ? (
                         <Badge variant={timesheetStatusTone(weekSheet.status).variant}>
-                          {timesheetStatusTone(weekSheet.status).label}
+                          {t(timesheetStatusTone(weekSheet.status).label)}
                         </Badge>
                       ) : null}
                     </span>
                     <span className="text-muted-foreground tabular-nums">
                       {headroom
-                        ? `${formatHours(weekMinutes)} of ${formatHours(weekSheet!.overtimeThresholdMinutes)}`
+                        ? t("{0} of {1}", formatHours(weekMinutes), formatHours(weekSheet!.overtimeThresholdMinutes))
                         : formatHours(weekMinutes)}
                     </span>
                   </div>
@@ -291,7 +293,7 @@ export function TimeClockPanel({
                     <>
                       <span
                         role="meter"
-                        aria-label="This week"
+                        aria-label={t("This week")}
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-valuenow={Math.round(headroom.share * 100)}
@@ -307,13 +309,13 @@ export function TimeClockPanel({
                       </span>
                       <p className="text-muted-foreground text-xs tabular-nums">
                         {headroom.over > 0
-                          ? `${formatHours(headroom.over)} into overtime`
-                          : `${formatHours(headroom.remaining)} before overtime`}
+                          ? t("{0} into overtime", formatHours(headroom.over))
+                          : t("{0} before overtime", formatHours(headroom.remaining))}
                       </p>
                     </>
                   ) : (
                     <p className="text-muted-foreground text-xs">
-                      No timesheet has been opened for this week yet.
+                      {t("No timesheet has been opened for this week yet.")}
                     </p>
                   )}
                 </div>
@@ -328,7 +330,7 @@ export function TimeClockPanel({
                         onClick={() => void punchOut({ workerId })}
                       >
                         <SquareIcon className="size-3.5" />
-                        Clock out
+                        {t("Clock out")}
                       </Button>
                     ) : (
                       <Button
@@ -337,7 +339,7 @@ export function TimeClockPanel({
                         onClick={() => void punchIn({ workerId })}
                       >
                         <PlayIcon className="size-3.5" />
-                        Clock in
+                        {t("Clock in")}
                       </Button>
                     )
                   ) : null}
@@ -348,7 +350,7 @@ export function TimeClockPanel({
                       onClick={() => setEntryDialog({ entry: null })}
                     >
                       <PenLineIcon className="size-3.5" />
-                      Record hours
+                      {t("Record hours")}
                     </Button>
                   ) : null}
                 </div>
@@ -362,11 +364,10 @@ export function TimeClockPanel({
           >
             <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
               <h3 id="punch-history-heading" className="text-sm font-medium">
-                Last two weeks
+                {t("Last two weeks")}
               </h3>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {entries.length} punch{entries.length === 1 ? "" : "es"} ·{" "}
-                {formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0))}
+                {t("{0, plural, one {# punch} other {# punches}} · {1}", entries.length, formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)))}
               </span>
             </header>
             {recentEntries.isLoading ? (
@@ -377,7 +378,7 @@ export function TimeClockPanel({
               </div>
             ) : days.length === 0 ? (
               <p className="text-muted-foreground px-3 py-3 text-sm">
-                No punches in the last two weeks.
+                {t("No punches in the last two weeks.")}
               </p>
             ) : (
               <div className="divide-y">
@@ -429,6 +430,8 @@ type DayGroupProps = {
  * then the punches themselves.
  */
 function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroupProps) {
+  const t = useT();
+
   const heading = formatDayHeading(day.startsAt);
   const spans = useMemo(
     () => dayTrackSpans(day.entries, now, timezone),
@@ -447,14 +450,14 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
     <section aria-label={heading} className="flex flex-col">
       <header className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1">
         <h4 className="text-xs font-medium">{heading}</h4>
-        <span className="text-xs tabular-nums" aria-label="Day total">
+        <span className="text-xs tabular-nums" aria-label={t("Day total")}>
           <span className="font-mono font-medium">
             {day.running
-              ? `${formatHours(day.paidMinutes)} + running`
+              ? t("{0} + running", formatHours(day.paidMinutes))
               : formatHours(day.paidMinutes)}
           </span>
           {day.breakMinutes > 0 ? (
-            <span className="text-muted-foreground"> · {day.breakMinutes}m break</span>
+            <span className="text-muted-foreground"> {t("· {0}m break", day.breakMinutes)}</span>
           ) : null}
         </span>
       </header>
@@ -507,7 +510,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               />
               <span className="font-medium tabular-nums">
                 {formatPunchTime(row.clockedInAt)}
-                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : " – now"}
+                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : ` ${t("– now")}`}
               </span>
               {row.source !== "Clock" ? <Badge variant="secondary">{row.source}</Badge> : null}
               {row.editReason ? (
@@ -516,9 +519,9 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
             </span>
             <span className="flex items-center gap-1">
               <span className="font-mono tabular-nums">
-                {row.clockedOutAt ? formatHours(row.paidMinutes) : "Running"}
+                {row.clockedOutAt ? formatHours(row.paidMinutes) : t("Running")}
                 {row.breakMinutes > 0 ? (
-                  <span className="text-muted-foreground"> · {row.breakMinutes}m break</span>
+                  <span className="text-muted-foreground"> {t("· {0}m break", row.breakMinutes)}</span>
                 ) : null}
               </span>
               {canCorrect && row.clockedOutAt ? (
@@ -526,7 +529,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
                   <Button
                     size="icon-xs"
                     variant="ghost"
-                    aria-label="Correct this entry"
+                    aria-label={t("Correct this entry")}
                     onClick={() => onEdit(row)}
                   >
                     <PenLineIcon className="size-3.5" />
@@ -535,7 +538,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
                     size="icon-xs"
                     variant="ghost"
                     className="text-destructive hover:text-destructive"
-                    aria-label="Remove this entry"
+                    aria-label={t("Remove this entry")}
                     onClick={() => onRemove(row)}
                   >
                     <Trash2Icon className="size-3.5" />

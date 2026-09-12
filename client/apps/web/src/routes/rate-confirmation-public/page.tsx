@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/public-page/error-kind";
 import { PublicPageShell } from "@/components/public-page/public-page-shell";
@@ -36,6 +37,8 @@ function RateConfirmationSummary({
   isSubmitting: boolean;
   onConfirm: (payload: SignerPayload) => void;
 }) {
+  const t = useT();
+
   const [signerName, setSignerName] = useState("");
   const [signerTitle, setSignerTitle] = useState("");
 
@@ -43,7 +46,7 @@ function RateConfirmationSummary({
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-base">
-          Rate confirmation for {rateConfirmation.carrierName}
+          {t("Rate confirmation for {0}", rateConfirmation.carrierName)}
         </CardTitle>
         <p className="text-muted-foreground text-xs">
           {[
@@ -51,12 +54,12 @@ function RateConfirmationSummary({
             rateConfirmation.revisionLabel,
           ]
             .filter(Boolean)
-            .join(" · ") || "Review and sign the agreement below"}
+            .join(" · ") || t("Review and sign the agreement below")}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-col">
-          <SummaryRow label="Broker" value={rateConfirmation.companyName} />
+          <SummaryRow label={t("Broker")} value={rateConfirmation.companyName} />
           {rateConfirmation.stops.map((stop) => (
             <SummaryRow
               key={`${stop.sequence}-${stop.type}`}
@@ -69,13 +72,13 @@ function RateConfirmationSummary({
         <Separator />
 
         <div className="flex flex-col">
-          <SummaryRow label="Rate method" value={rateConfirmation.rateMethodLabel} />
-          <SummaryRow label="Base rate" value={rateConfirmation.baseRateLabel} />
-          <SummaryRow label="Payment terms" value={rateConfirmation.paymentTermsLabel} />
+          <SummaryRow label={t("Rate method")} value={rateConfirmation.rateMethodLabel} />
+          <SummaryRow label={t("Base rate")} value={rateConfirmation.baseRateLabel} />
+          <SummaryRow label={t("Payment terms")} value={rateConfirmation.paymentTermsLabel} />
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-xs">Total</span>
+          <span className="text-muted-foreground text-xs">{t("Total")}</span>
           <span className="text-sm font-semibold tabular-nums">
             {rateConfirmation.totalCost}
             <span className="text-muted-foreground ml-1 text-xs font-normal">
@@ -88,7 +91,7 @@ function RateConfirmationSummary({
           <div className="bg-muted/40 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
             <ClockIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
             <span className="text-muted-foreground text-xs">
-              Sign link expires {formatUnixDateTime(rateConfirmation.expiresAt)}
+              {t("Sign link expires {0}", formatUnixDateTime(rateConfirmation.expiresAt))}
             </span>
           </div>
         )}
@@ -96,26 +99,26 @@ function RateConfirmationSummary({
         <div className="flex flex-col gap-2 pt-1">
           <div className="flex flex-col gap-1">
             <label htmlFor="signer-name" className="text-muted-foreground text-xs">
-              Your name (required)
+              {t("Your name (required)")}
             </label>
             <Input
               id="signer-name"
               value={signerName}
               onChange={(event) => setSignerName(event.target.value)}
-              placeholder="e.g., Jane Smith"
+              placeholder={t("e.g., Jane Smith")}
               maxLength={255}
               autoComplete="name"
             />
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="signer-title" className="text-muted-foreground text-xs">
-              Title (optional)
+              {t("Title (optional)")}
             </label>
             <Input
               id="signer-title"
               value={signerTitle}
               onChange={(event) => setSignerTitle(event.target.value)}
-              placeholder="e.g., Operations Manager"
+              placeholder={t("e.g., Operations Manager")}
               maxLength={255}
               autoComplete="organization-title"
             />
@@ -124,17 +127,16 @@ function RateConfirmationSummary({
             type="button"
             className="mt-1"
             isLoading={isSubmitting}
-            loadingText="Confirming..."
+            loadingText={t("Confirming...")}
             disabled={isSubmitting || !signerName.trim()}
             onClick={() =>
               onConfirm({ signerName: signerName.trim(), signerTitle: signerTitle.trim() })
             }
           >
-            Confirm rate
+            {t("Confirm rate")}
           </Button>
           <p className="text-muted-foreground text-[11px]">
-            By confirming, you agree to the rate and terms shown above on behalf of{" "}
-            {rateConfirmation.carrierName}.
+            {t("By confirming, you agree to the rate and terms shown above on behalf of {0}.", rateConfirmation.carrierName)}
           </p>
         </div>
       </CardContent>
@@ -143,21 +145,25 @@ function RateConfirmationSummary({
 }
 
 function InvalidLinkCard() {
+  const t = useT();
+
   return (
     <StatusCard
       icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
-      title="This rate confirmation link is no longer valid"
-      body="The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error."
+      title={t("This rate confirmation link is no longer valid")}
+      body={t("The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.")}
     />
   );
 }
 
 function ThrottledCard() {
+  const t = useT();
+
   return (
     <StatusCard
       icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
-      title="Too many attempts"
-      body="Please wait a minute and try the link from your email again."
+      title={t("Too many attempts")}
+      body={t("Please wait a minute and try the link from your email again.")}
     />
   );
 }
@@ -168,6 +174,8 @@ function ThrottledCard() {
  * page leaks nothing about why a link is unusable.
  */
 export function RateConfirmationPublicPage() {
+  const t = useT();
+
   const { token = "" } = useParams();
 
   const [submitted, setSubmitted] = useState(false);
@@ -196,8 +204,8 @@ export function RateConfirmationPublicPage() {
     content = (
       <StatusCard
         icon={<CheckCircle2Icon className="size-8 text-green-600" aria-hidden />}
-        title="Rate confirmed"
-        body="Thank you — your signature has been recorded and the broker has been notified."
+        title={t("Rate confirmed")}
+        body={t("Thank you — your signature has been recorded and the broker has been notified.")}
       />
     );
   } else if (submitError === "throttled") {
@@ -206,8 +214,8 @@ export function RateConfirmationPublicPage() {
     content = (
       <StatusCard
         icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
-        title="Temporarily unavailable"
-        body="Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment."
+        title={t("Temporarily unavailable")}
+        body={t("Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.")}
         action={
           <Button
             type="button"
@@ -222,7 +230,7 @@ export function RateConfirmationPublicPage() {
               }
             }}
           >
-            Try again
+            {t("Try again")}
           </Button>
         }
       />
@@ -247,8 +255,8 @@ export function RateConfirmationPublicPage() {
       ) : kind === "unavailable" ? (
         <StatusCard
           icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
-          title="Temporarily unavailable"
-          body="The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment."
+          title={t("Temporarily unavailable")}
+          body={t("The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.")}
           action={
             <Button
               type="button"
@@ -256,10 +264,10 @@ export function RateConfirmationPublicPage() {
               size="sm"
               className="mt-2"
               isLoading={previewQuery.isRefetching}
-              loadingText="Retrying..."
+              loadingText={t("Retrying...")}
               onClick={() => void previewQuery.refetch()}
             >
-              Try again
+              {t("Try again")}
             </Button>
           }
         />
@@ -270,8 +278,8 @@ export function RateConfirmationPublicPage() {
     content = (
       <StatusCard
         icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
-        title="Already confirmed"
-        body="This rate confirmation has already been signed. Contact the broker if anything changed."
+        title={t("Already confirmed")}
+        body={t("This rate confirmation has already been signed. Contact the broker if anything changed.")}
       />
     );
   } else if (previewQuery.data) {
@@ -288,8 +296,8 @@ export function RateConfirmationPublicPage() {
 
   return (
     <>
-      <Metadata title="Rate Confirmation" description="Review and sign a rate confirmation" />
-      <PublicPageShell footer="Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.">
+      <Metadata title={t("Rate Confirmation")} description={t("Review and sign a rate confirmation")} />
+      <PublicPageShell footer={t("Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.")}>
         {content}
       </PublicPageShell>
     </>

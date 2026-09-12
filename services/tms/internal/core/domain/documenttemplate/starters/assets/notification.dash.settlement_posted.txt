@@ -1,1 +1,1 @@
-Settlement {{ .SettlementNumber }} has been issued{{ if .Amount }} for {{ .Amount }}{{ end }}. Open Dash to review it.
+{{ if .Amount }}{{ t "Settlement {0} has been issued for {1}." .SettlementNumber .Amount }}{{ else }}{{ t "Settlement {0} has been issued." .SettlementNumber }}{{ end }} {{ t "Open Dash to review it." }}

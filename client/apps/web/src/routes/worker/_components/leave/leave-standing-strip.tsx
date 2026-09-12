@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { fetchWorkerLeaveFile, WORKER_LEAVE_KEY } from "@/lib/graphql/worker-leave";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,8 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
  * reading that event asks next.
  */
 export function LeaveStandingStrip({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.WorkerLeave, Operation.Read);
 
   const leaveQuery = useQuery({
@@ -44,22 +47,21 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
     <section className="rounded-lg border px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-2">
-          <h4 className="text-xs font-medium">Leave standing</h4>
-          {entitlement.exhausted ? <Badge variant="inactive">Exhausted</Badge> : null}
+          <h4 className="text-xs font-medium">{t("Leave standing")}</h4>
+          {entitlement.exhausted ? <Badge variant="inactive">{t("Exhausted")}</Badge> : null}
           {entitlement.eligibleOnTenure ? null : (
-            <Badge variant="warning">Under 12 months&apos; service</Badge>
+            <Badge variant="warning">{t("Under 12 months' service")}</Badge>
           )}
           {owing > 0 ? (
             <Badge variant="warning">
-              {owing} certification{owing === 1 ? "" : "s"} owed
+              {t("{0, plural, one {# certification} other {# certifications}} owed", owing)}
             </Badge>
           ) : null}
         </span>
         <span className="text-xs tabular-nums">
-          <span className="font-semibold">{formatLeaveHours(entitlement.remainingHours)} h</span>
+          <span className="font-semibold">{t("{0} h", formatLeaveHours(entitlement.remainingHours))}</span>
           <span className="text-muted-foreground">
-            {" "}
-            of {formatLeaveHours(entitlement.totalHours)} left
+            {t("of {0} left", formatLeaveHours(entitlement.totalHours))}
           </span>
         </span>
       </div>
@@ -68,9 +70,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
         className="mt-2"
       />
       <p className="text-muted-foreground mt-1.5 text-[11px]">
-        {measurementMethodLabel(entitlement.method)} · {formatUnixDate(entitlement.window.from)} to{" "}
-        {formatUnixDate(entitlement.window.through)} · {file.cases.length} case
-        {file.cases.length === 1 ? "" : "s"}
+        {t("{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through), file.cases.length)}
       </p>
     </section>
   );

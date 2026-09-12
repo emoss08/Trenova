@@ -81,7 +81,7 @@ func TestProblemBuilder_WithDetail(t *testing.T) {
 
 	problem := helpers.NewProblemBuilder("https://api.test.com/").
 		WithType(helpers.ProblemTypeValidation).
-		WithDetail("Email format is invalid").
+		WithDetail(helpers.Message{Text: "Email format is invalid"}).
 		Build()
 
 	assert.Equal(t, "Email format is invalid", problem.Detail)
@@ -147,7 +147,7 @@ func TestProblemBuilder_FullChain(t *testing.T) {
 
 	problem := helpers.NewProblemBuilder("https://api.example.com/problems/").
 		WithType(helpers.ProblemTypeValidation).
-		WithDetail("Request validation failed").
+		WithDetail(helpers.Message{Text: "Request validation failed"}).
 		WithInstance("/api/users/create", "req-999").
 		WithTraceID("trace-xyz").
 		WithErrors(errors).
@@ -169,7 +169,7 @@ func TestProblemDetail_JSONSerialization(t *testing.T) {
 		t.Parallel()
 		problem := helpers.NewProblemBuilder("https://api.test.com/").
 			WithType(helpers.ProblemTypeValidation).
-			WithDetail("Validation failed").
+			WithDetail(helpers.Message{Text: "Validation failed"}).
 			WithInstance("/api/test", "req-123").
 			WithTraceID("trace-456").
 			WithErrors([]helpers.ValidationError{

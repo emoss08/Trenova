@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   DOT_RANDOM_DRAW_KEY,
@@ -29,6 +30,8 @@ export type DrawDetailSheetProps = {
 };
 
 export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canManage } = usePermission(Resource.DOTRandomPool, Operation.Manage);
 
@@ -55,7 +58,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
       ]);
     },
     onError: (error: Error) =>
-      toast.error("Could not update the selection", { description: error.message }),
+      toast.error(t("Could not update the selection"), { description: error.message }),
   });
 
   const draw = drawQuery.data;
@@ -65,10 +68,10 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
     <Sheet open={Boolean(drawId)} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle>{draw ? `Round ${draw.periodKey}` : "Round"}</SheetTitle>
+          <SheetTitle>{draw ? t("Round {0}", draw.periodKey) : t("Round")}</SheetTitle>
           <SheetDescription>
             {draw
-              ? `${draw.pool?.name ?? "Pool"} · ${draw.poolSize} drivers in the pool · drawn ${formatUnixDate(draw.drawnAt)}`
+              ? t("{0} · {1} drivers in the pool · drawn {2}", draw.pool?.name ?? t("Pool"), draw.poolSize, formatUnixDate(draw.drawnAt))
               : null}
           </SheetDescription>
         </SheetHeader>
@@ -82,29 +85,29 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
         ) : (
           <div className="flex flex-col gap-4 overflow-y-auto p-4">
             <section className="rounded-md border p-3 text-xs">
-              <h3 className="cc-label text-foreground mb-2">How this round was drawn</h3>
+              <h3 className="cc-label text-foreground mb-2">{t("How this round was drawn")}</h3>
               <dl className="grid grid-cols-2 gap-2">
                 <div>
-                  <dt className="text-muted-foreground text-[11px]">Method</dt>
+                  <dt className="text-muted-foreground text-[11px]">{t("Method")}</dt>
                   <dd className="font-mono text-[11px]">{draw.method}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground text-[11px]">Period</dt>
+                  <dt className="text-muted-foreground text-[11px]">{t("Period")}</dt>
                   <dd className="tabular-nums">
                     {formatUnixDate(draw.periodStart)} – {formatUnixDate(draw.periodEnd)}
                   </dd>
                 </div>
                 <div className="col-span-2">
-                  <dt className="text-muted-foreground text-[11px]">Seed</dt>
+                  <dt className="text-muted-foreground text-[11px]">{t("Seed")}</dt>
                   <dd className="font-mono text-[11px] break-all">{draw.seed}</dd>
                 </div>
               </dl>
               <p className="text-muted-foreground mt-2 text-[11px]">
-                The same seed over the same roster reproduces exactly these names, in this order.
+                {t("The same seed over the same roster reproduces exactly these names, in this order.")}
               </p>
             </section>
 
-            <section aria-label="Collections" className="grid grid-cols-2 gap-2">
+            <section aria-label={t("Collections")} className="grid grid-cols-2 gap-2">
               {tallies.map((tally) => (
                 <div key={tally.substance} className="rounded-md border p-3 text-xs">
                   <div className="flex items-center justify-between gap-2">
@@ -116,7 +119,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                   </div>
                   <p className="text-muted-foreground mt-1 tabular-nums">
                     {tally.total === 0
-                      ? "Nobody selected"
+                      ? t("Nobody selected")
                       : [
                           tally.outstanding > 0 ? `${tally.outstanding} to collect` : null,
                           tally.notified > 0 ? `${tally.notified} notified` : null,
@@ -124,14 +127,14 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                           tally.missed > 0 ? `${tally.missed} missed` : null,
                         ]
                           .filter(Boolean)
-                          .join(" · ") || "All collected"}
+                          .join(" · ") || t("All collected")}
                   </p>
                 </div>
               ))}
             </section>
 
             <section>
-              <h3 className="cc-label text-foreground mb-2">Selected ({draw.entries.length})</h3>
+              <h3 className="cc-label text-foreground mb-2">{t("Selected ({0})", draw.entries.length)}</h3>
               <ul className="flex flex-col gap-1.5">
                 {draw.entries.map((entry) => (
                   <li
@@ -146,7 +149,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                           : entry.workerId}
                       </span>
                       <Badge variant="secondary">
-                        {entry.substance === "Alcohol" ? "Alcohol" : "Drug"}
+                        {entry.substance === "Alcohol" ? t("Alcohol") : t("Drug")}
                       </Badge>
                       <Badge
                         variant={
@@ -170,7 +173,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                               entryMutation.mutate({ entryId: entry.id, status: "Notified" })
                             }
                           >
-                            Mark notified
+                            {t("Mark notified")}
                           </Button>
                         ) : null}
                         <Button
@@ -184,7 +187,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                             })
                           }
                         >
-                          Excuse
+                          {t("Excuse")}
                         </Button>
                         <Button
                           size="xs"
@@ -193,7 +196,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                             entryMutation.mutate({ entryId: entry.id, status: "Missed" })
                           }
                         >
-                          Missed
+                          {t("Missed")}
                         </Button>
                       </span>
                     ) : null}
@@ -201,8 +204,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                 ))}
               </ul>
               <p className="text-muted-foreground mt-2 text-[11px]">
-                A selection is marked collected by recording its test on the driver&apos;s Testing
-                tab, not from here — that keeps the entry and the test from ever disagreeing.
+                {t("A selection is marked collected by recording its test on the driver's Testing tab, not from here — that keeps the entry and the test from ever disagreeing.")}
               </p>
             </section>
           </div>

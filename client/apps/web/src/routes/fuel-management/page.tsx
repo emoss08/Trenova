@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
@@ -10,6 +11,8 @@ const ProgramSection = lazy(() => import("./_components/program-section"));
 const IndexSection = lazy(() => import("./_components/index-section"));
 
 export function FuelManagementPage() {
+  const t = useT();
+
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("dashboard"));
 
   return (
@@ -29,15 +32,15 @@ export function FuelManagementPage() {
           <TabsList variant="underline">
             <TabsTab value="dashboard">
               <Gauge className="size-4" />
-              Price Dashboard
+              {t("Price Dashboard")}
             </TabsTab>
             <TabsTab value="programs">
               <Fuel className="size-4" />
-              Surcharge Programs
+              {t("Surcharge Programs")}
             </TabsTab>
             <TabsTab value="indices">
               <ListTree className="size-4" />
-              Fuel Indices
+              {t("Fuel Indices")}
             </TabsTab>
           </TabsList>
         </div>

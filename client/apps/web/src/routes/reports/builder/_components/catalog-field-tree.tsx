@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import type { ReportCatalogEntity, ReportCatalogField } from "@/lib/graphql/reports";
@@ -41,6 +42,8 @@ function FieldRow({
   onSelect: () => void;
   disabled: boolean;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -56,7 +59,7 @@ function FieldRow({
     >
       <span className="flex min-w-0 items-center gap-1.5">
         {!field.accessible && <LockIcon className="size-3 shrink-0" />}
-        <span className="truncate">{field.label}</span>
+        <span className="truncate">{t(field.label)}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1">
         <Badge
@@ -92,6 +95,8 @@ function EntityFields({
   filterFields?: (field: ReportCatalogField, crossesToMany: boolean) => boolean;
   depth: number;
 }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const visibleFields = entity.fields.filter((field) => {
@@ -145,7 +150,7 @@ function EntityFields({
               ) : (
                 <ChevronRightIcon className="size-3.5 shrink-0" />
               )}
-              <span className="truncate">{edge.label}</span>
+              <span className="truncate">{t(edge.label)}</span>
               {edge.cardinality !== "one" && (
                 <Badge variant="outline" className="text-[10px]">
                   many
@@ -180,6 +185,8 @@ export function CatalogFieldTree({
   filterFields,
   className,
 }: FieldTreeProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const entity = useMemo(() => index.entities.get(entityKey), [index, entityKey]);
 
@@ -190,7 +197,7 @@ export function CatalogFieldTree({
       <div className="relative">
         <Input
           className="h-8 pl-7"
-          placeholder="Search fields..."
+          placeholder={t("Search fields...")}
           value={search}
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           onChange={(event) => setSearch(event.target.value)}

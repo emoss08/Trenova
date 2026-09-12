@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ChartContainer,
   ChartLegend,
@@ -48,6 +49,8 @@ function bucketLabel(point: EDIVolumePoint) {
 }
 
 export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
+  const t = useT();
+
   const data = useMemo(
     () =>
       points.map((point) => ({
@@ -64,7 +67,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
   if (data.length === 0) {
     return (
       <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-        No document activity in the selected time range.
+        {t("No document activity in the selected time range.")}
       </div>
     );
   }
@@ -73,7 +76,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <div className="bg-background rounded-md border p-3">
         <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Document volume
+          {t("Document volume")}
         </h3>
         <ChartContainer config={volumeChartConfig} className="mt-2 aspect-auto! h-[220px] w-full">
           <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -111,7 +114,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
       </div>
       <div className="bg-background rounded-md border p-3">
         <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Delivery success rate
+          {t("Delivery success rate")}
         </h3>
         <ChartContainer
           config={successRateChartConfig}

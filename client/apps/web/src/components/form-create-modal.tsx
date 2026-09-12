@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -47,6 +48,8 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
   submitText = "Save and Close",
   loadingText = "Saving...",
 }: FormCreateModalProps<T, TResponse>) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const {
@@ -65,7 +68,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
       return api.post<TResponse>(url, values);
     },
     onSuccess: async (data, values) => {
-      toast.success("Changes have been saved.", {
+      toast.success(t("Changes have been saved."), {
         description: `${title} created successfully`,
       });
       onOpenChange(false);
@@ -110,9 +113,9 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
     >
       <DialogContent className={cn("max-w-[450px]", className)}>
         <DialogHeader>
-          <DialogTitle>Add New {title}</DialogTitle>
+          <DialogTitle>{t("Add New {0}", title)}</DialogTitle>
           <DialogDescription>
-            {description ? description : `Please fill out the form below to create a new ${title}.`}
+            {description ? description : t("Please fill out the form below to create a new {0}.", title)}
           </DialogDescription>
         </DialogHeader>
         {notice ? notice : null}
@@ -121,7 +124,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
             {formComponent}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmitting} loadingText={loadingText}>
                 {submitText}

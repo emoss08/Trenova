@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TableBody, TableCell, TableRow } from "@trenova/shared/components/ui/table";
 import { useDataTable } from "@/contexts/data-table-context";
 import {
@@ -173,6 +174,8 @@ export function DataTableBody<TData extends Record<string, any>>({
   isLoading?: boolean;
   getFormatClass?: CompiledFormatRules<TData> | null;
 }) {
+  const t = useT();
+
   const rows = table.getRowModel().rows;
   const { columnVisibility, columnOrder, columnPinning, cellEditing } = table.state;
   const enableSelection = table.options.enableRowSelection === true;
@@ -301,7 +304,7 @@ export function DataTableBody<TData extends Record<string, any>>({
           <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">
             <div className="border-border bg-muted-foreground/10 text-foreground mx-auto flex w-fit flex-row items-center justify-center rounded-md border p-2 text-sm font-medium">
               <Spinner className="size-4" />
-              <p className="text-foreground text-xs">Loading data...</p>
+              <p className="text-foreground text-xs">{t("Loading data...")}</p>
             </div>
           </TableCell>
         </TableRow>

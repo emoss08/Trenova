@@ -132,11 +132,9 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 				multiErr.Add(
 					"revenueRecognitionPolicy",
 					errortypes.ErrInvalidOperation,
-					fmt.Sprintf(
-						"Accounting basis %s does not allow revenue recognition policy %s",
-						entity.AccountingBasis,
-						entity.RevenueRecognitionPolicy,
-					),
+					"Accounting basis {0} does not allow revenue recognition policy {1}",
+					entity.AccountingBasis,
+					entity.RevenueRecognitionPolicy,
 				)
 			}
 
@@ -145,11 +143,9 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 				multiErr.Add(
 					"expenseRecognitionPolicy",
 					errortypes.ErrInvalidOperation,
-					fmt.Sprintf(
-						"Accounting basis %s does not allow expense recognition policy %s",
-						entity.AccountingBasis,
-						entity.ExpenseRecognitionPolicy,
-					),
+					"Accounting basis {0} does not allow expense recognition policy {1}",
+					entity.AccountingBasis,
+					entity.ExpenseRecognitionPolicy,
 				)
 			}
 
@@ -244,7 +240,7 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 					multiErr.Add(
 						"autoPostSourceEvents",
 						errortypes.ErrInvalidOperation,
-						fmt.Sprintf("Auto-post source events must include %s", requiredEvent),
+						"Auto-post source events must include {0}", requiredEvent,
 					)
 				}
 			}
@@ -259,10 +255,8 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 						multiErr.Add(
 							"autoPostSourceEvents",
 							errortypes.ErrInvalidOperation,
-							fmt.Sprintf(
-								"Auto-post source events must not include %s when revenue recognition is OnCashReceipt",
-								blockedEvent,
-							),
+							"Auto-post source events must not include {0} when revenue recognition is OnCashReceipt",
+							blockedEvent,
 						)
 					}
 				}
@@ -360,10 +354,7 @@ func createCurrencyRule(
 				multiErr.Add(
 					"functionalCurrencyCode",
 					errortypes.ErrInvalid,
-					fmt.Sprintf(
-						"Unrecognized ISO 4217 currency code: %q",
-						entity.FunctionalCurrencyCode,
-					),
+					"Unrecognized ISO 4217 currency code: \"{0}\"", entity.FunctionalCurrencyCode,
 				)
 			}
 

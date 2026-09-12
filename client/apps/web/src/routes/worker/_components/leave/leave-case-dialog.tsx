@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -75,6 +76,8 @@ function defaultsFor(leaveCase: LeaveCaseRow | null): LeaveCaseFormValues {
 }
 
 export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: LeaveCaseDialogProps) {
+  const t = useT();
+
   const invalidate = useLeaveInvalidation(workerId);
   const isEdit = Boolean(leaveCase);
   const form = useForm<LeaveCaseFormValues>({
@@ -128,10 +131,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit leave case" : "Open a leave case"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit leave case") : t("Open a leave case")}</DialogTitle>
           <DialogDescription>
-            A case is one qualifying reason. The entitlement is drawn down by the days recorded
-            against it, so a case open for months has used nothing until days are.
+            {t("A case is one qualifying reason. The entitlement is drawn down by the days recorded against it, so a case open for months has used nothing until days are.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -147,40 +149,40 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                 <SelectField<LeaveCaseFormValues>
                   control={control}
                   name="leaveType"
-                  label="Type of leave"
+                  label={t("Type of leave")}
                   options={TYPE_OPTIONS}
                   rules={{ required: true }}
-                  placeholder="Pick a leave type"
-                  description="The law or policy the leave falls under."
+                  placeholder={t("Pick a leave type")}
+                  description={t("The law or policy the leave falls under.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<LeaveCaseFormValues>
                   control={control}
                   name="frequency"
-                  label="How it is taken"
+                  label={t("How it is taken")}
                   options={FREQUENCY_OPTIONS}
                   rules={{ required: true }}
-                  placeholder="Pick a pattern"
-                  description="Continuous is one block of time; intermittent and reduced schedule are recorded day by day."
+                  placeholder={t("Pick a pattern")}
+                  description={t("Continuous is one block of time; intermittent and reduced schedule are recorded day by day.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <InputField<LeaveCaseFormValues>
                   control={control}
                   name="reason"
-                  label="Qualifying reason"
-                  placeholder="e.g. Serious health condition of a parent"
-                  description="The one qualifying reason this case covers; open another case for a different reason."
+                  label={t("Qualifying reason")}
+                  placeholder={t("e.g. Serious health condition of a parent")}
+                  description={t("The one qualifying reason this case covers; open another case for a different reason.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<LeaveCaseFormValues>
                   control={control}
                   name="startsAt"
-                  label="Leave begins"
-                  placeholder="First day of leave"
-                  description="The first day of the leave; the expected end cannot be before it."
+                  label={t("Leave begins")}
+                  placeholder={t("First day of leave")}
+                  description={t("The first day of the leave; the expected end cannot be before it.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -188,9 +190,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                 <AutoCompleteDateField<LeaveCaseFormValues>
                   control={control}
                   name="endsAt"
-                  label="Expected to end"
-                  placeholder="Leave empty if not yet known"
-                  description="When the leave is expected to finish; closing the case fills it in if still blank."
+                  label={t("Expected to end")}
+                  placeholder={t("Leave empty if not yet known")}
+                  description={t("When the leave is expected to finish; closing the case fills it in if still blank.")}
                 />
               </FormControl>
               {isEdit ? null : (
@@ -198,9 +200,9 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   <AutoCompleteDateField<LeaveCaseFormValues>
                     control={control}
                     name="requestedAt"
-                    label="Requested on"
-                    placeholder="Date the driver asked"
-                    description="When the driver asked for the leave; defaults to today."
+                    label={t("Requested on")}
+                    placeholder={t("Date the driver asked")}
+                    description={t("When the driver asked for the leave; defaults to today.")}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -209,25 +211,24 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                 <NumberField<LeaveCaseFormValues>
                   control={control}
                   name="eligibilityHoursWorked"
-                  label="Hours worked in the prior year"
-                  placeholder="e.g. 1800"
-                  description="For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand."
+                  label={t("Hours worked in the prior year")}
+                  placeholder={t("e.g. 1800")}
+                  description={t("For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<LeaveCaseFormValues>
                   control={control}
                   name="militaryCaregiver"
-                  label="Military caregiver leave"
-                  description="Raises the entitlement to 26 weeks for the period (29 CFR 825.127)."
+                  label={t("Military caregiver leave")}
+                  description={t("Raises the entitlement to 26 weeks for the period (29 CFR 825.127).")}
                 />
               </FormControl>
               {frequency === "Intermittent" || frequency === "ReducedSchedule" ? (
                 <FormControl cols="full">
                   <Alert>
                     <AlertDescription>
-                      Intermittent leave is recorded day by day in hours, in the smallest increment
-                      the organisation uses for any other absence (29 CFR 825.205).
+                      {t("Intermittent leave is recorded day by day in hours, in the smallest increment the organisation uses for any other absence (29 CFR 825.205).")}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -236,19 +237,19 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                 <TextareaField<LeaveCaseFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Certification requested from the physician"
-                  description="Kept on the case and shown on the driver's leave record."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Certification requested from the physician")}
+                  description={t("Kept on the case and shown on the driver's leave record.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Open case"}
+                {isEdit ? t("Save") : t("Open case")}
               </Button>
             </DialogFooter>
           </Form>

@@ -1,4 +1,7 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 export function MicrosoftLogo({ className }: { className?: string }) {
+  const t = useT();
+
   return (
     <svg
       viewBox="0 0 256 256"
@@ -8,7 +11,7 @@ export function MicrosoftLogo({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid"
       className={className || "h-8 w-8"}
     >
-      <title>Microsoft Logo</title>
+      <title>{t("Microsoft Logo")}</title>
       <path fill="#F1511B" d="M121.666 121.666H0V0h121.666z" />
       <path fill="#80CC28" d="M256 121.666H134.335V0H256z" />
       <path fill="#00ADEF" d="M121.663 256.002H0V134.336h121.663z" />

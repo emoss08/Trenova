@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   settlementDisputeTableGraphQLConfig,
@@ -15,6 +16,8 @@ import { getColumns } from "./dispute-columns";
 import { DisputePanel } from "./dispute-panel";
 
 export default function DisputesTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -22,7 +25,7 @@ export default function DisputesTable() {
     async (rows: SettlementDisputeRow[]) => {
       const eligible = rows.filter((row) => row.status === "Open");
       if (eligible.length === 0) {
-        toast.info("Only open disputes can be moved to review.");
+        toast.info(t("Only open disputes can be moved to review."));
         return;
       }
       await runBulkAction(eligible, (row) => startSettlementDisputeReview(row.id), {
@@ -31,7 +34,7 @@ export default function DisputesTable() {
       });
       await queryClient.invalidateQueries({ queryKey: ["settlement-dispute-list"] });
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<SettlementDisputeRow>[]>(

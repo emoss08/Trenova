@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -65,6 +66,8 @@ type MarkFiledDialogProps = {
 };
 
 export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const schema = useMemo(
     () => markFiledSchema(ret.finalizedAt ?? null, getEndOfDay()),
@@ -96,9 +99,9 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
         filingReference: values.filingReference,
       }),
     onSuccess: async () => {
-      toast.success("Return marked filed", {
+      toast.success(t("Return marked filed"), {
         description:
-          "It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed.",
+          t("It is immutable now. A correction opens a new draft through an amendment, leaving this one as filed."),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -118,11 +121,9 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
             }}
           >
             <DialogHeader>
-              <DialogTitle>Mark the {quarterLabel(period)} return filed</DialogTitle>
+              <DialogTitle>{t("Mark the {0} return filed", quarterLabel(period))}</DialogTitle>
               <DialogDescription>
-                This records that the finalized worksheet went to the base jurisdiction. The return
-                becomes immutable: a correction opens a new draft as an amendment and leaves this
-                one as it was filed.
+                {t("This records that the finalized worksheet went to the base jurisdiction. The return becomes immutable: a correction opens a new draft as an amendment and leaves this one as it was filed.")}
               </DialogDescription>
             </DialogHeader>
             <FormGroup cols={2} className="mt-4">
@@ -130,19 +131,19 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
                 <DateField
                   control={control}
                   name="filedAt"
-                  label="Filed on"
-                  placeholder="Pick the filing date"
-                  description="Between the day the return was finalized and today."
+                  label={t("Filed on")}
+                  placeholder={t("Pick the filing date")}
+                  description={t("Between the day the return was finalized and today.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField
                   control={control}
                   name="filingReference"
-                  label="Filing reference"
-                  placeholder="e.g. TX-2026Q2-88213"
+                  label={t("Filing reference")}
+                  placeholder={t("e.g. TX-2026Q2-88213")}
                   maxLength={FILING_REFERENCE_MAX}
-                  description="Optional. The confirmation number the jurisdiction gave you."
+                  description={t("Optional. The confirmation number the jurisdiction gave you.")}
                 />
               </FormControl>
             </FormGroup>
@@ -153,10 +154,10 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
                 onClick={() => onOpenChange(false)}
                 disabled={isPending}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Recording..." : "Mark filed"}
+                {isPending ? t("Recording...") : t("Mark filed")}
               </Button>
             </DialogFooter>
           </Form>

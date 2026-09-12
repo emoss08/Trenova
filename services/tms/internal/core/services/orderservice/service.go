@@ -2,7 +2,6 @@ package orderservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -69,10 +68,7 @@ func guardMembershipChange(ord *order.Order) error {
 	return errortypes.NewValidationError(
 		"orderId",
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf(
-			"The legs and charges of a %s order cannot be modified",
-			ord.Status,
-		),
+		"The legs and charges of a {0} order cannot be modified", ord.Status,
 	)
 }
 
@@ -346,11 +342,9 @@ func (s *Service) guardSourceOrders(
 			return errortypes.NewValidationError(
 				"shipmentIds",
 				errortypes.ErrInvalid,
-				fmt.Sprintf(
-					"Shipment belongs to order %s (%s) and cannot be moved",
-					source.OrderNumber,
-					source.Status,
-				),
+				"Shipment belongs to order {0} ({1}) and cannot be moved",
+				source.OrderNumber,
+				source.Status,
 			)
 		}
 	}
@@ -748,7 +742,7 @@ func (s *Service) Close(
 		return nil, errortypes.NewValidationError(
 			"orderId",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("Only a Billed order can be closed; this order is %s", ord.Status),
+			"Only a Billed order can be closed; this order is {0}", ord.Status,
 		)
 	}
 
@@ -792,7 +786,7 @@ func (s *Service) Cancel(
 		return nil, errortypes.NewValidationError(
 			"orderId",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("A %s order cannot be canceled", ord.Status),
+			"A {0} order cannot be canceled", ord.Status,
 		)
 	}
 	for _, leg := range ord.Shipments {

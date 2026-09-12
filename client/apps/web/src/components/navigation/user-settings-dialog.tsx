@@ -1,9 +1,11 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { DEFAULT_LOCALE } from "@trenova/shared/i18n/generated/locales";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
+import { localeChoices, timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
@@ -56,6 +58,8 @@ function SectionHeader({
 }
 
 export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogProps) {
+  const t = useT();
+
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -67,6 +71,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     defaultValues: {
       timezone: user?.timezone ?? "",
       timeFormat: user?.timeFormat ?? "12-hour",
+      locale: user?.locale ?? DEFAULT_LOCALE,
     },
   });
 
@@ -82,6 +87,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     settingsForm.reset({
       timezone: user?.timezone ?? "",
       timeFormat: user?.timeFormat ?? "12-hour",
+      locale: user?.locale ?? DEFAULT_LOCALE,
     });
   }, [settingsForm, user]);
 
@@ -96,8 +102,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     form: settingsForm,
     onSuccess: (updatedUser) => {
       useAuthStore.getState().setUser(updatedUser);
-      toast.success("Settings updated", {
-        description: "Your profile settings have been saved.",
+      toast.success(t("Settings updated"), {
+        description: t("Your profile settings have been saved."),
       });
     },
   });
@@ -112,8 +118,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     resourceName: "Change Password",
     form: passwordForm,
     onSuccess: () => {
-      toast.success("Password changed", {
-        description: "Your password has been updated successfully.",
+      toast.success(t("Password changed"), {
+        description: t("Your password has been updated successfully."),
       });
     },
   });
@@ -154,20 +160,20 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       setPendingFile(selectedFile);
       setIsCropOpen(true);
     } catch (error) {
-      toast.error("Unsupported profile picture", {
+      toast.error(t("Unsupported profile picture"), {
         description:
           error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
       });
     }
-  }, []);
+  }, [t]);
 
   const handleProfilePictureUpload = useCallback(
     async (file: File) => {
       const updatedUser = await apiService.userService.uploadMyProfilePicture(file);
       await syncUserSettings(updatedUser);
-      toast.success("Profile picture updated");
+      toast.success(t("Profile picture updated"));
     },
-    [syncUserSettings],
+    [syncUserSettings, t],
   );
 
   const handleRemoveProfilePicture = useCallback(async () => {
@@ -179,15 +185,15 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     try {
       const updatedUser = await apiService.userService.deleteMyProfilePicture();
       await syncUserSettings(updatedUser);
-      toast.success("Profile picture removed");
+      toast.success(t("Profile picture removed"));
     } catch (error) {
-      toast.error("Failed to remove profile picture", {
+      toast.error(t("Failed to remove profile picture"), {
         description: error instanceof Error ? error.message : "Please try again.",
       });
     }
 
     setIsRemovingProfilePicture(false);
-  }, [isRemovingProfilePicture, syncUserSettings]);
+  }, [isRemovingProfilePicture, syncUserSettings, t]);
 
   const onSubmit = useCallback(async () => {
     const settingsValid = await settingsForm.trigger();
@@ -216,8 +222,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>Manage your preferences and security.</DialogDescription>
+          <DialogTitle>{t("Settings")}</DialogTitle>
+          <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>
         </DialogHeader>
 
         <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
@@ -245,7 +251,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera className="size-4" />
-              {user?.profilePicUrl ? "Change" : "Upload"}
+              {user?.profilePicUrl ? t("Change") : t("Upload")}
             </Button>
             {user?.profilePicUrl ? (
               <Button
@@ -254,7 +260,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                 size="icon"
                 onClick={() => void handleRemoveProfilePicture()}
                 disabled={isRemovingProfilePicture}
-                aria-label="Remove profile picture"
+                aria-label={t("Remove profile picture")}
               >
                 <Trash2 className="size-4" />
               </Button>
@@ -275,8 +281,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           <div className="space-y-3">
             <SectionHeader
               icon={Globe}
-              title="Preferences"
-              description="Configure your regional and display settings."
+              title={t("Preferences")}
+              description={t("Configure your regional and display settings.")}
             />
             <Form onSubmit={(e) => e.preventDefault()}>
               <FormGroup cols={2}>
@@ -285,16 +291,16 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     control={settingsForm.control}
                     rules={{ required: true }}
                     name="timezone"
-                    label="Timezone"
-                    placeholder="Select timezone"
+                    label={t("Timezone")}
+                    placeholder={t("Select timezone")}
                     groups={timezoneGroupedChoices}
                     // isReadOnly={isDisabled}
                     renderOption={(option) => (
                       <span className="flex w-full items-center justify-between gap-3">
-                        <span>{option.label}</span>
+                        <span>{t(option.label)}</span>
                         {option.description && (
                           <span className="text-muted-foreground text-xs">
-                            {option.description}
+                            {t(option.description)}
                           </span>
                         )}
                       </span>
@@ -305,9 +311,19 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SelectField
                     control={settingsForm.control}
                     name="timeFormat"
-                    label="Time Format"
+                    label={t("Time Format")}
                     options={timeFormatChoices}
                     rules={{ required: "Time format is required" }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <SelectField
+                    control={settingsForm.control}
+                    name="locale"
+                    label={t("Language")}
+                    description={t("Applies to the interface, and to the emails and documents sent to you.")}
+                    options={localeChoices}
+                    rules={{ required: "Language is required" }}
                   />
                 </FormControl>
               </FormGroup>
@@ -319,8 +335,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           <div className="space-y-3">
             <SectionHeader
               icon={KeyRound}
-              title="Change Password"
-              description="Leave blank to keep your current password."
+              title={t("Change Password")}
+              description={t("Leave blank to keep your current password.")}
             />
             <Form onSubmit={(e) => e.preventDefault()}>
               <FormGroup cols={1}>
@@ -328,8 +344,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SensitiveField
                     control={passwordForm.control}
                     name="currentPassword"
-                    label="Current Password"
-                    placeholder="Enter current password"
+                    label={t("Current Password")}
+                    placeholder={t("Enter current password")}
                   />
                 </FormControl>
               </FormGroup>
@@ -338,16 +354,16 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                   <SensitiveField
                     control={passwordForm.control}
                     name="newPassword"
-                    label="New Password"
-                    placeholder="Enter new password"
+                    label={t("New Password")}
+                    placeholder={t("Enter new password")}
                   />
                 </FormControl>
                 <FormControl>
                   <SensitiveField
                     control={passwordForm.control}
                     name="confirmPassword"
-                    label="Confirm Password"
-                    placeholder="Confirm new password"
+                    label={t("Confirm Password")}
+                    placeholder={t("Confirm new password")}
                   />
                 </FormControl>
               </FormGroup>
@@ -359,10 +375,10 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
-          <Button type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText="Saving...">
-            Save Changes
+          <Button type="button" onClick={onSubmit} isLoading={isSubmitting} loadingText={t("Saving...")}>
+            {t("Save Changes")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -370,10 +386,10 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       <ImageCropUploadDialog
         open={isCropOpen}
         file={pendingFile}
-        title="Crop Profile Picture"
-        description="Adjust your image before uploading. Profile pictures are cropped to a square."
+        title={t("Crop Profile Picture")}
+        description={t("Adjust your image before uploading. Profile pictures are cropped to a square.")}
         {...profilePictureCropConfig}
-        confirmLabel="Upload Picture"
+        confirmLabel={t("Upload Picture")}
         onClose={() => {
           setIsCropOpen(false);
           setPendingFile(null);

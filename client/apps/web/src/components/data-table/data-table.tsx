@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableProvider } from "@/contexts/data-table-context";
 import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
@@ -98,6 +99,8 @@ export function DataTable<TData extends Record<string, any>>({
   renderEmptyState,
 }: DataTableProps<TData>) {
   "use no memo";
+  const t = useT();
+
   const contextMenuActions = useGuardedRowActions<TData>(
     unguardedContextMenuActions ?? NO_ROW_ACTIONS,
   );
@@ -451,13 +454,13 @@ export function DataTable<TData extends Record<string, any>>({
       }
       setRowSelection(selection);
     } catch (error) {
-      toast.error("Selection failed", {
+      toast.error(t("Selection failed"), {
         description: error instanceof Error ? error.message : "Could not load all matching rows.",
       });
     } finally {
       setIsSelectingAll(false);
     }
-  }, [graphql, baseQueryOptions]);
+  }, [graphql, baseQueryOptions, t]);
 
   const handleClearSelection = useCallback(() => {
     setRowSelection({});

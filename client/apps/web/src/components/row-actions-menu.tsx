@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +31,8 @@ type RowActionsMenuProps = {
  * answer to "can I act on this".
  */
 export function RowActionsMenu({ label, actions, disabled, className }: RowActionsMenuProps) {
+  const t = useT();
+
   if (actions.length === 0) return null;
 
   return (
@@ -53,7 +56,7 @@ export function RowActionsMenu({ label, actions, disabled, className }: RowActio
           return (
             <DropdownMenuItem
               key={action.id}
-              title={action.label}
+              title={t(action.label)}
               startContent={Icon ? <Icon className="size-3.5" /> : undefined}
               color={action.destructive ? "danger" : undefined}
               disabled={action.disabled}

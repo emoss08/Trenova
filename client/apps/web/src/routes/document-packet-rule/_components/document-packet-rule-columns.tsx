@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
@@ -54,7 +55,7 @@ export function getColumns(
       header: "Required",
       cell: ({ row }) => (
         <Badge variant={row.original.required ? "active" : "outline"}>
-          {row.original.required ? "Yes" : "No"}
+          {row.original.required ? translate("Yes") : translate("No")}
         </Badge>
       ),
       size: 100,
@@ -74,7 +75,7 @@ export function getColumns(
       header: "Allow Multiple",
       cell: ({ row }) => (
         <Badge variant={row.original.allowMultiple ? "info" : "outline"}>
-          {row.original.allowMultiple ? "Yes" : "No"}
+          {row.original.allowMultiple ? translate("Yes") : translate("No")}
         </Badge>
       ),
       size: 130,
@@ -106,7 +107,7 @@ export function getColumns(
       header: "Expiration Req.",
       cell: ({ row }) => (
         <Badge variant={row.original.expirationRequired ? "warning" : "outline"}>
-          {row.original.expirationRequired ? "Yes" : "No"}
+          {row.original.expirationRequired ? translate("Yes") : translate("No")}
         </Badge>
       ),
       size: 140,
@@ -124,7 +125,7 @@ export function getColumns(
       header: "Warning Days",
       cell: ({ row }) =>
         row.original.expirationRequired ? (
-          <span>{row.original.expirationWarningDays}d</span>
+          <span>{translate("{0}d", row.original.expirationWarningDays)}</span>
         ) : (
           <span className="text-muted-foreground">-</span>
         ),

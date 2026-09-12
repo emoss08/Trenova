@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import {
@@ -62,6 +63,8 @@ function ScenarioRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
+
   return (
     <div
       className={cn(
@@ -84,9 +87,9 @@ function ScenarioRow({
           <span className="truncate text-sm font-medium">{scenario.name}</span>
         </div>
         <div className="text-muted-foreground text-xs">
-          Expects {formatCurrency(scenario.expectedAmount)}
+          {t("Expects")} {formatCurrency(scenario.expectedAmount)}
           {result && !result.passed && !result.error && (
-            <span className="text-destructive"> — got {formatCurrency(result.actualAmount)}</span>
+            <span className="text-destructive"> {t("— got {0}", formatCurrency(result.actualAmount))}</span>
           )}
           {result?.error && <span className="text-destructive"> — {result.error}</span>}
         </div>
@@ -106,7 +109,7 @@ function ScenarioRow({
               </Button>
             }
           />
-          <TooltipContent>Edit scenario</TooltipContent>
+          <TooltipContent>{t("Edit scenario")}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
@@ -123,7 +126,7 @@ function ScenarioRow({
               </Button>
             }
           />
-          <TooltipContent>Delete scenario</TooltipContent>
+          <TooltipContent>{t("Delete scenario")}</TooltipContent>
         </Tooltip>
       </div>
     </div>
@@ -137,6 +140,8 @@ export function StudioScenariosPane({
   pinDraft,
   onPinConsumed,
 }: StudioScenariosPaneProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { scenarios, isLoading, results, isPending, isStale, runNow } = live;
   const { control } = useFormContext<FormulaTemplateFormValues>();
@@ -181,7 +186,7 @@ export function StudioScenariosPane({
       await invalidate();
     },
     onError: () => {
-      toast.error("Failed to save scenario");
+      toast.error(t("Failed to save scenario"));
     },
   });
 
@@ -191,12 +196,12 @@ export function StudioScenariosPane({
       await apiService.formulaTemplateService.deleteTestCase(templateId, scenario.id);
     },
     onSuccess: async () => {
-      toast.success("Scenario deleted");
+      toast.success(t("Scenario deleted"));
       setPendingDelete(null);
       await invalidate();
     },
     onError: () => {
-      toast.error("Failed to delete scenario");
+      toast.error(t("Failed to delete scenario"));
     },
   });
 
@@ -220,7 +225,7 @@ export function StudioScenariosPane({
     return (
       <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-sm">
         <FlaskConicalIcon className="size-8 opacity-40" />
-        <span>Save the template first, then pin its behaviour with test scenarios.</span>
+        <span>{t("Save the template first, then pin its behaviour with test scenarios.")}</span>
       </div>
     );
   }
@@ -230,13 +235,13 @@ export function StudioScenariosPane({
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <FlaskConicalIcon className="text-muted-foreground size-4" />
-          <span className="text-sm font-semibold">Scenarios</span>
+          <span className="text-sm font-semibold">{t("Scenarios")}</span>
           {results && (
             <Badge
               variant={results.failed === 0 ? "active" : "inactive"}
               className={cn("text-2xs", isStale && "opacity-60")}
             >
-              {results.passed}/{results.total} passing
+              {t("{0}/{1} passing", results.passed, results.total)}
             </Badge>
           )}
           {isPending && <Spinner className="size-3" />}
@@ -256,19 +261,19 @@ export function StudioScenariosPane({
             className="gap-1"
           >
             <PlusIcon className="size-3" />
-            Add
+            {t("Add")}
           </Button>
           <Button
             type="button"
             size="xs"
             onClick={runNow}
             isLoading={isPending}
-            loadingText="Running..."
+            loadingText={t("Running...")}
             disabled={!scenarios || scenarios.length === 0}
             className="gap-1"
           >
             <PlayIcon className="size-3" />
-            Run All
+            {t("Run All")}
           </Button>
         </div>
       </div>
@@ -290,8 +295,7 @@ export function StudioScenariosPane({
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
               <FlaskConicalIcon className="size-8 opacity-40" />
               <span>
-                No scenarios yet. Add one to pin what this formula must produce — approval requires
-                every scenario to pass. A green preview can be pinned in one click.
+                {t("No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.")}
               </span>
             </div>
           )}
@@ -339,15 +343,15 @@ export function StudioScenariosPane({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              Delete scenario &quot;{pendingDelete?.name}&quot;?
+              {t("Delete scenario \"{0}\"?", pendingDelete?.name)}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This scenario will no longer gate approval of the template.
+              {t("This scenario will no longer gate approval of the template.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel variant="outline" size="default">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -356,7 +360,7 @@ export function StudioScenariosPane({
               disabled={deleteMutation.isPending}
               isLoading={deleteMutation.isPending}
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

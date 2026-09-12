@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatFeetInches, formatPounds } from "@trenova/shared/lib/permit";
@@ -111,7 +112,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
         row.original.verifiedAt ? (
           <HoverCardTimestamp timestamp={row.original.verifiedAt} />
         ) : (
-          <span className="text-muted-foreground">Never</span>
+          <span className="text-muted-foreground">{translate("Never")}</span>
         ),
       size: 150,
       meta: { label: "Verified", apiField: "verifiedAt", sortable: true },

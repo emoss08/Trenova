@@ -1,3 +1,4 @@
+import { intlLocale } from "@trenova/shared/i18n/format";
 import type { Location } from "@trenova/shared/types/location";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -117,14 +118,14 @@ export function truncateText(str: string, length: number): string {
 }
 
 export function formatCurrency(num: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(intlLocale(), {
     style: "currency",
     currency: currency,
   }).format(num);
 }
 
 export function formatCompactCurrency(num: number, currency: string = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(intlLocale(), {
     style: "currency",
     currency: currency,
     notation: "compact",
@@ -132,8 +133,15 @@ export function formatCompactCurrency(num: number, currency: string = "USD"): st
   }).format(num);
 }
 
+// value arrives already scaled to percentage points, so it is divided back out before
+// Intl re-applies the scale. That keeps every existing caller's contract while letting the
+// separator and sign placement follow the reader's language.
 export function formatPercent(value: number, digits: number = 1): string {
-  return `${value.toFixed(digits)}%`;
+  return new Intl.NumberFormat(intlLocale(), {
+    style: "percent",
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value / 100);
 }
 
 const METERS_PER_MILE = 1609.344;
@@ -143,7 +151,7 @@ export function metersToMiles(meters: number): number {
 }
 
 export function formatPerMile(value: number, digits: number = 2, currency: string = "USD"): string {
-  const formatted = new Intl.NumberFormat("en-US", {
+  const formatted = new Intl.NumberFormat(intlLocale(), {
     style: "currency",
     currency: currency,
     minimumFractionDigits: digits,

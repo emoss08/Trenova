@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
@@ -117,6 +118,8 @@ export function WeatherTimeline({
   weatherLayer: WeatherLayerId;
   onWeatherLayerChange: (layer: WeatherLayerId) => void;
 }) {
+  const t = useT();
+
   const trackRef = useRef<HTMLDivElement>(null);
   const currentFrame = frames[currentIndex];
   const isLive = currentIndex === frames.length - 1;
@@ -182,7 +185,7 @@ export function WeatherTimeline({
               }
             >
               <activeOption.icon className="fill-foreground text-foreground size-4" />
-              <span>{activeOption.label}</span>
+              <span>{t(activeOption.label)}</span>
               <ChevronDownIcon className="text-muted-foreground size-3" />
             </PopoverTrigger>
             <PopoverContent
@@ -200,8 +203,8 @@ export function WeatherTimeline({
                 >
                   <opt.icon className="fill-foreground text-foreground mt-px size-4 shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium">{opt.label}</div>
-                    <div className="text-2xs text-muted-foreground">{opt.description}</div>
+                    <div className="text-sm font-medium">{t(opt.label)}</div>
+                    <div className="text-2xs text-muted-foreground">{t(opt.description)}</div>
                   </div>
                 </button>
               ))}
@@ -213,7 +216,7 @@ export function WeatherTimeline({
               size="icon-xs"
               onClick={() => onIndexChange(0)}
               disabled={currentIndex === 0}
-              title="Jump to earliest"
+              title={t("Jump to earliest")}
             >
               <SkipBackIcon className="size-3.5" />
             </Button>
@@ -222,7 +225,7 @@ export function WeatherTimeline({
               size="icon-xs"
               onClick={() => onIndexChange(Math.max(0, currentIndex - 1))}
               disabled={currentIndex === 0}
-              title="Previous frame"
+              title={t("Previous frame")}
             >
               <StepBackIcon className="size-3.5" />
             </Button>
@@ -239,7 +242,7 @@ export function WeatherTimeline({
               size="icon-xs"
               onClick={() => onIndexChange(Math.min(frames.length - 1, currentIndex + 1))}
               disabled={isLive}
-              title="Next frame"
+              title={t("Next frame")}
             >
               <StepForwardIcon className="size-3.5" />
             </Button>
@@ -248,7 +251,7 @@ export function WeatherTimeline({
               size="icon-xs"
               onClick={() => onIndexChange(frames.length - 1)}
               disabled={isLive}
-              title="Jump to live"
+              title={t("Jump to live")}
             >
               <SkipForwardIcon className="size-3.5" />
             </Button>
@@ -290,7 +293,7 @@ export function WeatherTimeline({
                         : "translateX(-50%)",
                 }}
               >
-                {tick.label}
+                {t(tick.label)}
               </span>
             ))}
           </div>

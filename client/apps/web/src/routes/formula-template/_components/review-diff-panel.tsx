@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
 import { queries } from "@/lib/queries";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -12,6 +13,8 @@ import { describeChangedFields } from "./review-diff";
  * other changed field as one line. Reviewers approve a change, not a template.
  */
 export function ReviewDiffPanel({ templateId }: { templateId: string }) {
+  const t = useT();
+
   const { data, isLoading, isError } = useQuery({
     ...queries.formulaTemplate.reviewDiff(templateId),
     enabled: !!templateId,
@@ -32,7 +35,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
   if (isError || !data) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        The change summary could not be loaded; open Version History to compare by hand.
+        {t("The change summary could not be loaded; open Version History to compare by hand.")}
       </div>
     );
   }
@@ -45,27 +48,26 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
         <span className="flex items-center gap-1.5 text-xs font-semibold">
           <GitCompareIcon className="size-3.5" />
           {data.hasApprovedBase
-            ? `Changes since approved v${data.baseVersion}`
-            : "First approval; everything below is new"}
+            ? t("Changes since approved v{0}", data.baseVersion)
+            : t("First approval; everything below is new")}
         </span>
         <span className="text-2xs text-muted-foreground">
           {data.changeCount === 0
-            ? "identical to production"
+            ? t("identical to production")
             : `${data.changeCount} ${data.changeCount === 1 ? "change" : "changes"}`}
         </span>
       </div>
 
       {data.changeCount === 0 ? (
         <p className="text-muted-foreground px-3 py-2 text-xs">
-          The content matches what is already approved; approving records a fresh review without
-          changing any rate.
+          {t("The content matches what is already approved; approving records a fresh review without changing any rate.")}
         </p>
       ) : (
         <div className="space-y-2 p-3">
           {expressionChanged && (
             <div className="space-y-1">
               <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-                Expression
+                {t("Expression")}
               </span>
               <ExpressionDiff before={data.baseExpression} after={data.currentExpression} />
             </div>
@@ -74,7 +76,7 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
             <ul className="divide-y rounded-md border text-xs">
               {rows.map((row) => (
                 <li key={row.path} className="flex items-center justify-between gap-3 px-3 py-1.5">
-                  <span className="font-medium">{row.label}</span>
+                  <span className="font-medium">{t(row.label)}</span>
                   <span className="text-muted-foreground truncate font-mono">{row.summary}</span>
                 </li>
               ))}

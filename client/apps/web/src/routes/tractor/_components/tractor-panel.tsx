@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { TractorRow } from "@/lib/graphql/equipment-table";
@@ -46,6 +47,8 @@ export function buildTractorDefaults() {
 }
 
 export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<TractorRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(tractorSchema),
     defaultValues: buildTractorDefaults(),
@@ -85,7 +88,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         form={form}
         url="/tractors/"
         queryKey="tractor-list"
-        title="Tractor"
+        title={t("Tractor")}
         fieldKey="code"
         formComponent={<TractorForm />}
         tabs={documentsTabs}
@@ -101,7 +104,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       form={form}
       url="/tractors/"
       queryKey="tractor-list"
-      title="Tractor"
+      title={t("Tractor")}
       formComponent={<TractorForm />}
       useDock
     />

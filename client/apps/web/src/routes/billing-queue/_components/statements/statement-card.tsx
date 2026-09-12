@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
 import { billsInLabel, cadenceLabel } from "@/lib/billing-schedule";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -11,7 +12,13 @@ import { BotIcon, PauseCircleIcon } from "lucide-react";
  * A statement's most-asked question is "how much longer", and a date alone does
  * not answer it at a glance the way a bar filling up does.
  */
-function PeriodProgress({ statement, nowSeconds }: { statement: OpenStatement; nowSeconds: number }) {
+function PeriodProgress({
+  statement,
+  nowSeconds,
+}: {
+  statement: OpenStatement;
+  nowSeconds: number;
+}) {
   const span = statement.periodEnd - statement.periodStart;
   const elapsed = nowSeconds - statement.periodStart;
   const pct = span > 0 ? Math.min(100, Math.max(0, (elapsed / span) * 100)) : 100;
@@ -38,6 +45,8 @@ export function StatementCard({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
+
   const empty = statement.shipmentCount === 0;
   const due = statement.periodEnd <= nowSeconds;
 
@@ -54,7 +63,7 @@ export function StatementCard({
         }
         amount={
           empty ? (
-            <span className="text-muted-foreground text-xs font-normal">Nothing yet</span>
+            <span className="text-muted-foreground text-xs font-normal">{t("Nothing yet")}</span>
           ) : (
             formatCurrency(Number(statement.totalAmount ?? 0), statement.currencyCode)
           )
@@ -80,14 +89,14 @@ export function StatementCard({
                         <span
                           tabIndex={0}
                           className="text-muted-foreground/70 inline-flex"
-                          aria-label="Bills automatically"
+                          aria-label={t("Bills automatically")}
                         >
                           <BotIcon className="size-3" />
                         </span>
                       }
                     />
                     <TooltipContent side="right">
-                      Bills automatically when the period closes — no review step
+                      {t("Bills automatically when the period closes — no review step")}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -98,15 +107,16 @@ export function StatementCard({
                         <span
                           tabIndex={0}
                           className="inline-flex text-amber-600 dark:text-amber-400"
-                          aria-label="Under the customer's minimum"
+                          aria-label={t("Under the customer's minimum")}
                         >
                           <PauseCircleIcon className="size-3" />
                         </span>
                       }
                     />
                     <TooltipContent side="right">
-                      Under this customer&apos;s invoice minimum — it will roll into next period
-                      instead of billing
+                      {t(
+                        "Under this customer's invoice minimum — it will roll into next period instead of billing",
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -114,7 +124,9 @@ export function StatementCard({
               <span
                 className={cn(
                   "text-[11px]",
-                  due ? "font-medium text-amber-600 dark:text-amber-400" : "text-muted-foreground/70",
+                  due
+                    ? "font-medium text-amber-600 dark:text-amber-400"
+                    : "text-muted-foreground/70",
                 )}
               >
                 {billsInLabel(statement.periodEnd, nowSeconds)}

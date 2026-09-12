@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -35,6 +36,8 @@ export function ApplyUnappliedForm({
   onBack: () => void;
   onDone: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const budgetMinor = payment.unappliedAmountMinor;
 
@@ -83,8 +86,8 @@ export function ApplyUnappliedForm({
       });
     },
     onSuccess: () => {
-      toast.success("Unapplied cash applied", {
-        description: "Invoice balances and the GL were updated.",
+      toast.success(t("Unapplied cash applied"), {
+        description: t("Invoice balances and the GL were updated."),
       });
       void queryClient.invalidateQueries({ queryKey: ["customer-payment-list"] });
       void queryClient.invalidateQueries({
@@ -100,13 +103,13 @@ export function ApplyUnappliedForm({
   const onSubmit = async (values: ApplyUnappliedFormValues) => {
     const totals = computeApplicationTotals(values.applications, budgetMinor);
     if (totals.appliedMinor <= 0) {
-      toast.error("Nothing to apply", {
-        description: "Check at least one invoice and enter an applied amount.",
+      toast.error(t("Nothing to apply"), {
+        description: t("Check at least one invoice and enter an applied amount."),
       });
       return;
     }
     if (totals.isOverBudget || totals.overAppliedRows.length > 0) {
-      toast.error("Invalid application", {
+      toast.error(t("Invalid application"), {
         description: totals.isOverBudget
           ? "The applied total exceeds the unapplied cash on this payment."
           : "One or more invoices would be over-applied.",
@@ -121,10 +124,10 @@ export function ApplyUnappliedForm({
       <div className="flex items-center justify-between">
         <Button type="button" variant="ghost" size="sm" onClick={onBack} className="h-7 text-xs">
           <ArrowLeftIcon className="size-3.5" />
-          Back to payment
+          {t("Back to payment")}
         </Button>
         <p className="text-muted-foreground text-xs">
-          Unapplied cash available:{" "}
+          {t("Unapplied cash available:")}{" "}
           <span className="text-foreground font-semibold tabular-nums">
             {formatCurrency(budgetMinor / 100)}
           </span>
@@ -139,10 +142,10 @@ export function ApplyUnappliedForm({
                 <AutoCompleteDateField
                   control={form.control}
                   name="accountingDate"
-                  label="Accounting Date"
+                  label={t("Accounting Date")}
                   rules={{ required: "Accounting date is required" }}
-                  placeholder="Select date"
-                  description="The GL date for this application. It must fall within an open fiscal period."
+                  placeholder={t("Select date")}
+                  description={t("The GL date for this application. It must fall within an open fiscal period.")}
                 />
               </FormControl>
             </FormGroup>
@@ -156,15 +159,15 @@ export function ApplyUnappliedForm({
                 })
               }
               isLoadingItems={itemsLoading}
-              emptyMessage="This customer has no open invoices to apply against."
+              emptyMessage={t("This customer has no open invoices to apply against.")}
             />
 
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmitting}>
-                Apply Cash
+                {t("Apply Cash")}
               </Button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -11,6 +12,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 export function useSwitchOrganization() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
@@ -34,8 +37,8 @@ export function useSwitchOrganization() {
 
       void navigate("/");
 
-      toast.success("Organization switched", {
-        description: "You are now working in a different organization.",
+      toast.success(t("Organization switched"), {
+        description: t("You are now working in a different organization."),
       });
     },
   });

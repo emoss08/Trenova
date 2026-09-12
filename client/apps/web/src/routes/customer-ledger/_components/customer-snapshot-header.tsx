@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AgingDistributionBar } from "@/components/accounting/aging-buckets";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
@@ -38,6 +39,8 @@ export function CustomerSnapshotHeader({
   profile: ARCustomerProfile | undefined;
   isLoading: boolean;
 }) {
+  const t = useT();
+
   const chartData = useMemo(
     () =>
       (profile?.snapshot.monthlyCollections ?? []).map((point) => ({
@@ -86,15 +89,15 @@ export function CustomerSnapshotHeader({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-        <SnapshotTile index={0} label="Open Balance">
+        <SnapshotTile index={0} label={t("Open Balance")}>
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
           <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
-            {formatCurrency(snapshot.overdueMinor / 100)} overdue · {snapshot.openInvoiceCount} open
+            {t("{0} overdue · {1} open", formatCurrency(snapshot.overdueMinor / 100), snapshot.openInvoiceCount)}
           </p>
         </SnapshotTile>
-        <SnapshotTile index={1} label="Credit Utilization">
+        <SnapshotTile index={1} label={t("Credit Utilization")}>
           {snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0 ? (
             <>
               <p className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -109,42 +112,42 @@ export function CustomerSnapshotHeader({
                 />
               </div>
               <p className="text-muted-foreground mt-1 text-[11px] tabular-nums">
-                of {formatCurrency(snapshot.creditLimitMinor / 100)} limit
+                {t("of {0} limit", formatCurrency(snapshot.creditLimitMinor / 100))}
               </p>
             </>
           ) : (
             <>
               <p className="text-muted-foreground text-2xl font-semibold tracking-tight">—</p>
-              <p className="text-muted-foreground mt-0.5 text-[11px]">no credit limit set</p>
+              <p className="text-muted-foreground mt-0.5 text-[11px]">{t("no credit limit set")}</p>
             </>
           )}
         </SnapshotTile>
-        <SnapshotTile index={2} label="DSO / Days to Pay">
+        <SnapshotTile index={2} label={t("DSO / Days to Pay")}>
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
-            {profile.dsoDays.toFixed(0)}d
+            {t("{0}d", profile.dsoDays.toFixed(0))}
             <span className="text-muted-foreground ml-2 text-sm font-medium tabular-nums">
-              / {snapshot.avgDaysToPay.toFixed(0)}d avg
+              / {snapshot.avgDaysToPay.toFixed(0)}{t("d avg")}
             </span>
           </p>
           <p className="text-muted-foreground mt-0.5 text-[11px]">trailing 91d / 12mo</p>
         </SnapshotTile>
-        <SnapshotTile index={3} label="Delinquency Score">
+        <SnapshotTile index={3} label={t("Delinquency Score")}>
           <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
             {score.toFixed(0)}
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px]">0 low risk · 100 high risk</p>
+          <p className="text-muted-foreground mt-0.5 text-[11px]">{t("0 low risk · 100 high risk")}</p>
         </SnapshotTile>
       </div>
 
       <div className="grid gap-3 xl:grid-cols-2">
         <Card className="gap-0 p-0">
           <CardHeader className="border-b px-4 py-2.5">
-            <CardTitle className="text-xs font-medium">Payments — trailing 12 months</CardTitle>
+            <CardTitle className="text-xs font-medium">{t("Payments — trailing 12 months")}</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
             {chartData.length === 0 ? (
               <div className="text-muted-foreground flex h-28 items-center justify-center text-xs">
-                No payments received yet
+                {t("No payments received yet")}
               </div>
             ) : (
               <ChartContainer config={collectionsChartConfig} className="h-28 w-full">
@@ -166,12 +169,12 @@ export function CustomerSnapshotHeader({
 
         <Card className="gap-0 p-0">
           <CardHeader className="border-b px-4 py-2.5">
-            <CardTitle className="text-xs font-medium">Account details</CardTitle>
+            <CardTitle className="text-xs font-medium">{t("Account details")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 p-4">
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
               <DetailRow
-                label="Oldest open invoice"
+                label={t("Oldest open invoice")}
                 value={
                   snapshot.oldestOpenInvoiceDate
                     ? `${formatDateOrDash(snapshot.oldestOpenInvoiceDate)} · ${snapshot.oldestDaysPastDue}d past due`
@@ -179,7 +182,7 @@ export function CustomerSnapshotHeader({
                 }
               />
               <DetailRow
-                label="Last payment"
+                label={t("Last payment")}
                 value={
                   snapshot.lastPaymentDate
                     ? `${formatCurrency(snapshot.lastPaymentMinor / 100)} on ${formatDateOrDash(snapshot.lastPaymentDate)}`
@@ -187,11 +190,11 @@ export function CustomerSnapshotHeader({
                 }
               />
               <DetailRow
-                label="Unapplied cash"
+                label={t("Unapplied cash")}
                 value={formatCurrency(snapshot.unappliedCashMinor / 100)}
               />
               <DetailRow
-                label="Billed trailing 91d"
+                label={t("Billed trailing 91d")}
                 value={formatCurrency(snapshot.billedTrailing91Minor / 100)}
               />
             </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   LocationCategoryAutocompleteField,
   UsStateAutocompleteField,
@@ -15,6 +16,8 @@ import { useFormContext } from "react-hook-form";
 import { LocationGeofenceControls } from "./location-geofence-editor";
 
 export function LocationForm() {
+  const t = useT();
+
   const { control } = useFormContext<Location>();
   const googleMapsQuery = useQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
@@ -24,8 +27,8 @@ export function LocationForm() {
   return (
     <div className="space-y-6 p-3">
       <FormSection
-        title="Basic Details"
-        description="Identification, address, and operating boundary for this location."
+        title={t("Basic Details")}
+        description={t("Identification, address, and operating boundary for this location.")}
       >
         <FormGroup cols={1}>
           <FormControl>
@@ -33,9 +36,9 @@ export function LocationForm() {
               control={control}
               rules={{ required: true }}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="The current status of the location."
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("The current status of the location.")}
               options={statusChoices}
             />
           </FormControl>
@@ -44,9 +47,9 @@ export function LocationForm() {
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Name"
-              placeholder="Name"
-              description="The name of the location."
+              label={t("Name")}
+              placeholder={t("Name")}
+              description={t("The name of the location.")}
               maxLength={255}
             />
           </FormControl>
@@ -55,19 +58,19 @@ export function LocationForm() {
               control={control}
               rules={{ required: true }}
               name="locationCategoryId"
-              label="Location Category"
-              placeholder="Location Category"
-              description="The category this location belongs to."
+              label={t("Location Category")}
+              placeholder={t("Location Category")}
+              description={t("The category this location belongs to.")}
             />
           </FormControl>
           {googleMapsQuery.isLoading ? (
             <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-              Loading Maps Configuration..
+              {t("Loading Maps Configuration..")}
             </div>
           ) : googleMapsQuery.data?.config.apiKey ? (
             <FormControl cols="full">
               <div className="space-y-1.5">
-                <p className="required text-sm leading-none font-medium">Geofence</p>
+                <p className="required text-sm leading-none font-medium">{t("Geofence")}</p>
                 <LocationGeofenceControls />
               </div>
             </FormControl>
@@ -80,9 +83,9 @@ export function LocationForm() {
               <InputField
                 control={control}
                 name="addressLine2"
-                label="Address Line 2"
-                placeholder="Suite, floor, building, etc."
-                description="Additional address details such as suite number, floor, or building name."
+                label={t("Address Line 2")}
+                placeholder={t("Suite, floor, building, etc.")}
+                description={t("Additional address details such as suite number, floor, or building name.")}
               />
             </FormControl>
             <FormControl>
@@ -90,18 +93,18 @@ export function LocationForm() {
                 control={control}
                 name="city"
                 rules={{ required: true }}
-                label="City"
-                placeholder="City"
-                description="City where the customer's primary office or billing address is located."
+                label={t("City")}
+                placeholder={t("City")}
+                description={t("City where the customer's primary office or billing address is located.")}
               />
             </FormControl>
             <FormControl>
               <UsStateAutocompleteField
                 control={control}
                 name="stateId"
-                label="State"
-                placeholder="State"
-                description="U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting."
+                label={t("State")}
+                placeholder={t("State")}
+                description={t("U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.")}
               />
             </FormControl>
             <FormControl cols="full">
@@ -109,25 +112,25 @@ export function LocationForm() {
                 rules={{ required: true }}
                 control={control}
                 name="postalCode"
-                label="Postal Code"
-                placeholder="e.g., 90210"
-                description="ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups."
+                label={t("Postal Code")}
+                placeholder={t("e.g., 90210")}
+                description={t("ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.")}
               />
             </FormControl>
             <FormControl cols="full">
               <SelectField
                 control={control}
                 name="timezone"
-                label="Timezone"
-                placeholder="Not set (UTC)"
+                label={t("Timezone")}
+                placeholder={t("Not set (UTC)")}
                 isClearable
-                description="Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC."
+                description={t("Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.")}
                 groups={timezoneGroupedChoices}
                 renderOption={(option) => (
                   <span className="flex w-full items-center justify-between gap-3">
-                    <span>{option.label}</span>
+                    <span>{t(option.label)}</span>
                     {option.description && (
-                      <span className="text-muted-foreground text-xs">{option.description}</span>
+                      <span className="text-muted-foreground text-xs">{t(option.description)}</span>
                     )}
                   </span>
                 )}
@@ -139,9 +142,9 @@ export function LocationForm() {
             <TextareaField
               control={control}
               name="description"
-              label="Notes"
-              placeholder="Add any extra detail about this location"
-              description="Optional notes for dispatchers and drivers."
+              label={t("Notes")}
+              placeholder={t("Add any extra detail about this location")}
+              description={t("Optional notes for dispatchers and drivers.")}
               minRows={3}
             />
           </FormControl>

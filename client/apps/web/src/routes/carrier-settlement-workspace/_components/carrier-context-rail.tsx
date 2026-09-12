@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   CarrierCostEventStatusBadge,
@@ -33,10 +34,12 @@ export function CarrierContextRail({
   carrierName: string | null;
   selectedSettlement: CarrierSettlementRow | null;
 }) {
+  const t = useT();
+
   if (!carrierId) {
     return (
       <div className="bg-card text-muted-foreground hidden items-center justify-center rounded-lg border p-6 text-center text-xs lg:flex">
-        Carrier context appears here once a settlement is selected.
+        {t("Carrier context appears here once a settlement is selected.")}
       </div>
     );
   }
@@ -51,10 +54,9 @@ export function CarrierContextRail({
       >
         <div className="flex flex-col gap-3 p-3">
           <div>
-            <h3 className="text-sm font-semibold">{carrierName ?? "Carrier"}</h3>
+            <h3 className="text-sm font-semibold">{carrierName ?? t("Carrier")}</h3>
             <p className="text-muted-foreground text-[11px]">
-              Everything affecting this carrier&apos;s payable — cost accruals, recent statements,
-              and the AP subledger.
+              {t("Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.")}
             </p>
           </div>
           <UnsettledCostSection carrierId={carrierId} />
@@ -97,6 +99,8 @@ function RailSection({
 }
 
 function UnsettledCostSection({ carrierId }: { carrierId: string }) {
+  const t = useT();
+
   const { data: events, isLoading } = useQuery({
     queryKey: ["carrier-pending-cost-events", carrierId],
     queryFn: ({ signal }) => fetchCarrierPendingCostEvents(carrierId, { signal }),
@@ -104,7 +108,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title="Unsettled Cost" hint="Accrued cost not yet on a settlement.">
+      <RailSection title={t("Unsettled Cost")} hint={t("Accrued cost not yet on a settlement.")}>
         <Skeleton className="h-16 w-full" />
       </RailSection>
     );
@@ -114,12 +118,12 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
 
   return (
     <RailSection
-      title="Unsettled Cost"
-      hint="Accrued purchased-transportation cost waiting for the next settlement run."
+      title={t("Unsettled Cost")}
+      hint={t("Accrued purchased-transportation cost waiting for the next settlement run.")}
     >
       {list.length === 0 ? (
         <p className="text-muted-foreground text-[11px]">
-          Nothing waiting. New cost accrues automatically as carrier-covered moves complete.
+          {t("Nothing waiting. New cost accrues automatically as carrier-covered moves complete.")}
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -127,7 +131,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
             <li key={event.id} className="rounded-md border p-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground font-mono text-[10px]">
-                  {event.proNumber || "No PRO"}
+                  {event.proNumber || t("No PRO")}
                 </span>
                 <span className="text-muted-foreground text-[10px]">
                   {formatSettlementMonthDay(event.eventDate)}
@@ -139,7 +143,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
               <div className="mt-1 flex items-center gap-1.5">
                 <CarrierCostEventStatusBadge status={event.status as CarrierCostEventStatus} />
                 <span className="text-muted-foreground truncate text-[10px]">
-                  {event.description}
+                  {t(event.description)}
                 </span>
               </div>
             </li>
@@ -157,6 +161,8 @@ function RecentSettlementsSection({
   carrierId: string;
   selectedSettlementId: string | null;
 }) {
+  const t = useT();
+
   const { data: settlements, isLoading } = useQuery({
     queryKey: ["carrier-recent-settlements", carrierId],
     queryFn: ({ signal }) => fetchCarrierRecentSettlements(carrierId, 5, { signal }),
@@ -164,7 +170,7 @@ function RecentSettlementsSection({
 
   if (isLoading) {
     return (
-      <RailSection title="Recent Settlements" hint="Latest statements for this carrier.">
+      <RailSection title={t("Recent Settlements")} hint={t("Latest statements for this carrier.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -173,9 +179,9 @@ function RecentSettlementsSection({
   const list = (settlements ?? []).filter((settlement) => settlement.id !== selectedSettlementId);
 
   return (
-    <RailSection title="Recent Settlements" hint="Latest statements for this carrier.">
+    <RailSection title={t("Recent Settlements")} hint={t("Latest statements for this carrier.")}>
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">No other settlements on record.</p>
+        <p className="text-muted-foreground text-[11px]">{t("No other settlements on record.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((settlement) => (
@@ -209,6 +215,8 @@ function RecentSettlementsSection({
 }
 
 function LedgerSection({ carrierId }: { carrierId: string }) {
+  const t = useT();
+
   const { data: entries, isLoading } = useQuery({
     queryKey: ["carrier-ledger-entries", carrierId],
     queryFn: ({ signal }) => fetchCarrierLedgerEntries(carrierId, 100, { signal }),
@@ -216,7 +224,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
 
   if (isLoading) {
     return (
-      <RailSection title="AP Subledger" hint="Bills, payments, and adjustments.">
+      <RailSection title={t("AP Subledger")} hint={t("Bills, payments, and adjustments.")}>
         <Skeleton className="h-12 w-full" />
       </RailSection>
     );
@@ -227,13 +235,13 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
 
   return (
     <RailSection
-      title="AP Subledger"
-      hint="Bills, payments, and adjustments — the balance reconciles to the GL's AP account."
+      title={t("AP Subledger")}
+      hint={t("Bills, payments, and adjustments — the balance reconciles to the GL's AP account.")}
     >
       <p className="text-sm font-semibold">
         <AmountDisplay value={balance} currency="USD" />
         <span className="text-muted-foreground ml-1 text-[10px] font-normal">
-          open balance{list.length >= 100 ? " (latest 100 entries)" : ""}
+          {t("open balance{0}", list.length >= 100 ? ` ${t("(latest 100 entries)")}` : "")}
         </span>
       </p>
       {list.length > 0 && (

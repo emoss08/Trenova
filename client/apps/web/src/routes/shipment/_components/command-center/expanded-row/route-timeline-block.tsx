@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import type { Stop, StopType } from "@trenova/shared/types/shipment";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
@@ -74,10 +75,12 @@ function stopNote(stop: Stop): string {
 }
 
 export function RouteTimelineBlock({ stops }: { stops: Stop[] }) {
+  const t = useT();
+
   return (
     <ScrollArea className="h-70" viewportClassName="pr-2">
       {stops.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">No stops on this shipment.</p>
+        <p className="text-muted-foreground text-[11px]">{t("No stops on this shipment.")}</p>
       ) : (
         <div className="relative pl-4">
           <div

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { ServiceTypeRow } from "@/lib/graphql/service-type-table";
@@ -13,6 +14,8 @@ export function ServiceTypePanel({
   mode,
   row,
 }: DataTablePanelProps<ServiceTypeRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(serviceTypeSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function ServiceTypePanel({
         form={form}
         url="/service-types/"
         queryKey="service-type-list"
-        title="Service Type"
+        title={t("Service Type")}
         fieldKey="code"
         formComponent={<ServiceTypeForm />}
       />
@@ -47,7 +50,7 @@ export function ServiceTypePanel({
       form={form}
       url="/service-types/"
       queryKey="service-type-list"
-      title="Service Type"
+      title={t("Service Type")}
       formComponent={<ServiceTypeForm />}
     />
   );

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ACTION_DOCK_SECONDARY_BUTTON,
   ActionDock,
@@ -35,12 +36,14 @@ export function HomeEditDock({
   onDiscard,
   onSave,
 }: HomeEditDockProps) {
+  const t = useT();
+
   return (
     <ActionDock
       animated
       indicator={
         dirty ? (
-          <ActionDockIndicator title="Unsaved layout" description="You have unsaved changes." />
+          <ActionDockIndicator title={t("Unsaved layout")} description={t("You have unsaved changes.")} />
         ) : (
           <ActionDockIndicator
             icon={
@@ -48,8 +51,8 @@ export function HomeEditDock({
                 <LayoutGridIcon className="text-background size-3.5" />
               </span>
             }
-            title="Editing home screen"
-            description="Drag to rearrange, resize from a widget's menu."
+            title={t("Editing home screen")}
+            description={t("Drag to rearrange, resize from a widget's menu.")}
           />
         )
       }
@@ -64,7 +67,7 @@ export function HomeEditDock({
         className={ACTION_DOCK_SECONDARY_BUTTON}
       >
         <PlusIcon className="size-3.5" />
-        Add widget
+        {t("Add widget")}
       </Button>
       <Button
         variant="outline"
@@ -72,7 +75,7 @@ export function HomeEditDock({
         disabled={saving}
         className={ACTION_DOCK_SECONDARY_BUTTON}
       >
-        Discard
+        {t("Discard")}
       </Button>
       <Button variant="default" onClick={onSave} disabled={saving} className="min-w-16">
         {saving ? <Spinner /> : saveLabel}

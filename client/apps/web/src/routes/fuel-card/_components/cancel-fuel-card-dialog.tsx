@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { cancelFuelCard, type FuelCardRow } from "@/lib/graphql/fuel-card";
@@ -34,6 +35,8 @@ export function CancelFuelCardDialog({
   card,
   onCancelled,
 }: CancelFuelCardDialogProps) {
+  const t = useT();
+
   const form = useForm<CancelFuelCardValues>({
     resolver: zodResolver(cancelFuelCardSchema) as Resolver<CancelFuelCardValues>,
     defaultValues: { reason: "" },
@@ -57,8 +60,8 @@ export function CancelFuelCardDialog({
       return cancelFuelCard({ id: card.id, version: card.version, reason: values.reason.trim() });
     },
     onSuccess: async () => {
-      toast.success("Card cancelled", {
-        description: "It stays on file for the purchases already made with it.",
+      toast.success(t("Card cancelled"), {
+        description: t("It stays on file for the purchases already made with it."),
       });
       await onCancelled();
       onOpenChange(false);
@@ -81,12 +84,10 @@ export function CancelFuelCardDialog({
                 <BanIcon />
               </AlertDialogMedia>
               <AlertDialogTitle>
-                Cancel {card ? `${card.label} (${maskedCardNumber(card.lastFour)})` : "this card"}?
+                {t("Cancel {0}?", card ? `${card.label} (${maskedCardNumber(card.lastFour)})` : t("this card"))}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                Cancelling is permanent. The card stops matching statement rows and cannot be made
-                active again; purchases already recorded against it are kept. To pause a card
-                instead, suspend it.
+                {t("Cancelling is permanent. The card stops matching statement rows and cannot be made active again; purchases already recorded against it are kept. To pause a card instead, suspend it.")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <FormGroup cols={1} className="mt-4">
@@ -94,20 +95,20 @@ export function CancelFuelCardDialog({
                 <TextareaField
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. Reported lost by the driver on 14 May"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Reported lost by the driver on 14 May")}
                   rules={{ required: true }}
                   maxLength={500}
-                  description="At least ten characters. Kept with the card as the record of why it was cancelled."
+                  description={t("At least ten characters. Kept with the card as the record of why it was cancelled.")}
                 />
               </FormControl>
             </FormGroup>
             <AlertDialogFooter className="mt-4">
               <AlertDialogCancel type="button" disabled={isPending}>
-                Keep card
+                {t("Keep card")}
               </AlertDialogCancel>
               <AlertDialogAction type="submit" variant="destructive" disabled={isPending || !card}>
-                {isPending ? "Cancelling..." : "Cancel card"}
+                {isPending ? t("Cancelling...") : t("Cancel card")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </Form>

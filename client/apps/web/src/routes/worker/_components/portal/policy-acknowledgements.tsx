@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchWorkerPolicyAcknowledgements,
@@ -17,6 +18,8 @@ import { FileSignatureIcon, PenLineIcon } from "lucide-react";
  * agreed to at the time.
  */
 export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.WorkerPolicy, Operation.Read);
 
   const acks = useQuery({
@@ -35,15 +38,15 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FileSignatureIcon className="text-muted-foreground size-4" />
-          <h3 className="text-sm font-semibold">Policies signed</h3>
+          <h3 className="text-sm font-semibold">{t("Policies signed")}</h3>
         </div>
         <span className="text-muted-foreground text-xs tabular-nums">
-          {rows.length} signature{rows.length === 1 ? "" : "s"}
+          {t("{0, plural, one {# signature} other {# signatures}}", rows.length)}
         </span>
       </div>
       {rows.length === 0 ? (
         <p className="text-muted-foreground mt-2 text-xs">
-          Nothing signed yet. Policies are signed from Dash under Profile.
+          {t("Nothing signed yet. Policies are signed from Dash under Profile.")}
         </p>
       ) : (
         <ol className="mt-3 flex flex-col">
@@ -62,10 +65,10 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                 </span>
                 <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 pb-3">
                   <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span className="truncate font-medium">{ack.policy?.title ?? "Policy"}</span>
-                    <Badge variant="outline">v{ack.versionLabel}</Badge>
+                    <span className="truncate font-medium">{ack.policy?.title ?? t("Policy")}</span>
+                    <Badge variant="outline">{t("v{0}", ack.versionLabel)}</Badge>
                     {superseded ? (
-                      <Badge variant="secondary">Superseded by v{ack.policy?.versionLabel}</Badge>
+                      <Badge variant="secondary">{t("Superseded by v{0}", ack.policy?.versionLabel)}</Badge>
                     ) : null}
                   </span>
                   <span className="text-muted-foreground flex items-center gap-1 tabular-nums">
@@ -76,7 +79,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                         <span>{ack.signatureName}</span>
                       </>
                     ) : (
-                      " · read"
+                      ` ${t("· read")}`
                     )}
                   </span>
                 </div>

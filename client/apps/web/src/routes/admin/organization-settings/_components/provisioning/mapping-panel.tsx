@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { SCIMGroupRoleMappingRow } from "@/lib/graphql/scim-group-role-mapping-table";
@@ -99,6 +100,8 @@ export function SCIMGroupMappingCreatePanel({
   organizationId,
   directoryId,
 }: SCIMGroupMappingCreatePanelProps) {
+  const t = useT();
+
   const form = useForm<SCIMGroupRoleMappingFormValues>({
     resolver: zodResolver(
       scimGroupRoleMappingFormSchema,
@@ -114,8 +117,8 @@ export function SCIMGroupMappingCreatePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey={queryKey}
-      title="Group Mapping"
-      description="Map an external SCIM group to a Trenova role."
+      title={t("Group Mapping")}
+      description={t("Map an external SCIM group to a Trenova role.")}
       size="md"
       formComponent={<SCIMGroupMappingForm />}
       mutationFn={async (values) => {
@@ -137,6 +140,8 @@ function SCIMGroupMappingEditPanel({
   organizationId,
   directoryId,
 }: SCIMGroupMappingEditPanelProps) {
+  const t = useT();
+
   const form = useForm<SCIMGroupRoleMappingFormValues>({
     resolver: zodResolver(
       scimGroupRoleMappingFormSchema,
@@ -153,7 +158,7 @@ function SCIMGroupMappingEditPanel({
       row={row ? (toSCIMGroupMappingFormValuesFromRow(row) as SCIMGroupMappingRecord) : null}
       form={form}
       queryKey={queryKey}
-      title="Group Mapping"
+      title={t("Group Mapping")}
       fieldKey="displayName"
       size="md"
       formComponent={<SCIMGroupMappingForm />}

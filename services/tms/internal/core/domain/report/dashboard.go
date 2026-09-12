@@ -172,7 +172,7 @@ func (d *Dashboard) Validate(multiErr *errortypes.MultiError) {
 
 	if len(d.Layout.Tiles) > MaxDashboardTiles {
 		multiErr.Add("layout.tiles", errortypes.ErrInvalid,
-			fmt.Sprintf("A dashboard holds at most %d tiles", MaxDashboardTiles))
+			"A dashboard holds at most {0} tiles", MaxDashboardTiles)
 		return
 	}
 
@@ -268,17 +268,17 @@ func validateTileGeometry(
 	}
 	if tile.W < 1 || tile.W > MaxTileSpan {
 		multiErr.Add(fieldPath+".w", errortypes.ErrInvalid,
-			fmt.Sprintf("Tile width must be between 1 and %d columns", MaxTileSpan))
+			"Tile width must be between 1 and {0} columns", MaxTileSpan)
 		return
 	}
 	if tile.X+tile.W > DashboardGridColumns {
 		multiErr.Add(fieldPath+".x", errortypes.ErrInvalid,
-			fmt.Sprintf("Tile runs past the %d-column grid", DashboardGridColumns))
+			"Tile runs past the {0}-column grid", DashboardGridColumns)
 		return
 	}
 	if tile.H < 1 || tile.H > MaxTileHeight {
 		multiErr.Add(fieldPath+".h", errortypes.ErrInvalid,
-			fmt.Sprintf("Tile height must be between 1 and %d rows", MaxTileHeight))
+			"Tile height must be between 1 and {0} rows", MaxTileHeight)
 	}
 }
 
@@ -300,7 +300,7 @@ func validateDashboardParams(multiErr *errortypes.MultiError, params []Parameter
 
 		if !param.Type.IsValid() {
 			multiErr.Add(fieldPath+".type", errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown parameter type %q", param.Type))
+				"Unknown parameter type \"{0}\"", param.Type)
 		}
 	}
 }

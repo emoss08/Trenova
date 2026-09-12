@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -47,6 +48,8 @@ export function BillingQueueChargeDialog({
   onSave: (values: ChargeDialogResult) => void;
   defaultValues?: Partial<ChargeDialogResult>;
 }) {
+  const t = useT();
+
   const isEditing = !!defaultValues?.accessorialChargeId;
   const accessorialRef = useRef<AccessorialCharge | GraphQLSelectOption | null>(null);
 
@@ -103,11 +106,11 @@ export function BillingQueueChargeDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Charge" : "Add Charge"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the accessorial charge details"
-              : "Select an accessorial charge and configure billing details"}
+              ? t("Update the accessorial charge details")
+              : t("Select an accessorial charge and configure billing details")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(onSubmit)}>
@@ -117,10 +120,10 @@ export function BillingQueueChargeDialog({
                 <AccessorialChargeAutocompleteField
                   control={control}
                   name="accessorialChargeId"
-                  label="Accessorial Charge"
+                  label={t("Accessorial Charge")}
                   clearable
                   rules={{ required: true }}
-                  placeholder="Select Accessorial Charge"
+                  placeholder={t("Select Accessorial Charge")}
                   onOptionChange={handleChargeSelected}
                 />
               </FormControl>
@@ -128,40 +131,40 @@ export function BillingQueueChargeDialog({
                 <NumberField
                   control={control}
                   name="unit"
-                  label="Unit"
+                  label={t("Unit")}
                   rules={{ required: true, min: 1 }}
-                  placeholder="Unit"
-                  sideText="unit(s)"
+                  placeholder={t("Unit")}
+                  sideText={t("unit(s)")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField
                   control={control}
                   name="method"
-                  label="Method"
+                  label={t("Method")}
                   options={accessorialChargeMethodChoices}
                   rules={{ required: true }}
-                  placeholder="Select Method"
+                  placeholder={t("Select Method")}
                 />
               </FormControl>
               <FormControl className="col-span-2">
                 <NumberField
                   control={control}
                   name="amount"
-                  label="Amount"
+                  label={t("Amount")}
                   decimalScale={2}
                   rules={{ required: true, min: 0 }}
-                  placeholder="Amount"
-                  sideText="USD"
+                  placeholder={t("Amount")}
+                  sideText={t("USD")}
                 />
               </FormControl>
             </FormGroup>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit">{t("Save")}</Button>
           </DialogFooter>
         </Form>
       </DialogContent>

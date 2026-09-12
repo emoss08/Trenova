@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -17,6 +18,8 @@ const TRIAL_BALANCE_COLUMNS = [
 ] as const;
 
 export function TrialBalancePage() {
+  const t = useT();
+
   const [periodId, setPeriodId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -43,8 +46,8 @@ export function TrialBalancePage() {
 
         {!periodId ? (
           <EmptyTable
-            title="Pick a period"
-            description="Choose a fiscal period above and every account's debits, credits and net change for it are listed here."
+            title={t("Pick a period")}
+            description={t("Choose a fiscal period above and every account's debits, credits and net change for it are listed here.")}
             columns={TRIAL_BALANCE_COLUMNS}
           />
         ) : isLoading ? (
@@ -55,8 +58,8 @@ export function TrialBalancePage() {
           </div>
         ) : balances.length === 0 ? (
           <EmptyTable
-            title="Nothing posted"
-            description="No journal entry landed in this period, so every account stands where it did. Post one, or pick another period."
+            title={t("Nothing posted")}
+            description={t("No journal entry landed in this period, so every account stands where it did. Post one, or pick another period.")}
             columns={TRIAL_BALANCE_COLUMNS}
           />
         ) : (
@@ -64,12 +67,12 @@ export function TrialBalancePage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
-                  <th className="px-3 py-2 text-xs font-medium">Account Code</th>
-                  <th className="px-3 py-2 text-xs font-medium">Account Name</th>
-                  <th className="px-3 py-2 text-xs font-medium">Category</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">Debit</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">Credit</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium">Net Change</th>
+                  <th className="px-3 py-2 text-xs font-medium">{t("Account Code")}</th>
+                  <th className="px-3 py-2 text-xs font-medium">{t("Account Name")}</th>
+                  <th className="px-3 py-2 text-xs font-medium">{t("Category")}</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium">{t("Debit")}</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium">{t("Credit")}</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium">{t("Net Change")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,7 +105,7 @@ export function TrialBalancePage() {
               <tfoot className="bg-muted/30 border-t font-medium">
                 <tr>
                   <td colSpan={3} className="px-3 py-2 text-right text-xs">
-                    Totals
+                    {t("Totals")}
                   </td>
                   <td className="px-3 py-2 text-right">
                     <AmountDisplay value={totalDebit} className="text-xs font-semibold" />

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useState } from "react";
 
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -24,6 +25,8 @@ export function DateTimePickerPopover({
   dateTime,
   setDateTime,
 }: DateTimePickerPopoverProps) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 640px)");
@@ -51,8 +54,8 @@ export function DateTimePickerPopover({
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader className="sr-only text-left">
-            <DrawerTitle>Date Time Picker</DrawerTitle>
-            <DrawerDescription>Select date and time</DrawerDescription>
+            <DrawerTitle>{t("Date Time Picker")}</DrawerTitle>
+            <DrawerDescription>{t("Select date and time")}</DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col py-5">
             <Calendar

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Drawer,
@@ -16,6 +17,8 @@ import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
 
 export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const features = useDashFeatures();
   const [declineOpen, setDeclineOpen] = useState(false);
@@ -47,9 +50,9 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
   if (load.ackStatus === "Declined") {
     return (
       <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="text-sm font-semibold">You declined this load</p>
+        <p className="text-sm font-semibold">{t("You declined this load")}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Dispatch has been notified. If plans changed, call your dispatcher.
+          {t("Dispatch has been notified. If plans changed, call your dispatcher.")}
         </p>
       </div>
     );
@@ -61,9 +64,9 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
 
   return (
     <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-      <p className="text-sm font-semibold">Can you take this load?</p>
+      <p className="text-sm font-semibold">{t("Can you take this load?")}</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Let dispatch know so they can plan around you.
+        {t("Let dispatch know so they can plan around you.")}
       </p>
       <div className={features.allowLoadRefusals ? "mt-3 grid grid-cols-2 gap-2" : "mt-3"}>
         <Button
@@ -72,7 +75,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
           onClick={() => respond.mutate(true)}
         >
           <CheckIcon className="size-4" />
-          Accept
+          {t("Accept")}
         </Button>
         {features.allowLoadRefusals ? (
           <Button
@@ -82,7 +85,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
             onClick={() => setDeclineOpen(true)}
           >
             <XIcon className="size-4" />
-            Decline
+            {t("Decline")}
           </Button>
         ) : null}
       </div>
@@ -90,16 +93,16 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
       <Drawer open={declineOpen} onOpenChange={setDeclineOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Decline this load?</DrawerTitle>
+            <DrawerTitle>{t("Decline this load?")}</DrawerTitle>
             <DrawerDescription>
-              Tell dispatch why so they can replan — hours, home time, equipment, anything.
+              {t("Tell dispatch why so they can replan — hours, home time, equipment, anything.")}
             </DrawerDescription>
           </DrawerHeader>
           <div className="px-4">
             <Textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Why can't you take it?"
+              placeholder={t("Why can't you take it?")}
               rows={3}
               maxLength={1000}
             />
@@ -111,7 +114,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
               disabled={reason.trim().length === 0 || respond.isPending}
               onClick={() => respond.mutate(false)}
             >
-              {respond.isPending ? "Sending..." : "Decline load"}
+              {respond.isPending ? t("Sending...") : t("Decline load")}
             </Button>
           </DrawerFooter>
         </DrawerContent>

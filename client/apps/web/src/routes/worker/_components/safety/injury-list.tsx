@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   deleteWorkerInjury,
@@ -30,6 +31,8 @@ import { InjuryDialog } from "./injury-dialog";
  * establishment on the OSHA page; this is the per-worker view.
  */
 export function InjuryList({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.WorkerInjury, Operation.Read);
   const { allowed: canRecord } = usePermission(Resource.WorkerInjury, Operation.Create);
@@ -46,14 +49,14 @@ export function InjuryList({ workerId }: { workerId: string }) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWorkerInjury(id),
     onSuccess: () => {
-      toast.success("Case deleted", {
-        description: "The case number is not reused — two case 4s cannot be told apart.",
+      toast.success(t("Case deleted"), {
+        description: t("The case number is not reused — two case 4s cannot be told apart."),
       });
       void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: ["osha-log"] });
     },
     onError: (error: Error) =>
-      toast.error("Could not delete the case", { description: error.message }),
+      toast.error(t("Could not delete the case"), { description: error.message }),
   });
 
   // The log carries body parts, treatment and claims. Somebody without the
@@ -67,11 +70,11 @@ export function InjuryList({ workerId }: { workerId: string }) {
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
-          Injuries &amp; illnesses
+          {t("Injuries & illnesses")}
         </h4>
         {canRecord ? (
           <Button size="sm" variant="outline" onClick={() => setDialog({ injury: null })}>
-            Record a case
+            {t("Record a case")}
           </Button>
         ) : null}
       </div>
@@ -80,7 +83,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
         <Skeleton className="h-16 w-full rounded-lg" />
       ) : injuries.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          No injury or illness has been recorded for this worker.
+          {t("No injury or illness has been recorded for this worker.")}
         </p>
       ) : (
         <ul className="divide-border divide-y rounded-lg border">
@@ -114,9 +117,9 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     <Badge variant={classificationTone(injury.classification)}>
                       {caseClassificationLabel(injury.classification)}
                     </Badge>
-                    {injury.recordable ? <Badge variant="info">On the 300 log</Badge> : null}
-                    {injury.status === "Open" ? <Badge variant="warning">Open</Badge> : null}
-                    {injury.privacyCase ? <Badge variant="secondary">Privacy case</Badge> : null}
+                    {injury.recordable ? <Badge variant="info">{t("On the 300 log")}</Badge> : null}
+                    {injury.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
+                    {injury.privacyCase ? <Badge variant="secondary">{t("Privacy case")}</Badge> : null}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground tabular-nums">
@@ -128,17 +131,17 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     />
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1">{injury.description}</p>
+                <p className="text-muted-foreground mt-1">{t(injury.description)}</p>
                 <p className="text-muted-foreground mt-1">
                   {illnessTypeLabel(injury.illnessType)}
                   {injury.bodyPart ? ` · ${injury.bodyPart}` : ""}
-                  {injury.daysAway > 0 ? ` · ${injury.daysAway} days away` : ""}
-                  {injury.daysRestricted > 0 ? ` · ${injury.daysRestricted} restricted` : ""}
+                  {injury.daysAway > 0 ? ` ${t("· {0} days away", injury.daysAway)}` : ""}
+                  {injury.daysRestricted > 0 ? ` ${t("· {0} restricted", injury.daysRestricted)}` : ""}
                 </p>
                 {injury.claimStatus !== "NotFiled" ? (
                   <p className="mt-1 flex items-center gap-2">
                     <Badge variant={claimStatusTone(injury.claimStatus)}>
-                      Claim {claimStatusLabel(injury.claimStatus).toLowerCase()}
+                      {t("Claim {0}", claimStatusLabel(injury.claimStatus).toLowerCase())}
                     </Badge>
                     {injury.claimNumber ? (
                       <span className="text-muted-foreground">{injury.claimNumber}</span>

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
@@ -15,7 +16,7 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
         <div>
           <div className="font-medium">{row.original.name}</div>
           <div className="text-muted-foreground text-xs">
-            {row.original.description || "No description"}
+            {row.original.description || translate("No description")}
           </div>
         </div>
       ),

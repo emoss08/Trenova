@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import googleMapsEmptyState from "@/assets/integrations/empty-state/map-preview.webp";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
@@ -188,6 +189,8 @@ function useLocationGeofence() {
 }
 
 export function LocationGeofenceControls({ className }: { className?: string }) {
+  const t = useT();
+
   const { geofenceType, handleTypeChange } = useLocationGeofence();
 
   return (
@@ -209,7 +212,7 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
-            {choice.label}
+            {t(choice.label)}
           </button>
         );
       })}
@@ -218,6 +221,8 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
 }
 
 export function LocationGeofenceMap({ className }: { className?: string }) {
+  const t = useT();
+
   const navigate = useNavigate();
   const canCreateIntegrations = usePermissionStore((state) =>
     state.hasPermission(Resource.Integration, Operation.Create),
@@ -247,24 +252,23 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
     <div className={cn("bg-background relative h-full w-full overflow-hidden", className)}>
       {googleMapsQuery.isLoading ? (
         <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-          Loading map editor...
+          {t("Loading map editor...")}
         </div>
       ) : !googleMapsQuery.data?.config.apiKey ? (
         <div className="relative flex h-full flex-col items-center justify-center gap-4 px-6">
           <img
             src={googleMapsEmptyState}
-            alt="Google Maps Empty State"
+            alt={t("Google Maps Empty State")}
             className="pointer-events-none absolute inset-0 size-full object-cover opacity-50 blur-sm select-none"
           />
           <div className="text-foreground relative z-10 flex flex-col items-center gap-4 text-center text-sm">
             <span>
-              Google Maps is not configured for this environment, so the geofence editor cannot be
-              displayed.
+              {t("Google Maps is not configured for this environment, so the geofence editor cannot be displayed.")}
             </span>
             {canCreateIntegrations ? (
               <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>
                 <PlusIcon className="size-4 shrink-0" aria-hidden />
-                Configure Google Maps
+                {t("Configure Google Maps")}
               </Button>
             ) : null}
           </div>

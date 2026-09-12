@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -63,6 +64,8 @@ export function VersionDetail({ versionId, onBack }: VersionDetailProps) {
 }
 
 function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canActivate } = usePermission(Resource.DocumentParsingRule, Operation.Activate);
 
@@ -104,10 +107,10 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.list._def,
       });
-      toast.success("Version published successfully");
+      toast.success(t("Version published successfully"));
     },
     onError: () => {
-      toast.error("Failed to publish version");
+      toast.error(t("Failed to publish version"));
     },
   });
 
@@ -153,14 +156,14 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
             className="group text-muted-foreground hover:text-foreground mt-2 flex items-center gap-1 text-xs transition-colors"
           >
             <ArrowLeftIcon className="size-3 transition-transform group-hover:-translate-x-0.5" />
-            Back to versions
+            {t("Back to versions")}
           </button>
 
           {/* Page title row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <h3 className="font-table text-base leading-none tracking-tight">
-                Version {version.versionNumber}
+                {t("Version {0}", version.versionNumber)}
               </h3>
               <Badge
                 variant={
@@ -171,7 +174,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 {version.status}
               </Badge>
               {version.label && (
-                <span className="text-muted-foreground text-sm">{version.label}</span>
+                <span className="text-muted-foreground text-sm">{t(version.label)}</span>
               )}
             </div>
             {isDraft && canActivate && (
@@ -185,31 +188,30 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                       disabled={publishMutation.isPending}
                     >
                       <RocketIcon className="size-3.5" />
-                      Publish
+                      {t("Publish")}
                     </Button>
                   }
                 />
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Publish Version {version.versionNumber}</AlertDialogTitle>
+                    <AlertDialogTitle>{t("Publish Version {0}", version.versionNumber)}</AlertDialogTitle>
                     <AlertDialogDescription className="space-y-2">
                       <span>
-                        Publishing will make this version the active rule used for document parsing.
-                        This action:
+                        {t("Publishing will make this version the active rule used for document parsing. This action:")}
                       </span>
                       <ul className="text-muted-foreground ml-4 list-disc text-sm">
                         <li>
-                          Activates this version for all incoming documents matching its criteria
+                          {t("Activates this version for all incoming documents matching its criteria")}
                         </li>
-                        <li>Archives the currently published version (if any)</li>
-                        <li>Makes this version read-only — no further edits will be possible</li>
+                        <li>{t("Archives the currently published version (if any)")}</li>
+                        <li>{t("Makes this version read-only — no further edits will be possible")}</li>
                       </ul>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                     <AlertDialogAction onClick={() => publishMutation.mutate()}>
-                      {publishMutation.isPending ? "Publishing..." : "Publish Version"}
+                      {publishMutation.isPending ? t("Publishing...") : t("Publish Version")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -221,11 +223,11 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
             <div className="border-info/50 bg-info/10 flex items-start gap-2.5 rounded-md border p-3">
               <LockIcon className="text-info mt-0.5 size-4 shrink-0" />
               <div className="text-info text-sm">
-                <p className="font-medium">Read-only version</p>
+                <p className="font-medium">{t("Read-only version")}</p>
                 <p className="mt-0.5 text-xs opacity-80">
                   {version.status === "Published"
-                    ? "Published versions cannot be modified. Create a new version to make changes."
-                    : "Archived versions are frozen snapshots of previously published rules."}
+                    ? t("Published versions cannot be modified. Create a new version to make changes.")
+                    : t("Archived versions are frozen snapshots of previously published rules.")}
                 </p>
               </div>
             </div>
@@ -235,11 +237,11 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
             <div className="border-destructive/50 bg-destructive/10 rounded-md border p-3">
               <div className="mb-1.5 flex items-center gap-1.5">
                 <AlertTriangleIcon className="text-destructive size-4" />
-                <p className="text-destructive text-sm font-medium">Validation Issues</p>
+                <p className="text-destructive text-sm font-medium">{t("Validation Issues")}</p>
               </div>
               {fixtureCount !== null && (
                 <p className="text-destructive/80 mb-1 text-xs">
-                  {fixtureCount} fixture{fixtureCount !== 1 ? "s" : ""} tested
+                  {t("{0, plural, one {# fixture} other {# fixtures}} tested", fixtureCount)}
                 </p>
               )}
               {fixtureFailures.length > 0 && (
@@ -261,17 +263,17 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
 
           {/* Version settings */}
           <FormSection
-            title="Version Settings"
-            description="Label this version and choose how it interacts with the base parser."
+            title={t("Version Settings")}
+            description={t("Label this version and choose how it interacts with the base parser.")}
           >
             <FormGroup cols={2}>
               <FormControl>
                 <InputField
                   control={control}
                   name="label"
-                  label="Label"
-                  placeholder="e.g. Initial draft, Added stops"
-                  description="A short description to identify this version."
+                  label={t("Label")}
+                  placeholder={t("e.g. Initial draft, Added stops")}
+                  description={t("A short description to identify this version.")}
                   readOnly={isReadOnly}
                 />
               </FormControl>
@@ -279,8 +281,8 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 <SelectField
                   control={control}
                   name="parserMode"
-                  label="Parser Mode"
-                  description="Merge extends the base parser results. Override replaces them entirely."
+                  label={t("Parser Mode")}
+                  description={t("Merge extends the base parser results. Override replaces them entirely.")}
                   options={PARSER_MODE_OPTIONS}
                   isReadOnly={isReadOnly}
                 />
@@ -291,8 +293,8 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           {/* Rule configuration tabs */}
           <Tabs defaultValue="match-config">
             <TabsList variant="underline">
-              <TabsTab value="match-config">Match Config</TabsTab>
-              <TabsTab value="rule-builder">Rule Builder</TabsTab>
+              <TabsTab value="match-config">{t("Match Config")}</TabsTab>
+              <TabsTab value="rule-builder">{t("Rule Builder")}</TabsTab>
               <TabsTab value="json">JSON</TabsTab>
             </TabsList>
             <TabsPanel value="match-config" className="mt-4">
@@ -306,7 +308,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
             </TabsPanel>
           </Tabs>
 
-          {isDraft && <FormSaveDock saveButtonContent="Save Changes" />}
+          {isDraft && <FormSaveDock saveButtonContent={t("Save Changes")} />}
         </div>
       </Form>
     </FormProvider>

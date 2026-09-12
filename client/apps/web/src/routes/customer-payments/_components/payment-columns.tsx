@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PlainCustomerPaymentStatusBadge } from "@trenova/shared/components/status-badge";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
@@ -64,7 +65,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">Amount</div>,
+      header: () => <div className="text-right">{translate("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} className="text-xs font-semibold" />
@@ -75,7 +76,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "appliedAmountMinor",
-      header: () => <div className="text-right">Applied</div>,
+      header: () => <div className="text-right">{translate("Applied")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -89,7 +90,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     },
     {
       accessorKey: "unappliedAmountMinor",
-      header: () => <div className="text-right">Unapplied</div>,
+      header: () => <div className="text-right">{translate("Unapplied")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
@@ -97,6 +98,8 @@ function StopMarker({
   activeIdx: number | null;
   idx: number;
 }) {
+  const t = useT();
+
   const color = (stopType: Stop["type"]) => {
     switch (stopType) {
       case "Pickup":
@@ -117,7 +120,7 @@ function StopMarker({
       {activeIdx === idx && (
         <div className="border-border bg-popover text-2xs text-popover-foreground absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border px-2 py-1 whitespace-nowrap shadow-md">
           <div className="max-w-[220px] truncate font-medium">
-            {point.stop.location?.name || "Location"}
+            {point.stop.location?.name || t("Location")}
           </div>
           <div className="text-muted-foreground max-w-[220px] truncate">
             {point.stop.location

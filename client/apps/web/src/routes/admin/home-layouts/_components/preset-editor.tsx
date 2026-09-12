@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageHeader } from "@/components/page-header";
 import {
   useCreateHomeLayoutPreset,
@@ -69,6 +70,8 @@ function toDraft(preset: HomeLayoutPreset | undefined): Draft {
  * on this, and may they change it.
  */
 export function PresetEditor({ preset }: PresetEditorProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft>(() => toDraft(preset));
   const [previewRoleId, setPreviewRoleId] = useState<string | null>(null);
@@ -115,7 +118,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
 
   const save = async () => {
     if (draft.name.trim() === "") {
-      toast.error("Give this home screen a name");
+      toast.error(t("Give this home screen a name"));
       return;
     }
 
@@ -148,11 +151,11 @@ export function PresetEditor({ preset }: PresetEditorProps) {
     <div className="flex flex-col p-6">
       <PageHeader
         title={preset ? draft.name || "Home screen" : "New home screen"}
-        description="Arrange the widgets, then choose who lands on them."
+        description={t("Arrange the widgets, then choose who lands on them.")}
         className="p-0 py-4"
         actions={
           <Button variant="ghost" size="sm" onClick={() => void navigate("/admin/home-layouts")}>
-            Back
+            {t("Back")}
           </Button>
         }
       />
@@ -161,21 +164,21 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="flex flex-col gap-3 lg:col-span-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="preset-name">Name</Label>
+              <Label htmlFor="preset-name">{t("Name")}</Label>
               <Input
                 id="preset-name"
                 value={draft.name}
-                placeholder="Dispatch Home"
+                placeholder={t("Dispatch Home")}
                 onChange={(event) => patch({ name: event.target.value })}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="preset-description">Description</Label>
+              <Label htmlFor="preset-description">{t("Description")}</Label>
               <Textarea
                 id="preset-description"
                 rows={2}
                 value={draft.description}
-                placeholder="What this home screen is for."
+                placeholder={t("What this home screen is for.")}
                 onChange={(event) => patch({ description: event.target.value })}
               />
             </div>
@@ -184,25 +187,25 @@ export function PresetEditor({ preset }: PresetEditorProps) {
           <div className="border-border/80 bg-card flex flex-col gap-3 rounded-lg border p-3">
             <Toggle
               id="preset-org-default"
-              label="Organization default"
-              hint="Where anyone without a role assignment lands. Only one preset can hold this."
+              label={t("Organization default")}
+              hint={t("Where anyone without a role assignment lands. Only one preset can hold this.")}
               checked={draft.isOrgDefault}
               onChange={(isOrgDefault) => patch({ isOrgDefault })}
             />
             <Toggle
               id="preset-locked"
-              label="Lock this home screen"
-              hint="People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock."
+              label={t("Lock this home screen")}
+              hint={t("People assigned it cannot rearrange it. Anything they saved earlier is kept and returns if you unlock.")}
               checked={draft.locked}
               onChange={(locked) => patch({ locked })}
             />
             <ConfigNumberField
               id="preset-priority"
-              label="Priority"
+              label={t("Priority")}
               value={draft.priority}
               min={0}
               max={MAX_PRIORITY}
-              hint="When someone matches more than one home screen, the highest priority wins."
+              hint={t("When someone matches more than one home screen, the highest priority wins.")}
               onChange={(priority) => patch({ priority: priority ?? 0 })}
             />
           </div>
@@ -210,9 +213,9 @@ export function PresetEditor({ preset }: PresetEditorProps) {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
-            <Label>Assign to roles</Label>
+            <Label>{t("Assign to roles")}</Label>
             {roles.isLoading ? (
-              <p className="text-muted-foreground text-xs">Loading roles…</p>
+              <p className="text-muted-foreground text-xs">{t("Loading roles…")}</p>
             ) : (
               <div className="grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">
                 {(roles.data ?? []).map((role) => (
@@ -232,7 +235,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
           </div>
 
           <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
-            <Label htmlFor="preset-responsibility">Or assign by job function</Label>
+            <Label htmlFor="preset-responsibility">{t("Or assign by job function")}</Label>
             <Select
               value={draft.coreResponsibility || NO_RESPONSIBILITY}
               items={responsibilityItems}
@@ -243,22 +246,22 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               }
             >
               <SelectTrigger id="preset-responsibility">
-                <SelectValue placeholder="No job function" />
+                <SelectValue placeholder={t("No job function")} />
               </SelectTrigger>
               <SelectContent>
                 {responsibilityItems.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-2xs text-muted-foreground">
-              Reaches every role tagged with that function, including ones added later.
+              {t("Reaches every role tagged with that function, including ones added later.")}
             </p>
 
             <div className="border-border mt-1 flex flex-col gap-1.5 border-t pt-2">
-              <Label htmlFor="preview-role">Preview as</Label>
+              <Label htmlFor="preview-role">{t("Preview as")}</Label>
               <div className="flex items-center gap-2">
                 <Select
                   value={previewRoleId ?? NO_RESPONSIBILITY}
@@ -268,12 +271,12 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                   }
                 >
                   <SelectTrigger id="preview-role" className="flex-1">
-                    <SelectValue placeholder="Nobody" />
+                    <SelectValue placeholder={t("Nobody")} />
                   </SelectTrigger>
                   <SelectContent>
                     {previewItems.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -281,12 +284,12 @@ export function PresetEditor({ preset }: PresetEditorProps) {
                 {previewing && (
                   <Button variant="ghost" size="sm" onClick={() => setPreviewRoleId(null)}>
                     <EyeOffIcon className="size-3.5" />
-                    Stop
+                    {t("Stop")}
                   </Button>
                 )}
               </div>
               <p className="text-2xs text-muted-foreground">
-                Shows what a member of that role resolves to today. Unsaved edits are not included.
+                {t("Shows what a member of that role resolves to today. Unsaved edits are not included.")}
               </p>
             </div>
           </div>
@@ -296,7 +299,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
           <div className="flex flex-col gap-2">
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <EyeIcon className="size-3.5" />
-              Previewing — widgets are read-only and drawn against your own permissions.
+              {t("Previewing — widgets are read-only and drawn against your own permissions.")}
             </p>
             <HomeCanvas
               widgets={shownWidgets}

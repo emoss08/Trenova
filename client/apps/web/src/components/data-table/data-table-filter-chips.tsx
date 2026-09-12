@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { getOperatorLabel, operatorRequiresValue, stringifyUnknown } from "@/lib/data-table";
 import type {
@@ -39,6 +40,8 @@ function formatFilterValue(filter: SingleFilterItem): string {
 }
 
 function FilterChip({ label, onRemove }: { label: React.ReactNode; onRemove: () => void }) {
+  const t = useT();
+
   return (
     <span className="border-border bg-muted/50 flex h-6 items-center gap-1 rounded-md border pr-1 pl-2 text-xs">
       {label}
@@ -48,7 +51,7 @@ function FilterChip({ label, onRemove }: { label: React.ReactNode; onRemove: () 
         size="icon-xs"
         className="text-muted-foreground hover:text-foreground size-4 rounded-sm"
         onClick={onRemove}
-        aria-label="Remove filter"
+        aria-label={t("Remove filter")}
       >
         <XIcon className="size-3" />
       </Button>
@@ -62,6 +65,8 @@ export default function DataTableFilterChips({
   query,
   onClearQuery,
 }: DataTableFilterChipsProps) {
+  const t = useT();
+
   const hasQuery = query !== "";
   if (filters.length === 0 && !hasQuery) return null;
 
@@ -95,8 +100,8 @@ export default function DataTableFilterChips({
               key={group.id}
               label={
                 <span>
-                  <span className="text-muted-foreground">Group·</span>{" "}
-                  <span className="font-medium">{group.items.length} conditions</span>
+                  <span className="text-muted-foreground">{t("Group·")}</span>{" "}
+                  <span className="font-medium">{t("{0} conditions", group.items.length)}</span>
                 </span>
               }
               onRemove={() => removeFilter(group.id)}
@@ -111,7 +116,7 @@ export default function DataTableFilterChips({
             key={single.id}
             label={
               <span className="max-w-64 truncate">
-                <span className="font-medium">{single.label}</span>{" "}
+                <span className="font-medium">{t(single.label)}</span>{" "}
                 <span className="text-muted-foreground">{getOperatorLabel(single.operator)}</span>
                 {value && <span className="font-medium"> {value}</span>}
               </span>
@@ -128,7 +133,7 @@ export default function DataTableFilterChips({
           className="text-muted-foreground hover:text-foreground h-6 px-2 text-xs"
           onClick={clearAll}
         >
-          Clear all
+          {t("Clear all")}
         </Button>
       )}
     </div>

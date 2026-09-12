@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { QueryKey } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,21 +52,23 @@ function DebugPanel<T extends FieldValues>({
   values: T;
   errors: FieldErrors<T>;
 }) {
+  const t = useT();
+
   return (
     <aside className="bg-muted rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-medium">Form State</h3>
+        <h3 className="text-sm font-medium">{t("Form State")}</h3>
         <span className="text-2xs text-muted-foreground">react-hook-form</span>
       </div>
       <div className="grid gap-3">
         <div>
-          <p className="text-2xs text-muted-foreground mb-1 font-medium">Values</p>
+          <p className="text-2xs text-muted-foreground mb-1 font-medium">{t("Values")}</p>
           <pre className="bg-background text-2xs max-h-80 overflow-auto rounded-md p-2">
             {JSON.stringify(values, null, 2)}
           </pre>
         </div>
         <div>
-          <p className="text-2xs text-muted-foreground mb-1 font-medium">Errors</p>
+          <p className="text-2xs text-muted-foreground mb-1 font-medium">{t("Errors")}</p>
           <pre className="bg-background text-2xs max-h-40 overflow-auto rounded-md p-2">
             {JSON.stringify(formatErrors(errors as FieldErrors<FieldValues>), null, 2)}
           </pre>
@@ -112,6 +115,8 @@ export function StoryForm<T extends FieldValues>({
   children,
   forcedErrors,
 }: StoryFormProps<T>) {
+  const t = useT();
+
   const form = useForm<T>({
     defaultValues,
     mode: "onChange",
@@ -130,7 +135,7 @@ export function StoryForm<T extends FieldValues>({
           <div className="grid gap-4">{children({ control: form.control, form })}</div>
           <div className="mt-4 flex justify-end">
             <Button type="button" variant="outline" onClick={() => void form.trigger()}>
-              Validate
+              {t("Validate")}
             </Button>
           </div>
         </div>

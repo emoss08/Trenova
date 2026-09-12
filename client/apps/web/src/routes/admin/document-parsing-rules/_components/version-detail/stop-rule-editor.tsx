@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection, FormGroup, FormControl } from "@trenova/shared/components/ui/form";
@@ -40,6 +41,8 @@ const FIELD_KEY_OPTIONS = [
 ];
 
 export function StopRuleEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RuleVersionFormValues>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -48,9 +51,9 @@ export function StopRuleEditor() {
 
   return (
     <FormSection
-      title="Stops"
+      title={t("Stops")}
       titleCount={fields.length}
-      description="Stops represent physical locations in a shipment — pickup points, delivery destinations, or intermediate stops. Each stop defines how to extract address and scheduling details."
+      description={t("Stops represent physical locations in a shipment — pickup points, delivery destinations, or intermediate stops. Each stop defines how to extract address and scheduling details.")}
       action={
         <Button
           type="button"
@@ -81,7 +84,7 @@ export function StopRuleEditor() {
           }
         >
           <PlusIcon className="size-3" />
-          Add Stop
+          {t("Add Stop")}
         </Button>
       }
     >
@@ -89,9 +92,9 @@ export function StopRuleEditor() {
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
           <MapPinIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-muted-foreground text-sm font-medium">No stop rules defined</p>
+            <p className="text-muted-foreground text-sm font-medium">{t("No stop rules defined")}</p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              Add stops to extract pickup and delivery locations from the document.
+              {t("Add stops to extract pickup and delivery locations from the document.")}
             </p>
           </div>
         </div>
@@ -117,6 +120,8 @@ function StopItem({
   defaultRole: string;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<RuleVersionFormValues>();
 
   const role = useWatch({
@@ -136,7 +141,7 @@ function StopItem({
             <Badge variant={badgeVariant} className="capitalize">
               {currentRole}
             </Badge>
-            <span>Stop {index + 1}</span>
+            <span>{t("Stop {0}", index + 1)}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -161,7 +166,7 @@ function StopItem({
                 <SelectField
                   control={control}
                   name={`ruleDocument.stops.${index}.role`}
-                  label="Role"
+                  label={t("Role")}
                   options={ROLE_OPTIONS}
                 />
               </FormControl>
@@ -169,60 +174,60 @@ function StopItem({
                 <NumberField
                   control={control}
                   name={`ruleDocument.stops.${index}.sequenceStart`}
-                  label="Sequence Start"
-                  description="Starting sequence number for this stop type"
+                  label={t("Sequence Start")}
+                  description={t("Starting sequence number for this stop type")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.sectionNames`}
-                  label="Section Names"
-                  description="Restrict stop extraction to these document sections"
-                  placeholder="Add section..."
+                  label={t("Section Names")}
+                  description={t("Restrict stop extraction to these document sections")}
+                  placeholder={t("Add section...")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.startAnchors`}
-                  label="Start Anchors"
-                  description="Text that marks the beginning of stop data"
-                  placeholder="Add anchor..."
+                  label={t("Start Anchors")}
+                  description={t("Text that marks the beginning of stop data")}
+                  placeholder={t("Add anchor...")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.endAnchors`}
-                  label="End Anchors"
-                  description="Text that marks the end of stop data"
-                  placeholder="Add anchor..."
+                  label={t("End Anchors")}
+                  description={t("Text that marks the end of stop data")}
+                  placeholder={t("Add anchor...")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.stops.${index}.appointmentPatterns`}
-                  label="Appointment Patterns"
-                  description="Regex patterns to extract appointment windows"
-                  placeholder="Add regex..."
+                  label={t("Appointment Patterns")}
+                  description={t("Regex patterns to extract appointment windows")}
+                  placeholder={t("Add regex...")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField
                   control={control}
                   name={`ruleDocument.stops.${index}.required`}
-                  label="Required"
-                  description="Flag for review if this stop is missing"
+                  label={t("Required")}
+                  description={t("Flag for review if this stop is missing")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField
                   control={control}
                   name={`ruleDocument.stops.${index}.allowMultiple`}
-                  label="Allow Multiple"
-                  description="Allow multiple instances of this stop type"
+                  label={t("Allow Multiple")}
+                  description={t("Allow multiple instances of this stop type")}
                 />
               </FormControl>
             </FormGroup>
@@ -240,6 +245,8 @@ function StopItem({
 }
 
 function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
+  const t = useT();
+
   const { control } = useFormContext<RuleVersionFormValues>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -250,9 +257,9 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-medium">Extractors ({fields.length})</h4>
+          <h4 className="text-sm font-medium">{t("Extractors ({0})", fields.length)}</h4>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Each extractor pulls a specific piece of data (name, address, date) from this stop.
+            {t("Each extractor pulls a specific piece of data (name, address, date) from this stop.")}
           </p>
         </div>
         <Button
@@ -272,14 +279,14 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
           }
         >
           <PlusIcon className="size-3" />
-          Add Extractor
+          {t("Add Extractor")}
         </Button>
       </div>
       {fields.map((field, extIdx) => (
         <div key={field.id} className="bg-background rounded border p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              {field.fieldKey || `Extractor ${extIdx + 1}`}
+              {field.fieldKey || t("Extractor {0}", extIdx + 1)}
             </span>
             <Button
               type="button"
@@ -296,7 +303,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               <SelectField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.fieldKey`}
-                label="Field Key"
+                label={t("Field Key")}
                 options={FIELD_KEY_OPTIONS}
               />
             </FormControl>
@@ -304,39 +311,39 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               <InputField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.normalizer`}
-                label="Normalizer"
-                placeholder="e.g. trim"
+                label={t("Normalizer")}
+                placeholder={t("e.g. trim")}
               />
             </FormControl>
             <FormControl>
               <TagInput
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.aliases`}
-                label="Aliases"
-                placeholder="Add alias..."
+                label={t("Aliases")}
+                placeholder={t("Add alias...")}
               />
             </FormControl>
             <FormControl>
               <TagInput
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.patterns`}
-                label="Patterns"
-                placeholder="Add regex..."
+                label={t("Patterns")}
+                placeholder={t("Add regex...")}
               />
             </FormControl>
             <FormControl>
               <NumberField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.confidence`}
-                label="Min Confidence"
-                description="0.0 to 1.0"
+                label={t("Min Confidence")}
+                description={t("0.0 to 1.0")}
               />
             </FormControl>
             <FormControl>
               <SwitchField
                 control={control}
                 name={`ruleDocument.stops.${stopIndex}.extractors.${extIdx}.required`}
-                label="Required"
+                label={t("Required")}
               />
             </FormControl>
           </FormGroup>

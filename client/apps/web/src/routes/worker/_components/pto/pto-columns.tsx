@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import type { WorkerPTORow } from "@/lib/graphql/worker-table";
@@ -184,7 +185,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
           {ptoDaysOf(row.original)}
           {row.original.autoApproved ? (
             <Badge variant="outline" className="ml-1.5 px-1 py-0 text-[10px]">
-              Auto
+              {translate("Auto")}
             </Badge>
           ) : null}
         </span>

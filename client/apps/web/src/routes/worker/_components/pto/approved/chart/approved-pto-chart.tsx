@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -43,6 +44,8 @@ export default function ApprovedPTOChart({
   isError: boolean;
   errorMessage?: string;
 }) {
+  const t = useT();
+
   const { theme } = useTheme();
 
   const DEFAULT_APPROVED_PTO_COLOR_SCHEME: ColorSchemeId = useMemo(() => {
@@ -84,7 +87,7 @@ export default function ApprovedPTOChart({
   if (isLoading) {
     return (
       <LoadingSkeletonState
-        description="Loading chart data..."
+        description={t("Loading chart data...")}
         className="min-h-40 w-full flex-1"
       />
     );
@@ -94,8 +97,8 @@ export default function ApprovedPTOChart({
     return (
       <div className="flex min-h-40 w-full flex-1 items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive text-sm">Failed to load chart data</p>
-          <p className="text-muted-foreground text-xs">{errorMessage || "An error occurred"}</p>
+          <p className="text-destructive text-sm">{t("Failed to load chart data")}</p>
+          <p className="text-muted-foreground text-xs">{errorMessage || t("An error occurred")}</p>
         </div>
       </div>
     );
@@ -105,7 +108,7 @@ export default function ApprovedPTOChart({
     return (
       <div className="flex min-h-40 w-full flex-1 items-center justify-center">
         <p className="text-muted-foreground text-sm">
-          No PTO data available for the selected period
+          {t("No PTO data available for the selected period")}
         </p>
       </div>
     );
@@ -118,7 +121,7 @@ export default function ApprovedPTOChart({
         setColorScheme={(value) => setColorScheme(value)}
       />
       <p className="text-muted-foreground mb-2 text-xs">
-        Counts are daily occupancy. Multi-day PTO appears on each covered day.
+        {t("Counts are daily occupancy. Multi-day PTO appears on each covered day.")}
       </p>
       <ResponsiveBar
         data={chartData as any}
@@ -202,7 +205,7 @@ export default function ApprovedPTOChart({
         }}
         enableGridY={true}
         role="application"
-        ariaLabel="PTO chart"
+        ariaLabel={t("PTO chart")}
         tooltip={CustomTooltip}
       />
     </ChartOuter>

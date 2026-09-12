@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
@@ -13,6 +14,8 @@ export function CustomFieldDefinitionPanel({
   mode,
   row,
 }: DataTablePanelProps<CustomFieldDefinitionRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(customFieldDefinitionSchema),
     defaultValues: {
@@ -42,7 +45,7 @@ export function CustomFieldDefinitionPanel({
         form={form}
         url="/custom-fields/definitions/"
         queryKey="custom-field-definition-list"
-        title="Custom Field Definition"
+        title={t("Custom Field Definition")}
         fieldKey="label"
         formComponent={<CustomFieldDefinitionForm />}
       />
@@ -56,7 +59,7 @@ export function CustomFieldDefinitionPanel({
       form={form}
       url="/custom-fields/definitions/"
       queryKey="custom-field-definition-list"
-      title="Custom Field Definition"
+      title={t("Custom Field Definition")}
       formComponent={<CustomFieldDefinitionForm />}
     />
   );

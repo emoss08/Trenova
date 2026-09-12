@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -13,6 +14,8 @@ export function DistanceOverridePanel({
   mode,
   row,
 }: DataTablePanelProps<DistanceOverrideRow>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(distanceOverrideSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function DistanceOverridePanel({
         form={form}
         url="/distance-overrides/"
         queryKey="distance-override-list"
-        title="Distance Override"
+        title={t("Distance Override")}
         fieldKey="originLocationId"
         formComponent={<DistanceOverrideForm />}
       />
@@ -47,7 +50,7 @@ export function DistanceOverridePanel({
       form={form}
       url="/distance-overrides/"
       queryKey="distance-override-list"
-      title="Distance Override"
+      title={t("Distance Override")}
       formComponent={<DistanceOverrideForm />}
     />
   );

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -61,10 +62,12 @@ function ToolbarSkeleton() {
  * read; the loaded cards land in the same cells their outlines were.
  */
 export function PolicyCardsSkeleton() {
+  const t = useT();
+
   return (
     <ul
       aria-busy
-      aria-label="Loading policies"
+      aria-label={t("Loading policies")}
       className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
     >
       {POLICY_CARDS.map((card, index) => (
@@ -99,8 +102,10 @@ export function PolicyCardsSkeleton() {
  * so it is hidden from assistive technology.
  */
 export function PoliciesSkeleton() {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading policies">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading policies")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton />
         <ToolbarSkeleton />

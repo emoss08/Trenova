@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { AssignPayProfileDialog } from "@/components/pay/assign-pay-profile-dialog";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
@@ -143,6 +144,8 @@ function PayProfileCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<PayProfileFormValues>({
     resolver: zodResolver(payProfileFormSchema) as Resolver<PayProfileFormValues>,
     defaultValues: buildDefaults(null),
@@ -152,8 +155,8 @@ function PayProfileCreatePanel({
     <FormCreatePanel<PayProfileFormValues, PayProfileRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Pay Profile"
-      description="A reusable pay package; assign it to drivers and add per-driver rate overrides where rates differ."
+      title={t("Pay Profile")}
+      description={t("A reusable pay package; assign it to drivers and add per-driver rate overrides where rates differ.")}
       queryKey="pay-profile-list"
       form={form}
       size="xl"
@@ -175,6 +178,8 @@ function PayProfileEditPanel({
   onOpenChange: (open: boolean) => void;
   row: PayProfileRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildDefaults(row) } as unknown as PayProfileRow &
     Record<string, unknown>;
   const form = useForm<PayProfileFormValues>({
@@ -187,7 +192,7 @@ function PayProfileEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Pay Profile"
+      title={t("Pay Profile")}
       fieldKey="name"
       queryKey="pay-profile-list"
       form={form}
@@ -219,6 +224,8 @@ function PayProfileEditPanel({
 }
 
 function AssignedDriversSection({ profileId }: { profileId: string }) {
+  const t = useT();
+
   const [assignOpen, setAssignOpen] = useState(false);
   const { data: assignments } = useQuery({
     queryKey: ["pay-profile-assignments", profileId],
@@ -229,15 +236,14 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Assigned Drivers</h3>
+          <h3 className="text-sm font-semibold">{t("Assigned Drivers")}</h3>
           <p className="text-muted-foreground text-xs">
-            Drivers currently paid under this profile. Overrides show where a driver&apos;s rate
-            differs from the template — prefer overrides over cloning profiles.
+            {t("Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.")}
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
           <UserPlus className="size-3.5" />
-          Assign Driver
+          {t("Assign Driver")}
         </Button>
       </div>
       {(assignments ?? []).length > 0 ? (
@@ -245,10 +251,10 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2 font-medium">Driver</th>
-                <th className="px-3 py-2 font-medium">Since</th>
-                <th className="px-3 py-2 text-right font-medium">Split</th>
-                <th className="px-3 py-2 text-right font-medium">Overrides</th>
+                <th className="px-3 py-2 font-medium">{t("Driver")}</th>
+                <th className="px-3 py-2 font-medium">{t("Since")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Split")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Overrides")}</th>
               </tr>
             </thead>
             <tbody>
@@ -273,7 +279,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
         </div>
       ) : (
         <p className="text-muted-foreground mt-3 text-xs">
-          No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.
+          {t("No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.")}
         </p>
       )}
       <AssignPayProfileDialog

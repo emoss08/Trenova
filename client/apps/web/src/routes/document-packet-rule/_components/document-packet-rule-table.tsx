@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   documentPacketRuleTableGraphQLConfig,
@@ -29,6 +30,8 @@ import { DocumentPacketRulePanel } from "./document-packet-rule-panel";
 const service = new DocumentPacketRuleService();
 
 export default function DocumentPacketRuleTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<DocumentPacketRuleRow | null>(null);
@@ -52,7 +55,7 @@ export default function DocumentPacketRuleTable() {
       await service.delete(id);
     },
     onSuccess: () => {
-      toast.success("Document packet rule deleted");
+      toast.success(t("Document packet rule deleted"));
       void queryClient.invalidateQueries({
         queryKey: ["document-packet-rule-list"],
       });
@@ -60,7 +63,7 @@ export default function DocumentPacketRuleTable() {
       setSelectedRule(null);
     },
     onError: (error) => {
-      toast.error("Failed to delete document packet rule", {
+      toast.error(t("Failed to delete document packet rule"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -103,13 +106,13 @@ export default function DocumentPacketRuleTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete Document Packet Rule</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete Document Packet Rule")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this packet rule? This action cannot be undone.
+              {t("Are you sure you want to delete this packet rule? This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -120,7 +123,7 @@ export default function DocumentPacketRuleTable() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

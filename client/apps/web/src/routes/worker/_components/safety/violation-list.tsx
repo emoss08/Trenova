@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   deleteSafetyViolation,
@@ -27,6 +28,8 @@ export function ViolationList({
   safetyEventId: string;
   suggestedBasic: string | null;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canRead } = usePermission(Resource.WorkerSafetyEvent, Operation.Read);
   const { allowed: canRecord } = usePermission(Resource.WorkerSafetyEvent, Operation.Create);
@@ -42,12 +45,12 @@ export function ViolationList({
   const removeMutation = useMutation({
     mutationFn: (id: string) => deleteSafetyViolation(id),
     onSuccess: () => {
-      toast.success("Violation removed");
+      toast.success(t("Violation removed"));
       void queryClient.invalidateQueries({ queryKey: [SAFETY_VIOLATIONS_KEY, safetyEventId] });
       void queryClient.invalidateQueries({ queryKey: ["fleet-safety"] });
     },
     onError: (error: Error) =>
-      toast.error("Could not remove the violation", { description: error.message }),
+      toast.error(t("Could not remove the violation"), { description: error.message }),
   });
 
   if (!canRead) return null;
@@ -58,26 +61,24 @@ export function ViolationList({
     <div className="border-border/60 mt-1 border-t pt-2">
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground text-[11px] font-medium">
-          Violations cited
-          {violations.length > 0 ? ` (${violations.length})` : ""}
+          {t("Violations cited {0}", violations.length > 0 ? ` (${violations.length})` : "")}
         </span>
         {canRecord ? (
           <Button
             size="xs"
             variant="ghost"
             onClick={() => setDialog({ violation: null })}
-            aria-label="Cite a violation"
+            aria-label={t("Cite a violation")}
           >
             <PlusIcon className="size-3" />
-            Cite one
+            {t("Cite one")}
           </Button>
         ) : null}
       </div>
 
       {violations.length === 0 ? (
         <p className="text-muted-foreground mt-1 text-[11px]">
-          None keyed in. The fleet scorecard falls back to the kind of event, which is an estimate
-          rather than what the inspection actually said.
+          {t("None keyed in. The fleet scorecard falls back to the kind of event, which is an estimate rather than what the inspection actually said.")}
         </p>
       ) : (
         <ul className="mt-1 flex flex-col gap-1">
@@ -90,12 +91,12 @@ export function ViolationList({
                     {violation.code}
                   </span>
                 ) : null}
-                <span className="truncate">{violation.description}</span>
-                {violation.outOfService ? <Badge variant="inactive">OOS</Badge> : null}
+                <span className="truncate">{t(violation.description)}</span>
+                {violation.outOfService ? <Badge variant="inactive">{t("OOS")}</Badge> : null}
               </span>
               <span className="flex shrink-0 items-center gap-1">
                 <span className="text-muted-foreground tabular-nums">
-                  weight {violation.severityWeight}
+                  {t("weight {0}", violation.severityWeight)}
                 </span>
                 {canRecord ? (
                   <Button
@@ -104,7 +105,7 @@ export function ViolationList({
                     onClick={() => setDialog({ violation })}
                     aria-label={`Edit ${violation.description}`}
                   >
-                    Edit
+                    {t("Edit")}
                   </Button>
                 ) : null}
                 {canDelete ? (

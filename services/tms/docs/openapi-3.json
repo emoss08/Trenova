@@ -13032,6 +13032,9 @@
                     "id": {
                         "type": "string"
                     },
+                    "locale": {
+                        "type": "string"
+                    },
                     "loginSlug": {
                         "type": "string"
                     },
@@ -13468,6 +13471,9 @@
                     },
                     "lastLoginAt": {
                         "type": "integer"
+                    },
+                    "locale": {
+                        "type": "string"
                     },
                     "memberships": {
                         "items": {
@@ -21175,6 +21181,9 @@
             },
             "internal_api_handlers_userhandler.UpdateMySettingsRequest": {
                 "properties": {
+                    "locale": {
+                        "type": "string"
+                    },
                     "timeFormat": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.TimeFormat"
                     },

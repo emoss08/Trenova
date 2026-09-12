@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -34,6 +35,8 @@ type TenderReviewProps = {
 };
 
 export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
+  const t = useT();
+
   const payload = transfer.tenderPayload;
   const stopsCount = payload.moves.reduce((count, move) => count + move.stops.length, 0);
   const unresolvedCount = mappingRows.filter((row) => !row.resolved).length;
@@ -45,18 +48,18 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
           <div className="flex flex-wrap items-center gap-2">
             <EDITransferStatusBadge status={transfer.status} />
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0 ? `${unresolvedCount} unresolved mappings` : "Ready to accept"}
+              {unresolvedCount > 0 ? t("{0} unresolved mappings", unresolvedCount) : t("Ready to accept")}
             </Badge>
           </div>
           <div>
-            <div className="truncate text-base font-semibold">{payload.bol || "Load tender"}</div>
+            <div className="truncate text-base font-semibold">{payload.bol || t("Load tender")}</div>
             <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-              <span>Submitted {formatUnix(transfer.submittedAt)}</span>
+              <span>{t("Submitted {0}", formatUnix(transfer.submittedAt))}</span>
               <span>
-                Target{" "}
+                {t("Target")}{" "}
                 {transfer.targetShipmentId ? (
                   <Link to={`/shipment-management/shipments?item=${transfer.targetShipmentId}`}>
-                    Open shipment
+                    {t("Open shipment")}
                   </Link>
                 ) : (
                   "pending"
@@ -67,30 +70,30 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
         </div>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-4">
           <InfoTile
-            label="Customer"
+            label={t("Customer")}
             value={sourceValueLabel(payload.customerLabel, payload.customerId)}
           />
           <InfoTile
-            label="Service"
+            label={t("Service")}
             value={sourceValueLabel(payload.serviceTypeLabel, payload.serviceTypeId)}
           />
           <InfoTile
-            label="Shipment Type"
+            label={t("Shipment Type")}
             value={sourceValueLabel(payload.shipmentTypeLabel, payload.shipmentTypeId)}
           />
           <InfoTile
-            label="Rating Template"
+            label={t("Rating Template")}
             value={sourceValueLabel(payload.formulaTemplateLabel, payload.formulaTemplateId)}
           />
           <InfoTile
-            label="Route"
+            label={t("Route")}
             value={`${payload.moves.length} / ${stopsCount}`}
             hint="moves / stops"
           />
-          <InfoTile label="Pieces" value={formatNumber(payload.pieces)} />
-          <InfoTile label="Weight" value={formatWeight(payload.weight)} />
+          <InfoTile label={t("Pieces")} value={formatNumber(payload.pieces)} />
+          <InfoTile label={t("Weight")} value={formatWeight(payload.weight)} />
           <InfoTile
-            label="Charges"
+            label={t("Charges")}
             value={
               payload.additionalCharges?.length === undefined ||
               payload.additionalCharges?.length === 0
@@ -105,10 +108,12 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
 }
 
 export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) {
+  const t = useT();
+
   const moves = transfer.tenderPayload.moves;
 
   if (moves.length === 0) {
-    return <EDIEmptyState message="No moves were included in this load tender." />;
+    return <EDIEmptyState message={t("No moves were included in this load tender.")} />;
   }
 
   return (
@@ -131,7 +136,7 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
                   <RouteIcon className="text-muted-foreground size-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium">Move {move.sequence + 1}</div>
+                  <div className="text-sm font-medium">{t("Move {0}", move.sequence + 1)}</div>
                   <div className="text-muted-foreground mt-1 flex min-w-0 items-center gap-1.5 text-xs">
                     <span className="truncate">{formatStopName(origin, originMapping)}</span>
                     <ArrowRightIcon className="size-3 shrink-0" />
@@ -142,10 +147,10 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
                 </div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="outline">{move.loaded ? "Loaded" : "Empty"}</Badge>
-                <Badge variant="outline">{move.stops.length} stops</Badge>
+                <Badge variant="outline">{move.loaded ? t("Loaded") : t("Empty")}</Badge>
+                <Badge variant="outline">{t("{0} stops", move.stops.length)}</Badge>
                 {move.distance && (
-                  <Badge variant="outline">{move.distance.toLocaleString()} mi</Badge>
+                  <Badge variant="outline">{t("{0} mi", move.distance.toLocaleString())}</Badge>
                 )}
               </div>
             </div>
@@ -175,6 +180,8 @@ function TenderStopCard({
   mapping?: EDIMappingResolution;
   isLast: boolean;
 }) {
+  const t = useT();
+
   const stopAddress = formatStopAddress(stop);
 
   return (
@@ -190,7 +197,7 @@ function TenderStopCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={stop.type === "Pickup" ? "active" : "secondary"}>{stop.type}</Badge>
-              <span className="text-muted-foreground text-xs">Stop {stop.sequence + 1}</span>
+              <span className="text-muted-foreground text-xs">{t("Stop {0}", stop.sequence + 1)}</span>
               <Badge variant="outline">{stop.scheduleType}</Badge>
             </div>
             <div className="mt-2 truncate text-sm font-medium">{formatStopName(stop, mapping)}</div>
@@ -199,7 +206,7 @@ function TenderStopCard({
             )}
             {mapping?.targetLabel && (
               <div className="text-muted-foreground mt-1 text-xs">
-                Local record: <span className="text-foreground">{mapping.targetLabel}</span>
+                {t("Local record:")} <span className="text-foreground">{mapping.targetLabel}</span>
               </div>
             )}
           </div>
@@ -209,7 +216,7 @@ function TenderStopCard({
               {formatWindow(stop.scheduledWindowStart, stop.scheduledWindowEnd)}
             </span>
             <span>
-              {formatWeight(stop.weight)} / {formatNumber(stop.pieces)} pcs
+              {t("{0} / {1} pcs", formatWeight(stop.weight), formatNumber(stop.pieces))}
             </span>
           </div>
         </div>
@@ -219,15 +226,17 @@ function TenderStopCard({
 }
 
 export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps) {
+  const t = useT();
+
   const payload = transfer.tenderPayload;
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       <ReviewSection
         icon={<PackageIcon className="size-4" />}
-        title="Commodities"
+        title={t("Commodities")}
         count={payload.commodities?.length ?? 0}
-        empty="No commodities were included in this tender."
+        empty={t("No commodities were included in this tender.")}
       >
         {payload.commodities?.map((commodity) => {
           const mapping = findMapping(mappingRows, "Commodity", commodity.commodityId);
@@ -243,9 +252,9 @@ export function TenderFreightReview({ transfer, mappingRows }: TenderReviewProps
       </ReviewSection>
       <ReviewSection
         icon={<DollarSignIcon className="size-4" />}
-        title="Additional Charges"
+        title={t("Additional Charges")}
         count={payload.additionalCharges?.length ?? 0}
-        empty="No additional charges were included in this tender."
+        empty={t("No additional charges were included in this tender.")}
       >
         {payload.additionalCharges?.map((charge) => {
           const mapping = findMapping(mappingRows, "AccessorialCharge", charge.accessorialChargeId);

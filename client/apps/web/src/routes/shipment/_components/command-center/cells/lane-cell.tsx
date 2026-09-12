@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   getDestinationLocation,
   getOriginLocation,
@@ -31,6 +32,8 @@ function toneClass(status: Shipment["status"]): LaneToneClass {
 }
 
 export function LaneCell({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const highlightId = useCommandCenterStore.use.highlightId();
   const isHighlighted = !!shipment.id && highlightId === shipment.id;
 
@@ -65,7 +68,7 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
         </span>
       </div>
       <div className="font-table text-muted-foreground text-[9.5px] tabular-nums">
-        {miles}mi{commodityName ? ` · ${commodityName}` : ""}
+        {t("{0}mi{1}", miles, commodityName ? ` · ${commodityName}` : "")}
       </div>
     </div>
   );

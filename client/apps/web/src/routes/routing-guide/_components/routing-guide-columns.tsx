@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -88,7 +89,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
         const count = row.original.entries?.length ?? 0;
         return (
           <span className="text-muted-foreground tabular-nums">
-            {count} carrier{count === 1 ? "" : "s"}
+            {translate("{0, plural, one {# carrier} other {# carriers}}", count)}
           </span>
         );
       },

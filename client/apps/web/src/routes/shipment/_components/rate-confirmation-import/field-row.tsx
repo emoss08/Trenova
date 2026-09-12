@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
@@ -29,6 +30,8 @@ function displayValue(value: unknown): string {
 }
 
 export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative }: FieldRowProps) {
+  const t = useT();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [showAlts, setShowAlts] = useState(false);
@@ -76,8 +79,8 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         role="row"
       >
         <div className={cn("size-1.5 shrink-0 rounded-full", style.dot)} />
-        <span className="text-muted-foreground/50 text-xs">{field.label}</span>
-        <span className="text-muted-foreground/30 text-xs italic">Not extracted</span>
+        <span className="text-muted-foreground/50 text-xs">{t(field.label)}</span>
+        <span className="text-muted-foreground/30 text-xs italic">{t("Not extracted")}</span>
         <Button
           variant="ghost"
           size="icon-xs"
@@ -106,7 +109,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-2">
-              <span className="text-2xs text-muted-foreground shrink-0">{field.label}</span>
+              <span className="text-2xs text-muted-foreground shrink-0">{t(field.label)}</span>
               {isEditing ? (
                 <Input
                   ref={inputRef}
@@ -142,7 +145,9 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
           {field.evidenceExcerpt && !isEditing && (
             <p className="text-2xs text-muted-foreground/40 mt-0.5 max-w-[320px] truncate">
               &ldquo;{field.evidenceExcerpt}&rdquo;
-              {field.pageNumber != null && <span className="ml-1">p.{field.pageNumber}</span>}
+              {field.pageNumber != null && (
+                <span className="ml-1">{t("p.{0}", field.pageNumber)}</span>
+              )}
             </p>
           )}
 
@@ -157,7 +162,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                 <ChevronDownIcon
                   className={cn("size-2.5 transition-transform", showAlts && "rotate-180")}
                 />
-                {field.alternativeValues.length} alternatives
+                {t("{0} alternatives", field.alternativeValues.length)}
               </button>
               {showAlts && (
                 <div className="mt-1 flex flex-wrap gap-1">

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   closePerformanceReview,
@@ -22,6 +23,8 @@ import { ReviewEditorDialog } from "./reviews/review-editor-dialog";
 import { useReviewInvalidation } from "./reviews/use-review-invalidation";
 
 export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canCreate } = usePermission(Resource.PerformanceReview, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.PerformanceReview, Operation.Update);
   const { allowed: canSubmit } = usePermission(Resource.PerformanceReview, Operation.Submit);
@@ -51,29 +54,29 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
     mutationFn: (review: PerformanceReviewRow) =>
       submitPerformanceReview({ id: review.id, version: review.version }),
     onSuccess: () => {
-      toast.success("Review submitted", {
-        description: "The worker has been asked to read it and sign off in Dash.",
+      toast.success(t("Review submitted"), {
+        description: t("The worker has been asked to read it and sign off in Dash."),
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not submit review", { description: error.message }),
+      toast.error(t("Could not submit review"), { description: error.message }),
   });
   const reopen = useMutation({
     mutationFn: (review: PerformanceReviewRow) =>
       reopenPerformanceReview({ id: review.id, version: review.version }),
     onSuccess: () => {
-      toast.success("Review reopened as a draft");
+      toast.success(t("Review reopened as a draft"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not reopen review", { description: error.message }),
+      toast.error(t("Could not reopen review"), { description: error.message }),
   });
   const close = useMutation({
     mutationFn: (review: PerformanceReviewRow) =>
       closePerformanceReview({ id: review.id, version: review.version }),
     onSuccess: (review) => {
-      toast.success("Review closed", {
+      toast.success(t("Review closed"), {
         description: review.nextReviewAt
           ? "The next review is scheduled from the template cadence."
           : "Filed on the worker's record.",
@@ -81,16 +84,16 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not close review", { description: error.message }),
+      toast.error(t("Could not close review"), { description: error.message }),
   });
   const remove = useMutation({
     mutationFn: (review: PerformanceReviewRow) => deletePerformanceReview(review.id),
     onSuccess: () => {
-      toast.success("Draft deleted");
+      toast.success(t("Draft deleted"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not delete draft", { description: error.message }),
+      toast.error(t("Could not delete draft"), { description: error.message }),
   });
 
   const permissions = useMemo<ReviewPermissions>(
@@ -122,9 +125,9 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold">Performance reviews</h3>
+          <h3 className="text-sm font-semibold">{t("Performance reviews")}</h3>
           <p className="text-muted-foreground text-xs">
-            Drafted here, signed off by the worker in Dash, then closed and scheduled again.
+            {t("Drafted here, signed off by the worker in Dash, then closed and scheduled again.")}
           </p>
         </div>
         {canCreate ? (
@@ -134,7 +137,7 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
             onClick={() => setEditing({ review: null })}
           >
             <PlusIcon className="size-3.5" />
-            Start a review
+            {t("Start a review")}
           </Button>
         ) : null}
       </div>
@@ -142,7 +145,7 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
       {reviews.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center text-sm">
           <ClipboardCheckIcon className="size-5" />
-          No reviews yet
+          {t("No reviews yet")}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -164,7 +167,7 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
             <ChevronDownIcon
               className={`size-3.5 transition-transform ${historyOpen ? "rotate-180" : ""}`}
             />
-            History ({closed.length})
+            {t("History ({0})", closed.length)}
           </Button>
           {historyOpen
             ? closed.map((review) => <ReviewCard key={review.id} review={review} {...cardProps} />)

@@ -1,3 +1,4 @@
+import { intlLocale } from "@trenova/shared/i18n/format";
 import { TimeFormat, type TimeFormatType } from "@trenova/shared/types/user";
 import { parseDate } from "@trenova/shared/lib/chrono";
 import { endOfDay, startOfDay, startOfMonth } from "date-fns";
@@ -69,7 +70,7 @@ function zonedFormatter({ timezone, timeFormat, ...options }: ZonedFormatOptions
     options.second !== undefined ||
     options.timeStyle !== undefined;
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     timeZone: resolveUserTimezone(timezone),
     ...(showsTime && options.hour12 === undefined ? { hour12: isHour12(timeFormat) } : {}),
     ...options,
@@ -264,7 +265,7 @@ export function generateDateOnlyString(date: Date): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     throw new Error("Invalid date provided to generateDateOnlyString");
   }
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
@@ -347,7 +348,7 @@ export function generateDateTimeString(date: Date, options: DateFormatOptions = 
 
   const { timeFormat, showSeconds = false } = options;
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(intlLocale(), {
     month: "2-digit",
     day: "2-digit",
     year: "numeric",

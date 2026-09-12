@@ -1,29 +1,32 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 export function EmailLogsPage() {
+  const t = useT();
+
   const logsQuery = useQuery(queries.email.logs());
   const logs = logsQuery.data?.results ?? [];
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <div>
-        <h1 className="text-lg font-semibold">Email Logs</h1>
+        <h1 className="text-lg font-semibold">{t("Email Logs")}</h1>
         <p className="text-muted-foreground text-sm">
-          Transactional email send and delivery history.
+          {t("Transactional email send and delivery history.")}
         </p>
       </div>
       <section className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground border-b text-left text-xs uppercase">
             <tr>
-              <th className="px-3 py-2">Subject</th>
-              <th className="px-3 py-2">Purpose</th>
-              <th className="px-3 py-2">Recipients</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Attempts</th>
-              <th className="px-3 py-2">Created</th>
+              <th className="px-3 py-2">{t("Subject")}</th>
+              <th className="px-3 py-2">{t("Purpose")}</th>
+              <th className="px-3 py-2">{t("Recipients")}</th>
+              <th className="px-3 py-2">{t("Status")}</th>
+              <th className="px-3 py-2">{t("Attempts")}</th>
+              <th className="px-3 py-2">{t("Created")}</th>
             </tr>
           </thead>
           <tbody>
@@ -45,7 +48,7 @@ export function EmailLogsPage() {
             {logs.length === 0 && (
               <tr>
                 <td className="text-muted-foreground px-3 py-8 text-center" colSpan={6}>
-                  No email logs yet.
+                  {t("No email logs yet.")}
                 </td>
               </tr>
             )}

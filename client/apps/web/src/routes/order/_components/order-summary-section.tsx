@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import {
   AlertDialog,
@@ -35,6 +36,8 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 }
 
 export function OrderSummarySection() {
+  const t = useT();
+
   const { control } = useFormContext<Order>();
   const orderId = useWatch({ control, name: "id" });
   const invalidateOrders = useOrderInvalidation();
@@ -51,12 +54,12 @@ export function OrderSummarySection() {
     mutationFn: () => closeOrder(orderId!),
     onSuccess: () => {
       invalidateOrders();
-      toast.success("Order closed", {
-        description: "The order has been settled and closed.",
+      toast.success(t("Order closed"), {
+        description: t("The order has been settled and closed."),
       });
     },
     onError: (error) =>
-      toast.error("Failed to close order", {
+      toast.error(t("Failed to close order"), {
         description: graphQLErrorMessage(error, "The order could not be closed."),
       }),
   });
@@ -67,12 +70,12 @@ export function OrderSummarySection() {
       invalidateOrders();
       setCancelOpen(false);
       setCancelReason("");
-      toast.success("Order canceled", {
-        description: "Every remaining leg has been canceled.",
+      toast.success(t("Order canceled"), {
+        description: t("Every remaining leg has been canceled."),
       });
     },
     onError: (error) =>
-      toast.error("Failed to cancel order", {
+      toast.error(t("Failed to cancel order"), {
         description: graphQLErrorMessage(error, "The order could not be canceled."),
       }),
   });
@@ -91,8 +94,8 @@ export function OrderSummarySection() {
 
   return (
     <FormSection
-      title="Accounts Receivable"
-      description="The commercial rollup across every leg and order-level charge"
+      title={t("Accounts Receivable")}
+      description={t("The commercial rollup across every leg and order-level charge")}
       className="border-border border-t pt-4"
       action={
         <div className="flex gap-2">
@@ -102,17 +105,17 @@ export function OrderSummarySection() {
               variant="outline"
               size="xxs"
               isLoading={isClosing}
-              loadingText="Closing..."
+              loadingText={t("Closing...")}
               onClick={() => close()}
             >
               <CheckCircle2Icon className="size-3" />
-              Close Order
+              {t("Close Order")}
             </Button>
           )}
           {canCancel && (
             <Button type="button" variant="outline" size="xxs" onClick={() => setCancelOpen(true)}>
               <BanIcon className="text-destructive size-3" />
-              Cancel Order
+              {t("Cancel Order")}
             </Button>
           )}
         </div>
@@ -120,18 +123,18 @@ export function OrderSummarySection() {
     >
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="flex flex-col rounded-lg border px-3 py-2">
-          <span className="text-2xs text-muted-foreground uppercase">Status</span>
+          <span className="text-2xs text-muted-foreground uppercase">{t("Status")}</span>
           <span className="pt-0.5">
             <OrderStatusBadge status={order.status} />
           </span>
         </div>
-        <SummaryStat label="Quoted" value={formatAmount(order.quotedAmount)} />
+        <SummaryStat label={t("Quoted")} value={formatAmount(order.quotedAmount)} />
         <SummaryStat
           label={`Total (${activeLegCount} of ${legCount} active leg${legCount === 1 ? "" : "s"})`}
           value={formatAmount(order.totalAmount)}
         />
         <SummaryStat
-          label="Quote Variance"
+          label={t("Quote Variance")}
           value={
             order.quotedAmount != null && order.totalAmount != null
               ? formatCurrency(Number(order.totalAmount) - Number(order.quotedAmount), currency)
@@ -143,20 +146,19 @@ export function OrderSummarySection() {
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel order {order.orderNumber}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Cancel order {0}?", order.orderNumber)}</AlertDialogTitle>
             <AlertDialogDescription>
-              Every remaining active leg will be canceled and the order will derive to Canceled.
-              This cannot be undone. A reason is required.
+              {t("Every remaining active leg will be canceled and the order will derive to Canceled. This cannot be undone. A reason is required.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
             value={cancelReason}
             onChange={(event) => setCancelReason(event.target.value)}
-            placeholder="Reason for cancellation"
+            placeholder={t("Reason for cancellation")}
             rows={3}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCanceling}>Keep order</AlertDialogCancel>
+            <AlertDialogCancel disabled={isCanceling}>{t("Keep order")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={!cancelReason.trim() || isCanceling}
               onClick={(event) => {
@@ -164,7 +166,7 @@ export function OrderSummarySection() {
                 cancel();
               }}
             >
-              Cancel order
+              {t("Cancel order")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

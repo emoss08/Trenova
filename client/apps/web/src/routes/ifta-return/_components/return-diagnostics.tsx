@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import {
   backfillJurisdictionMiles,
@@ -68,6 +69,8 @@ function CountFigure({
   miles: string;
   hint: string;
 }) {
+  const t = useT();
+
   return (
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
       <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
@@ -77,7 +80,7 @@ function CountFigure({
         {count} {pluralize("move", count)}
       </p>
       <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
-        {formatIftaMeasure(miles, IFTA_MILES_DISPLAY_SCALE)} miles
+        {t("{0} miles", formatIftaMeasure(miles, IFTA_MILES_DISPLAY_SCALE))}
       </p>
     </div>
   );
@@ -89,6 +92,8 @@ type ReturnDiagnosticsProps = {
 };
 
 export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) {
+  const t = useT();
+
   const [backfillOpen, setBackfillOpen] = useState(false);
   const mismatch = problemTotals(ret.problems, "MileageMismatch");
   const hasUnattributed = ret.unattributedMoveCount > 0;
@@ -97,44 +102,44 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
     <Card className="rounded-md">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <CardTitle className="text-sm font-semibold">What the figures leave out</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("What the figures leave out")}</CardTitle>
           <p className="text-muted-foreground text-xs">
-            Miles the return could not place, and everything the computation flagged while it ran.
+            {t("Miles the return could not place, and everything the computation flagged while it ran.")}
           </p>
         </div>
         {canBackfill ? (
           <Button variant="outline" size="sm" onClick={() => setBackfillOpen(true)}>
             <RouteIcon className="size-3.5" />
-            Backfill jurisdiction miles…
+            {t("Backfill jurisdiction miles…")}
           </Button>
         ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <CountFigure
-            label="Unattributed"
+            label={t("Unattributed")}
             count={ret.unattributedMoveCount}
             miles={ret.unattributedMiles}
-            hint="Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles."
+            hint={t("Completed moves with routed distance but no jurisdiction breakdown. They are on no line, so the return is understated by these miles.")}
           />
           <CountFigure
-            label="No tractor"
+            label={t("No tractor")}
             count={ret.noTractorMoveCount}
             miles={ret.noTractorMiles}
-            hint="Attributed miles on moves with no tractor assignment, which cannot be placed on a fuel type."
+            hint={t("Attributed miles on moves with no tractor assignment, which cannot be placed on a fuel type.")}
           />
           <CountFigure
-            label="Mileage mismatch"
+            label={t("Mileage mismatch")}
             count={mismatch.count}
             miles={mismatch.amount}
-            hint="Where the jurisdiction rows do not add up to the move's own distance."
+            hint={t("Where the jurisdiction rows do not add up to the move's own distance.")}
           />
         </div>
 
         {ret.problems.length === 0 ? (
           <div className="text-muted-foreground flex items-center gap-2 text-xs">
             <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
-            The computation flagged nothing on this quarter.
+            {t("The computation flagged nothing on this quarter.")}
           </div>
         ) : (
           <ul className="divide-border/60 divide-y rounded-md border">
@@ -159,15 +164,14 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
         {hasUnattributed ? (
           <Alert variant="warning">
             <SettingsIcon className="size-4" />
-            <AlertTitle>Some moves were never broken down by jurisdiction</AlertTitle>
+            <AlertTitle>{t("Some moves were never broken down by jurisdiction")}</AlertTitle>
             <AlertDescription>
-              Routed miles are only split state by state while{" "}
-              <span className="font-medium">Capture jurisdiction miles</span> is on in{" "}
+              {t("Routed miles are only split state by state while")}{" "}
+              <span className="font-medium">{t("Capture jurisdiction miles")}</span> {t("is on in")}{" "}
               <Link to={DISTANCE_CONTROLS_PATH} className="text-brand font-medium hover:underline">
-                distance controls
+                {t("distance controls")}
               </Link>
-              . Switch it on for future routes, and backfill the moves already run — each one is a
-              billable distance request, so size the job with the dry run first.
+              {t(". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.")}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -185,15 +189,15 @@ type BackfillMilesDialogProps = {
 };
 
 export function BackfillMilesDialog({ open, onOpenChange, ret }: BackfillMilesDialogProps) {
+  const t = useT();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Backfill jurisdiction miles</DialogTitle>
+          <DialogTitle>{t("Backfill jurisdiction miles")}</DialogTitle>
           <DialogDescription>
-            Every completed move in {ret.period.label} that has distance but no jurisdiction
-            breakdown is re-routed for its state-by-state report. Each move is a billable distance
-            request, so the quarter is counted first.
+            {t("Every completed move in {0} that has distance but no jurisdiction breakdown is re-routed for its state-by-state report. Each move is a billable distance request, so the quarter is counted first.", ret.period.label)}
           </DialogDescription>
         </DialogHeader>
         {open ? <BackfillSession ret={ret} onOpenChange={onOpenChange} /> : null}
@@ -209,6 +213,8 @@ function BackfillSession({
   ret: IftaReturnView;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const [dryRun, setDryRun] = useState<JurisdictionMilesBackfillResult | null>(null);
 
   const count = useMutation({
@@ -230,7 +236,7 @@ function BackfillSession({
         dryRun: false,
       }),
     onSuccess: (result) => {
-      toast.success("Backfill started", {
+      toast.success(t("Backfill started"), {
         description: result.workflowId
           ? `Workflow ${result.workflowId}. Recompute the return once it finishes.`
           : "Recompute the return once it finishes.",
@@ -253,12 +259,11 @@ function BackfillSession({
         {count.isPending || dryRun === null ? (
           <span className="text-muted-foreground flex items-center gap-2 text-xs">
             <Spinner className="size-3.5" />
-            Counting the moves this would re-route…
+            {t("Counting the moves this would re-route…")}
           </span>
         ) : nothingToDo ? (
           <span className="text-xs">
-            Every completed move in the quarter already has a jurisdiction breakdown. There is
-            nothing to backfill.
+            {t("Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.")}
           </span>
         ) : (
           <div className="flex flex-col gap-1">
@@ -266,8 +271,7 @@ function BackfillSession({
               {dryRun.unattributedMoves} {pluralize("move", dryRun.unattributedMoves)}
             </span>
             <span className="text-muted-foreground text-xs tabular-nums">
-              {formatIftaMeasure(dryRun.unattributedMiles, IFTA_MILES_DISPLAY_SCALE)} miles would be
-              attributed, at one billable distance request per move.
+              {t("{0} miles would be attributed, at one billable distance request per move.", formatIftaMeasure(dryRun.unattributedMiles, IFTA_MILES_DISPLAY_SCALE))}
             </span>
           </div>
         )}
@@ -279,14 +283,14 @@ function BackfillSession({
           onClick={() => onOpenChange(false)}
           disabled={start.isPending}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="button"
           onClick={() => start.mutate()}
           disabled={count.isPending || dryRun === null || nothingToDo || start.isPending}
         >
-          {start.isPending ? "Starting..." : "Start the backfill"}
+          {start.isPending ? t("Starting...") : t("Start the backfill")}
         </Button>
       </DialogFooter>
     </>

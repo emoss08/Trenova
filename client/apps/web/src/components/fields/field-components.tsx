@@ -1,16 +1,19 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { WarningProps } from "@trenova/shared/types/fields";
 import React, { useMemo } from "react";
 import { Label } from "@trenova/shared/components/ui/label";
 
 export function ErrorMessage({ formError, id }: { formError?: string; id?: string }) {
+  const t = useT();
+
   return (
     <span
       id={id}
       role="alert"
       className="text-destructive dark:bg-destructive/40 mt-1 inline-block rounded-md bg-red-50 px-2 py-1 text-left text-xs leading-tight dark:text-red-50"
     >
-      {formError ? formError : "An Error has occurred. Please try again."}
+      {formError ? formError : t("An Error has occurred. Please try again.")}
     </span>
   );
 }

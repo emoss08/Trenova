@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { usePermission } from "@/hooks/use-permission";
@@ -18,6 +19,8 @@ export function PinnedStrip({
   onJumpToComment: (commentId: string) => void;
   onUnpin: (comment: LocalShipmentComment) => void;
 }) {
+  const t = useT();
+
   const [isExpanded, setIsExpanded] = useState(false);
   const { allowed: canUnpin } = usePermission("shipment_comment", Operation.Unpin);
 
@@ -43,7 +46,7 @@ export function PinnedStrip({
       >
         <PinIcon className="size-3.5 shrink-0 text-amber-500" />
         <span className="shrink-0 text-xs font-medium">
-          {pinnedComments.length === 1 ? "1 pinned" : `${pinnedComments.length} pinned`}
+          {pinnedComments.length === 1 ? t("1 pinned") : t("{0} pinned", pinnedComments.length)}
         </span>
         {!isExpanded && (
           <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
@@ -78,7 +81,7 @@ export function PinnedStrip({
                     onClick={() => onJumpToComment(comment.id)}
                   >
                     <span className="block truncate text-xs">
-                      <span className="font-medium">{comment.user?.name ?? "Unknown"}</span>
+                      <span className="font-medium">{comment.user?.name ?? t("Unknown")}</span>
                       <span className="text-muted-foreground"> — {comment.comment}</span>
                     </span>
                   </button>
@@ -88,7 +91,7 @@ export function PinnedStrip({
                       variant="ghost"
                       size="icon-xs"
                       className="text-muted-foreground size-5 shrink-0 opacity-0 transition-opacity group-hover/pinned:opacity-100"
-                      aria-label="Unpin comment"
+                      aria-label={t("Unpin comment")}
                       onClick={() => onUnpin(comment)}
                     >
                       <PinOffIcon className="size-3" />

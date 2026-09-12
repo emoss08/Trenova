@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { HazardousMaterialAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -10,13 +11,15 @@ import type { Commodity } from "@trenova/shared/types/commodity";
 import { useFormContext } from "react-hook-form";
 
 export function CommodityForm() {
+  const t = useT();
+
   const { control } = useFormContext<Commodity>();
 
   return (
     <div className="space-y-6">
       <FormSection
-        title="General Information"
-        description="Basic identification for this commodity."
+        title={t("General Information")}
+        description={t("Basic identification for this commodity.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -25,9 +28,9 @@ export function CommodityForm() {
               control={control}
               rules={{ required: true }}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="The current status of the commodity."
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("The current status of the commodity.")}
               options={statusChoices}
             />
           </FormControl>
@@ -36,9 +39,9 @@ export function CommodityForm() {
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Name"
-              placeholder="Name"
-              description="The name of the commodity."
+              label={t("Name")}
+              placeholder={t("Name")}
+              description={t("The name of the commodity.")}
               maxLength={100}
             />
           </FormControl>
@@ -47,16 +50,16 @@ export function CommodityForm() {
               control={control}
               rules={{ required: true }}
               name="description"
-              label="Description"
-              placeholder="Description"
-              description="A detailed description of the commodity."
+              label={t("Description")}
+              placeholder={t("Description")}
+              description={t("A detailed description of the commodity.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Classification"
-        description="Freight classification and hazardous material linkage."
+        title={t("Classification")}
+        description={t("Freight classification and hazardous material linkage.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -64,9 +67,9 @@ export function CommodityForm() {
             <SelectField
               control={control}
               name="freightClass"
-              label="Freight Class"
-              placeholder="Select freight class"
-              description="The NMFC freight classification for this commodity."
+              label={t("Freight Class")}
+              placeholder={t("Select freight class")}
+              description={t("The NMFC freight classification for this commodity.")}
               options={freightClassChoices}
               isClearable
             />
@@ -75,17 +78,17 @@ export function CommodityForm() {
             <HazardousMaterialAutocompleteField
               control={control}
               name="hazardousMaterialId"
-              label="Hazardous Material"
-              placeholder="Search hazardous materials..."
-              description="Link a hazardous material to this commodity if applicable."
+              label={t("Hazardous Material")}
+              placeholder={t("Search hazardous materials...")}
+              description={t("Link a hazardous material to this commodity if applicable.")}
               clearable
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Temperature"
-        description="Temperature range requirements for shipping."
+        title={t("Temperature")}
+        description={t("Temperature range requirements for shipping.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -93,27 +96,27 @@ export function CommodityForm() {
             <NumberField
               control={control}
               name="minTemperature"
-              label="Min Temperature"
-              sideText="&deg;F"
-              placeholder="Min Temperature"
-              description="Minimum temperature for storing or shipping."
+              label={t("Min Temperature")}
+              sideText={t("°F")}
+              placeholder={t("Min Temperature")}
+              description={t("Minimum temperature for storing or shipping.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="maxTemperature"
-              label="Max Temperature"
-              sideText="&deg;F"
-              placeholder="Max Temperature"
-              description="Maximum temperature for storing or shipping."
+              label={t("Max Temperature")}
+              sideText={t("°F")}
+              placeholder={t("Max Temperature")}
+              description={t("Maximum temperature for storing or shipping.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
       <FormSection
-        title="Physical Properties"
-        description="Weight, dimensions, and quantity constraints."
+        title={t("Physical Properties")}
+        description={t("Weight, dimensions, and quantity constraints.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -121,10 +124,10 @@ export function CommodityForm() {
             <NumberField
               control={control}
               name="weightPerUnit"
-              label="Weight Per Unit"
+              label={t("Weight Per Unit")}
               sideText="lbs"
-              placeholder="Weight Per Unit"
-              description="The weight of a single unit of this commodity."
+              placeholder={t("Weight Per Unit")}
+              description={t("The weight of a single unit of this commodity.")}
               step={0.01}
             />
           </FormControl>
@@ -132,10 +135,10 @@ export function CommodityForm() {
             <NumberField
               control={control}
               name="linearFeetPerUnit"
-              label="Linear Feet Per Unit"
+              label={t("Linear Feet Per Unit")}
               sideText="ft"
-              placeholder="Linear Feet Per Unit"
-              description="The linear feet occupied by a single unit."
+              placeholder={t("Linear Feet Per Unit")}
+              description={t("The linear feet occupied by a single unit.")}
               step={0.01}
             />
           </FormControl>
@@ -143,39 +146,39 @@ export function CommodityForm() {
             <NumberField
               control={control}
               name="maxQuantityPerShipment"
-              label="Max Qty Per Shipment"
-              placeholder="Max Quantity Per Shipment"
-              description="Maximum quantity allowed per shipment."
+              label={t("Max Qty Per Shipment")}
+              placeholder={t("Max Quantity Per Shipment")}
+              description={t("Maximum quantity allowed per shipment.")}
               step={0.01}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
-      <FormSection title="Handling" description="Loading instructions and handling requirements.">
+      <FormSection title={t("Handling")} description={t("Loading instructions and handling requirements.")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="loadingInstructions"
-              label="Loading Instructions"
-              placeholder="Loading Instructions"
-              description="Specific instructions for loading this commodity."
+              label={t("Loading Instructions")}
+              placeholder={t("Loading Instructions")}
+              description={t("Specific instructions for loading this commodity.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="stackable"
-              label="Stackable"
-              description="Whether this commodity can be stacked during transport."
+              label={t("Stackable")}
+              description={t("Whether this commodity can be stacked during transport.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="fragile"
-              label="Fragile"
-              description="Whether this commodity requires fragile handling."
+              label={t("Fragile")}
+              description={t("Whether this commodity requires fragile handling.")}
             />
           </FormControl>
         </FormGroup>

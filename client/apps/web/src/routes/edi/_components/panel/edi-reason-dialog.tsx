@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -33,6 +34,8 @@ export function EDIReasonDialog({
   isPending,
   onConfirm,
 }: EDIReasonDialogProps) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export function EDIReasonDialog({
         />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -117,6 +118,8 @@ function SectionHeading({ children, hint }: { children: string; hint?: string })
  * before anybody gets that far.
  */
 export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(policy);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -162,7 +165,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
     onSuccess: (document, file) => {
       setValue("documentId", document.id, { shouldDirty: true, shouldValidate: true });
       setAttachedName(file.name);
-      toast.success("Document attached");
+      toast.success(t("Document attached"));
     },
     onError: (error: Error) => toast.error(error.message || "Could not attach the document"),
   });
@@ -205,7 +208,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
   function pickFile(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
-      toast.error("Attach a PDF or an image");
+      toast.error(t("Attach a PDF or an image"));
       return;
     }
     attach.mutate(file);
@@ -223,10 +226,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Revise the policy" : "Publish a policy"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Revise the policy") : t("Publish a policy")}</DialogTitle>
           <DialogDescription>
-            Either a short text or an attached document — a signature has to be on something.
-            Everybody it applies to is asked to sign the version in force.
+            {t("Either a short text or an attached document — a signature has to be on something. Everybody it applies to is asked to sign the version in force.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -238,14 +240,14 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
             }}
           >
             <FormGroup className="pb-2" cols={2}>
-              <SectionHeading>What it is</SectionHeading>
+              <SectionHeading>{t("What it is")}</SectionHeading>
               <FormControl>
                 <InputField<WorkerPolicyFormValues>
                   control={control}
                   name="code"
-                  label="Code"
-                  placeholder="e.g. HANDBOOK"
-                  description="A short reference for the policy; it is stored in upper case."
+                  label={t("Code")}
+                  placeholder={t("e.g. HANDBOOK")}
+                  description={t("A short reference for the policy; it is stored in upper case.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -253,9 +255,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 <InputField<WorkerPolicyFormValues>
                   control={control}
                   name="title"
-                  label="Title"
-                  placeholder="e.g. Driver handbook"
-                  description="The name drivers see in their list of policies to read and sign."
+                  label={t("Title")}
+                  placeholder={t("e.g. Driver handbook")}
+                  description={t("The name drivers see in their list of policies to read and sign.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -263,20 +265,20 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 <InputField<WorkerPolicyFormValues>
                   control={control}
                   name="summary"
-                  label="One-line summary"
-                  placeholder="e.g. Hours, conduct and equipment rules for every driver"
-                  description="Optional line a driver sees before opening the policy."
+                  label={t("One-line summary")}
+                  placeholder={t("e.g. Hours, conduct and equipment rules for every driver")}
+                  description={t("Optional line a driver sees before opening the policy.")}
                 />
               </FormControl>
 
-              <SectionHeading hint="What the signature is on">The text</SectionHeading>
+              <SectionHeading hint={t("What the signature is on")}>{t("The text")}</SectionHeading>
               <FormControl cols="full">
                 <SegmentedControl<Source>
                   items={SOURCE_ITEMS}
                   value={source}
                   onValueChange={setSourceOverride}
                   fullWidth
-                  aria-label="Where the policy text lives"
+                  aria-label={t("Where the policy text lives")}
                 />
               </FormControl>
               {source === "text" ? (
@@ -284,9 +286,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   <TextareaField<WorkerPolicyFormValues>
                     control={control}
                     name="body"
-                    label="Policy text"
-                    placeholder="e.g. Drivers must complete a pre-trip inspection before every dispatch..."
-                    description="The wording drivers read and sign; short policies fit here, longer ones are better attached as a document."
+                    label={t("Policy text")}
+                    placeholder={t("e.g. Drivers must complete a pre-trip inspection before every dispatch...")}
+                    description={t("The wording drivers read and sign; short policies fit here, longer ones are better attached as a document.")}
                     rows={6}
                   />
                 </FormControl>
@@ -300,11 +302,11 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">
-                            {attachedName ?? "Attached document"}
+                            {attachedName ?? t("Attached document")}
                           </span>
                           <span className="text-muted-foreground flex items-center gap-1 text-xs">
                             <ShieldCheckIcon className="size-3" />
-                            Its checksum is copied onto every signature
+                            {t("Its checksum is copied onto every signature")}
                           </span>
                         </span>
                         <Button
@@ -314,13 +316,13 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           isLoading={attach.isPending}
                           onClick={() => fileInputRef.current?.click()}
                         >
-                          Replace
+                          {t("Replace")}
                         </Button>
                         <Button
                           type="button"
                           size="icon-xs"
                           variant="ghost"
-                          aria-label="Remove the attached document"
+                          aria-label={t("Remove the attached document")}
                           onClick={detach}
                         >
                           <XIcon className="size-3.5" />
@@ -356,9 +358,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           )}
                         />
                         <span className="text-foreground font-medium">
-                          {attach.isPending ? "Uploading…" : "Drop a PDF here, or click to choose"}
+                          {attach.isPending ? t("Uploading…") : t("Drop a PDF here, or click to choose")}
                         </span>
-                        <span>Drivers open it from Dash. PDFs and images are accepted.</span>
+                        <span>{t("Drivers open it from Dash. PDFs and images are accepted.")}</span>
                       </div>
                     )}
                     {bodyError ? <p className="text-destructive text-xs">{bodyError}</p> : null}
@@ -384,71 +386,70 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 >
                   <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
                   <span>
-                    The words changed. Give this a new version, or the server will refuse it if
-                    anybody has signed the current one.
+                    {t("The words changed. Give this a new version, or the server will refuse it if anybody has signed the current one.")}
                   </span>
                 </div>
               ) : null}
 
-              <SectionHeading>Who and when</SectionHeading>
+              <SectionHeading>{t("Who and when")}</SectionHeading>
               <FormControl>
                 <InputField<WorkerPolicyFormValues>
                   control={control}
                   name="versionLabel"
-                  label="Version"
-                  placeholder="e.g. 2026.1"
+                  label={t("Version")}
+                  placeholder={t("e.g. 2026.1")}
                   rules={{ required: true }}
-                  description="What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures."
+                  description={t("What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<WorkerPolicyFormValues>
                   control={control}
                   name="appliesTo"
-                  label="Applies to"
+                  label={t("Applies to")}
                   options={AUDIENCE_OPTIONS}
-                  placeholder="Choose who it binds"
+                  placeholder={t("Choose who it binds")}
                   rules={{ required: true }}
-                  description="Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator."
+                  description={t("Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<WorkerPolicyFormValues>
                   control={control}
                   name="effectiveFrom"
-                  label="Effective from"
-                  placeholder="e.g. Jan 1"
+                  label={t("Effective from")}
+                  placeholder={t("e.g. Jan 1")}
                   rules={{ required: true }}
-                  description="The day this version of the policy takes effect."
+                  description={t("The day this version of the policy takes effect.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<WorkerPolicyFormValues>
                   control={control}
                   name="status"
-                  label="Status"
+                  label={t("Status")}
                   options={STATUS_OPTIONS}
-                  placeholder="Choose a status"
+                  placeholder={t("Choose a status")}
                   rules={{ required: true }}
-                  description="Only a policy in force can be signed; a retired one is kept so old signatures still point at something."
+                  description={t("Only a policy in force can be signed; a retired one is kept so old signatures still point at something.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<WorkerPolicyFormValues>
                   control={control}
                   name="requiresSignature"
-                  label="Needs a signature"
-                  description="On, drivers type their name to sign it; off means they only confirm they have read it."
+                  label={t("Needs a signature")}
+                  description={t("On, drivers type their name to sign it; off means they only confirm they have read it.")}
                 />
               </FormControl>
             </FormGroup>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={close}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Publish"}
+                {isEdit ? t("Save") : t("Publish")}
               </Button>
             </DialogFooter>
           </Form>

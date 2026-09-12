@@ -2401,6 +2401,7 @@ var OrganizationColumns = struct {
 	City                   Column // "city" → qualified: "org.city"
 	PostalCode             Column // "postal_code" → qualified: "org.postal_code"
 	Timezone               Column // "timezone" → qualified: "org.timezone"
+	Locale                 Column // "locale" → qualified: "org.locale"
 	TaxID                  Column // "tax_id" → qualified: "org.tax_id"
 	BrokerageEnabled       Column // "brokerage_enabled" → qualified: "org.brokerage_enabled"
 	AssetOperationsEnabled Column // "asset_operations_enabled" → qualified: "org.asset_operations_enabled"
@@ -2423,6 +2424,7 @@ var OrganizationColumns = struct {
 	City:                   NewColumn("city", "org"),
 	PostalCode:             NewColumn("postal_code", "org"),
 	Timezone:               NewColumn("timezone", "org"),
+	Locale:                 NewColumn("locale", "org"),
 	TaxID:                  NewColumn("tax_id", "org"),
 	BrokerageEnabled:       NewColumn("brokerage_enabled", "org"),
 	AssetOperationsEnabled: NewColumn("asset_operations_enabled", "org"),
@@ -2451,6 +2453,7 @@ var OrganizationFieldMap = map[string]string{
 	"city":                   "city",
 	"postalCode":             "postal_code",
 	"timezone":               "timezone",
+	"locale":                 "locale",
 	"taxId":                  "tax_id",
 	"brokerageEnabled":       "brokerage_enabled",
 	"assetOperationsEnabled": "asset_operations_enabled",
@@ -2476,6 +2479,7 @@ var OrganizationInsertableColumns = []string{
 	"city",
 	"postal_code",
 	"timezone",
+	"locale",
 	"tax_id",
 	"brokerage_enabled",
 	"asset_operations_enabled",
@@ -2520,6 +2524,7 @@ var OrganizationFilter = struct {
 	City                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
 	PostalCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
 	Timezone               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	Locale                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locale" → DB: "locale"
 	TaxID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
 	BrokerageEnabled       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerageEnabled" → DB: "brokerage_enabled"
 	AssetOperationsEnabled func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assetOperationsEnabled" → DB: "asset_operations_enabled"
@@ -2568,6 +2573,9 @@ var OrganizationFilter = struct {
 	},
 	Timezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("timezone", op, value)
+	},
+	Locale: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("locale", op, value)
 	},
 	TaxID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taxId", op, value)
@@ -4166,6 +4174,7 @@ var UserColumns = struct {
 	ProfilePicURL         Column // "profile_pic_url" → qualified: "usr.profile_pic_url"
 	ThumbnailURL          Column // "thumbnail_url" → qualified: "usr.thumbnail_url"
 	Timezone              Column // "timezone" → qualified: "usr.timezone"
+	Locale                Column // "locale" → qualified: "usr.locale"
 	IsLocked              Column // "is_locked" → qualified: "usr.is_locked"
 	MustChangePassword    Column // "must_change_password" → qualified: "usr.must_change_password"
 	Version               Column // "version" → qualified: "usr.version"
@@ -4185,6 +4194,7 @@ var UserColumns = struct {
 	ProfilePicURL:         NewColumn("profile_pic_url", "usr"),
 	ThumbnailURL:          NewColumn("thumbnail_url", "usr"),
 	Timezone:              NewColumn("timezone", "usr"),
+	Locale:                NewColumn("locale", "usr"),
 	IsLocked:              NewColumn("is_locked", "usr"),
 	MustChangePassword:    NewColumn("must_change_password", "usr"),
 	Version:               NewColumn("version", "usr"),
@@ -4209,6 +4219,7 @@ var UserFieldMap = map[string]string{
 	"profilePicUrl":         "profile_pic_url",
 	"thumbnailUrl":          "thumbnail_url",
 	"timezone":              "timezone",
+	"locale":                "locale",
 	"isLocked":              "is_locked",
 	"mustChangePassword":    "must_change_password",
 	"version":               "version",
@@ -4232,6 +4243,7 @@ var UserInsertableColumns = []string{
 	"profile_pic_url",
 	"thumbnail_url",
 	"timezone",
+	"locale",
 	"is_locked",
 	"must_change_password",
 	"version",
@@ -4276,6 +4288,7 @@ var UserFilter = struct {
 	ProfilePicURL         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "profilePicUrl" → DB: "profile_pic_url"
 	ThumbnailURL          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "thumbnailUrl" → DB: "thumbnail_url"
 	Timezone              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	Locale                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locale" → DB: "locale"
 	IsLocked              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isLocked" → DB: "is_locked"
 	MustChangePassword    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mustChangePassword" → DB: "must_change_password"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -4315,6 +4328,9 @@ var UserFilter = struct {
 	},
 	Timezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("timezone", op, value)
+	},
+	Locale: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("locale", op, value)
 	},
 	IsLocked: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isLocked", op, value)

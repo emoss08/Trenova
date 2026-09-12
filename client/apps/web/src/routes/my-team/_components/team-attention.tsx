@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { attentionReasons, isWatched, type ClassifiedMember } from "@/lib/my-team";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { AlertTriangleIcon, ChevronRightIcon, CircleCheckIcon } from "lucide-react";
@@ -15,6 +16,8 @@ type TeamAttentionProps = {
  * "who do I chase today" — the question the page is opened for.
  */
 export function TeamAttention({ rows }: TeamAttentionProps) {
+  const t = useT();
+
   const flagged = useMemo(
     () =>
       rows
@@ -45,7 +48,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
             <CircleCheckIcon className="text-muted-foreground size-3.5" aria-hidden />
           )}
           <h3 id="team-attention-heading" className="text-sm font-medium">
-            Needs your attention
+            {t("Needs your attention")}
           </h3>
           {flagged.length > 0 ? (
             <Badge variant="inactive" className="text-2xs h-4 px-1 tabular-nums">
@@ -54,18 +57,18 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
           ) : null}
         </div>
         {watched.length > 0 ? (
-          <span className="text-muted-foreground text-xs">{watched.length} to keep an eye on</span>
+          <span className="text-muted-foreground text-xs">{t("{0} to keep an eye on", watched.length)}</span>
         ) : null}
       </header>
 
       {flagged.length === 0 ? (
         <div className="px-3 py-3">
           <p className="text-muted-foreground text-sm">
-            Everyone is in good standing.
+            {t("Everyone is in good standing.")}
             {watched.length > 0 ? (
               <>
                 {" "}
-                Worth a look soon:{" "}
+                {t("Worth a look soon:")}{" "}
                 <span className="text-foreground">
                   {watched.map((member) => member.name).join(", ")}
                 </span>
@@ -93,7 +96,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
                         variant={reason.severity === "critical" ? "inactive" : "warning"}
                         className="text-2xs h-4 px-1"
                       >
-                        {reason.label}
+                        {t(reason.label)}
                       </Badge>
                     ))}
                   </span>

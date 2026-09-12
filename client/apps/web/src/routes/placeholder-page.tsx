@@ -1,6 +1,9 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useLocation } from "react-router";
 
 export function PlaceholderPage() {
+  const t = useT();
+
   const location = useLocation();
 
   return (
@@ -9,7 +12,7 @@ export function PlaceholderPage() {
         <h1 className="text-foreground text-2xl font-semibold">
           {formatPathToTitle(location.pathname)}
         </h1>
-        <p className="text-muted-foreground mt-2">This page is under construction</p>
+        <p className="text-muted-foreground mt-2">{t("This page is under construction")}</p>
         <code className="bg-muted mt-4 block rounded px-3 py-1.5 text-sm">{location.pathname}</code>
       </div>
     </div>

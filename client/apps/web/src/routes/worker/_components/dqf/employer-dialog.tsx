@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -105,6 +106,8 @@ export function EmployerDialog({
   workerId,
   verification,
 }: EmployerDialogProps) {
+  const t = useT();
+
   const invalidate = useDqfInvalidation(workerId);
   const isEdit = Boolean(verification);
   const form = useForm<EmploymentVerificationFormValues>({
@@ -174,10 +177,9 @@ export function EmployerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit previous employer" : "Add a previous employer"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit previous employer") : t("Add a previous employer")}</DialogTitle>
           <DialogDescription>
-            Every DOT-regulated employer in the three years before the application has to be
-            investigated within thirty days of hire (49 CFR 391.23).
+            {t("Every DOT-regulated employer in the three years before the application has to be investigated within thirty days of hire (49 CFR 391.23).")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -193,9 +195,9 @@ export function EmployerDialog({
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="employerName"
-                  label="Employer"
-                  placeholder="e.g. Swift Transportation"
-                  description="The carrier or company as it appeared on the driver's application."
+                  label={t("Employer")}
+                  placeholder={t("e.g. Swift Transportation")}
+                  description={t("The carrier or company as it appeared on the driver's application.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -203,102 +205,102 @@ export function EmployerDialog({
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="employerDotNumber"
-                  label="USDOT number"
-                  placeholder="e.g. 1234567"
-                  description="Identifies the carrier when the safety history request is sent."
+                  label={t("USDOT number")}
+                  placeholder={t("e.g. 1234567")}
+                  description={t("Identifies the carrier when the safety history request is sent.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="employerMcNumber"
-                  label="MC number"
-                  placeholder="e.g. MC-123456"
-                  description="Recorded when the carrier has one, alongside the USDOT number."
+                  label={t("MC number")}
+                  placeholder={t("e.g. MC-123456")}
+                  description={t("Recorded when the carrier has one, alongside the USDOT number.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<EmploymentVerificationFormValues>
                   control={control}
                   name="employedFrom"
-                  label="Employed from"
-                  placeholder="First day there"
-                  description="When the driver started with this employer."
+                  label={t("Employed from")}
+                  placeholder={t("First day there")}
+                  description={t("When the driver started with this employer.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<EmploymentVerificationFormValues>
                   control={control}
                   name="employedTo"
-                  label="Employed to"
-                  placeholder="Last day there"
-                  description="When the driver left; cannot be before the start date."
+                  label={t("Employed to")}
+                  placeholder={t("Last day there")}
+                  description={t("When the driver left; cannot be before the start date.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="contactName"
-                  label="Contact"
-                  placeholder="e.g. Jane Doe, Safety Manager"
-                  description="Who at the employer the request is addressed to."
+                  label={t("Contact")}
+                  placeholder={t("e.g. Jane Doe, Safety Manager")}
+                  description={t("Who at the employer the request is addressed to.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="contactEmail"
-                  label="Contact email"
-                  placeholder="e.g. safety@carrier.com"
-                  description="Where the request goes when it is sent by email."
+                  label={t("Contact email")}
+                  placeholder={t("e.g. safety@carrier.com")}
+                  description={t("Where the request goes when it is sent by email.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<EmploymentVerificationFormValues>
                   control={control}
                   name="contactPhone"
-                  label="Contact phone"
-                  placeholder="e.g. (555) 123-4567"
-                  description="Used when the request is made or chased by phone."
+                  label={t("Contact phone")}
+                  placeholder={t("e.g. (555) 123-4567")}
+                  description={t("Used when the request is made or chased by phone.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<EmploymentVerificationFormValues>
                   control={control}
                   name="method"
-                  label="Requested by"
+                  label={t("Requested by")}
                   options={METHOD_OPTIONS}
                   rules={{ required: true }}
-                  placeholder="Pick a method"
-                  description="How the request was, or will be, sent to the employer."
+                  placeholder={t("Pick a method")}
+                  description={t("How the request was, or will be, sent to the employer.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<EmploymentVerificationFormValues>
                   control={control}
                   name="status"
-                  label="Status"
+                  label={t("Status")}
                   options={STATUS_OPTIONS}
                   rules={{ required: true }}
-                  placeholder="Pick a status"
-                  description="Where the request stands; anything past Pending needs the date it was sent."
+                  placeholder={t("Pick a status")}
+                  description={t("Where the request stands; anything past Pending needs the date it was sent.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<EmploymentVerificationFormValues>
                   control={control}
                   name="requestedAt"
-                  label="Requested on"
-                  placeholder="Date the request went out"
-                  description="Required once the status moves past Pending; the response cannot pre-date it."
+                  label={t("Requested on")}
+                  placeholder={t("Date the request went out")}
+                  description={t("Required once the status moves past Pending; the response cannot pre-date it.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SwitchField<EmploymentVerificationFormValues>
                   control={control}
                   name="wasDotRegulated"
-                  label="DOT-regulated employment"
-                  description="Turn off for a job with no safety-sensitive duties; there is then no testing record to ask about."
+                  label={t("DOT-regulated employment")}
+                  description={t("Turn off for a job with no safety-sensitive duties; there is then no testing record to ask about.")}
                 />
               </FormControl>
 
@@ -308,9 +310,9 @@ export function EmployerDialog({
                     <AutoCompleteDateField<EmploymentVerificationFormValues>
                       control={control}
                       name="responseReceivedAt"
-                      label="Response received"
-                      placeholder="Date the reply arrived"
-                      description="Required for a received response; cannot be earlier than the request."
+                      label={t("Response received")}
+                      placeholder={t("Date the reply arrived")}
+                      description={t("Required for a received response; cannot be earlier than the request.")}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -319,9 +321,9 @@ export function EmployerDialog({
                       <AutoCompleteDateField<EmploymentVerificationFormValues>
                         control={control}
                         name="drugAlcoholResponseReceivedAt"
-                        label="Drug and alcohol history received"
-                        placeholder="Date the testing history arrived"
-                        description="49 CFR 382.413 asks for this specifically."
+                        label={t("Drug and alcohol history received")}
+                        placeholder={t("Date the testing history arrived")}
+                        description={t("49 CFR 382.413 asks for this specifically.")}
                       />
                     </FormControl>
                   ) : null}
@@ -329,8 +331,8 @@ export function EmployerDialog({
                     <SwitchField<EmploymentVerificationFormValues>
                       control={control}
                       name="hadAccidents"
-                      label="Accidents reported"
-                      description="Turn on if the employer reported any accidents; the count is asked next."
+                      label={t("Accidents reported")}
+                      description={t("Turn on if the employer reported any accidents; the count is asked next.")}
                     />
                   </FormControl>
                   {hadAccidents ? (
@@ -338,9 +340,9 @@ export function EmployerDialog({
                       <NumberField<EmploymentVerificationFormValues>
                         control={control}
                         name="accidentCount"
-                        label="How many"
-                        placeholder="e.g. 1"
-                        description="Accidents the employer reported for the driver's time there."
+                        label={t("How many")}
+                        placeholder={t("e.g. 1")}
+                        description={t("Accidents the employer reported for the driver's time there.")}
                         rules={{ required: true }}
                       />
                     </FormControl>
@@ -350,8 +352,8 @@ export function EmployerDialog({
                       <SwitchField<EmploymentVerificationFormValues>
                         control={control}
                         name="hadDrugAlcoholViolations"
-                        label="Drug or alcohol violations reported"
-                        description="Turn on when the employer's testing history reports a violation."
+                        label={t("Drug or alcohol violations reported")}
+                        description={t("Turn on when the employer's testing history reports a violation.")}
                       />
                     </FormControl>
                   ) : null}
@@ -359,9 +361,9 @@ export function EmployerDialog({
                     <TextareaField<EmploymentVerificationFormValues>
                       control={control}
                       name="findings"
-                      label="What the employer reported"
-                      placeholder="e.g. Company driver, no accidents, eligible for rehire"
-                      description="The employer's answer, kept as the record of the investigation."
+                      label={t("What the employer reported")}
+                      placeholder={t("e.g. Company driver, no accidents, eligible for rehire")}
+                      description={t("The employer's answer, kept as the record of the investigation.")}
                       maxLength={4000}
                     />
                   </FormControl>
@@ -372,9 +374,9 @@ export function EmployerDialog({
                 <TextareaField<EmploymentVerificationFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Left a voicemail with HR"
-                  description="Office notes about this employer; not part of the response itself."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Left a voicemail with HR")}
+                  description={t("Office notes about this employer; not part of the response itself.")}
                   maxLength={2000}
                 />
               </FormControl>
@@ -383,9 +385,7 @@ export function EmployerDialog({
                 <FormControl cols="full">
                   <Alert>
                     <AlertDescription>
-                      Record the response once it arrives by editing this employer. Chasing a silent
-                      employer is tracked separately — the count of chases is the record of
-                      good-faith effort.
+                      {t("Record the response once it arrives by editing this employer. Chasing a silent employer is tracked separately — the count of chases is the record of good-faith effort.")}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -393,10 +393,10 @@ export function EmployerDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add"}
+                {isEdit ? t("Save") : t("Add")}
               </Button>
             </DialogFooter>
           </Form>

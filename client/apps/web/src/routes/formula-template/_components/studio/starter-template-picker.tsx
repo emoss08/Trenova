@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ControlledFormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { queries } from "@/lib/queries";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,6 +17,8 @@ import { applyTemplateValues, copyValuesFrom, starterValuesFrom } from "./starte
 const SKELETON_KEYS = ["a", "b", "c", "d"] as const;
 
 export function StarterTemplatePicker() {
+  const t = useT();
+
   const { control, setValue, getValues } = useFormContext<FormulaTemplateFormValues>();
   const queryClient = useQueryClient();
   const [copyFromId, setCopyFromId] = useState("");
@@ -45,10 +48,10 @@ export function StarterTemplatePicker() {
         setValue("description", source.description ?? "", { shouldDirty: true });
       }
       toast.success(`Copied from ${source.name}`, {
-        description: "The formula, variables, lines, and charge policy are in the editor.",
+        description: t("The formula, variables, lines, and charge policy are in the editor."),
       });
     } catch {
-      toast.error("Could not load that template");
+      toast.error(t("Could not load that template"));
       setCopyFromId("");
     } finally {
       setCopying(false);
@@ -60,7 +63,7 @@ export function StarterTemplatePicker() {
       <div className="space-y-2">
         <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
           <LayoutTemplateIcon className="size-3" />
-          Start from a standard
+          {t("Start from a standard")}
         </div>
         {standards.isPending ? (
           <div className="grid grid-cols-2 gap-2">
@@ -70,12 +73,11 @@ export function StarterTemplatePicker() {
           </div>
         ) : standards.isError ? (
           <p className="text-muted-foreground text-xs">
-            The standard library could not be loaded. Write the formula by hand or copy an existing
-            template below.
+            {t("The standard library could not be loaded. Write the formula by hand or copy an existing template below.")}
           </p>
         ) : matchingStandards.length === 0 ? (
           <p className="text-muted-foreground text-xs">
-            No standards exist for this template type yet.
+            {t("No standards exist for this template type yet.")}
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
@@ -89,7 +91,7 @@ export function StarterTemplatePicker() {
               >
                 <span className="text-xs font-semibold">{standard.name}</span>
                 <span className="text-muted-foreground text-2xs font-normal">
-                  {standard.description}
+                  {t(standard.description)}
                 </span>
               </Button>
             ))}
@@ -100,18 +102,17 @@ export function StarterTemplatePicker() {
       <div className="space-y-2 border-t pt-3">
         <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
           <CopyIcon className="size-3" />
-          Or copy an existing template
+          {t("Or copy an existing template")}
         </div>
         <ControlledFormulaTemplateAutocompleteField
           label=""
-          placeholder="Search your templates..."
+          placeholder={t("Search your templates...")}
           value={copyFromId}
           onValueChange={(value) => void copyFrom(value)}
           disabled={copying}
         />
         <p className="text-2xs text-muted-foreground">
-          Copies the formula and charge policy into this new template. The original is untouched and
-          keeps its own history.
+          {t("Copies the formula and charge policy into this new template. The original is untouched and keeps its own history.")}
         </p>
       </div>
     </div>

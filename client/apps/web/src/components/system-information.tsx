@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrentUserTime } from "@trenova/shared/lib/date";
 import { Dot } from "lucide-react";
 import React from "react";
@@ -27,10 +28,12 @@ function UserCurrentTime() {
 }
 
 function SystemStatus() {
+  const t = useT();
+
   return (
     <div className="flex flex-row items-center justify-center gap-1 text-center">
       <div className="mb-0.5 size-1.5 rounded-full bg-green-500" />
-      <span className="text-muted-foreground text-xs">Systems nominal</span>
+      <span className="text-muted-foreground text-xs">{t("Systems nominal")}</span>
     </div>
   );
 }

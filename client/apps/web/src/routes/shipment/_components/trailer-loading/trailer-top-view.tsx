@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type React from "react";
 import { TooltipProvider } from "@trenova/shared/components/ui/tooltip";
 import type { LoadingOptimizationResult } from "@/types/loading-optimization";
@@ -11,6 +12,8 @@ export function TrailerTopView({
   data: LoadingOptimizationResult;
   scoreBadge?: React.ReactNode;
 }) {
+  const t = useT();
+
   const trailerLenFt = data.trailerLengthFeet;
   const W = 640;
   const H = 110;
@@ -30,11 +33,11 @@ export function TrailerTopView({
     <div className="border-border rounded-lg border p-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
-          Trailer Layout
+          {t("Trailer Layout")}
         </span>
         <div className="flex items-center gap-2">
           {scoreBadge}
-          <span className="text-2xs text-muted-foreground">{trailerLenFt}ft</span>
+          <span className="text-2xs text-muted-foreground">{t("{0}ft", trailerLenFt)}</span>
         </div>
       </div>
       <div className="w-full overflow-x-auto">
@@ -160,7 +163,7 @@ export function TrailerTopView({
                         dominantBaseline="middle"
                         className={`${palette.text} text-[9px] opacity-70`}
                       >
-                        {p.weight.toLocaleString()} lbs
+                        {t("{0} lbs", p.weight.toLocaleString())}
                       </text>
                       {/* Length + pieces */}
                       <text
@@ -170,7 +173,12 @@ export function TrailerTopView({
                         dominantBaseline="middle"
                         className={`${palette.text} text-[8px] opacity-50`}
                       >
-                        {p.lengthFeet}ft{p.estimatedLength ? "*" : ""} &middot; {p.pieces}pc
+                        {t(
+                          "{0}ft{1} · {2}pc",
+                          p.lengthFeet,
+                          p.estimatedLength ? "*" : "",
+                          p.pieces,
+                        )}
                       </text>
                       {/* Hazmat badge */}
                       {p.isHazmat && (
@@ -245,7 +253,7 @@ export function TrailerTopView({
                       textAnchor="middle"
                       className="fill-primary text-[8px] font-semibold"
                     >
-                      {divider.label}
+                      {t(divider.label)}
                     </text>
                   </g>
                 );
@@ -352,7 +360,7 @@ export function TrailerTopView({
                   textAnchor="middle"
                   className="fill-muted-foreground text-[8px]"
                 >
-                  {trailerLenFt} ft total
+                  {t("{0} ft total", trailerLenFt)}
                 </text>
               </g>
             </g>

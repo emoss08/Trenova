@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomerAutocompleteField, UserAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -17,6 +18,8 @@ type OrderFormProps = {
 };
 
 export function OrderForm({ mode }: OrderFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<Order>();
   const currencyCode = useWatch({ control, name: "currencyCode" }) || "USD";
   const orderId = useWatch({ control, name: "id" });
@@ -32,8 +35,8 @@ export function OrderForm({ mode }: OrderFormProps) {
   return (
     <div className="flex flex-col gap-4">
       <FormSection
-        title="General Information"
-        description="The customer, ownership, and reference numbers that identify this order"
+        title={t("General Information")}
+        description={t("The customer, ownership, and reference numbers that identify this order")}
       >
         <FormGroup cols={2}>
           {mode === "edit" && (
@@ -41,9 +44,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               <InputField
                 control={control}
                 name="orderNumber"
-                label="Order Number"
-                placeholder="Order Number"
-                description="System-generated identifier for this order. Read-only."
+                label={t("Order Number")}
+                placeholder={t("Order Number")}
+                description={t("System-generated identifier for this order. Read-only.")}
                 readOnly
                 disabled
               />
@@ -53,9 +56,9 @@ export function OrderForm({ mode }: OrderFormProps) {
             <SelectField
               control={control}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="Lifecycle stage, derived automatically from the status of the order's shipment legs."
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("Lifecycle stage, derived automatically from the status of the order's shipment legs.")}
               options={orderStatusChoices}
               isReadOnly
             />
@@ -65,8 +68,8 @@ export function OrderForm({ mode }: OrderFormProps) {
               control={control}
               rules={{ required: true }}
               name="customerId"
-              label="Customer"
-              placeholder="Select a customer"
+              label={t("Customer")}
+              placeholder={t("Select a customer")}
               description={
                 hasLegs
                   ? "The customer cannot be changed while the order has legs; detach them first."
@@ -79,35 +82,35 @@ export function OrderForm({ mode }: OrderFormProps) {
             <UserAutocompleteField<Order>
               control={control}
               name="ownerId"
-              label="Owner"
-              placeholder="Select an owner"
-              description="Team member accountable for coordinating and billing this order."
+              label={t("Owner")}
+              placeholder={t("Select an owner")}
+              description={t("Team member accountable for coordinating and billing this order.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="poNumber"
-              label="PO Number"
-              placeholder="e.g. PO-10432"
-              description="The customer's purchase order number, shown on their invoice."
+              label={t("PO Number")}
+              placeholder={t("e.g. PO-10432")}
+              description={t("The customer's purchase order number, shown on their invoice.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="bol"
-              label="BOL"
-              placeholder="e.g. BOL-88213"
-              description="Bill of lading number associated with the overall order."
+              label={t("BOL")}
+              placeholder={t("e.g. BOL-88213")}
+              description={t("Bill of lading number associated with the overall order.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Commercial"
-        description="The quoted price and currency the order is billed in"
+        title={t("Commercial")}
+        description={t("The quoted price and currency the order is billed in")}
         className="border-border border-t pt-4"
       >
         <FormGroup cols={2}>
@@ -116,9 +119,9 @@ export function OrderForm({ mode }: OrderFormProps) {
               control={control}
               rules={{ required: true }}
               name="currencyCode"
-              label="Currency"
-              placeholder="Select currency"
-              description="Currency used for every monetary amount on this order and its invoices."
+              label={t("Currency")}
+              placeholder={t("Select currency")}
+              description={t("Currency used for every monetary amount on this order and its invoices.")}
               options={currencyChoices}
             />
           </FormControl>
@@ -126,9 +129,9 @@ export function OrderForm({ mode }: OrderFormProps) {
             <NumberField
               control={control}
               name="quotedAmount"
-              label="Quoted Amount"
+              label={t("Quoted Amount")}
               placeholder="0.00"
-              description="Price quoted to the customer for the whole order, including expected extra charges."
+              description={t("Price quoted to the customer for the whole order, including expected extra charges.")}
               decimalScale={2}
               thousandSeparator
               sideText={currencyCode}
@@ -138,9 +141,9 @@ export function OrderForm({ mode }: OrderFormProps) {
             <NumberField
               control={control}
               name="baseAmount"
-              label="Base Amount"
+              label={t("Base Amount")}
               placeholder="0.00"
-              description="Base freight amount before accessorial or other extra charges are applied."
+              description={t("Base freight amount before accessorial or other extra charges are applied.")}
               decimalScale={2}
               thousandSeparator
               sideText={currencyCode}

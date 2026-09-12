@@ -44,7 +44,7 @@ func (s *Service) Transition(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("A %s timesheet cannot be %s", sheet.Status, req.Status),
+			"A {0} timesheet cannot be {1}", sheet.Status, req.Status,
 		)
 	}
 	// A worker hands their own week over and nothing else. Letting them

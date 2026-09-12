@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -87,6 +88,8 @@ export function activeFilterCount(values: Record<string, unknown>): number {
  * counterpart to the shared bar, for when a question is about one report.
  */
 export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPopoverProps) {
+  const t = useT();
+
   const fields = useTileFilterFields(index, ir);
   const active = activeFilterCount(values);
 
@@ -103,8 +106,8 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
               "size-6 shrink-0",
               active === 0 && "opacity-0 transition-opacity group-hover/tile:opacity-100",
             )}
-            aria-label="Filter this tile"
-            title="Filter this tile"
+            aria-label={t("Filter this tile")}
+            title={t("Filter this tile")}
           >
             <FilterIcon className={cn("size-3.5", active > 0 && "text-primary")} />
           </Button>
@@ -124,7 +127,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-              Filter this tile
+              {t("Filter this tile")}
             </span>
             {active > 0 && (
               <Badge variant="secondary" className="text-[10px]">
@@ -139,7 +142,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
                 className="text-2xs h-6"
                 onClick={() => onChange({})}
               >
-                Clear
+                {t("Clear")}
               </Button>
             )}
           </div>

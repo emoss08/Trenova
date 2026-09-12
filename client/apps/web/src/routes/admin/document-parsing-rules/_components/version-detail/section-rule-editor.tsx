@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormGroup, FormControl, FormSection } from "@trenova/shared/components/ui/form";
@@ -14,6 +15,8 @@ import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
 
 export function SectionRuleEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RuleVersionFormValues>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -22,9 +25,9 @@ export function SectionRuleEditor() {
 
   return (
     <FormSection
-      title="Sections"
+      title={t("Sections")}
       titleCount={fields.length}
-      description="Sections divide the document into named regions. Fields and stops can optionally target specific sections."
+      description={t("Sections divide the document into named regions. Fields and stops can optionally target specific sections.")}
       action={
         <Button
           type="button"
@@ -42,7 +45,7 @@ export function SectionRuleEditor() {
           }
         >
           <PlusIcon className="size-3" />
-          Add Section
+          {t("Add Section")}
         </Button>
       }
     >
@@ -51,10 +54,9 @@ export function SectionRuleEditor() {
           <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
             <LayoutListIcon className="text-muted-foreground/50 size-8" />
             <div>
-              <p className="text-muted-foreground text-sm font-medium">No sections defined</p>
+              <p className="text-muted-foreground text-sm font-medium">{t("No sections defined")}</p>
               <p className="text-muted-foreground/70 mt-0.5 text-xs">
-                Sections are optional. Add them to scope field and stop extraction to specific
-                document regions.
+                {t("Sections are optional. Add them to scope field and stop extraction to specific document regions.")}
               </p>
             </div>
           </div>
@@ -81,6 +83,8 @@ function SectionItem({
   defaultName: string;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<RuleVersionFormValues>();
 
   const startAnchors = useWatch({
@@ -101,10 +105,10 @@ function SectionItem({
       <div className="rounded-md border">
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span>{defaultName || `Section ${index + 1}`}</span>
+            <span>{defaultName || t("Section {0}", index + 1)}</span>
             {anchorCount > 0 && (
               <Badge variant="secondary">
-                {anchorCount} anchor{anchorCount !== 1 ? "s" : ""}
+                {t("{0, plural, one {# anchor} other {# anchors}}", anchorCount)}
               </Badge>
             )}
           </div>
@@ -131,42 +135,42 @@ function SectionItem({
                 <InputField
                   control={control}
                   name={`ruleDocument.sections.${index}.name`}
-                  label="Name"
-                  placeholder="e.g. header, shipment_details"
+                  label={t("Name")}
+                  placeholder={t("e.g. header, shipment_details")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.sections.${index}.startAnchors`}
-                  label="Start Anchors"
-                  description="Text strings that mark the beginning of this section"
-                  placeholder="Add anchor text..."
+                  label={t("Start Anchors")}
+                  description={t("Text strings that mark the beginning of this section")}
+                  placeholder={t("Add anchor text...")}
                 />
               </FormControl>
               <FormControl>
                 <TagInput
                   control={control}
                   name={`ruleDocument.sections.${index}.endAnchors`}
-                  label="End Anchors"
-                  description="Text strings that mark the end of this section"
-                  placeholder="Add anchor text..."
+                  label={t("End Anchors")}
+                  description={t("Text strings that mark the end of this section")}
+                  placeholder={t("Add anchor text...")}
                 />
               </FormControl>
               <FormControl className="flex items-end gap-4">
                 <SwitchField
                   control={control}
                   name={`ruleDocument.sections.${index}.captureBlankLine`}
-                  label="Capture Blank Lines"
-                  description="Include blank lines within the section boundaries"
+                  label={t("Capture Blank Lines")}
+                  description={t("Include blank lines within the section boundaries")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField
                   control={control}
                   name={`ruleDocument.sections.${index}.allowMultiple`}
-                  label="Allow Multiple"
-                  description="Allow this section to appear more than once in the document"
+                  label={t("Allow Multiple")}
+                  description={t("Allow this section to appear more than once in the document")}
                 />
               </FormControl>
             </FormGroup>

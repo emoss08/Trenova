@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -26,6 +27,8 @@ type ExportTemplateDialogProps = {
 };
 
 export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTemplateDialogProps) {
+  const t = useT();
+
   const [includeVersionHistory, setIncludeVersionHistory] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -47,20 +50,20 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
         const filename = getExportFilename(fullTemplate, includeVersionHistory);
         downloadJson(exportData, filename);
 
-        toast.success("Template exported successfully", {
+        toast.success(t("Template exported successfully"), {
           description: filename,
         });
         onOpenChange(false);
       })
       .catch(() => {
-        toast.error("Export failed", {
-          description: "Could not export the template. Please try again.",
+        toast.error(t("Export failed"), {
+          description: t("Could not export the template. Please try again."),
         });
       })
       .finally(() => {
         setIsExporting(false);
       });
-  }, [template, includeVersionHistory, onOpenChange]);
+  }, [template, includeVersionHistory, onOpenChange, t]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -73,11 +76,10 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DownloadIcon className="size-4" />
-            Export Template
+            {t("Export Template")}
           </DialogTitle>
           <DialogDescription>
-            Export &ldquo;{template?.name}&rdquo; as a JSON file, including its test scenarios. You
-            can import this template later or share it with others.
+            {t("Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.", template?.name)}
           </DialogDescription>
         </DialogHeader>
 
@@ -88,9 +90,9 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
               onCheckedChange={(checked) => setIncludeVersionHistory(checked === true)}
             />
             <div className="flex flex-col">
-              <span className="text-sm font-medium">Include version history</span>
+              <span className="text-sm font-medium">{t("Include version history")}</span>
               <span className="text-muted-foreground text-xs">
-                Export all versions with change messages and timestamps
+                {t("Export all versions with change messages and timestamps")}
               </span>
             </div>
           </label>
@@ -98,18 +100,18 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <>
                 <Loader2Icon className="size-4 animate-spin" />
-                Exporting...
+                {t("Exporting...")}
               </>
             ) : (
               <>
                 <DownloadIcon className="size-4" />
-                Export
+                {t("Export")}
               </>
             )}
           </Button>

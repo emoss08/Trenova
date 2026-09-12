@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -79,9 +80,11 @@ function OverviewSkeleton() {
 }
 
 function AttentionSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="Needs your attention"
+      aria-label={t("Needs your attention")}
       className="bg-card overflow-hidden rounded-lg border"
     >
       <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
@@ -114,8 +117,10 @@ function AttentionSkeleton() {
 }
 
 function RosterSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Roster" className="flex flex-col gap-3">
+    <section aria-label={t("Roster")} className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Skeleton className="h-7 w-72 max-w-full rounded-md" />
@@ -130,7 +135,7 @@ function RosterSkeleton() {
         </div>
       </div>
       {ROSTER_GROUPS.map((group) => (
-        <section key={group.label} aria-label={group.label} className="flex flex-col gap-1.5">
+        <section key={group.label} aria-label={t(group.label)} className="flex flex-col gap-1.5">
           <header className="flex items-baseline justify-between gap-2 px-1">
             <span className="flex items-center gap-1.5">
               <Skeleton className="h-3 w-24" />
@@ -164,9 +169,11 @@ function RosterSkeleton() {
 }
 
 function ByTerminalSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="By terminal"
+      aria-label={t("By terminal")}
       className="bg-card flex flex-col overflow-hidden rounded-lg border"
     >
       <PanelHeaderSkeleton titleWidth="w-20" right="w-12" />
@@ -191,9 +198,11 @@ function ByTerminalSkeleton() {
 }
 
 function ComingUpSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="Coming up"
+      aria-label={t("Coming up")}
       className="bg-card flex flex-col overflow-hidden rounded-lg border"
     >
       <PanelHeaderSkeleton titleWidth="w-20" />
@@ -214,9 +223,11 @@ function ComingUpSkeleton() {
 }
 
 function CoverSkeleton() {
+  const t = useT();
+
   return (
     <section
-      aria-label="Approval cover"
+      aria-label={t("Approval cover")}
       className="bg-card flex flex-col overflow-hidden rounded-lg border"
     >
       <PanelHeaderSkeleton titleWidth="w-24" right="w-16" />
@@ -246,8 +257,10 @@ type MyTeamSkeletonProps = {
  * panels' labels only so the two trees can be compared like for like.
  */
 export function MyTeamSkeleton({ showCover = true }: MyTeamSkeletonProps) {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading your team">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading your team")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton />
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
@@ -21,6 +22,8 @@ const runStatusStyles: Record<RecurringShipmentRunStatus, string> = {
 };
 
 function RunRow({ run }: { run: RecurringShipmentRun }) {
+  const t = useT();
+
   return (
     <div className="border-border flex flex-col gap-1 rounded-md border p-2.5">
       <div className="flex items-center justify-between gap-2">
@@ -34,12 +37,12 @@ function RunRow({ run }: { run: RecurringShipmentRun }) {
       </div>
       {run.generatedShipment?.proNumber && (
         <p className="text-sm">
-          Generated shipment <span className="font-medium">{run.generatedShipment.proNumber}</span>
+          {t("Generated shipment")} <span className="font-medium">{run.generatedShipment.proNumber}</span>
         </p>
       )}
       {run.originalOccurrenceAt && run.originalOccurrenceAt !== run.occurrenceAt && (
         <p className="text-2xs text-muted-foreground">
-          Shifted from its original slot by the exception policy
+          {t("Shifted from its original slot by the exception policy")}
         </p>
       )}
       {run.detail && <p className="text-2xs text-muted-foreground">{run.detail}</p>}
@@ -56,6 +59,8 @@ export function RecurringShipmentRunsDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const { data, isLoading } = useQuery({
     ...queries.recurringShipment.listRuns(series?.id ?? "", { limit: 50 }),
     enabled: open && !!series?.id,
@@ -65,10 +70,9 @@ export function RecurringShipmentRunsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Generation History</DialogTitle>
+          <DialogTitle>{t("Generation History")}</DialogTitle>
           <DialogDescription>
-            {series ? `Runs for "${series.name}"` : "Runs"} — every generated, skipped, and failed
-            occurrence.
+            {t("{0} — every generated, skipped, and failed occurrence.", series ? t("Runs for \"{0}\"", series.name) : t("Runs"))}
           </DialogDescription>
         </DialogHeader>
         <div className="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">
@@ -81,7 +85,7 @@ export function RecurringShipmentRunsDialog({
           )}
           {!isLoading && (data?.results?.length ?? 0) === 0 && (
             <p className="text-muted-foreground py-6 text-center text-sm">
-              Nothing generated yet. Runs appear here as the schedule fires.
+              {t("Nothing generated yet. Runs appear here as the schedule fires.")}
             </p>
           )}
           {data?.results?.map((run) => (

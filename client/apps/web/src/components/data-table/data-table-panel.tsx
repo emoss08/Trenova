@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
@@ -38,6 +39,8 @@ export function DataTablePanelContainer({
   headerActions,
   size = "md",
 }: DataTablePanelContainerProps) {
+  const t = useT();
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -73,7 +76,7 @@ export function DataTablePanelContainer({
                 }
               >
                 <XIcon className="size-4" />
-                <span className="sr-only">Close panel</span>
+                <span className="sr-only">{t("Close panel")}</span>
               </Dialog.Close>
             </div>
           </div>

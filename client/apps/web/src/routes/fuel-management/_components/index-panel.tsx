@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -39,6 +40,8 @@ type IndexPanelProps = {
 };
 
 export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = !!entry;
 
@@ -100,15 +103,15 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? (entry?.index.name ?? "Fuel Index") : "New Custom Fuel Index"}
-      description="Custom indices take manually entered weekly prices — ideal for Canadian FCA or contract-dictated pegs"
+      description={t("Custom indices take manually entered weekly prices — ideal for Canadian FCA or contract-dictated pegs")}
       size="md"
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-index-form" isLoading={isSubmitting}>
-            {isEdit ? "Save Changes" : "Create Index"}
+            {isEdit ? t("Save Changes") : t("Create Index")}
           </Button>
         </>
       }
@@ -120,8 +123,8 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
               <SwitchField
                 control={form.control}
                 name="isActive"
-                label="Active"
-                description="Inactive indices are hidden from program selection and the dashboard."
+                label={t("Active")}
+                description={t("Inactive indices are hidden from program selection and the dashboard.")}
                 outlined
                 position="left"
               />
@@ -130,8 +133,8 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
               <InputField
                 control={form.control}
                 name="name"
-                label="Name"
-                placeholder="FCA Canadian Diesel"
+                label={t("Name")}
+                placeholder={t("FCA Canadian Diesel")}
                 rules={{ required: true }}
                 maxLength={100}
               />
@@ -140,49 +143,49 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
               <InputField
                 control={form.control}
                 name="code"
-                label="Code"
+                label={t("Code")}
                 placeholder="FCA_CAD"
                 rules={{ required: true }}
                 maxLength={50}
-                description="Short unique identifier."
+                description={t("Short unique identifier.")}
               />
             </FormControl>
             <FormControl>
               <SelectField
                 control={form.control}
                 name="fuelType"
-                label="Fuel Type"
+                label={t("Fuel Type")}
                 options={fuelTypeChoices}
-                description="The fuel product this index prices."
+                description={t("The fuel product this index prices.")}
               />
             </FormControl>
             <FormControl>
               <InputField
                 control={form.control}
                 name="region"
-                label="Region"
-                placeholder="Canada, PADD 2, Northeast..."
+                label={t("Region")}
+                placeholder={t("Canada, PADD 2, Northeast...")}
                 maxLength={100}
-                description="Geographic region the price applies to."
+                description={t("Geographic region the price applies to.")}
               />
             </FormControl>
             <FormControl>
               <InputField
                 control={form.control}
                 name="currency"
-                label="Currency"
-                placeholder="USD"
+                label={t("Currency")}
+                placeholder={t("USD")}
                 rules={{ required: true }}
                 maxLength={3}
-                description="3-letter ISO currency of the entered prices."
+                description={t("3-letter ISO currency of the entered prices.")}
               />
             </FormControl>
             <FormControl cols="full">
               <TextareaField
                 control={form.control}
                 name="description"
-                label="Description"
-                placeholder="Where this index comes from and how it's maintained"
+                label={t("Description")}
+                placeholder={t("Where this index comes from and how it's maintained")}
               />
             </FormControl>
           </FormGroup>

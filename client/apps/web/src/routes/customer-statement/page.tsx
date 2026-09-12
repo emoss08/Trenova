@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -34,9 +35,11 @@ function formatDate(unix: number): string {
 }
 
 function AgingBadge({ daysPastDue }: { daysPastDue: number }) {
-  if (daysPastDue <= 0) return <Badge variant="active">Current</Badge>;
-  if (daysPastDue <= 30) return <Badge variant="orange">{daysPastDue}d</Badge>;
-  return <Badge variant="inactive">{daysPastDue}d</Badge>;
+  const t = useT();
+
+  if (daysPastDue <= 0) return <Badge variant="active">{t("Current")}</Badge>;
+  if (daysPastDue <= 30) return <Badge variant="orange">{t("{0}d", daysPastDue)}</Badge>;
+  return <Badge variant="inactive">{t("{0}d", daysPastDue)}</Badge>;
 }
 
 function MetricCard({
@@ -95,6 +98,8 @@ function AgingBar({
 }
 
 export function CustomerStatementPage() {
+  const t = useT();
+
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const [statementDate, setStatementDate] = useState("");
@@ -142,7 +147,7 @@ export function CustomerStatementPage() {
             onClick={() => void navigate("/accounting/ar/open-items")}
           >
             <ArrowLeftIcon className="mr-1.5 size-3.5" />
-            Back to Open Items
+            {t("Back to Open Items")}
           </Button>
         </div>
       </PageLayout>
@@ -171,7 +176,7 @@ export function CustomerStatementPage() {
       <PageLayout pageHeaderProps={{ title: "Customer Statement", description: "Failed to load." }}>
         <div className="mx-4 mt-3 space-y-3">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            Could not load the statement. The customer may not exist or you may not have permission.
+            {t("Could not load the statement. The customer may not exist or you may not have permission.")}
           </div>
           <Button
             variant="ghost"
@@ -179,7 +184,7 @@ export function CustomerStatementPage() {
             onClick={() => void navigate("/accounting/ar/open-items")}
           >
             <ArrowLeftIcon className="mr-1.5 size-3.5" />
-            Back to Open Items
+            {t("Back to Open Items")}
           </Button>
         </div>
       </PageLayout>
@@ -204,16 +209,16 @@ export function CustomerStatementPage() {
             onClick={() => void navigate("/accounting/ar/open-items")}
           >
             <ArrowLeftIcon className="mr-1.5 size-3.5" />
-            Back to Open Items
+            {t("Back to Open Items")}
           </Button>
           <div className="flex items-end gap-3">
             <div>
               <label className="text-2xs text-muted-foreground mb-1 block font-medium">
-                Statement Date
+                {t("Statement Date")}
               </label>
               <Input
                 type="date"
-                aria-label="Statement Date"
+                aria-label={t("Statement Date")}
                 value={statementDate}
                 onChange={(e) => setStatementDate(e.target.value)}
                 className="h-8 w-[160px] text-xs"
@@ -221,11 +226,11 @@ export function CustomerStatementPage() {
             </div>
             <div>
               <label className="text-2xs text-muted-foreground mb-1 block font-medium">
-                Start Date
+                {t("Start Date")}
               </label>
               <Input
                 type="date"
-                aria-label="Start Date"
+                aria-label={t("Start Date")}
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="h-8 w-[160px] text-xs"
@@ -236,19 +241,19 @@ export function CustomerStatementPage() {
 
         <div className="grid gap-2.5 md:grid-cols-4">
           <MetricCard
-            label="Opening Balance"
+            label={t("Opening Balance")}
             value={statement.openingBalanceMinor}
             icon={CalendarIcon}
           />
-          <MetricCard label="Charges" value={statement.totalChargesMinor} icon={FileTextIcon} />
+          <MetricCard label={t("Charges")} value={statement.totalChargesMinor} icon={FileTextIcon} />
           <MetricCard
-            label="Payments"
+            label={t("Payments")}
             value={statement.totalPaymentsMinor}
             icon={WalletIcon}
             colorClass="text-green-600 dark:text-green-400"
           />
           <MetricCard
-            label="Ending Balance"
+            label={t("Ending Balance")}
             value={statement.endingBalanceMinor}
             icon={ReceiptTextIcon}
             colorClass={
@@ -260,34 +265,34 @@ export function CustomerStatementPage() {
         </div>
 
         <div className="bg-card rounded-lg border p-4">
-          <h3 className="mb-3 text-sm font-semibold">Aging Summary</h3>
+          <h3 className="mb-3 text-sm font-semibold">{t("Aging Summary")}</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <AgingBar
-              label="Current"
+              label={t("Current")}
               amount={aging.currentMinor}
               total={agingTotal}
               colorClass="bg-green-500"
             />
             <AgingBar
-              label="1-30 Days"
+              label={t("1-30 Days")}
               amount={aging.days1To30Minor}
               total={agingTotal}
               colorClass="bg-yellow-500"
             />
             <AgingBar
-              label="31-60 Days"
+              label={t("31-60 Days")}
               amount={aging.days31To60Minor}
               total={agingTotal}
               colorClass="bg-orange-500"
             />
             <AgingBar
-              label="61-90 Days"
+              label={t("61-90 Days")}
               amount={aging.days61To90Minor}
               total={agingTotal}
               colorClass="bg-red-400"
             />
             <AgingBar
-              label="90+ Days"
+              label={t("90+ Days")}
               amount={aging.daysOver90Minor}
               total={agingTotal}
               colorClass="bg-red-600"
@@ -298,7 +303,7 @@ export function CustomerStatementPage() {
         <div className="bg-card rounded-lg border">
           <div className="border-b px-4 py-3">
             <h3 className="text-sm font-semibold">
-              Transaction History
+              {t("Transaction History")}
               <span className="text-muted-foreground ml-1.5 text-xs font-normal">
                 ({statement.transactions.length})
               </span>
@@ -306,7 +311,7 @@ export function CustomerStatementPage() {
           </div>
           {statement.transactions.length === 0 ? (
             <EmptyTable
-              title="Nothing in this period"
+              title={t("Nothing in this period")}
               description={
                 hasDateFilters
                   ? "No invoice, payment or credit touched this account between those dates. Widen the range, or clear it to see everything on record."
@@ -320,12 +325,12 @@ export function CustomerStatementPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
-                    <th className="px-4 py-2.5 text-xs font-medium">Date</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">Document</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">Description</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">Charges</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">Payments</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">Balance</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Date")}</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Document")}</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Description")}</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Charges")}</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Payments")}</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Balance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -374,7 +379,7 @@ export function CustomerStatementPage() {
           <div className="bg-card rounded-lg border">
             <div className="border-b px-4 py-3">
               <h3 className="text-sm font-semibold">
-                Open Items
+                {t("Open Items")}
                 <span className="text-muted-foreground ml-1.5 text-xs font-normal">
                   ({statement.openItems.length})
                 </span>
@@ -384,12 +389,12 @@ export function CustomerStatementPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
-                    <th className="px-4 py-2.5 text-xs font-medium">Invoice</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">Invoice Date</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">Due Date</th>
-                    <th className="px-4 py-2.5 text-xs font-medium">Aging</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">Total</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-medium">Open</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Invoice")}</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Invoice Date")}</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Due Date")}</th>
+                    <th className="px-4 py-2.5 text-xs font-medium">{t("Aging")}</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Total")}</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium">{t("Open")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -421,7 +426,7 @@ export function CustomerStatementPage() {
                 <tfoot className="bg-muted/30 border-t">
                   <tr>
                     <td colSpan={4} className="px-4 py-2.5 text-right text-xs font-medium">
-                      Total Open
+                      {t("Total Open")}
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       <AmountDisplay

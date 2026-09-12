@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
   DriverSettlementStatusBadge,
@@ -27,7 +28,7 @@ export function getColumns(): ColumnDef<DriverSettlementRow>[] {
         <div className="flex items-center gap-1.5">
           <DriverSettlementStatusBadge status={row.original.status as DriverSettlementStatus} />
           {row.original.hasExceptions && (
-            <TriangleAlert className="size-3.5 text-amber-500" aria-label="Has exceptions" />
+            <TriangleAlert className="size-3.5 text-amber-500" aria-label={translate("Has exceptions")} />
           )}
         </div>
       ),
@@ -76,7 +77,7 @@ export function getColumns(): ColumnDef<DriverSettlementRow>[] {
     },
     {
       accessorKey: "shipmentCount",
-      header: () => <div className="text-right">Loads</div>,
+      header: () => <div className="text-right">{translate("Loads")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
       ),
@@ -85,7 +86,7 @@ export function getColumns(): ColumnDef<DriverSettlementRow>[] {
     },
     {
       accessorKey: "grossEarningsMinor",
-      header: () => <div className="text-right">Gross</div>,
+      header: () => <div className="text-right">{translate("Gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -99,7 +100,7 @@ export function getColumns(): ColumnDef<DriverSettlementRow>[] {
     },
     {
       accessorKey: "deductionsMinor",
-      header: () => <div className="text-right">Deductions</div>,
+      header: () => <div className="text-right">{translate("Deductions")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -114,7 +115,7 @@ export function getColumns(): ColumnDef<DriverSettlementRow>[] {
     },
     {
       accessorKey: "netPayMinor",
-      header: () => <div className="text-right">Net Pay</div>,
+      header: () => <div className="text-right">{translate("Net Pay")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

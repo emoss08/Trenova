@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,8 @@ type PreviousRatesDialogProps = {
 };
 
 export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRatesDialogProps) {
+  const t = useT();
+
   const { data: rates, isLoading } = useQuery({
     queryKey: ["previous-rates", request],
     queryFn: () => apiService.shipmentService.getPreviousRates(request),
@@ -34,10 +37,10 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <HistoryIcon className="size-4" />
-            Previous Rates
+            {t("Previous Rates")}
           </DialogTitle>
           <DialogDescription>
-            Historical rates for this lane, service, and shipment type
+            {t("Historical rates for this lane, service, and shipment type")}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-80 overflow-y-auto">
@@ -48,12 +51,17 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
           ) : !rates || rates.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <HistoryIcon className="text-muted-foreground/40 mb-2 size-6" />
-              <p className="text-muted-foreground text-sm">No previous rates found for this lane</p>
+              <p className="text-muted-foreground text-sm">
+                {t("No previous rates found for this lane")}
+              </p>
             </div>
           ) : (
             <>
               <p className="text-muted-foreground mb-2 text-xs">
-                {rates.total} previous rate{rates.total !== 1 ? "s" : ""} found
+                {t(
+                  "{0, plural, one {# previous rate} other {# previous rates}} found",
+                  rates.total,
+                )}
               </p>
               <div className="space-y-2">
                 {rates.items.map((rate) => (
@@ -69,6 +77,8 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
 }
 
 function RateCard({ rate }: { rate: PreviousRateSummary }) {
+  const t = useT();
+
   return (
     <div className="bg-card rounded-lg border p-3">
       <div className="flex items-center justify-between">
@@ -79,15 +89,15 @@ function RateCard({ rate }: { rate: PreviousRateSummary }) {
       </div>
       <div className="mt-2 grid grid-cols-3 gap-2">
         <div>
-          <p className="text-2xs text-muted-foreground">Freight</p>
+          <p className="text-2xs text-muted-foreground">{t("Freight")}</p>
           <p className="text-xs font-medium">{formatCurrency(Number(rate.freightChargeAmount))}</p>
         </div>
         <div>
-          <p className="text-2xs text-muted-foreground">Other</p>
+          <p className="text-2xs text-muted-foreground">{t("Other")}</p>
           <p className="text-xs font-medium">{formatCurrency(Number(rate.otherChargeAmount))}</p>
         </div>
         <div>
-          <p className="text-2xs text-muted-foreground">Total</p>
+          <p className="text-2xs text-muted-foreground">{t("Total")}</p>
           <p className="text-primary text-xs font-semibold">
             {formatCurrency(Number(rate.totalChargeAmount))}
           </p>
@@ -95,8 +105,8 @@ function RateCard({ rate }: { rate: PreviousRateSummary }) {
       </div>
       {(rate.pieces || rate.weight) && (
         <div className="text-2xs text-muted-foreground mt-1 flex gap-3">
-          {rate.pieces && <span>{rate.pieces} pcs</span>}
-          {rate.weight && <span>{rate.weight} lbs</span>}
+          {rate.pieces && <span>{t("{0} pcs", rate.pieces)}</span>}
+          {rate.weight && <span>{t("{0} lbs", rate.weight)}</span>}
         </div>
       )}
     </div>
@@ -110,6 +120,8 @@ export function PreviousRatesButton({
   request: GetPreviousRatesRequest;
   disabled?: boolean;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const canFetch =
@@ -127,7 +139,7 @@ export function PreviousRatesButton({
         disabled={disabled || !canFetch}
         onClick={() => setOpen(true)}
       >
-        View Previous Rates
+        {t("View Previous Rates")}
       </Button>
       {open && <PreviousRatesDialog open={open} onOpenChange={setOpen} request={request} />}
     </>

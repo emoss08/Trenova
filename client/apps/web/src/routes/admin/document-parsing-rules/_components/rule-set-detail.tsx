@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,6 +88,8 @@ function RuleSetDetailError({ message }: { message: string }) {
 }
 
 export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canDelete } = usePermission(Resource.DocumentParsingRule, Operation.Delete);
 
@@ -105,11 +108,11 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.list._def,
       });
-      toast.success("Rule set deleted");
+      toast.success(t("Rule set deleted"));
       onDeleted();
     },
     onError: () => {
-      toast.error("Failed to delete rule set");
+      toast.error(t("Failed to delete rule set"));
     },
   });
 
@@ -145,28 +148,26 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                   />
                 }
               />
-              <TooltipContent>Delete rule set</TooltipContent>
+              <TooltipContent>{t("Delete rule set")}</TooltipContent>
             </Tooltip>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogMedia className="bg-destructive/10">
                   <TrashIcon className="text-destructive size-5" />
                 </AlertDialogMedia>
-                <AlertDialogTitle>Delete Rule Set</AlertDialogTitle>
+                <AlertDialogTitle>{t("Delete Rule Set")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete &quot;{ruleSet.name}&quot; including all versions,
-                  fixtures, and simulation results. Any shipments currently using this rule set will
-                  fall back to default parsing. This action cannot be undone.
+                  {t("This will permanently delete \"{0}\" including all versions, fixtures, and simulation results. Any shipments currently using this rule set will fall back to default parsing. This action cannot be undone.", ruleSet.name)}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => deleteMutation.mutate()}
                   disabled={deleteMutation.isPending}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  {deleteMutation.isPending ? t("Deleting...") : t("Delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -178,19 +179,19 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
         <TabsList variant="underline" className="mx-4 mt-2 w-fit">
           <TabsTab value="metadata">
             <Settings2Icon className="mr-1.5 size-3.5" />
-            Metadata
+            {t("Metadata")}
           </TabsTab>
           <TabsTab value="versions">
             <GitBranchIcon className="mr-1.5 size-3.5" />
-            Versions
+            {t("Versions")}
           </TabsTab>
           <TabsTab value="fixtures">
             <TestTube2Icon className="mr-1.5 size-3.5" />
-            Fixtures
+            {t("Fixtures")}
           </TabsTab>
           <TabsTab value="simulation">
             <PlayIcon className="mr-1.5 size-3.5" />
-            Simulation
+            {t("Simulation")}
           </TabsTab>
         </TabsList>
 

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -23,13 +24,15 @@ export function useInvalidateDetention() {
 
 /** The single-stop notice action, shared by the card, the table, and the claim file. */
 export function useSendDetentionNotice(occurrenceId: string) {
+  const t = useT();
+
   const invalidate = useInvalidateDetention();
 
   return useApiMutation<DetentionOccurrence, undefined>({
     mutationFn: () => apiService.detentionService.sendNotice(occurrenceId),
     onSuccess: () => {
-      toast.success("Notice sent", {
-        description: "The customer notice went out and was recorded as evidence.",
+      toast.success(t("Notice sent"), {
+        description: t("The customer notice went out and was recorded as evidence."),
       });
       invalidate();
     },
@@ -48,6 +51,8 @@ export type BulkNoticeResult = {
  * notices went out and are now defensible.
  */
 export function useSendDetentionNotices() {
+  const t = useT();
+
   const invalidate = useInvalidateDetention();
 
   return useMutation<BulkNoticeResult, unknown, string[]>({
@@ -71,8 +76,8 @@ export function useSendDetentionNotices() {
       }
 
       if (sent === 0 && failed > 0) {
-        toast.error("No notices could be sent", {
-          description: "The stops are still in the notice window — try again in a moment.",
+        toast.error(t("No notices could be sent"), {
+          description: t("The stops are still in the notice window — try again in a moment."),
         });
       }
 

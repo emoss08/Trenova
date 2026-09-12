@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
 import type { TrainingCourseRow } from "@/lib/graphql/worker-training";
@@ -67,7 +68,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
           <span>{row.original.name}</span>
           {row.original.description ? (
             <span className="text-muted-foreground max-w-md truncate text-xs">
-              {row.original.description}
+              {translate(row.original.description)}
             </span>
           ) : null}
         </div>
@@ -105,7 +106,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
             row.original.delivery}
           {row.original.durationMinutes > 0 ? (
             <span className="text-muted-foreground text-xs">
-              {row.original.durationMinutes} min
+              {translate("{0} min", row.original.durationMinutes)}
             </span>
           ) : null}
         </span>
@@ -137,16 +138,16 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
         <span className="flex flex-wrap gap-1">
           {row.original.passingScore ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              Pass ≥ {Number(row.original.passingScore).toFixed(0)}%
+              {translate("Pass ≥ {0}%", Number(row.original.passingScore).toFixed(0))}
             </Badge>
           ) : null}
           {row.original.validityMonths ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              Every {row.original.validityMonths} mo
+              {translate("Every {0} mo", row.original.validityMonths)}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-muted-foreground px-1.5 py-0 text-[10px]">
-              One-time
+              {translate("One-time")}
             </Badge>
           )}
         </span>

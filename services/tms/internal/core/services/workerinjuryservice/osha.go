@@ -223,8 +223,8 @@ func (s *Service) CertifySummary(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"Close the "+strconv.Itoa(open)+
-				" case(s) still accruing days before certifying the summary",
+			"Close the {0} case(s) still accruing days before certifying the summary",
+			strconv.Itoa(open),
 		)
 	}
 

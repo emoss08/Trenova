@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 //go:embed assets/*
@@ -96,6 +97,21 @@ const reportMarginMillimeters = 10.16
 // A missing asset is an error rather than an empty template: rendering an invoice
 // from nothing would produce a blank page and send it to a customer.
 func For(kind documenttemplate.Kind) (*Starter, error) {
+	return ForLocale(kind, i18n.Default)
+}
+
+// ForLocale returns the built-in starter for a kind in a given language.
+//
+// A localized asset is an override, not a replacement: `invoice.email.es.html`
+// wins over `invoice.email.html` when it exists, and its absence falls back to
+// the source-language file rather than failing. That is what lets a language be
+// added one asset at a time instead of all 84 at once.
+//
+// Most starters need no localized asset at all, because their English text is
+// wrapped in the template's own `t` function and translated from the shared
+// catalog at render. A per-locale file is for the cases where the layout itself
+// has to change, not merely the words.
+func ForLocale(kind documenttemplate.Kind, locale i18n.Locale) (*Starter, error) {
 	registry := documenttemplate.NewRegistry()
 	def, ok := registry.Get(kind)
 	if !ok {
@@ -110,13 +126,14 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 	}
 
 	stem := def.StarterKey()
+	read := func(ext string) (string, error) { return readLocalizedAsset(stem, ext, locale) }
 
 	// Only a kind with an HTML channel has an HTML asset. An in-app notification
 	// is a title and a body of text; the client renders both into its own layout,
 	// and markup would show up as characters.
 	if def.HasChannel(documenttemplate.ChannelPDF) ||
 		def.HasChannel(documenttemplate.ChannelEmailHTML) {
-		body, bodyErr := readAsset(stem + extHTML)
+		body, bodyErr := read(extHTML)
 		if bodyErr != nil {
 			return nil, bodyErr
 		}
@@ -124,7 +141,7 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 	}
 
 	if def.HasChannel(documenttemplate.ChannelPDF) {
-		css, cssErr := readAsset(stem + extCSS)
+		css, cssErr := read(extCSS)
 		if cssErr != nil {
 			return nil, cssErr
 		}
@@ -133,7 +150,7 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 
 	if def.HasChannel(documenttemplate.ChannelEmailText) ||
 		def.HasChannel(documenttemplate.ChannelNotificationBody) {
-		text, textErr := readAsset(stem + extText)
+		text, textErr := read(extText)
 		if textErr != nil {
 			return nil, textErr
 		}
@@ -142,7 +159,7 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 
 	if def.HasChannel(documenttemplate.ChannelSubject) ||
 		def.HasChannel(documenttemplate.ChannelNotificationTitle) {
-		subject, subjectErr := readAsset(stem + extSubject)
+		subject, subjectErr := read(extSubject)
 		if subjectErr != nil {
 			return nil, subjectErr
 		}
@@ -154,6 +171,18 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 	applyPageSetup(kind, starter)
 
 	return starter, nil
+}
+
+// readLocalizedAsset prefers `<stem>.<locale><ext>`, falling back to `<stem><ext>`.
+func readLocalizedAsset(stem, ext string, locale i18n.Locale) (string, error) {
+	if locale != "" && locale != i18n.Default {
+		localized, err := readAsset(stem + "." + string(locale) + ext)
+		if err == nil {
+			return localized, nil
+		}
+	}
+
+	return readAsset(stem + ext)
 }
 
 // applyPageSetup overrides the defaults for kinds whose layout needs it.

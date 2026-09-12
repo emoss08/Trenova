@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,8 @@ export function BillingQueueCancelDialog({
   onOpenChange: (open: boolean) => void;
   itemId: string;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
 
@@ -34,11 +37,11 @@ export function BillingQueueCancelDialog({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      toast.success("Billing queue item canceled");
+      toast.success(t("Billing queue item canceled"));
       handleClose();
     },
     onError: () => {
-      toast.error("Failed to cancel item");
+      toast.error(t("Failed to cancel item"));
     },
   });
 
@@ -51,27 +54,27 @@ export function BillingQueueCancelDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Cancel Billing Queue Item</DialogTitle>
-          <DialogDescription>This item will be removed from the billing queue.</DialogDescription>
+          <DialogTitle>{t("Cancel Billing Queue Item")}</DialogTitle>
+          <DialogDescription>{t("This item will be removed from the billing queue.")}</DialogDescription>
         </DialogHeader>
         <Textarea
-          placeholder="Reason for cancellation..."
+          placeholder={t("Reason for cancellation...")}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
         />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Close
+            {t("Close")}
           </Button>
           <Button
             variant="destructive"
             onClick={() => mutate()}
             disabled={!reason.trim() || isPending}
             isLoading={isPending}
-            loadingText="Canceling..."
+            loadingText={t("Canceling...")}
           >
-            Cancel Item
+            {t("Cancel Item")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
@@ -25,6 +26,8 @@ export function RolePageLayout({
   children,
   banner,
 }: RolePageLayoutProps) {
+  const t = useT();
+
   return (
     <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
       <header className="bg-card/95 sticky top-0 z-10 shrink-0 border-b px-6 py-3 backdrop-blur-sm">
@@ -42,11 +45,11 @@ export function RolePageLayout({
           <div className="flex items-center gap-3">
             {permissionCount !== undefined && permissionCount > 0 && (
               <Badge variant="outline" className="text-xs font-normal">
-                {permissionCount} resource{permissionCount !== 1 ? "s" : ""} configured
+                {t("{0, plural, one {# resource} other {# resources}} configured", permissionCount)}
               </Badge>
             )}
             <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting}>
               {isSubmitting && <Loader2Icon className="mr-2 size-4 animate-spin" />}

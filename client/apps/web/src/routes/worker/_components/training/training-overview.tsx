@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import type { WorkerTrainingSummary } from "@/lib/graphql/worker-training";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -28,26 +29,24 @@ export function TrainingOverview({
   onAssign,
   onAssignRequired,
 }: TrainingOverviewProps) {
+  const t = useT();
+
   const progress = useMemo(() => trainingProgress(summary.items), [summary.items]);
 
   return (
     <div data-testid="training-overview" className="flex flex-col gap-4 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold">Training matrix</h3>
+          <h3 className="text-sm font-semibold">{t("Training matrix")}</h3>
           <Badge variant={summary.compliant ? "active" : "inactive"}>
-            {summary.compliant ? "Qualified" : "Not qualified"}
+            {summary.compliant ? t("Qualified") : t("Not qualified")}
           </Badge>
-          <InfoPopover title="Training matrix">
+          <InfoPopover title={t("Training matrix")}>
             <p>
-              The required courses come from the driver type&apos;s course matrix; a required course
-              that was never assigned shows as Missing. One record speaks for each course: an open
-              assignment first, otherwise the strongest closed record, with a completion or waiver
-              outranking a lapsed one and a lapsed one outranking a failure.
+              {t("The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.")}
             </p>
             <p>
-              Current and Expiring soon both count as current. The worker reads as not qualified
-              while any required course is missing, failed, expired or overdue.
+              {t("Current and Expiring soon both count as current. The worker reads as not qualified while any required course is missing, failed, expired or overdue.")}
             </p>
           </InfoPopover>
         </div>
@@ -58,16 +57,16 @@ export function TrainingOverview({
                 size="sm"
                 variant="outline"
                 isLoading={assigningRequired}
-                loadingText="Assigning..."
+                loadingText={t("Assigning...")}
                 onClick={onAssignRequired}
               >
                 <ListChecksIcon className="size-3.5" />
-                Assign required
+                {t("Assign required")}
               </Button>
             ) : null}
             <Button size="sm" onClick={onAssign}>
               <PlusIcon className="size-3.5" />
-              Assign course
+              {t("Assign course")}
             </Button>
           </div>
         ) : null}
@@ -79,20 +78,20 @@ export function TrainingOverview({
             <span className="text-3xl leading-none font-semibold tracking-tight tabular-nums">
               {progress.satisfied}/{progress.required}
             </span>
-            <span className="text-muted-foreground text-xs">required current</span>
+            <span className="text-muted-foreground text-xs">{t("required current")}</span>
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             {summary.requiredCount === 0
-              ? "No courses are required for this worker's driver type."
-              : `${progress.satisfied} of ${summary.requiredCount} required courses are current.`}
+              ? t("No courses are required for this worker's driver type.")
+              : t("{0} of {1} required courses are current.", progress.satisfied, summary.requiredCount)}
           </p>
         </div>
         <dl className="grid grid-cols-5 gap-x-5 text-xs">
-          <Count label="Due" value={summary.dueCount} />
-          <Count label="Overdue" value={summary.overdueCount} />
-          <Count label="Expiring" value={summary.expiringCount} />
-          <Count label="Expired" value={summary.expiredCount} />
-          <Count label="Not assigned" value={summary.missingCount} />
+          <Count label={t("Due")} value={summary.dueCount} />
+          <Count label={t("Overdue")} value={summary.overdueCount} />
+          <Count label={t("Expiring")} value={summary.expiringCount} />
+          <Count label={t("Expired")} value={summary.expiredCount} />
+          <Count label={t("Not assigned")} value={summary.missingCount} />
         </dl>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
@@ -29,6 +30,8 @@ export function StatementGroupCard({
   onToggleShipment: (shipment: StatementShipment) => void;
   onToggleGroup: (group: StatementGroup) => void;
 }) {
+  const t = useT();
+
   const shipments = group.shipments ?? [];
   const included = shipments.filter((s) => !heldIds.has(s.billingQueueItemId));
   const heldCount = shipments.length - included.length;
@@ -66,13 +69,17 @@ export function StatementGroupCard({
             <ChevronRightIcon className="size-3.5 shrink-0" />
           )}
           <ReceiptTextIcon className="size-3.5 shrink-0" />
-          <span className="text-foreground truncate text-sm font-medium">{group.label}</span>
+          <span className="text-foreground truncate text-sm font-medium">{t(group.label)}</span>
         </button>
 
         <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
-          {included.length}
-          {heldCount > 0 ? ` of ${shipments.length}` : ""} shipment
-          {shipments.length !== 1 ? "s" : ""}
+          {heldCount > 0
+            ? t(
+                "{0} of {1, plural, one {# shipment} other {# shipments}}",
+                included.length,
+                shipments.length,
+              )
+            : t("{0, plural, one {# shipment} other {# shipments}}", shipments.length)}
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
           {formatCurrency(liveTotal, currencyCode)}
@@ -84,15 +91,16 @@ export function StatementGroupCard({
                 <span
                   tabIndex={0}
                   className="inline-flex shrink-0 text-amber-600 dark:text-amber-400"
-                  aria-label="Under the customer's invoice minimum"
+                  aria-label={t("Under the customer's invoice minimum")}
                 >
                   <PauseCircleIcon className="size-3.5" />
                 </span>
               }
             />
             <TooltipContent side="left">
-              Under the customer&apos;s invoice minimum. Billing the statement skips this invoice
-              and its shipments stay on next period.
+              {t(
+                "Under the customer's invoice minimum. Billing the statement skips this invoice and its shipments stay on next period.",
+              )}
             </TooltipContent>
           </Tooltip>
         )}
@@ -119,10 +127,10 @@ export function StatementGroupCard({
                   {shipment.proNumber || "—"}
                 </span>
                 <span className="text-muted-foreground hidden w-28 shrink-0 truncate sm:inline">
-                  {shipment.bol ? `BOL ${shipment.bol}` : ""}
+                  {shipment.bol ? t("BOL {0}", shipment.bol) : ""}
                 </span>
                 <span className="text-muted-foreground hidden w-24 shrink-0 truncate md:inline">
-                  {shipment.poNumber ? `PO ${shipment.poNumber}` : ""}
+                  {shipment.poNumber ? t("PO {0}", shipment.poNumber) : ""}
                 </span>
                 <span className="text-muted-foreground hidden shrink-0 lg:inline">
                   {shipment.serviceDate ? formatUnixDateMedium(shipment.serviceDate) : ""}

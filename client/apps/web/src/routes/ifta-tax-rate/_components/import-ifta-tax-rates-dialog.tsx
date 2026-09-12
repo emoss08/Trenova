@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
 import { useIftaJurisdictionOptions } from "@/components/fields/ifta-jurisdiction-select-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -71,6 +72,8 @@ export function ImportIftaTaxRatesDialog({ open, onOpenChange }: ImportIftaTaxRa
 }
 
 function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps, "onOpenChange">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { jurisdictions, isLoading: jurisdictionsLoading } = useIftaJurisdictionOptions();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -91,7 +94,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
   const { mutate: importRates, isPending } = useMutation({
     mutationFn: (rates: IftaTaxRateInput[]) => upsertIftaTaxRates(rates),
     onSuccess: async (saved) => {
-      toast.success("Rates imported", {
+      toast.success(t("Rates imported"), {
         description: `${saved.length} ${pluralize("rate", saved.length)} published for Q${quarter} ${year}.`,
       });
       await queryClient.invalidateQueries({ queryKey: [IFTA_TAX_RATE_LIST_KEY] });
@@ -133,10 +136,9 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Import IFTA Tax Rates</DialogTitle>
+          <DialogTitle>{t("Import IFTA Tax Rates")}</DialogTitle>
           <DialogDescription>
-            Read a CSV of the quarter&apos;s matrix in the browser, check every row, then publish
-            the good ones. Rows with problems are shown but never sent.
+            {t("Read a CSV of the quarter's matrix in the browser, check every row, then publish the good ones. Rows with problems are shown but never sent.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -147,23 +149,23 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 <NumberField
                   control={form.control}
                   name="year"
-                  label="Year"
+                  label={t("Year")}
                   placeholder="2026"
                   min={IFTA_MIN_YEAR}
                   max={IFTA_MAX_YEAR}
                   rules={{ required: true }}
-                  description="Every row in the file is published for this year."
+                  description={t("Every row in the file is published for this year.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField
                   control={form.control}
                   name="quarter"
-                  label="Quarter"
+                  label={t("Quarter")}
                   options={iftaQuarterChoices}
                   rules={{ required: true }}
-                  placeholder="Select a quarter"
-                  description="And this quarter. Changing either clears the preview."
+                  placeholder={t("Select a quarter")}
+                  description={t("And this quarter. Changing either clears the preview.")}
                 />
               </FormControl>
             </FormGroup>
@@ -193,7 +195,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
         {result && result.fileErrors.length > 0 ? (
           <Alert variant="destructive">
             <CircleAlertIcon className="size-4" />
-            <AlertTitle>{fileName ?? "This file"} could not be read</AlertTitle>
+            <AlertTitle>{t("{0} could not be read", fileName ?? t("This file"))}</AlertTitle>
             <AlertDescription>
               <ul className="mt-1 list-inside list-disc space-y-0.5">
                 {result.fileErrors.map((problem) => (
@@ -201,8 +203,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 ))}
               </ul>
               <p className="mt-1.5 text-xs">
-                The columns are jurisdiction code, fuel type, rate per gallon and surcharge per
-                gallon, matched by name. Start from the template if in doubt.
+                {t("The columns are jurisdiction code, fuel type, rate per gallon and surcharge per gallon, matched by name. Start from the template if in doubt.")}
               </p>
             </AlertDescription>
           </Alert>
@@ -213,7 +214,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
             <div className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <Badge variant={errorCount > 0 ? "warning" : "secondary"}>
-                  {errorCount > 0 ? "Needs attention" : "Ready"}
+                  {errorCount > 0 ? t("Needs attention") : t("Ready")}
                 </Badge>
                 {fileName ? <span className="font-mono text-xs">{fileName}</span> : null}
                 <span className="text-muted-foreground text-xs">
@@ -222,10 +223,10 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
               </div>
               <p className="text-sm">
                 {validCount > 0
-                  ? `Publishing would set ${validCount} ${pluralize("rate", validCount)} for Q${quarter} ${year}, replacing any already published for the same jurisdiction and fuel.`
-                  : "No row in this file can be published as it stands."}
+                  ? t("Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.", validCount, pluralize("rate", validCount), quarter, year)
+                  : t("No row in this file can be published as it stands.")}
                 {errorCount > 0
-                  ? ` ${errorCount} ${pluralize("row", errorCount)} will be left out.`
+                  ? ` ${t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))}`
                   : ""}
               </p>
             </div>
@@ -235,12 +236,12 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 text-xs">Line</TableHead>
-                      <TableHead className="text-xs">Jurisdiction</TableHead>
-                      <TableHead className="text-xs">Fuel</TableHead>
-                      <TableHead className="text-right text-xs">Rate</TableHead>
-                      <TableHead className="text-right text-xs">Surcharge</TableHead>
-                      <TableHead className="text-xs">Problem</TableHead>
+                      <TableHead className="w-12 text-xs">{t("Line")}</TableHead>
+                      <TableHead className="text-xs">{t("Jurisdiction")}</TableHead>
+                      <TableHead className="text-xs">{t("Fuel")}</TableHead>
+                      <TableHead className="text-right text-xs">{t("Rate")}</TableHead>
+                      <TableHead className="text-right text-xs">{t("Surcharge")}</TableHead>
+                      <TableHead className="text-xs">{t("Problem")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -261,7 +262,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                             row.error ? "text-destructive" : "text-muted-foreground",
                           )}
                         >
-                          {row.error ?? "OK"}
+                          {row.error ?? t("OK")}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -275,7 +276,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
         {!reviewing ? (
           <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
             <p className="text-muted-foreground text-xs">
-              Not sure how to lay out the file? Start from the template.
+              {t("Not sure how to lay out the file? Start from the template.")}
             </p>
             <Button
               type="button"
@@ -290,7 +291,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
               }
             >
               <DownloadIcon className="size-3.5" />
-              Download template
+              {t("Download template")}
             </Button>
           </div>
         ) : null}
@@ -304,21 +305,21 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 onClick={() => setPreview(null)}
                 disabled={isPending}
               >
-                Choose another file
+                {t("Choose another file")}
               </Button>
               <Button
                 type="button"
                 isLoading={isPending}
-                loadingText="Publishing..."
+                loadingText={t("Publishing...")}
                 disabled={validCount === 0}
                 onClick={() => result && importRates(result.valid)}
               >
-                Publish {validCount} {pluralize("rate", validCount)}
+                {t("Publish {0} {1}", validCount, pluralize("rate", validCount))}
               </Button>
             </>
           ) : (
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Close
+              {t("Close")}
             </Button>
           )}
         </DialogFooter>

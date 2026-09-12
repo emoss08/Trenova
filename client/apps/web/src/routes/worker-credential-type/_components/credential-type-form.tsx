@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -33,6 +34,8 @@ export function CredentialTypeForm({
   profileField = null,
   activeCredentialCount = 0,
 }: CredentialTypeFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<CredentialTypeFormValues>();
   const isRequired = useWatch({ control, name: "isRequired" });
 
@@ -40,7 +43,7 @@ export function CredentialTypeForm({
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="General"
+          title={t("General")}
           hint={
             isSystem
               ? "System types ship with Trenova. Their code is fixed; everything else is yours to tune."
@@ -52,43 +55,43 @@ export function CredentialTypeForm({
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="e.g. HAZMAT"
+              label={t("Code")}
+              placeholder={t("e.g. HAZMAT")}
               rules={{ required: true }}
               disabled={isSystem}
-              description="Short unique identifier. Letters, digits, dashes and underscores."
+              description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="e.g. Hazmat Endorsement"
+              label={t("Name")}
+              placeholder={t("e.g. Hazmat Endorsement")}
               rules={{ required: true }}
-              description="Shown on worker records, in credential pickers and on compliance reports."
+              description={t("Shown on worker records, in credential pickers and on compliance reports.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="category"
-              label="Category"
+              label={t("Category")}
               options={CATEGORY_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a category"
-              description="Groups the credential on the worker's record and in the type list."
+              placeholder={t("Select a category")}
+              description={t("Groups the credential on the worker's record and in the type list.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
               isReadOnly={Boolean(profileField)}
-              placeholder="Select a status"
+              placeholder={t("Select a status")}
               description={
                 profileField
                   ? "Mirrors a worker-profile field and cannot be deactivated."
@@ -102,10 +105,10 @@ export function CredentialTypeForm({
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="What this credential is and the regulation behind it"
+              label={t("Description")}
+              placeholder={t("What this credential is and the regulation behind it")}
               maxLength={1000}
-              description="Optional notes on what the credential covers and why it is tracked."
+              description={t("Optional notes on what the credential covers and why it is tracked.")}
             />
           </FormControl>
         </FormGroup>
@@ -113,16 +116,14 @@ export function CredentialTypeForm({
 
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="Compliance"
-          hint="Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant."
+          title={t("Compliance")}
+          hint={t("Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant.")}
         />
         <Alert variant="default">
           <InfoIcon className="size-4" />
-          <AlertTitle>One active credential per worker</AlertTitle>
+          <AlertTitle>{t("One active credential per worker")}</AlertTitle>
           <AlertDescription>
-            A worker holds a single active credential of each type. Renewing supersedes the earlier
-            one instead of adding a second; the renewal window and validity below drive when that
-            renewal is prompted.
+            {t("A worker holds a single active credential of each type. Renewing supersedes the earlier one instead of adding a second; the renewal window and validity below drive when that renewal is prompted.")}
           </AlertDescription>
         </Alert>
         <FormGroup cols={2}>
@@ -130,8 +131,8 @@ export function CredentialTypeForm({
             <SwitchField
               control={control}
               name="isRequired"
-              label="Required"
-              description="Workers must hold a valid credential of this type to be compliant."
+              label={t("Required")}
+              description={t("Workers must hold a valid credential of this type to be compliant.")}
               position="left"
             />
           </FormControl>
@@ -140,9 +141,9 @@ export function CredentialTypeForm({
               <MultiCheckboxField
                 control={control}
                 name="requiredForDriverTypes"
-                label="Required for driver types"
+                label={t("Required for driver types")}
                 options={driverTypeChoices}
-                description="Leave all unchecked to require it for every worker."
+                description={t("Leave all unchecked to require it for every worker.")}
               />
             </FormControl>
           ) : null}
@@ -150,31 +151,31 @@ export function CredentialTypeForm({
             <NumberField
               control={control}
               name="renewalWindowDays"
-              label="Renewal alert window"
+              label={t("Renewal alert window")}
               sideText="days"
               min={0}
               max={365}
               placeholder="30"
-              description="How far ahead of expiry the credential is flagged as expiring soon."
+              description={t("How far ahead of expiry the credential is flagged as expiring soon.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="validityMonths"
-              label="Typical validity"
+              label={t("Typical validity")}
               sideText="months"
               min={1}
               placeholder="24"
-              description="Pre-fills the expiry from the issue date when adding or renewing. Leave empty if it varies."
+              description={t("Pre-fills the expiry from the issue date when adding or renewing. Leave empty if it varies.")}
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
               name="requiresNumber"
-              label="Requires a number"
-              description="The credential cannot be saved without an identifying number."
+              label={t("Requires a number")}
+              description={t("The credential cannot be saved without an identifying number.")}
               position="left"
             />
           </FormControl>
@@ -182,8 +183,8 @@ export function CredentialTypeForm({
             <SwitchField
               control={control}
               name="requiresDocument"
-              label="Requires a document"
-              description="A scan must be attached before the credential can be verified."
+              label={t("Requires a document")}
+              description={t("A scan must be attached before the credential can be verified.")}
               position="left"
             />
           </FormControl>

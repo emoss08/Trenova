@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { lazy, Suspense, type ReactNode } from "react";
@@ -44,21 +45,23 @@ export function ExpandedRow({
   rowActions: RowAction<Shipment>[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
+  const t = useT();
+
   const stops = shipment.moves?.flatMap((m) => m.stops ?? []) ?? [];
 
   return (
     <div className="flex flex-col gap-5 px-4 py-3">
       <div className="grid grid-cols-1 gap-5 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
-        <PanelSection title="Route timeline" fallback={<PanelSkeleton />}>
+        <PanelSection title={t("Route timeline")} fallback={<PanelSkeleton />}>
           <RouteTimelineBlock stops={stops} />
         </PanelSection>
-        <PanelSection title="Financials" fallback={<PanelSkeleton />}>
+        <PanelSection title={t("Financials")} fallback={<PanelSkeleton />}>
           <FinancialsBlock shipment={shipment} />
         </PanelSection>
-        <PanelSection title="Documents" fallback={<PanelSkeleton />}>
+        <PanelSection title={t("Documents")} fallback={<PanelSkeleton />}>
           <DocumentsBlock shipment={shipment} onUpload={onUploadDocument} />
         </PanelSection>
-        <PanelSection title="Quick actions" fallback={<PanelSkeleton />}>
+        <PanelSection title={t("Quick actions")} fallback={<PanelSkeleton />}>
           <QuickActionsBlock row={row} actions={rowActions} />
         </PanelSection>
       </div>

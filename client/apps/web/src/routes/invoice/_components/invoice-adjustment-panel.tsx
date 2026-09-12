@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -28,6 +29,8 @@ import {
 } from "./invoice-adjustment-dialog-sections";
 
 export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<InvoiceAdjustment | null>(null);
@@ -102,7 +105,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     onSuccess: (result) => {
       setDraft(result);
     },
-    onError: () => toast.error("Failed to start invoice adjustment"),
+    onError: () => toast.error(t("Failed to start invoice adjustment")),
   });
 
   const ensureDraft = async () => {
@@ -208,13 +211,13 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     >
       <Button size="sm" className="cursor-pointer" variant="outline" onClick={() => setOpen(true)}>
         <WalletCardsIcon className="size-3.5" />
-        Adjust Invoice
+        {t("Adjust Invoice")}
       </Button>
       <DialogContent className="gap-0 p-0 sm:max-w-4xl">
         <DialogHeader className="gap-0 p-4">
-          <DialogTitle>Invoice Adjustment</DialogTitle>
+          <DialogTitle>{t("Invoice Adjustment")}</DialogTitle>
           <DialogDescription>
-            Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.
+            {t("Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(handleAdjustmentSubmit)}>
@@ -258,13 +261,13 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
               onClick={() => void handleSubmit(handlePreview)()}
               disabled={previewMutation.isPending}
             >
-              Preview
+              {t("Preview")}
             </Button>
             <Button
               type="submit"
               disabled={submitMutation.isPending || createDraftMutation.isPending || !draft}
             >
-              {preview?.requiresApproval ? "Submit for Approval" : "Execute"}
+              {preview?.requiresApproval ? t("Submit for Approval") : t("Execute")}
             </Button>
           </DialogFooter>
         </Form>

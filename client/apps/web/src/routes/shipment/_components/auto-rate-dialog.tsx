@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -28,6 +29,8 @@ import { toast } from "sonner";
  * replace before it does it, and what it applied afterwards.
  */
 export function AutoRateDialog() {
+  const t = useT();
+
   const { getValues, setValue } = useFormContext<Shipment>();
   const queryClient = useQueryClient();
 
@@ -41,8 +44,8 @@ export function AutoRateDialog() {
     mutationFn: () => apiService.shipmentService.autoRate(shipmentId ?? ""),
     onSuccess: ({ shipment, contractRate }) => {
       if (!contractRate.applied) {
-        toast.error("No contract covers this lane", {
-          description: "Nothing was changed. Write a rate agreement for it and try again.",
+        toast.error(t("No contract covers this lane"), {
+          description: t("Nothing was changed. Write a rate agreement for it and try again."),
         });
         setOpen(false);
         return;
@@ -73,8 +76,8 @@ export function AutoRateDialog() {
       setOpen(false);
     },
     onError: () => {
-      toast.error("The shipment could not be re-rated", {
-        description: "Please try again or contact your system administrator.",
+      toast.error(t("The shipment could not be re-rated"), {
+        description: t("Please try again or contact your system administrator."),
       });
     },
   });
@@ -86,7 +89,7 @@ export function AutoRateDialog() {
   return (
     <>
       <Button type="button" size="xxxs" onClick={() => setOpen(true)}>
-        <span className="text-2xs">Re-Apply Rate</span>
+        <span className="text-2xs">{t("Re-Apply Rate")}</span>
       </Button>
 
       <ConfirmDialog
@@ -112,26 +115,28 @@ function ConfirmDialog({
   pending: boolean;
   onConfirm: () => void;
 }) {
+  const t = useT();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-110">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SparklesIcon className="size-4" />
-            Re-rate from contract
+            {t("Re-rate from contract")}
           </DialogTitle>
           <DialogDescription>
-            The rate agreement covering this lane will replace the rating method, the base rate and
-            every charge the contract applies automatically. Anything you have set by hand on those
-            fields is discarded.
+            {t(
+              "The rate agreement covering this lane will replace the rating method, the base rate and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={onConfirm} disabled={pending}>
-            {pending ? "Re-rating…" : "Re-rate"}
+            {pending ? t("Re-rating…") : t("Re-rate")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -141,6 +146,8 @@ function ConfirmDialog({
 
 /** The account of what the contract just applied. */
 function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: () => void }) {
+  const t = useT();
+
   if (!rate) {
     return null;
   }
@@ -155,23 +162,26 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <SparklesIcon className="size-4" />
-            Rate applied
+            {t("Rate applied")}
           </DialogTitle>
           <DialogDescription>
-            {rate.agreementName || "A rate agreement"}
-            {rate.ruleLabel ? ` — ${rate.ruleLabel}` : ""} priced this shipment.
+            {t(
+              "{0}{1} priced this shipment.",
+              rate.agreementName || t("A rate agreement"),
+              rate.ruleLabel ? ` — ${rate.ruleLabel}` : "",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 text-sm">
-          <AppliedRow label="Rating method" value={rate.formulaTemplateName || "—"} />
+          <AppliedRow label={t("Rating method")} value={rate.formulaTemplateName || "—"} />
           {rate.baseRate ? (
-            <AppliedRow label="Base rate" value={formatCurrency(Number(rate.baseRate))} />
+            <AppliedRow label={t("Base rate")} value={formatCurrency(Number(rate.baseRate))} />
           ) : null}
-          <AppliedRow label="Freight charges" value={formatCurrency(linehaul)} />
+          <AppliedRow label={t("Freight charges")} value={formatCurrency(linehaul)} />
           {previous > 0 && change !== 0 ? (
             <AppliedRow
-              label="Change"
+              label={t("Change")}
               value={`${change > 0 ? "+" : ""}${formatCurrency(change)}`}
             />
           ) : null}
@@ -180,7 +190,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
             <>
               <Separator className="my-2" />
               <p className="text-2xs text-muted-foreground">
-                Charges the contract applies automatically
+                {t("Charges the contract applies automatically")}
               </p>
               {rate.accessorials.map((accessorial) => (
                 <div
@@ -203,7 +213,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
 
           <Separator className="my-2" />
           <AppliedRow
-            label="Contract total"
+            label={t("Contract total")}
             value={formatCurrency(Number(rate.totalChargeAmount) || 0)}
             bold
           />
@@ -211,7 +221,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
 
         <DialogFooter>
           <Button type="button" onClick={onClose}>
-            Done
+            {t("Done")}
           </Button>
         </DialogFooter>
       </DialogContent>

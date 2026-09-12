@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { MapStyleId, OverlayId } from "@/types/shipment-map";
@@ -26,6 +27,8 @@ export function MapControls({
   boundsPoints: google.maps.LatLngLiteral[];
   mapInstanceId: string;
 }) {
+  const t = useT();
+
   const map = useMap(mapInstanceId);
 
   const handleZoomToFit = useCallback(() => {
@@ -62,7 +65,7 @@ export function MapControls({
           )}
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          {isFullscreen ? t("Exit fullscreen") : t("Fullscreen")}
         </TooltipContent>
       </Tooltip>
       <Tooltip>
@@ -79,7 +82,7 @@ export function MapControls({
         >
           <LocateFixedIcon className="size-3.5" />
         </TooltipTrigger>
-        <TooltipContent side="bottom">Zoom to fit</TooltipContent>
+        <TooltipContent side="bottom">{t("Zoom to fit")}</TooltipContent>
       </Tooltip>
     </div>
   );

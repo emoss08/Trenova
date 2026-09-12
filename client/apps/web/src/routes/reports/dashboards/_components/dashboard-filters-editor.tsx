@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -54,6 +55,8 @@ function SelectedFilter({
   onUpdate: (filter: ReportDashboardFilter) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const field = resolveField(index, filter.entity, filter.ref);
   const operators = field ? operatorsForFieldType(field.type) : [];
 
@@ -68,14 +71,14 @@ function SelectedFilter({
           size="icon"
           className="size-6"
           onClick={onRemove}
-          aria-label="Remove filter"
+          aria-label={t("Remove filter")}
         >
           <XIcon className="size-3.5" />
         </Button>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Shown as</Label>
+          <Label className="text-muted-foreground text-xs">{t("Shown as")}</Label>
           <Input
             className="h-7"
             value={filter.label ?? ""}
@@ -84,7 +87,7 @@ function SelectedFilter({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-muted-foreground text-xs">Comparison</Label>
+          <Label className="text-muted-foreground text-xs">{t("Comparison")}</Label>
           <Select
             value={filter.operator}
             onValueChange={(operator) => {
@@ -98,7 +101,7 @@ function SelectedFilter({
             <SelectContent>
               {operators.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -118,6 +121,8 @@ function CustomFieldPicker({
   entities: string[];
   onAdd: (entity: string, ref: { path?: string[]; field: string }, operator: string) => void;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const [entity, setEntity] = useState(entities[0] ?? "");
   const entityChoices = entities.map((key) => ({
@@ -131,7 +136,7 @@ function CustomFieldPicker({
         render={
           <Button variant="outline" size="sm" className="h-7 self-start">
             <PlusIcon className="size-3.5" />
-            Another field
+            {t("Another field")}
           </Button>
         }
       />
@@ -150,7 +155,7 @@ function CustomFieldPicker({
             <SelectContent>
               {entityChoices.map((choice) => (
                 <SelectItem key={choice.value} value={choice.value}>
-                  {choice.label}
+                  {t(choice.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -180,6 +185,8 @@ export function DashboardFiltersEditor({
   entities,
   onChange,
 }: DashboardFiltersEditorProps) {
+  const t = useT();
+
   // A grouping like "Service Type › Code" is normalised to the reference
   // beside it, so the control offers real records instead of raw text. Two
   // candidates that normalise to the same field collapse into one row.
@@ -228,7 +235,7 @@ export function DashboardFiltersEditor({
   if (entities.length === 0) {
     return (
       <p className="text-muted-foreground px-2 py-2 text-center text-sm">
-        Add a tile first — filters are drawn from the reports on this dashboard.
+        {t("Add a tile first — filters are drawn from the reports on this dashboard.")}
       </p>
     );
   }
@@ -257,7 +264,7 @@ export function DashboardFiltersEditor({
       {filters.length > 0 && (
         <section className="flex flex-col gap-2">
           <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-            On this dashboard
+            {t("On this dashboard")}
           </h3>
           {filters.map((filter, filterIndex) => (
             <SelectedFilter
@@ -275,11 +282,10 @@ export function DashboardFiltersEditor({
 
       <section className="flex flex-col gap-2">
         <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Add from your reports
+          {t("Add from your reports")}
         </h3>
         <p className="text-2xs text-muted-foreground">
-          What each report filters on and breaks down by. Turning one on narrows every tile built on
-          the same data.
+          {t("What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.")}
         </p>
 
         {groups.map((group) => (

@@ -2,7 +2,6 @@ package apikeyservice
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -418,7 +417,7 @@ func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionI
 			me.Add(
 				"permissions",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Resource %q is not available for API keys", resource),
+				"Resource \"{0}\" is not available for API keys", resource,
 			)
 			continue
 		}
@@ -428,7 +427,7 @@ func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionI
 			me.Add(
 				"permissions",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Resource %q is not registered", resource),
+				"Resource \"{0}\" is not registered", resource,
 			)
 			continue
 		}
@@ -437,7 +436,7 @@ func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionI
 			me.Add(
 				"permissions",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Resource %q has an invalid data scope", resource),
+				"Resource \"{0}\" has an invalid data scope", resource,
 			)
 		}
 
@@ -446,7 +445,7 @@ func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionI
 				me.Add(
 					"permissions",
 					errortypes.ErrInvalid,
-					fmt.Sprintf("Operation %q is not available for API keys", operation),
+					"Operation \"{0}\" is not available for API keys", operation,
 				)
 				continue
 			}
@@ -455,7 +454,7 @@ func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionI
 				me.Add(
 					"permissions",
 					errortypes.ErrInvalid,
-					fmt.Sprintf("Resource %q does not support operation %q", resource, operation),
+					"Resource \"{0}\" does not support operation \"{1}\"", resource, operation,
 				)
 			}
 		}

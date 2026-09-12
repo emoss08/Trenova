@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,8 @@ type RuleSetListProps = {
 };
 
 export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -60,15 +63,14 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
       <div className="space-y-2 border-b p-3">
         <Input
           leftElement={<SearchIcon className="text-muted-foreground size-4" />}
-          placeholder="Search rule sets..."
+          placeholder={t("Search rule sets...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8"
         />
         <div className="flex items-center justify-between">
           <span className="text-2xs text-muted-foreground">
-            {isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount}`} rule set
-            {totalCount !== 1 ? "s" : ""}
+            {t("{0} rule set {1}", isFiltered ? t("{0} of {1}", filteredCount, totalCount) : `${totalCount}`, totalCount !== 1 ? "s" : "")}
           </span>
           {canCreate && (
             <Button
@@ -78,7 +80,7 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
               onClick={() => setCreateOpen(true)}
             >
               <PlusIcon className="size-3" />
-              New
+              {t("New")}
             </Button>
           )}
         </div>
@@ -119,6 +121,8 @@ function RuleSetCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const isPublished = Boolean(ruleSet.publishedVersionId);
 
   return (
@@ -144,14 +148,14 @@ function RuleSetCard({
                   }
                 />
                 <TooltipContent side="right" sideOffset={10}>
-                  Published
+                  {t("Published")}
                 </TooltipContent>
               </Tooltip>
             )}
           </div>
           {ruleSet.description && (
             <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
-              {ruleSet.description}
+              {t(ruleSet.description)}
             </p>
           )}
         </div>
@@ -182,21 +186,23 @@ function RuleSetListSkeleton() {
 }
 
 function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
       <div className="bg-muted flex size-10 items-center justify-center rounded-full">
         <FileTextIcon className="text-muted-foreground size-5" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-medium">No rule sets yet</p>
+        <p className="text-sm font-medium">{t("No rule sets yet")}</p>
         <p className="text-muted-foreground text-xs">
-          Create a rule set to define how documents are parsed.
+          {t("Create a rule set to define how documents are parsed.")}
         </p>
       </div>
       {onCreateClick && (
         <Button variant="outline" size="sm" className="mt-1 gap-1" onClick={onCreateClick}>
           <PlusIcon className="size-3.5" />
-          Create Rule Set
+          {t("Create Rule Set")}
         </Button>
       )}
     </div>
@@ -204,11 +210,13 @@ function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
 }
 
 function RuleSetNoResults({ search, onClear }: { search: string; onClear: () => void }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
-      <p className="text-muted-foreground text-sm">No results for &quot;{search}&quot;</p>
+      <p className="text-muted-foreground text-sm">{t("No results for \"{0}\"", search)}</p>
       <Button variant="ghost" size="xs" onClick={onClear}>
-        Clear search
+        {t("Clear search")}
       </Button>
     </div>
   );
@@ -223,6 +231,8 @@ function CreateRuleSetDialog({
   onOpenChange: (open: boolean) => void;
   onCreated: (id: string) => void;
 }) {
+  const t = useT();
+
   const [name, setName] = useState("");
   const queryClient = useQueryClient();
 
@@ -241,7 +251,7 @@ function CreateRuleSetDialog({
       onOpenChange(false);
       setName("");
       if (data.id) onCreated(data.id);
-      toast.success("Rule set created");
+      toast.success(t("Rule set created"));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to create rule set");
@@ -268,33 +278,32 @@ function CreateRuleSetDialog({
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create Rule Set</DialogTitle>
+            <DialogTitle>{t("Create Rule Set")}</DialogTitle>
             <DialogDescription>
-              A rule set defines how a specific type of document is parsed. Each rule set contains
-              versions with match criteria, section definitions, and field extraction rules.
+              {t("A rule set defines how a specific type of document is parsed. Each rule set contains versions with match criteria, section definitions, and field extraction rules.")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="create-rule-set-name">Name</Label>
+              <Label htmlFor="create-rule-set-name">{t("Name")}</Label>
               <Input
                 id="create-rule-set-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. CH Robinson Rate Confirmation"
+                placeholder={t("e.g. CH Robinson Rate Confirmation")}
                 autoFocus
               />
               <p className="text-2xs text-muted-foreground">
-                Use a descriptive name that identifies the provider or document format.
+                {t("Use a descriptive name that identifies the provider or document format.")}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" disabled={!name.trim() || isPending}>
-              {isPending ? "Creating..." : "Create"}
+              {isPending ? t("Creating...") : t("Create")}
             </Button>
           </DialogFooter>
         </form>

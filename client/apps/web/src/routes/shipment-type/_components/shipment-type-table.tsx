@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
 import {
@@ -19,6 +20,8 @@ import { ShipmentTypePanel } from "./shipment-type-panel";
 const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentTypeRow>(["code", "description"]);
 
 export default function ShipmentTypeTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -60,9 +63,9 @@ export default function ShipmentTypeTable() {
         refetchType: "all",
       });
 
-      toast.success("Shipment Type updated");
+      toast.success(t("Shipment Type updated"));
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<ShipmentTypeRow>[]>(

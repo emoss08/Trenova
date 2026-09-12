@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { isWindowMonths, type WindowMonths } from "@/lib/fleet-safety-console";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +23,8 @@ const WINDOW_ITEMS = [
 ] satisfies { value: WindowMonths; label: string }[];
 
 export default function FleetSafetyConsole() {
+  const t = useT();
+
   const { allowed: canRead } = usePermission(Resource.WorkerSafetyEvent, Operation.Read);
   const [windowMonths, setWindowMonths] = useState<WindowMonths>("12");
   const [fleetCodeId, setFleetCodeId] = useState("");
@@ -45,7 +48,7 @@ export default function FleetSafetyConsole() {
   if (fleet.isError) {
     return (
       <div className="text-destructive rounded-lg border border-dashed p-4 text-sm">
-        The fleet could not be read. {fleet.error.message}
+        {t("The fleet could not be read. {0}", fleet.error.message)}
       </div>
     );
   }
@@ -62,7 +65,7 @@ export default function FleetSafetyConsole() {
             items={WINDOW_ITEMS}
             value={windowMonths}
             onValueChange={(value) => setWindowMonths(isWindowMonths(value) ? value : "12")}
-            aria-label="Counting window"
+            aria-label={t("Counting window")}
           />
           {selectedTerminal ? (
             <Button
@@ -81,13 +84,12 @@ export default function FleetSafetyConsole() {
             </Button>
           ) : (
             <span className="text-muted-foreground text-xs">
-              Every terminal · choose one below to narrow the page
+              {t("Every terminal · choose one below to narrow the page")}
             </span>
           )}
         </div>
         <p className="text-muted-foreground text-xs">
-          As of {formatUnixDate(summary.asOf)}
-          {fleet.isFetching ? " · refreshing" : ""}
+          {t("As of {0}{1}", formatUnixDate(summary.asOf), fleet.isFetching ? ` ${t("· refreshing")}` : "")}
         </p>
       </div>
 
@@ -108,15 +110,15 @@ export default function FleetSafetyConsole() {
           onSelect={setFleetCodeId}
         />
         <RankList
-          title="Needs attention"
+          title={t("Needs attention")}
           kind="worst"
-          empty="Nobody is carrying points."
+          empty={t("Nobody is carrying points.")}
           rows={summary.worst}
         />
         <RankList
-          title="Best records"
+          title={t("Best records")}
           kind="best"
-          empty="No drivers to rank."
+          empty={t("No drivers to rank.")}
           rows={summary.best}
         />
       </div>

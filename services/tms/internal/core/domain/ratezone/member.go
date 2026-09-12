@@ -122,7 +122,7 @@ func (rzm *RateZoneMember) validateScope(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"scopeValue",
 			errortypes.ErrInvalid,
-			"Scope value is not valid for a "+rzm.ScopeType.String()+" member",
+			"Scope value is not valid for a {0} member", rzm.ScopeType.String(),
 		)
 	}
 }

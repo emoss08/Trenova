@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   DispatchPlan,
   DispatchPlannedAssignment,
@@ -35,6 +36,8 @@ function PlannedAssignmentRow({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
+  const t = useT();
+
   const verdict = verdictMeta(assignment.score.verdict);
   const canAssign = assignable(assignment);
 
@@ -67,18 +70,18 @@ function PlannedAssignmentRow({
             {assignment.score.score}
           </span>
           <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
-            {verdict.label}
+            {t(verdict.label)}
           </Badge>
         </div>
         <span className="text-muted-foreground text-[10.5px]">
           {assignment.rationale}
           {assignment.score.deadheadMiles != null &&
-            ` · ${formatMiles(assignment.score.deadheadMiles)} empty`}
-          {` · ${Math.round(assignment.confidence * 100)}% confidence`}
+            ` ${t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}`}
+          {` ${t("· {0}% confidence", Math.round(assignment.confidence * 100))}`}
         </span>
         {!assignment.tractorId && (
           <span className="text-[10px] text-red-600 dark:text-red-400">
-            No tractor available for this driver — cannot be applied.
+            {t("No tractor available for this driver — cannot be applied.")}
           </span>
         )}
         {assignment.score.blocked && <FindingList findings={assignment.score.findings} limit={2} />}
@@ -122,6 +125,8 @@ function groupUncovered(uncovered: readonly DispatchUncoveredMove[]): UncoveredG
 const VISIBLE_PRO_CHIPS = 6;
 
 function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
+  const t = useT();
+
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? group.proNumbers : group.proNumbers.slice(0, VISIBLE_PRO_CHIPS);
   const hidden = group.proNumbers.length - shown.length;
@@ -131,7 +136,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-medium">{group.reason}</span>
         <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
-          {group.proNumbers.length} move{group.proNumbers.length === 1 ? "" : "s"}
+          {t("{0, plural, one {# move} other {# moves}}", group.proNumbers.length)}
         </span>
       </div>
       <FindingList findings={group.findings} limit={3} />
@@ -150,7 +155,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
             className="text-muted-foreground hover:text-foreground px-1 text-[10px] transition-colors"
             onClick={() => setShowAll(true)}
           >
-            +{hidden} more
+            {t("+{0} more", hidden)}
           </button>
         ) : null}
       </div>
@@ -174,6 +179,8 @@ export function PlanReviewDialog({
   onApply: (input: DispatchAssignMoveInput[]) => void;
   isAssigning: boolean;
 }) {
+  const t = useT();
+
   const [checkedMoveIds, setCheckedMoveIds] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
@@ -224,20 +231,20 @@ export function PlanReviewDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5 text-sm">
             <SparklesIcon className="text-brand size-4" aria-hidden />
-            Auto-assign proposal
+            {t("Auto-assign proposal")}
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5 text-xs">
             <span className="text-foreground font-medium tabular-nums">
-              {plan.assignments.length} pairing{plan.assignments.length === 1 ? "" : "s"}
+              {t("{0, plural, one {# pairing} other {# pairings}}", plan.assignments.length)}
             </span>
             {plan.uncovered.length > 0 && (
               <>
                 <span aria-hidden>·</span>
-                <span className="tabular-nums">{plan.uncovered.length} not covered</span>
+                <span className="tabular-nums">{t("{0} not covered", plan.uncovered.length)}</span>
               </>
             )}
             <span aria-hidden>·</span>
-            <span>Nothing is written until you apply.</span>
+            <span>{t("Nothing is written until you apply.")}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -245,10 +252,9 @@ export function PlanReviewDialog({
           {plan.assignments.length === 0 ? (
             <div className="flex flex-col items-center gap-1.5 px-6 py-8 text-center">
               <SearchXIcon className="text-muted-foreground size-5" aria-hidden />
-              <span className="text-xs font-medium">No pairings to propose</span>
+              <span className="text-xs font-medium">{t("No pairings to propose")}</span>
               <span className="text-muted-foreground max-w-sm text-[11px] leading-snug">
-                Every candidate was blocked or out of range for the moves in this window. The
-                reasons are grouped below.
+                {t("Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.")}
               </span>
             </div>
           ) : (
@@ -265,7 +271,7 @@ export function PlanReviewDialog({
             <div className="flex flex-col border-t">
               <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-[10.5px] font-semibold tracking-wide uppercase">
                 <TriangleAlertIcon className="size-3" aria-hidden />
-                Not covered
+                {t("Not covered")}
               </span>
               <div className="divide-border flex flex-col divide-y">
                 {uncoveredGroups.map((group) => (
@@ -278,7 +284,7 @@ export function PlanReviewDialog({
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}>
-            {nothingToApply ? "Close" : "Discard plan"}
+            {nothingToApply ? t("Close") : t("Discard plan")}
           </Button>
           {!nothingToApply && (
             <Button
@@ -287,7 +293,7 @@ export function PlanReviewDialog({
               onClick={apply}
               isLoading={isAssigning}
             >
-              Assign {selected.length} move{selected.length === 1 ? "" : "s"}
+              {t("Assign {0, plural, one {# move} other {# moves}}", selected.length)}
             </Button>
           )}
         </DialogFooter>

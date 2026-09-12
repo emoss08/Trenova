@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -34,6 +35,8 @@ export function DocumentTypePanel({
   mode,
   row,
 }: DataTablePanelProps<DocumentType>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(documentTypeSchema),
     defaultValues: {
@@ -57,7 +60,7 @@ export function DocumentTypePanel({
       form={form}
       url="/document-types/"
       queryKey="document-type-list"
-      title="Document Type"
+      title={t("Document Type")}
       formComponent={<DocumentTypeForm />}
     />
   );
@@ -71,6 +74,8 @@ type DocumentTypeEditPanelProps = Pick<
 };
 
 function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
@@ -111,8 +116,8 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved", {
-        description: "Document Type updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Document Type updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: ["document-type-list"] });
 
@@ -172,17 +177,17 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           {isSystem ? (
-            <Button disabled>Save</Button>
+            <Button disabled>{t("Save")}</Button>
           ) : (
             <SplitButton
               options={SAVE_OPTIONS}
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               formId="panel-edit-form"
             />
           )}
@@ -190,15 +195,15 @@ function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEd
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading Document Type..." />
+        <ComponentLoader message={t("Loading Document Type...")} />
       ) : (
         <div className="flex flex-col gap-6">
           {isSystem && (
             <Alert variant="info">
               <CircleAlertIcon />
-              <AlertTitle>System Document Type</AlertTitle>
+              <AlertTitle>{t("System Document Type")}</AlertTitle>
               <AlertDescription>
-                This is a system document type and cannot be modified.
+                {t("This is a system document type and cannot be modified.")}
               </AlertDescription>
             </Alert>
           )}

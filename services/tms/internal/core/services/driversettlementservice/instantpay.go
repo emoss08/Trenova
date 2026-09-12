@@ -186,7 +186,9 @@ func (s *Service) instantStepError(
 	return errortypes.NewValidationError(
 		"settlementId",
 		errortypes.ErrInvalidOperation,
-		"Settlement "+settlement.SettlementNumber+" was created but the "+step+
-			" step failed: "+err.Error()+" — finish it from the settlement page.",
+		"Settlement {0} was created but the {1} step failed: {2} — finish it from the settlement page.",
+		settlement.SettlementNumber,
+		step,
+		err.Error(),
 	)
 }

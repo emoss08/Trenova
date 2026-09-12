@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { PlusIcon } from "lucide-react";
@@ -28,6 +29,8 @@ type BenefitsEmptyProps = {
 };
 
 export function BenefitsEmpty({ title, description, onAddPlan, className }: BenefitsEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -37,7 +40,7 @@ export function BenefitsEmpty({ title, description, onAddPlan, className }: Bene
         onAddPlan ? (
           <Button variant="outline" size="sm" onClick={onAddPlan}>
             <PlusIcon className="size-3.5" />
-            Add a plan
+            {t("Add a plan")}
           </Button>
         ) : null
       }

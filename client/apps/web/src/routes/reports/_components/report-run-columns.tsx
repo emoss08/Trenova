@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { ReportRun } from "@/lib/graphql/reports";
@@ -22,6 +24,8 @@ function formatDuration(durationMs: number): string {
 }
 
 function StatusCell({ run }: { run: ReportRun }) {
+  const t = useT();
+
   return (
     <div className="flex items-center gap-1.5">
       <ReportRunStatusBadge status={run.status} />
@@ -41,7 +45,7 @@ function StatusCell({ run }: { run: ReportRun }) {
           <TooltipTrigger>
             <ZapIcon className="size-4 text-yellow-500" />
           </TooltipTrigger>
-          <TooltipContent>Served from the result cache</TooltipContent>
+          <TooltipContent>{t("Served from the result cache")}</TooltipContent>
         </Tooltip>
       )}
     </div>
@@ -110,7 +114,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
         return (
           <p>
             {run.rowCount.toLocaleString()}
-            {run.truncated && <span className="text-warning"> (truncated)</span>}
+            {run.truncated && <span className="text-warning"> {translate("(truncated)")}</span>}
           </p>
         );
       },

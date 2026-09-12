@@ -344,11 +344,11 @@ func (e *emitter) checkOwnScopeSupport() error {
 			continue
 		}
 		if entity.OwnershipColumn == "" {
-			return errortypes.NewAuthorizationError(fmt.Sprintf(
-				"your access to %s is limited to your own records, but %s does not support per-user scoping in reports",
+			return errortypes.NewAuthorizationError(
+				"your access to {0} is limited to your own records, but {1} does not support per-user scoping in reports",
 				entity.PluralLabel,
 				entity.PluralLabel,
-			))
+			)
 		}
 	}
 	return nil

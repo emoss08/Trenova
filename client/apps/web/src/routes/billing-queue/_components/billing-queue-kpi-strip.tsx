@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,8 @@ export function BillingQueueKPIStrip({
   includePosted: boolean;
   onFilterChange: (status: string | null) => void;
 }) {
+  const t = useT();
+
   const { data: stats } = useQuery(queries.billingQueue.stats());
 
   const toggle = (status: string) => {
@@ -61,7 +64,7 @@ export function BillingQueueKPIStrip({
               statusFilter === metric.key && "bg-muted",
             )}
           >
-            <span className="text-muted-foreground text-xs">{metric.label}</span>
+            <span className="text-muted-foreground text-xs">{t(metric.label)}</span>
             <span className="text-sm font-semibold tabular-nums">{metric.value}</span>
           </button>
         ))}

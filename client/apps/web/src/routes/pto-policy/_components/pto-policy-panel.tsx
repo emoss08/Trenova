@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -127,6 +128,8 @@ function PTOPolicyCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<PTOPolicyFormValues>({
     resolver: zodResolver(ptoPolicyFormSchema) as Resolver<PTOPolicyFormValues>,
     defaultValues: buildPtoPolicyDefaults(null),
@@ -136,8 +139,8 @@ function PTOPolicyCreatePanel({
     <FormCreatePanel<PTOPolicyFormValues, PTOPolicyRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="PTO Policy"
-      description="Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it."
+      title={t("PTO Policy")}
+      description={t("Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it.")}
       queryKey={PTO_POLICY_LIST_KEY}
       form={form}
       size="lg"
@@ -159,6 +162,8 @@ function PTOPolicyEditPanel({
   onOpenChange: (open: boolean) => void;
   row: PTOPolicyRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildPtoPolicyDefaults(row) } as unknown as PTOPolicyRow &
     Record<string, unknown>;
   const form = useForm<PTOPolicyFormValues>({
@@ -171,7 +176,7 @@ function PTOPolicyEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="PTO Policy"
+      title={t("PTO Policy")}
       fieldKey="code"
       queryKey={PTO_POLICY_LIST_KEY}
       form={form}

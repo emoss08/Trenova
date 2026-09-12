@@ -2244,10 +2244,10 @@ func readDocumentBody(body io.ReadCloser, label string) ([]byte, error) {
 	content, err := io.ReadAll(body)
 	closeErr := body.Close()
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to read " + label).WithInternal(err)
+		return nil, errortypes.NewDatabaseError("Failed to read {0}", label).WithInternal(err)
 	}
 	if closeErr != nil {
-		return nil, errortypes.NewDatabaseError("Failed to close " + label).WithInternal(closeErr)
+		return nil, errortypes.NewDatabaseError("Failed to close {0}", label).WithInternal(closeErr)
 	}
 	return content, nil
 }

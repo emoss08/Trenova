@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ALERT_CATEGORY_CONFIG,
@@ -17,6 +18,8 @@ export function WeatherAlertLegendPanel({
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 }) {
+  const t = useT();
+
   const categoryCounts = useMemo(() => {
     const counts = new Map<WeatherAlertCategory, number>();
     for (const feature of features) {
@@ -38,7 +41,7 @@ export function WeatherAlertLegendPanel({
         >
           <div className="flex items-center gap-1.5">
             <TriangleAlertIcon className="text-muted-foreground size-3.5" />
-            <span className="text-foreground text-xs font-semibold">Public Alerts</span>
+            <span className="text-foreground text-xs font-semibold">{t("Public Alerts")}</span>
             <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>
           <ChevronDownIcon
@@ -62,7 +65,7 @@ export function WeatherAlertLegendPanel({
                       className="inline-block size-3 shrink-0 rounded-sm"
                       style={{ backgroundColor: config.stroke }}
                     />
-                    <span className="text-foreground text-xs">{config.label}</span>
+                    <span className="text-foreground text-xs">{t(config.label)}</span>
                   </div>
                   <span className="text-2xs text-muted-foreground tabular-nums">{count}</span>
                 </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { eventTotals, trendPeak, trendRows } from "@/lib/fleet-safety-console";
 import type { FleetSafetyKindRow, FleetSafetyTrendPoint } from "@/lib/graphql/fleet-safety";
 import {
@@ -31,6 +32,8 @@ type TrendCardProps = {
  * the fleet is getting better or worse, and a stack answers a different one.
  */
 export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
+  const t = useT();
+
   const rows = useMemo(() => trendRows(trend), [trend]);
   const direction = useMemo(() => trendDirection(rows.map((row) => row.events)), [rows]);
   const peak = useMemo(() => trendPeak(trend), [trend]);
@@ -41,9 +44,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <h3 id="trend-heading" className="text-sm font-medium">
-            Events by month
+            {t("Events by month")}
           </h3>
-          <span className="text-muted-foreground text-xs">last {windowMonths} months</span>
+          <span className="text-muted-foreground text-xs">{t("last {0} months", windowMonths)}</span>
         </div>
         <span className="text-muted-foreground flex items-center gap-1 text-xs" aria-live="polite">
           {direction === "up" ? (
@@ -53,9 +56,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
           ) : (
             <MinusIcon className="size-3.5" aria-hidden />
           )}
-          {direction === "up" ? "Rising" : direction === "down" ? "Falling" : "Holding steady"}
+          {direction === "up" ? t("Rising") : direction === "down" ? t("Falling") : t("Holding steady")}
           {peak && rows.length > 1
-            ? ` · busiest ${formatUnixInUserTimezone(peak.periodStart, { month: "short", year: "numeric", timezone: "UTC" })}`
+            ? ` ${t("· busiest {0}", formatUnixInUserTimezone(peak.periodStart, { month: "short", year: "numeric", timezone: "UTC" }))}`
             : ""}
         </span>
       </header>
@@ -63,7 +66,7 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
       <div className="p-3">
         {rows.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
-            No safety events in this window.
+            {t("No safety events in this window.")}
           </p>
         ) : (
           <ChartContainer config={chartConfig} className="h-44 w-full">
@@ -102,10 +105,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
                       const row = item.payload as (typeof rows)[number];
                       return (
                         <div className="flex flex-col gap-0.5 text-xs">
-                          <span className="font-medium tabular-nums">{value} events</span>
+                          <span className="font-medium tabular-nums">{t("{0} events", value)}</span>
                           <span className="text-muted-foreground tabular-nums">
-                            {row.accidents} accidents · {row.preventable} preventable ·{" "}
-                            {row.outOfService} out of service · {row.points} points
+                            {t("{0} accidents · {1} preventable · {2} out of service · {3} points", row.accidents, row.preventable, row.outOfService, row.points)}
                           </span>
                         </div>
                       );
@@ -124,7 +126,7 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
         )}
       </div>
 
-      <ul className="divide-y border-t" aria-label="Events by kind">
+      <ul className="divide-y border-t" aria-label={t("Events by kind")}>
         {kinds.map((kind) => (
           <li
             key={kind.kind}
@@ -133,17 +135,17 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
             <span className="font-medium">{safetyEventKindLabel(kind.kind)}</span>
             <span className="text-muted-foreground tabular-nums">
               {kind.events}
-              {kind.preventable > 0 ? ` · ${kind.preventable} preventable` : ""}
-              {kind.outOfService > 0 ? ` · ${kind.outOfService} out of service` : ""}
-              {kind.open > 0 ? ` · ${kind.open} open` : ""}
+              {kind.preventable > 0 ? ` ${t("· {0} preventable", kind.preventable)}` : ""}
+              {kind.outOfService > 0 ? ` ${t("· {0} out of service", kind.outOfService)}` : ""}
+              {kind.open > 0 ? ` ${t("· {0} open", kind.open)}` : ""}
             </span>
           </li>
         ))}
         {kinds.length > 0 ? (
           <li className="text-muted-foreground flex items-center justify-between gap-2 px-3 py-1.5 text-xs">
-            <span>All kinds</span>
+            <span>{t("All kinds")}</span>
             <span className="tabular-nums">
-              {totals.events} · {totals.points} points
+              {t("{0} · {1} points", totals.events, totals.points)}
             </span>
           </li>
         ) : null}

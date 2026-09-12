@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import { queries } from "@/lib/queries";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
@@ -35,6 +36,8 @@ function detentionOccurrenceId(charge: Shipment["additionalCharges"][number] | u
 }
 
 export default function AdditionalChargesSection() {
+  const t = useT();
+
   const {
     control,
     setValue,
@@ -115,13 +118,15 @@ export default function AdditionalChargesSection() {
   return (
     <>
       <FormSection
-        title="Additional Charges"
-        description="Additional fees charged for services such as detention, fuel surcharge, and more."
+        title={t("Additional Charges")}
+        description={t(
+          "Additional fees charged for services such as detention, fuel surcharge, and more.",
+        )}
         action={
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
               <PlusIcon className="size-3" />
-              Add Charge
+              {t("Add Charge")}
             </Button>
           )
         }
@@ -129,9 +134,9 @@ export default function AdditionalChargesSection() {
         {fields.length > 0 ? (
           <div className="rounded-lg border">
             <div className="border-border text-2xs text-muted-foreground grid grid-cols-10 gap-2 border-b px-4 py-2 uppercase">
-              <span className="col-span-4">Charge</span>
-              <span className="col-span-2">Unit</span>
-              <span className="col-span-2">Amount</span>
+              <span className="col-span-4">{t("Charge")}</span>
+              <span className="col-span-2">{t("Unit")}</span>
+              <span className="col-span-2">{t("Amount")}</span>
               <span className="col-span-2" />
             </div>
             <div className="divide-y">
@@ -178,7 +183,7 @@ export default function AdditionalChargesSection() {
                       )}
                       {isFuelSurcharge && !fuelSurchargeLocked && (
                         <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
-                          Auto
+                          {t("Auto")}
                         </span>
                       )}
                       {isFuelSurcharge && fuelSurchargeLocked && (
@@ -192,13 +197,14 @@ export default function AdditionalChargesSection() {
                               className="text-2xs flex items-center gap-1 rounded bg-amber-500/10 px-1 py-0.5 text-amber-600 dark:text-amber-400"
                             >
                               <LockIcon className="size-2.5" />
-                              Locked
+                              {t("Locked")}
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={6}>
                             <p className="max-w-56 text-xs">
-                              Kept at its original amount — shipment changes won&apos;t re-rate it.
-                              Click to unlock and re-rate automatically.
+                              {t(
+                                "Kept at its original amount — shipment changes won't re-rate it. Click to unlock and re-rate automatically.",
+                              )}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -268,8 +274,8 @@ export default function AdditionalChargesSection() {
           </div>
         ) : (
           <EmptyState
-            title="No Additional Charges"
-            description="Shipment has no associated additional charges"
+            title={t("No Additional Charges")}
+            description={t("Shipment has no associated additional charges")}
             icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
             className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{

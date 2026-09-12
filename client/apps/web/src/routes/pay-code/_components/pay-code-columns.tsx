@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { statusChoices } from "@/lib/choices";
@@ -84,7 +85,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
           {row.original.name}
           {row.original.isSystem && (
             <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-[10px]">
-              System
+              {translate("System")}
             </span>
           )}
         </span>
@@ -99,8 +100,8 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
         if (row.original.direction !== "Earning") return null;
         return (
           <span className="text-muted-foreground text-[11px]">
-            {row.original.taxable ? "Taxable" : "Reimbursement"}
-            {!row.original.countsTowardGuarantee && " · excl. guarantee"}
+            {row.original.taxable ? translate("Taxable") : translate("Reimbursement")}
+            {!row.original.countsTowardGuarantee && ` ${translate("· excl. guarantee")}`}
           </span>
         );
       },
@@ -116,13 +117,13 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
             <span className="text-muted-foreground">{row.original.glAccount.name}</span>
           </span>
         ) : (
-          <span className="text-muted-foreground text-[11px]">Default</span>
+          <span className="text-muted-foreground text-[11px]">{translate("Default")}</span>
         ),
       size: 200,
     },
     {
       accessorKey: "defaultAmountMinor",
-      header: () => <div className="text-right">Default Amount</div>,
+      header: () => <div className="text-right">{translate("Default Amount")}</div>,
       cell: ({ row }) =>
         row.original.defaultAmountMinor != null ? (
           <div className="text-right">

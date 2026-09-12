@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Accordion,
   AccordionHeader,
@@ -33,6 +34,8 @@ import type { ApiKeyPanelFormValues } from "./api-key-panel";
 type BulkMode = "read" | "write" | "full" | "clear";
 
 export function APIKeyPermissionsEditor() {
+  const t = useT();
+
   const { setValue, control } = useFormContext<ApiKeyPanelFormValues>();
   const permissions = useWatch({ control, name: "permissions" });
   const [searchQuery, setSearchQuery] = useState("");
@@ -214,9 +217,9 @@ export function APIKeyPermissionsEditor() {
       <div className="border-border/70 flex flex-col gap-3 border-t pt-6">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold">Permissions</h3>
+            <h3 className="text-sm font-semibold">{t("Permissions")}</h3>
             <p className="text-muted-foreground text-sm">
-              Apply a global preset, then narrow access by resource where needed.
+              {t("Apply a global preset, then narrow access by resource where needed.")}
             </p>
           </div>
           <div className="w-full xl:max-w-sm">
@@ -225,7 +228,7 @@ export function APIKeyPermissionsEditor() {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search resources..."
+                placeholder={t("Search resources...")}
                 className="h-9 pl-9"
               />
               {searchQuery && (
@@ -250,7 +253,7 @@ export function APIKeyPermissionsEditor() {
               size="sm"
               onClick={() => applyBulkPreset(allResources, mode)}
             >
-              {mode === "read" ? "All Read" : mode === "write" ? "All Write" : "Full Access"}
+              {mode === "read" ? t("All Read") : mode === "write" ? t("All Write") : t("Full Access")}
             </Button>
           ))}
           <Button
@@ -260,7 +263,7 @@ export function APIKeyPermissionsEditor() {
             onClick={() => applyBulkPreset(allResources, "clear")}
             disabled={permissions.length === 0}
           >
-            Clear All
+            {t("Clear All")}
           </Button>
           <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="secondary">
@@ -284,7 +287,7 @@ export function APIKeyPermissionsEditor() {
         </div>
       ) : filteredCategories.length === 0 ? (
         <div className="text-muted-foreground py-8 text-center text-sm">
-          No resources found matching &ldquo;{searchQuery}&rdquo;
+          {t("No resources found matching “{0}”", searchQuery)}
         </div>
       ) : (
         <div className="bg-card max-h-[500px] overflow-y-auto rounded-lg border p-1">
@@ -327,6 +330,8 @@ function CategorySection({
   onQuickAction,
   onCategoryPreset,
 }: CategorySectionProps) {
+  const t = useT();
+
   const grantedInCategory = category.resources.filter((r) => permissionMap.has(r.resource)).length;
 
   return (
@@ -341,7 +346,7 @@ function CategorySection({
           <div className="flex items-center gap-2">
             {grantedInCategory > 0 && (
               <Badge variant="secondary" className="text-xs">
-                {grantedInCategory} granted
+                {t("{0} granted", grantedInCategory)}
               </Badge>
             )}
           </div>
@@ -358,7 +363,7 @@ function CategorySection({
               onCategoryPreset(category, "read");
             }}
           >
-            All Read
+            {t("All Read")}
           </Button>
           <Button
             type="button"
@@ -369,7 +374,7 @@ function CategorySection({
               onCategoryPreset(category, "write");
             }}
           >
-            All Write
+            {t("All Write")}
           </Button>
           <Button
             type="button"
@@ -380,7 +385,7 @@ function CategorySection({
               onCategoryPreset(category, "clear");
             }}
           >
-            Clear
+            {t("Clear")}
           </Button>
         </div>
         <div className="space-y-1 pb-2">
@@ -418,6 +423,8 @@ function ResourceRow({
   onDataScopeChange,
   onQuickAction,
 }: ResourceRowProps) {
+  const t = useT();
+
   const isGranted = !!permission;
   const [showDetails, setShowDetails] = useState(false);
 
@@ -447,15 +454,15 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
                   {isFullAccess
-                    ? "Full Access"
+                    ? t("Full Access")
                     : isViewOnly
-                      ? "View Only"
+                      ? t("View Only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}
             </div>
             {resource.description && (
-              <p className="text-muted-foreground truncate text-xs">{resource.description}</p>
+              <p className="text-muted-foreground truncate text-xs">{t(resource.description)}</p>
             )}
           </div>
           {isGranted && (
@@ -482,7 +489,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>View Only</TooltipContent>
+            <TooltipContent>{t("View Only")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger
@@ -498,7 +505,7 @@ function ResourceRow({
                 </Button>
               }
             />
-            <TooltipContent>Full Access</TooltipContent>
+            <TooltipContent>{t("Full Access")}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -527,7 +534,7 @@ function ResourceRow({
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-xs">Scope:</span>
+            <span className="text-muted-foreground text-xs">{t("Scope:")}</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}
@@ -538,7 +545,7 @@ function ResourceRow({
               <SelectContent>
                 {dataScopeChoices.map((choice) => (
                   <SelectItem key={choice.value} value={choice.value}>
-                    {choice.label}
+                    {t(choice.label)}
                   </SelectItem>
                 ))}
               </SelectContent>

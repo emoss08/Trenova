@@ -1,1 +1,1 @@
-{{ if .Approved }}Dispatch resolved your dispute in your favor.{{ else }}Dispatch reviewed your dispute and the original settlement stands.{{ end }}{{ if .Reason }} {{ .Reason }}{{ else }} See the details in Dash.{{ end }}
+{{ if .Approved }}{{ t "Dispatch resolved your dispute in your favor." }}{{ else }}{{ t "Dispatch reviewed your dispute and the original settlement stands." }}{{ end }}{{ if .Reason }} {{ .Reason }}{{ else }} {{ t "See the details in Dash." }}{{ end }}

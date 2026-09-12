@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   assignDispatchMovesGraphQL,
   assignDispatchMoveToCarrierGraphQL,
@@ -81,6 +82,8 @@ function describeTenderError(title: string, error: unknown): void {
 export type DispatchActions = ReturnType<typeof useDispatchActions>;
 
 export function useDispatchActions() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const undoStack = useRef<UndoStep[]>([]);
   const [undoDepth, setUndoDepth] = useState(0);
@@ -112,7 +115,7 @@ export function useDispatchActions() {
       }
       invalidateBoard();
     },
-    onError: (error: Error) => toast.error("Assignment failed", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Assignment failed"), { description: error.message }),
   });
 
   const unassignMutation = useMutation({
@@ -132,7 +135,7 @@ export function useDispatchActions() {
       }
       invalidateBoard();
     },
-    onError: (error: Error) => toast.error("Unassignment failed", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Unassignment failed"), { description: error.message }),
   });
 
   // Carrier coverage is deliberately outside the undo stack: reversing it requires a
@@ -141,24 +144,24 @@ export function useDispatchActions() {
     mutationFn: (input: DispatchAssignMoveToCarrierInput) =>
       assignDispatchMoveToCarrierGraphQL(input),
     onSuccess: (assignment) => {
-      toast.success("Move assigned to carrier", {
+      toast.success(t("Move assigned to carrier"), {
         description: assignment.carrier?.name ?? undefined,
       });
       invalidateBoard();
     },
     onError: (error: Error) =>
-      toast.error("Carrier assignment failed", { description: error.message }),
+      toast.error(t("Carrier assignment failed"), { description: error.message }),
   });
 
   const carrierCancelMutation = useMutation({
     mutationFn: (params: { moveId: string; reason: string }) =>
       cancelDispatchCarrierAssignmentGraphQL(params.moveId, params.reason),
     onSuccess: () => {
-      toast.success("Carrier assignment canceled");
+      toast.success(t("Carrier assignment canceled"));
       invalidateBoard();
     },
     onError: (error: Error) =>
-      toast.error("Carrier cancellation failed", { description: error.message }),
+      toast.error(t("Carrier cancellation failed"), { description: error.message }),
   });
 
   // Tendering shares the carrier-coverage rule: none of it is undoable. Reversing a
@@ -178,12 +181,12 @@ export function useDispatchActions() {
       // got, so the outcome is reported as a warning rather than a plain success.
       const skipped = result.screening?.skipped.length ?? 0;
       if (skipped > 0) {
-        toast.warning("Waterfall tender started with skipped carriers", {
+        toast.warning(t("Waterfall tender started with skipped carriers"), {
           description: `${skipped} routing-guide carrier(s) were skipped for eligibility.`,
         });
       } else {
-        toast.success("Waterfall tender started", {
-          description: "The rank-1 carrier has been offered the move.",
+        toast.success(t("Waterfall tender started"), {
+          description: t("The rank-1 carrier has been offered the move."),
         });
       }
       invalidateTenders();
@@ -214,8 +217,8 @@ export function useDispatchActions() {
     mutationFn: (params: { tenderId: string; reason: string }) =>
       apiService.tenderService.cancel(params.tenderId, params.reason),
     onSuccess: () => {
-      toast.success("Tender canceled", {
-        description: "Outstanding offers have been withdrawn.",
+      toast.success(t("Tender canceled"), {
+        description: t("Outstanding offers have been withdrawn."),
       });
       invalidateTenders();
     },
@@ -238,7 +241,7 @@ export function useDispatchActions() {
     mutationFn: (input: DispatchPlanInput) => planDispatchAutoAssignGraphQL(input),
     onSuccess: (plan: DispatchPlan) => {
       if (plan.shadowMode) {
-        toast.info("Shadow mode: nothing was assigned", {
+        toast.info(t("Shadow mode: nothing was assigned"), {
           description: `${plan.assignments.length} pairing(s) would have been proposed.`,
         });
         return;
@@ -248,12 +251,12 @@ export function useDispatchActions() {
         invalidateBoard();
       }
       if (plan.assignments.length === 0 && plan.uncovered.length === 0) {
-        toast.info("Nothing to plan", {
-          description: "No uncovered moves in the current window.",
+        toast.info(t("Nothing to plan"), {
+          description: t("No uncovered moves in the current window."),
         });
       }
     },
-    onError: (error: Error) => toast.error("Auto-assign failed", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Auto-assign failed"), { description: error.message }),
   });
 
   // The mutation objects themselves are not referentially stable; their mutate functions

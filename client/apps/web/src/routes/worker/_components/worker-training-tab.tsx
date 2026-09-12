@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   assignRequiredWorkerTraining,
@@ -31,6 +32,8 @@ type DialogState =
 const CLOSED_STATUSES = new Set(["Completed", "Failed", "Expired", "Waived", "Cancelled"]);
 
 export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canAssign } = usePermission(Resource.WorkerTraining, Operation.Assign);
   const { allowed: canRecord } = usePermission(Resource.WorkerTraining, Operation.Update);
   const { allowed: canWaive } = usePermission(Resource.WorkerTraining, Operation.Cancel);
@@ -89,8 +92,8 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
     mutationFn: () => assignRequiredWorkerTraining(workerId),
     onSuccess: (records) => {
       if (records.length === 0) {
-        toast.info("Nothing to assign", {
-          description: "Every required course is already open or current.",
+        toast.info(t("Nothing to assign"), {
+          description: t("Every required course is already open or current."),
         });
       } else {
         const names = records
@@ -103,7 +106,7 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not assign training", { description: error.message }),
+      toast.error(t("Could not assign training"), { description: error.message }),
   });
 
   const cancel = useMutation({
@@ -114,7 +117,7 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not cancel assignment", { description: error.message }),
+      toast.error(t("Could not cancel assignment"), { description: error.message }),
   });
 
   const permissions = useMemo<TrainingSlotPermissions>(
@@ -144,7 +147,7 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
   if (!summary) {
     return (
       <p className="text-muted-foreground text-sm">
-        Training could not be loaded. Try again in a moment.
+        {t("Training could not be loaded. Try again in a moment.")}
       </p>
     );
   }
@@ -171,17 +174,17 @@ export default function WorkerTrainingTab({ workerId }: { workerId: string }) {
       />
 
       <TrainingSection
-        title="Required"
-        hint="Every course this worker must complete for their driver type."
+        title={t("Required")}
+        hint={t("Every course this worker must complete for their driver type.")}
         items={required}
-        empty="No courses are required for this driver type."
+        empty={t("No courses are required for this driver type.")}
         {...cardProps}
       />
 
       {optional.length > 0 ? (
         <TrainingSection
-          title="Other courses"
-          hint="Optional training assigned to or completed by this worker."
+          title={t("Other courses")}
+          hint={t("Optional training assigned to or completed by this worker.")}
           items={optional}
           {...cardProps}
         />
@@ -233,6 +236,8 @@ type TrainingSectionProps = {
 };
 
 function TrainingSection({ title, hint, items, empty, ...cardProps }: TrainingSectionProps) {
+  const t = useT();
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
@@ -241,7 +246,7 @@ function TrainingSection({ title, hint, items, empty, ...cardProps }: TrainingSe
       </div>
       {items.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          {empty ?? "Nothing on file."}
+          {empty ?? t("Nothing on file.")}
         </p>
       ) : (
         <div className="divide-border divide-y rounded-lg border">

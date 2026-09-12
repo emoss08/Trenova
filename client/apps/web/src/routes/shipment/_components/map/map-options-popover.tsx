@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -48,6 +49,8 @@ export function MapOptionsPopover({
   overlays: Record<OverlayId, boolean>;
   onToggleOverlay: (id: OverlayId) => void;
 }) {
+  const t = useT();
+
   return (
     <Popover>
       <Tooltip>
@@ -62,11 +65,11 @@ export function MapOptionsPopover({
         >
           <LayersIcon className="size-4" />
         </TooltipTrigger>
-        <TooltipContent side="bottom">Map options</TooltipContent>
+        <TooltipContent side="bottom">{t("Map options")}</TooltipContent>
       </Tooltip>
       <PopoverContent side="bottom" sideOffset={8} className="w-48 p-0">
         <div className="max-h-[70vh] overflow-y-auto p-3">
-          <SectionLabel>Map Base</SectionLabel>
+          <SectionLabel>{t("Map Base")}</SectionLabel>
           <div className="mt-1.5 flex flex-col">
             {MAP_BASE_OPTIONS.map((opt) => (
               <label
@@ -80,12 +83,12 @@ export function MapOptionsPopover({
                   onChange={() => onMapStyleChange(opt.id)}
                   className="accent-brand"
                 />
-                {opt.label}
+                {t(opt.label)}
               </label>
             ))}
           </div>
           <Separator className="my-2.5" />
-          <SectionLabel>Overlay</SectionLabel>
+          <SectionLabel>{t("Overlay")}</SectionLabel>
           <div className="mt-1.5 flex flex-col">
             {OVERLAY_OPTIONS.map((opt) => (
               <label
@@ -97,7 +100,7 @@ export function MapOptionsPopover({
                   onCheckedChange={() => onToggleOverlay(opt.id)}
                 />
                 <opt.icon className="text-muted-foreground size-3.5" />
-                {opt.label}
+                {t(opt.label)}
               </label>
             ))}
           </div>

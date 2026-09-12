@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
 import {
@@ -57,6 +58,8 @@ export function ErrorBoundaryUi({
   isDev = import.meta.env.DEV,
   className,
 }: ErrorBoundaryUiProps) {
+  const t = useT();
+
   const [showStack, setShowStack] = React.useState(isDev);
   const [showComponentStack, setShowComponentStack] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
@@ -105,12 +108,12 @@ export function ErrorBoundaryUi({
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-red-700 dark:text-red-300">
-            {isDev ? error.name || "Error" : "Something went wrong"}
+            {isDev ? error.name || t("Error") : t("Something went wrong")}
           </h3>
           <p className="mt-1 text-sm break-words text-red-600 dark:text-red-400">
             {isDev
               ? error.message
-              : "An unexpected error occurred. Please try again."}
+              : t("An unexpected error occurred. Please try again.")}
           </p>
         </div>
       </div>
@@ -120,11 +123,11 @@ export function ErrorBoundaryUi({
           <button
             type="button"
             onClick={resetError}
-            aria-label="Try again"
+            aria-label={t("Try again")}
             className="flex items-center gap-1.5 rounded bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900"
           >
             <RefreshCw className="h-3.5 w-3.5" />
-            Try again
+            {t("Try again")}
           </button>
         )}
         <button
@@ -134,7 +137,7 @@ export function ErrorBoundaryUi({
           className="flex items-center gap-1.5 rounded bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900"
         >
           <Copy className="h-3.5 w-3.5" />
-          {copied ? "Copied!" : "Copy error"}
+          {copied ? t("Copied!") : t("Copy error")}
         </button>
       </div>
 
@@ -145,10 +148,10 @@ export function ErrorBoundaryUi({
             onClick={handleToggleStack}
             aria-expanded={showStack}
             aria-controls="stack-trace-content"
-            aria-label="Toggle stack trace"
+            aria-label={t("Toggle stack trace")}
             className="flex w-full items-center justify-between px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
           >
-            <span className="font-medium">Stack Trace</span>
+            <span className="font-medium">{t("Stack Trace")}</span>
             {showStack ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -159,7 +162,7 @@ export function ErrorBoundaryUi({
             <div
               id="stack-trace-content"
               className="overflow-auto px-4 pb-4"
-              aria-label="Error stack trace"
+              aria-label={t("Error stack trace")}
             >
               <div className="space-y-1 font-mono text-xs">
                 {stackFrames.map((frame, idx) => (
@@ -191,10 +194,10 @@ export function ErrorBoundaryUi({
             onClick={handleToggleComponentStack}
             aria-expanded={showComponentStack}
             aria-controls="component-stack-content"
-            aria-label="Toggle component stack"
+            aria-label={t("Toggle component stack")}
             className="flex w-full items-center justify-between px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
           >
-            <span className="font-medium">Component Stack</span>
+            <span className="font-medium">{t("Component Stack")}</span>
             {showComponentStack ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -205,7 +208,7 @@ export function ErrorBoundaryUi({
             <div
               id="component-stack-content"
               className="overflow-auto px-4 pb-4"
-              aria-label="Component stack trace"
+              aria-label={t("Component stack trace")}
             >
               <pre className="font-mono text-xs whitespace-pre-wrap text-red-600 dark:text-red-400">
                 {componentStack}

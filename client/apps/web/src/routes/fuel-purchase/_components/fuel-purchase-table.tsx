@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   jurisdictionFilterOptions,
@@ -45,6 +46,8 @@ function FuelPurchasesEmpty({
   canImport,
   onImport,
 }: DataTableEmptyStateRenderProps & { canImport: boolean; onImport: () => void }) {
+  const t = useT();
+
   return (
     <EmptyTable
       className="py-10"
@@ -60,7 +63,7 @@ function FuelPurchasesEmpty({
         canImport ? (
           <Button variant="outline" size="sm" onClick={onImport}>
             <FileSpreadsheetIcon className="size-3.5" />
-            Import card statement
+            {t("Import card statement")}
           </Button>
         ) : null
       }

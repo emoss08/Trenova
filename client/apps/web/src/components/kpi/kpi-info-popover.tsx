@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Popover,
   PopoverContent,
@@ -21,6 +22,8 @@ type KpiInfoPopoverProps = {
 };
 
 export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps) {
+  const t = useT();
+
   return (
     <Popover>
       <PopoverTrigger
@@ -49,7 +52,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
           {rows.map((row) => (
             <div key={row.label} className="grid gap-0.5">
               <dt className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
-                {row.label}
+                {t(row.label)}
               </dt>
               <dd className="text-foreground/90 text-xs leading-snug">{row.value}</dd>
             </div>

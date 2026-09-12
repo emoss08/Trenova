@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -45,6 +46,8 @@ function SummaryCard({ label, value, amount }: { label: string; value: string; a
 }
 
 export function BankReceiptBatchPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -78,16 +81,16 @@ export function BankReceiptBatchPage() {
         <div className="flex items-center justify-between">
           <div className="grid flex-1 gap-2.5 md:grid-cols-4">
             <SummaryCard
-              label="Total Batches"
+              label={t("Total Batches")}
               value={String(stats.total)}
               amount={stats.totalAmount}
             />
-            <SummaryCard label="Processing" value={String(stats.processing)} />
-            <SummaryCard label="Completed" value={String(stats.completed)} />
+            <SummaryCard label={t("Processing")} value={String(stats.processing)} />
+            <SummaryCard label={t("Completed")} value={String(stats.completed)} />
             <div className="flex items-end">
               <Button size="sm" onClick={() => setDialogOpen(true)}>
                 <UploadIcon className="mr-1.5 size-3.5" />
-                Import Batch
+                {t("Import Batch")}
               </Button>
             </div>
           </div>
@@ -103,19 +106,19 @@ export function BankReceiptBatchPage() {
 
         {isError ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            Failed to load import batches. Try refreshing the page.
+            {t("Failed to load import batches. Try refreshing the page.")}
           </div>
         ) : null}
 
         {!isLoading && !isError && batches && batches.length === 0 ? (
           <EmptyTable
-            title="No batches yet"
-            description="Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched."
+            title={t("No batches yet")}
+            description={t("Import a bank receipt file and it becomes a batch here, with every receipt it carried and how many of them matched.")}
             columns={BATCH_COLUMNS}
             action={
               <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
                 <UploadIcon className="size-3.5" />
-                Import a batch
+                {t("Import a batch")}
               </Button>
             }
           />
@@ -126,14 +129,14 @@ export function BankReceiptBatchPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
-                  <th className="px-3 py-2.5 text-xs font-medium">Reference</th>
-                  <th className="px-3 py-2.5 text-xs font-medium">Source</th>
-                  <th className="px-3 py-2.5 text-xs font-medium">Status</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium">Imported</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium">Matched</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium">Exceptions</th>
-                  <th className="px-3 py-2.5 text-right text-xs font-medium">Total Amount</th>
-                  <th className="px-3 py-2.5 text-xs font-medium">Created</th>
+                  <th className="px-3 py-2.5 text-xs font-medium">{t("Reference")}</th>
+                  <th className="px-3 py-2.5 text-xs font-medium">{t("Source")}</th>
+                  <th className="px-3 py-2.5 text-xs font-medium">{t("Status")}</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Imported")}</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Matched")}</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Exceptions")}</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-medium">{t("Total Amount")}</th>
+                  <th className="px-3 py-2.5 text-xs font-medium">{t("Created")}</th>
                   <th className="w-10 px-3 py-2.5" />
                 </tr>
               </thead>

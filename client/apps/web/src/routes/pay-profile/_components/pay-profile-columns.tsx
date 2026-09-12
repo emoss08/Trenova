@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
@@ -123,7 +124,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
     },
     {
       accessorKey: "guaranteedPeriodMinimumMinor",
-      header: () => <div className="text-right">Guarantee</div>,
+      header: () => <div className="text-right">{translate("Guarantee")}</div>,
       cell: ({ row }) =>
         row.original.guaranteedPeriodMinimumMinor > 0 ? (
           <div className="text-right">
@@ -140,7 +141,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
     },
     {
       accessorKey: "activeAssignmentCount",
-      header: () => <div className="text-right">Drivers</div>,
+      header: () => <div className="text-right">{translate("Drivers")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.activeAssignmentCount}</div>
       ),

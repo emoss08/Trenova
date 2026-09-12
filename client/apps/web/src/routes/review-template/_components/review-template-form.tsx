@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -18,6 +19,8 @@ type ReviewTemplateFormProps = {
 };
 
 export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTemplateFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<ReviewTemplateFormValues>();
   const items = useFieldArray({ control, name: "items" });
   const watched = useWatch({ control, name: "items" });
@@ -30,38 +33,38 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="General"
-          hint="Name and code identify the template when someone starts a review."
+          title={t("General")}
+          hint={t("Name and code identify the template when someone starts a review.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="e.g. DRIVER-ANNUAL"
+              label={t("Code")}
+              placeholder={t("e.g. DRIVER-ANNUAL")}
               rules={{ required: true }}
-              description="Short unique identifier. Letters, digits, dashes and underscores."
+              description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="e.g. Annual Driver Review"
+              label={t("Name")}
+              placeholder={t("e.g. Annual Driver Review")}
               rules={{ required: true }}
-              description="Shown when someone picks a template to start a review."
+              description={t("Shown when someone picks a template to start a review.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
-              placeholder="Select a status"
+              placeholder={t("Select a status")}
               description={
                 isEdit && openReviewCount > 0
                   ? `${openReviewCount} open review${openReviewCount === 1 ? "" : "s"} use this template; close those first to deactivate.`
@@ -73,19 +76,19 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             <NumberField
               control={control}
               name="cadenceMonths"
-              label="Repeat every"
+              label={t("Repeat every")}
               sideText="months"
               min={1}
               placeholder="12"
-              description="Closing a review schedules the next one this far out. Leave empty for one-off reviews."
+              description={t("Closing a review schedules the next one this far out. Leave empty for one-off reviews.")}
             />
           </FormControl>
           <FormControl cols="full">
             <SwitchField
               control={control}
               name="isDefault"
-              label="Default template"
-              description="Pre-selected when someone starts a review."
+              label={t("Default template")}
+              description={t("Pre-selected when someone starts a review.")}
               position="left"
               outlined
             />
@@ -94,10 +97,10 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Who this review is for and what it covers"
+              label={t("Description")}
+              placeholder={t("Who this review is for and what it covers")}
               maxLength={1000}
-              description="Optional notes on when and for whom this template should be used."
+              description={t("Optional notes on when and for whom this template should be used.")}
             />
           </FormControl>
         </FormGroup>
@@ -106,7 +109,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <SectionTitle
-            title="Rating items"
+            title={t("Rating items")}
             hint={`Each item is scored 1–5. Weights decide the share of the overall score — currently ${totalWeight} in total.`}
           />
           <Button
@@ -116,15 +119,14 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             onClick={() => items.append({ key: "", label: "", description: null, weight: 1 })}
           >
             <PlusIcon className="size-3.5" />
-            Add item
+            {t("Add item")}
           </Button>
         </div>
         <Alert variant="default">
           <InfoIcon className="size-4" />
-          <AlertTitle>Items are copied when a review starts</AlertTitle>
+          <AlertTitle>{t("Items are copied when a review starts")}</AlertTitle>
           <AlertDescription>
-            Changes to the rating items only affect reviews started after you save. Reviews already
-            in progress keep the items and weights they were started with.
+            {t("Changes to the rating items only affect reviews started after you save. Reviews already in progress keep the items and weights they were started with.")}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -132,7 +134,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
             <div key={field.id} className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-muted-foreground text-[11px] font-medium uppercase">
-                  Item {index + 1}
+                  {t("Item {0}", index + 1)}
                 </p>
                 {items.fields.length > 1 ? (
                   <Button
@@ -152,41 +154,41 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                   <InputField
                     control={control}
                     name={`items.${index}.key`}
-                    label="Key"
-                    placeholder="e.g. safety"
+                    label={t("Key")}
+                    placeholder={t("e.g. safety")}
                     rules={{ required: true }}
-                    description="Stable identifier kept on every review; must be unique within the template."
+                    description={t("Stable identifier kept on every review; must be unique within the template.")}
                   />
                 </FormControl>
                 <FormControl>
                   <InputField
                     control={control}
                     name={`items.${index}.label`}
-                    label="Label"
-                    placeholder="e.g. Safe driving"
+                    label={t("Label")}
+                    placeholder={t("e.g. Safe driving")}
                     rules={{ required: true }}
-                    description="Shown to the reviewer as the thing being scored."
+                    description={t("Shown to the reviewer as the thing being scored.")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField
                     control={control}
                     name={`items.${index}.weight`}
-                    label="Weight"
+                    label={t("Weight")}
                     min={1}
                     max={10}
                     placeholder="1"
-                    description="Relative share of the overall score; the score is the weighted average of items."
+                    description={t("Relative share of the overall score; the score is the weighted average of items.")}
                   />
                 </FormControl>
                 <FormControl className="col-span-3">
                   <InputField
                     control={control}
                     name={`items.${index}.description`}
-                    label="Hint"
-                    placeholder="What the reviewer should be looking at"
+                    label={t("Hint")}
+                    placeholder={t("What the reviewer should be looking at")}
                     maxLength={255}
-                    description="Optional guidance for whoever scores this item."
+                    description={t("Optional guidance for whoever scores this item.")}
                   />
                 </FormControl>
               </FormGroup>

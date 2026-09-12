@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
@@ -96,6 +97,8 @@ function ColorFieldInput<T extends FieldValues>({
   disabled?: boolean;
   hideHeader?: boolean;
 }) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState(false);
   const { onChange, value, ...restField } = field;
 
@@ -146,7 +149,7 @@ function ColorFieldInput<T extends FieldValues>({
                 <Paintbrush className="size-4" />
               )}
               <div className="mt-0.5 flex-1 truncate text-left">
-                {value ? value : "Pick a color"}
+                {value ? value : t("Pick a color")}
               </div>
             </div>
           </Button>
@@ -156,8 +159,8 @@ function ColorFieldInput<T extends FieldValues>({
         <div className="flex flex-col gap-1">
           {!hideHeader && (
             <div className="border-border mb-2 flex items-center justify-between border-b">
-              <p className="text-2xs text-left font-normal">Predefined Colors</p>
-              <p className="text-2xs text-muted-foreground">Click to select a color</p>
+              <p className="text-2xs text-left font-normal">{t("Predefined Colors")}</p>
+              <p className="text-2xs text-muted-foreground">{t("Click to select a color")}</p>
             </div>
           )}
           <ColorGrid handleChange={handleChange} />
@@ -166,7 +169,7 @@ function ColorFieldInput<T extends FieldValues>({
           id="custom"
           value={value || ""}
           className="col-span-2 mt-4 h-6"
-          placeholder="Enter a custom color (e.g. #000000)"
+          placeholder={t("Enter a custom color (e.g. #000000)")}
           onChange={(e) => onChange(e.target.value)}
         />
       </PopoverContent>

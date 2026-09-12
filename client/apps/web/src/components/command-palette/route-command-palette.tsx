@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import Highlight from "@trenova/shared/components/highlight";
 import {
   CommandDialog,
@@ -34,6 +35,8 @@ import { SearchResultItem } from "./search-result-items";
 import { SearchEmpty, SearchError, SearchKeepTyping, SearchLoading } from "./search-states";
 
 export function RouteCommandPalette() {
+  const t = useT();
+
   const navigate = useNavigate();
   const location = useLocation();
   const filteredModules = useFilteredNavigation();
@@ -178,7 +181,7 @@ export function RouteCommandPalette() {
   const remoteResultGroups =
     remoteQueryReady && !remoteSearchQuery.isFetching && !remoteSearchQuery.isError
       ? remoteGroups.map((group) => (
-          <CommandGroup key={group.entityType} heading={group.label}>
+          <CommandGroup key={group.entityType} heading={t(group.label)}>
             {group.hits.map((hit) => (
               <SearchResultItem
                 key={`${group.entityType}:${hit.id}`}
@@ -215,8 +218,8 @@ export function RouteCommandPalette() {
           setPreviewId(undefined);
         }
       }}
-      title="Command Palette"
-      description="Search for routes, commands, and synced records."
+      title={t("Command Palette")}
+      description={t("Search for routes, commands, and synced records.")}
       className={cn(
         "z-50 grid w-full max-w-4xl gap-4 overflow-visible border duration-200 sm:max-w-4xl",
         "rounded-md border-none bg-clip-padding shadow-2xl ring-4",
@@ -298,7 +301,7 @@ export function RouteCommandPalette() {
                 className="bg-muted text-2xs text-foreground hover:bg-muted/80 inline-flex h-5 items-center gap-1 rounded-full border px-2 py-0 font-medium transition-colors"
                 aria-label={`Clear ${activeEntityOption.label} record filter`}
               >
-                <span>{activeEntityOption.label}</span>
+                <span>{t(activeEntityOption.label)}</span>
                 <X className="size-3" />
               </button>
             </div>
@@ -306,7 +309,7 @@ export function RouteCommandPalette() {
           {mentionOpen && filteredEntityOptions.length > 0 && (
             <div className="bg-popover absolute top-11 left-2 z-50 w-52 rounded-lg border p-2 shadow-lg">
               <div className="text-2xs text-muted-foreground px-2 pb-1 font-medium tracking-[0.18em] uppercase">
-                Filter records
+                {t("Filter records")}
               </div>
               <div className="flex flex-col gap-1">
                 {filteredEntityOptions.map((option, index) => (
@@ -321,7 +324,7 @@ export function RouteCommandPalette() {
                         : "text-foreground hover:bg-muted",
                     )}
                   >
-                    {option.label}
+                    {t(option.label)}
                   </button>
                 ))}
               </div>
@@ -342,7 +345,7 @@ export function RouteCommandPalette() {
               {!recordEntityFilter && (
                 <>
                   {routeGroups.map((group) => (
-                    <CommandGroup key={group.id} heading={group.label}>
+                    <CommandGroup key={group.id} heading={t(group.label)}>
                       {group.items.map((item) => (
                         <CommandItem
                           key={item.id}
@@ -352,7 +355,7 @@ export function RouteCommandPalette() {
                         >
                           <item.icon className="size-4" />
                           <div className="flex flex-1 flex-col">
-                            <Highlight text={item.title} highlight={searchValue} />
+                            <Highlight text={t(item.title)} highlight={searchValue} />
                             <Highlight
                               text={item.subtitle}
                               highlight={searchValue}
@@ -365,7 +368,7 @@ export function RouteCommandPalette() {
                     </CommandGroup>
                   ))}
                   {showSuggestedCommands && suggestedCommands.length > 0 && (
-                    <CommandGroup heading="Suggested commands">
+                    <CommandGroup heading={t("Suggested commands")}>
                       {suggestedCommands.map((item) => (
                         <CommandItem
                           key={item.id}
@@ -375,9 +378,9 @@ export function RouteCommandPalette() {
                         >
                           <Plus className="size-4" />
                           <div className="flex flex-1 flex-col">
-                            <Highlight text={item.label} highlight={searchValue} />
+                            <Highlight text={t(item.label)} highlight={searchValue} />
                             <Highlight
-                              text={item.description}
+                              text={t(item.description)}
                               highlight={searchValue}
                               className="text-2xs text-muted-foreground"
                             />
@@ -415,17 +418,17 @@ export function RouteCommandPalette() {
                 <ArrowDown className="size-3" />
               </Kbd>
             </KbdGroup>
-            <span>to navigate</span>
+            <span>{t("to navigate")}</span>
           </div>
           <div className="flex items-center gap-2">
             <Kbd>
               <CornerDownLeft className="size-3" />
             </Kbd>
-            <span>to select</span>
+            <span>{t("to select")}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Kbd>Esc</Kbd>
-            <span>to close</span>
+            <Kbd>{t("Esc")}</Kbd>
+            <span>{t("to close")}</span>
           </div>
         </div>
       </div>

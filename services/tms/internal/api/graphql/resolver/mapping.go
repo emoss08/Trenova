@@ -109,7 +109,7 @@ func requiredPatchValue[T any](field, label string, value *T) (T, error) {
 		return zero, errortypes.NewValidationError(
 			field,
 			errortypes.ErrRequired,
-			label+" cannot be cleared",
+			"{0} cannot be cleared", label,
 		)
 	}
 	return *value, nil

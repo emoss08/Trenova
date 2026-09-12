@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -39,6 +40,8 @@ export function RescindActionDialog({
   workerId,
   action,
 }: RescindActionDialogProps) {
+  const t = useT();
+
   const invalidate = useSafetyInvalidation(workerId);
   const form = useForm<RescindActionFormValues>({
     resolver: zodResolver(rescindActionFormSchema) as Resolver<RescindActionFormValues>,
@@ -67,8 +70,8 @@ export function RescindActionDialog({
       });
     },
     onSuccess: () => {
-      toast.success("Action rescinded", {
-        description: "It comes off the ladder but stays in the record with your reason.",
+      toast.success(t("Action rescinded"), {
+        description: t("It comes off the ladder but stays in the record with your reason."),
       });
       void invalidate();
       onOpenChange(false);
@@ -83,10 +86,9 @@ export function RescindActionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rescind this {label}</DialogTitle>
+          <DialogTitle>{t("Rescind this {0}", label)}</DialogTitle>
           <DialogDescription>
-            Use this when the action should not have been issued. It stops counting toward the next
-            rung immediately; the row and your reason stay on the record.
+            {t("Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -102,9 +104,9 @@ export function RescindActionDialog({
                 <TextareaField<RescindActionFormValues>
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. The delay was the shipper's, not the driver's"
-                  description="Saved on the rescinded row so an auditor can see why the action was withdrawn."
+                  label={t("Reason")}
+                  placeholder={t("e.g. The delay was the shipper's, not the driver's")}
+                  description={t("Saved on the rescinded row so an auditor can see why the action was withdrawn.")}
                   rules={{ required: true }}
                   maxLength={255}
                 />
@@ -112,10 +114,10 @@ export function RescindActionDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Rescinding...">
-                Rescind
+              <Button type="submit" isLoading={isPending} loadingText={t("Rescinding...")}>
+                {t("Rescind")}
               </Button>
             </DialogFooter>
           </Form>

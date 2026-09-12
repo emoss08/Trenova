@@ -521,7 +521,8 @@ func (s *Service) validateNoEscalation(
 			me.Add(
 				"permissions",
 				errortypes.ErrForbidden,
-				"cannot grant permissions for resource '"+rp.Resource+"' that you don't have access to",
+				"cannot grant permissions for resource '{0}' that you don't have access to",
+				rp.Resource,
 			)
 			return me
 		}
@@ -533,9 +534,9 @@ func (s *Service) validateNoEscalation(
 				me.Add(
 					"permissions",
 					errortypes.ErrForbidden,
-					"cannot grant '"+string(
+					"cannot grant '{0}' operation on '{1}' that you don't have", string(
 						op,
-					)+"' operation on '"+rp.Resource+"' that you don't have",
+					), rp.Resource,
 				)
 				return me
 			}
@@ -546,9 +547,11 @@ func (s *Service) validateNoEscalation(
 			me.Add(
 				"permissions",
 				errortypes.ErrForbidden,
-				"cannot grant data scope '"+string(
+				"cannot grant data scope '{0}' on '{1}' that is more permissive than your own",
+				string(
 					rp.DataScope,
-				)+"' on '"+rp.Resource+"' that is more permissive than your own",
+				),
+				rp.Resource,
 			)
 			return me
 		}

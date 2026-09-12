@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { queries } from "@/lib/queries";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
@@ -90,6 +91,8 @@ function useNowSeconds(): number {
 }
 
 export function BillingQueuePage() {
+  const t = useT();
+
   const [viewParams, setViewParams] = useQueryStates(queueViewSearchParamsParser);
   const [selectionParams, setSelectionParams] = useQueryStates(queueSelectionSearchParamsParser);
   const [statementParams, setStatementParams] = useQueryStates(
@@ -246,9 +249,9 @@ export function BillingQueuePage() {
       >
         <SheetContent side="right" className="w-[min(92vw,1100px)] p-0 sm:max-w-none">
           <SheetHeader className="border-border border-b pr-12">
-            <SheetTitle>{selectedDocumentName || "Document Preview"}</SheetTitle>
+            <SheetTitle>{selectedDocumentName || t("Document Preview")}</SheetTitle>
             <SheetDescription>
-              Review the supporting shipment document attached to this billing queue item.
+              {t("Review the supporting shipment document attached to this billing queue item.")}
             </SheetDescription>
           </SheetHeader>
           <div className="h-[calc(100%-73px)]">

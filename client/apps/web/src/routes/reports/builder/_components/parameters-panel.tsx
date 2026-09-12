@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -47,12 +48,14 @@ function uniqueParamName(parameters: ReportParameterDef[]): string {
 }
 
 export function ParametersPanel({ parameters, onChange, emptyMessage }: ParametersPanelProps) {
+  const t = useT();
+
   return (
     <div className="flex flex-col gap-2">
       {parameters.length === 0 && (
         <p className="text-muted-foreground px-2 py-2 text-center text-sm">
           {emptyMessage ??
-            "Parameters prompt the runner for values — bind them to filters for reusable reports."}
+            t("Parameters prompt the runner for values — bind them to filters for reusable reports.")}
         </p>
       )}
       {parameters.map((param, paramIndex) => {
@@ -78,14 +81,14 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 size="icon"
                 className="size-6"
                 onClick={() => onChange(parameters.filter((_, i) => i !== paramIndex))}
-                aria-label="Remove parameter"
+                aria-label={t("Remove parameter")}
               >
                 <XIcon className="size-3.5" />
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
-                <Label className="text-muted-foreground text-xs">Label</Label>
+                <Label className="text-muted-foreground text-xs">{t("Label")}</Label>
                 <Input
                   className="h-7"
                   value={param.label ?? ""}
@@ -94,7 +97,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Label className="text-muted-foreground text-xs">Type</Label>
+                <Label className="text-muted-foreground text-xs">{t("Type")}</Label>
                 <Select
                   value={param.type}
                   onValueChange={(type) => {
@@ -115,7 +118,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                   <SelectContent>
                     {REPORT_PARAMETER_TYPE_CHOICES.map((choice) => (
                       <SelectItem key={choice.value} value={choice.value}>
-                        {choice.label}
+                        {t(choice.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -123,7 +126,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               </div>
               {param.type === "ref" ? (
                 <div className="flex flex-col gap-1">
-                  <Label className="text-muted-foreground text-xs">Entity</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Entity")}</Label>
                   <Select
                     value={param.refEntity ?? ""}
                     onValueChange={(refEntity) => {
@@ -132,12 +135,12 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                     items={REPORT_REF_ENTITY_CHOICES}
                   >
                     <SelectTrigger className="h-7">
-                      <SelectValue placeholder="Select entity" />
+                      <SelectValue placeholder={t("Select entity")} />
                     </SelectTrigger>
                     <SelectContent>
                       {REPORT_REF_ENTITY_CHOICES.map((choice) => (
                         <SelectItem key={choice.value} value={choice.value}>
-                          {choice.label}
+                          {t(choice.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -145,7 +148,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <Label className="text-muted-foreground text-xs">Default</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Default")}</Label>
                   <Input
                     className="h-7"
                     type={param.type === "int" || param.type === "decimal" ? "number" : "text"}
@@ -165,14 +168,14 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               )}
               <div className="flex flex-col gap-2 pt-1">
                 <div className="flex items-center justify-between gap-2">
-                  <Label className="text-muted-foreground text-xs">Required</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Required")}</Label>
                   <Switch
                     checked={param.required}
                     onCheckedChange={(required) => update({ ...param, required })}
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <Label className="text-muted-foreground text-xs">Multiple</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Multiple")}</Label>
                   <Switch
                     checked={param.multi ?? false}
                     onCheckedChange={(multi) => update({ ...param, multi, default: undefined })}
@@ -181,10 +184,10 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               </div>
               {param.type !== "bool" && param.type !== "epoch" && param.type !== "ref" && (
                 <div className="col-span-2 flex flex-col gap-1">
-                  <Label className="text-muted-foreground text-xs">Allowed Values</Label>
+                  <Label className="text-muted-foreground text-xs">{t("Allowed Values")}</Label>
                   <Input
                     className="h-7"
-                    placeholder="Any value — or comma-separated choices"
+                    placeholder={t("Any value — or comma-separated choices")}
                     value={(param.allowedValues ?? []).join(", ")}
                     onChange={(event) => {
                       const allowedValues = event.target.value
@@ -198,7 +201,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                     }}
                   />
                   <p className="text-2xs text-muted-foreground">
-                    When set, the runner picks from these instead of typing a value.
+                    {t("When set, the runner picks from these instead of typing a value.")}
                   </p>
                 </div>
               )}
@@ -218,7 +221,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
         }
       >
         <PlusIcon className="size-3.5" />
-        Parameter
+        {t("Parameter")}
       </Button>
     </div>
   );

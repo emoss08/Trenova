@@ -1,1 +1,1 @@
-{{ .CompanyName }} invited you to Dash
+{{ t "{0} invited you to Dash" .CompanyName }}

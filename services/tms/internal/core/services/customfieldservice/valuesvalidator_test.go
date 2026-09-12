@@ -344,7 +344,7 @@ func TestValidateText_MinLength(t *testing.T) {
 	validator.Validate(t.Context(), tenantInfo, "trailer", customFields, multiErr)
 
 	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Errors[0].Message, "at least 5 characters")
+	assert.Contains(t, multiErr.Errors[0].Error(), "at least 5 characters")
 }
 
 func TestValidateText_MaxLength(t *testing.T) {
@@ -377,7 +377,7 @@ func TestValidateText_MaxLength(t *testing.T) {
 	validator.Validate(t.Context(), tenantInfo, "trailer", customFields, multiErr)
 
 	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Errors[0].Message, "at most 5 characters")
+	assert.Contains(t, multiErr.Errors[0].Error(), "at most 5 characters")
 }
 
 func TestValidateText_Pattern(t *testing.T) {
@@ -534,7 +534,7 @@ func TestValidateNumber_BelowMin(t *testing.T) {
 	validator.Validate(t.Context(), tenantInfo, "trailer", customFields, multiErr)
 
 	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Errors[0].Message, "at least 10")
+	assert.Contains(t, multiErr.Errors[0].Error(), "at least 10")
 }
 
 func TestValidateNumber_AboveMax(t *testing.T) {
@@ -567,7 +567,7 @@ func TestValidateNumber_AboveMax(t *testing.T) {
 	validator.Validate(t.Context(), tenantInfo, "trailer", customFields, multiErr)
 
 	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Errors[0].Message, "at most 100")
+	assert.Contains(t, multiErr.Errors[0].Error(), "at most 100")
 }
 
 func TestValidateDate_Success_RFC3339(t *testing.T) {

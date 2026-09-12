@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,8 @@ export function TimePeriodSelect({
   onLeftFocus,
   onRightFocus,
 }: PeriodSelectorProps) {
+  const t = useT();
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "ArrowRight") onRightFocus?.();
     if (e.key === "ArrowLeft") onLeftFocus?.();
@@ -55,8 +58,8 @@ export function TimePeriodSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="AM">AM</SelectItem>
-          <SelectItem value="PM">PM</SelectItem>
+          <SelectItem value="AM">{t("AM")}</SelectItem>
+          <SelectItem value="PM">{t("PM")}</SelectItem>
         </SelectContent>
       </Select>
     </div>

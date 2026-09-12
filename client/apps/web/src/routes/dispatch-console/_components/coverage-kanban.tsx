@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { useDroppable } from "@dnd-kit/core";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -24,6 +25,8 @@ const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "warning">
 };
 
 function TenderChip({ move }: { move: DispatchBoardMove }) {
+  const t = useT();
+
   const summary = move.liveTender;
   if (!summary) return null;
 
@@ -38,7 +41,7 @@ function TenderChip({ move }: { move: DispatchBoardMove }) {
   return (
     <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-[9px]">
       <SendIcon className="mr-0.5 size-2.5" aria-hidden />
-      {meta.label}
+      {t(meta.label)}
       {countdown ? ` · ${countdown}` : ""}
     </Badge>
   );
@@ -53,6 +56,8 @@ function MoveCard({
   isSelected: boolean;
   onSelect: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const { setNodeRef, isOver, active } = useDroppable({
     id: `move:${move.moveId}`,
     data: { type: "move-target", move },
@@ -82,7 +87,7 @@ function MoveCard({
           <span className="truncate font-mono text-xs font-semibold">{move.proNumber}</span>
           {move.moveCount > 1 && (
             <Badge variant="outline" className="h-4 shrink-0 rounded px-1 text-[9px]">
-              Leg {move.sequence + 1}/{move.moveCount}
+              {t("Leg {0}/{1}", move.sequence + 1, move.moveCount)}
             </Badge>
           )}
         </div>
@@ -114,7 +119,7 @@ function MoveCard({
         <span className="text-muted-foreground text-[10px]">
           {move.originWindowStart > 0
             ? formatUnixDateTime(move.originWindowStart)
-            : "No appointment"}
+            : t("No appointment")}
         </span>
         {move.distance != null && (
           <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
@@ -129,19 +134,19 @@ function MoveCard({
         {move.hasHazmat && (
           <Badge variant="inactive" className="h-4 rounded px-1 text-[9px]">
             <FlameIcon className="mr-0.5 size-2.5" aria-hidden />
-            Hazmat
+            {t("Hazmat")}
           </Badge>
         )}
         {move.temperatureMin != null && (
           <Badge variant="info" className="h-4 rounded px-1 text-[9px]">
             <SnowflakeIcon className="mr-0.5 size-2.5" aria-hidden />
-            {move.temperatureMin}–{move.temperatureMax}°F
+            {t("{0}–{1}°F", move.temperatureMin, move.temperatureMax)}
           </Badge>
         )}
         {move.hasActiveHold && (
           <Badge variant="inactive" className="h-4 rounded px-1 text-[9px]">
             <TriangleAlertIcon className="mr-0.5 size-2.5" aria-hidden />
-            On hold
+            {t("On hold")}
           </Badge>
         )}
         <TenderChip move={move} />
@@ -180,13 +185,15 @@ function UrgencyColumn({
   selectedMoveId: string | null;
   onSelectMove: (moveId: string) => void;
 }) {
+  const t = useT();
+
   const meta = urgencyMeta(bucket);
 
   return (
     <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
-      <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={meta.description}>
+      <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={t(meta.description)}>
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
-        <span className="text-[10.5px] font-semibold tracking-wide uppercase">{meta.label}</span>
+        <span className="text-[10.5px] font-semibold tracking-wide uppercase">{t(meta.label)}</span>
         <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
           {moves.length}
         </span>
@@ -202,7 +209,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-[11px]">Nothing here.</p>
+            <p className="text-muted-foreground py-6 text-center text-[11px]">{t("Nothing here.")}</p>
           )}
         </div>
       </ScrollArea>

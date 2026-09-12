@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -40,6 +41,8 @@ export function invalidateWorkspace(queryClient: QueryClient) {
 }
 
 export default function Workspace() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<QueueFilter>("all");
@@ -94,11 +97,11 @@ export default function Workspace() {
     deepLinkHandled.current = true;
     if (!settlements.some((settlement) => settlement.id === target)) {
       toast.info(
-        "That settlement isn't in the current pay period — look it up in Settlement History.",
+        t("That settlement isn't in the current pay period — look it up in Settlement History."),
       );
     }
     setSearchParams({}, { replace: true });
-  }, [settlements, searchParams, setSearchParams]);
+  }, [settlements, searchParams, setSearchParams, t]);
 
   useEffect(() => {
     if (settlements == null) return;
@@ -168,19 +171,19 @@ export default function Workspace() {
               size="sm"
               variant="outline"
               onClick={refresh}
-              aria-label="Refresh workspace data"
+              aria-label={t("Refresh workspace data")}
             >
               <RefreshCcw className="size-3.5" />
-              Refresh
+              {t("Refresh")}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setShowInstantPay(true)}
-              title="Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass"
+              title={t("Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass")}
             >
               <Zap className="size-3.5" />
-              Pay Now
+              {t("Pay Now")}
             </Button>
             <Button
               size="sm"
@@ -193,7 +196,7 @@ export default function Workspace() {
               }
             >
               <Sparkles className="size-3.5" />
-              Generate Settlements
+              {t("Generate Settlements")}
             </Button>
           </div>
         }
@@ -223,8 +226,8 @@ export default function Workspace() {
             ) : (
               <BillingDetailUnselected
                 layout="tabs"
-                title="Nothing open"
-                description="Pick a settlement from the queue to review its earnings and deductions, approve it and post it here."
+                title={t("Nothing open")}
+                description={t("Pick a settlement from the queue to review its earnings and deductions, approve it and post it here.")}
               />
             )}
           </div>
@@ -241,7 +244,7 @@ export default function Workspace() {
         </div>
       ) : (
         <SettlementPeriodEmpty
-          title="No settlements this period yet"
+          title={t("No settlements this period yet")}
           description={periodEmptyDescription(
             summary.unsettledEventCount,
             summary.unsettledWorkerCount,

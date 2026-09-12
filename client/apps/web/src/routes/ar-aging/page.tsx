@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { AgingBucketTotals } from "@/components/accounting/aging-buckets";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
@@ -58,6 +59,8 @@ function buildCsvRows(
 }
 
 export function ARAgingPage() {
+  const t = useT();
+
   const filterForm = useForm<FilterValues>({
     defaultValues: { customerId: "", asOfDate: null },
   });
@@ -126,7 +129,7 @@ export function ARAgingPage() {
             disabled={filteredRows.length === 0}
           >
             <DownloadIcon className="size-4" />
-            Export CSV
+            {t("Export CSV")}
           </Button>
         ),
       }}
@@ -138,8 +141,8 @@ export function ARAgingPage() {
             <CustomerAutocompleteField
               control={filterForm.control}
               name="customerId"
-              label="Customer"
-              placeholder="All customers"
+              label={t("Customer")}
+              placeholder={t("All customers")}
               clearable
             />
           </div>
@@ -147,8 +150,8 @@ export function ARAgingPage() {
             <AutoCompleteDateField
               control={filterForm.control}
               name="asOfDate"
-              label="As of Date"
-              placeholder="Today"
+              label={t("As of Date")}
+              placeholder={t("Today")}
               clearable
             />
           </div>

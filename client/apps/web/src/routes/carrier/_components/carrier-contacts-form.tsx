@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -7,6 +8,8 @@ import type { Carrier } from "@trenova/shared/types/carrier";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 export function CarrierContactsForm() {
+  const t = useT();
+
   const { control } = useFormContext<Carrier>();
   const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
@@ -24,21 +27,20 @@ export function CarrierContactsForm() {
   return (
     <div className="space-y-6">
       <FormSection
-        title="Contacts"
-        description="People at this carrier your team communicates with for dispatch and billing."
+        title={t("Contacts")}
+        description={t("People at this carrier your team communicates with for dispatch and billing.")}
       >
         <div className="flex flex-col gap-3">
           {fields.length === 0 && (
             <p className="text-muted-foreground text-sm">
-              No contacts yet. Add dispatch, billing, and after-hours contacts so your team knows
-              who to reach.
+              {t("No contacts yet. Add dispatch, billing, and after-hours contacts so your team knows who to reach.")}
             </p>
           )}
 
           {fields.map((field, index) => (
             <div key={field.id} className="rounded-md border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs font-medium">Contact {index + 1}</p>
+                <p className="text-xs font-medium">{t("Contact {0}", index + 1)}</p>
                 <Button
                   type="button"
                   size="sm"
@@ -46,7 +48,7 @@ export function CarrierContactsForm() {
                   className="h-6 text-xs"
                   onClick={() => remove(index)}
                 >
-                  Remove
+                  {t("Remove")}
                 </Button>
               </div>
 
@@ -55,10 +57,10 @@ export function CarrierContactsForm() {
                   <InputField
                     control={control}
                     name={`contacts.${index}.name`}
-                    label="Name"
-                    placeholder="e.g., Jane Smith"
+                    label={t("Name")}
+                    placeholder={t("e.g., Jane Smith")}
                     rules={{ required: true }}
-                    description="Contact's full name."
+                    description={t("Contact's full name.")}
                     maxLength={255}
                   />
                 </FormControl>
@@ -66,9 +68,9 @@ export function CarrierContactsForm() {
                   <InputField
                     control={control}
                     name={`contacts.${index}.title`}
-                    label="Title"
-                    placeholder="e.g., Dispatch Manager"
-                    description="Contact's role at the carrier."
+                    label={t("Title")}
+                    placeholder={t("e.g., Dispatch Manager")}
+                    description={t("Contact's role at the carrier.")}
                     maxLength={100}
                   />
                 </FormControl>
@@ -76,9 +78,9 @@ export function CarrierContactsForm() {
                   <InputField
                     control={control}
                     name={`contacts.${index}.email`}
-                    label="Email"
-                    placeholder="e.g., jane@carrier.com"
-                    description="Required when this contact receives rate confirmations."
+                    label={t("Email")}
+                    placeholder={t("e.g., jane@carrier.com")}
+                    description={t("Required when this contact receives rate confirmations.")}
                     maxLength={255}
                   />
                 </FormControl>
@@ -86,25 +88,25 @@ export function CarrierContactsForm() {
                   <PhoneNumberField
                     control={control}
                     name={`contacts.${index}.phone`}
-                    label="Phone"
-                    placeholder="Phone"
-                    description="Direct phone number for this contact."
+                    label={t("Phone")}
+                    placeholder={t("Phone")}
+                    description={t("Direct phone number for this contact.")}
                   />
                 </FormControl>
                 <FormControl>
                   <SwitchField
                     control={control}
                     name={`contacts.${index}.isPrimary`}
-                    label="Primary Contact"
-                    description="Main point of contact for this carrier."
+                    label={t("Primary Contact")}
+                    description={t("Main point of contact for this carrier.")}
                   />
                 </FormControl>
                 <FormControl>
                   <SwitchField
                     control={control}
                     name={`contacts.${index}.receivesRateConfirmations`}
-                    label="Receives Rate Confirmations"
-                    description="Send rate confirmations to this contact's email."
+                    label={t("Receives Rate Confirmations")}
+                    description={t("Send rate confirmations to this contact's email.")}
                   />
                 </FormControl>
               </FormGroup>
@@ -113,7 +115,7 @@ export function CarrierContactsForm() {
 
           <div>
             <Button type="button" size="sm" variant="outline" onClick={appendContact}>
-              Add contact
+              {t("Add contact")}
             </Button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -47,6 +48,8 @@ import { useDashProfile } from "./dash-layout";
  * tap, not after.
  */
 export function PoliciesCard() {
+  const t = useT();
+
   const [open, setOpen] = useState<MyPolicy | null>(null);
 
   const policies = useQuery({
@@ -69,9 +72,9 @@ export function PoliciesCard() {
         <div className="flex items-start gap-2">
           <FileSignatureIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold">Policies</h2>
+            <h2 className="text-sm font-semibold">{t("Policies")}</h2>
             <p className="text-muted-foreground text-xs">
-              {outstanding === 0 ? "You are up to date." : `${outstanding} to read and sign.`}
+              {outstanding === 0 ? t("You are up to date.") : t("{0} to read and sign.", outstanding)}
             </p>
           </div>
         </div>
@@ -102,18 +105,17 @@ export function PoliciesCard() {
                   <PenLineIcon className="text-muted-foreground size-4 shrink-0" />
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{policy.title}</span>
+                  <span className="block truncate font-medium">{t(policy.title)}</span>
                   <span className="text-muted-foreground block truncate text-xs">
-                    v{policy.versionLabel}
-                    {policy.acknowledgedAt
+                    {t("v{0}{1}", policy.versionLabel, policy.acknowledgedAt
                       ? ` · ${formatShiftDate(policy.acknowledgedAt)}`
                       : policy.summary
                         ? ` · ${policy.summary}`
-                        : ""}
+                        : "")}
                   </span>
                 </span>
                 <Badge variant={tone.variant} className="shrink-0">
-                  {tone.label}
+                  {t(tone.label)}
                 </Badge>
                 <ChevronRightIcon className="text-muted-foreground size-4 shrink-0" />
               </button>
@@ -134,6 +136,8 @@ function PolicyDrawer({
   policy: MyPolicy | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const profile = useDashProfile();
   const [signature, setSignature] = useState("");
@@ -177,10 +181,9 @@ function PolicyDrawer({
         <DrawerHeader>
           <DrawerTitle>{policy?.title}</DrawerTitle>
           <DrawerDescription>
-            Version {policy?.versionLabel}
-            {policy?.effectiveFrom
-              ? ` · in force from ${formatShiftDate(policy.effectiveFrom)}`
-              : ""}
+            {t("Version {0}{1}", policy?.versionLabel, policy?.effectiveFrom
+              ? ` ${t("· in force from {0}", formatShiftDate(policy.effectiveFrom))}`
+              : "")}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -200,7 +203,7 @@ function PolicyDrawer({
             >
               <span className="flex items-center gap-2">
                 <FileTextIcon className="size-4" />
-                {openDocument.isPending ? "Opening…" : "Open the document"}
+                {openDocument.isPending ? t("Opening…") : t("Open the document")}
               </span>
               <ExternalLinkIcon className="text-muted-foreground size-4" />
             </Button>
@@ -210,8 +213,8 @@ function PolicyDrawer({
             <div className="border-success/40 bg-success/10 text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
               <CheckIcon className="size-4 shrink-0" />
               {policy?.signatureName
-                ? `Signed “${policy.signatureName}” on ${formatShiftDate(policy.acknowledgedAt ?? 0)}.`
-                : `Read on ${formatShiftDate(policy?.acknowledgedAt ?? 0)}.`}
+                ? t("Signed “{0}” on {1}.", policy.signatureName, formatShiftDate(policy.acknowledgedAt ?? 0))
+                : t("Read on {0}.", formatShiftDate(policy?.acknowledgedAt ?? 0))}
             </div>
           ) : (
             <div className="border-border flex flex-col gap-3 border-t pt-3">
@@ -222,14 +225,13 @@ function PolicyDrawer({
                   className="mt-0.5"
                 />
                 <span>
-                  I have read {policy?.title ?? "this policy"}
-                  {needsSignature ? " and agree to it." : "."}
+                  {t("I have read {0}{1}", policy?.title ?? t("this policy"), needsSignature ? ` ${t("and agree to it.")}` : ".")}
                 </span>
               </label>
               {needsSignature ? (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="policy-signature" className="text-muted-foreground text-xs">
-                    Type your full name to sign
+                    {t("Type your full name to sign")}
                   </Label>
                   <div className="relative">
                     <Input
@@ -250,12 +252,11 @@ function PolicyDrawer({
                   </div>
                   {signature && !nameOk ? (
                     <p className="text-destructive text-xs">
-                      Sign as {fullName} — the name on your record.
+                      {t("Sign as {0} — the name on your record.", fullName)}
                     </p>
                   ) : (
                     <p className="text-muted-foreground text-xs">
-                      Your name, the time, and the device you signed from are kept with the
-                      signature.
+                      {t("Your name, the time, and the device you signed from are kept with the signature.")}
                     </p>
                   )}
                 </div>
@@ -267,7 +268,7 @@ function PolicyDrawer({
         <DrawerFooter>
           {signed ? (
             <Button variant="outline" className="h-11" onClick={() => onOpenChange(false)}>
-              Close
+              {t("Close")}
             </Button>
           ) : (
             <Button
@@ -275,7 +276,7 @@ function PolicyDrawer({
               disabled={!agreed || !nameOk || sign.isPending}
               onClick={() => sign.mutate()}
             >
-              {sign.isPending ? "Sending…" : needsSignature ? "Sign" : "Mark as read"}
+              {sign.isPending ? t("Sending…") : needsSignature ? t("Sign") : t("Mark as read")}
             </Button>
           )}
         </DrawerFooter>

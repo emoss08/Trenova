@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -208,6 +209,8 @@ export function SamsaraWorkerSyncCard({
   embedded?: boolean;
   open?: boolean;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { canUpdate } = usePermissions(Resource.Integration);
 
@@ -326,8 +329,8 @@ export function SamsaraWorkerSyncCard({
           : null,
       );
       appendLog("success", "sync", `Workflow started: ${response.workflowId} (${response.runId})`);
-      toast.success("Samsara worker sync started", {
-        description: "Monitoring the workflow run now.",
+      toast.success(t("Samsara worker sync started"), {
+        description: t("Monitoring the workflow run now."),
       });
     },
     onError: (error) => {
@@ -350,8 +353,8 @@ export function SamsaraWorkerSyncCard({
             "sync",
             `Workflow already running, attached to ${parsedUsageStats.data.workflowId}`,
           );
-          toast.info("Sync already running", {
-            description: "Switched to monitoring the existing workflow run.",
+          toast.info(t("Sync already running"), {
+            description: t("Switched to monitoring the existing workflow run."),
           });
           return;
         }
@@ -359,15 +362,15 @@ export function SamsaraWorkerSyncCard({
 
       if (error instanceof ApiRequestError) {
         appendLog("error", "sync", error.data.detail || error.data.title || "Failed to start sync");
-        toast.error("Failed to start sync", {
+        toast.error(t("Failed to start sync"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
 
       appendLog("error", "sync", "Unable to submit the sync request right now.");
-      toast.error("Failed to start sync", {
-        description: "Unable to submit the sync request right now.",
+      toast.error(t("Failed to start sync"), {
+        description: t("Unable to submit the sync request right now."),
       });
     },
   });
@@ -380,7 +383,7 @@ export function SamsaraWorkerSyncCard({
         "drift",
         `Drift detection complete: ${response.totalDrifts} drift(s) found`,
       );
-      toast.success("Worker drift detection complete");
+      toast.success(t("Worker drift detection complete"));
       await queryClient.invalidateQueries({
         queryKey: queries.integration.samsaraWorkerSyncDrift().queryKey,
       });
@@ -392,13 +395,13 @@ export function SamsaraWorkerSyncCard({
           "drift",
           error.data.detail || error.data.title || "Failed to detect worker drift",
         );
-        toast.error("Failed to detect worker drift", {
+        toast.error(t("Failed to detect worker drift"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
       appendLog("error", "drift", "Failed to detect worker drift");
-      toast.error("Failed to detect worker drift");
+      toast.error(t("Failed to detect worker drift"));
     },
   });
 
@@ -410,7 +413,7 @@ export function SamsaraWorkerSyncCard({
         "drift",
         `Drift repair completed: repaired ${response.repairedWorkers}, failed ${response.failedWorkers}`,
       );
-      toast.success("Worker drift repair completed", {
+      toast.success(t("Worker drift repair completed"), {
         description: `Repaired ${response.repairedWorkers} worker(s).`,
       });
       await Promise.all([
@@ -433,13 +436,13 @@ export function SamsaraWorkerSyncCard({
           "drift",
           error.data.detail || error.data.title || "Failed to repair worker drift",
         );
-        toast.error("Failed to repair worker drift", {
+        toast.error(t("Failed to repair worker drift"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
       appendLog("error", "drift", "Failed to repair worker drift");
-      toast.error("Failed to repair worker drift");
+      toast.error(t("Failed to repair worker drift"));
     },
   });
 
@@ -457,13 +460,13 @@ export function SamsaraWorkerSyncCard({
           "retry",
           firstFailure?.message || "Worker retry request completed with issues",
         );
-        toast.error("Worker retry failed", {
+        toast.error(t("Worker retry failed"), {
           description: firstFailure?.message || "Unable to repair mapping for this worker.",
         });
       } else {
         appendLog("success", "retry", `Queued worker ${workerID} for resync`);
-        toast.success("Worker retry queued", {
-          description: "The worker mapping was repaired and will be picked up on next sync.",
+        toast.success(t("Worker retry queued"), {
+          description: t("The worker mapping was repaired and will be picked up on next sync."),
         });
       }
 
@@ -479,14 +482,14 @@ export function SamsaraWorkerSyncCard({
     onError: (error) => {
       if (error instanceof ApiRequestError) {
         appendLog("error", "retry", error.data.detail || error.data.title || "Worker retry failed");
-        toast.error("Worker retry failed", {
+        toast.error(t("Worker retry failed"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
 
       appendLog("error", "retry", "Worker retry failed");
-      toast.error("Worker retry failed");
+      toast.error(t("Worker retry failed"));
     },
     onSettled: () => {
       setRetryingWorkerID(null);
@@ -510,10 +513,10 @@ export function SamsaraWorkerSyncCard({
     setShowAllFailures(false);
     appendLog("error", "workflow", "Tracked workflow not found. Cleared active tracking.");
 
-    toast.error("Sync workflow not found", {
-      description: "Tracking was cleared. Start a new sync to continue.",
+    toast.error(t("Sync workflow not found"), {
+      description: t("Tracking was cleared. Start a new sync to continue."),
     });
-  }, [statusQuery.error, statusQuery.errorUpdatedAt, appendLog]);
+  }, [statusQuery.error, statusQuery.errorUpdatedAt, appendLog, t]);
 
   const statusResponse = statusQuery.data;
   const normalizedStatus = normalizeWorkflowStatus(statusResponse?.status);
@@ -578,12 +581,12 @@ export function SamsaraWorkerSyncCard({
             "sync",
             `Completed with issues: ${statusResponse.result?.failed ?? 0} worker record(s) failed`,
           );
-          toast.error("Samsara sync completed with issues", {
+          toast.error(t("Samsara sync completed with issues"), {
             description: `${statusResponse.result?.failed ?? 0} worker record(s) failed to sync.`,
           });
         } else {
           appendLog("success", "sync", "Completed successfully with no failures");
-          toast.success("Samsara sync completed successfully");
+          toast.success(t("Samsara sync completed successfully"));
         }
       } else {
         appendLog(
@@ -591,7 +594,7 @@ export function SamsaraWorkerSyncCard({
           "sync",
           `Workflow ended in ${getStatusLabel(statusResponse.status)}: ${statusResponse.error || "no details"}`,
         );
-        toast.error("Samsara sync did not complete", {
+        toast.error(t("Samsara sync did not complete"), {
           description: statusResponse.error || getStatusLabel(statusResponse.status),
         });
       }
@@ -640,7 +643,7 @@ export function SamsaraWorkerSyncCard({
     if (isWorkflowTerminal(terminalStatus)) {
       setSyncProgressBaseline(null);
     }
-  }, [queryClient, statusResponse, trackedWorkflowId, setLastSuccessfulSync, appendLog]);
+  }, [queryClient, statusResponse, trackedWorkflowId, setLastSuccessfulSync, appendLog, t]);
 
   useEffect(() => {
     if (!isTrackingWorkflow || !readiness || syncProgressBaseline) {
@@ -668,9 +671,9 @@ export function SamsaraWorkerSyncCard({
   const handleCopyFailure = async (message: string) => {
     try {
       await navigator.clipboard.writeText(message);
-      toast.success("Failure message copied");
+      toast.success(t("Failure message copied"));
     } catch {
-      toast.error("Failed to copy failure message");
+      toast.error(t("Failed to copy failure message"));
     }
   };
 
@@ -694,13 +697,13 @@ export function SamsaraWorkerSyncCard({
       {embedded && (
         <div className="border-border flex flex-col border-b p-4 leading-tight">
           <div className="flex flex-row items-center gap-2">
-            <p className="text-2xl font-semibold">Samsara Worker Sync</p>
+            <p className="text-2xl font-semibold">{t("Samsara Worker Sync")}</p>
             <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
               {currentStatusLabel}
             </Badge>
           </div>
           <span className="text-muted-foreground text-sm">
-            Sync Trenova worker records directly into Samsara.
+            {t("Sync Trenova worker records directly into Samsara.")}
           </span>
         </div>
       )}
@@ -708,9 +711,9 @@ export function SamsaraWorkerSyncCard({
         {!canUpdate && (
           <Alert variant="warning">
             <AlertTriangleIcon />
-            <AlertTitle>Read-only access</AlertTitle>
+            <AlertTitle>{t("Read-only access")}</AlertTitle>
             <AlertDescription>
-              Worker update permission is required to start a new sync.
+              {t("Worker update permission is required to start a new sync.")}
             </AlertDescription>
           </Alert>
         )}
@@ -718,7 +721,7 @@ export function SamsaraWorkerSyncCard({
           size="sm"
           onClick={handleStartSync}
           isLoading={startSyncMutation.isPending}
-          loadingText="Starting..."
+          loadingText={t("Starting...")}
           disabled={
             !canUpdate ||
             !isSamsaraConfigured ||
@@ -729,7 +732,7 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          Start Sync
+          {t("Start Sync")}
         </Button>
 
         {isTrackingWorkflow && (
@@ -739,7 +742,7 @@ export function SamsaraWorkerSyncCard({
             onClick={handleClearTrackedRun}
             disabled={startSyncMutation.isPending}
           >
-            Clear Tracked Run
+            {t("Clear Tracked Run")}
           </Button>
         )}
         <Button
@@ -747,7 +750,7 @@ export function SamsaraWorkerSyncCard({
           variant="outline"
           onClick={() => detectDriftMutation.mutate()}
           isLoading={detectDriftMutation.isPending}
-          loadingText="Detecting..."
+          loadingText={t("Detecting...")}
           disabled={
             !canUpdate ||
             !isSamsaraConfigured ||
@@ -755,14 +758,14 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          Detect Drift
+          {t("Detect Drift")}
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={() => repairDriftMutation.mutate()}
           isLoading={repairDriftMutation.isPending}
-          loadingText="Repairing..."
+          loadingText={t("Repairing...")}
           disabled={
             !canUpdate ||
             !isSamsaraConfigured ||
@@ -771,14 +774,14 @@ export function SamsaraWorkerSyncCard({
             retryWorkerMutation.isPending
           }
         >
-          Repair Drift
+          {t("Repair Drift")}
         </Button>
       </div>
       <ScrollArea className="flex max-h-[calc(100vh-14rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
         <div className="space-y-3 pr-3">
           <div className="border-border bg-muted/30 grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
-              <p>Workflow</p>
+              <p>{t("Workflow")}</p>
               <div className="mt-1">
                 <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
                   {currentStatusLabel}
@@ -786,19 +789,19 @@ export function SamsaraWorkerSyncCard({
               </div>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
-              <p>Workflow ID</p>
+              <p>{t("Workflow ID")}</p>
               <p className="text-foreground mt-1 truncate font-mono">
-                {trackedWorkflowId ?? "N/A"}
+                {trackedWorkflowId ?? t("N/A")}
               </p>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
-              <p>Run ID</p>
+              <p>{t("Run ID")}</p>
               <p className="text-foreground mt-1 truncate font-mono">
-                {statusResponse?.runId || trackedRunId || "N/A"}
+                {statusResponse?.runId || trackedRunId || t("N/A")}
               </p>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
-              <p>Last Updated</p>
+              <p>{t("Last Updated")}</p>
               <p className="text-foreground mt-1">
                 {generateDateTimeStringFromUnixTimestamp(
                   statusResponse?.closedAt || statusResponse?.startedAt,
@@ -809,21 +812,21 @@ export function SamsaraWorkerSyncCard({
           {readiness && (
             <div className="border-border bg-muted/30 grid gap-2 rounded-md border p-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">Synced Active</p>
+                <p className="text-muted-foreground">{t("Synced Active")}</p>
                 <p className="text-foreground font-semibold">
                   {readiness.syncedActiveWorkers} / {readiness.activeWorkers}
                 </p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">Unsynced Active</p>
+                <p className="text-muted-foreground">{t("Unsynced Active")}</p>
                 <p className="text-foreground font-semibold">{readiness.unsyncedActiveWorkers}</p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">Total Workers</p>
+                <p className="text-muted-foreground">{t("Total Workers")}</p>
                 <p className="text-foreground font-semibold">{readiness.totalWorkers}</p>
               </div>
               <div className="border-border bg-background rounded-md border p-3">
-                <p className="text-muted-foreground">Readiness Scan</p>
+                <p className="text-muted-foreground">{t("Readiness Scan")}</p>
                 <p className="text-foreground font-semibold">
                   {formatToUserTimezone(readiness.lastCalculatedAt)}
                 </p>
@@ -831,13 +834,13 @@ export function SamsaraWorkerSyncCard({
             </div>
           )}
           <LastSuccessfulSyncCard />
-          <Suspense fallback={<RunConsoleLoadingState description="Loading run console..." />}>
+          <Suspense fallback={<RunConsoleLoadingState description={t("Loading run console...")} />}>
             <RunConsole isWorkflowRunning={isWorkflowRunning} />
           </Suspense>
           {statusQuery.isLoading && isTrackingWorkflow && (
             <div className="text-muted-foreground inline-flex items-center gap-2 text-xs">
               <Spinner className="size-3.5" />
-              Loading workflow status...
+              {t("Loading workflow status...")}
             </div>
           )}
           {statusQuery.error &&
@@ -846,20 +849,20 @@ export function SamsaraWorkerSyncCard({
             ) && (
               <Alert variant="destructive">
                 <AlertTriangleIcon />
-                <AlertTitle>Status lookup failed</AlertTitle>
+                <AlertTitle>{t("Status lookup failed")}</AlertTitle>
                 <AlertDescription>{getStatusErrorMessage(statusQuery.error)}</AlertDescription>
               </Alert>
             )}
           {driftRows.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Detected Drift ({driftRows.length})</h3>
+              <h3 className="text-sm font-medium">{t("Detected Drift ({0})", driftRows.length)}</h3>
               <div className="border-border rounded-md border">
                 <Table containerClassName="max-h-72 rounded-md">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Worker</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Message</TableHead>
+                      <TableHead>{t("Worker")}</TableHead>
+                      <TableHead>{t("Type")}</TableHead>
+                      <TableHead>{t("Message")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -885,10 +888,10 @@ export function SamsaraWorkerSyncCard({
           {failures.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Sync Failures ({failures.length})</h3>
+                <h3 className="text-sm font-medium">{t("Sync Failures ({0})", failures.length)}</h3>
                 {hasHiddenFailures && (
                   <Button size="sm" variant="outline" onClick={() => setShowAllFailures(true)}>
-                    Show All
+                    {t("Show All")}
                   </Button>
                 )}
               </div>
@@ -897,10 +900,10 @@ export function SamsaraWorkerSyncCard({
                 <Table containerClassName="max-h-72 rounded-md">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Worker</TableHead>
-                      <TableHead>Operation</TableHead>
-                      <TableHead>Message</TableHead>
-                      <TableHead className="w-48 text-right">Actions</TableHead>
+                      <TableHead>{t("Worker")}</TableHead>
+                      <TableHead>{t("Operation")}</TableHead>
+                      <TableHead>{t("Message")}</TableHead>
+                      <TableHead className="w-48 text-right">{t("Actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -928,10 +931,10 @@ export function SamsaraWorkerSyncCard({
                                 retryWorkerMutation.isPending &&
                                 retryingWorkerID === failure.workerId
                               }
-                              loadingText="Retrying..."
+                              loadingText={t("Retrying...")}
                             >
                               <RefreshCcwIcon className="size-3.5" />
-                              Retry
+                              {t("Retry")}
                             </Button>
                             <Button
                               size="sm"
@@ -940,7 +943,7 @@ export function SamsaraWorkerSyncCard({
                               onClick={() => handleCopyFailure(failure.message)}
                             >
                               <CopyIcon className="size-3.5" />
-                              Copy
+                              {t("Copy")}
                             </Button>
                             <Button
                               size="sm"
@@ -949,7 +952,7 @@ export function SamsaraWorkerSyncCard({
                               onClick={() => handleOpenWorker(failure.workerId)}
                             >
                               <ExternalLinkIcon className="size-3.5" />
-                              Open
+                              {t("Open")}
                             </Button>
                           </div>
                         </TableCell>
@@ -972,8 +975,8 @@ export function SamsaraWorkerSyncCard({
   return (
     <div>
       <div className="border-border border-b">
-        <div>Samsara Worker Sync</div>
-        <div>Start and monitor worker synchronization from TMS to Samsara.</div>
+        <div>{t("Samsara Worker Sync")}</div>
+        <div>{t("Start and monitor worker synchronization from TMS to Samsara.")}</div>
       </div>
       <CardContent className="space-y-4">{content}</CardContent>
     </div>

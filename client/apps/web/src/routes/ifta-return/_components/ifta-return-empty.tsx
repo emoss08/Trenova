@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { quarterLabel, type IftaPeriodKey } from "@/lib/ifta-return";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
@@ -26,6 +27,8 @@ export function IftaReturnEmpty({
   onGenerate,
   isGenerating,
 }: IftaReturnEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       sketchClassName="max-w-2xl"
@@ -39,7 +42,7 @@ export function IftaReturnEmpty({
         canCreate ? (
           <Button variant="outline" size="sm" onClick={onGenerate} disabled={isGenerating}>
             <PlayIcon className="size-3.5" />
-            {isGenerating ? "Generating..." : "Generate the return"}
+            {isGenerating ? t("Generating...") : t("Generate the return")}
           </Button>
         ) : null
       }

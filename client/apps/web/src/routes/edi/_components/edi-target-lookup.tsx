@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import type { EDIMappingEntityType } from "@trenova/shared/types/edi";
 import type { FieldValues } from "react-hook-form";
@@ -17,12 +18,14 @@ type TargetLookupProps = {
 };
 
 export function TargetLookup({ entityType, label, value, onChange }: TargetLookupProps) {
+  const t = useT();
+
   return (
     <Autocomplete<Record<string, unknown>, FieldValues>
       link={mappingTargetEndpoints[entityType]}
       label={label}
       value={value}
-      placeholder="Select local record"
+      placeholder={t("Select local record")}
       clearable
       onChange={(nextValue) => {
         if (!nextValue) {

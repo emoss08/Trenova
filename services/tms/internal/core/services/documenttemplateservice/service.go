@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -21,6 +22,7 @@ type Params struct {
 
 	Logger         *zap.Logger
 	Repo           repositories.DocumentTemplateRepository
+	OrgRepo        repositories.OrganizationRepository
 	VersionRepo    repositories.DocumentTemplateVersionRepository
 	AssignmentRepo repositories.DocumentTemplateAssignmentRepository
 	GeneratedRepo  repositories.GeneratedDocumentRepository
@@ -37,6 +39,7 @@ type Params struct {
 type Service struct {
 	l              *zap.Logger
 	repo           repositories.DocumentTemplateRepository
+	orgRepo        repositories.OrganizationRepository
 	versionRepo    repositories.DocumentTemplateVersionRepository
 	assignmentRepo repositories.DocumentTemplateAssignmentRepository
 	generatedRepo  repositories.GeneratedDocumentRepository
@@ -65,6 +68,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:              p.Logger.Named("service.document-template"),
 		repo:           p.Repo,
+		orgRepo:        p.OrgRepo,
 		versionRepo:    p.VersionRepo,
 		assignmentRepo: p.AssignmentRepo,
 		generatedRepo:  p.GeneratedRepo,
@@ -93,9 +97,7 @@ func (s *Service) Resolve(
 ) (*services.ResolvedTemplate, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q is not registered", req.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
 	}
 
 	// A customer only participates when the kind says a per-customer override
@@ -115,13 +117,16 @@ func (s *Service) Resolve(
 		return nil, err
 	}
 
+	locale := s.localeFor(ctx, req)
+
 	if row == nil {
-		return s.builtIn(req.Kind)
+		return s.builtIn(req.Kind, locale)
 	}
 
 	content := contentFromVersion(row.Version)
 
 	return &services.ResolvedTemplate{
+		Locale:      locale,
 		Kind:        req.Kind,
 		Source:      row.Source,
 		Content:     content,
@@ -131,9 +136,53 @@ func (s *Service) Resolve(
 	}, nil
 }
 
+// localeFor falls back to the organization's language when the caller did not name
+// one.
+//
+// Most senders have no recipient locale to pass: a customer, a carrier contact and
+// a worker have no language preference of their own, only the organization they
+// belong to does. Resolving it here means every sender gets the organization's
+// language for free and only the few with an actual user recipient — a password
+// reset, a comment mention — have to say anything.
+//
+// A lookup failure is not worth failing a send over. English is the source
+// language, so falling through to it renders the same document that shipped before
+// any of this existed.
+func (s *Service) localeFor(
+	ctx context.Context,
+	req *services.ResolveTemplateRequest,
+) i18n.Locale {
+	if req.Locale.IsValid() {
+		return req.Locale
+	}
+
+	if s.orgRepo == nil {
+		return i18n.Default
+	}
+
+	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("could not read the organization language; rendering in the source language",
+			zap.String("kind", string(req.Kind)),
+			zap.Error(err))
+		return i18n.Default
+	}
+
+	if locale := i18n.Locale(org.Locale); locale.IsValid() {
+		return locale
+	}
+
+	return i18n.Default
+}
+
 // builtIn loads the embedded starter for a kind.
-func (s *Service) builtIn(kind documenttemplate.Kind) (*services.ResolvedTemplate, error) {
-	starter, err := starters.For(kind)
+func (s *Service) builtIn(
+	kind documenttemplate.Kind,
+	locale i18n.Locale,
+) (*services.ResolvedTemplate, error) {
+	starter, err := starters.ForLocale(kind, locale)
 	if err != nil {
 		// A missing starter is a packaging fault, not an organization's problem,
 		// but it must not render a blank page to a customer either.
@@ -151,6 +200,7 @@ func (s *Service) builtIn(kind documenttemplate.Kind) (*services.ResolvedTemplat
 	}
 
 	return &services.ResolvedTemplate{
+		Locale:      locale,
 		Kind:        kind,
 		Source:      documenttemplate.SourceBuiltIn,
 		Content:     content,
@@ -223,6 +273,10 @@ type compileOptions struct {
 	// their id is a safe key; a draft changes under the same id, so the editor
 	// passes nothing.
 	CacheKeyPrefix string
+	// Locale binds `t` at parse time, so it is part of the cache identity. A
+	// compiled template carries the language it was compiled in; reusing one
+	// across locales would answer a Spanish recipient in English.
+	Locale i18n.Locale
 }
 
 // compile parses every channel a kind declares and collects the union of paths.
@@ -247,6 +301,9 @@ func (s *Service) compile(
 		cacheKey := ""
 		if opts.CacheKeyPrefix != "" {
 			cacheKey = opts.CacheKeyPrefix + ":" + string(channel)
+			if opts.Locale != "" {
+				cacheKey += ":" + string(opts.Locale)
+			}
 		}
 
 		compiled, diags := s.engine.Parse(&templateengine.ParseRequest{
@@ -257,6 +314,7 @@ func (s *Service) compile(
 			AllowedPaths: allowed,
 			Strict:       opts.Strict,
 			CacheKey:     cacheKey,
+			Locale:       opts.Locale,
 		})
 
 		result.diags = append(result.diags, diags...)

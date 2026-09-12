@@ -286,8 +286,7 @@ func (r *versionRepository) Publish(
 
 		if incoming.Status != documenttemplate.VersionStatusDraft {
 			return errortypes.NewBusinessError(
-				"Only a draft can be published. This version is " +
-					incoming.Status.String() + ".",
+				"Only a draft can be published. This version is {0}.", incoming.Status.String(),
 			)
 		}
 

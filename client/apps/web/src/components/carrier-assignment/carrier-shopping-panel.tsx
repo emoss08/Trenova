@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -54,6 +55,8 @@ type CarrierShoppingPanelProps = {
  * would otherwise leave a quote behind competing with the shipment's real one.
  */
 export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPanelProps) {
+  const t = useT();
+
   const [strategy, setStrategy] = useState<ShopStrategy>("LeastCost");
   const [result, setResult] = useState<ShopResult | undefined>();
 
@@ -61,7 +64,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
     mutationFn: (chosen: ShopStrategy) =>
       apiService.rateQuoteService.shop(shipmentId, { strategy: chosen }),
     onSuccess: setResult,
-    onError: () => toast.error("Could not shop this lane"),
+    onError: () => toast.error(t("Could not shop this lane")),
   });
 
   const run = useCallback(
@@ -79,7 +82,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-xs">Rank by</span>
+          <span className="text-muted-foreground text-xs">{t("Rank by")}</span>
           <Select value={strategy} onValueChange={(value) => setStrategy(value as ShopStrategy)}>
             <SelectTrigger className="w-52">
               <SelectValue />
@@ -105,7 +108,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
           ) : (
             <SearchIcon className="mr-1 size-3.5" />
           )}
-          Shop carriers
+          {t("Shop carriers")}
         </Button>
       </div>
 
@@ -122,8 +125,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
         <Alert variant="destructive">
           <CircleAlertIcon className="size-4" />
           <AlertDescription>
-            No carrier on this lane has a contract that prices it. Write one, or enter the rate by
-            hand.
+            {t("No carrier on this lane has a contract that prices it. Write one, or enter the rate by hand.")}
           </AlertDescription>
         </Alert>
       )}
@@ -133,9 +135,9 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-muted/50 text-muted-foreground text-xs">
-                <th className="border-b px-3 py-2 text-left font-medium">Carrier</th>
-                <th className="border-b px-3 py-2 text-right font-medium">Cost</th>
-                <th className="border-b px-3 py-2 text-right font-medium">Margin</th>
+                <th className="border-b px-3 py-2 text-left font-medium">{t("Carrier")}</th>
+                <th className="border-b px-3 py-2 text-right font-medium">{t("Cost")}</th>
+                <th className="border-b px-3 py-2 text-right font-medium">{t("Margin")}</th>
                 <th className="border-b px-3 py-2 text-right font-medium">
                   {shopStrategyLabel(result.strategy)}
                 </th>
@@ -157,12 +159,12 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
                         </span>
                         {option.guideRank > 0 && (
                           <Badge variant="secondary" className="text-2xs h-4.5">
-                            Guide #{option.guideRank}
+                            {t("Guide #{0}", option.guideRank)}
                           </Badge>
                         )}
                         {option.offerTtlSeconds > 0 && (
                           <span className="text-muted-foreground text-2xs">
-                            {offerWindowLabel(option.offerTtlSeconds)} to accept
+                            {t("{0} to accept", offerWindowLabel(option.offerTtlSeconds))}
                           </span>
                         )}
                       </div>
@@ -187,7 +189,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
                         disabled={!priced}
                         onClick={() => onChoose(option)}
                       >
-                        Use
+                        {t("Use")}
                       </Button>
                     </td>
                   </tr>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -43,6 +44,8 @@ function currentRateDisplay(entry: FuelProgramCurrentRate) {
 }
 
 export default function ProgramSection() {
+  const t = useT();
+
   const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.currentRates());
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
@@ -62,12 +65,11 @@ export default function ProgramSection() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          Programs apply automatically to shipments of customers assigned to them — this week&apos;s
-          computed rate is shown on each card
+          {t("Programs apply automatically to shipments of customers assigned to them — this week's computed rate is shown on each card")}
         </p>
         <Button type="button" size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-3.5" />
-          New Program
+          {t("New Program")}
         </Button>
       </div>
 
@@ -79,7 +81,7 @@ export default function ProgramSection() {
         </div>
       ) : !entries || entries.length === 0 ? (
         <FuelProgramsEmpty
-          title="No programs yet"
+          title={t("No programs yet")}
           description={
             "Create a program with a peg price and increment, assign it to customers from their " +
             "billing profile, and the fuel surcharge lands on their shipments on its own."
@@ -115,6 +117,8 @@ function ProgramCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
+
   const rate = currentRateDisplay(entry);
   const inactive = entry.program.status !== "Active";
 
@@ -141,7 +145,7 @@ function ProgramCard({
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          {inactive && <Badge variant="outline">Inactive</Badge>}
+          {inactive && <Badge variant="outline">{t("Inactive")}</Badge>}
           <Button
             type="button"
             variant="ghost"
@@ -164,7 +168,7 @@ function ProgramCard({
             <span className="text-muted-foreground text-xs">{rate.unit}</span>
           </>
         ) : (
-          <span className="text-muted-foreground text-sm">No rate for this week yet</span>
+          <span className="text-muted-foreground text-sm">{t("No rate for this week yet")}</span>
         )}
       </div>
 
@@ -174,7 +178,7 @@ function ProgramCard({
         </Badge>
         {entry.price && (
           <Badge variant="outline" className="text-2xs tabular-nums">
-            DOE ${Number(entry.price.price).toFixed(3)}
+            {t("DOE ${0}", Number(entry.price.price).toFixed(3))}
           </Badge>
         )}
         {entry.usedFallback && (
@@ -183,7 +187,7 @@ function ProgramCard({
             className="text-2xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400"
           >
             <AlertTriangle className="size-3" />
-            Prior week price
+            {t("Prior week price")}
           </Badge>
         )}
       </div>
@@ -198,20 +202,22 @@ function DeleteProgramDialog({
   target: FuelProgramCurrentRate | null;
   onOpenChange: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const { mutate: remove, isPending } = useMutation({
     mutationFn: (id: string) => deleteFuelSurchargeProgram(id),
     onSuccess: () => {
-      toast.success("Fuel surcharge program deleted");
+      toast.success(t("Fuel surcharge program deleted"));
       void queryClient.invalidateQueries({
         queryKey: queries.fuelSurcharge.currentRates().queryKey,
       });
       onOpenChange();
     },
     onError: () => {
-      toast.error("Could not delete the program", {
-        description: "Programs assigned to customer billing profiles must be unassigned first",
+      toast.error(t("Could not delete the program"), {
+        description: t("Programs assigned to customer billing profiles must be unassigned first"),
       });
     },
   });
@@ -220,14 +226,13 @@ function DeleteProgramDialog({
     <AlertDialog open={!!target} onOpenChange={(open) => !open && onOpenChange()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {target?.program.name}?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Delete {0}?", target?.program.name)}</AlertDialogTitle>
           <AlertDialogDescription>
-            Customers assigned to this program will stop receiving fuel surcharges on new shipments.
-            Already-billed surcharges and their audit snapshots are preserved.
+            {t("Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
             onClick={(event) => {
@@ -236,7 +241,7 @@ function DeleteProgramDialog({
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? t("Deleting...") : t("Delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

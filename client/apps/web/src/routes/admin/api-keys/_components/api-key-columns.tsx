@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { PermissionScopeBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -32,7 +33,7 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
       header: "Description",
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 text-sm">
-          {row.original.description || "No description"}
+          {row.original.description || translate("No description")}
         </span>
       ),
       meta: {
@@ -85,7 +86,7 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
         row.original.lastUsedAt ? (
           <HoverCardTimestamp timestamp={row.original.lastUsedAt} />
         ) : (
-          <span className="text-muted-foreground">Never</span>
+          <span className="text-muted-foreground">{translate("Never")}</span>
         ),
       meta: {
         label: "Last Used",
@@ -104,7 +105,7 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
         row.original.expiresAt ? (
           <HoverCardTimestamp timestamp={row.original.expiresAt} />
         ) : (
-          <span className="text-muted-foreground">Does not expire</span>
+          <span className="text-muted-foreground">{translate("Does not expire")}</span>
         ),
       meta: {
         label: "Expires",

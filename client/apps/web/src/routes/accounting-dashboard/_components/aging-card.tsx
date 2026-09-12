@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AGING_BUCKETS, agingChartConfig } from "@/components/accounting/aging-buckets";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
@@ -20,12 +21,14 @@ import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 type AgingView = "snapshot" | "trend";
 
 export function AgingCard() {
+  const t = useT();
+
   const [view, setView] = useState<AgingView>("snapshot");
 
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">Aging</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("Aging")}</CardTitle>
         <div className="flex gap-1">
           {(["snapshot", "trend"] as const).map((option) => (
             <Button
@@ -49,6 +52,8 @@ export function AgingCard() {
 }
 
 function AgingSnapshot() {
+  const t = useT();
+
   const { data: kpis, isLoading } = useQuery(queries.ar.dashboardKpis());
 
   const buckets = kpis?.overview.buckets;
@@ -70,7 +75,7 @@ function AgingSnapshot() {
   if (chartData.length === 0) {
     return (
       <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-        Nothing outstanding — all caught up
+        {t("Nothing outstanding — all caught up")}
       </div>
     );
   }
@@ -101,7 +106,7 @@ function AgingSnapshot() {
           <span className="text-lg font-semibold tabular-nums">
             {formatCompactCurrency(totalOpen)}
           </span>
-          <span className="text-muted-foreground text-[11px]">total open</span>
+          <span className="text-muted-foreground text-[11px]">{t("total open")}</span>
         </div>
       </div>
       <div className="w-44 shrink-0 space-y-2">
@@ -111,7 +116,7 @@ function AgingSnapshot() {
           return (
             <div key={bucket.key} className="flex items-center gap-2 text-xs">
               <span className={`size-2 shrink-0 rounded-full ${bucket.dotClass}`} />
-              <span className="text-muted-foreground w-10">{bucket.label}</span>
+              <span className="text-muted-foreground w-10">{t(bucket.label)}</span>
               <span className="flex-1 text-right font-medium tabular-nums">
                 {formatCurrency(amount)}
               </span>
@@ -127,6 +132,8 @@ function AgingSnapshot() {
 }
 
 function AgingTrend() {
+  const t = useT();
+
   const [range, setRange] = useState<number>(13);
   const { data: trend, isLoading } = useQuery(queries.ar.agingTrend(range));
 
@@ -150,7 +157,7 @@ function AgingTrend() {
   if (chartData.length === 0) {
     return (
       <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-        No open receivables history yet
+        {t("No open receivables history yet")}
       </div>
     );
   }

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -17,7 +18,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{row.original.name}</span>
-          <DataTableDescription description={row.original.description} truncateLength={70} />
+          <DataTableDescription description={translate(row.original.description)} truncateLength={70} />
         </div>
       ),
       size: 260,
@@ -85,7 +86,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       header: "Reply-To",
       cell: ({ row }) => (
         <span className="text-muted-foreground truncate">
-          {row.original.replyToEmail || "Default sender"}
+          {row.original.replyToEmail || translate("Default sender")}
         </span>
       ),
       size: 240,

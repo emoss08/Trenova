@@ -70,8 +70,8 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenRowsAffectedZero(t *testing.T
 	require.True(t, errors.As(err, &valErr))
 	assert.Equal(t, "version", valErr.Field)
 	assert.Equal(t, errortypes.ErrVersionMismatch, valErr.Code)
-	assert.Contains(t, valErr.Message, customerIDs[0].String())
-	assert.Contains(t, valErr.Message, customerIDs[1].String())
+	assert.Contains(t, valErr.Error(), customerIDs[0].String())
+	assert.Contains(t, valErr.Error(), customerIDs[1].String())
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }

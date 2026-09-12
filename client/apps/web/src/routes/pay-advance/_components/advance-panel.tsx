@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -78,6 +79,8 @@ function IssueAdvancePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<IssuePayAdvanceFormValues>({
     resolver: zodResolver(issuePayAdvanceFormSchema) as Resolver<IssuePayAdvanceFormValues>,
     defaultValues: buildDefaults(),
@@ -88,8 +91,8 @@ function IssueAdvancePanel({
     <FormCreatePanel<IssuePayAdvanceFormValues, PayAdvanceRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Pay Advance"
-      description="Records a cash or money-code advance recovered from the driver's future settlements."
+      title={t("Pay Advance")}
+      description={t("Records a cash or money-code advance recovered from the driver's future settlements.")}
       queryKey="pay-advance-list"
       form={form}
       formComponent={
@@ -98,58 +101,58 @@ function IssueAdvancePanel({
             <WorkerAutocompleteField
               control={control}
               name="workerId"
-              label="Driver"
-              placeholder="Select driver"
+              label={t("Driver")}
+              placeholder={t("Select driver")}
               rules={{ required: true }}
-              description="The driver receiving the advance; recovery is deducted from their next settlement."
+              description={t("The driver receiving the advance; recovery is deducted from their next settlement.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="source"
-              label="Source"
+              label={t("Source")}
               options={payAdvanceSourceChoices}
               rules={{ required: true }}
-              description="How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load."
+              description={t("How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="reference"
-              label="Reference"
-              placeholder="Money code / check number"
-              description="The money-code or check number so the advance can be matched to the card statement."
+              label={t("Reference")}
+              placeholder={t("Money code / check number")}
+              description={t("The money-code or check number so the advance can be matched to the card statement.")}
             />
           </FormControl>
           <FormControl>
             <AutoCompleteDateField
               control={control}
               name="issuedDate"
-              label="Issued Date"
+              label={t("Issued Date")}
               rules={{ required: true }}
-              description="The date the driver actually received the funds."
+              description={t("The date the driver actually received the funds.")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="amount"
-              label="Amount"
+              label={t("Amount")}
               decimalScale={2}
               fixedDecimalScale
-              sideText="USD"
+              sideText={t("USD")}
               rules={{ required: true }}
-              description="The full amount advanced; it is recovered automatically from upcoming settlements."
+              description={t("The full amount advanced; it is recovered automatically from upcoming settlements.")}
             />
           </FormControl>
           <FormControl className="col-span-2">
             <TextareaField
               control={control}
               name="notes"
-              label="Notes"
-              description="Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair."
+              label={t("Notes")}
+              description={t("Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.")}
             />
           </FormControl>
         </FormGroup>
@@ -170,6 +173,8 @@ function IssueAdvancePanel({
 }
 
 function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => void }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [writeOffOpen, setWriteOffOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -177,7 +182,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
   const writeOffMutation = useMutation({
     mutationFn: () => writeOffPayAdvance({ advanceId: row.id, reason }),
     onSuccess: () => {
-      toast.success("Advance written off");
+      toast.success(t("Advance written off"));
       void queryClient.invalidateQueries({ queryKey: ["pay-advance-list"] });
       setWriteOffOpen(false);
       onClose();
@@ -197,19 +202,19 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Amount</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Amount")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.amountMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Recovered</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Recovered")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.recoveredMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">Outstanding</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Outstanding")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={row.outstandingMinor}
@@ -222,13 +227,13 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       {row.notes && <p className="text-muted-foreground text-xs">{row.notes}</p>}
       {row.writeOffReason && (
         <p className="text-xs text-red-600 dark:text-red-400">
-          Write-off reason: {row.writeOffReason}
+          {t("Write-off reason: {0}", row.writeOffReason)}
         </p>
       )}
       {canWriteOff && (
         <div>
           <Button size="sm" variant="outline" onClick={() => setWriteOffOpen(true)}>
-            Write Off Remaining Balance
+            {t("Write Off Remaining Balance")}
           </Button>
         </div>
       )}
@@ -236,27 +241,27 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       <Dialog open={writeOffOpen} onOpenChange={setWriteOffOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Write off advance</DialogTitle>
+            <DialogTitle>{t("Write off advance")}</DialogTitle>
             <DialogDescription>
-              The outstanding balance will no longer be recovered from future settlements.
+              {t("The outstanding balance will no longer be recovered from future settlements.")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason (required)"
+            placeholder={t("Reason (required)")}
             rows={3}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setWriteOffOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               variant="destructive"
               disabled={!reason.trim() || writeOffMutation.isPending}
               onClick={() => writeOffMutation.mutate()}
             >
-              Write Off
+              {t("Write Off")}
             </Button>
           </DialogFooter>
         </DialogContent>

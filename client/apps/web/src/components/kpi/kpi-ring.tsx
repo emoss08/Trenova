@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type React from "react";
 import { Delta, KpiCard, KpiHeader, KpiSub } from "./kpi-card";
 import type { DeltaTone } from "./tone";
@@ -35,6 +36,8 @@ export function KpiRing({
   span = 2,
   className,
 }: KpiRingProps) {
+  const t = useT();
+
   const pct = Math.min(100, Math.max(0, (ringValue / ringMax) * 100));
   const onTarget = target !== undefined ? ringValue >= target : true;
   const ringColor = onTarget ? "var(--success)" : "var(--warning)";
@@ -58,8 +61,7 @@ export function KpiRing({
           </div>
           {target !== undefined && (
             <span className="text-muted-foreground/80 font-mono text-[9.5px] tracking-wide uppercase">
-              Target {target}
-              {unit ?? ""}
+              {t("Target {0}{1}", target, unit ?? "")}
             </span>
           )}
         </div>

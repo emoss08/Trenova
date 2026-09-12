@@ -1,6 +1,10 @@
 package helpers
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/emoss08/trenova/shared/i18n"
+)
 
 const ProblemJSONContentType = "application/problem+json"
 
@@ -22,17 +26,50 @@ type ValidationError struct {
 	Message  string `json:"message"`
 	Code     string `json:"code,omitempty"`
 	Location string `json:"location,omitempty"`
+	Args     []any  `json:"-"`
+	Details  string `json:"-"`
+}
+
+type Message struct {
+	Text    string
+	Args    []any
+	Details string
+}
+
+func (m Message) Localize(locale i18n.Locale) string {
+	text := i18n.Translate(locale, m.Text, m.Args...)
+	if m.Details == "" {
+		return text
+	}
+	return fmt.Sprintf("%s: %s", text, m.Details)
+}
+
+func LocalizeErrors(locale i18n.Locale, errs []ValidationError) []ValidationError {
+	if len(errs) == 0 {
+		return errs
+	}
+
+	localized := make([]ValidationError, len(errs))
+	for i, e := range errs {
+		localized[i] = e
+		localized[i].Message = Message{Text: e.Message, Args: e.Args, Details: e.Details}.
+			Localize(locale)
+		localized[i].Args = nil
+	}
+
+	return localized
 }
 
 type ProblemBuilder struct {
 	baseURI     string
 	problemType ProblemType
-	detail      string
+	detail      Message
 	instance    string
 	traceID     string
 	errors      []ValidationError
 	usageStats  any
 	params      map[string]string
+	locale      i18n.Locale
 }
 
 func NewProblemBuilder(baseURI string) *ProblemBuilder {
@@ -47,7 +84,7 @@ func (b *ProblemBuilder) WithType(t ProblemType) *ProblemBuilder {
 	return b
 }
 
-func (b *ProblemBuilder) WithDetail(d string) *ProblemBuilder {
+func (b *ProblemBuilder) WithDetail(d Message) *ProblemBuilder {
 	b.detail = d
 	return b
 }
@@ -81,6 +118,15 @@ func (b *ProblemBuilder) WithParams(params map[string]string) *ProblemBuilder {
 	return b
 }
 
+func (b *ProblemBuilder) WithLocale(locale i18n.Locale) *ProblemBuilder {
+	b.locale = locale
+	return b
+}
+
+func (b *ProblemBuilder) translatedErrors() []ValidationError {
+	return LocalizeErrors(b.locale, b.errors)
+}
+
 func (b *ProblemBuilder) Build() *ProblemDetail {
 	info := b.problemType.Info()
 
@@ -91,12 +137,12 @@ func (b *ProblemBuilder) Build() *ProblemDetail {
 
 	return &ProblemDetail{
 		Type:       typeURI,
-		Title:      info.Title,
+		Title:      i18n.Translate(b.locale, info.Title),
 		Status:     info.StatusCode,
-		Detail:     b.detail,
+		Detail:     b.detail.Localize(b.locale),
 		Instance:   b.instance,
 		TraceID:    b.traceID,
-		Errors:     b.errors,
+		Errors:     b.translatedErrors(),
 		UsageStats: b.usageStats,
 		Params:     b.params,
 	}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FleetCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -124,6 +125,8 @@ function RecordSheet({
   history = EMPTY_HISTORY,
   onSaved,
 }: EmploymentEventSheetProps) {
+  const t = useT();
+
   const invalidate = useEmploymentInvalidation(workerId);
   const today = useMemo(() => getTodayDate(), []);
   const kinds = useMemo(
@@ -202,7 +205,7 @@ function RecordSheet({
       // The termination stands either way, so a portal failure is a follow-up
       // task for the recorder rather than a failed save.
       if (result.cascade.portalRevocationError) {
-        toast.warning("Revoke the driver portal sign-in by hand", {
+        toast.warning(t("Revoke the driver portal sign-in by hand"), {
           description: `The worker is terminated but Dash access is still open: ${result.cascade.portalRevocationError}`,
         });
       }
@@ -221,10 +224,9 @@ function RecordSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record employment event</DialogTitle>
+          <DialogTitle>{t("Record employment event")}</DialogTitle>
           <DialogDescription>
-            Events are the only way employment status moves. Each one is kept on the worker&apos;s
-            timeline with who recorded it.
+            {t("Events are the only way employment status moves. Each one is kept on the worker's timeline with who recorded it.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -240,10 +242,9 @@ function RecordSheet({
                 <FormControl cols="full">
                   <Alert variant="destructive" className="py-2">
                     <TriangleAlertIcon className="size-4" />
-                    <AlertTitle>This ends employment</AlertTitle>
+                    <AlertTitle>{t("This ends employment")}</AlertTitle>
                     <AlertDescription>
-                      The worker becomes inactive, their PTO and pay assignments close on the
-                      effective date, and any time off starting after it is cancelled.
+                      {t("The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.")}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -252,8 +253,8 @@ function RecordSheet({
                 <SelectField<EmploymentEventFormValues>
                   control={control}
                   name="kind"
-                  label="Event"
-                  placeholder="Select an event"
+                  label={t("Event")}
+                  placeholder={t("Select an event")}
                   options={kindOptions}
                   rules={{ required: true }}
                   description={meta.hint}
@@ -263,10 +264,10 @@ function RecordSheet({
                 <AutoCompleteDateField<EmploymentEventFormValues>
                   control={control}
                   name="effectiveAt"
-                  label="Effective"
+                  label={t("Effective")}
                   rules={{ required: true }}
-                  placeholder="Today"
-                  description="Moves the worker to the new state from this date; the change cannot be replayed by editing it later."
+                  placeholder={t("Today")}
+                  description={t("Moves the worker to the new state from this date; the change cannot be replayed by editing it later.")}
                 />
               </FormControl>
               {kind === "Transferred" ? (
@@ -274,9 +275,9 @@ function RecordSheet({
                   <FleetCodeAutocompleteField<EmploymentEventFormValues>
                     control={control}
                     name="fleetCodeId"
-                    label="Fleet code"
-                    placeholder="Destination fleet"
-                    description="The fleet the worker moves to."
+                    label={t("Fleet code")}
+                    placeholder={t("Destination fleet")}
+                    description={t("The fleet the worker moves to.")}
                   />
                 </FormControl>
               ) : null}
@@ -285,11 +286,11 @@ function RecordSheet({
                   <SelectField<EmploymentEventFormValues>
                     control={control}
                     name="leaveType"
-                    label="Leave type"
+                    label={t("Leave type")}
                     options={LEAVE_TYPE_OPTIONS}
                     rules={{ required: true }}
-                    placeholder="Select a leave type"
-                    description="Shown on the worker's status while the leave is open."
+                    placeholder={t("Select a leave type")}
+                    description={t("Shown on the worker's status while the leave is open.")}
                   />
                 </FormControl>
               ) : null}
@@ -299,10 +300,10 @@ function RecordSheet({
                     <SelectField<EmploymentEventFormValues>
                       control={control}
                       name="driverType"
-                      label="Driver type"
+                      label={t("Driver type")}
                       options={driverTypeChoices}
                       isClearable
-                      placeholder="Select a driver type"
+                      placeholder={t("Select a driver type")}
                       description={`Currently ${worker.driverType}.`}
                     />
                   </FormControl>
@@ -310,10 +311,10 @@ function RecordSheet({
                     <SelectField<EmploymentEventFormValues>
                       control={control}
                       name="workerType"
-                      label="Worker type"
+                      label={t("Worker type")}
                       options={workerTypeChoices}
                       isClearable
-                      placeholder="Select a worker type"
+                      placeholder={t("Select a worker type")}
                       description={`Currently ${worker.type}.`}
                     />
                   </FormControl>
@@ -325,19 +326,19 @@ function RecordSheet({
                     <InputField<EmploymentEventFormValues>
                       control={control}
                       name="rate"
-                      label="New rate"
-                      placeholder="e.g. 0.62"
+                      label={t("New rate")}
+                      placeholder={t("e.g. 0.62")}
                       rules={{ required: true }}
-                      description="The new pay figure; it is recorded on the event exactly as typed."
+                      description={t("The new pay figure; it is recorded on the event exactly as typed.")}
                     />
                   </FormControl>
                   <FormControl>
                     <InputField<EmploymentEventFormValues>
                       control={control}
                       name="rateUnit"
-                      label="Unit"
-                      placeholder="per mile, per hour, salary"
-                      description="What the rate is per, so the figure reads correctly later."
+                      label={t("Unit")}
+                      placeholder={t("per mile, per hour, salary")}
+                      description={t("What the rate is per, so the figure reads correctly later.")}
                     />
                   </FormControl>
                 </>
@@ -346,7 +347,7 @@ function RecordSheet({
                 <InputField<EmploymentEventFormValues>
                   control={control}
                   name="reason"
-                  label="Reason"
+                  label={t("Reason")}
                   placeholder={requiresReason ? "e.g. Repeated no-shows" : "Optional"}
                   rules={{ required: requiresReason }}
                   maxLength={255}
@@ -361,16 +362,16 @@ function RecordSheet({
                 <TextareaField<EmploymentEventFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Context for whoever reads this later"
+                  label={t("Notes")}
+                  placeholder={t("Context for whoever reads this later")}
                   maxLength={4000}
-                  description="Kept with the event on the timeline."
+                  description={t("Kept with the event on the timeline.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -378,7 +379,7 @@ function RecordSheet({
                 disabled={isPending}
                 className={cn(kind === "Terminated" && "min-w-40")}
               >
-                {isPending ? "Saving..." : `Record ${EMPLOYMENT_EVENT_LABELS[kind] ?? "event"}`}
+                {isPending ? t("Saving...") : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
               </Button>
             </DialogFooter>
           </Form>
@@ -395,6 +396,8 @@ function AmendSheet({
   event,
   onSaved,
 }: EmploymentEventSheetProps & { event: NonNullable<EmploymentEventSheetProps["event"]> }) {
+  const t = useT();
+
   const invalidate = useEmploymentInvalidation(workerId);
   const meta = employmentEventMeta(event.kind);
 
@@ -437,8 +440,8 @@ function AmendSheet({
         version: event.version,
       }),
     onSuccess: (saved) => {
-      toast.success("Event amended", {
-        description: "The correction is kept alongside the original record.",
+      toast.success(t("Event amended"), {
+        description: t("The correction is kept alongside the original record."),
       });
       void invalidate();
       onSaved?.(saved);
@@ -450,10 +453,9 @@ function AmendSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Amend {meta.label.toLowerCase()}</DialogTitle>
+          <DialogTitle>{t("Amend {0}", meta.label.toLowerCase())}</DialogTitle>
           <DialogDescription>
-            Correct the date, reason or notes. What the event already did to the worker stays as it
-            is — record a new event to change state again.
+            {t("Correct the date, reason or notes. What the event already did to the worker stays as it is — record a new event to change state again.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -469,50 +471,50 @@ function AmendSheet({
                 <AutoCompleteDateField<EmploymentEventAmendValues>
                   control={control}
                   name="effectiveAt"
-                  label="Effective"
+                  label={t("Effective")}
                   rules={{ required: true }}
-                  placeholder="Pick a date"
-                  description="Corrects the recorded date only; what the event already did is not replayed."
+                  placeholder={t("Pick a date")}
+                  description={t("Corrects the recorded date only; what the event already did is not replayed.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <InputField<EmploymentEventAmendValues>
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. Voluntary resignation"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Voluntary resignation")}
                   maxLength={255}
-                  description="The reason recorded on the event itself."
+                  description={t("The reason recorded on the event itself.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<EmploymentEventAmendValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="Context for whoever reads this later"
+                  label={t("Notes")}
+                  placeholder={t("Context for whoever reads this later")}
                   maxLength={4000}
-                  description="The notes kept with the event."
+                  description={t("The notes kept with the event.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <InputField<EmploymentEventAmendValues>
                   control={control}
                   name="amendmentNote"
-                  label="Why is this being amended?"
-                  placeholder="e.g. Wrong effective date was entered"
+                  label={t("Why is this being amended?")}
+                  placeholder={t("e.g. Wrong effective date was entered")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description="Kept alongside the original record as the reason for the correction."
+                  description={t("Kept alongside the original record as the reason for the correction.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter className="border-border border-t pt-3">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save amendment"}
+                {isPending ? t("Saving...") : t("Save amendment")}
               </Button>
             </DialogFooter>
           </Form>

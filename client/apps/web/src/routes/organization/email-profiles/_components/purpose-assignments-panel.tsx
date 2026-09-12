@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { EmailProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -47,6 +48,8 @@ function toPayload(values: PurposeAssignmentsFormValues): EmailProfileAssignment
 }
 
 export function PurposeAssignmentsPanel() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const assignmentsQuery = useQuery(queries.email.assignments());
   const form = useForm<PurposeAssignmentsFormValues>({
@@ -63,10 +66,10 @@ export function PurposeAssignmentsPanel() {
       apiService.emailService.updateAssignments(toPayload(values)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queries.email.assignments().queryKey });
-      toast.success("Purpose assignments updated");
+      toast.success(t("Purpose assignments updated"));
     },
     onError: (error) => {
-      toast.error("Failed to update purpose assignments", {
+      toast.error(t("Failed to update purpose assignments"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -75,10 +78,9 @@ export function PurposeAssignmentsPanel() {
   return (
     <section className="border-border bg-background rounded-md border">
       <div className="border-border flex flex-col gap-1 border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium">Purpose Assignments</div>
+        <div className="flex items-center gap-2 text-sm font-medium">{t("Purpose Assignments")}</div>
         <p className="text-muted-foreground text-xs">
-          Assign each email purpose to an active sender profile. Clearing a purpose removes its
-          assignment on save.
+          {t("Assign each email purpose to an active sender profile. Clearing a purpose removes its assignment on save.")}
         </p>
       </div>
       <div className="p-4">
@@ -91,15 +93,15 @@ export function PurposeAssignmentsPanel() {
                     control={form.control}
                     name={purpose}
                     label={purpose}
-                    placeholder="Unassigned"
+                    placeholder={t("Unassigned")}
                     clearable
-                    noResultsMessage="No active email profiles found."
+                    noResultsMessage={t("No active email profiles found.")}
                     initialLimit={20}
                   />
                 </FormControl>
               ))}
             </FormGroup>
-            <FormSaveDock saveButtonContent="Save Assignments" showHeightGap={false} />
+            <FormSaveDock saveButtonContent={t("Save Assignments")} showHeightGap={false} />
           </Form>
         </FormProvider>
       </div>

@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,11 +18,30 @@ func NewSanitizer(debug bool) *Sanitizer {
 	return &Sanitizer{debug: debug}
 }
 
-func (s *Sanitizer) SanitizeMessage(err error, problemType ProblemType) string {
+func (s *Sanitizer) SanitizeMessage(err error, problemType ProblemType) Message {
 	if problemType.IsInternal() && !s.debug {
-		return genericServerError
+		return Message{Text: genericServerError}
 	}
-	return err.Error()
+	return MessageOf(err)
+}
+
+func MessageOf(err error) Message {
+	var businessErr *errortypes.BusinessError
+	if errors.As(err, &businessErr) {
+		return Message{
+			Text:    businessErr.Message,
+			Args:    businessErr.Args,
+			Details: businessErr.Details,
+		}
+	}
+
+	var localizable errortypes.Localizable
+	if errors.As(err, &localizable) {
+		text, args := localizable.LocalizedMessage()
+		return Message{Text: text, Args: args}
+	}
+
+	return Message{Text: err.Error()}
 }
 
 func (s *Sanitizer) ExtractErrors(err error) []ValidationError {
@@ -70,6 +88,7 @@ func (s *Sanitizer) extractMultiError(err error) ([]ValidationError, bool) {
 		result = append(result, ValidationError{
 			Field:    e.Field,
 			Message:  e.Message,
+			Args:     e.Args,
 			Code:     string(e.Code),
 			Location: "body",
 		})
@@ -86,6 +105,7 @@ func (s *Sanitizer) extractValidationError(err error) ([]ValidationError, bool) 
 	return []ValidationError{{
 		Field:    validErr.Field,
 		Message:  validErr.Message,
+		Args:     validErr.Args,
 		Code:     string(validErr.Code),
 		Location: "body",
 	}}, true
@@ -115,14 +135,11 @@ func (s *Sanitizer) extractBusinessError(err error) ([]ValidationError, bool) {
 		return nil, false
 	}
 
-	message := businessErr.Message
-	if businessErr.Details != "" {
-		message = fmt.Sprintf("%s: %s", businessErr.Message, businessErr.Details)
-	}
-
 	return []ValidationError{{
 		Field:    "business",
-		Message:  message,
+		Message:  businessErr.Message,
+		Args:     businessErr.Args,
+		Details:  businessErr.Details,
 		Code:     string(businessErr.Code),
 		Location: "business",
 	}}, true
@@ -137,6 +154,7 @@ func (s *Sanitizer) extractRateLimitError(err error) ([]ValidationError, bool) {
 	return []ValidationError{{
 		Field:    rateLimitErr.Field,
 		Message:  rateLimitErr.Message,
+		Args:     rateLimitErr.Args,
 		Code:     string(rateLimitErr.Code),
 		Location: "rate-limit",
 	}}, true

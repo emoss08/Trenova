@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { EDIPartnerReadinessBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -32,6 +33,8 @@ const READINESS_HINTS: Record<string, string> = {
 };
 
 export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) {
+  const t = useT();
+
   const partnerId = partner.id ?? "";
   const { data, isPending, isError } = useQuery({
     queryKey: ["edi-partner-readiness-detail", partnerId],
@@ -40,12 +43,12 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
   });
 
   if (isPending) {
-    return <ComponentLoader message="Checking partner readiness" />;
+    return <ComponentLoader message={t("Checking partner readiness")} />;
   }
   if (isError || !data) {
     return (
       <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-        The readiness checklist could not be loaded.
+        {t("The readiness checklist could not be loaded.")}
       </div>
     );
   }
@@ -63,8 +66,8 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           />
           <p className="text-muted-foreground text-sm">
             {data.ready
-              ? "This partner has completed every onboarding step."
-              : `${data.totalCount - data.completedCount} onboarding step(s) remaining before this partner is production-ready.`}
+              ? t("This partner has completed every onboarding step.")
+              : t("{0} onboarding step(s) remaining before this partner is production-ready.", data.totalCount - data.completedCount)}
           </p>
         </div>
       </div>
@@ -72,11 +75,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         <div className="flex items-start gap-2 rounded-md border border-yellow-600/30 bg-yellow-600/10 p-3 text-sm text-yellow-800 dark:text-yellow-300">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <p>
-            This partner is enabled for {partner.enabledForInbound ? "inbound" : ""}
-            {partner.enabledForInbound && partner.enabledForOutbound ? " and " : ""}
-            {partner.enabledForOutbound ? "outbound" : ""} exchange while the checklist is
-            incomplete. Documents may fail to generate, deliver, or map until the remaining steps
-            are finished.
+            {t("This partner is enabled for {0}{1}{2} exchange while the checklist is incomplete. Documents may fail to generate, deliver, or map until the remaining steps are finished.", partner.enabledForInbound ? "inbound" : "", partner.enabledForInbound && partner.enabledForOutbound ? " and " : "", partner.enabledForOutbound ? "outbound" : "")}
           </p>
         </div>
       )}
@@ -92,7 +91,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
                 <CircleIcon className="text-muted-foreground size-4 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm">{item.label}</p>
+                <p className="text-sm">{t(item.label)}</p>
                 {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
               </div>
               {link && (
@@ -102,7 +101,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
                   className="shrink-0"
                   render={<Link to={link.to} />}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Button>
               )}
             </div>

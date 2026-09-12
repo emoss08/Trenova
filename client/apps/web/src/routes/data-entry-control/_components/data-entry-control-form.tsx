@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import {
@@ -19,6 +20,8 @@ import { useCallback } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 
 export default function DataEntryControlForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.dataEntryControl.get(),
   });
@@ -52,7 +55,7 @@ export default function DataEntryControlForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <CaseFormattingForm />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -60,15 +63,16 @@ export default function DataEntryControlForm() {
 }
 
 function CaseFormattingForm() {
+  const t = useT();
+
   const { control } = useFormContext<DataEntryControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Case Formatting Rules</CardTitle>
+        <CardTitle>{t("Case Formatting Rules")}</CardTitle>
         <CardDescription>
-          Control how text is automatically formatted when entering data. These rules apply
-          system-wide to standardize codes, names, emails, and city fields.
+          {t("Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -77,8 +81,8 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="codeCase"
-              label="Code Case"
-              description="Formatting applied to code fields (e.g., equipment codes, fleet codes)."
+              label={t("Code Case")}
+              description={t("Formatting applied to code fields (e.g., equipment codes, fleet codes).")}
               options={caseFormatChoices}
             />
           </FormControl>
@@ -86,8 +90,8 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="nameCase"
-              label="Name Case"
-              description="Formatting applied to name fields (e.g., commodity names, hazmat names)."
+              label={t("Name Case")}
+              description={t("Formatting applied to name fields (e.g., commodity names, hazmat names).")}
               options={caseFormatChoices}
             />
           </FormControl>
@@ -95,8 +99,8 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="emailCase"
-              label="Email Case"
-              description="Formatting applied to email address fields."
+              label={t("Email Case")}
+              description={t("Formatting applied to email address fields.")}
               options={caseFormatChoices}
             />
           </FormControl>
@@ -104,8 +108,8 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="cityCase"
-              label="City Case"
-              description="Formatting applied to city name fields."
+              label={t("City Case")}
+              description={t("Formatting applied to city name fields.")}
               options={caseFormatChoices}
             />
           </FormControl>

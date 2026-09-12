@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ActivityFeed } from "@/components/navigation/activity-section";
 import { AttentionCountBadge, ModulePageList } from "@/components/navigation/sidebar-chrome";
 import type { ModuleAttention, SidebarModuleView } from "@/components/navigation/sidebar-model";
@@ -40,6 +41,8 @@ function ModulePanel({
 }
 
 function AttentionRows() {
+  const t = useT();
+
   const { pathname } = useLocation();
   const { rows, isLoading } = useAttentionRows();
 
@@ -58,10 +61,10 @@ function AttentionRows() {
 
   return (
     <div className="flex flex-col gap-0.5 px-2">
-      <WorkspaceGroupLabel>Needs attention</WorkspaceGroupLabel>
+      <WorkspaceGroupLabel>{t("Needs attention")}</WorkspaceGroupLabel>
       {rows.map(({ row, count }) => (
         <WorkspaceNavRow key={row.key} to={row.path} active={isRouteActive(pathname, row.path)} sub>
-          <WorkspaceRowLabel>{row.label}</WorkspaceRowLabel>
+          <WorkspaceRowLabel>{t(row.label)}</WorkspaceRowLabel>
           <AttentionCountBadge attention={count > 0 ? { count, tone: row.tone } : undefined} />
         </WorkspaceNavRow>
       ))}
@@ -70,6 +73,8 @@ function AttentionRows() {
 }
 
 function PinnedRows() {
+  const t = useT();
+
   const { pathname } = useLocation();
   const { data: favorites } = useQuery(queries.pageFavorite.all());
 
@@ -79,7 +84,7 @@ function PinnedRows() {
 
   return (
     <div className="flex flex-col gap-0.5 px-2">
-      <WorkspaceGroupLabel>Pinned</WorkspaceGroupLabel>
+      <WorkspaceGroupLabel>{t("Pinned")}</WorkspaceGroupLabel>
       {favorites.map((favorite) => (
         <WorkspaceNavRow
           key={favorite.id}
@@ -96,13 +101,15 @@ function PinnedRows() {
 }
 
 function HomePanel({ hiddenSections }: { hiddenSections: ReadonlySet<string> }) {
+  const t = useT();
+
   const { pathname } = useLocation();
 
   return (
     <>
       <div className="px-2 pt-2">
         <WorkspaceNavRow to="/" active={pathname === "/"}>
-          <WorkspaceRowLabel>Home</WorkspaceRowLabel>
+          <WorkspaceRowLabel>{t("Home")}</WorkspaceRowLabel>
         </WorkspaceNavRow>
       </div>
       {!hiddenSections.has(SIDEBAR_SECTION_KEYS.attention) && <AttentionRows />}
@@ -113,7 +120,7 @@ function HomePanel({ hiddenSections }: { hiddenSections: ReadonlySet<string> }) 
           maxHeightClassName="max-h-64"
           heading={
             <div className="px-2">
-              <WorkspaceGroupLabel>Recent activity</WorkspaceGroupLabel>
+              <WorkspaceGroupLabel>{t("Recent activity")}</WorkspaceGroupLabel>
             </div>
           }
         />
@@ -128,6 +135,8 @@ function HomePanel({ hiddenSections }: { hiddenSections: ReadonlySet<string> }) 
  * room and no focus; the toggle lives in the context bar.
  */
 export function WorkspaceSidebar() {
+  const t = useT();
+
   const hidden = useNavigationStore((state) => state.sidebarCollapsed);
   const { home, views, activeModule, activePath, pageAttention, hiddenSections } =
     useSidebarNavigation();
@@ -137,7 +146,7 @@ export function WorkspaceSidebar() {
 
   return (
     <aside
-      aria-label="Sidebar"
+      aria-label={t("Sidebar")}
       inert={hidden || undefined}
       className={cn(
         "bg-sidebar border-border flex h-full shrink-0 flex-col border-r transition-[width] duration-200",

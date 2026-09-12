@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchWorkerCredentialSummary,
@@ -33,6 +34,8 @@ type FormState = {
 };
 
 export default function WorkerCredentialsTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const { allowed: canCreate } = usePermission(Resource.WorkerCredential, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.WorkerCredential, Operation.Update);
   const { allowed: canVerify } = usePermission(Resource.WorkerCredential, Operation.Approve);
@@ -55,13 +58,13 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
     mutationFn: (credential: WorkerCredentialRow) =>
       verifyWorkerCredential(credential.id, credential.version),
     onSuccess: (saved) => {
-      toast.success("Credential verified", {
+      toast.success(t("Credential verified"), {
         description: `${saved.credentialType?.name ?? "The credential"} is marked as checked against its document.`,
       });
       void invalidate();
     },
     onError: (error: Error) => {
-      toast.error("Could not verify credential", { description: error.message });
+      toast.error(t("Could not verify credential"), { description: error.message });
     },
   });
 
@@ -106,7 +109,7 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
   if (!summary) {
     return (
       <p className="text-muted-foreground text-sm">
-        Credentials could not be loaded. Try again in a moment.
+        {t("Credentials could not be loaded. Try again in a moment.")}
       </p>
     );
   }
@@ -120,8 +123,8 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
       />
 
       <CredentialSection
-        title="Required"
-        hint="Every credential this worker must hold to be dispatched."
+        title={t("Required")}
+        hint={t("Every credential this worker must hold to be dispatched.")}
         items={required}
         permissions={permissions}
         verifyingId={verify.isPending ? verify.variables?.id : undefined}
@@ -132,13 +135,13 @@ export default function WorkerCredentialsTab({ workerId }: { workerId: string })
           item.credential && verify.mutate(item.credential as WorkerCredentialRow)
         }
         onArchive={(item) => setArchiving((item.credential as WorkerCredentialRow) ?? null)}
-        empty="No credential types are marked required for this driver type."
+        empty={t("No credential types are marked required for this driver type.")}
       />
 
       {optional.length > 0 ? (
         <CredentialSection
-          title="Other credentials"
-          hint="Optional endorsements and certificates on file."
+          title={t("Other credentials")}
+          hint={t("Optional endorsements and certificates on file.")}
           items={optional}
           permissions={permissions}
           verifyingId={verify.isPending ? verify.variables?.id : undefined}
@@ -205,6 +208,8 @@ function CredentialSection({
   onVerify,
   onArchive,
 }: CredentialSectionProps) {
+  const t = useT();
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
@@ -213,7 +218,7 @@ function CredentialSection({
       </div>
       {items.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          {empty ?? "Nothing on file."}
+          {empty ?? t("Nothing on file.")}
         </p>
       ) : (
         <div className="divide-border divide-y rounded-lg border">

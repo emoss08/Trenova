@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTime, generateDateTimeString } from "@trenova/shared/lib/date";
 import { CalendarIcon } from "lucide-react";
@@ -27,6 +28,8 @@ export function DateTimePicker({
   readOnly,
   ...props
 }: DateTimePickerProps) {
+  const t = useT();
+
   return (
     <DateSuggestionInput
       {...props}
@@ -48,7 +51,7 @@ export function DateTimePicker({
             disabled={disabled || readOnly}
             className="text-muted-foreground absolute top-1/2 right-2 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
-            <span className="sr-only">Open date time picker</span>
+            <span className="sr-only">{t("Open date time picker")}</span>
             <CalendarIcon className="size-4" />
           </Button>
         </DateTimePickerPopover>

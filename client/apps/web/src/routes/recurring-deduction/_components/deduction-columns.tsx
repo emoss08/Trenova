@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { recurringDeductionStatusChoices } from "@/lib/choices";
@@ -89,7 +90,7 @@ export function getColumns(): ColumnDef<RecurringDeductionRow>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <span className="text-xs">{row.original.description}</span>,
+      cell: ({ row }) => <span className="text-xs">{translate(row.original.description)}</span>,
       size: 220,
       meta: { apiField: "description" },
     },
@@ -98,7 +99,7 @@ export function getColumns(): ColumnDef<RecurringDeductionRow>[] {
       header: "Frequency",
       cell: ({ row }) => (
         <span className="text-xs">
-          {row.original.frequency === "EverySettlement" ? "Every settlement" : "Monthly"}
+          {row.original.frequency === "EverySettlement" ? translate("Every settlement") : translate("Monthly")}
         </span>
       ),
       size: 110,
@@ -106,7 +107,7 @@ export function getColumns(): ColumnDef<RecurringDeductionRow>[] {
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">Amount</div>,
+      header: () => <div className="text-right">{translate("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} currency={row.original.currencyCode} />
@@ -117,7 +118,7 @@ export function getColumns(): ColumnDef<RecurringDeductionRow>[] {
     },
     {
       id: "progress",
-      header: () => <div className="text-right">Deducted / Cap</div>,
+      header: () => <div className="text-right">{translate("Deducted / Cap")}</div>,
       cell: ({ row }) => {
         const cap = row.original.totalCapMinor;
         return (

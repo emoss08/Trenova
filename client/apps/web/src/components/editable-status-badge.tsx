@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
@@ -64,6 +65,8 @@ export function EditableStatusBadge<T extends string>({
   disabledReason,
   className,
 }: EditableStatusBadgeProps<T>) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -79,13 +82,13 @@ export function EditableStatusBadge<T extends string>({
 
       await onStatusChange(newStatus)
         .catch(() => {
-          toast.error("Failed to update status");
+          toast.error(t("Failed to update status"));
         })
         .finally(() => {
           setIsLoading(false);
         });
     },
-    [status, onStatusChange],
+    [status, onStatusChange, t],
   );
 
   const normalizedStatus = status.toLowerCase();
@@ -129,9 +132,9 @@ export function EditableStatusBadge<T extends string>({
                   value={option.value}
                   onSelect={(currentValue) => handleStatusChange(currentValue as T)}
                   className="text-xs"
-                  label={option.label}
+                  label={t(option.label)}
                   color={option.color}
-                  description={option.description}
+                  description={t(option.description)}
                   icon={option.icon}
                   disabled={option.disabled}
                 />

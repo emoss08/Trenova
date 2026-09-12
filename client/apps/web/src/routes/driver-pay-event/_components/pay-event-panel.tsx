@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { DriverPayEventStatusBadge } from "@trenova/shared/components/status-badge";
@@ -11,6 +12,8 @@ export function PayEventPanel({
   mode,
   row,
 }: DataTablePanelProps<DriverPayEventRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) return null;
 
   return (
@@ -32,15 +35,15 @@ export function PayEventPanel({
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left">
               <tr>
-                <th className="px-3 py-2 font-medium">Component</th>
-                <th className="px-3 py-2 text-right font-medium">Qty × Rate</th>
-                <th className="px-3 py-2 text-right font-medium">Amount</th>
+                <th className="px-3 py-2 font-medium">{t("Component")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Qty × Rate")}</th>
+                <th className="px-3 py-2 text-right font-medium">{t("Amount")}</th>
               </tr>
             </thead>
             <tbody>
               {(row.components ?? []).map((component, index) => (
                 <tr key={`${component.kind}-${index}`} className="border-t">
-                  <td className="px-3 py-2 font-medium">{component.description}</td>
+                  <td className="px-3 py-2 font-medium">{t(component.description)}</td>
                   <td className="text-muted-foreground px-3 py-2 text-right tabular-nums">
                     {Number(component.quantity) > 0
                       ? `${Number(component.quantity).toLocaleString()} × ${Number(
@@ -55,7 +58,7 @@ export function PayEventPanel({
               ))}
               <tr className="bg-muted/30 border-t">
                 <td className="px-3 py-2 font-semibold" colSpan={2}>
-                  Total
+                  {t("Total")}
                 </td>
                 <td className="px-3 py-2 text-right font-semibold">
                   <AmountDisplay
@@ -69,8 +72,7 @@ export function PayEventPanel({
           </table>
         </div>
         <p className="text-muted-foreground text-[11px]">
-          Pay events accrue automatically when a shipment reaches your configured pay trigger and
-          are locked once settled.
+          {t("Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.")}
         </p>
       </div>
     </DataTablePanelContainer>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { IftaPeriodKey } from "@/lib/ifta-return";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -20,6 +21,8 @@ type IftaReturnWorkspaceProps = {
 };
 
 export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorkspaceProps) {
+  const t = useT();
+
   const perms = useIftaReturnPermissions();
   const returnQuery = useQuery(iftaReturnForPeriodQuery(period));
   const periodQuery = useQuery(iftaPeriodQuery(period));
@@ -42,13 +45,12 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
       ) : returnQuery.isError ? (
         <Alert variant="destructive">
           <TriangleAlertIcon className="size-4" />
-          <AlertTitle>The return could not be read</AlertTitle>
+          <AlertTitle>{t("The return could not be read")}</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-2">
             <span>
-              {returnQuery.error instanceof Error
+              {t("{0} Nothing was changed.", returnQuery.error instanceof Error
                 ? returnQuery.error.message
-                : "Something went wrong reading the quarter."}{" "}
-              Nothing was changed.
+                : t("Something went wrong reading the quarter."))}
             </span>
             <Button
               variant="outline"
@@ -56,7 +58,7 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
               onClick={() => void returnQuery.refetch()}
               disabled={returnQuery.isFetching}
             >
-              {returnQuery.isFetching ? "Retrying..." : "Retry"}
+              {returnQuery.isFetching ? t("Retrying...") : t("Retry")}
             </Button>
           </AlertDescription>
         </Alert>

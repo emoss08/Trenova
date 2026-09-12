@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
@@ -52,6 +53,8 @@ const allowedResourceOptions: Array<{
 ];
 
 export default function DocumentIntelligenceForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.documentControl.get(),
   });
@@ -87,7 +90,7 @@ export default function DocumentIntelligenceForm() {
           <ClassificationAndExtractionCard />
           <ShipmentDraftCard />
           <SearchCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -95,6 +98,8 @@ export default function DocumentIntelligenceForm() {
 }
 
 function PlatformAvailabilityCard() {
+  const t = useT();
+
   const { control } = useFormContext<DocumentControl>();
   const enabled = useWatch({
     control,
@@ -104,11 +109,9 @@ function PlatformAvailabilityCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Platform Availability</CardTitle>
+        <CardTitle>{t("Platform Availability")}</CardTitle>
         <CardDescription>
-          Control whether document intelligence is active for this tenant. When this is disabled,
-          extraction and shipment-draft workflows remain off even if the OpenAI integration is
-          configured.
+          {t("Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -117,8 +120,8 @@ function PlatformAvailabilityCard() {
             <SwitchField
               control={control}
               name="enableDocumentIntelligence"
-              label="Enable Document Intelligence"
-              description="Master switch for OCR, document classification, extraction, and indexing workflows."
+              label={t("Enable Document Intelligence")}
+              description={t("Master switch for OCR, document classification, extraction, and indexing workflows.")}
               position="left"
             />
           </FormControl>
@@ -126,8 +129,8 @@ function PlatformAvailabilityCard() {
             <SwitchField
               control={control}
               name="enableOcr"
-              label="Enable OCR"
-              description="Run OCR when native text extraction is unavailable or insufficient."
+              label={t("Enable OCR")}
+              description={t("Run OCR when native text extraction is unavailable or insufficient.")}
               position="left"
               disabled={!enabled}
             />
@@ -139,6 +142,8 @@ function PlatformAvailabilityCard() {
 }
 
 function ClassificationAndExtractionCard() {
+  const t = useT();
+
   const { control } = useFormContext<DocumentControl>();
   const enabled = useWatch({
     control,
@@ -148,10 +153,9 @@ function ClassificationAndExtractionCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Classification And Extraction</CardTitle>
+        <CardTitle>{t("Classification And Extraction")}</CardTitle>
         <CardDescription>
-          Manage automatic routing, document type assignment, and optional AI-assisted extraction.
-          AI toggles here depend on a configured and enabled OpenAI integration.
+          {t("Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -160,8 +164,8 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoClassification"
-              label="Enable Automatic Classification"
-              description="Classify uploaded documents into supported kinds as they are processed."
+              label={t("Enable Automatic Classification")}
+              description={t("Classify uploaded documents into supported kinds as they are processed.")}
               position="left"
               disabled={!enabled}
             />
@@ -170,8 +174,8 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAiAssistedClassification"
-              label="Enable AI-Assisted Classification"
-              description="Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient."
+              label={t("Enable AI-Assisted Classification")}
+              description={t("Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.")}
               position="left"
               disabled={!enabled}
             />
@@ -180,8 +184,8 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoDocumentTypeAssociate"
-              label="Enable Automatic Document Type Association"
-              description="Map detected document kinds to existing document types automatically."
+              label={t("Enable Automatic Document Type Association")}
+              description={t("Map detected document kinds to existing document types automatically.")}
               position="left"
               disabled={!enabled}
             />
@@ -190,8 +194,8 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAutoCreateDocumentTypes"
-              label="Enable Automatic Document Type Creation"
-              description="Create missing document types during auto-association when a mapping does not exist yet."
+              label={t("Enable Automatic Document Type Creation")}
+              description={t("Create missing document types during auto-association when a mapping does not exist yet.")}
               position="left"
               disabled={!enabled}
             />
@@ -200,8 +204,8 @@ function ClassificationAndExtractionCard() {
             <SwitchField
               control={control}
               name="enableAiAssistedExtraction"
-              label="Enable AI-Assisted Extraction"
-              description="Use the OpenAI integration for structured extraction on supported document kinds."
+              label={t("Enable AI-Assisted Extraction")}
+              description={t("Use the OpenAI integration for structured extraction on supported document kinds.")}
               position="left"
               disabled={!enabled}
             />
@@ -213,6 +217,8 @@ function ClassificationAndExtractionCard() {
 }
 
 function ShipmentDraftCard() {
+  const t = useT();
+
   const { control, setValue } = useFormContext<DocumentControl>();
   const enabled = useWatch({
     control,
@@ -245,10 +251,9 @@ function ShipmentDraftCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Shipment Draft Extraction</CardTitle>
+        <CardTitle>{t("Shipment Draft Extraction")}</CardTitle>
         <CardDescription>
-          Limit structured shipment-draft generation to the resources where operators should be able
-          to review a draft and create a shipment from it.
+          {t("Limit structured shipment-draft generation to the resources where operators should be able to review a draft and create a shipment from it.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -257,8 +262,8 @@ function ShipmentDraftCard() {
             <SwitchField
               control={control}
               name="enableShipmentDraftExtraction"
-              label="Enable Shipment Draft Extraction"
-              description="Generate reviewable shipment drafts for supported document kinds such as rate confirmations."
+              label={t("Enable Shipment Draft Extraction")}
+              description={t("Generate reviewable shipment drafts for supported document kinds such as rate confirmations.")}
               position="left"
               disabled={!enabled}
             />
@@ -279,8 +284,8 @@ function ShipmentDraftCard() {
                     className="mt-0.5"
                   />
                   <div className="grid gap-1">
-                    <Label>{option.label}</Label>
-                    <p className="text-2xs text-muted-foreground">{option.description}</p>
+                    <Label>{t(option.label)}</Label>
+                    <p className="text-2xs text-muted-foreground">{t(option.description)}</p>
                   </div>
                 </div>
               );
@@ -293,6 +298,8 @@ function ShipmentDraftCard() {
 }
 
 function SearchCard() {
+  const t = useT();
+
   const { control } = useFormContext<DocumentControl>();
   const enabled = useWatch({
     control,
@@ -302,9 +309,9 @@ function SearchCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Search And Retrieval</CardTitle>
+        <CardTitle>{t("Search And Retrieval")}</CardTitle>
         <CardDescription>
-          Control whether extracted text is indexed for document search and retrieval experiences.
+          {t("Control whether extracted text is indexed for document search and retrieval experiences.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -313,8 +320,8 @@ function SearchCard() {
             <SwitchField
               control={control}
               name="enableFullTextIndexing"
-              label="Enable Full-Text Indexing"
-              description="Store extracted text in the search index so operators can find documents by content."
+              label={t("Enable Full-Text Indexing")}
+              description={t("Store extracted text in the search index so operators can find documents by content.")}
               position="left"
               disabled={!enabled}
             />

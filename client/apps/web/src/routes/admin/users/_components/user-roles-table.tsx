@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
@@ -9,6 +10,8 @@ const RoleTable = lazy(() => import("@/routes/admin/roles/_components/role-table
 const tabValues = ["users", "roles"] as const;
 
 export default function UserRolesTable() {
+  const t = useT();
+
   const [activeTab, setActiveTab] = useQueryState(
     "tab",
     parseAsStringLiteral(tabValues).withDefault(tabValues[0]),
@@ -20,8 +23,8 @@ export default function UserRolesTable() {
       onValueChange={(value) => setActiveTab(value as (typeof tabValues)[number])}
     >
       <TabsList variant="underline">
-        <TabsTrigger value="users">Users</TabsTrigger>
-        <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
+        <TabsTrigger value="users">{t("Users")}</TabsTrigger>
+        <TabsTrigger value="roles">{t("Roles & Permissions")}</TabsTrigger>
       </TabsList>
       <TabsContent value="users" keepMounted>
         <Activity mode={activeTab === "users" ? "visible" : "hidden"}>

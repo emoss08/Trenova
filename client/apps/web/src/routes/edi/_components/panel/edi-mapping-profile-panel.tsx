@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ControlledEDIPartnerAutocompleteField } from "@/components/autocomplete-fields";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
@@ -45,6 +46,8 @@ export function MappingProfilePanel({
   partnerId: string;
   canUpdate: boolean;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useQuery(queries.edi.mappingProfile(partnerId));
   const [draft, setDraft] = useState<EDIMappingProfileItem>(emptyDraft);
@@ -54,7 +57,7 @@ export function MappingProfilePanel({
         ? apiService.ediService.saveMappingProfileItems(data.id, [item])
         : apiService.ediService.saveMappingProfile(partnerId, [item]),
     onSuccess: async () => {
-      toast.success("Mapping saved");
+      toast.success(t("Mapping saved"));
       setDraft((current) => ({ ...emptyDraft, entityType: current.entityType }));
       await Promise.all([
         queryClient.invalidateQueries({
@@ -63,7 +66,7 @@ export function MappingProfilePanel({
         queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
       ]);
     },
-    onError: () => toast.error("Failed to save mapping"),
+    onError: () => toast.error(t("Failed to save mapping")),
   });
   const deleteMutation = useApiMutation({
     mutationFn: (itemId: string) =>
@@ -71,7 +74,7 @@ export function MappingProfilePanel({
         ? apiService.ediService.deleteMappingProfileItem(data.id, itemId)
         : apiService.ediService.deleteMappingItem(partnerId, itemId),
     onSuccess: async () => {
-      toast.success("Mapping deleted");
+      toast.success(t("Mapping deleted"));
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.edi.mappingProfile(partnerId).queryKey,
@@ -79,7 +82,7 @@ export function MappingProfilePanel({
         queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
       ]);
     },
-    onError: () => toast.error("Failed to delete mapping"),
+    onError: () => toast.error(t("Failed to delete mapping")),
   });
 
   return (
@@ -117,7 +120,7 @@ export function MappingProfilePanel({
                   }
                 />
                 <Input
-                  placeholder="Source label"
+                  placeholder={t("Source label")}
                   value={draft.entityType === entityType ? (draft.sourceLabel ?? "") : ""}
                   onChange={(event) =>
                     setDraft({ ...draft, entityType, sourceLabel: event.target.value })
@@ -125,7 +128,7 @@ export function MappingProfilePanel({
                 />
                 {entityType === "ServiceFailureReasonCode" ? (
                   <Input
-                    placeholder="Partner X12 code"
+                    placeholder={t("Partner X12 code")}
                     value={draft.entityType === entityType ? draft.targetId : ""}
                     onChange={(event) =>
                       setDraft({
@@ -150,7 +153,7 @@ export function MappingProfilePanel({
                   />
                 )}
                 <Input
-                  placeholder="Target label"
+                  placeholder={t("Target label")}
                   value={draft.entityType === entityType ? (draft.targetLabel ?? "") : ""}
                   onChange={(event) =>
                     setDraft({ ...draft, entityType, targetLabel: event.target.value })
@@ -162,7 +165,7 @@ export function MappingProfilePanel({
                   onClick={() => saveMutation.mutate(draft)}
                 >
                   <CheckIcon data-icon="inline-start" />
-                  Save
+                  {t("Save")}
                 </Button>
               </div>
             )}
@@ -170,8 +173,8 @@ export function MappingProfilePanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Target</TableHead>
+                    <TableHead>{t("Source")}</TableHead>
+                    <TableHead>{t("Target")}</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
@@ -196,7 +199,7 @@ export function MappingProfilePanel({
                   {entries.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-muted-foreground h-16 text-center">
-                        No mappings saved for {entityType}.
+                        {t("No mappings saved for {0}.", entityType)}
                       </TableCell>
                     </TableRow>
                   )}
@@ -219,13 +222,15 @@ function MappingSourceInput({
   value: string;
   onChange: (source: { sourceId: string; sourceLabel: string }) => void;
 }) {
+  const t = useT();
+
   if (entityType === "ServiceFailureReasonCode") {
     return (
       <Autocomplete<ServiceFailureReasonCode, FieldValues>
         link="/service-failure-reason-codes/select-options/"
         selectedValueLink="/service-failure-reason-codes/"
         value={value}
-        placeholder="Service failure reason"
+        placeholder={t("Service failure reason")}
         clearable
         onChange={(nextValue) => {
           if (!nextValue) {
@@ -243,7 +248,7 @@ function MappingSourceInput({
         renderOption={(option) => (
           <div className="flex size-full flex-col items-start">
             <span className="w-full truncate font-medium">{option.code}</span>
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.label}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{t(option.label)}</span>
           </div>
         )}
       />
@@ -252,7 +257,7 @@ function MappingSourceInput({
 
   return (
     <Input
-      placeholder="Source value key"
+      placeholder={t("Source value key")}
       value={value}
       onChange={(event) =>
         onChange({
@@ -275,6 +280,8 @@ export function MappingProfileTablePanel({
   mode,
   row,
 }: DataTablePanelProps<EDIMappingProfileRow>) {
+  const t = useT();
+
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );
@@ -307,16 +314,16 @@ export function MappingProfileTablePanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="New Mapping Profile"
-      description="Choose which partner source values should map into local records."
+      title={t("New Mapping Profile")}
+      description={t("Choose which partner source values should map into local records.")}
       size="xl"
     >
       <div className="flex min-h-0 flex-col gap-4">
         <div className="max-w-md">
           <ControlledEDIPartnerAutocompleteField
-            label="Partner"
-            placeholder="Select partner"
-            description="Saving the first mapping creates the partner's mapping profile."
+            label={t("Partner")}
+            placeholder={t("Select partner")}
+            description={t("Saving the first mapping creates the partner's mapping profile.")}
             value={selectedPartnerId}
             onValueChange={setSelectedPartnerId}
           />
@@ -324,7 +331,7 @@ export function MappingProfileTablePanel({
         {selectedPartnerId ? (
           <MappingProfilePanel partnerId={selectedPartnerId} canUpdate={canUpdate} />
         ) : (
-          <EDIEmptyState message="Select a partner to manage mapping records." />
+          <EDIEmptyState message={t("Select a partner to manage mapping records.")} />
         )}
       </div>
     </DataTablePanelContainer>

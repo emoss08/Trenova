@@ -181,7 +181,7 @@ func versionMismatch(entity string) error {
 	return errortypes.NewValidationError(
 		"version",
 		errortypes.ErrVersionMismatch,
-		"This "+entity+" was changed by someone else; reload it and try again",
+		"This {0} was changed by someone else; reload it and try again", entity,
 	)
 }
 

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import { orderStatusChoices } from "@/lib/choices";
@@ -81,7 +82,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "totalAmount",
-      header: () => <div className="text-right">Total</div>,
+      header: () => <div className="text-right">{translate("Total")}</div>,
       cell: ({ row }) => {
         const { totalAmount, currencyCode } = row.original;
         if (totalAmount == null) return <div className="text-right">-</div>;

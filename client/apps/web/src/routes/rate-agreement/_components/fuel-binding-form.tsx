@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FuelSurchargeProgramAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -25,6 +26,8 @@ const NEW_BINDING = {
  * rather than left to whoever reads the contract.
  */
 export function FuelBindingForm() {
+  const t = useT();
+
   const { control, setValue } = useFormContext<RateAgreement>();
   const binding = useWatch({ control, name: "fuelBinding" });
   const waived = Boolean(binding?.waived);
@@ -33,8 +36,7 @@ export function FuelBindingForm() {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-muted-foreground text-sm">
-          This contract has no fuel terms of its own, so fuel comes from the customer&apos;s billing
-          profile.
+          {t("This contract has no fuel terms of its own, so fuel comes from the customer's billing profile.")}
         </p>
         <Button
           type="button"
@@ -43,7 +45,7 @@ export function FuelBindingForm() {
           className="self-start"
           onClick={() => setValue("fuelBinding", NEW_BINDING as never, { shouldDirty: true })}
         >
-          Add fuel terms
+          {t("Add fuel terms")}
         </Button>
       </div>
     );
@@ -52,8 +54,8 @@ export function FuelBindingForm() {
   return (
     <div className="space-y-6">
       <FormSection
-        title="Fuel Terms"
-        description="The program this contract's fuel surcharge reads, and the terms it negotiated over it."
+        title={t("Fuel Terms")}
+        description={t("The program this contract's fuel surcharge reads, and the terms it negotiated over it.")}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -61,9 +63,9 @@ export function FuelBindingForm() {
               control={control}
               rules={{ required: !waived }}
               name="fuelBinding.fuelSurchargeProgramId"
-              label="Fuel Program"
-              placeholder="Select program"
-              description="Overrides whatever the customer's billing profile names, because one customer can hold several contracts"
+              label={t("Fuel Program")}
+              placeholder={t("Select program")}
+              description={t("Overrides whatever the customer's billing profile names, because one customer can hold several contracts")}
             />
           </FormControl>
 
@@ -71,8 +73,8 @@ export function FuelBindingForm() {
             <SwitchField
               control={control}
               name="fuelBinding.waived"
-              label="Fuel Included in Rate"
-              description="An all-in rate, with no surcharge billed at all"
+              label={t("Fuel Included in Rate")}
+              description={t("An all-in rate, with no surcharge billed at all")}
               outlined
             />
           </FormControl>
@@ -82,8 +84,7 @@ export function FuelBindingForm() {
           <Alert>
             <InfoIcon className="size-4" />
             <AlertDescription>
-              A waived binding cannot also change the program&apos;s terms — the two describe
-              opposite intentions.
+              {t("A waived binding cannot also change the program's terms — the two describe opposite intentions.")}
             </AlertDescription>
           </Alert>
         ) : (
@@ -92,34 +93,34 @@ export function FuelBindingForm() {
               <NumberField
                 control={control}
                 name="fuelBinding.pegPriceOverride"
-                label="Peg Price Override"
+                label={t("Peg Price Override")}
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={3}
-                description="The price the surcharge starts climbing from, when the contract negotiated its own"
+                description={t("The price the surcharge starts climbing from, when the contract negotiated its own")}
               />
             </FormControl>
             <FormControl>
               <NumberField
                 control={control}
                 name="fuelBinding.incrementRateOverride"
-                label="Increment Rate Override"
+                label={t("Increment Rate Override")}
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={4}
-                description="What each step above the peg adds, when the contract negotiated its own"
+                description={t("What each step above the peg adds, when the contract negotiated its own")}
               />
             </FormControl>
             <FormControl>
               <NumberField
                 control={control}
                 name="fuelBinding.capAmount"
-                label="Cap Amount"
+                label={t("Cap Amount")}
                 placeholder="0.00"
                 sideText="$"
                 decimalScale={2}
                 thousandSeparator
-                description="The most fuel this contract can ever be billed on one shipment"
+                description={t("The most fuel this contract can ever be billed on one shipment")}
               />
             </FormControl>
           </FormGroup>
@@ -132,7 +133,7 @@ export function FuelBindingForm() {
           className="self-start"
           onClick={() => setValue("fuelBinding", null, { shouldDirty: true })}
         >
-          Remove fuel terms
+          {t("Remove fuel terms")}
         </Button>
       </FormSection>
     </div>

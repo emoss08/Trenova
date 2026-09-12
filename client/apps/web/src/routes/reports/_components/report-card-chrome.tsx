@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -62,13 +63,15 @@ export function CategoryGroupHeader({
   count: number;
   noun: string;
 }) {
+  const t = useT();
+
   return (
     <div className="flex items-center gap-2">
       <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
         {label}
       </h2>
       <span className="text-2xs text-muted-foreground/70 tabular-nums">
-        {count} {count === 1 ? noun : `${noun}s`}
+        {count} {count === 1 ? noun : t("{0}s", noun)}
       </span>
     </div>
   );
@@ -290,6 +293,8 @@ export function ReportGridEmpty({
   onClearFilters?: () => void;
   action?: ReactNode;
 }) {
+  const t = useT();
+
   return (
     <EmptySheet
       className="col-span-full"
@@ -300,7 +305,7 @@ export function ReportGridEmpty({
         onClearFilters ? (
           <Button variant="outline" size="sm" onClick={onClearFilters}>
             <XIcon className="size-3.5" />
-            Clear filters
+            {t("Clear filters")}
           </Button>
         ) : (
           action

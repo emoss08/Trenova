@@ -946,12 +946,10 @@ func sourceTransactionSetError(
 	return errortypes.NewValidationError(
 		field,
 		errortypes.ErrInvalidReference,
-		fmt.Sprintf(
-			"%s source cannot be used with transaction set %s; expected %s",
-			source,
-			actual,
-			strings.Join(allowedValues, " or "),
-		),
+		"{0} source cannot be used with transaction set {1}; expected {2}",
+		source,
+		actual,
+		strings.Join(allowedValues, " or "),
 	)
 }
 

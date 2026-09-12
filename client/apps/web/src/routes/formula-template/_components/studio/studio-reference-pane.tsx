@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   FunctionDoc,
   KnownIdentifiers,
@@ -51,6 +52,8 @@ function VariableRow({
   variable: VariableDoc;
   onInsert: StudioReferencePaneProps["onInsert"];
 }) {
+  const t = useT();
+
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -73,7 +76,7 @@ function VariableRow({
       <HoverCardContent side="left" className="w-72 space-y-1.5">
         <div className="font-mono text-sm font-semibold">{variable.name}</div>
         <p className="text-muted-foreground text-xs">
-          {variable.description || "No description available."}
+          {variable.description || t("No description available.")}
         </p>
         <div className="flex items-center gap-1.5">
           <Badge variant="outline" className="text-2xs">
@@ -97,6 +100,8 @@ function FunctionRow({
   fn: FunctionDoc;
   onInsert: StudioReferencePaneProps["onInsert"];
 }) {
+  const t = useT();
+
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -117,7 +122,7 @@ function FunctionRow({
       <HoverCardContent side="left" className="w-72 space-y-1.5">
         <div className="font-mono text-sm font-semibold">{fn.signature}</div>
         <p className="text-muted-foreground text-xs">
-          {fn.description || "No description available."}
+          {fn.description || t("No description available.")}
         </p>
         {fn.example && (
           <code className="bg-muted block rounded px-2 py-1 font-mono text-xs">{fn.example}</code>
@@ -128,6 +133,8 @@ function FunctionRow({
 }
 
 export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferencePaneProps) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"variables" | "functions">("variables");
   const { isError: schemaUnavailable, refetch: refetchSchema } = useFormulaSchema(schemaId);
@@ -172,8 +179,8 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
       <div className="space-y-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <BookOpenIcon className="text-muted-foreground size-4" />
-          <span className="text-sm font-semibold">Reference</span>
-          <span className="text-muted-foreground text-2xs ml-auto">Click to insert</span>
+          <span className="text-sm font-semibold">{t("Reference")}</span>
+          <span className="text-muted-foreground text-2xs ml-auto">{t("Click to insert")}</span>
         </div>
         {schemaUnavailable && (
           <div
@@ -181,8 +188,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
           >
             <span>
-              Showing the built-in reference; the live schema could not be loaded, so newer
-              variables may be missing and flagged as unknown.
+              {t("Showing the built-in reference; the live schema could not be loaded, so newer variables may be missing and flagged as unknown.")}
             </span>
             <Button
               type="button"
@@ -191,7 +197,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
               className="h-5 shrink-0"
               onClick={() => void refetchSchema()}
             >
-              Retry
+              {t("Retry")}
             </Button>
           </div>
         )}
@@ -202,7 +208,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={`Search variables and functions (${shortcutHint("search")})`}
-            aria-label="Search variables and functions"
+            aria-label={t("Search variables and functions")}
             className="h-7 pl-7 text-xs"
           />
         </div>
@@ -242,7 +248,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             functionGroups.map(([category, functions]) => (
               <div key={category || "general"}>
                 <div className="text-muted-foreground px-2 pb-1 text-xs font-medium tracking-wide uppercase">
-                  {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || "Functions"}
+                  {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
                 </div>
                 <div className="space-y-0.5">
                   {functions.map((fn) => (
@@ -255,7 +261,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
           {((activeTab === "variables" && filteredVariables.length === 0) ||
             (activeTab === "functions" && filteredFunctions.length === 0)) && (
             <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-              Nothing matches &quot;{search}&quot;
+              {t("Nothing matches \"{0}\"", search)}
             </p>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
@@ -7,6 +8,8 @@ import { m } from "motion/react";
 import { Link } from "react-router";
 
 export function TopOverdueCustomersCard() {
+  const t = useT();
+
   const { data: customers, isLoading } = useQuery(queries.ar.topOverdueCustomers(10));
 
   const rows = customers ?? [];
@@ -15,12 +18,12 @@ export function TopOverdueCustomersCard() {
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">Top overdue customers</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("Top overdue customers")}</CardTitle>
         <Link
           to="/accounting/ar/aging"
           className="text-muted-foreground hover:text-foreground text-xs hover:underline"
         >
-          View aging
+          {t("View aging")}
         </Link>
       </CardHeader>
       <CardContent className="p-2">
@@ -32,7 +35,7 @@ export function TopOverdueCustomersCard() {
           </div>
         ) : rows.length === 0 ? (
           <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
-            No overdue balances — nice work
+            {t("No overdue balances — nice work")}
           </div>
         ) : (
           <div className="max-h-80 divide-y overflow-y-auto">
@@ -70,7 +73,7 @@ export function TopOverdueCustomersCard() {
                         />
                       </div>
                       <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
-                        {row.openInvoiceCount} inv · oldest {row.oldestDaysPastDue}d
+                        {t("{0} inv · oldest {1}d", row.openInvoiceCount, row.oldestDaysPastDue)}
                       </span>
                     </div>
                   </div>

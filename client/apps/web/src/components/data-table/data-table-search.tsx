@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -82,6 +83,8 @@ export default function DataTableSearch({ value, onChange, placeholder }: DataTa
 }
 
 function SearchSyntaxHelper() {
+  const t = useT();
+
   return (
     <Popover>
       <PopoverTrigger
@@ -98,9 +101,9 @@ function SearchSyntaxHelper() {
       <PopoverContent className="w-80" align="end">
         <div className="space-y-3">
           <div>
-            <h4 className="font-medium">Search Syntax</h4>
+            <h4 className="font-medium">{t("Search Syntax")}</h4>
             <p className="text-muted-foreground text-sm">
-              Use these patterns to refine your search results.
+              {t("Use these patterns to refine your search results.")}
             </p>
           </div>
           <div className="space-y-2">
@@ -110,9 +113,9 @@ function SearchSyntaxHelper() {
                   {item.syntax}
                 </code>
                 <div>
-                  <p className="text-foreground">{item.description}</p>
+                  <p className="text-foreground">{t(item.description)}</p>
                   <p className="text-muted-foreground text-xs">
-                    e.g., <code className="font-mono">{item.example}</code>
+                    {t("e.g.,")} <code className="font-mono">{item.example}</code>
                   </p>
                 </div>
               </div>

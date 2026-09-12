@@ -225,7 +225,7 @@ func (s *service) validateBillingReadinessForStatusChange(
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalidOperation,
-			"Missing required document: "+requirement.DocumentTypeName,
+			"Missing required document: {0}", requirement.DocumentTypeName,
 		)
 	}
 

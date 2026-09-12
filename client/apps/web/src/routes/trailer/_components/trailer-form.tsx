@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   EquipmentManufacturerAutocompleteField,
   EquipmentTypeAutocompleteField,
@@ -17,6 +18,8 @@ import { statusSchema } from "@trenova/shared/types/helpers";
 import { type Control, useFormContext } from "react-hook-form";
 
 function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
+  const t = useT();
+
   return (
     <FormGroup cols={2} className="pb-2">
       <FormControl>
@@ -25,9 +28,9 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           options={equipmentStatusChoices}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="Indicates the current operational status of the trailer."
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("Indicates the current operational status of the trailer.")}
         />
       </FormControl>
       <FormControl>
@@ -35,9 +38,9 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           control={control}
           rules={{ required: true }}
           name="code"
-          label="Code"
-          placeholder="Code"
-          description="A unique code identifying the trailer."
+          label={t("Code")}
+          placeholder={t("Code")}
+          description={t("A unique code identifying the trailer.")}
           maxLength={50}
         />
       </FormControl>
@@ -45,10 +48,10 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <EquipmentTypeAutocompleteField<Trailer>
           name="equipmentTypeId"
           control={control}
-          label="Equipment Type"
+          label={t("Equipment Type")}
           rules={{ required: true }}
-          placeholder="Equipment Type"
-          description="The type of equipment the trailer is categorized under."
+          placeholder={t("Equipment Type")}
+          description={t("The type of equipment the trailer is categorized under.")}
           extraSearchParams={{
             classes: [
               equipmentClassSchema.enum.Trailer,
@@ -62,10 +65,10 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <EquipmentManufacturerAutocompleteField<Trailer>
           name="equipmentManufacturerId"
           control={control}
-          label="Equip. Manufacturer"
+          label={t("Equip. Manufacturer")}
           rules={{ required: true }}
-          placeholder="Equip. Manufacturer"
-          description="The manufacturer of the trailer's equipment."
+          placeholder={t("Equip. Manufacturer")}
+          description={t("The manufacturer of the trailer's equipment.")}
           extraSearchParams={{
             status: statusSchema.enum.Active,
           }}
@@ -75,10 +78,10 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <InputField
           control={control}
           name="model"
-          label="Model"
+          label={t("Model")}
           rules={{ required: true }}
-          placeholder="Model"
-          description="The specific model of the trailer."
+          placeholder={t("Model")}
+          description={t("The specific model of the trailer.")}
           maxLength={50}
         />
       </FormControl>
@@ -86,10 +89,10 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <InputField
           control={control}
           name="make"
-          label="Make"
+          label={t("Make")}
           rules={{ required: true }}
-          placeholder="Make"
-          description="The manufacturer of the trailer."
+          placeholder={t("Make")}
+          description={t("The manufacturer of the trailer.")}
           maxLength={50}
         />
       </FormControl>
@@ -97,20 +100,20 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <NumberField
           control={control}
           name="year"
-          label="Year"
+          label={t("Year")}
           rules={{ required: true }}
-          placeholder="Year"
-          description="The production year of the trailer."
+          placeholder={t("Year")}
+          description={t("The production year of the trailer.")}
         />
       </FormControl>
       <FormControl>
         <NumberField
           control={control}
           name="maxLoadWeight"
-          label="Max Load Weight"
+          label={t("Max Load Weight")}
           sideText="lbs"
-          placeholder="Max Load Weight"
-          description="The maximum load weight the trailer can carry."
+          placeholder={t("Max Load Weight")}
+          description={t("The maximum load weight the trailer can carry.")}
         />
       </FormControl>
       <FormControl cols="full">
@@ -118,9 +121,9 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           name="fleetCodeId"
           control={control}
           clearable
-          label="Fleet Code"
-          placeholder="Fleet Code"
-          description="The fleet code associated with the trailer."
+          label={t("Fleet Code")}
+          placeholder={t("Fleet Code")}
+          description={t("The fleet code associated with the trailer.")}
         />
       </FormControl>
     </FormGroup>
@@ -128,16 +131,18 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
 }
 
 function RegistrationInformationSecond({ control }: { control: Control<Trailer> }) {
+  const t = useT();
+
   return (
-    <FormSection title="Registration Information" className="border-t py-2">
+    <FormSection title={t("Registration Information")} className="border-t py-2">
       <FormGroup cols={2}>
         <FormControl>
           <InputField
             control={control}
             name="vin"
-            label="VIN"
-            placeholder="VIN"
-            description="The Vehicle Identification Number (VIN) of the trailer."
+            label={t("VIN")}
+            placeholder={t("VIN")}
+            description={t("The Vehicle Identification Number (VIN) of the trailer.")}
             maxLength={17}
           />
         </FormControl>
@@ -145,9 +150,9 @@ function RegistrationInformationSecond({ control }: { control: Control<Trailer> 
           <InputField
             control={control}
             name="registrationNumber"
-            label="Registration Number"
-            placeholder="Registration Number"
-            description="The unique registration number assigned to the trailer."
+            label={t("Registration Number")}
+            placeholder={t("Registration Number")}
+            description={t("The unique registration number assigned to the trailer.")}
             maxLength={50}
           />
         </FormControl>
@@ -155,36 +160,36 @@ function RegistrationInformationSecond({ control }: { control: Control<Trailer> 
           <InputField
             control={control}
             name="externalId"
-            label="Samsara Asset ID"
-            placeholder="Samsara Asset ID"
-            description="Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank."
+            label={t("Samsara Asset ID")}
+            placeholder={t("Samsara Asset ID")}
+            description={t("Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank.")}
           />
         </FormControl>
         <FormControl>
           <UsStateAutocompleteField
             control={control}
             name="registrationStateId"
-            label="Registration State"
-            placeholder="Registration State"
-            description="The U.S. state where the trailer is registered."
+            label={t("Registration State")}
+            placeholder={t("Registration State")}
+            description={t("The U.S. state where the trailer is registered.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="registrationExpiry"
-            label="Registration Expiry"
-            description="The expiration date of the trailer's registration."
-            placeholder="Registration Expiry"
+            label={t("Registration Expiry")}
+            description={t("The expiration date of the trailer's registration.")}
+            placeholder={t("Registration Expiry")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="licensePlateNumber"
-            label="License Plate Number"
-            placeholder="License Plate Number"
-            description="The license plate number associated with the trailer."
+            label={t("License Plate Number")}
+            placeholder={t("License Plate Number")}
+            description={t("The license plate number associated with the trailer.")}
             maxLength={50}
           />
         </FormControl>
@@ -193,9 +198,9 @@ function RegistrationInformationSecond({ control }: { control: Control<Trailer> 
             control={control}
             clearable
             name="lastInspectionDate"
-            label="Last Inspection Date"
-            description="The date of the trailer's most recent inspection."
-            placeholder="Last Inspection Date"
+            label={t("Last Inspection Date")}
+            description={t("The date of the trailer's most recent inspection.")}
+            placeholder={t("Last Inspection Date")}
           />
         </FormControl>
       </FormGroup>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FinancialReportEmpty } from "@/components/accounting/accounting-empty";
 import { FinancialReportSection } from "@/components/accounting/financial-report-section";
 import { FiscalPeriodSelector } from "@/components/accounting/fiscal-period-selector";
@@ -11,6 +12,8 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 
 export function BalanceSheetPage() {
+  const t = useT();
+
   const [periodId, setPeriodId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -34,8 +37,8 @@ export function BalanceSheetPage() {
 
         {!periodId ? (
           <FinancialReportEmpty
-            title="Pick a period"
-            description="Choose a fiscal period above and the assets, liabilities and equity as they stood at its close are laid out here."
+            title={t("Pick a period")}
+            description={t("Choose a fiscal period above and the assets, liabilities and equity as they stood at its close are laid out here.")}
           />
         ) : isLoading ? (
           <div className="space-y-4">
@@ -48,7 +51,7 @@ export function BalanceSheetPage() {
             <FinancialReportSection section={data.assets} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">Total Assets</span>
+              <span className="text-sm font-semibold">{t("Total Assets")}</span>
               <AmountDisplay value={data.totalAssetsMinor} className="text-lg font-bold" />
             </div>
 
@@ -57,7 +60,7 @@ export function BalanceSheetPage() {
             <FinancialReportSection section={data.liabilities} />
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">Total Liabilities</span>
+              <span className="text-sm font-semibold">{t("Total Liabilities")}</span>
               <AmountDisplay value={data.totalLiabilitiesMinor} className="text-lg font-bold" />
             </div>
 
@@ -65,7 +68,7 @@ export function BalanceSheetPage() {
 
             {data.currentYearEarningsMinor !== 0 ? (
               <div className="flex items-center justify-between rounded-md border px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Current Year Earnings</span>
+                <span className="text-muted-foreground">{t("Current Year Earnings")}</span>
                 <AmountDisplay
                   value={data.currentYearEarningsMinor}
                   variant="auto"
@@ -75,7 +78,7 @@ export function BalanceSheetPage() {
             ) : null}
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-sm font-semibold">Total Equity</span>
+              <span className="text-sm font-semibold">{t("Total Equity")}</span>
               <AmountDisplay value={data.totalEquityMinor} className="text-lg font-bold" />
             </div>
 
@@ -88,16 +91,16 @@ export function BalanceSheetPage() {
               )}
             >
               <span className="text-base font-bold">
-                {isBalanced ? "Balance Sheet is Balanced" : "Balance Sheet is NOT Balanced"}
+                {isBalanced ? t("Balance Sheet is Balanced") : t("Balance Sheet is NOT Balanced")}
               </span>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="text-2xs text-muted-foreground">Assets</p>
+                  <p className="text-2xs text-muted-foreground">{t("Assets")}</p>
                   <AmountDisplay value={data.totalAssetsMinor} className="font-semibold" />
                 </div>
                 <span className="text-muted-foreground">=</span>
                 <div className="text-right">
-                  <p className="text-2xs text-muted-foreground">L + E</p>
+                  <p className="text-2xs text-muted-foreground">{t("L + E")}</p>
                   <AmountDisplay
                     value={data.totalLiabilitiesMinor + data.totalEquityMinor}
                     className="font-semibold"

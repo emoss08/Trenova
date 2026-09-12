@@ -40,7 +40,7 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 		multiErr.Add(
 			"configs",
 			errortypes.ErrInvalid,
-			"Exactly "+strconv.Itoa(len(requiredTypes))+" sequence configurations are required",
+			"Exactly {0} sequence configurations are required", strconv.Itoa(len(requiredTypes)),
 		)
 	}
 
@@ -153,7 +153,7 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 			multiErr.Add(
 				"configs",
 				errortypes.ErrRequired,
-				"Missing sequence type: "+string(requiredType),
+				"Missing sequence type: {0}", string(requiredType),
 			)
 		}
 	}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { LandmarkIcon, ReceiptIcon, ShieldCheckIcon, TruckIcon, UsersIcon } from "lucide-react";
@@ -9,6 +10,8 @@ import { CarrierRemittanceForm } from "./carrier-remittance-form";
 import { CarrierTaxForm } from "./carrier-tax-form";
 
 export function CarrierTabbedForm() {
+  const t = useT();
+
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
 
   return (
@@ -21,23 +24,23 @@ export function CarrierTabbedForm() {
         <TabsList variant="underline">
           <TabsTab value="identity">
             <TruckIcon className="size-4" />
-            Identity
+            {t("Identity")}
           </TabsTab>
           <TabsTab value="compliance">
             <ShieldCheckIcon className="size-4" />
-            Compliance & Insurance
+            {t("Compliance & Insurance")}
           </TabsTab>
           <TabsTab value="tax">
             <ReceiptIcon className="size-4" />
-            Tax
+            {t("Tax")}
           </TabsTab>
           <TabsTab value="remittance">
             <LandmarkIcon className="size-4" />
-            Remittance
+            {t("Remittance")}
           </TabsTab>
           <TabsTab value="contacts">
             <UsersIcon className="size-4" />
-            Contacts
+            {t("Contacts")}
           </TabsTab>
         </TabsList>
       </div>

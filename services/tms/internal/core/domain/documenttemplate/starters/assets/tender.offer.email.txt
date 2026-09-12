@@ -1,17 +1,17 @@
-Hello{{ if .CarrierName }} {{ .CarrierName }}{{ end }},
+{{ if .CarrierName }}{{ t "Hello {0}," .CarrierName }}{{ else }}{{ t "Hello," }}{{ end }}
 
-{{ .CompanyName }} has a load available for you{{ if .ShipmentProNumber }} (ref {{ .ShipmentProNumber }}){{ end }}.
+{{ if .ShipmentProNumber }}{{ t "{0} has a load available for you (ref {1})." .CompanyName .ShipmentProNumber }}{{ else }}{{ t "{0} has a load available for you." .CompanyName }}{{ end }}
 
-Origin: {{ .OriginSummary }}{{ if .PickupWindow }} ({{ .PickupWindow }}){{ end }}
-Destination: {{ .DestinationSummary }}{{ if .DeliveryWindow }} ({{ .DeliveryWindow }}){{ end }}
-{{ if .EquipmentSummary }}Equipment: {{ .EquipmentSummary }}
-{{ end }}{{ if .WeightSummary }}Weight: {{ .WeightSummary }}
-{{ end }}Rate: {{ .RateAmount }}{{ if .RateMethodLabel }} ({{ .RateMethodLabel }}){{ end }}
+{{ if .PickupWindow }}{{ t "Origin: {0} ({1})" .OriginSummary .PickupWindow }}{{ else }}{{ t "Origin: {0}" .OriginSummary }}{{ end }}
+{{ if .DeliveryWindow }}{{ t "Destination: {0} ({1})" .DestinationSummary .DeliveryWindow }}{{ else }}{{ t "Destination: {0}" .DestinationSummary }}{{ end }}
+{{ if .EquipmentSummary }}{{ t "Equipment: {0}" .EquipmentSummary }}
+{{ end }}{{ if .WeightSummary }}{{ t "Weight: {0}" .WeightSummary }}
+{{ end }}{{ if .RateMethodLabel }}{{ t "Rate: {0} ({1})" .RateAmount .RateMethodLabel }}{{ else }}{{ t "Rate: {0}" .RateAmount }}{{ end }}
 
-Accept the load:
+{{ t "Accept the load:" }}
 {{ .AcceptURL }}
 
-Decline the load:
+{{ t "Decline the load:" }}
 {{ .DeclineURL }}
 
-{{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hour{{ if ne .ExpiresInHours 1 }}s{{ end }}{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }} After that the load may be offered to another carrier.
+{{ if .ExpiresInHours }}{{ if .ExpiresAt }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}, at {1}." .ExpiresInHours .ExpiresAt }}{{ else }}{{ t "This offer expires in {0, plural, one {# hour} other {# hours}}." .ExpiresInHours }}{{ end }}{{ else }}{{ if .ExpiresAt }}{{ t "This offer expires at {0}." .ExpiresAt }}{{ end }}{{ end }} {{ t "After that the load may be offered to another carrier." }}

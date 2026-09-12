@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   fetchPtoLiabilityReport,
   PTO_LIABILITY_REPORT_KEY,
@@ -46,6 +47,8 @@ export function PTOLiabilityDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const { data, isLoading, isError } = useQuery({
     queryKey: [PTO_LIABILITY_REPORT_KEY],
     queryFn: ({ signal }) => fetchPtoLiabilityReport(undefined, { signal }),
@@ -57,11 +60,9 @@ export function PTOLiabilityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>PTO liability</DialogTitle>
+          <DialogTitle>{t("PTO liability")}</DialogTitle>
           <DialogDescription>
-            Every tracked balance valued against its policy&apos;s termination rule. Liability is
-            what the organisation would owe if everyone left{" "}
-            {data ? formatUnixDate(data.asOf) : "today"}.
+            {t("Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left {0}.", data ? formatUnixDate(data.asOf) : "today")}
           </DialogDescription>
         </DialogHeader>
 
@@ -72,20 +73,20 @@ export function PTOLiabilityDialog({
           </div>
         ) : isError || !data ? (
           <p className="text-destructive py-6 text-center text-sm">
-            The report could not be loaded. Try again in a moment.
+            {t("The report could not be loaded. Try again in a moment.")}
           </p>
         ) : (
           <>
             <div className="my-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Workers tracked" value={data.workersTracked.toLocaleString()} />
-              <Stat label="Banked days" value={formatPtoDays(data.totalBalanceDays)} />
+              <Stat label={t("Workers tracked")} value={data.workersTracked.toLocaleString()} />
+              <Stat label={t("Banked days")} value={formatPtoDays(data.totalBalanceDays)} />
               <Stat
-                label="Owed on exit"
+                label={t("Owed on exit")}
                 value={formatPtoDays(data.liabilityDays)}
                 tone="text-amber-700 dark:text-amber-400"
               />
               <Stat
-                label="Would be forfeited"
+                label={t("Would be forfeited")}
                 value={formatPtoDays(data.forfeitableDays)}
                 tone="text-muted-foreground"
               />
@@ -93,19 +94,19 @@ export function PTOLiabilityDialog({
             <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
               {data.rows.length === 0 ? (
                 <p className="text-muted-foreground p-6 text-center text-sm">
-                  No worker has a tracked balance yet.
+                  {t("No worker has a tracked balance yet.")}
                 </p>
               ) : (
                 <Table>
                   <TableHeader className="bg-muted/40 sticky top-0">
                     <TableRow>
-                      <TableHead>Worker</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Balance</TableHead>
-                      <TableHead className="text-right">Accrued YTD</TableHead>
-                      <TableHead className="text-right">Used YTD</TableHead>
-                      <TableHead>On exit</TableHead>
-                      <TableHead className="text-right">Liability</TableHead>
+                      <TableHead>{t("Worker")}</TableHead>
+                      <TableHead>{t("Type")}</TableHead>
+                      <TableHead className="text-right">{t("Balance")}</TableHead>
+                      <TableHead className="text-right">{t("Accrued YTD")}</TableHead>
+                      <TableHead className="text-right">{t("Used YTD")}</TableHead>
+                      <TableHead>{t("On exit")}</TableHead>
+                      <TableHead className="text-right">{t("Liability")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

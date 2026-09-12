@@ -507,7 +507,7 @@ func mapOANDAError(statusCode int, body []byte) error {
 	var apiErr oandaErrorResponse
 	if err := sonic.Unmarshal(body, &apiErr); err != nil {
 		return errortypes.NewBusinessError(
-			fmt.Sprintf("OANDA exchange rate request failed with status %d", statusCode),
+			"OANDA exchange rate request failed with status {0}", statusCode,
 		).WithInternal(err)
 	}
 

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { archiveWorkerCredential, type WorkerCredentialRow } from "@/lib/graphql/worker-credential";
@@ -33,6 +34,8 @@ export function CredentialArchiveDialog({
   workerId,
   credential,
 }: CredentialArchiveDialogProps) {
+  const t = useT();
+
   const invalidate = useCredentialInvalidation(workerId);
   const form = useForm<CredentialArchiveValues>({
     resolver: zodResolver(credentialArchiveSchema) as Resolver<CredentialArchiveValues>,
@@ -57,8 +60,8 @@ export function CredentialArchiveDialog({
       });
     },
     onSuccess: () => {
-      toast.success("Credential archived", {
-        description: "It stays in the worker's history and no longer counts toward compliance.",
+      toast.success(t("Credential archived"), {
+        description: t("It stays in the worker's history and no longer counts toward compliance."),
       });
       void invalidate();
       reset({ reason: null });
@@ -72,10 +75,9 @@ export function CredentialArchiveDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Archive {name}</DialogTitle>
+          <DialogTitle>{t("Archive {0}", name)}</DialogTitle>
           <DialogDescription>
-            Archiving removes this credential from the active file. Use Renew instead when the
-            worker has a newer card.
+            {t("Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -91,19 +93,19 @@ export function CredentialArchiveDialog({
                 <TextareaField
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="e.g. Endorsement surrendered"
-                  description="Optional; stored with the archived credential and shown in the worker's history."
+                  label={t("Reason")}
+                  placeholder={t("e.g. Endorsement surrendered")}
+                  description={t("Optional; stored with the archived credential and shown in the worker's history.")}
                   maxLength={255}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending || !credential}>
-                {isPending ? "Archiving..." : "Archive"}
+                {isPending ? t("Archiving...") : t("Archive")}
               </Button>
             </DialogFooter>
           </Form>

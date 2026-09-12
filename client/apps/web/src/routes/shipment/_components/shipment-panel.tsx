@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { apiService } from "@/services/api";
@@ -34,6 +35,8 @@ const ShipmentCommentsTab = lazy(() => import("./comments"));
 const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
+  const t = useT();
+
   const { data: owner, isLoading } = useQuery({
     queryKey: ["user", ownerId],
     queryFn: () => apiService.userService.get(ownerId!),
@@ -46,13 +49,13 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   if (ownerId) {
     return (
       <div className="flex items-center gap-1">
-        <span className="text-2xs text-muted-foreground">Owner:</span>
+        <span className="text-2xs text-muted-foreground">{t("Owner:")}</span>
         <span className="text-2xs text-blue-500">{owner?.name}</span>
       </div>
     );
   }
 
-  return <span className="text-2xs text-foreground">No owner assigned</span>;
+  return <span className="text-2xs text-foreground">{t("No owner assigned")}</span>;
 }
 
 const getDefaultValues = (): ShipmentCreateInput => {
@@ -118,6 +121,8 @@ const getDefaultValues = (): ShipmentCreateInput => {
 };
 
 export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
+  const t = useT();
+
   const defaultValues = getDefaultValues();
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),
@@ -203,7 +208,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         form={editForm}
         url="/shipments/"
         queryKey="shipment-list"
-        title="Shipment"
+        title={t("Shipment")}
         fieldKey="proNumber"
         formComponent={<ShipmentForm />}
         tabs={extraTabs}
@@ -227,7 +232,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
               >
                 <ContainerIcon className="size-4" />
               </TooltipTrigger>
-              <TooltipContent side="bottom">Load Planner</TooltipContent>
+              <TooltipContent side="bottom">{t("Load Planner")}</TooltipContent>
             </Tooltip>
           </>
         }
@@ -243,7 +248,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       form={createForm}
       url="/shipments/"
       queryKey="shipment-list"
-      title="Shipment"
+      title={t("Shipment")}
       formComponent={<ShipmentForm />}
       mutationFn={(values) => apiService.shipmentService.create(values as ShipmentCreateInput)}
       useDock

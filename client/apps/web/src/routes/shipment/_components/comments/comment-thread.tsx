@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { ChevronDownIcon, MessageSquareReplyIcon } from "lucide-react";
@@ -41,6 +42,8 @@ export function CommentThread({
   onTyping?: () => void;
   onStopTyping?: () => void;
 }) {
+  const t = useT();
+
   const replyCount = parentComment.replyCount ?? 0;
   const showRegion = isExpanded || isReplyOpen;
   const {
@@ -69,7 +72,7 @@ export function CommentThread({
             className={`size-3 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
           />
           <MessageSquareReplyIcon className="size-3" />
-          {replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+          {replyCount === 1 ? t("1 reply") : t("{0} replies", replyCount)}
         </Button>
       )}
       <AnimatePresence initial={false}>
@@ -84,7 +87,7 @@ export function CommentThread({
             <div className="space-y-0.5 pt-1">
               {isExpanded && isRepliesLoading && <ReplySkeleton />}
               {isExpanded && isRepliesError && (
-                <p className="text-2xs px-2 py-1.5 text-red-500">Failed to load replies</p>
+                <p className="text-2xs px-2 py-1.5 text-red-500">{t("Failed to load replies")}</p>
               )}
               {isExpanded && hasMoreReplies && !isRepliesLoading && (
                 <Button
@@ -95,7 +98,7 @@ export function CommentThread({
                   disabled={isFetchingMoreReplies}
                   onClick={() => void fetchMoreReplies()}
                 >
-                  {isFetchingMoreReplies ? "Loading…" : "Load earlier replies"}
+                  {isFetchingMoreReplies ? t("Loading…") : t("Load earlier replies")}
                 </Button>
               )}
               {isExpanded &&

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
@@ -21,6 +22,8 @@ import { Link, useNavigate, useParams } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export function JournalEntryDetailPage() {
+  const t = useT();
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -56,7 +59,7 @@ export function JournalEntryDetailPage() {
       >
         <Button variant="outline" onClick={() => void navigate(-1)}>
           <ArrowLeftIcon className="mr-1.5 size-3.5" />
-          Back
+          {t("Back")}
         </Button>
       </PageLayout>
     );
@@ -74,7 +77,7 @@ export function JournalEntryDetailPage() {
       <div className="mb-2">
         <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
           <ArrowLeftIcon className="mr-1.5 size-3.5" />
-          Back
+          {t("Back")}
         </Button>
       </div>
 
@@ -89,16 +92,16 @@ export function JournalEntryDetailPage() {
               </div>
               <span className="text-muted-foreground text-sm">{accountingDate}</span>
             </div>
-            {entry.description && <CardDescription>{entry.description}</CardDescription>}
+            {entry.description && <CardDescription>{t(entry.description)}</CardDescription>}
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
               <div>
-                <dt className="text-muted-foreground">Reference Type</dt>
+                <dt className="text-muted-foreground">{t("Reference Type")}</dt>
                 <dd className="mt-0.5 font-medium">{entry.referenceType}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Reference</dt>
+                <dt className="text-muted-foreground">{t("Reference")}</dt>
                 <dd className="mt-0.5">
                   <SourceDrillDownLink
                     sourceType={entry.referenceType}
@@ -107,16 +110,16 @@ export function JournalEntryDetailPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Is Reversal</dt>
+                <dt className="text-muted-foreground">{t("Is Reversal")}</dt>
                 <dd className="mt-0.5">
                   <Badge variant={entry.isReversal ? "orange" : "secondary"}>
-                    {entry.isReversal ? "Yes" : "No"}
+                    {entry.isReversal ? t("Yes") : t("No")}
                   </Badge>
                 </dd>
               </div>
               {entry.reversalOfId && (
                 <div>
-                  <dt className="text-muted-foreground">Reversal Of</dt>
+                  <dt className="text-muted-foreground">{t("Reversal Of")}</dt>
                   <dd className="mt-0.5">
                     <Link
                       to={`/accounting/journal-entries/${entry.reversalOfId}`}
@@ -129,7 +132,7 @@ export function JournalEntryDetailPage() {
               )}
               {entry.reversedById && (
                 <div>
-                  <dt className="text-muted-foreground">Reversed By</dt>
+                  <dt className="text-muted-foreground">{t("Reversed By")}</dt>
                   <dd className="mt-0.5">
                     <Link
                       to={`/accounting/journal-entries/${entry.reversedById}`}
@@ -147,13 +150,13 @@ export function JournalEntryDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Line Items</CardTitle>
+              <CardTitle>{t("Line Items")}</CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
-                  Total Debit: <AmountDisplay value={entry.totalDebit} className="font-semibold" />
+                  {t("Total Debit:")} <AmountDisplay value={entry.totalDebit} className="font-semibold" />
                 </span>
                 <span className="text-muted-foreground">
-                  Total Credit:{" "}
+                  {t("Total Credit:")}{" "}
                   <AmountDisplay value={entry.totalCredit} className="font-semibold" />
                 </span>
               </div>
@@ -167,7 +170,7 @@ export function JournalEntryDetailPage() {
                 totalCredit={entry.totalCredit}
               />
             ) : (
-              <p className="text-muted-foreground text-sm">No line items available.</p>
+              <p className="text-muted-foreground text-sm">{t("No line items available.")}</p>
             )}
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { canMarkShipmentReadyToBill, canTransferShipmentToBilling } from "@/lib/shipment-utils";
@@ -25,6 +26,8 @@ export type ShipmentBillingActions = {
 };
 
 export function useShipmentBillingActions(): ShipmentBillingActions {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const invalidateShipment = useCallback(
@@ -51,7 +54,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
       });
     },
     onSuccess: () => {
-      toast.success("Shipment marked ready to bill");
+      toast.success(t("Shipment marked ready to bill"));
     },
     onSettled: (_data, _error, shipmentId) => invalidateShipment(shipmentId),
     resourceName: "Shipment",
@@ -60,8 +63,8 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
   const { mutateAsync: transferToBilling } = useApiMutation({
     mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
     onSuccess: () => {
-      toast.success("Transferred to billing", {
-        description: "The shipment has been added to the billing queue.",
+      toast.success(t("Transferred to billing"), {
+        description: t("The shipment has been added to the billing queue."),
       });
     },
     onSettled: (_data, _error, shipmentId) => invalidateShipment(shipmentId),

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
@@ -67,6 +68,8 @@ export function SettlementQueue({
   onCheckedChange: (ids: ReadonlySet<string>) => void;
   onActionComplete: () => void;
 }) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const hasActiveFilters = filter !== "all" || search.trim() !== "";
   const clearFilters = () => {
@@ -134,10 +137,10 @@ export function SettlementQueue({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search driver or number"
+            placeholder={t("Search driver or number")}
             leftElement={<Search className="text-muted-foreground size-3.5" />}
             className="h-8 pl-7 text-xs"
-            aria-label="Search settlements by driver name or settlement number"
+            aria-label={t("Search settlements by driver name or settlement number")}
           />
         </div>
         <div className="flex flex-wrap gap-1">
@@ -159,7 +162,7 @@ export function SettlementQueue({
                     "border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400",
                 )}
               >
-                {chip.label} {count > 0 && <span className="tabular-nums">{count}</span>}
+                {t(chip.label)} {count > 0 && <span className="tabular-nums">{count}</span>}
               </button>
             );
           })}
@@ -169,12 +172,12 @@ export function SettlementQueue({
         <Checkbox
           checked={allVisibleChecked}
           onCheckedChange={toggleAllVisible}
-          aria-label="Select all visible settlements"
+          aria-label={t("Select all visible settlements")}
         />
         <span className="text-muted-foreground text-[11px]">
           {checkedIds.size > 0
-            ? `${checkedIds.size} selected`
-            : "Select settlements to act on several at once"}
+            ? t("{0} selected", checkedIds.size)
+            : t("Select settlements to act on several at once")}
         </span>
       </div>
       <ScrollArea
@@ -270,6 +273,8 @@ function BulkActionBar({
   onClear: () => void;
   onComplete: () => void;
 }) {
+  const t = useT();
+
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const eligibleCount = (action: BulkSettlementActionType) =>
@@ -349,7 +354,7 @@ function BulkActionBar({
         className="text-muted-foreground ml-auto h-7 text-xs"
         onClick={onClear}
       >
-        Clear
+        {t("Clear")}
       </Button>
       <BulkMarkPaidDialog
         open={payDialogOpen}

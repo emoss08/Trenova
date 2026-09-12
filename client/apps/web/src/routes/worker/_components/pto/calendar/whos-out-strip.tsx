@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Avatar,
   AvatarFallback,
@@ -64,6 +65,8 @@ export function WhosOutStrip({
   onHighlightDay,
   onSelectDay,
 }: WhosOutStripProps) {
+  const t = useT();
+
   const days = useMemo(() => buildWhosOut(items, todayUnix), [items, todayUnix]);
   const totalToday = days[0]?.out.length ?? 0;
   const distinctThisWeek = useMemo(() => {
@@ -76,10 +79,10 @@ export function WhosOutStrip({
     <section className="flex shrink-0 flex-col gap-1.5" data-testid="whos-out-strip">
       <div className="flex items-baseline justify-between">
         <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-          Who&apos;s out
+          {t("Who's out")}
         </p>
         <p className="text-muted-foreground text-[11px] tabular-nums">
-          {totalToday} today · {distinctThisWeek} this week
+          {t("{0} today · {1} this week", totalToday, distinctThisWeek)}
         </p>
       </div>
       <div className="grid grid-cols-7 gap-1">
@@ -111,6 +114,8 @@ function DayTile({
   onHighlightDay?: (unix: number | null) => void;
   onSelectDay?: (unix: number) => void;
 }) {
+  const t = useT();
+
   const count = day.out.length;
   const dateNumber = new Date(day.unix * 1000).getDate();
   const tile = (
@@ -131,7 +136,7 @@ function DayTile({
     >
       <span className="flex items-baseline justify-between gap-1 leading-none">
         <span className={cn("truncate text-[11px] font-medium", isToday && "text-primary")}>
-          {day.label}
+          {t(day.label)}
         </span>
         <span className="text-muted-foreground text-[10px] tabular-nums">{dateNumber}</span>
       </span>
@@ -156,7 +161,7 @@ function DayTile({
           ) : null}
         </AvatarGroup>
       ) : (
-        <span className="text-muted-foreground/50 h-5 text-[11px] leading-5">Nobody</span>
+        <span className="text-muted-foreground/50 h-5 text-[11px] leading-5">{t("Nobody")}</span>
       )}
     </button>
   );
@@ -175,7 +180,7 @@ function DayTile({
                 aria-hidden
               />
               <span className="truncate">{ptoWorkerName(pto)}</span>
-              <span className="opacity-70">· {ptoTypeMeta(pto.type).label}</span>
+              <span className="opacity-70">· {t(ptoTypeMeta(pto.type).label)}</span>
             </li>
           ))}
         </ul>

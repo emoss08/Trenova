@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -40,6 +41,8 @@ export function AddChargeDialog({
   currency,
   charge,
 }: AddChargeDialogProps) {
+  const t = useT();
+
   const invalidateOrders = useOrderInvalidation();
   const isEditing = !!charge;
 
@@ -87,10 +90,9 @@ export function AddChargeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Charge" : "Add Charge"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
           <DialogDescription>
-            Order-level charges not tied to a single leg roll into the order total and are billed
-            exactly once on the first grouped invoice.
+            {t("Order-level charges not tied to a single leg roll into the order total and are billed exactly once on the first grouped invoice.")}
           </DialogDescription>
         </DialogHeader>
         <FormGroup cols={1} className="pb-4">
@@ -98,15 +100,15 @@ export function AddChargeDialog({
             <InputField
               control={form.control}
               name="description"
-              label="Description"
-              placeholder="e.g. Customs brokerage"
+              label={t("Description")}
+              placeholder={t("e.g. Customs brokerage")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={form.control}
               name="amount"
-              label="Amount"
+              label={t("Amount")}
               placeholder="0.00"
               decimalScale={2}
               thousandSeparator
@@ -116,7 +118,7 @@ export function AddChargeDialog({
         </FormGroup>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="button"
@@ -125,7 +127,7 @@ export function AddChargeDialog({
             loadingText={isEditing ? "Saving..." : "Adding..."}
             onClick={() => void handleSubmit()}
           >
-            {isEditing ? "Save Charge" : "Add Charge"}
+            {isEditing ? t("Save Charge") : t("Add Charge")}
           </Button>
         </DialogFooter>
       </DialogContent>

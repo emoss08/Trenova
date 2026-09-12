@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { CarrierSettlementStatusBadge } from "@trenova/shared/components/status-badge";
 import { carrierSettlementStatusChoices } from "@/lib/choices";
@@ -86,7 +87,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "shipmentCount",
-      header: () => <div className="text-right">Loads</div>,
+      header: () => <div className="text-right">{translate("Loads")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
       ),
@@ -102,7 +103,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "grossCostMinor",
-      header: () => <div className="text-right">Gross Cost</div>,
+      header: () => <div className="text-right">{translate("Gross Cost")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.grossCostMinor} currency={row.original.currencyCode} />
@@ -120,7 +121,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "adjustmentsMinor",
-      header: () => <div className="text-right">Adjustments</div>,
+      header: () => <div className="text-right">{translate("Adjustments")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -142,7 +143,7 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     },
     {
       accessorKey: "netPayableMinor",
-      header: () => <div className="text-right">Net Payable</div>,
+      header: () => <div className="text-right">{translate("Net Payable")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

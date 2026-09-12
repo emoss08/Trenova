@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -32,6 +33,8 @@ export function HoldReasonPanel({
   mode,
   row,
 }: DataTablePanelProps<HoldReason>) {
+  const t = useT();
+
   const form = useForm<HoldReason>({
     resolver: zodResolver(holdReasonSchema) as Resolver<HoldReason>,
     defaultValues: {
@@ -60,7 +63,7 @@ export function HoldReasonPanel({
       form={form}
       url="/hold-reasons/"
       queryKey="hold-reason-list"
-      title="Hold Reason"
+      title={t("Hold Reason")}
       formComponent={<HoldReasonForm />}
     />
   );
@@ -74,6 +77,8 @@ type HoldReasonEditPanelProps = Pick<
 };
 
 function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
@@ -114,8 +119,8 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
       return { previousRecord, newValues };
     },
     onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved", {
-        description: "Hold Reason updated successfully",
+      toast.success(t("Changes have been saved"), {
+        description: t("Hold Reason updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: ["hold-reason-list"] });
 
@@ -173,21 +178,21 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
       footer={
         <>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <SplitButton
             options={SAVE_OPTIONS}
             selectedOption={defaultAction}
             onOptionSelect={handleOptionSelect}
             isLoading={isSubmitting}
-            loadingText="Saving..."
+            loadingText={t("Saving...")}
             formId="panel-edit-form"
           />
         </>
       }
     >
       {!row ? (
-        <ComponentLoader message="Loading Hold Reason..." />
+        <ComponentLoader message={t("Loading Hold Reason...")} />
       ) : (
         <FormProvider {...form}>
           <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>

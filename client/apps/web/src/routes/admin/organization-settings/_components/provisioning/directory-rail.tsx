@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -24,6 +25,8 @@ type DirectoryRailProps = {
 };
 
 export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: DirectoryRailProps) {
+  const t = useT();
+
   const [selectedDirectoryId, setSelectedDirectoryId] = useQueryState(
     "directoryId",
     directoryIdParser,
@@ -86,12 +89,12 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
     <div className="bg-background flex h-full min-h-0 flex-col rounded-lg border">
       <div className="flex shrink-0 items-center justify-between border-b p-3">
         <div>
-          <div className="text-sm font-medium">SCIM directories</div>
-          <div className="text-muted-foreground text-xs">Directory sync tenants</div>
+          <div className="text-sm font-medium">{t("SCIM directories")}</div>
+          <div className="text-muted-foreground text-xs">{t("Directory sync tenants")}</div>
         </div>
         <Button size="sm" onClick={onAdd}>
           <PlusIcon />
-          Add
+          {t("Add")}
         </Button>
       </div>
       {directoriesQuery.isLoading ? (
@@ -100,7 +103,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
           <Skeleton className="h-14 w-full" />
         </div>
       ) : directoriesQuery.isError ? (
-        <ErrorState label="SCIM directories could not be loaded." compact />
+        <ErrorState label={t("SCIM directories could not be loaded.")} compact />
       ) : directories.length > 0 ? (
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0" maskHeight={18}>
           <div className="divide-y">
@@ -115,7 +118,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
             {directoriesQuery.isFetchingNextPage && (
               <div className="flex items-center justify-center py-3">
                 <TextShimmer className="font-mono text-xs" duration={1}>
-                  Loading more...
+                  {t("Loading more...")}
                 </TextShimmer>
               </div>
             )}
@@ -125,8 +128,8 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
       ) : (
         <EmptyState
           icon={<UsersRoundIcon />}
-          label="No directories"
-          description="Create a SCIM directory before issuing tokens or mapping groups."
+          label={t("No directories")}
+          description={t("Create a SCIM directory before issuing tokens or mapping groups.")}
           compact
         />
       )}
@@ -143,6 +146,8 @@ function DirectoryRailItem({
   selected: boolean;
   onSelect: (directoryId: string) => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -155,11 +160,11 @@ function DirectoryRailItem({
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{directory.tenantSlug}</div>
         <div className="text-muted-foreground text-xs">
-          Updated {formatUnixDateTimeOrDash(directory.updatedAt || directory.createdAt)}
+          {t("Updated {0}", formatUnixDateTimeOrDash(directory.updatedAt || directory.createdAt))}
         </div>
       </div>
       <Badge variant={directory.enabled ? "active" : "inactive"}>
-        {directory.enabled ? "Enabled" : "Disabled"}
+        {directory.enabled ? t("Enabled") : t("Disabled")}
       </Badge>
     </button>
   );

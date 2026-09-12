@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -22,6 +23,8 @@ type DataTableViewOptionsProps<TData extends RowData> = {
 export function DataTableViewOptions<TData extends RowData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const columns = table
@@ -38,15 +41,15 @@ export function DataTableViewOptions<TData extends RowData>({
         render={
           <Button variant="outline" size="sm">
             <Columns3Icon className="size-4" />
-            <span className="hidden pt-0.5 lg:inline">Columns</span>
+            <span className="hidden pt-0.5 lg:inline">{t("Columns")}</span>
           </Button>
         }
       />
       <PopoverContent className="dark w-48 p-0" align="end">
         <Command>
-          <CommandInput className="h-7" placeholder="Search columns..." />
+          <CommandInput className="h-7" placeholder={t("Search columns...")} />
           <CommandList>
-            <CommandEmpty>No columns found.</CommandEmpty>
+            <CommandEmpty>{t("No columns found.")}</CommandEmpty>
             <CommandGroup>
               {columns.map((column) => {
                 const label = column.columnDef.meta?.label || column.id;

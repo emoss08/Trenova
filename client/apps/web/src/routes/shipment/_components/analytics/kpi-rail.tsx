@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { analytics } from "@/lib/queries/analytics";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -156,6 +157,8 @@ function profitabilitySub(merged: ShipmentAnalyticsData): string {
 }
 
 export default function KpiRail() {
+  const t = useT();
+
   const { data } = useSuspenseQuery(analytics.get("shipment-management"));
   const merged = mergeShipmentAnalyticsWithDefaults(data as DeepPartial<ShipmentAnalyticsData>);
 
@@ -166,7 +169,7 @@ export default function KpiRail() {
   return (
     <div className="grid grid-cols-12 gap-2 pt-1">
       <KpiHero
-        label="Revenue today"
+        label={t("Revenue today")}
         value={`$${formatCompact(merged.revenueToday.total)}`}
         delta={merged.revenueToday.deltaPct}
         deltaLabel="%"
@@ -179,7 +182,7 @@ export default function KpiRail() {
         span={3}
       />
       <KpiHero
-        label="Active shipments"
+        label={t("Active shipments")}
         value={String(merged.activeShipments.count)}
         delta={merged.activeShipments.changeFromYesterday}
         deltaTone="success"
@@ -196,7 +199,7 @@ export default function KpiRail() {
         span={3}
       />
       <KpiRing
-        label="On-time"
+        label={t("On-time")}
         value={merged.onTimePercent.percent.toFixed(1)}
         unit="%"
         target={merged.onTimePercent.target}
@@ -210,7 +213,7 @@ export default function KpiRail() {
         span={2}
       />
       <KpiGoalBar
-        label="Empty mile %"
+        label={t("Empty mile %")}
         value={merged.emptyMilePercent.percent.toFixed(1)}
         unit="%"
         target={merged.emptyMilePercent.target}
@@ -225,7 +228,7 @@ export default function KpiRail() {
         span={2}
       />
       <KpiRing
-        label="Tender accept"
+        label={t("Tender accept")}
         value={merged.tenderAccept.percent.toFixed(1)}
         unit="%"
         target={merged.tenderAccept.target}
@@ -240,7 +243,7 @@ export default function KpiRail() {
       />
 
       <KpiStat
-        label="At-risk"
+        label={t("At-risk")}
         value={String(merged.atRisk.count)}
         delta={merged.atRisk.delta}
         tone="danger"
@@ -250,7 +253,7 @@ export default function KpiRail() {
         span={2}
       />
       <KpiStat
-        label="Unassigned"
+        label={t("Unassigned")}
         value={String(merged.unassigned.count)}
         delta={merged.unassigned.delta}
         tone="warning"
@@ -260,7 +263,7 @@ export default function KpiRail() {
         span={2}
       />
       <KpiStat
-        label="Ready to dispatch"
+        label={t("Ready to dispatch")}
         value={String(merged.readyToDispatch.count)}
         delta={merged.readyToDispatch.delta}
         tone="brand"
@@ -270,7 +273,7 @@ export default function KpiRail() {
         span={2}
       />
       <KpiWatchlist
-        label="HOS near limit"
+        label={t("HOS near limit")}
         items={merged.hosNearLimit.items.map((item) => ({
           id: item.driverId,
           who: `${item.driverId} ${item.name}`,
@@ -282,7 +285,7 @@ export default function KpiRail() {
         span={3}
       />
       <KpiWatchlist
-        label="Detention dwell > 2h"
+        label={t("Detention dwell > 2h")}
         items={merged.detentionWatchlist.items.map((item) => ({
           id: item.shipmentId,
           who: `${item.shipmentId} ${item.customer}`,

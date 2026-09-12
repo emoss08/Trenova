@@ -239,9 +239,12 @@ func (p *Profile) validateRules(multiErr *errortypes.MultiError) {
 		}
 
 		if !slices.Contains(p.Capabilities, def.Capability) {
-			ruleErr.Add("ruleKey", errortypes.ErrInvalid,
-				"This rule requires the "+def.Capability.Label()+
-					" capability, which the profile does not declare")
+			ruleErr.Add(
+				"ruleKey",
+				errortypes.ErrInvalid,
+				"This rule requires the {0} capability, which the profile does not declare",
+				def.Capability.Label(),
+			)
 		}
 	}
 }

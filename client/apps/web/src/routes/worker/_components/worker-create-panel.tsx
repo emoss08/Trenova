@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -72,6 +73,8 @@ interface WorkerCreatePanelProps {
 }
 
 export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePanelProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
@@ -99,7 +102,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
       return await apiService.workerService.create(values);
     },
     onSuccess: () => {
-      toast.success("Worker created successfully");
+      toast.success(t("Worker created successfully"));
       void queryClient.invalidateQueries({ queryKey: ["worker-list"] });
       reset();
       onOpenChange(false);
@@ -147,10 +150,10 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
           <div className="border-border flex items-center justify-between border-b px-4 py-3">
             <div className="flex flex-col gap-0.5">
               <Dialog.Title className="text-sm leading-none font-medium">
-                Create Worker
+                {t("Create Worker")}
               </Dialog.Title>
               <Dialog.Description className="text-muted-foreground text-xs">
-                Add a new worker to your organization
+                {t("Add a new worker to your organization")}
               </Dialog.Description>
             </div>
             <Dialog.Close
@@ -163,7 +166,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
               }
             >
               <XIcon className="size-4" />
-              <span className="sr-only">Close panel</span>
+              <span className="sr-only">{t("Close panel")}</span>
             </Dialog.Close>
           </div>
 
@@ -182,21 +185,21 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
                   <TabsList variant="underline">
                     <TabsTab value="general" className={cn(hasGeneralErrors && "text-destructive")}>
                       <UserIcon className="size-4" />
-                      General Information
+                      {t("General Information")}
                     </TabsTab>
                     <TabsTab
                       value="employment"
                       className={cn(hasEmploymentErrors && "text-destructive")}
                     >
                       <BriefcaseIcon className="size-4" />
-                      Employment Information
+                      {t("Employment Information")}
                     </TabsTab>
                     <TabsTab
                       value="compliance"
                       className={cn(hasComplianceErrors && "text-destructive")}
                     >
                       <ShieldCheckIcon className="size-4" />
-                      Compliance Status
+                      {t("Compliance Status")}
                     </TabsTab>
                   </TabsList>
                 </div>
@@ -217,10 +220,10 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
 
           <div className="border-border bg-muted/30 flex items-center justify-end gap-2 border-t px-4 py-3">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button type="submit" form="worker-create-form" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Worker"}
+              {isSubmitting ? t("Creating...") : t("Create Worker")}
             </Button>
           </div>
         </Dialog.Popup>

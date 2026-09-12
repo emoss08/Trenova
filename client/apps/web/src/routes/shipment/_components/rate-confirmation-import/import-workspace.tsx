@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
@@ -26,6 +27,8 @@ function createImportResourceId() {
 }
 
 export function ImportWorkspace() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [importResourceId, setImportResourceId] = useState(createImportResourceId);
@@ -107,7 +110,7 @@ export function ImportWorkspace() {
         });
       }
       setReconciliationInitialized(false);
-      toast.success("Re-extraction started");
+      toast.success(t("Re-extraction started"));
     },
     onError: (error) => {
       toast.error(`Failed to restart extraction: ${error.message}`);
@@ -217,9 +220,9 @@ export function ImportWorkspace() {
       }
 
       if (attachError) {
-        toast.warning("Shipment created, but document could not be attached");
+        toast.warning(t("Shipment created, but document could not be attached"));
       } else {
-        toast.success("Shipment created from rate confirmation");
+        toast.success(t("Shipment created from rate confirmation"));
       }
     },
     onError: (error) => {
@@ -335,9 +338,9 @@ export function ImportWorkspace() {
     (shipmentId: string) => {
       setCreatedShipmentId(shipmentId);
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Shipment created from rate confirmation");
+      toast.success(t("Shipment created from rate confirmation"));
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   return (
@@ -349,14 +352,15 @@ export function ImportWorkspace() {
             <ArrowLeftIcon className="size-4" />
           </Button>
           <div>
-            <h1 className="text-sm font-medium">Import from Rate Confirmation</h1>
+            <h1 className="text-sm font-medium">{t("Import from Rate Confirmation")}</h1>
             <p className="text-muted-foreground text-xs">
               {currentPhase === "upload" &&
-                "Upload a rate confirmation to extract shipment details."}
-              {currentPhase === "processing" && "Extracting shipment details from your document..."}
+                t("Upload a rate confirmation to extract shipment details.")}
+              {currentPhase === "processing" &&
+                t("Extracting shipment details from your document...")}
               {currentPhase === "reconciliation" &&
-                "Review extracted fields, resolve issues, and create the shipment."}
-              {currentPhase === "success" && "Import complete."}
+                t("Review extracted fields, resolve issues, and create the shipment.")}
+              {currentPhase === "success" && t("Import complete.")}
             </p>
           </div>
         </div>

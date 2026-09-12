@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
@@ -37,6 +38,8 @@ export default function ShipmentMapPanel({
 }: {
   backgroundEnabled?: boolean;
 }) {
+  const t = useT();
+
   const mapId = useMapId();
   const { data } = useSuspenseQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
@@ -122,8 +125,9 @@ export default function ShipmentMapPanel({
           isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-full",
         )}
       >
-        Google Maps is not configured for this environment, so the live shipment map cannot be
-        displayed.
+        {t(
+          "Google Maps is not configured for this environment, so the live shipment map cannot be displayed.",
+        )}
       </div>
     );
   }
@@ -140,9 +144,9 @@ export default function ShipmentMapPanel({
       >
         <div className="border-border bg-card flex h-9 shrink-0 items-center justify-between border-b px-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-foreground text-xs font-semibold">Live Map</span>
+            <span className="text-foreground text-xs font-semibold">{t("Live Map")}</span>
             <span className="border-border bg-muted/60 text-muted-foreground shrink truncate rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
-              {delayedCount} at-risk · {inTransitCount} in-transit
+              {t("{0} at-risk · {1} in-transit", delayedCount, inTransitCount)}
             </span>
           </div>
           <MapControls
@@ -219,6 +223,8 @@ function LiveMapSyncOverlay({
   unitCount: number;
   dataUpdatedAt: number;
 }) {
+  const t = useT();
+
   const connectionState = useRealtimeStore.use.connectionState();
   const lastEventAt = useRealtimeStore.use.lastEventAt();
   const [now, setNow] = useState(() => Date.now());
@@ -241,10 +247,10 @@ function LiveMapSyncOverlay({
             live ? "bg-success animate-pulse" : "bg-muted-foreground",
           )}
         />
-        {live ? "LIVE" : "OFFLINE"} · {unitCount} units
+        {t("{0} · {1} units", live ? "LIVE" : "OFFLINE", unitCount)}
       </span>
       <span className="border-border bg-background text-muted-foreground rounded-md border px-2 py-1 font-mono text-[10px] font-medium shadow-sm backdrop-blur-sm">
-        synced {formatElapsedTime(syncedAt, now)}
+        {t("synced {0}", formatElapsedTime(syncedAt, now))}
       </span>
     </div>
   );

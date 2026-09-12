@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { closeWorkerSafetyEvent, type WorkerSafetyEventRow } from "@/lib/graphql/worker-safety";
@@ -29,6 +30,8 @@ export type CloseEventDialogProps = {
 };
 
 export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseEventDialogProps) {
+  const t = useT();
+
   const invalidate = useSafetyInvalidation(workerId);
   const form = useForm<CloseSafetyEventFormValues>({
     resolver: zodResolver(closeSafetyEventFormSchema) as Resolver<CloseSafetyEventFormValues>,
@@ -57,8 +60,8 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
       });
     },
     onSuccess: () => {
-      toast.success("Safety event closed", {
-        description: "The resolution stays on the record and in the audit log.",
+      toast.success(t("Safety event closed"), {
+        description: t("The resolution stays on the record and in the audit log."),
       });
       void invalidate();
       onOpenChange(false);
@@ -69,10 +72,9 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Close this event</DialogTitle>
+          <DialogTitle>{t("Close this event")}</DialogTitle>
           <DialogDescription>
-            Say what was done about it — coaching, a repair, a dismissed citation. Points already
-            recorded stay on the scorecard until they roll off.
+            {t("Say what was done about it — coaching, a repair, a dismissed citation. Points already recorded stay on the scorecard until they roll off.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -88,9 +90,9 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
                 <TextareaField<CloseSafetyEventFormValues>
                   control={control}
                   name="resolution"
-                  label="Resolution"
-                  placeholder="e.g. Coached on backing procedure; dock damage repaired"
-                  description="Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first."
+                  label={t("Resolution")}
+                  placeholder={t("e.g. Coached on backing procedure; dock damage repaired")}
+                  description={t("Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first.")}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -98,10 +100,10 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Closing...">
-                Close event
+              <Button type="submit" isLoading={isPending} loadingText={t("Closing...")}>
+                {t("Close event")}
               </Button>
             </DialogFooter>
           </Form>

@@ -243,11 +243,7 @@ func (s *Service) requireTemplateRetirable(
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"%d open review%s still use this template. Close those first",
-				count,
-				plural(count),
-			),
+			"{0} open review{1} still use this template. Close those first", count, plural(count),
 		)
 	}
 	return nil

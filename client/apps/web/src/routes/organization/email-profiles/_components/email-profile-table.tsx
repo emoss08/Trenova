@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { emailProfileTableGraphQLConfig } from "@/lib/graphql/email-profile-table";
 import {
@@ -34,6 +35,8 @@ import { emailProfileQueryKey } from "./email-profile-constants";
 import { EmailProfilePanel } from "./email-profile-panel";
 
 export default function EmailProfileTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -51,12 +54,12 @@ export default function EmailProfileTable() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [emailProfileQueryKey] });
       await queryClient.invalidateQueries({ queryKey: ["email", "assignments"] });
-      toast.success("Email profile deleted");
+      toast.success(t("Email profile deleted"));
       setDeleteDialogOpen(false);
       setSelectedProfile(null);
     },
     onError: (error) => {
-      toast.error("Failed to delete email profile", {
+      toast.error(t("Failed to delete email profile"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -78,13 +81,13 @@ export default function EmailProfileTable() {
       );
     },
     onSuccess: () => {
-      toast.success("Test email queued");
+      toast.success(t("Test email queued"));
       setTestDialogOpen(false);
       setTestRecipient("");
       setSelectedProfile(null);
     },
     onError: (error) => {
-      toast.error("Failed to queue test email", {
+      toast.error(t("Failed to queue test email"), {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
@@ -136,32 +139,32 @@ export default function EmailProfileTable() {
       <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Test Email</DialogTitle>
+            <DialogTitle>{t("Send Test Email")}</DialogTitle>
             <DialogDescription>
-              Queue a test message from {selectedProfile?.name ?? "this email profile"}.
+              {t("Queue a test message from {0}.", selectedProfile?.name ?? t("this email profile"))}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
             <label className="text-muted-foreground text-xs font-medium" htmlFor="test-recipient">
-              Recipient Email
+              {t("Recipient Email")}
             </label>
             <Input
               id="test-recipient"
               type="email"
-              placeholder="recipient@example.com"
+              placeholder={t("recipient@example.com")}
               value={testRecipient}
               onChange={(event) => setTestRecipient(event.target.value)}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setTestDialogOpen(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="button"
               disabled={!selectedProfile || !testRecipient}
               isLoading={testSendMutation.isPending}
-              loadingText="Sending..."
+              loadingText={t("Sending...")}
               onClick={() => {
                 if (selectedProfile) {
                   testSendMutation.mutate({ profile: selectedProfile, to: testRecipient });
@@ -169,7 +172,7 @@ export default function EmailProfileTable() {
               }}
             >
               <SendIcon />
-              Send Test
+              {t("Send Test")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -181,14 +184,13 @@ export default function EmailProfileTable() {
             <AlertDialogMedia>
               <TrashIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Delete Email Profile</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete Email Profile")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete {selectedProfile?.name ?? "this email profile"} and remove it from any purpose
-              assignment. This action cannot be undone.
+              {t("Delete {0} and remove it from any purpose assignment. This action cannot be undone.", selectedProfile?.name ?? t("this email profile"))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={!selectedProfile || deleteMutation.isPending}
@@ -199,7 +201,7 @@ export default function EmailProfileTable() {
               }}
             >
               {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
@@ -8,17 +9,19 @@ const SubscriptionTable = lazy(() => import("./_components/subscription-table"))
 const NotificationList = lazy(() => import("./_components/notification-list"));
 
 export function TableChangeAlertPage() {
+  const t = useT();
+
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Table Change Alert"
-        description="Monitor and review system activity across your organization"
+        title={t("Table Change Alert")}
+        description={t("Monitor and review system activity across your organization")}
       />
       <div className="px-4">
         <Tabs defaultValue="subscriptions">
           <TabsList variant="underline">
-            <TabsTab value="subscriptions">Subscriptions</TabsTab>
-            <TabsTab value="notifications">Notifications</TabsTab>
+            <TabsTab value="subscriptions">{t("Subscriptions")}</TabsTab>
+            <TabsTab value="notifications">{t("Notifications")}</TabsTab>
           </TabsList>
           <TabsPanel value="subscriptions">
             <DataTableLazyComponent>

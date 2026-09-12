@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -89,6 +90,8 @@ function FilterSelect({
   onValueChange: (value: string) => void;
   ariaLabel: string;
 }) {
+  const t = useT();
+
   return (
     <Select
       items={items}
@@ -106,7 +109,7 @@ function FilterSelect({
         <SelectGroup>
           {items.map((item) => (
             <SelectItem key={item.value} value={item.value}>
-              {item.label}
+              {t(item.label)}
             </SelectItem>
           ))}
         </SelectGroup>
@@ -127,6 +130,8 @@ function searchPlaceholder(tab: ReportTab): string {
 }
 
 export function ReportsPage() {
+  const t = useT();
+
   const navigate = useNavigate();
   const { allowed: canCreate } = usePermission(Resource.Report, Operation.Create);
   const [params, setParams] = useQueryStates(reportsPageSearchParamsParser);
@@ -157,12 +162,12 @@ export function ReportsPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" render={<Link to="/reports/runs" />}>
               <HistoryIcon className="size-4" />
-              Run History
+              {t("Run History")}
             </Button>
             {canCreate && (
               <Button onClick={() => void navigate("/reports/builder")}>
                 <PlusIcon className="size-4" />
-                New Report
+                {t("New Report")}
               </Button>
             )}
           </div>
@@ -172,19 +177,19 @@ export function ReportsPage() {
       <div className="border-border flex flex-wrap items-center gap-1.5 border-b px-4 pt-1 pb-1.5">
         <div className="flex items-center">
           <TabButton active={isLibrary} onClick={() => switchTab("library")}>
-            My Reports
+            {t("My Reports")}
           </TabButton>
           <TabButton active={params.tab === "gallery"} onClick={() => switchTab("gallery")}>
-            Gallery
+            {t("Gallery")}
           </TabButton>
           <TabButton active={isDashboards} onClick={() => switchTab("dashboards")}>
-            Dashboards
+            {t("Dashboards")}
           </TabButton>
         </div>
         <div className="flex-1" />
         <div className="flex shrink-0 flex-row items-center gap-0 text-center text-sm">
           <div className="border-input bg-muted text-muted-foreground flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 px-1.5 text-xs font-medium focus:z-10">
-            Sort By
+            {t("Sort By")}
           </div>
           <Select
             items={sortChoices}
@@ -197,7 +202,7 @@ export function ReportsPage() {
           >
             <SelectTrigger
               className="bg-background h-7 rounded-s-none rounded-e-lg text-xs"
-              aria-label="Sort reports"
+              aria-label={t("Sort reports")}
             >
               <SelectValue />
             </SelectTrigger>
@@ -205,7 +210,7 @@ export function ReportsPage() {
               <SelectGroup>
                 {sortChoices.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -218,7 +223,7 @@ export function ReportsPage() {
               items={REPORT_CATEGORY_FILTER_CHOICES}
               value={params.category}
               onValueChange={(value) => void setParams({ category: value })}
-              ariaLabel="Filter by category"
+              ariaLabel={t("Filter by category")}
             />
           </div>
         )}
@@ -232,7 +237,7 @@ export function ReportsPage() {
                   void setParams({ status: value as ReportStatusFilter });
                 }
               }}
-              ariaLabel="Filter by status"
+              ariaLabel={t("Filter by status")}
             />
           </div>
         )}
@@ -252,7 +257,7 @@ export function ReportsPage() {
             disabled={createDashboard.isPending}
           >
             <PlusIcon className="size-3.5" />
-            New Dashboard
+            {t("New Dashboard")}
           </Button>
         )}
       </div>

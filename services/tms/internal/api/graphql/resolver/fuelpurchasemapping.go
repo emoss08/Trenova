@@ -307,7 +307,7 @@ func fuelImportMappingFromGraphQL(raw map[string]any) (map[string]int, error) {
 			return nil, errortypes.NewValidationError(
 				"mapping",
 				errortypes.ErrInvalid,
-				"Column index for "+name+" must be a whole number",
+				"Column index for {0} must be a whole number", name,
 			)
 		}
 		mapping[name] = index

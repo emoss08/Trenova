@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreateModal } from "@/components/form-create-modal";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -26,6 +27,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "@/lib/queries";
 
 export default function TemplateDesignerAside() {
+  const t = useT();
+
   const [templateUrlState, setTemplateUrlState] = useTemplateDesignerUrlState();
   const { templateSearch, templateStatus, templateTransactionSet, templateDirection } =
     templateUrlState;
@@ -96,7 +99,7 @@ export default function TemplateDesignerAside() {
     <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
       <PanelHeader
         icon={<FileCode2Icon />}
-        title="Templates"
+        title={t("Templates")}
         actions={
           <Button
             type="button"
@@ -105,7 +108,7 @@ export default function TemplateDesignerAside() {
             onClick={() => setIsCreateDialogOpen(true)}
           >
             <PlusIcon className="size-3.5" />
-            New
+            {t("New")}
           </Button>
         }
       />
@@ -114,7 +117,7 @@ export default function TemplateDesignerAside() {
           <Input
             value={templateSearch}
             onChange={(event) => setTemplateSearch(event.target.value)}
-            placeholder="Search templates"
+            placeholder={t("Search templates")}
             inputContainerClassName="w-full"
             leftElement={<SearchIcon className="text-muted-foreground size-3" />}
           />
@@ -136,15 +139,15 @@ export default function TemplateDesignerAside() {
       <FormCreateModal
         open={isCreateDialogOpen}
         onOpenChange={handleCreateDialogOpenChange}
-        title="EDI Template"
-        description="Choose a document type and name the EDI template before editing its version details."
+        title={t("EDI Template")}
+        description={t("Choose a document type and name the EDI template before editing its version details.")}
         url="/edi/templates/"
         queryKey="templates"
         form={createTemplateForm}
         formComponent={<CreateTemplateForm />}
         className="sm:max-w-120"
         submitText="Create Template"
-        loadingText="Creating..."
+        loadingText={t("Creating...")}
         onSuccess={handleTemplateCreated}
       />
     </aside>
@@ -170,6 +173,8 @@ function TemplateFilterPopover({
   onDirectionChange: (value: string) => void;
   onReset: () => void;
 }) {
+  const t = useT();
+
   const transactionSetFilterOptions = useEDITransactionSetOptions(transactionSetOptions);
 
   return (
@@ -178,7 +183,7 @@ function TemplateFilterPopover({
         render={
           <Button type="button" variant="outline" className="h-7 shrink-0">
             <FilterIcon className="size-3" />
-            <span className="text-xs">Filter</span>
+            <span className="text-xs">{t("Filter")}</span>
             {activeFilterCount > 0 ? (
               <Badge variant="active" className="ml-0.5 px-1.5 py-0 text-[10px]">
                 {activeFilterCount}
@@ -189,30 +194,30 @@ function TemplateFilterPopover({
       />
       <PopoverContent align="start" className="dark w-72 p-0">
         <div className="border-b px-3 py-2">
-          <div className="text-sm font-semibold">Template Filters</div>
-          <div className="text-muted-foreground text-xs">Narrow the template list.</div>
+          <div className="text-sm font-semibold">{t("Template Filters")}</div>
+          <div className="text-muted-foreground text-xs">{t("Narrow the template list.")}</div>
         </div>
         <div className="flex flex-col gap-1 px-3">
           <ControlledSelectField
-            label="Status"
+            label={t("Status")}
             value={templateStatus}
             onValueChange={onStatusChange}
             options={templateStatusOptions}
-            placeholder="All statuses"
+            placeholder={t("All statuses")}
           />
           <ControlledSelectField
-            label="Set"
+            label={t("Set")}
             value={templateTransactionSet}
             onValueChange={onTransactionSetChange}
             options={transactionSetFilterOptions}
-            placeholder="All sets"
+            placeholder={t("All sets")}
           />
           <ControlledSelectField
-            label="Direction"
+            label={t("Direction")}
             value={templateDirection}
             onValueChange={onDirectionChange}
             options={documentDirectionOptions}
-            placeholder="All"
+            placeholder={t("All")}
           />
         </div>
         <div className="flex justify-end border-t p-2">
@@ -223,7 +228,7 @@ function TemplateFilterPopover({
             onClick={onReset}
             disabled={activeFilterCount === 0}
           >
-            Reset
+            {t("Reset")}
           </Button>
         </div>
       </PopoverContent>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ControlledEDITransferAutocompleteField,
   ControlledShipmentAutocompleteField,
@@ -26,6 +27,8 @@ export function DocumentSourceControls({
   onChange,
   layout = "stack",
 }: DocumentSourceControlsProps) {
+  const t = useT();
+
   const sourceInputs = getEDIDocumentSourceInputs(transactionSet);
 
   return (
@@ -36,16 +39,16 @@ export function DocumentSourceControls({
           return layout === "toolbar" ? (
             <DocumentSourceField
               key={input.field}
-              label={input.label}
+              label={t(input.label)}
               value={value}
-              placeholder='{"transactionSet":"204"}'
+              placeholder={t("{\"transactionSet\":\"204\"}")}
               onChange={(nextValue) => onChange(input.field, nextValue)}
               className="w-64"
             />
           ) : (
             <DocumentSourceTextarea
               key={input.field}
-              label={input.label}
+              label={t(input.label)}
               value={value}
               onChange={(nextValue) => onChange(input.field, nextValue)}
             />
@@ -58,7 +61,7 @@ export function DocumentSourceControls({
           return (
             <div key={input.field} className={fieldClassName}>
               <ControlledShipmentAutocompleteField
-                label={input.label}
+                label={t(input.label)}
                 value={value}
                 onValueChange={(nextValue) => onChange(input.field, nextValue)}
               />
@@ -70,7 +73,7 @@ export function DocumentSourceControls({
           return (
             <div key={input.field} className={fieldClassName}>
               <ControlledEDITransferAutocompleteField
-                label={input.label}
+                label={t(input.label)}
                 value={value}
                 onValueChange={(nextValue) => onChange(input.field, nextValue)}
               />
@@ -81,7 +84,7 @@ export function DocumentSourceControls({
         return (
           <DocumentSourceField
             key={input.field}
-            label={input.label}
+            label={t(input.label)}
             placeholder={input.placeholder}
             value={value}
             onChange={(nextValue) => onChange(input.field, nextValue)}

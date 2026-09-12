@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import {
   deleteEmploymentVerification,
@@ -46,6 +47,8 @@ type WorkerDQFTabProps = {
  * request or chasing an employer happens from the step itself.
  */
 export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps) {
+  const t = useT();
+
   const { allowed: canCreate } = usePermission(Resource.Qualification, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.Qualification, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.Qualification, Operation.Delete);
@@ -63,31 +66,31 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
   const requested = useMutation({
     mutationFn: (id: string) => markEmploymentVerificationRequested(id),
     onSuccess: () => {
-      toast.success("Request recorded");
+      toast.success(t("Request recorded"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not record the request", { description: error.message }),
+      toast.error(t("Could not record the request"), { description: error.message }),
   });
   const followUp = useMutation({
     mutationFn: (id: string) => recordEmploymentVerificationFollowUp(id),
     onSuccess: (updated) => {
-      toast.success("Follow-up recorded", {
+      toast.success(t("Follow-up recorded"), {
         description: `${updated.followUpCount} chase${updated.followUpCount === 1 ? "" : "s"} on file as evidence of good-faith effort.`,
       });
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not record the follow-up", { description: error.message }),
+      toast.error(t("Could not record the follow-up"), { description: error.message }),
   });
   const remove = useMutation({
     mutationFn: (id: string) => deleteEmploymentVerification(id),
     onSuccess: () => {
-      toast.success("Employer removed");
+      toast.success(t("Employer removed"));
       void invalidate();
     },
     onError: (error: Error) =>
-      toast.error("Could not remove the employer", { description: error.message }),
+      toast.error(t("Could not remove the employer"), { description: error.message }),
   });
 
   const file = fileQuery.data;
@@ -174,7 +177,7 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
                   className="text-muted-foreground"
                   onClick={() => onOpenTab(tab)}
                 >
-                  Open {tab}
+                  {t("Open {0}", tab)}
                   <ArrowUpRightIcon className="size-3" />
                 </Button>
               ) : null}
@@ -191,16 +194,15 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
           <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
-            Previous employers
+            {t("Previous employers")}
           </h4>
           <p className="text-muted-foreground truncate text-xs">
-            Three-year lookback · 49 CFR 391.23
+            {t("Three-year lookback · 49 CFR 391.23")}
           </p>
         </div>
         {file.verifications.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-            No previous employer has been recorded. Until one is, the three-year investigation has
-            not been made.
+            {t("No previous employer has been recorded. Until one is, the three-year investigation has not been made.")}
           </p>
         ) : (
           <ul className="divide-border divide-y rounded-lg border">

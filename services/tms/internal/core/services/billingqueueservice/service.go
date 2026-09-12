@@ -409,7 +409,7 @@ func (s *service) AssignBiller(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			"Cannot assign a biller to a billing queue item in "+string(entity.Status)+" status",
+			"Cannot assign a biller to a billing queue item in {0} status", string(entity.Status),
 		)
 	}
 
@@ -491,7 +491,7 @@ func (s *service) UpdateStatus(
 			return errortypes.NewValidationError(
 				"status",
 				errortypes.ErrInvalidOperation,
-				"Cannot transition from "+string(entity.Status)+" to "+string(req.NewStatus),
+				"Cannot transition from {0} to {1}", string(entity.Status), string(req.NewStatus),
 			)
 		}
 

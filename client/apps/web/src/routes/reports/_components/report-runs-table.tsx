@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   downloadReportRun,
@@ -21,6 +22,8 @@ function isDownloadable(run: ReportRun): boolean {
 }
 
 export default function ReportRunsTable({ definitionId }: { definitionId?: string }) {
+  const t = useT();
+
   const cancelRun = useCancelReportRun();
   const { allowed: canExport } = usePermission(Resource.Report, Operation.Export);
 
@@ -47,12 +50,12 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
         hidden: (row) => !isReportRunActive(row.original.status),
         onClick: (row) =>
           cancelRun.mutateAsync(row.original.id).then(
-            () => toast.success("Report run canceled"),
-            (error) => toast.error(graphQLErrorMessage(error, "Failed to cancel the run")),
+            () => toast.success(t("Report run canceled")),
+            (error) => toast.error(graphQLErrorMessage(error, t("Failed to cancel the run"))),
           ),
       },
     ],
-    [canExport, cancelRun],
+    [canExport, cancelRun, t],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
@@ -13,6 +14,8 @@ export function EquipmentTypePanel({
   mode,
   row,
 }: DataTablePanelProps<EquipmentType>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(equipmentTypeSchema),
     defaultValues: {
@@ -33,7 +36,7 @@ export function EquipmentTypePanel({
         row={row}
         form={form}
         queryKey="equipment-type-list"
-        title="Equipment Type"
+        title={t("Equipment Type")}
         fieldKey="code"
         formComponent={<EquipTypeForm />}
         mutationFn={(values, currentRow) => {
@@ -53,7 +56,7 @@ export function EquipmentTypePanel({
       onOpenChange={onOpenChange}
       form={form}
       queryKey="equipment-type-list"
-      title="Equipment Type"
+      title={t("Equipment Type")}
       formComponent={<EquipTypeForm />}
       mutationFn={(values) => apiService.equipmentTypeService.create(values)}
     />

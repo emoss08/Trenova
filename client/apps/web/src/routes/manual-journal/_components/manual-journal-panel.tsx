@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -40,6 +41,8 @@ function CreatePanel({
   open,
   onOpenChange,
 }: Pick<DataTablePanelProps<ManualJournalRow>, "open" | "onOpenChange">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<JournalFormValues>({
@@ -65,7 +68,7 @@ function CreatePanel({
     form,
     resourceName: "manual journal",
     onSuccess: () => {
-      toast.success("Draft created");
+      toast.success(t("Draft created"));
       void queryClient.invalidateQueries({ queryKey: ["manual-journal-list"] });
       onOpenChange(false);
       form.reset();
@@ -77,12 +80,12 @@ function CreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       size="xl"
-      title="New Manual Journal"
-      description="Create a new manual journal entry draft."
+      title={t("New Manual Journal")}
+      description={t("Create a new manual journal entry draft.")}
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             type="submit"
@@ -90,7 +93,7 @@ function CreatePanel({
             isLoading={isPending}
             disabled={isPending}
           >
-            Create Draft
+            {t("Create Draft")}
           </Button>
         </>
       }
@@ -112,6 +115,8 @@ function EditPanel({
   onOpenChange,
   row,
 }: Pick<DataTablePanelProps<ManualJournalRow>, "open" | "onOpenChange" | "row">) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [rejectReason, setRejectReason] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -157,7 +162,7 @@ function EditPanel({
       resourceName: "manual journal",
       onSuccess: () => {
         invalidateQueries();
-        toast.success("Draft updated");
+        toast.success(t("Draft updated"));
       },
     },
   );
@@ -167,7 +172,7 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success("Journal submitted for approval");
+      toast.success(t("Journal submitted for approval"));
     },
   });
 
@@ -176,7 +181,7 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success("Journal approved");
+      toast.success(t("Journal approved"));
     },
   });
 
@@ -185,7 +190,7 @@ function EditPanel({
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
-      toast.success("Journal posted");
+      toast.success(t("Journal posted"));
     },
   });
 
@@ -195,7 +200,7 @@ function EditPanel({
     onSuccess: () => {
       invalidateQueries();
       setShowRejectInput(false);
-      toast.success("Journal rejected");
+      toast.success(t("Journal rejected"));
     },
   });
 
@@ -205,14 +210,14 @@ function EditPanel({
     onSuccess: () => {
       invalidateQueries();
       setShowCancelInput(false);
-      toast.success("Journal cancelled");
+      toast.success(t("Journal cancelled"));
     },
   });
 
   const footer = isDraft ? (
     <>
       <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-        Cancel
+        {t("Cancel")}
       </Button>
       <Button
         type="submit"
@@ -220,7 +225,7 @@ function EditPanel({
         isLoading={saveMutation.isPending}
         disabled={saveMutation.isPending}
       >
-        Save Draft
+        {t("Save Draft")}
       </Button>
       <Button
         type="button"
@@ -230,12 +235,12 @@ function EditPanel({
         isLoading={submitMutation.isPending}
       >
         <SendIcon className="mr-1.5 size-3.5" />
-        Submit
+        {t("Submit")}
       </Button>
     </>
   ) : (
     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-      Close
+      {t("Close")}
     </Button>
   );
 
@@ -245,7 +250,7 @@ function EditPanel({
       onOpenChange={onOpenChange}
       size="xl"
       title={journal?.requestNumber ? `Journal ${journal.requestNumber}` : "Manual Journal"}
-      description="View or manage this manual journal entry."
+      description={t("View or manage this manual journal entry.")}
       headerActions={status ? <AccountingStatusBadge status={status} /> : undefined}
       footer={footer}
     >
@@ -269,7 +274,7 @@ function EditPanel({
             <>
               <Separator />
               <div className="space-y-3">
-                <h4 className="text-xs font-semibold">Actions</h4>
+                <h4 className="text-xs font-semibold">{t("Actions")}</h4>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
@@ -278,19 +283,19 @@ function EditPanel({
                     disabled={approveMutation.isPending}
                   >
                     <CheckIcon className="mr-1.5 size-3.5" />
-                    Approve
+                    {t("Approve")}
                   </Button>
                   {!showRejectInput ? (
                     <Button size="sm" variant="outline" onClick={() => setShowRejectInput(true)}>
                       <XIcon className="mr-1.5 size-3.5" />
-                      Reject
+                      {t("Reject")}
                     </Button>
                   ) : (
                     <div className="w-full space-y-2">
                       <textarea
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder="Rejection reason..."
+                        placeholder={t("Rejection reason...")}
                         className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                         rows={2}
                       />
@@ -301,7 +306,7 @@ function EditPanel({
                           onClick={() => rejectMutation.mutate(undefined)}
                           disabled={!rejectReason.trim() || rejectMutation.isPending}
                         >
-                          Confirm Reject
+                          {t("Confirm Reject")}
                         </Button>
                         <Button
                           size="sm"
@@ -311,7 +316,7 @@ function EditPanel({
                             setRejectReason("");
                           }}
                         >
-                          Cancel
+                          {t("Cancel")}
                         </Button>
                       </div>
                     </div>
@@ -325,7 +330,7 @@ function EditPanel({
             <>
               <Separator />
               <div className="space-y-3">
-                <h4 className="text-xs font-semibold">Actions</h4>
+                <h4 className="text-xs font-semibold">{t("Actions")}</h4>
                 <Button
                   size="sm"
                   onClick={() => postMutation.mutate(undefined)}
@@ -333,7 +338,7 @@ function EditPanel({
                   isLoading={postMutation.isPending}
                 >
                   <StampIcon className="mr-1.5 size-3.5" />
-                  Post to GL
+                  {t("Post to GL")}
                 </Button>
               </div>
             </>
@@ -345,7 +350,7 @@ function EditPanel({
             <>
               <Separator />
               <Button size="sm" variant="outline" onClick={() => setShowCancelInput(true)}>
-                Cancel Journal
+                {t("Cancel Journal")}
               </Button>
             </>
           ) : null}
@@ -357,7 +362,7 @@ function EditPanel({
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Cancel reason..."
+                  placeholder={t("Cancel reason...")}
                   className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                   rows={2}
                 />
@@ -368,7 +373,7 @@ function EditPanel({
                     onClick={() => cancelMutation.mutate(undefined)}
                     disabled={!cancelReason.trim() || cancelMutation.isPending}
                   >
-                    Confirm Cancel
+                    {t("Confirm Cancel")}
                   </Button>
                   <Button
                     size="sm"
@@ -378,7 +383,7 @@ function EditPanel({
                       setCancelReason("");
                     }}
                   >
-                    Dismiss
+                    {t("Dismiss")}
                   </Button>
                 </div>
               </div>

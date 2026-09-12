@@ -1,0 +1,10 @@
+{
+  "source": "en",
+  "locales": ["en", "es", "zh-TW", "zh-CN"],
+  "names": {
+    "en": "English",
+    "es": "Español",
+    "zh-TW": "繁體中文",
+    "zh-CN": "简体中文"
+  }
+}

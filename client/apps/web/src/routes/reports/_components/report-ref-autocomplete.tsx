@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -185,6 +186,8 @@ export function ReportRefMultiAutocomplete({
   values,
   onChange,
 }: ReportRefMultiAutocompleteProps) {
+  const t = useT();
+
   const config = REPORT_REF_ENTITIES[entityKey];
   const [labels, setLabels] = useState<Record<string, string>>({});
 
@@ -217,7 +220,7 @@ export function ReportRefMultiAutocomplete({
                 variant="ghost"
                 size="icon"
                 className="size-4"
-                aria-label="Remove value"
+                aria-label={t("Remove value")}
                 onClick={() => onChange(values.filter((v) => v !== id))}
               >
                 <XIcon className="size-3" />

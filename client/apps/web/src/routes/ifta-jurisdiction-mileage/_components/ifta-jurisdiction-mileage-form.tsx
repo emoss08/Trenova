@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { TractorAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { IftaJurisdictionSelectField } from "@/components/fields/ifta-jurisdiction-select-field";
@@ -32,6 +33,8 @@ export function IftaJurisdictionMileageForm({
   source,
   shipmentMoveId,
 }: IftaJurisdictionMileageFormProps) {
+  const t = useT();
+
   const { control } = useFormContext<IftaMileageEntryFormValues>();
 
   return (
@@ -40,59 +43,56 @@ export function IftaJurisdictionMileageForm({
         <Alert>
           <RouteIcon className="size-4" />
           <AlertTitle>
-            Written by {source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : "the system"}
+            {t("Written by {0}", source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : t("the system"))}
           </AlertTitle>
           <AlertDescription>
-            These miles came from the distance provider or telematics, not from a person, so they
-            are read-only here. To correct a move&apos;s miles, add a manual entry for the same move
-            and it replaces these rows on the return.
-            {shipmentMoveId ? ` Move ${shipmentMoveId}.` : ""}
+            {t("These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}", shipmentMoveId ? ` ${t("Move {0}.", shipmentMoveId)}` : "")}
           </AlertDescription>
         </Alert>
       ) : null}
 
       <FormSection
-        title="Where and when"
-        description="Which tractor ran the miles, in which jurisdiction, and on what day."
+        title={t("Where and when")}
+        description={t("Which tractor ran the miles, in which jurisdiction, and on what day.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <TractorAutocompleteField<IftaMileageEntryFormValues>
               control={control}
               name="tractorId"
-              label="Tractor"
+              label={t("Tractor")}
               rules={{ required: true }}
-              placeholder="Select a tractor"
+              placeholder={t("Select a tractor")}
               disabled={computed}
-              description="The unit that ran the miles. Its fuel type decides which fleet MPG applies."
+              description={t("The unit that ran the miles. Its fuel type decides which fleet MPG applies.")}
             />
           </FormControl>
           <FormControl>
             <IftaJurisdictionSelectField<IftaMileageEntryFormValues>
               control={control}
               name="jurisdictionId"
-              label="Jurisdiction"
+              label={t("Jurisdiction")}
               rules={{ required: true }}
-              placeholder="Select a jurisdiction"
+              placeholder={t("Select a jurisdiction")}
               isReadOnly={computed}
-              description="The state or province the miles were run in, not where the trip started."
+              description={t("The state or province the miles were run in, not where the trip started.")}
             />
           </FormControl>
           <FormControl cols="full">
             <AutoCompleteDateField
               control={control}
               name="traveledAt"
-              label="Travelled on"
+              label={t("Travelled on")}
               rules={{ required: true }}
-              placeholder="Day the miles were run"
+              placeholder={t("Day the miles were run")}
               readOnly={computed}
-              description="Fixes the quarter the miles belong to. Cannot be in the future."
+              description={t("Fixes the quarter the miles belong to. Cannot be in the future.")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
-      <FormSection title="Miles" description="How far, and whether the tractor was under load.">
+      <FormSection title={t("Miles")} description={t("How far, and whether the tractor was under load.")}>
         <FormGroup cols={2}>
           <FormControl cols="full">
             <NumberField
@@ -103,30 +103,25 @@ export function IftaJurisdictionMileageForm({
               thousandSeparator
               label={
                 <span className="inline-flex items-center gap-1">
-                  Miles
-                  <InfoPopover title="Manual miles and the return">
-                    Routed miles are captured from every completed move automatically. A manual
-                    entry is for travel the system did not see, such as bobtailing to a shop or
-                    repositioning between customers, and is added to the jurisdiction&apos;s line on
-                    the quarter&apos;s return at its next recompute. Manual miles are never
-                    subtracted, so do not enter miles a move already carries unless the entry names
-                    that move.
+                  {t("Miles")}
+                  <InfoPopover title={t("Manual miles and the return")}>
+                    {t("Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.")}
                   </InfoPopover>
                 </span>
               }
               placeholder="412.50"
               rules={{ required: true }}
               readOnly={computed}
-              description="Above zero, up to two decimals, as read from the odometer or trip sheet."
+              description={t("Above zero, up to two decimals, as read from the odometer or trip sheet.")}
             />
           </FormControl>
           <FormControl cols="full">
             <SwitchField
               control={control}
               name="loaded"
-              label="Under load"
-              description="Leave on when the trailer carried freight. Turn off for empty or bobtail miles."
-              tooltip="Loaded and empty miles are both taxable; the split is kept for the fleet's own reporting."
+              label={t("Under load")}
+              description={t("Leave on when the trailer carried freight. Turn off for empty or bobtail miles.")}
+              tooltip={t("Loaded and empty miles are both taxable; the split is kept for the fleet's own reporting.")}
               position="left"
               outlined
               readOnly={computed}
@@ -136,16 +131,16 @@ export function IftaJurisdictionMileageForm({
       </FormSection>
 
       <FormSection
-        title="Notes"
-        description="Why these miles exist, so an auditor can see the reason without asking."
+        title={t("Notes")}
+        description={t("Why these miles exist, so an auditor can see the reason without asking.")}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="notes"
-              label="Notes"
-              placeholder="e.g. Deadhead from Amarillo to the Dallas yard after the drop"
+              label={t("Notes")}
+              placeholder={t("e.g. Deadhead from Amarillo to the Dallas yard after the drop")}
               maxLength={IFTA_MILEAGE_NOTES_MAX}
               readOnly={computed}
               description={`Up to ${IFTA_MILEAGE_NOTES_MAX} characters.`}

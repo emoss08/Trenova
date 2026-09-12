@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import type { StatementSection } from "@/types/income-statement";
 import { cn } from "@trenova/shared/lib/utils";
@@ -8,18 +9,20 @@ type FinancialReportSectionProps = {
 };
 
 export function FinancialReportSection({ section, className }: FinancialReportSectionProps) {
+  const t = useT();
+
   if (!section) return null;
 
   return (
     <div className={cn("space-y-1", className)}>
-      <h3 className="text-sm font-semibold">{section.label}</h3>
+      <h3 className="text-sm font-semibold">{t(section.label)}</h3>
       <div className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
-              <th className="px-3 py-2 text-xs font-medium">Account Code</th>
-              <th className="px-3 py-2 text-xs font-medium">Account Name</th>
-              <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
+              <th className="px-3 py-2 text-xs font-medium">{t("Account Code")}</th>
+              <th className="px-3 py-2 text-xs font-medium">{t("Account Name")}</th>
+              <th className="px-3 py-2 text-right text-xs font-medium">{t("Amount")}</th>
             </tr>
           </thead>
           <tbody>
@@ -36,7 +39,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
           <tfoot className="bg-muted/30 border-t font-medium">
             <tr>
               <td colSpan={2} className="px-3 py-2 text-right text-xs">
-                Total {section.label}
+                {t("Total {0}", section.label)}
               </td>
               <td className="px-3 py-2 text-right">
                 <AmountDisplay

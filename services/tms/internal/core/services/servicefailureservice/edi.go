@@ -33,7 +33,7 @@ func (s *service) preflightServiceFailure214(
 		return errortypes.NewValidationError(
 			"edi",
 			errortypes.ErrInvalidOperation,
-			"Service failure EDI 214 preflight failed: "+err.Error(),
+			"Service failure EDI 214 preflight failed: {0}", err.Error(),
 		)
 	}
 	if result.Action != services.ServiceFailureEDIActionBlocked || !result.Mandatory {

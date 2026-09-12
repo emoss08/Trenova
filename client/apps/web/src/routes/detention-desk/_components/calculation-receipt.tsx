@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
@@ -50,12 +51,14 @@ export function CalculationReceipt({
   currency = "USD",
   className,
 }: CalculationReceiptProps) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   if (!trace || trace.steps.length === 0) {
     return (
       <p className="text-muted-foreground text-xs">
-        No calculation has been recorded for this stop yet.
+        {t("No calculation has been recorded for this stop yet.")}
       </p>
     );
   }
@@ -64,11 +67,11 @@ export function CalculationReceipt({
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          How this charge was calculated
+          {t("How this charge was calculated")}
         </h4>
         <div className="flex items-center gap-2">
           <span className="text-2xs text-muted-foreground/70 tabular-nums">
-            engine {trace.engineVersion}
+            {t("engine {0}", trace.engineVersion)}
           </span>
           <Button
             size="xxs"
@@ -76,7 +79,7 @@ export function CalculationReceipt({
             className="text-2xs text-muted-foreground hover:text-foreground"
             onClick={() => void copy(receiptText(trace, currency))}
           >
-            {isCopied ? "Copied" : "Copy"}
+            {isCopied ? t("Copied") : t("Copy")}
           </Button>
         </div>
       </div>
@@ -95,7 +98,7 @@ export function CalculationReceipt({
               )}
             >
               <div className="min-w-0">
-                <p className={cn("text-xs", isFinal && "font-medium")}>{step.label}</p>
+                <p className={cn("text-xs", isFinal && "font-medium")}>{t(step.label)}</p>
                 {step.detail && <p className="text-2xs text-muted-foreground">{step.detail}</p>}
                 {step.term && <p className="text-2xs text-muted-foreground/70">{step.term}</p>}
               </div>

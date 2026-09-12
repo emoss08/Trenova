@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { AR_CEI_HEALTHY_THRESHOLD, AR_CEI_WARNING_THRESHOLD } from "@/lib/accounting-constants";
@@ -8,13 +9,15 @@ import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 
 export function CollectionsPerformanceCard() {
+  const t = useT();
+
   const { data: performance, isLoading } = useQuery(queries.ar.collectionPerformance());
 
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">Collections performance</CardTitle>
-        <span className="text-muted-foreground text-xs">trailing 91 days</span>
+        <CardTitle className="text-sm font-medium">{t("Collections performance")}</CardTitle>
+        <span className="text-muted-foreground text-xs">{t("trailing 91 days")}</span>
       </CardHeader>
       <CardContent className="p-4">
         {isLoading || !performance ? (
@@ -28,6 +31,8 @@ export function CollectionsPerformanceCard() {
 }
 
 function PerformanceBody({ performance }: { performance: ARCollectionPerformance }) {
+  const t = useT();
+
   const totals = performance.totals;
   const collectedShare =
     totals.creditSalesMinor > 0
@@ -51,7 +56,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Collection Effectiveness
+            {t("Collection Effectiveness")}
           </p>
           <p className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", ceiClass)}>
             {performance.cei.toFixed(0)}%
@@ -67,20 +72,20 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
         </div>
         <div>
           <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            Avg Days to Pay
+            {t("Avg Days to Pay")}
           </p>
           <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
-            {totals.avgDaysToPay.toFixed(1)}d
+            {t("{0}d", totals.avgDaysToPay.toFixed(1))}
           </p>
           <p className="text-muted-foreground mt-2 text-[11px] tabular-nums">
-            {totals.applicationCount} applications in period
+            {t("{0} applications in period", totals.applicationCount)}
           </p>
         </div>
       </div>
 
       <div>
         <div className="flex items-baseline justify-between text-xs">
-          <span className="text-muted-foreground">Collected vs invoiced</span>
+          <span className="text-muted-foreground">{t("Collected vs invoiced")}</span>
           <span className="font-medium tabular-nums">
             {formatCurrency(totals.collectedMinor / 100)} /{" "}
             {formatCurrency(totals.creditSalesMinor / 100)}
@@ -98,19 +103,19 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
 
       <div className="bg-muted/30 grid grid-cols-3 divide-x rounded-md border">
         <RateStat
-          label="Write-off"
+          label={t("Write-off")}
           value={`${(performance.writeOffRatio * 100).toFixed(1)}%`}
           detail={formatCurrency(totals.shortPayMinor / 100)}
           alert={performance.writeOffRatio > 0.02}
         />
         <RateStat
-          label="Short-pay rate"
+          label={t("Short-pay rate")}
           value={`${(performance.shortPayRate * 100).toFixed(1)}%`}
           detail={`${totals.shortPayApplicationCount} of ${totals.applicationCount || 0}`}
           alert={performance.shortPayRate > 0.1}
         />
         <RateStat
-          label="Dispute rate"
+          label={t("Dispute rate")}
           value={`${(performance.disputeRate * 100).toFixed(1)}%`}
           detail={`${totals.disputedInvoiceCount} invoices`}
           alert={performance.disputeRate > 0.05}

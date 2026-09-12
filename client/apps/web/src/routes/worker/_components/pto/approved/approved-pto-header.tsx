@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { BarChart3Icon, CalendarDaysIcon } from "lucide-react";
@@ -17,6 +18,8 @@ const VIEW_ITEMS = [
 ];
 
 export function ApprovedPTOHeader() {
+  const t = useT();
+
   const [, setSearchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
   const [{ viewType }, setViewType] = useQueryStates(ptoViewTypeSearchParamsParser);
   const { defaultValues } = usePTOFilters();
@@ -46,13 +49,13 @@ export function ApprovedPTOHeader() {
   };
 
   return (
-    <HeaderContent title="Approved PTO Overview">
+    <HeaderContent title={t("Approved PTO Overview")}>
       <SegmentedControl<PTOViewType>
         items={VIEW_ITEMS}
         value={viewType}
         className="h-full"
         onValueChange={(value) => void setViewType({ viewType: value })}
-        aria-label="PTO view"
+        aria-label={t("PTO view")}
       />
       <PTOFilterPopover
         defaultValues={defaultValues}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DEFAULT_ZOOM } from "@trenova/shared/lib/constants";
@@ -6,6 +7,8 @@ import { MinusIcon, PlusIcon } from "lucide-react";
 import { useCallback } from "react";
 
 export function MapZoomControls() {
+  const t = useT();
+
   const map = useMap();
 
   const zoomIn = useCallback(() => {
@@ -34,7 +37,7 @@ export function MapZoomControls() {
           >
             <PlusIcon className="size-3.5" />
           </TooltipTrigger>
-          <TooltipContent side="left">Zoom in</TooltipContent>
+          <TooltipContent side="left">{t("Zoom in")}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
@@ -49,7 +52,7 @@ export function MapZoomControls() {
           >
             <MinusIcon className="size-3.5" />
           </TooltipTrigger>
-          <TooltipContent side="left">Zoom out</TooltipContent>
+          <TooltipContent side="left">{t("Zoom out")}</TooltipContent>
         </Tooltip>
       </div>
     </MapControl>

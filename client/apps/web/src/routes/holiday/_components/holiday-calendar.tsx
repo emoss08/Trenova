@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -61,6 +62,8 @@ type DialogState = {
 };
 
 export function HolidayCalendar() {
+  const t = useT();
+
   const thisYear = new Date().getUTCFullYear();
   const [year, setYear] = useState(thisYear);
   const [dialog, setDialog] = useState<DialogState>({ open: false, entry: null });
@@ -108,7 +111,7 @@ export function HolidayCalendar() {
       await invalidate();
     },
     onError: (error: Error) => {
-      toast.error("Could not remove the date", { description: error.message });
+      toast.error(t("Could not remove the date"), { description: error.message });
     },
   });
 
@@ -139,7 +142,7 @@ export function HolidayCalendar() {
               variant="ghost"
               size="icon"
               className="size-7"
-              aria-label="Previous year"
+              aria-label={t("Previous year")}
               onClick={() => setYear((current) => current - 1)}
             >
               <ChevronLeftIcon className="size-4" />
@@ -150,7 +153,7 @@ export function HolidayCalendar() {
               variant="ghost"
               size="icon"
               className="size-7"
-              aria-label="Next year"
+              aria-label={t("Next year")}
               onClick={() => setYear((current) => current + 1)}
             >
               <ChevronRightIcon className="size-4" />
@@ -163,16 +166,14 @@ export function HolidayCalendar() {
             disabled={year === thisYear}
             onClick={() => setYear(thisYear)}
           >
-            This year
+            {t("This year")}
           </Button>
           <p className="text-muted-foreground hidden text-xs sm:block">
             {holidayCount} {holidayCount === 1 ? "holiday" : "holidays"} · {blackoutCount}{" "}
             {blackoutCount === 1 ? "blackout" : "blackouts"}
           </p>
-          <InfoPopover title="How the calendar is used">
-            A time-off request that crosses a blackout is refused outright. A holiday inside a
-            request is not charged against the balance, but only under a policy that does not count
-            weekends; a policy that charges every calendar day charges holidays too.
+          <InfoPopover title={t("How the calendar is used")}>
+            {t("A time-off request that crosses a blackout is refused outright. A holiday inside a request is not charged against the balance, but only under a policy that does not count weekends; a policy that charges every calendar day charges holidays too.")}
           </InfoPopover>
         </div>
         <div className="flex items-center gap-3">
@@ -180,7 +181,7 @@ export function HolidayCalendar() {
           {canCreate ? (
             <Button type="button" size="sm" onClick={() => openCreate()}>
               <PlusIcon className="size-3.5" />
-              Add date
+              {t("Add date")}
             </Button>
           ) : null}
         </div>
@@ -194,7 +195,7 @@ export function HolidayCalendar() {
         </div>
       ) : isError ? (
         <div className="text-destructive rounded-lg border border-dashed p-6 text-center text-sm">
-          The calendar could not be loaded. Try again in a moment.
+          {t("The calendar could not be loaded. Try again in a moment.")}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
@@ -216,10 +217,10 @@ export function HolidayCalendar() {
         occurrences.length === 0 ? (
           <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center text-sm">
             <CalendarDaysIcon className="size-6" />
-            <p>Nothing on the calendar for {year}.</p>
+            <p>{t("Nothing on the calendar for {0}.", year)}</p>
             {canCreate ? (
               <Button type="button" variant="outline" size="sm" onClick={() => openCreate()}>
-                Add the first date
+                {t("Add the first date")}
               </Button>
             ) : null}
           </div>
@@ -262,16 +263,16 @@ export function HolidayCalendar() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {pendingDelete?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Remove {0}?", pendingDelete?.name)}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete?.kind === "Blackout"
-                ? "Workers will be able to request this date off again."
-                : "Policies that skip weekends will start counting this date against requests."}
-              {pendingDelete?.recursAnnually ? " This applies to every year." : ""}
+                ? t("Workers will be able to request this date off again.")
+                : t("Policies that skip weekends will start counting this date against requests.")}
+              {pendingDelete?.recursAnnually ? ` ${t("This applies to every year.")}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogCancel>{t("Keep")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={removeMutation.isPending}
@@ -280,7 +281,7 @@ export function HolidayCalendar() {
                 if (pendingDelete) removeMutation.mutate(pendingDelete);
               }}
             >
-              Remove
+              {t("Remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -290,15 +291,17 @@ export function HolidayCalendar() {
 }
 
 function Legend() {
+  const t = useT();
+
   return (
     <div className="text-muted-foreground hidden items-center gap-3 text-[11px] sm:flex">
       <span className="flex items-center gap-1">
         <span className="size-2 rounded-full bg-emerald-500" />
-        Holidays
+        {t("Holidays")}
       </span>
       <span className="flex items-center gap-1">
         <span className="size-2 rounded-full bg-rose-500" />
-        Blackouts
+        {t("Blackouts")}
       </span>
     </div>
   );
@@ -382,6 +385,8 @@ function EntryRow({
   onEdit: () => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const { entry } = occurrence;
   const isBlackout = entry.kind === "Blackout";
   return (
@@ -408,7 +413,7 @@ function EntryRow({
         {entry.recursAnnually ? (
           <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
             <RepeatIcon className="size-3" />
-            Every year
+            {t("Every year")}
           </Badge>
         ) : null}
         <Badge

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -15,6 +16,8 @@ type UserRolesSectionProps = {
 };
 
 export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRolesSectionProps) {
+  const t = useT();
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: rolesResponse, isLoading } = useQuery({
@@ -57,7 +60,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
       <div className="relative">
         <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
-          placeholder="Search roles..."
+          placeholder={t("Search roles...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="h-9 pl-9 text-sm"
@@ -77,7 +80,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
                   onClick={() => handleToggleRole(roleId)}
                   className="hover:bg-muted-foreground/20 ml-1 rounded-full p-0.5"
                 >
-                  <span className="sr-only">Remove</span>
+                  <span className="sr-only">{t("Remove")}</span>
                   <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -96,7 +99,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
         {filteredRoles.length === 0 ? (
           <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-            {searchQuery ? "No roles found" : "No roles available"}
+            {searchQuery ? t("No roles found") : t("No roles available")}
           </div>
         ) : (
           <div className="divide-y">
@@ -122,6 +125,8 @@ type RoleRowProps = {
 };
 
 function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
+  const t = useT();
+
   return (
     <label
       className={cn(
@@ -135,7 +140,7 @@ function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
           <span className="text-sm font-medium">{role.name}</span>
         </div>
         {role.description && (
-          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{role.description}</p>
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{t(role.description)}</p>
         )}
       </div>
     </label>

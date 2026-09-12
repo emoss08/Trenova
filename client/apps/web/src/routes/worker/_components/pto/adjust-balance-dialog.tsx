@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -40,6 +41,8 @@ export function AdjustBalanceDialog({
   balances,
   onAdjusted,
 }: AdjustBalanceDialogProps) {
+  const t = useT();
+
   const tracked = useMemo(() => balances.filter((balance) => balance.tracked), [balances]);
   const form = useForm<AdjustPTOBalanceFormValues>({
     resolver: zodResolver(adjustPtoBalanceFormSchema) as Resolver<AdjustPTOBalanceFormValues>,
@@ -88,7 +91,7 @@ export function AdjustBalanceDialog({
         note: values.note,
       }),
     onSuccess: (entry) => {
-      toast.success("Balance adjusted", {
+      toast.success(t("Balance adjusted"), {
         description: `${entry.ptoType} balance is now ${entry.balanceAfterDays} days.`,
       });
       onAdjusted?.();
@@ -107,10 +110,9 @@ export function AdjustBalanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adjust PTO Balance</DialogTitle>
+          <DialogTitle>{t("Adjust PTO Balance")}</DialogTitle>
           <DialogDescription>
-            Post a manual correction to the ledger. Positive amounts add days, negative amounts
-            remove them. The note is kept on the ledger and in the audit log.
+            {t("Post a manual correction to the ledger. Positive amounts add days, negative amounts remove them. The note is kept on the ledger and in the audit log.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -126,19 +128,19 @@ export function AdjustBalanceDialog({
                 <SelectField<AdjustPTOBalanceFormValues>
                   control={control}
                   name="ptoType"
-                  label="PTO type"
-                  placeholder="Pick a PTO type"
+                  label={t("PTO type")}
+                  placeholder={t("Pick a PTO type")}
                   options={ptoTypeChoices}
                   rules={{ required: true }}
-                  description="The balance this correction is posted to."
+                  description={t("The balance this correction is posted to.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<AdjustPTOBalanceFormValues>
                   control={control}
                   name="amountDays"
-                  label="Amount (days)"
-                  placeholder="e.g. 2 or -1.5"
+                  label={t("Amount (days)")}
+                  placeholder={t("e.g. 2 or -1.5")}
                   rules={{ required: true }}
                   description={
                     current
@@ -151,36 +153,36 @@ export function AdjustBalanceDialog({
                 <AutoCompleteDateField<AdjustPTOBalanceFormValues>
                   control={control}
                   name="effectiveAt"
-                  label="Effective date"
-                  placeholder="Today"
+                  label={t("Effective date")}
+                  placeholder={t("Today")}
                   rules={{ required: true }}
-                  description="The date the ledger shows the correction taking effect."
+                  description={t("The date the ledger shows the correction taking effect.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<AdjustPTOBalanceFormValues>
                   control={control}
                   name="note"
-                  label="Reason"
-                  placeholder="e.g. Credited 2 days for holiday worked"
+                  label={t("Reason")}
+                  placeholder={t("e.g. Credited 2 days for holiday worked")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description="Why the balance is being corrected; it stays on the ledger entry."
+                  description={t("Why the balance is being corrected; it stays on the ledger entry.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="button"
                 onClick={() => void handleSubmit(onSubmit)()}
                 isLoading={isPending}
-                loadingText="Posting..."
+                loadingText={t("Posting...")}
                 // disabled={tracked.length === 0}
               >
-                Post Adjustment
+                {t("Post Adjustment")}
               </Button>
             </DialogFooter>
           </Form>

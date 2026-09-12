@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -100,6 +101,8 @@ function IftaMileageEntryCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const resolver = useIftaMileageEntryResolver();
   const form = useForm<IftaMileageEntryFormValues>({
     resolver,
@@ -110,8 +113,8 @@ function IftaMileageEntryCreatePanel({
     <FormCreatePanel<IftaMileageEntryFormValues, IftaMileageEntryRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Jurisdiction Mileage"
-      description="Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute."
+      title={t("Jurisdiction Mileage")}
+      description={t("Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute.")}
       queryKey={IFTA_MILEAGE_ENTRY_LIST_KEY}
       form={form}
       size="md"
@@ -133,6 +136,8 @@ function IftaMileageEntryEditPanel({
   onOpenChange: (open: boolean) => void;
   row: IftaMileageEntryRow;
 }) {
+  const t = useT();
+
   const resolver = useIftaMileageEntryResolver();
   const computed = isComputedEntry(row);
   const formRow = {
@@ -149,11 +154,10 @@ function IftaMileageEntryEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Jurisdiction Mileage"
+      title={t("Jurisdiction Mileage")}
       titleComponent={(record) => (
         <span>
-          {record.tractor?.code ? `${record.tractor.code} · ` : ""}
-          {record.jurisdiction.code} · {record.miles} mi
+          {t("{0}{1} · {2} mi", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.miles)}
         </span>
       )}
       queryKey={IFTA_MILEAGE_ENTRY_LIST_KEY}

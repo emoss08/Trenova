@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import {
@@ -87,7 +88,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
           <div className="flex flex-col">
             <span>{name}</span>
             {dbaName ? (
-              <span className="text-2xs text-muted-foreground">DBA: {dbaName}</span>
+              <span className="text-2xs text-muted-foreground">{translate("DBA: {0}", dbaName)}</span>
             ) : null}
           </div>
         );

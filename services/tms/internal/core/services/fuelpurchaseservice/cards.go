@@ -128,8 +128,9 @@ func (s *Service) UpdateCard(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"A card that is "+strings.ToLower(stored.Status.Label())+
-				" cannot be made "+strings.ToLower(card.Status.Label()),
+			"A card that is {0} cannot be made {1}",
+			strings.ToLower(stored.Status.Label()),
+			strings.ToLower(card.Status.Label()),
 		)
 	}
 

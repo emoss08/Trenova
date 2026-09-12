@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { usePermission } from "@/hooks/use-permission";
@@ -40,6 +41,8 @@ function Section({
 }
 
 export function AccountingDashboardPage() {
+  const t = useT();
+
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   // The cards each draw their own zeros for a quiet book; only a tenant that
   // has never invoiced gets the sketch instead, so the KPI strip's own query
@@ -58,7 +61,7 @@ export function AccountingDashboardPage() {
           <Link to="/accounting/ar/payments?panelType=create">
             <Button size="sm">
               <HandCoinsIcon className="size-4" />
-              Record Payment
+              {t("Record Payment")}
             </Button>
           </Link>
         ) : undefined,
@@ -67,7 +70,7 @@ export function AccountingDashboardPage() {
       {neverInvoiced ? (
         <div className="mx-4 mt-3 mb-4">
           <AccountingDashboardEmpty
-            title="Nothing on the books yet"
+            title={t("Nothing on the books yet")}
             description={
               "Receivables begin when the first invoice posts from billing. Once one does, the " +
               "balance, days sales outstanding, aging and collections figures fill in here."

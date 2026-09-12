@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -12,6 +13,8 @@ import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-co
 import { useFormContext } from "react-hook-form";
 
 export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<ServiceFailureReasonCode>();
 
   return (
@@ -21,8 +24,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <SwitchField
             control={control}
             name="active"
-            label="Active"
-            description="Controls whether this reason is available for detected and manual service failures."
+            label={t("Active")}
+            description={t("Controls whether this reason is available for detected and manual service failures.")}
             outlined
             position="left"
             disabled={disabled}
@@ -32,11 +35,11 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <InputField
             control={control}
             name="code"
-            label="Reason Code"
+            label={t("Reason Code")}
             placeholder="LATE_DELIVERY"
             rules={{ required: true }}
             maxLength={64}
-            description="Stable identifier used for reporting, audit, and integrations."
+            description={t("Stable identifier used for reporting, audit, and integrations.")}
             disabled={disabled}
           />
         </FormControl>
@@ -44,11 +47,11 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <InputField
             control={control}
             name="label"
-            label="Display Name"
-            placeholder="Late Delivery"
+            label={t("Display Name")}
+            placeholder={t("Late Delivery")}
             rules={{ required: true }}
             maxLength={120}
-            description="Name shown to operations and billing users."
+            description={t("Name shown to operations and billing users.")}
             disabled={disabled}
           />
         </FormControl>
@@ -56,8 +59,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <SelectField
             control={control}
             name="category"
-            label="Category"
-            placeholder="Select Category"
+            label={t("Category")}
+            placeholder={t("Select Category")}
             options={serviceFailureReasonCategoryChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -67,8 +70,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <SelectField
             control={control}
             name="appliesTo"
-            label="Applies To"
-            placeholder="Select Stop Type"
+            label={t("Applies To")}
+            placeholder={t("Select Stop Type")}
             options={serviceFailureReasonCodeAppliesToChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -78,24 +81,24 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
           <TextareaField
             control={control}
             name="description"
-            label="Details"
-            placeholder="When should this reason be used?"
+            label={t("Details")}
+            placeholder={t("When should this reason be used?")}
             disabled={disabled}
           />
         </FormControl>
       </FormGroup>
 
       <FormSection
-        title="EDI Defaults"
-        description="Defaults used when building a service failure EDI 214 payload."
+        title={t("EDI Defaults")}
+        description={t("Defaults used when building a service failure EDI 214 payload.")}
       >
         <FormGroup cols={3}>
           <FormControl>
             <InputField
               control={control}
               name="defaultStatusCode"
-              label="Status Code"
-              placeholder="SD"
+              label={t("Status Code")}
+              placeholder={t("SD")}
               maxLength={3}
               disabled={disabled}
             />
@@ -104,8 +107,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <InputField
               control={control}
               name="defaultReasonCode"
-              label="Reason Code"
-              placeholder="NS"
+              label={t("Reason Code")}
+              placeholder={t("NS")}
               maxLength={3}
               disabled={disabled}
             />
@@ -114,8 +117,8 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <InputField
               control={control}
               name="defaultExceptionCode"
-              label="Exception Code"
-              placeholder="A3"
+              label={t("Exception Code")}
+              placeholder={t("A3")}
               maxLength={3}
               disabled={disabled}
             />
@@ -124,21 +127,21 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             <TextareaField
               control={control}
               name="defaultNote"
-              label="Default Note"
-              placeholder="Default note applied to detected failures"
+              label={t("Default Note")}
+              placeholder={t("Default note applied to detected failures")}
               disabled={disabled}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
-      <FormSection title="Ordering" description="Lower sort values appear first.">
+      <FormSection title={t("Ordering")} description={t("Lower sort values appear first.")}>
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
               control={control}
               name="sortOrder"
-              label="Sort Order"
+              label={t("Sort Order")}
               min={0}
               disabled={disabled}
             />

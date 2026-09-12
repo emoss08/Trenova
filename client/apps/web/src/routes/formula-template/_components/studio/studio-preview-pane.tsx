@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { TestDataEditor } from "@/components/formula-editor/test-data-editor";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -41,11 +42,13 @@ import { useFormContext, useWatch, type Path } from "react-hook-form";
 import type { LivePreviewState } from "./use-live-preview";
 
 function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
+  const t = useT();
+
   if (!guardrail.applied) {
     return (
       <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
         <ShieldIcon className="size-3" />
-        Within guardrails
+        {t("Within guardrails")}
       </div>
     );
   }
@@ -57,8 +60,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
     <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
       <ShieldIcon className="mt-0.5 size-3 shrink-0" />
       <span>
-        The formula produced {formatCurrency(guardrail.rawAmount)} and was clamped to the {bound}{" "}
-        charge{limit != null ? ` of ${formatCurrency(limit)}` : ""}.
+        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? ` ${t("of {0}", formatCurrency(limit))}` : "")}
       </span>
     </div>
   );
@@ -73,26 +75,30 @@ const ROUNDING_MODE_LABELS: Record<string, string> = {
 };
 
 function RoundingNotice({ rounding }: { rounding: RoundingResult }) {
+  const t = useT();
+
   const modeLabel = ROUNDING_MODE_LABELS[rounding.mode] ?? rounding.mode;
   const places = rounding.precision === 1 ? "1 decimal" : `${rounding.precision} decimals`;
 
   if (!rounding.applied) {
     return (
       <div className="text-muted-foreground text-2xs mt-1">
-        Rounding ({modeLabel}, {places}) made no change.
+        {t("Rounding ({0}, {1}) made no change.", modeLabel, places)}
       </div>
     );
   }
 
   return (
     <div className="text-muted-foreground text-2xs mt-1">
-      Rounded {modeLabel} to {places} from{" "}
+      {t("Rounded {0} to {1} from", modeLabel, places)}
       <span className="font-mono tabular-nums">{rounding.unroundedAmount.toFixed(6)}</span>.
     </div>
   );
 }
 
 function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
+  const t = useT();
+
   const { getValues, setValue } = useFormContext<FormulaTemplateFormValues>();
 
   const applyFix = (warning: ExpressionWarning) => {
@@ -108,7 +114,7 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
     <div className="mt-4 space-y-2">
       <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
         <AlertTriangleIcon className="size-3" />
-        Would fail on some shipments
+        {t("Would fail on some shipments")}
       </div>
       <div className="space-y-1.5">
         {warnings.map((warning) => (
@@ -119,7 +125,7 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
             <div className="min-w-0 space-y-0.5">
               <p>{warning.message}</p>
               {warning.scope !== "expression" && (
-                <p className="text-2xs opacity-80">In {warning.scope}</p>
+                <p className="text-2xs opacity-80">{t("In {0}", warning.scope)}</p>
               )}
             </div>
             <Button
@@ -129,7 +135,7 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
               className="shrink-0 font-mono"
               onClick={() => applyFix(warning)}
             >
-              Use {warning.suggestion}
+              {t("Use {0}", warning.suggestion)}
             </Button>
           </div>
         ))}
@@ -159,6 +165,8 @@ function BreakdownResultTable({
   rawAmount: number | null;
   guardrailApplied: boolean;
 }) {
+  const t = useT();
+
   const reconciliation =
     total !== null
       ? reconcileBreakdown({
@@ -173,7 +181,7 @@ function BreakdownResultTable({
     <div className="mt-4 space-y-2">
       <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
         <ListTree className="size-3" />
-        Breakdown
+        {t("Breakdown")}
       </div>
       <div className="bg-background/50 overflow-hidden rounded-md border">
         {items.map((item) => (
@@ -184,7 +192,7 @@ function BreakdownResultTable({
             <div className="min-w-0">
               <span className="font-mono text-xs">{item.name}</span>
               {item.label && (
-                <span className="text-muted-foreground ml-2 text-xs">{item.label}</span>
+                <span className="text-muted-foreground ml-2 text-xs">{t(item.label)}</span>
               )}
             </div>
             {item.error ? (
@@ -208,17 +216,17 @@ function BreakdownResultTable({
           >
             <span className="font-medium">
               {reconciliation.balanced
-                ? "Lines explain the total"
+                ? t("Lines explain the total")
                 : reconciliation.residual > 0
-                  ? "Unallocated"
-                  : "Lines exceed the total"}
+                  ? t("Unallocated")
+                  : t("Lines exceed the total")}
               {reconciliation.failedCount > 0 &&
-                ` · ${reconciliation.failedCount} line${reconciliation.failedCount === 1 ? "" : "s"} failed`}
+                t("· {0, plural, one {# line} other {# lines}} failed", reconciliation.failedCount)}
             </span>
             <span className="font-mono tabular-nums">
               {reconciliation.balanced
                 ? formatCurrency(reconciliation.sum)
-                : `${formatCurrency(reconciliation.sum)} of ${formatCurrency(total ?? 0)} · ${formatCurrency(Math.abs(reconciliation.residual))}`}
+                : t("{0} of {1} · {2}", formatCurrency(reconciliation.sum), formatCurrency(total ?? 0), formatCurrency(Math.abs(reconciliation.residual)))}
             </span>
           </div>
         )}
@@ -227,9 +235,7 @@ function BreakdownResultTable({
         <div className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
           <ShieldIcon className="mt-0.5 size-3 shrink-0" />
           <span>
-            A guardrail moved the total to {formatCurrency(total ?? 0)}, but the lines still add up
-            to the raw {formatCurrency(rawAmount ?? 0)}. An invoice built from these lines would not
-            match the charge.
+            {t("A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.", formatCurrency(total ?? 0), formatCurrency(rawAmount ?? 0))}
           </span>
         </div>
       )}
@@ -244,6 +250,8 @@ function ResolvedVariablesView({
   variables: Record<string, unknown>;
   onUseValues?: (values: Record<string, unknown>) => void;
 }) {
+  const t = useT();
+
   const [isOpen, setIsOpen] = useState(false);
   const count = Object.keys(variables).length;
 
@@ -257,7 +265,7 @@ function ResolvedVariablesView({
         >
           {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           <Braces className="size-3" />
-          Resolved Variables ({count})
+          {t("Resolved Variables ({0})", count)}
         </button>
         {onUseValues && (
           <Button
@@ -266,7 +274,7 @@ function ResolvedVariablesView({
             size="xs"
             onClick={() => onUseValues(flattenResolvedVariables(variables))}
           >
-            Use these values
+            {t("Use these values")}
           </Button>
         )}
       </div>
@@ -286,6 +294,8 @@ type StudioPreviewPaneProps = {
 };
 
 export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneProps) {
+  const t = useT();
+
   const { control, setError, clearErrors } = useFormContext<FormulaTemplateFormValues>();
   const schemaId = useWatch({ control, name: "schemaId" }) || "shipment";
   const customVariables = useWatch({ control, name: "variableDefinitions" }) ?? [];
@@ -340,16 +350,16 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <FlaskConical className="text-muted-foreground size-4" />
-          <span className="text-sm font-semibold">Live Preview</span>
+          <span className="text-sm font-semibold">{t("Live Preview")}</span>
           {isPending ? (
             <span className="text-muted-foreground text-2xs flex items-center gap-1">
               <Spinner className="size-3" />
-              Updating
+              {t("Updating")}
             </span>
           ) : (
             lastRunAt && (
               <span className="text-muted-foreground text-2xs tabular-nums">
-                Ran {formatRunTime(lastRunAt)}
+                {t("Ran {0}", formatRunTime(lastRunAt))}
               </span>
             )
           )}
@@ -358,7 +368,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
           <div className="flex items-center gap-1.5">
             <Truck className="text-muted-foreground size-3.5" />
             <Label htmlFor="preview-real-shipment" className="text-xs">
-              Real shipment
+              {t("Real shipment")}
             </Label>
             <Switch
               id="preview-real-shipment"
@@ -377,7 +387,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                   type="button"
                   variant="outline"
                   size="icon-xs"
-                  aria-label="Run preview now"
+                  aria-label={t("Run preview now")}
                   onClick={runNow}
                   disabled={useRealShipment && !shipmentId}
                 >
@@ -385,7 +395,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 </Button>
               }
             />
-            <TooltipContent>Run now ({shortcutHint("run")})</TooltipContent>
+            <TooltipContent>{t("Run now ({0})", shortcutHint("run"))}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -400,8 +410,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 clearable
               />
               <p className="text-2xs text-muted-foreground">
-                Variables resolve from the selected shipment; sample data is ignored. Custom
-                variable defaults still apply.
+                {t("Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.")}
               </p>
             </div>
           )}
@@ -421,16 +430,16 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
               className="border-destructive/40 bg-destructive/10 flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-xs"
             >
               <div className="space-y-0.5">
-                <p className="text-destructive font-medium">Preview could not run</p>
+                <p className="text-destructive font-medium">{t("Preview could not run")}</p>
                 <p className="text-muted-foreground">{requestError}</p>
                 {hasResult && (
                   <p className="text-muted-foreground text-2xs">
-                    The result below is from the last successful run.
+                    {t("The result below is from the last successful run.")}
                   </p>
                 )}
               </div>
               <Button type="button" variant="outline" size="xs" onClick={runNow}>
-                Retry
+                {t("Retry")}
               </Button>
             </div>
           )}
@@ -438,7 +447,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
           {!hasResult && !requestError && (
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
               <FlaskConical className="size-8 opacity-40" />
-              <span>Start typing an expression and the result appears here.</span>
+              <span>{t("Start typing an expression and the result appears here.")}</span>
             </div>
           )}
 
@@ -474,7 +483,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                       : "text-red-700 dark:text-red-300",
                   )}
                 >
-                  {isValid ? "Expression Valid" : "Expression Invalid"}
+                  {isValid ? t("Expression Valid") : t("Expression Invalid")}
                 </span>
                 {isValid && numericResult !== null && onPinScenario && (
                   <Tooltip>
@@ -490,12 +499,12 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                           }
                         >
                           <PinIcon className="size-3" />
-                          Pin as scenario
+                          {t("Pin as scenario")}
                         </Button>
                       }
                     />
                     <TooltipContent>
-                      Save these inputs and this result as a scenario that must keep passing
+                      {t("Save these inputs and this result as a scenario that must keep passing")}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -505,7 +514,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 {isValid && result.result !== undefined && (
                   <div className="space-y-1">
                     <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Computed Charge
+                      {t("Computed Charge")}
                     </div>
                     <span className="text-foreground font-mono text-3xl font-semibold tabular-nums">
                       {typeof result.result === "number"
@@ -520,7 +529,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 {!isValid && result.error && (
                   <div className="space-y-2">
                     <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Error Details
+                      {t("Error Details")}
                     </div>
                     <pre className="border-destructive/10 bg-background/50 text-destructive overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">
                       {result.error}

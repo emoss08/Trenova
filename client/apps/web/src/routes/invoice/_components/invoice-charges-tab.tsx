@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -29,6 +30,8 @@ function groupHeading(group: InvoiceLineGroup): string {
 }
 
 export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
+  const t = useT();
+
   const groups = useMemo(() => groupInvoiceLinesByShipment(invoice.lines ?? []), [invoice.lines]);
 
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
@@ -61,12 +64,12 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground text-left">
               <tr>
-                <th className="px-4 py-3 font-medium">Line</th>
-                <th className="px-4 py-3 font-medium">Description</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 text-right font-medium">Quantity</th>
-                <th className="px-4 py-3 text-right font-medium">Unit Price</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
+                <th className="px-4 py-3 font-medium">{t("Line")}</th>
+                <th className="px-4 py-3 font-medium">{t("Description")}</th>
+                <th className="px-4 py-3 font-medium">{t("Type")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("Quantity")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("Unit Price")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("Amount")}</th>
               </tr>
             </thead>
 
@@ -104,7 +107,7 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
                   colSpan={COLUMN_COUNT - 1}
                   className="text-muted-foreground px-4 py-2.5 text-right text-sm"
                 >
-                  Subtotal
+                  {t("Subtotal")}
                 </td>
                 <td className="px-4 py-2.5 text-right text-sm tabular-nums">
                   {formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
@@ -115,7 +118,7 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
                   colSpan={COLUMN_COUNT - 1}
                   className="text-muted-foreground px-4 py-2.5 text-right text-sm"
                 >
-                  Other Charges
+                  {t("Other Charges")}
                 </td>
                 <td className="px-4 py-2.5 text-right text-sm tabular-nums">
                   {formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
@@ -126,7 +129,7 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
                   colSpan={COLUMN_COUNT - 1}
                   className="px-4 py-3 text-right text-sm font-semibold"
                 >
-                  Total
+                  {t("Total")}
                 </td>
                 <td className="px-4 py-3 text-right text-sm font-bold tabular-nums">
                   {formatCurrency(Number(invoice.totalAmount ?? 0), invoice.currencyCode)}
@@ -151,6 +154,8 @@ function SummaryRow({
   group: InvoiceLineGroup;
   currencyCode: string;
 }) {
+  const t = useT();
+
   const heading = groupHeading(group);
   const lineLabel = group.lines.length === 1 ? "1 charge" : `${group.lines.length} charges`;
 
@@ -158,7 +163,7 @@ function SummaryRow({
     <tr className="hover:bg-muted/50 border-t transition-colors">
       <td className="px-4 py-3 font-mono text-xs">{heading}</td>
       <td className="px-4 py-3" colSpan={2}>
-        {group.bol ? `BOL ${group.bol}` : ""}
+        {group.bol ? t("BOL {0}", group.bol) : ""}
       </td>
       <td className="text-muted-foreground px-4 py-3 text-right text-xs">{lineLabel}</td>
       <td className="px-4 py-3" />
@@ -180,6 +185,8 @@ function ShipmentGroupBody({
   isCollapsed: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   const heading = groupHeading(group);
   const lineLabel = group.lines.length === 1 ? "1 line" : `${group.lines.length} lines`;
 
@@ -199,7 +206,7 @@ function ShipmentGroupBody({
               <ChevronDownIcon className="size-3.5 shrink-0" />
             )}
             <span className="text-foreground font-mono text-xs font-medium">{heading}</span>
-            {group.bol ? <span className="text-xs">BOL {group.bol}</span> : null}
+            {group.bol ? <span className="text-xs">{t("BOL {0}", group.bol)}</span> : null}
             <span className="text-xs">·</span>
             <span className="text-xs">{lineLabel}</span>
           </button>
@@ -217,7 +224,7 @@ function ShipmentGroupBody({
           colSpan={COLUMN_COUNT - 1}
           className="text-muted-foreground px-4 py-2 text-right text-xs"
         >
-          {heading} subtotal
+          {t("{0} subtotal", heading)}
         </td>
         <td className="px-4 py-2 text-right text-xs font-medium tabular-nums">
           {formatCurrency(group.subtotal, currencyCode)}
@@ -228,10 +235,12 @@ function ShipmentGroupBody({
 }
 
 function ChargeRow({ line, currencyCode }: { line: InvoiceLine; currencyCode: string }) {
+  const t = useT();
+
   return (
     <tr className="hover:bg-muted/50 border-t transition-colors">
       <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-      <td className="px-4 py-3">{line.description}</td>
+      <td className="px-4 py-3">{t(line.description)}</td>
       <td className="px-4 py-3">
         <Badge variant={LINE_TYPE_VARIANTS[line.type]}>{line.type}</Badge>
       </td>

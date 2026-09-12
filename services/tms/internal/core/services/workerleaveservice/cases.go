@@ -504,8 +504,8 @@ func (s *Service) RecordDay(
 		return nil, errortypes.NewValidationError(
 			"leaveCaseId",
 			errortypes.ErrInvalid,
-			"Leave cannot be recorded against a "+
-				strings.ToLower(leaveCase.Status.Label())+" case",
+			"Leave cannot be recorded against a {0} case",
+			strings.ToLower(leaveCase.Status.Label()),
 		)
 	}
 

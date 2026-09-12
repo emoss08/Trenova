@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
@@ -79,6 +80,8 @@ export function DateSuggestionInput({
   onKeyDown,
   ...props
 }: DateSuggestionInputProps) {
+  const t = useT();
+
   const listboxId = useId();
   const [text, setText] = useState("");
   const [focused, setFocused] = useState(false);
@@ -285,7 +288,7 @@ export function DateSuggestionInput({
             onClick={handleClear}
             className="text-muted-foreground absolute top-1/2 right-8 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
-            <span className="sr-only">Clear date</span>
+            <span className="sr-only">{t("Clear date")}</span>
             <XIcon className="size-4" />
           </Button>
         )}
@@ -303,7 +306,7 @@ export function DateSuggestionInput({
               <ul
                 id={listboxId}
                 role="listbox"
-                aria-label="Date suggestions"
+                aria-label={t("Date suggestions")}
                 className="max-h-56 overflow-auto p-1"
               >
                 {suggestions.map((suggestion, index) => (
@@ -329,8 +332,7 @@ export function DateSuggestionInput({
               </ul>
             ) : (
               <p className="text-muted-foreground px-3 py-1.5 text-xs">
-                No matching date. Try &quot;t+2&quot;, &quot;next friday&quot;, or
-                &quot;07/15&quot;.
+                {t("No matching date. Try \"t+2\", \"next friday\", or \"07/15\".")}
               </p>
             )}
           </div>,

@@ -406,11 +406,9 @@ func (s *Service) requirePassingTestCases(
 	return errortypes.NewValidationError(
 		"testCases",
 		errortypes.ErrInvalid,
-		fmt.Sprintf(
-			"%d of %d test scenarios fail: %s. Fix the formula or the scenarios before approving.",
-			run.Failed,
-			run.Total,
-			strings.Join(failing, ", "),
-		),
+		"{0} of {1} test scenarios fail: {2}. Fix the formula or the scenarios before approving.",
+		run.Failed,
+		run.Total,
+		strings.Join(failing, ", "),
 	)
 }

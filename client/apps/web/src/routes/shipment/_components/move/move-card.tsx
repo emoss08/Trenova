@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -61,6 +62,8 @@ export function MoveCard({
   onEdit: () => void;
   onRemove: () => void;
 }) {
+  const t = useT();
+
   const {
     control,
     setValue,
@@ -115,12 +118,12 @@ export function MoveCard({
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Move unassigned", {
-        description: "The assignment has been removed from this move.",
+      toast.success(t("Move unassigned"), {
+        description: t("The assignment has been removed from this move."),
       });
     },
     onError: () => {
-      toast.error("Failed to unassign move");
+      toast.error(t("Failed to unassign move"));
     },
   });
 
@@ -132,12 +135,12 @@ export function MoveCard({
       setValue(`moves.${moveIndex}.status`, "New");
       setCancelCarrierOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Carrier assignment canceled", {
-        description: "The move is uncovered again.",
+      toast.success(t("Carrier assignment canceled"), {
+        description: t("The move is uncovered again."),
       });
     },
     onError: (error: Error) => {
-      toast.error("Failed to cancel carrier assignment", { description: error.message });
+      toast.error(t("Failed to cancel carrier assignment"), { description: error.message });
     },
   });
 
@@ -164,11 +167,11 @@ export function MoveCard({
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
       }
       toast.success(variables.action === "Arrive" ? "Arrival recorded" : "Departure recorded", {
-        description: "The stop actuals and move status have been updated.",
+        description: t("The stop actuals and move status have been updated."),
       });
     },
     onError: (error: Error) => {
-      toast.error("Failed to record stop actual", { description: error.message });
+      toast.error(t("Failed to record stop actual"), { description: error.message });
     },
   });
 
@@ -176,19 +179,19 @@ export function MoveCard({
     mutationFn: () => apiService.shipmentService.recalculateDistance(shipmentId!),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Distance recalculated");
+      toast.success(t("Distance recalculated"));
     },
-    onError: () => toast.error("Failed to recalculate distance"),
+    onError: () => toast.error(t("Failed to recalculate distance")),
   });
 
   return (
     <div className="bg-card rounded-lg border">
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-          {move?.loaded && <Badge variant="secondary">Loaded</Badge>}
+          <Badge variant={statusConfig.variant}>{t(statusConfig.label)}</Badge>
+          {move?.loaded && <Badge variant="secondary">{t("Loaded")}</Badge>}
           {move?.distance ? (
-            <span className="text-muted-foreground text-xs">{move.distance} mi</span>
+            <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>
           ) : null}
           {move?.distanceSource ? <Badge variant="outline">{move.distanceSource}</Badge> : null}
         </div>
@@ -214,21 +217,21 @@ export function MoveCard({
                   render={
                     <div className="text-muted-foreground flex cursor-not-allowed items-center px-1.5 py-1 text-sm">
                       <UserIcon className="mr-2 size-3.5" />
-                      {hasAssignment ? "Reassign" : "Assign"}
+                      {hasAssignment ? t("Reassign") : t("Assign")}
                     </div>
                   }
                 />
                 <TooltipContent side="left" sideOffset={10}>
                   {isTerminal
-                    ? "Cannot assign a completed or canceled move"
-                    : "Save the shipment first to assign workers"}
+                    ? t("Cannot assign a completed or canceled move")
+                    : t("Save the shipment first to assign workers")}
                 </TooltipContent>
               </Tooltip>
             )}
             {canUnassign && (
               <DropdownMenuItem
-                label="Unassign"
-                title="Unassign"
+                label={t("Unassign")}
+                title={t("Unassign")}
                 color="danger"
                 startContent={<UserXIcon className="size-3.5" />}
                 onClick={() => unassignMutation.mutate()}
@@ -236,8 +239,8 @@ export function MoveCard({
             )}
             {canCancelCarrier && (
               <DropdownMenuItem
-                label="Cancel Carrier Assignment"
-                title="Cancel Carrier Assignment"
+                label={t("Cancel Carrier Assignment")}
+                title={t("Cancel Carrier Assignment")}
                 color="danger"
                 startContent={<Building2Icon className="size-3.5" />}
                 onClick={() => setCancelCarrierOpen(true)}
@@ -245,16 +248,16 @@ export function MoveCard({
             )}
             {canSplit && (
               <DropdownMenuItem
-                label="Split"
-                title="Split"
+                label={t("Split")}
+                title={t("Split")}
                 startContent={<ScissorsIcon className="size-3.5" />}
                 onClick={() => setSplitOpen(true)}
               />
             )}
             {shipmentId && (
               <DropdownMenuItem
-                label="Recalculate Distance"
-                title="Recalculate Distance"
+                label={t("Recalculate Distance")}
+                title={t("Recalculate Distance")}
                 startContent={<TruckIcon className="size-3.5" />}
                 onClick={() => recalculateDistanceMutation.mutateAsync()}
               />
@@ -262,14 +265,14 @@ export function MoveCard({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               startContent={<PencilIcon className="size-3.5" />}
-              title="Edit"
-              label="Edit"
+              title={t("Edit")}
+              label={t("Edit")}
               onClick={onEdit}
             />
             <DropdownMenuItem
               startContent={<TrashIcon className="size-3.5" />}
-              title="Delete"
-              label="Delete"
+              title={t("Delete")}
+              label={t("Delete")}
               description={
                 canRemove ? "Delete this move and all associated stops" : removalBlockedReason
               }
@@ -562,6 +565,8 @@ function StopTimelineItem({
   checkCallAction?: StopActualAction | null;
   onCheckCall?: () => void;
 }) {
+  const t = useT();
+
   const status = stop.status ?? "New";
   const statusIcon = getStatusIcon(status, isLast, moveStatus);
   const hasInfo = stopHasInfo(stop);
@@ -612,7 +617,7 @@ function StopTimelineItem({
             />
             <TooltipContent side="top" className="max-w-xs">
               <div className="space-y-1">
-                <p className="text-xs font-semibold">Validation Errors:</p>
+                <p className="text-xs font-semibold">{t("Validation Errors:")}</p>
                 {errorMessages.map((msg) => (
                   <p key={msg} className="text-xs">
                     • {msg}
@@ -647,13 +652,15 @@ function StopTimelineItem({
         ) : hasErrors ? (
           <div className="flex flex-col gap-0.5">
             <span className="text-destructive text-xs">
-              Error in {stopTypeLabels[stop.type]} stop
+              {t("Error in {0} stop", stopTypeLabels[stop.type])}
             </span>
-            <span className="text-muted-foreground text-xs">Click to edit and fix errors</span>
+            <span className="text-muted-foreground text-xs">
+              {t("Click to edit and fix errors")}
+            </span>
           </div>
         ) : (
           <span className="text-muted-foreground text-xs">
-            Enter {stopTypeLabels[stop.type]} Information
+            {t("Enter {0} Information", stopTypeLabels[stop.type])}
           </span>
         )}
       </div>
@@ -666,7 +673,7 @@ function StopTimelineItem({
           className="mt-1 shrink-0"
           onClick={onCheckCall}
         >
-          {checkCallAction === "Arrive" ? "Arrive" : "Depart"}
+          {checkCallAction === "Arrive" ? t("Arrive") : t("Depart")}
         </Button>
       )}
     </div>
@@ -692,6 +699,8 @@ function CarrierAssignmentDetails({
   canCancel: boolean;
   onCancel: () => void;
 }) {
+  const t = useT();
+
   const carrierName = carrierAssignment.carrier?.name || "External carrier";
   const scac = carrierAssignment.carrier?.scac;
   const currency = carrierAssignment.currencyCode;
@@ -712,7 +721,7 @@ function CarrierAssignmentDetails({
         </div>
         {canCancel && (
           <Button type="button" size="xs" variant="outline" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
         )}
       </div>
@@ -720,13 +729,13 @@ function CarrierAssignmentDetails({
       <div className="grid grid-cols-2 gap-x-6 gap-y-2">
         {carrierAssignment.proNumber && (
           <div>
-            <p className="text-2xs text-muted-foreground">Carrier Pro Number</p>
+            <p className="text-2xs text-muted-foreground">{t("Carrier Pro Number")}</p>
             <p className="text-xs font-medium">{carrierAssignment.proNumber}</p>
           </div>
         )}
         {carrierAssignment.externalDriverName && (
           <div>
-            <p className="text-2xs text-muted-foreground">Driver</p>
+            <p className="text-2xs text-muted-foreground">{t("Driver")}</p>
             <p className="text-xs font-medium">
               {carrierAssignment.externalDriverName}
               {carrierAssignment.externalDriverPhone
@@ -737,24 +746,26 @@ function CarrierAssignmentDetails({
         )}
         {carrierAssignment.externalTractorNumber && (
           <div>
-            <p className="text-2xs text-muted-foreground">Tractor</p>
+            <p className="text-2xs text-muted-foreground">{t("Tractor")}</p>
             <p className="text-xs font-medium">{carrierAssignment.externalTractorNumber}</p>
           </div>
         )}
         {carrierAssignment.externalTrailerNumber && (
           <div>
-            <p className="text-2xs text-muted-foreground">Trailer</p>
+            <p className="text-2xs text-muted-foreground">{t("Trailer")}</p>
             <p className="text-xs font-medium">{carrierAssignment.externalTrailerNumber}</p>
           </div>
         )}
       </div>
 
       <div className="text-2xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-t pt-2 tabular-nums">
-        <span>Base {formatCarrierMoney(carrierAssignment.baseAmount, currency)}</span>
+        <span>{t("Base {0}", formatCarrierMoney(carrierAssignment.baseAmount, currency))}</span>
         <span aria-hidden>+</span>
-        <span>Fuel {formatCarrierMoney(carrierAssignment.fuelSurcharge, currency)}</span>
+        <span>{t("Fuel {0}", formatCarrierMoney(carrierAssignment.fuelSurcharge, currency))}</span>
         <span aria-hidden>+</span>
-        <span>Accessorials {formatCarrierMoney(carrierAssignment.accessorialTotal, currency)}</span>
+        <span>
+          {t("Accessorials {0}", formatCarrierMoney(carrierAssignment.accessorialTotal, currency))}
+        </span>
         <span aria-hidden>=</span>
         <span className="text-foreground font-medium">
           {formatCarrierMoney(carrierAssignment.totalCost, currency)}
@@ -771,6 +782,8 @@ function CarrierAssignmentDetails({
 }
 
 function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
+  const t = useT();
+
   const { data: assignment, isLoading } = useQuery({
     queryKey: ["assignment", assignmentId],
     queryFn: () => apiService.assignmentService.get(assignmentId!),
@@ -783,7 +796,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
   if (isLoading) {
     return (
       <div className="bg-muted rounded-b-md border-t p-3">
-        <p className="text-2xs text-muted-foreground">Loading assignment…</p>
+        <p className="text-2xs text-muted-foreground">{t("Loading assignment…")}</p>
       </div>
     );
   }
@@ -798,19 +811,19 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
     <div className="bg-muted grid grid-cols-2 gap-x-6 gap-y-2 rounded-b-md border-t p-3">
       {tractor && (
         <div>
-          <p className="text-2xs text-muted-foreground">Tractor</p>
+          <p className="text-2xs text-muted-foreground">{t("Tractor")}</p>
           <p className="text-xs font-medium">{tractor.code}</p>
         </div>
       )}
       {trailer && (
         <div>
-          <p className="text-2xs text-muted-foreground">Trailer</p>
+          <p className="text-2xs text-muted-foreground">{t("Trailer")}</p>
           <p className="text-xs font-medium">{trailer.code}</p>
         </div>
       )}
       {primaryWorker && (
         <div>
-          <p className="text-2xs text-muted-foreground">Primary Worker</p>
+          <p className="text-2xs text-muted-foreground">{t("Primary Worker")}</p>
           <p className="text-xs font-medium">
             {`${primaryWorker.firstName} ${primaryWorker.lastName}`}
           </p>
@@ -818,7 +831,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
       )}
       {secondaryWorker && (
         <div>
-          <p className="text-2xs text-muted-foreground">Secondary Worker</p>
+          <p className="text-2xs text-muted-foreground">{t("Secondary Worker")}</p>
           <p className="text-xs font-medium">
             {`${secondaryWorker.firstName} ${secondaryWorker.lastName}`}
           </p>

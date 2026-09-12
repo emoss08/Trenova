@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { PayAdvanceStatusBadge } from "@trenova/shared/components/status-badge";
 import { payAdvanceSourceChoices } from "@/lib/choices";
@@ -60,7 +61,7 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
     },
     {
       accessorKey: "amountMinor",
-      header: () => <div className="text-right">Amount</div>,
+      header: () => <div className="text-right">{translate("Amount")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.amountMinor} currency={row.original.currencyCode} />
@@ -71,7 +72,7 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
     },
     {
       accessorKey: "recoveredMinor",
-      header: () => <div className="text-right">Recovered</div>,
+      header: () => <div className="text-right">{translate("Recovered")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay value={row.original.recoveredMinor} currency={row.original.currencyCode} />
@@ -82,7 +83,7 @@ export function getColumns(): ColumnDef<PayAdvanceRow>[] {
     },
     {
       accessorKey: "outstandingMinor",
-      header: () => <div className="text-right">Outstanding</div>,
+      header: () => <div className="text-right">{translate("Outstanding")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

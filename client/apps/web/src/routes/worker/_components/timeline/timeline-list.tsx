@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerEmploymentEventRow } from "@/lib/graphql/worker-employment";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -107,6 +108,8 @@ function TimelineItem({
   canAmend: boolean;
   onAmend: (event: WorkerEmploymentEventRow) => void;
 }) {
+  const t = useT();
+
   const meta = employmentEventMeta(event.kind);
   const Icon = meta.icon;
   const pairs = useMemo(() => pairValues(event), [event]);
@@ -129,13 +132,13 @@ function TimelineItem({
       </span>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold">{meta.label}</span>
+        <span className="text-sm font-semibold">{t(meta.label)}</span>
         <span className="text-muted-foreground text-xs">
           {formatUnixDateMedium(event.effectiveAt)}
         </span>
         {event.amendedAt ? (
           <Badge variant="warning" className="px-1.5 py-0 text-[10px]">
-            Amended
+            {t("Amended")}
           </Badge>
         ) : null}
         {canAmend ? (
@@ -144,7 +147,7 @@ function TimelineItem({
             size="icon"
             className="ml-auto size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
             aria-label={`Amend ${meta.label}`}
-            title="Amend"
+            title={t("Amend")}
             onClick={() => onAmend(event)}
           >
             <PencilLineIcon className="size-3.5" />
@@ -161,7 +164,7 @@ function TimelineItem({
               key={pair.key}
               className="bg-muted/50 border-border flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]"
             >
-              <span className="text-muted-foreground">{pair.label}:</span>
+              <span className="text-muted-foreground">{t(pair.label)}:</span>
               {pair.from ? <span className="line-through opacity-70">{pair.from}</span> : null}
               {pair.from && pair.to ? (
                 <ArrowRightIcon aria-hidden className="text-muted-foreground size-3" />
@@ -177,7 +180,7 @@ function TimelineItem({
       ) : null}
 
       <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
-        <span>Recorded by {recordedBy}</span>
+        <span>{t("Recorded by {0}", recordedBy)}</span>
         {event.document ? (
           <span className="flex items-center gap-1" title={event.document.originalName}>
             <PaperclipIcon className="size-3" />
@@ -186,8 +189,7 @@ function TimelineItem({
         ) : null}
         {event.amendedAt ? (
           <span>
-            · Amended by {event.amendedBy?.name ?? "someone"}
-            {event.amendmentNote ? ` — ${event.amendmentNote}` : ""}
+            {t("· Amended by {0}{1}", event.amendedBy?.name ?? "someone", event.amendmentNote ? ` — ${event.amendmentNote}` : "")}
           </span>
         ) : null}
       </p>

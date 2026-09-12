@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
@@ -77,6 +78,8 @@ export function TimelineBarItem({
   onHoverChange,
   onSelect,
 }: TimelineBarItemProps) {
+  const t = useT();
+
   const geometry = getBarGeometry(bar.start, bar.end, range, zoom);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `bar:${bar.moveId}`,
@@ -193,7 +196,7 @@ export function TimelineBarItem({
               {originCode} → {destCode}
             </span>
           </p>
-          <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? "No customer"}</p>
+          <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? t("No customer")}</p>
           {bar.dwell && (
             <p
               className={cn(
@@ -202,12 +205,16 @@ export function TimelineBarItem({
               )}
             >
               <TimerIcon className="size-3" />
-              Dwelling {formatDurationFromSeconds(bar.dwell.seconds)} at {bar.dwell.locationCode}
+              {t(
+                "Dwelling {0} at {1}",
+                formatDurationFromSeconds(bar.dwell.seconds),
+                bar.dwell.locationCode,
+              )}
             </p>
           )}
           {bar.hasOverlap && (
             <p className="text-warning text-[10.5px] font-semibold">
-              Overlaps another load on this driver
+              {t("Overlaps another load on this driver")}
             </p>
           )}
           <div className="mt-0.5 flex flex-col gap-0.5">

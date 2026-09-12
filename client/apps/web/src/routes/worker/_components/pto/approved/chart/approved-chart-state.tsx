@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ErrorBoundaryUi } from "@trenova/shared/components/elements/error-boundary-ui";
 import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
@@ -5,6 +6,8 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 export function ApprovedChartBoundary({ children }: { children: React.ReactNode }) {
+  const t = useT();
+
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
@@ -14,7 +17,7 @@ export function ApprovedChartBoundary({ children }: { children: React.ReactNode 
           )}
           onReset={reset}
         >
-          <Suspense fallback={<LoadingSkeletonState description="Loading chart component..." />}>
+          <Suspense fallback={<LoadingSkeletonState description={t("Loading chart component...")} />}>
             {children}
           </Suspense>
         </ErrorBoundary>

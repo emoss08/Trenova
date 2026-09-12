@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -31,6 +32,8 @@ export function ShipmentDuplicateDialog({
   onOpenChange,
   shipmentId,
 }: ShipmentDuplicateDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm({
@@ -56,8 +59,8 @@ export function ShipmentDuplicateDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Shipment duplication started", {
-        description: "The shipment will be duplicated in the background.",
+      toast.success(t("Shipment duplication started"), {
+        description: t("The shipment will be duplicated in the background."),
       });
     },
   });
@@ -79,8 +82,8 @@ export function ShipmentDuplicateDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
-          <DialogTitle>Duplicate Shipment</DialogTitle>
-          <DialogDescription>Create one or more copies of this shipment.</DialogDescription>
+          <DialogTitle>{t("Duplicate Shipment")}</DialogTitle>
+          <DialogDescription>{t("Create one or more copies of this shipment.")}</DialogDescription>
         </DialogHeader>
         <Form
           onSubmit={(e) => {
@@ -93,7 +96,7 @@ export function ShipmentDuplicateDialog({
               <NumberField
                 control={control}
                 name="count"
-                label="Number of Copies"
+                label={t("Number of Copies")}
                 placeholder="1"
                 min={1}
                 max={20}
@@ -104,17 +107,19 @@ export function ShipmentDuplicateDialog({
               <SwitchField
                 control={control}
                 name="overrideDates"
-                label="Override Dates"
-                description="Reset planned arrival and departure times on the duplicated shipment stops."
+                label={t("Override Dates")}
+                description={t(
+                  "Reset planned arrival and departure times on the duplicated shipment stops.",
+                )}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Duplicating...">
-              Duplicate
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Duplicating...")}>
+              {t("Duplicate")}
             </Button>
           </DialogFooter>
         </Form>

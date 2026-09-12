@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   Sheet,
@@ -42,6 +43,8 @@ export function DrillThroughSheet({
   params,
   target,
 }: DrillThroughSheetProps) {
+  const t = useT();
+
   const input = useMemo(() => {
     if (!open || !definition || !target) return null;
     return {
@@ -64,11 +67,11 @@ export function DrillThroughSheet({
         aria-describedby="drill-description"
       >
         <SheetHeader>
-          <SheetTitle>Records behind this number</SheetTitle>
+          <SheetTitle>{t("Records behind this number")}</SheetTitle>
           <SheetDescription id="drill-description">
             {target?.rowLabel && target?.columnLabel
-              ? `${target.columnLabel} for ${target.rowLabel}`
-              : "The individual records this aggregate was built from."}
+              ? t("{0} for {1}", target.columnLabel, target.rowLabel)
+              : t("The individual records this aggregate was built from.")}
           </SheetDescription>
         </SheetHeader>
 
@@ -90,11 +93,11 @@ export function DrillThroughSheet({
             <>
               <div className="flex h-8 shrink-0 items-center gap-2">
                 <Badge variant="secondary">
-                  {rows.length} record{rows.length === 1 ? "" : "s"}
+                  {t("{0, plural, one {# record} other {# records}}", rows.length)}
                 </Badge>
                 {drill.data?.truncated && (
                   <span className="text-2xs text-amber-600 dark:text-amber-400">
-                    first {DRILL_LIMIT} shown
+                    {t("first {0} shown", DRILL_LIMIT)}
                   </span>
                 )}
               </div>
@@ -103,7 +106,7 @@ export function DrillThroughSheet({
                   columns={drill.data?.columns ?? []}
                   rows={rows}
                   density="compact"
-                  emptyMessage="No records matched this cell."
+                  emptyMessage={t("No records matched this cell.")}
                 />
               </div>
             </>

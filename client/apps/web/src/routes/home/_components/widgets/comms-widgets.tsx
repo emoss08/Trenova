@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { lazy, Suspense } from "react";
 import { WidgetEmpty, WidgetShell } from "../widget-shell";
@@ -19,12 +20,14 @@ const ShipmentMapPanel = lazy(() => import("@/routes/shipment/_components/map/sh
  * taking for italics.
  */
 export function AnnouncementWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   const text = widget.config.text?.trim();
 
   return (
     <WidgetShell title={widget.title || "Announcement"}>
       {!text ? (
-        <WidgetEmpty>Nothing announced.</WidgetEmpty>
+        <WidgetEmpty>{t("Nothing announced.")}</WidgetEmpty>
       ) : (
         <p className="text-foreground/90 text-xs leading-relaxed whitespace-pre-wrap">{text}</p>
       )}
@@ -33,11 +36,13 @@ export function AnnouncementWidget({ widget }: WidgetProps) {
 }
 
 export function MapWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   return (
     <WidgetShell
       title={widget.title || "Fleet Map"}
       href="/shipment-management/shipments"
-      hrefLabel="Open dispatch board"
+      hrefLabel={t("Open dispatch board")}
       scroll={false}
       bodyClassName="p-0"
     >

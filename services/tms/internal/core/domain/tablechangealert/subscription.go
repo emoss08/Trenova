@@ -74,7 +74,7 @@ func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
 
 	for _, et := range s.EventTypes {
 		if !ValidEventType(et) {
-			multiErr.Add("eventTypes", errortypes.ErrInvalid, "Invalid event type: "+et)
+			multiErr.Add("eventTypes", errortypes.ErrInvalid, "Invalid event type: {0}", et)
 		}
 	}
 
@@ -84,14 +84,14 @@ func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				prefix+".operator",
 				errortypes.ErrInvalid,
-				"Invalid condition operator: "+string(cond.Operator),
+				"Invalid condition operator: {0}", string(cond.Operator),
 			)
 		}
 		if !IsUnaryOperator(cond.Operator) && cond.Value == nil {
 			multiErr.Add(
 				prefix+".value",
 				errortypes.ErrRequired,
-				"Value is required for operator: "+string(cond.Operator),
+				"Value is required for operator: {0}", string(cond.Operator),
 			)
 		}
 	}

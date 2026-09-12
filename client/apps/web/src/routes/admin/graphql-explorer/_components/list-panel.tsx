@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -140,6 +141,8 @@ export function ListPanel({
   onFilterChange: (value: CatalogFilter) => void;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const t = useT();
+
   const { catalog } = useCatalog();
   const results = useMemo(() => searchCatalog(catalog, query, filter), [catalog, query, filter]);
   const needle = query.trim().toLowerCase();
@@ -282,7 +285,7 @@ export function ListPanel({
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={handleSearchKeyDown}
-          placeholder="Search operations…"
+          placeholder={t("Search operations…")}
           className="h-8 pl-8 text-sm"
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           autoFocus
@@ -300,7 +303,7 @@ export function ListPanel({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {option.label}
+              {t(option.label)}
               <span
                 className={cn(
                   "text-2xs tabular-nums",
@@ -322,7 +325,7 @@ export function ListPanel({
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
             <SearchXIcon className="text-muted-foreground/50 size-5" />
             <p className="text-muted-foreground text-xs">
-              No matches{query ? ` for “${query}”` : ""}
+              {t("No matches{0}", query ? ` ${t("for “{0}”", query)}` : "")}
             </p>
           </div>
         ) : (
@@ -344,7 +347,7 @@ export function ListPanel({
                   {item.type === "header" ? (
                     <div className="flex h-full items-end px-2 pb-1">
                       <span className="text-2xs text-muted-foreground/60 font-medium tracking-wider uppercase">
-                        {item.label} · {item.count}
+                        {t(item.label)} · {item.count}
                       </span>
                     </div>
                   ) : item.type === "operation" ? (

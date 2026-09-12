@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { RowActionsMenu } from "@/components/row-actions-menu";
 import type { DisciplinaryLadder, WorkerDisciplinaryActionRow } from "@/lib/graphql/worker-safety";
@@ -47,6 +48,8 @@ export function DisciplineLadder({
   onIssue,
   onRescind,
 }: DisciplineLadderProps) {
+  const t = useT();
+
   const highestRank = ladder.highestLevel
     ? disciplinaryLevelMeta(ladder.highestLevel as DisciplinaryLevel).rank
     : 0;
@@ -60,19 +63,16 @@ export function DisciplineLadder({
         <div>
           <div className="flex items-center gap-1.5">
             <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
-              Discipline
+              {t("Discipline")}
             </h4>
-            <InfoPopover title="Discipline ladder">
-              Six rungs from coaching to termination. The next step is one rung above the highest
-              action still active, and drops back as actions expire or are rescinded. It is a
-              suggestion, not a rule: any rung can be issued, and a rung that ends employment is
-              flagged before it is.
+            <InfoPopover title={t("Discipline ladder")}>
+              {t("Six rungs from coaching to termination. The next step is one rung above the highest action still active, and drops back as actions expire or are rescinded. It is a suggestion, not a rule: any rung can be issued, and a rung that ends employment is flagged before it is.")}
             </InfoPopover>
           </div>
           <p className="mt-0.5 text-xs">
-            <span className="font-medium">{`Next step: ${nextLabel}`}</span>
+            <span className="font-medium">{t("Next step: {0}", nextLabel)}</span>
             {ladder.atFinalStep ? (
-              <span className="text-destructive"> — this would end employment.</span>
+              <span className="text-destructive"> {t("— this would end employment.")}</span>
             ) : null}
           </p>
         </div>
@@ -88,12 +88,12 @@ export function DisciplineLadder({
             ) : (
               <GavelIcon className="size-3.5" />
             )}
-            Issue action
+            {t("Issue action")}
           </Button>
         ) : null}
       </div>
 
-      <ol className="flex items-center gap-2 rounded-lg border px-4 py-3" aria-label="Ladder">
+      <ol className="flex items-center gap-2 rounded-lg border px-4 py-3" aria-label={t("Ladder")}>
         {LADDER.map((level, index) => {
           const meta = disciplinaryLevelMeta(level);
           const taken = meta.rank <= highestRank;
@@ -137,7 +137,7 @@ export function DisciplineLadder({
 
       {actions.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          No disciplinary actions on record
+          {t("No disciplinary actions on record")}
         </p>
       ) : (
         <ul className="divide-border divide-y rounded-lg border">
@@ -158,21 +158,17 @@ export function DisciplineLadder({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                    {meta.label}
+                    {t(meta.label)}
                     <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
                       {DISCIPLINARY_STATUS_LABELS[status] ?? status}
                     </Badge>
                     {action.acknowledgedAt ? (
-                      <span className="text-2xs text-muted-foreground uppercase">Acknowledged</span>
+                      <span className="text-2xs text-muted-foreground uppercase">{t("Acknowledged")}</span>
                     ) : null}
                   </p>
                   <p className="text-xs">{action.reason}</p>
                   <p className="text-muted-foreground text-xs">
-                    Issued {formatUnixDate(action.issuedAt)}
-                    {action.issuedBy?.name ? ` by ${action.issuedBy.name}` : ""}
-                    {action.expiresAt ? ` · rolls off ${formatUnixDate(action.expiresAt)}` : ""}
-                    {action.suspensionDays ? ` · ${action.suspensionDays} days` : ""}
-                    {action.rescindReason ? ` · rescinded: ${action.rescindReason}` : ""}
+                    {t("Issued {0}{1}{2}{3}{4}", formatUnixDate(action.issuedAt), action.issuedBy?.name ? ` ${t("by {0}", action.issuedBy.name)}` : "", action.expiresAt ? ` ${t("· rolls off {0}", formatUnixDate(action.expiresAt))}` : "", action.suspensionDays ? ` ${t("· {0} days", action.suspensionDays)}` : "", action.rescindReason ? ` ${t("· rescinded: {0}", action.rescindReason)}` : "")}
                   </p>
                   {action.workerComment ? (
                     <p className="text-muted-foreground mt-1 text-xs">“{action.workerComment}”</p>

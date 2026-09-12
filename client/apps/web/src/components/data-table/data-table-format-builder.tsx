@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -75,11 +76,13 @@ function ColorSwatchPicker({
   value: FormatRuleColor;
   onChange: (color: FormatRuleColor) => void;
 }) {
+  const t = useT();
+
   return (
     <div
       className="flex shrink-0 items-center gap-1.5"
       role="radiogroup"
-      aria-label="Highlight color"
+      aria-label={t("Highlight color")}
     >
       {RULE_COLORS.map((color) => (
         <button
@@ -111,6 +114,8 @@ function RuleValueInput({
   value: unknown;
   onChange: (value: unknown) => void;
 }) {
+  const t = useT();
+
   if (!column || !operatorRequiresValue(operator)) {
     return null;
   }
@@ -123,13 +128,13 @@ function RuleValueInput({
     return (
       <Select value={stringValue} onValueChange={(val) => onChange(val)}>
         <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue>{selectedLabel ?? "Select..."}</SelectValue>
+          <SelectValue>{selectedLabel ?? t("Select...")}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
             {column.filterOptions.map((option) => (
               <SelectItem key={String(option.value)} value={String(option.value)}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -145,12 +150,14 @@ function RuleValueInput({
         onValueChange={(val) => onChange(val === "true")}
       >
         <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue>{value === true ? "Yes" : value === false ? "No" : "Select..."}</SelectValue>
+          <SelectValue>
+            {value === true ? t("Yes") : value === false ? t("No") : t("Select...")}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
-            <SelectItem value="true">Yes</SelectItem>
-            <SelectItem value="false">No</SelectItem>
+            <SelectItem value="true">{t("Yes")}</SelectItem>
+            <SelectItem value="false">{t("No")}</SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>
@@ -171,7 +178,7 @@ function RuleValueInput({
             : e.target.value,
         )
       }
-      placeholder="Value"
+      placeholder={t("Value")}
     />
   );
 }
@@ -183,6 +190,8 @@ export default function DataTableFormatBuilder<TData extends RowData>({
   open,
   onOpenChange,
 }: DataTableFormatBuilderProps<TData>) {
+  const t = useT();
+
   const formatColumns = useMemo<FormatColumn[]>(
     () =>
       columns
@@ -223,20 +232,20 @@ export default function DataTableFormatBuilder<TData extends RowData>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Conditional formatting</DialogTitle>
+          <DialogTitle>{t("Conditional formatting")}</DialogTitle>
           <DialogDescription>
-            Highlight rows that match a condition — the first matching rule wins.
+            {t("Highlight rows that match a condition — the first matching rule wins.")}
           </DialogDescription>
         </DialogHeader>
         {rules.length === 0 ? (
           <div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
             <PaintbrushIcon className="text-muted-foreground size-4" />
-            <h3 className="text-sm font-medium">No formatting rules</h3>
+            <h3 className="text-sm font-medium">{t("No formatting rules")}</h3>
             <p className="text-muted-foreground max-w-72 text-xs">
-              Tint rows that need attention — for example, unassigned or late records.
+              {t("Tint rows that need attention — for example, unassigned or late records.")}
             </p>
             <Button size="sm" onClick={addRule} disabled={formatColumns.length === 0}>
-              Add Rule
+              {t("Add Rule")}
             </Button>
           </div>
         ) : (
@@ -252,7 +261,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground w-11 shrink-0 text-xs font-medium">
-                      {index === 0 ? "When" : "Else if"}
+                      {index === 0 ? t("When") : t("Else if")}
                     </span>
                     <Select
                       value={rule.field}
@@ -273,7 +282,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                         <SelectGroup>
                           {formatColumns.map((col) => (
                             <SelectItem key={col.field} value={col.field}>
-                              {col.label}
+                              {t(col.label)}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -316,7 +325,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                       variant="ghost"
                       size="icon-sm"
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label="Remove rule"
+                      aria-label={t("Remove rule")}
                       onClick={() => removeRule(rule.id)}
                     >
                       <TrashIcon className="size-3.5" />
@@ -332,7 +341,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" onClick={addRule}>
                 <PlusIcon className="size-3.5" />
-                Add Rule
+                {t("Add Rule")}
               </Button>
               <Button
                 variant="ghost"
@@ -340,14 +349,14 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                 className="text-muted-foreground"
                 onClick={() => onRulesChange([])}
               >
-                Clear Rules
+                {t("Clear Rules")}
               </Button>
             </div>
           ) : (
             <span />
           )}
           <Button size="sm" onClick={() => onOpenChange(false)}>
-            Done
+            {t("Done")}
           </Button>
         </DialogFooter>
       </DialogContent>

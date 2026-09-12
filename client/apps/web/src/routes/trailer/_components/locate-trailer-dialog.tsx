@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -33,6 +34,8 @@ export function LocateTrailerDialog({
   targetLocationId,
   onLocated,
 }: LocateTrailerDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<LocateTrailerPayload>({
@@ -63,7 +66,7 @@ export function LocateTrailerDialog({
     form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["trailer-list"] });
-      toast.success("Trailer located successfully");
+      toast.success(t("Trailer located successfully"));
       onLocated?.();
     },
   });
@@ -85,10 +88,9 @@ export function LocateTrailerDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-125">
         <DialogHeader>
-          <DialogTitle>Locate Trailer</DialogTitle>
+          <DialogTitle>{t("Locate Trailer")}</DialogTitle>
           <DialogDescription>
-            Set the trailer&apos;s new location. The system will create and complete an empty
-            reposition move automatically.
+            {t("Set the trailer's new location. The system will create and complete an empty reposition move automatically.")}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -102,18 +104,18 @@ export function LocateTrailerDialog({
               <LocationAutocompleteField
                 control={control}
                 name="newLocationId"
-                label="New Location"
-                placeholder="Select location"
+                label={t("New Location")}
+                placeholder={t("Select location")}
                 rules={{ required: true }}
               />
             </FormControl>
           </FormGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Locating...">
-              Locate Trailer
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Locating...")}>
+              {t("Locate Trailer")}
             </Button>
           </DialogFooter>
         </Form>

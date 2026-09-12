@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { nanoid } from "nanoid";
@@ -53,6 +54,8 @@ function toUserSnapshot(
 }
 
 export function useCommentMutations(shipmentId: string) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
   const pendingInputsRef = useRef<Map<string, ShipmentCommentCreateInput>>(new Map());
@@ -118,8 +121,8 @@ export function useCommentMutations(shipmentId: string) {
           failed: true,
         });
       }
-      toast.error("Failed to send comment", {
-        description: "Your draft is preserved — retry or discard it from the comment.",
+      toast.error(t("Failed to send comment"), {
+        description: t("Your draft is preserved — retry or discard it from the comment."),
       });
     },
   });
@@ -228,7 +231,7 @@ export function useCommentMutations(shipmentId: string) {
     },
     onError: (_error, _comment, context) => {
       context?.restore();
-      toast.error("Failed to delete comment");
+      toast.error(t("Failed to delete comment"));
     },
   });
 
@@ -321,7 +324,7 @@ export function useCommentMutations(shipmentId: string) {
     },
     onError: (_error, _comment, context) => {
       context?.restore();
-      toast.error("Failed to acknowledge comment");
+      toast.error(t("Failed to acknowledge comment"));
     },
   });
 

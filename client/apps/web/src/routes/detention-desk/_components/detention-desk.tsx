@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { pluralize } from "@trenova/shared/lib/utils";
 import { AnimatePresence, m } from "motion/react";
@@ -16,6 +17,8 @@ const ROW_TRANSITION = { duration: 0.16, ease: "easeOut" } as const;
  * loses the list they were reading.
  */
 export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
+  const t = useT();
+
   const {
     entries,
     visible,
@@ -91,10 +94,10 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
       {isFiltered && visible.length > 0 && (
         <div className="text-muted-foreground flex items-center gap-2 p-2 text-xs">
           <span className="tabular-nums">
-            {visible.length} of {entries.length} {pluralize("stop", entries.length)}
+            {t("{0} of {1} {2}", visible.length, entries.length, pluralize("stop", entries.length))}
           </span>
           <Button variant="link" size="xxs" className="h-auto p-0 text-xs" onClick={resetFilters}>
-            Clear filters
+            {t("Clear filters")}
           </Button>
         </div>
       )}

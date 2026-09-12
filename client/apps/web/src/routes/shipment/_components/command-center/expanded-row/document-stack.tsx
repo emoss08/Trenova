@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -40,6 +41,8 @@ export function DocumentsBlock({
   shipment: Shipment;
   onUpload: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
+  const t = useT();
+
   const shipmentId = shipment.id ?? "";
   const hasShipmentId = shipmentId.length > 0;
   const billingReadinessQuery = queries.shipment.billingReadiness(shipmentId);
@@ -89,13 +92,13 @@ export function DocumentsBlock({
         {isLoading ? (
           <PanelSkeleton />
         ) : isError ? (
-          <span className="text-muted-foreground">Documents unavailable</span>
+          <span className="text-muted-foreground">{t("Documents unavailable")}</span>
         ) : docRows.length === 0 ? (
-          <span className="text-muted-foreground">No required documents</span>
+          <span className="text-muted-foreground">{t("No required documents")}</span>
         ) : (
           docRows.map((row) => (
             <div key={row.id} className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground truncate">{row.label}</span>
+              <span className="text-muted-foreground truncate">{t(row.label)}</span>
               {row.matchedDocumentCount > 0 ? (
                 <span className="font-table text-success max-w-32 truncate text-right text-[10.5px] tabular-nums">
                   {getUploadedCountLabel(row.matchedDocumentCount)}
@@ -114,7 +117,7 @@ export function DocumentsBlock({
                     })
                   }
                 >
-                  Upload
+                  {t("Upload")}
                 </Button>
               )}
             </div>

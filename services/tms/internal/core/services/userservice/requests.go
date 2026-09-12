@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -9,6 +10,7 @@ import (
 type UpdateMySettingsRequest struct {
 	Timezone   string                 `json:"timezone"`
 	TimeFormat domaintypes.TimeFormat `json:"timeFormat"`
+	Locale     string                 `json:"locale"`
 }
 
 func (r *UpdateMySettingsRequest) Validate() error {
@@ -27,6 +29,10 @@ func (r *UpdateMySettingsRequest) Validate() error {
 				domaintypes.TimeFormat12Hour,
 				domaintypes.TimeFormat24Hour,
 			).Error("Time format must be either 12-hour or 24-hour"),
+		),
+		validation.Field(
+			&r.Locale,
+			validation.By(domainvalidation.ValidateLocale),
 		),
 	)
 

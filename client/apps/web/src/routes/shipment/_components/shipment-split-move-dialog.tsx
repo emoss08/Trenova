@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -61,6 +62,8 @@ function MiniLocationDisplay({
   locationId: string;
   fallbackLabel?: string;
 }) {
+  const t = useT();
+
   const { data: location } = useQuery({
     queryKey: ["location", "selectOption", locationId],
     queryFn: () => apiService.locationService.getOption(locationId),
@@ -69,7 +72,9 @@ function MiniLocationDisplay({
   });
 
   if (!location) {
-    return <span className="text-muted-foreground text-xs">{fallbackLabel ?? "Loading..."}</span>;
+    return (
+      <span className="text-muted-foreground text-xs">{fallbackLabel ?? t("Loading...")}</span>
+    );
   }
 
   return (
@@ -134,6 +139,8 @@ function MiniStopRow({
 }
 
 function CurrentMovePreview({ move }: { move: ShipmentMove }) {
+  const t = useT();
+
   const pickup = move.stops[0];
   const delivery = move.stops[1];
   if (!pickup || !delivery) return null;
@@ -150,7 +157,7 @@ function CurrentMovePreview({ move }: { move: ShipmentMove }) {
   return (
     <div>
       <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-        Current Move
+        {t("Current Move")}
       </h4>
       <div className="bg-muted/50 rounded-lg border p-3">
         <MiniStopRow
@@ -176,6 +183,8 @@ function AfterSplitPreview({
   move: ShipmentMove;
   formValues: SplitMoveFormValues;
 }) {
+  const t = useT();
+
   const pickup = move.stops[0];
   const delivery = move.stops[1];
   if (!pickup || !delivery) return null;
@@ -200,14 +209,14 @@ function AfterSplitPreview({
   return (
     <div>
       <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-        After Split
+        {t("After Split")}
       </h4>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
-            <Badge variant="secondary">Original</Badge>
+            <Badge variant="secondary">{t("Original")}</Badge>
             {hasAssignment && (
-              <span className="text-2xs text-muted-foreground">keeps assignment</span>
+              <span className="text-2xs text-muted-foreground">{t("keeps assignment")}</span>
             )}
           </div>
           <MiniStopRow
@@ -221,7 +230,7 @@ function AfterSplitPreview({
 
         <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
-            <Badge variant="info">New</Badge>
+            <Badge variant="info">{t("New")}</Badge>
             <span className="text-2xs text-muted-foreground">unassigned</span>
           </div>
           <MiniStopRow
@@ -234,7 +243,7 @@ function AfterSplitPreview({
             locationId={formValues.newDeliveryLocationId || undefined}
             stopType="Delivery"
             time={newDeliveryTime}
-            placeholder="Select a destination..."
+            placeholder={t("Select a destination...")}
           />
         </div>
       </div>
@@ -249,6 +258,8 @@ export function SplitMoveDialog({
   currentMove,
   onSplit,
 }: SplitMoveDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const origDelivery = currentMove.stops[1];
@@ -289,7 +300,7 @@ export function SplitMoveDialog({
     onSuccess: (data: SplitMoveResponse) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onSplit(data);
-      toast.success("Move split successfully");
+      toast.success(t("Move split successfully"));
     },
   });
 
@@ -325,10 +336,11 @@ export function SplitMoveDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="gap-2 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="border-border gap-0 border-b p-4">
-          <DialogTitle>Split Move</DialogTitle>
+          <DialogTitle>{t("Split Move")}</DialogTitle>
           <DialogDescription>
-            The original delivery becomes the handoff point. A new move continues from there to a
-            new destination.
+            {t(
+              "The original delivery becomes the handoff point. A new move continues from there to a new destination.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -343,8 +355,9 @@ export function SplitMoveDialog({
                 <div className="flex shrink-0 items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/50">
                   <InfoIcon className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
                   <p className="text-xs text-blue-700 dark:text-blue-300">
-                    The current assignment will remain on the original move. The new move will be
-                    unassigned.
+                    {t(
+                      "The current assignment will remain on the original move. The new move will be unassigned.",
+                    )}
                   </p>
                 </div>
               )}
@@ -354,7 +367,7 @@ export function SplitMoveDialog({
 
               <div>
                 <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-                  New Destination
+                  {t("New Destination")}
                 </h4>
                 <FormGroup cols={1}>
                   <FormControl>
@@ -362,8 +375,8 @@ export function SplitMoveDialog({
                       control={control}
                       name="newDeliveryLocationId"
                       rules={{ required: true }}
-                      label="Delivery Location"
-                      placeholder="Select destination for the new move"
+                      label={t("Delivery Location")}
+                      placeholder={t("Select destination for the new move")}
                     />
                   </FormControl>
                 </FormGroup>
@@ -371,8 +384,10 @@ export function SplitMoveDialog({
               <AfterSplitPreview move={currentMove} formValues={formValues} />
               <Separator />
               <Section
-                label="Handoff Pickup Times"
-                description="Pre-filled from the original delivery. The new carrier picks up at the same location, so these times should match or follow the original delivery."
+                label={t("Handoff Pickup Times")}
+                description={t(
+                  "Pre-filled from the original delivery. The new carrier picks up at the same location, so these times should match or follow the original delivery.",
+                )}
               >
                 <FormGroup cols={2}>
                   <FormControl>
@@ -380,23 +395,25 @@ export function SplitMoveDialog({
                       control={control}
                       name="splitPickupScheduledWindowStart"
                       rules={{ required: true }}
-                      label="Scheduled Window Start"
-                      placeholder="Scheduled window start"
+                      label={t("Scheduled Window Start")}
+                      placeholder={t("Scheduled window start")}
                     />
                   </FormControl>
                   <FormControl>
                     <AutoCompleteDateTimeField
                       control={control}
                       name="splitPickupScheduledWindowEnd"
-                      label="Scheduled Window End"
-                      placeholder="Optional scheduled window end"
+                      label={t("Scheduled Window End")}
+                      placeholder={t("Optional scheduled window end")}
                     />
                   </FormControl>
                 </FormGroup>
               </Section>
               <Section
-                label="New Delivery Times"
-                description="When the new move arrives at the final destination. These should be after the handoff pickup departure above."
+                label={t("New Delivery Times")}
+                description={t(
+                  "When the new move arrives at the final destination. These should be after the handoff pickup departure above.",
+                )}
               >
                 <FormGroup cols={2}>
                   <FormControl>
@@ -404,36 +421,36 @@ export function SplitMoveDialog({
                       control={control}
                       name="newDeliveryScheduledWindowStart"
                       rules={{ required: true }}
-                      label="Scheduled Window Start"
-                      placeholder="Scheduled window start"
+                      label={t("Scheduled Window Start")}
+                      placeholder={t("Scheduled window start")}
                     />
                   </FormControl>
                   <FormControl>
                     <AutoCompleteDateTimeField
                       control={control}
                       name="newDeliveryScheduledWindowEnd"
-                      label="Scheduled Window End"
-                      placeholder="Optional scheduled window end"
+                      label={t("Scheduled Window End")}
+                      placeholder={t("Optional scheduled window end")}
                     />
                   </FormControl>
                 </FormGroup>
               </Section>
-              <Section label="Cargo (Optional)">
+              <Section label={t("Cargo (Optional)")}>
                 <FormGroup cols={2}>
                   <FormControl>
                     <NumberField
                       control={control}
                       name="pieces"
-                      label="Pieces"
-                      placeholder="Optional"
+                      label={t("Pieces")}
+                      placeholder={t("Optional")}
                     />
                   </FormControl>
                   <FormControl>
                     <NumberField
                       control={control}
                       name="weight"
-                      label="Weight"
-                      placeholder="Optional"
+                      label={t("Weight")}
+                      placeholder={t("Optional")}
                     />
                   </FormControl>
                 </FormGroup>
@@ -442,10 +459,10 @@ export function SplitMoveDialog({
           </ScrollArea>
           <DialogFooter className="m-0">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Splitting...">
-              Split Move
+            <Button type="submit" isLoading={isSubmitting} loadingText={t("Splitting...")}>
+              {t("Split Move")}
             </Button>
           </DialogFooter>
         </Form>

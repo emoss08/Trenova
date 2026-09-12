@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CarrierAssignmentFields,
   CarrierEligibilityAlerts,
@@ -70,6 +71,8 @@ export function CarrierAssignDialog({
   onCancel: () => void;
   onConfirm: (input: DispatchAssignMoveToCarrierInput) => Promise<unknown>;
 }) {
+  const t = useT();
+
   const replace = move.coverageType === "carrier" && !!move.carrierAssignmentId;
 
   const form = useForm<CarrierAssignmentPayloadInput, unknown, CarrierAssignmentPayload>({
@@ -108,7 +111,7 @@ export function CarrierAssignDialog({
       <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>
-            {replace ? "Replace Carrier Assignment" : "Assign Move to Carrier"}
+            {replace ? t("Replace Carrier Assignment") : t("Assign Move to Carrier")}
           </DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}
@@ -133,15 +136,15 @@ export function CarrierAssignDialog({
           </ScrollArea>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button
               type="submit"
               disabled={submitBlocked}
               isLoading={isAssigning}
-              loadingText="Assigning..."
+              loadingText={t("Assigning...")}
             >
-              {replace ? "Replace carrier" : "Assign to carrier"}
+              {replace ? t("Replace carrier") : t("Assign to carrier")}
             </Button>
           </DialogFooter>
         </Form>

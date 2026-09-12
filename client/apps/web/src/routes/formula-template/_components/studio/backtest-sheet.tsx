@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
@@ -35,6 +36,8 @@ function BacktestSheetSkeleton() {
 }
 
 export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSheetProps) {
+  const t = useT();
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -44,11 +47,10 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <HistoryIcon className="size-4" />
-            Backtest
+            {t("Backtest")}
           </SheetTitle>
           <SheetDescription>
-            Re-rate recent shipments with a candidate expression and compare against what they
-            charge today.
+            {t("Re-rate recent shipments with a candidate expression and compare against what they charge today.")}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">

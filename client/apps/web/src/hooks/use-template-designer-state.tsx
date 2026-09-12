@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { listEdiTemplatesGraphQL } from "@/lib/graphql/edi-templates";
 import { queries } from "@/lib/queries";
 import {
@@ -262,6 +263,8 @@ const TemplateDesignerValidationContext = createContext<TemplateDesignerValidati
 );
 
 export function TemplateDesignerValidationProvider({ children }: { children: ReactNode }) {
+  const t = useT();
+
   const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
   const { hasUnsavedChanges } = useTemplateDesignerDirtyState();
   const setDiagnostics = useTemplateDesignerStore((state) => state.setDiagnostics);
@@ -269,9 +272,9 @@ export function TemplateDesignerValidationProvider({ children }: { children: Rea
   const { mutate: validateTemplate, isPending: isValidating } = useValidateEDITemplateMutation({
     onSuccess: (response) => {
       setDiagnostics(response.diagnostics);
-      toast.success("Template validation complete");
+      toast.success(t("Template validation complete"));
     },
-    onError: () => toast.error("Template validation failed"),
+    onError: () => toast.error(t("Template validation failed")),
   });
 
   const action = useMemo<TemplateDesignerValidationAction>(

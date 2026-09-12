@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import {
@@ -20,6 +21,8 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
  * tab rather than beside the rates: it should take a deliberate visit.
  */
 export function DimensionEditor() {
+  const t = useT();
+
   const { control } = useFormContext<RateMatrix>();
   const { fields, append, replace } = useFieldArray({ control, name: "dimensions" });
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
@@ -42,8 +45,7 @@ export function DimensionEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it
-          would quietly price nothing.
+          {t("No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it would quietly price nothing.")}
         </p>
       )}
 
@@ -51,8 +53,7 @@ export function DimensionEditor() {
         <Alert>
           <TriangleAlertIcon className="size-4" />
           <AlertDescription>
-            Changing an axis after rates exist changes what every existing cell means. Re-upload the
-            grid after any change here.
+            {t("Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.")}
           </AlertDescription>
         </Alert>
       )}
@@ -63,7 +64,7 @@ export function DimensionEditor() {
         return (
           <div key={field.id} className="bg-card rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium">Axis {index + 1}</p>
+              <p className="text-sm font-medium">{t("Axis {0}", index + 1)}</p>
               <Button
                 type="button"
                 variant="ghost"
@@ -71,7 +72,7 @@ export function DimensionEditor() {
                 className="h-6 text-xs"
                 onClick={() => removeAxis(index)}
               >
-                Remove
+                {t("Remove")}
               </Button>
             </div>
 
@@ -81,9 +82,9 @@ export function DimensionEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`dimensions.${index}.kind` as never}
-                  label="Dimension"
-                  placeholder="Select dimension"
-                  description="What about the shipment this axis reads"
+                  label={t("Dimension")}
+                  placeholder={t("Select dimension")}
+                  description={t("What about the shipment this axis reads")}
                   options={rateMatrixDimensionKindChoices}
                 />
               </FormControl>
@@ -92,8 +93,8 @@ export function DimensionEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`dimensions.${index}.matchMode` as never}
-                  label="Match Mode"
-                  placeholder="Select match mode"
+                  label={t("Match Mode")}
+                  placeholder={t("Select match mode")}
                   description={
                     matchMode === "Range"
                       ? "Bands, each covering from its floor up to but not including the next"
@@ -107,18 +108,18 @@ export function DimensionEditor() {
                   <SelectField
                     control={control}
                     name={`dimensions.${index}.rangeOverflow` as never}
-                    label="Outside every band"
-                    placeholder="Select overflow policy"
-                    description="What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break."
+                    label={t("Outside every band")}
+                    placeholder={t("Select overflow policy")}
+                    description={t("What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break.")}
                     options={rateMatrixRangeOverflowChoices}
                   />
                 ) : (
                   <SelectField
                     control={control}
                     name={`dimensions.${index}.keyNormalization` as never}
-                    label="Key matching"
-                    placeholder="Select key normalization"
-                    description="Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter."
+                    label={t("Key matching")}
+                    placeholder={t("Select key normalization")}
+                    description={t("Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.")}
                     options={rateMatrixKeyNormalizationChoices}
                   />
                 )}
@@ -127,9 +128,9 @@ export function DimensionEditor() {
                 <InputField
                   control={control}
                   name={`dimensions.${index}.label` as never}
-                  label="Label"
-                  placeholder="Origin zone"
-                  description="What this axis is called in the grid — leave blank to use the kind"
+                  label={t("Label")}
+                  placeholder={t("Origin zone")}
+                  description={t("What this axis is called in the grid — leave blank to use the kind")}
                 />
               </FormControl>
             </FormGroup>
@@ -154,13 +155,12 @@ export function DimensionEditor() {
         }
       >
         <PlusIcon className="mr-1 size-3.5" />
-        Add axis
+        {t("Add axis")}
       </Button>
 
       {atCapacity && (
         <p className="text-muted-foreground text-xs">
-          Four axes is the limit. Origin zone, destination zone, weight break and class covers every
-          published tariff we have seen, and a fifth would make the grid unreadable.
+          {t("Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.")}
         </p>
       )}
     </div>

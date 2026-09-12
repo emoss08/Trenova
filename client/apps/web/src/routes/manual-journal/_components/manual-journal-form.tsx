@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { JournalLineItemsEditor } from "@/components/accounting/journal-line-items-editor";
 import { JournalLineItemsTable } from "@/components/accounting/journal-line-items-table";
@@ -33,6 +34,8 @@ function mapToJournalEntryLines(lines: ManualJournalLine[]): JournalEntryLine[] 
 }
 
 function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; totalCredit: number }) {
+  const t = useT();
+
   const difference = totalDebit - totalCredit;
   const hasAmounts = totalDebit + totalCredit > 0;
   const isBalanced = difference === 0 && totalDebit > 0;
@@ -41,13 +44,13 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
     <div className="divide-border bg-muted/30 grid grid-cols-3 divide-x overflow-hidden rounded-lg border">
       <div className="flex flex-col gap-1 px-4 py-3">
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Total Debits
+          {t("Total Debits")}
         </span>
         <AmountDisplay value={totalDebit} className="text-sm font-semibold" />
       </div>
       <div className="flex flex-col gap-1 px-4 py-3">
         <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-          Total Credits
+          {t("Total Credits")}
         </span>
         <AmountDisplay value={totalCredit} className="text-sm font-semibold" />
       </div>
@@ -67,7 +70,7 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
                 : "text-red-700 dark:text-red-400"),
           )}
         >
-          {isBalanced ? "Balanced" : "Difference"}
+          {isBalanced ? t("Balanced") : t("Difference")}
         </span>
         <span className="flex items-center gap-1.5">
           {isBalanced ? (
@@ -91,6 +94,8 @@ type ManualJournalFormProps = {
 };
 
 export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
+  const t = useT();
+
   const { control, setValue } = useFormContext();
   const lines: ManualJournalLine[] = useWatch({ control, name: "lines" }) ?? [];
   const fiscalYearId: string = useWatch({ control, name: "requestedFiscalYearId" }) ?? "";
@@ -106,29 +111,29 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title="Journal Details"
-        description="Describe the entry and when it should hit the general ledger."
+        title={t("Journal Details")}
+        description={t("Describe the entry and when it should hit the general ledger.")}
       >
         <FormGroup cols={2}>
           <FormControl>
             <TextareaField
               control={control}
               name="description"
-              label="Description"
+              label={t("Description")}
               rules={{ required: "Description is required" }}
               disabled={!isDraft}
-              description="A short summary that will appear on the posted journal entry."
-              placeholder="e.g. Accrue December fuel invoices"
+              description={t("A short summary that will appear on the posted journal entry.")}
+              placeholder={t("e.g. Accrue December fuel invoices")}
             />
           </FormControl>
           <FormControl>
             <TextareaField
               control={control}
               name="reason"
-              label="Reason"
+              label={t("Reason")}
               disabled={!isDraft}
-              description="Business justification for the adjustment, shown to approvers."
-              placeholder="e.g. Vendor invoices received after period cutoff"
+              description={t("Business justification for the adjustment, shown to approvers.")}
+              placeholder={t("e.g. Vendor invoices received after period cutoff")}
             />
           </FormControl>
         </FormGroup>
@@ -137,22 +142,22 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <AutoCompleteDateField
               control={control}
               name="accountingDate"
-              label="Accounting Date"
+              label={t("Accounting Date")}
               rules={{ required: "Accounting date is required" }}
               disabled={!isDraft}
-              description="The GL date for this entry. It must fall within an open fiscal period."
-              placeholder="Select date"
+              description={t("The GL date for this entry. It must fall within an open fiscal period.")}
+              placeholder={t("Select date")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="currencyCode"
-              label="Currency"
+              label={t("Currency")}
               disabled={!isDraft}
               maxLength={3}
-              description="ISO 4217 code for all line amounts (e.g. USD)."
-              placeholder="USD"
+              description={t("ISO 4217 code for all line amounts (e.g. USD).")}
+              placeholder={t("USD")}
             />
           </FormControl>
         </FormGroup>
@@ -161,10 +166,10 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <FiscalYearAutocompleteField
               control={control}
               name="requestedFiscalYearId"
-              label="Fiscal Year"
+              label={t("Fiscal Year")}
               disabled={!isDraft}
-              placeholder="Select fiscal year"
-              description="Requested fiscal year. The posting period is resolved from the accounting date."
+              placeholder={t("Select fiscal year")}
+              description={t("Requested fiscal year. The posting period is resolved from the accounting date.")}
               onOptionChange={() => setValue("requestedFiscalPeriodId", "")}
             />
           </FormControl>
@@ -172,10 +177,10 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
             <FiscalPeriodAutocompleteField
               control={control}
               name="requestedFiscalPeriodId"
-              label="Fiscal Period"
+              label={t("Fiscal Period")}
               disabled={!isDraft || !fiscalYearId}
               placeholder={fiscalYearId ? "Select period" : "Select a fiscal year first"}
-              description="Requested period within the selected fiscal year."
+              description={t("Requested period within the selected fiscal year.")}
               extraSearchParams={periodSearchParams}
             />
           </FormControl>
@@ -183,9 +188,9 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
       </FormSection>
 
       <FormSection
-        title="Line Items"
+        title={t("Line Items")}
         titleCount={lines.length}
-        description="Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted."
+        description={t("Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.")}
         className="border-border border-t pt-4"
       >
         {isDraft ? (

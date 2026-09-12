@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportDashboards } from "@/hooks/use-reports";
@@ -24,6 +25,8 @@ type DashboardGalleryProps = {
 };
 
 export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGalleryProps) {
+  const t = useT();
+
   const navigate = useNavigate();
   const dashboards = useReportDashboards();
   const createDashboard = useCreateDashboardAction();
@@ -58,7 +61,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
       <div className="grid p-4">
         <ReportGridEmptyState
           icon={CircleAlertIcon}
-          title="Dashboards could not be loaded"
+          title={t("Dashboards could not be loaded")}
           description={graphQLErrorMessage(dashboards.error, "Please try again")}
         />
       </div>
@@ -87,7 +90,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                   disabled={createDashboard.isPending}
                 >
                   <PlusIcon className="size-3.5" />
-                  New dashboard
+                  {t("New dashboard")}
                 </Button>
               ) : undefined
             }
@@ -106,19 +109,21 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-medium">{dashboard.name}</h3>
                     <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
-                      {dashboard.description || "No description"}
+                      {dashboard.description || t("No description")}
                     </p>
                   </div>
                 </div>
                 <div className="border-border/60 text-2xs text-muted-foreground mt-3 flex items-center gap-2 border-t pt-3">
                   <LayoutDashboardIcon className="size-3.5" />
                   <span className="tabular-nums">
-                    {layout.tiles.length} tile{layout.tiles.length === 1 ? "" : "s"}
+                    {t("{0, plural, one {# tile} other {# tiles}}", layout.tiles.length)}
                   </span>
                   {(layout.parameters?.length ?? 0) > 0 && (
                     <span className="tabular-nums">
-                      · {layout.parameters?.length} filter
-                      {layout.parameters?.length === 1 ? "" : "s"}
+                      {t(
+                        "· {0, plural, one {# filter} other {# filters}}",
+                        layout.parameters?.length,
+                      )}
                     </span>
                   )}
                   <div className="flex-1" />

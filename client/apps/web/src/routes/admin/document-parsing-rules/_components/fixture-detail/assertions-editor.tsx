@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -71,6 +72,8 @@ const EMPTY_FIELD_ASSERTION: FixtureFieldAssertion = {
 };
 
 export function AssertionsEditor() {
+  const t = useT();
+
   const { control } = useFormContext<FixtureFormValues>();
 
   const expectedFields = useWatch({ control, name: "assertions.expectedFields" });
@@ -106,8 +109,8 @@ export function AssertionsEditor() {
 
   return (
     <FormSection
-      title="Assertions"
-      description="Define the expected extraction results for this fixture. Use field assertions for presence, shape, and format checks; keep exact-value matches only for legacy or intentionally strict fixtures."
+      title={t("Assertions")}
+      description={t("Define the expected extraction results for this fixture. Use field assertions for presence, shape, and format checks; keep exact-value matches only for legacy or intentionally strict fixtures.")}
       action={
         summary.length > 0 ? (
           <div className="flex items-center gap-1.5">
@@ -125,8 +128,8 @@ export function AssertionsEditor() {
           <FieldAssertionsEditor
             control={control}
             name="assertions.fieldAssertions"
-            label="Field Assertions"
-            description="Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values."
+            label={t("Field Assertions")}
+            description={t("Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values.")}
           />
         </div>
 
@@ -136,8 +139,8 @@ export function AssertionsEditor() {
           <KeyValueEditor
             control={control}
             name="assertions.expectedFields"
-            label="Legacy Exact Matches"
-            description="Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation."
+            label={t("Legacy Exact Matches")}
+            description={t("Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation.")}
             keyPlaceholder="Field key (e.g. referenceNumber)"
             valuePlaceholder="Expected value"
           />
@@ -150,25 +153,25 @@ export function AssertionsEditor() {
             <TagInput
               control={control}
               name="assertions.requiredStopRoles"
-              label="Required Stop Roles"
-              description="Stop roles that must appear in the extraction result (e.g. pickup, delivery)."
-              placeholder="Add role..."
+              label={t("Required Stop Roles")}
+              description={t("Stop roles that must appear in the extraction result (e.g. pickup, delivery).")}
+              placeholder={t("Add role...")}
             />
           </FormControl>
           <FormControl>
             <NumberField
               control={control}
               name="assertions.minimumStopCount"
-              label="Minimum Stop Count"
-              description="The minimum number of stops the parser must extract for this fixture to pass."
+              label={t("Minimum Stop Count")}
+              description={t("The minimum number of stops the parser must extract for this fixture to pass.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="assertions.reviewStatus"
-              label="Review Status"
-              description="Track whether this fixture's assertions have been verified as correct."
+              label={t("Review Status")}
+              description={t("Track whether this fixture's assertions have been verified as correct.")}
               options={REVIEW_STATUS_OPTIONS}
             />
           </FormControl>
@@ -226,6 +229,8 @@ function FieldAssertionsEditorInner({
   disabled?: boolean;
   error?: string;
 }) {
+  const t = useT();
+
   const entries = Object.entries(value);
 
   const addField = useCallback(() => {
@@ -319,8 +324,7 @@ function FieldAssertionsEditorInner({
       <div className="space-y-3">
         {entries.length === 0 && (
           <div className="text-muted-foreground rounded-md border border-dashed px-3 py-4 text-xs">
-            No field assertions yet. Add rules for things like “referenceNumber is not empty” or
-            “rate matches a currency pattern.”
+            {t("No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”")}
           </div>
         )}
 
@@ -330,7 +334,7 @@ function FieldAssertionsEditorInner({
               <Input
                 value={fieldKey}
                 onChange={(event) => renameField(fieldKey, event.target.value)}
-                placeholder="Field key (e.g. referenceNumber)"
+                placeholder={t("Field key (e.g. referenceNumber)")}
                 disabled={disabled}
                 className="flex-1"
               />
@@ -368,7 +372,7 @@ function FieldAssertionsEditorInner({
                 onClick={() => addAssertion(fieldKey)}
               >
                 <PlusIcon className="size-3.5" />
-                Add Assertion
+                {t("Add Assertion")}
               </Button>
             )}
           </div>
@@ -377,7 +381,7 @@ function FieldAssertionsEditorInner({
         {!disabled && (
           <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addField}>
             <PlusIcon className="size-3.5" />
-            Add Field Assertion
+            {t("Add Field Assertion")}
           </Button>
         )}
       </div>
@@ -401,6 +405,8 @@ function FieldAssertionRow({
   onRemove: () => void;
   disabled?: boolean;
 }) {
+  const t = useT();
+
   const operatorMeta = FIELD_ASSERTION_OPERATOR_OPTIONS.find(
     (option) => option.value === assertion.operator,
   );
@@ -419,7 +425,7 @@ function FieldAssertionRow({
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-2xs text-muted-foreground font-medium uppercase">Operator</label>
+            <label className="text-2xs text-muted-foreground font-medium uppercase">{t("Operator")}</label>
             <select
               value={assertion.operator}
               onChange={(event) =>
@@ -430,7 +436,7 @@ function FieldAssertionRow({
             >
               {FIELD_ASSERTION_OPERATOR_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </option>
               ))}
             </select>
@@ -439,18 +445,18 @@ function FieldAssertionRow({
           <div className="space-y-1">
             <label className="text-2xs text-muted-foreground font-medium uppercase">
               {assertion.operator === "matches_regex"
-                ? "Pattern"
+                ? t("Pattern")
                 : assertion.operator === "one_of"
-                  ? "Accepted Values"
+                  ? t("Accepted Values")
                   : assertion.operator === "equals"
-                    ? "Expected Value"
-                    : "Details"}
+                    ? t("Expected Value")
+                    : t("Details")}
             </label>
             {assertion.operator === "equals" && (
               <Input
                 value={assertion.value}
                 onChange={(event) => onChange({ ...assertion, value: event.target.value })}
-                placeholder="Expected exact value"
+                placeholder={t("Expected exact value")}
                 disabled={disabled}
               />
             )}
@@ -458,7 +464,7 @@ function FieldAssertionRow({
               <Input
                 value={assertion.pattern}
                 onChange={(event) => onChange({ ...assertion, pattern: event.target.value })}
-                placeholder="e.g. ^\\$[0-9]+(?:\\.[0-9]{2})$"
+                placeholder={t("e.g. ^\\\\$[0-9]+(?:\\\\.[0-9]{2})$")}
                 disabled={disabled}
                 className="font-mono text-xs"
               />
@@ -475,7 +481,7 @@ function FieldAssertionRow({
                       .filter(Boolean),
                   })
                 }
-                placeholder="Comma-separated acceptable values"
+                placeholder={t("Comma-separated acceptable values")}
                 disabled={disabled}
               />
             )}
@@ -493,7 +499,7 @@ function FieldAssertionRow({
             variant="ghost"
             size="icon"
             onClick={onRemove}
-            aria-label="Remove assertion"
+            aria-label={t("Remove assertion")}
           >
             <XIcon className="size-4" />
           </Button>
@@ -501,7 +507,7 @@ function FieldAssertionRow({
       </div>
 
       {operatorMeta && (
-        <p className="text-2xs text-muted-foreground mt-2">{operatorMeta.description}</p>
+        <p className="text-2xs text-muted-foreground mt-2">{t(operatorMeta.description)}</p>
       )}
     </div>
   );

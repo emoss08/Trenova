@@ -257,11 +257,9 @@ func (s *Service) requireNoOpenAssignments(ctx context.Context, entity *worker.P
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"%d worker%s still assigned to this policy. Reassign them before deactivating it",
-				count,
-				pluralSuffix(count),
-			),
+			"{0} worker{1} still assigned to this policy. Reassign them before deactivating it",
+			count,
+			pluralSuffix(count),
 		)
 	}
 	return nil

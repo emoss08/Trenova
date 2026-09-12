@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -65,6 +66,9 @@ type ResolvedTemplate struct {
 	// ContentHash identifies the bytes that will render, for both tiers. It is
 	// what makes a preview cacheable and a past render reproducible.
 	ContentHash string
+
+	// Locale is the language this template was resolved and must be compiled for.
+	Locale i18n.Locale
 }
 
 // FromBuiltIn reports whether the embedded starter produced this.
@@ -79,6 +83,12 @@ type ResolveTemplateRequest struct {
 	// CustomerID is optional. A kind that is not CustomerScoped ignores it
 	// rather than skipping the assignment tier by accident.
 	CustomerID *pulid.ID
+
+	// Locale is the language the recipient reads. These renders happen in
+	// workers, where there is no request to take an Accept-Language header from,
+	// so the caller resolves it from the recipient and passes it in. Empty means
+	// the source language.
+	Locale i18n.Locale
 }
 
 // BuildContextRequest is what a domain needs to assemble its own context.
@@ -123,6 +133,9 @@ type RenderDocumentRequest struct {
 	// SkipPDF renders only the HTML, for the editor preview tier that runs on
 	// every debounce and must not pay for a print.
 	SkipPDF bool
+
+	// Locale is the language the recipient reads; see ResolveTemplateRequest.
+	Locale i18n.Locale
 }
 
 type RenderedDocument struct {
@@ -157,6 +170,9 @@ type RenderMessageRequest struct {
 	// that silently differs from the one the organization authored, so the
 	// failure surfaces to the sender instead.
 	FallbackToBuiltIn bool
+
+	// Locale is the language the recipient reads; see ResolveTemplateRequest.
+	Locale i18n.Locale
 }
 
 type RenderedMessage struct {

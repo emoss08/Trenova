@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -48,6 +49,8 @@ export function InstantPayDialog({
   worker?: InstantPayWorker | null;
   onPaid: () => void;
 }) {
+  const t = useT();
+
   const form = useForm<InstantPayForm>({
     defaultValues: { workerId: worker?.workerId ?? "" },
   });
@@ -115,8 +118,7 @@ export function InstantPayDialog({
       toast.success(`${settlement.settlementNumber} paid`, {
         description: (
           <span>
-            Net <AmountDisplay value={settlement.netPayMinor} currency={settlement.currencyCode} />{" "}
-            via {settlement.paymentMethod} · posted to the GL and visible to the driver in Dash.
+            {t("Net")} <AmountDisplay value={settlement.netPayMinor} currency={settlement.currencyCode} />{t("via {0} · posted to the GL and visible to the driver in Dash.", settlement.paymentMethod)}
           </span>
         ),
       });
@@ -132,10 +134,9 @@ export function InstantPayDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Pay driver now</DialogTitle>
+          <DialogTitle>{t("Pay driver now")}</DialogTitle>
           <DialogDescription>
-            Builds an off-cycle settlement from the selected loads and approves, posts, and marks it
-            paid in one pass — the driver sees it in Dash immediately.
+            {t("Builds an off-cycle settlement from the selected loads and approves, posts, and marks it paid in one pass — the driver sees it in Dash immediately.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -147,9 +148,9 @@ export function InstantPayDialog({
               <WorkerAutocompleteField<InstantPayForm>
                 control={control}
                 name="workerId"
-                label="Driver"
+                label={t("Driver")}
                 rules={{ required: true }}
-                placeholder="Select a driver"
+                placeholder={t("Select a driver")}
               />
             </FormProvider>
           )}
@@ -161,14 +162,13 @@ export function InstantPayDialog({
             </div>
           ) : (events.data?.length ?? 0) === 0 ? (
             <p className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs">
-              This driver has no payable accrued events. Pay accrues once a load reaches the pay
-              trigger milestone; held events must be released first.
+              {t("This driver has no payable accrued events. Pay accrues once a load reaches the pay trigger milestone; held events must be released first.")}
             </p>
           ) : (
             <>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium">
-                  Loads to pay ({selectedEvents.length}/{events.data?.length})
+                  {t("Loads to pay ({0}/{1})", selectedEvents.length, events.data?.length)}
                 </p>
                 <Button
                   size="sm"
@@ -182,7 +182,7 @@ export function InstantPayDialog({
                     )
                   }
                 >
-                  {allSelected ? "Clear all" : "Select all"}
+                  {allSelected ? t("Clear all") : t("Select all")}
                 </Button>
               </div>
               <ScrollArea className="max-h-56 min-h-0" viewportClassName="min-h-0" maskHeight={18}>
@@ -199,7 +199,7 @@ export function InstantPayDialog({
               </ScrollArea>
 
               <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2">
-                <span className="text-xs font-medium">Gross selected</span>
+                <span className="text-xs font-medium">{t("Gross selected")}</span>
                 <span className="text-sm font-semibold tabular-nums">
                   <AmountDisplay value={selectedGross} currency="USD" />
                 </span>
@@ -212,16 +212,15 @@ export function InstantPayDialog({
                   onCheckedChange={(checked) => setApplyRecurring(checked === true)}
                 />
                 <Label htmlFor="instant-pay-recurring" className="text-xs font-normal">
-                  Apply recurring deductions, escrow, and advance recovery
+                  {t("Apply recurring deductions, escrow, and advance recovery")}
                   <span className="text-muted-foreground mt-0.5 block text-[11px]">
-                    Off by default so this payout doesn&apos;t double-dip items the regular period
-                    settlement will take.
+                    {t("Off by default so this payout doesn't double-dip items the regular period settlement will take.")}
                   </span>
                 </Label>
               </div>
 
               <div>
-                <p className="mb-1 text-xs font-medium">Payment method</p>
+                <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
                 <div className="flex flex-wrap gap-2">
                   {paymentMethods.map((method) => (
                     <Button
@@ -230,17 +229,17 @@ export function InstantPayDialog({
                       variant={paymentMethod === method ? "default" : "outline"}
                       onClick={() => setPaymentMethod(method)}
                     >
-                      {method === "InstantPay" ? "Instant Pay" : method}
+                      {method === "InstantPay" ? t("Instant Pay") : method}
                     </Button>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="mb-1 text-xs font-medium">Payment reference</p>
+                <p className="mb-1 text-xs font-medium">{t("Payment reference")}</p>
                 <Input
                   value={paymentReference}
                   onChange={(event) => setPaymentReference(event.target.value)}
-                  placeholder="ACH trace / check number (optional)"
+                  placeholder={t("ACH trace / check number (optional)")}
                 />
               </div>
             </>
@@ -249,15 +248,15 @@ export function InstantPayDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={!canPay}
             onClick={() => payMutation.mutate()}
-            title="Generates, approves, posts, and marks the settlement paid in one pass"
+            title={t("Generates, approves, posts, and marks the settlement paid in one pass")}
           >
             <Zap className="size-3.5" />
-            {payMutation.isPending ? "Paying..." : "Pay now"}
+            {payMutation.isPending ? t("Paying...") : t("Pay now")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -274,6 +273,8 @@ function EventRow({
   checked: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   return (
     <li className="flex items-center gap-2.5 rounded-md border p-2">
       <Checkbox
@@ -282,10 +283,10 @@ function EventRow({
         aria-label={`Pay ${event.proNumber}`}
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-mono text-xs font-medium">{event.proNumber || "No pro #"}</p>
+        <p className="truncate font-mono text-xs font-medium">{event.proNumber || t("No pro #")}</p>
         <p className="text-muted-foreground text-[11px]">
           {formatUnixDate(event.eventDate)}
-          {Number(event.totalMiles) > 0 ? ` · ${Number(event.totalMiles).toFixed(0)} mi` : ""}
+          {Number(event.totalMiles) > 0 ? ` ${t("· {0} mi", Number(event.totalMiles).toFixed(0))}` : ""}
         </p>
       </div>
       <span className="shrink-0 text-xs font-semibold tabular-nums">

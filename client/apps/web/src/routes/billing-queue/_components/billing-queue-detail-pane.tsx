@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
@@ -35,6 +36,8 @@ export default function BillingQueueDetailPane({
   onDocumentSelect: (docId: string, fileName: string) => void;
   onAutoAdvance?: () => void;
 }) {
+  const t = useT();
+
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const { data: item, isLoading } = useQuery({
@@ -50,8 +53,8 @@ export default function BillingQueueDetailPane({
     return (
       <BillingDetailUnselected
         layout="tabs"
-        title="Nothing open"
-        description="Pick an item from the queue to review it here, or press J to start at the top."
+        title={t("Nothing open")}
+        description={t("Pick an item from the queue to review it here, or press J to start at the top.")}
       />
     );
   }
@@ -100,14 +103,14 @@ export default function BillingQueueDetailPane({
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-          {item.number ? <MetadataCell label="Queue #" value={item.number} /> : null}
-          {shipment?.bol ? <MetadataCell label="BOL" value={shipment.bol} /> : null}
+          {item.number ? <MetadataCell label={t("Queue #")} value={item.number} /> : null}
+          {shipment?.bol ? <MetadataCell label={t("BOL")} value={shipment.bol} /> : null}
           {item.assignedBiller ? (
-            <MetadataCell label="Assigned Biller" value={item.assignedBiller.name} />
+            <MetadataCell label={t("Assigned Biller")} value={item.assignedBiller.name} />
           ) : null}
           {originLocation && destLocation ? (
             <MetadataCell
-              label="Route"
+              label={t("Route")}
               value={`${originLocation.city}, ${originLocation.state?.abbreviation} → ${destLocation.city}, ${destLocation.state?.abbreviation}`}
             />
           ) : null}
@@ -122,7 +125,7 @@ export default function BillingQueueDetailPane({
         <div className="p-2">
           <Alert variant="info">
             <AlertTriangleIcon className="size-4" />
-            <AlertTitle>Billing Notes</AlertTitle>
+            <AlertTitle>{t("Billing Notes")}</AlertTitle>
             <AlertDescription>{shipment.customer.billingProfile.billingNotes}</AlertDescription>
           </Alert>
         </div>
@@ -152,10 +155,10 @@ export default function BillingQueueDetailPane({
       ) : null}
       <Tabs defaultValue="charges" className="flex min-h-0 flex-1 flex-col">
         <TabsList variant="underline" className="border-border w-full border-b">
-          <TabsTrigger value="charges">Charges</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="comments">Comments</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
+          <TabsTrigger value="comments">{t("Comments")}</TabsTrigger>
+          <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
         </TabsList>
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">
@@ -220,6 +223,8 @@ function AdjustmentOriginBanner({
   sourceInvoiceAdjustmentId?: string | null;
   correctionGroupId?: string | null;
 }) {
+  const t = useT();
+
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -232,7 +237,7 @@ function AdjustmentOriginBanner({
         <RefreshCwIcon className="size-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-            Adjustment-Origin Rebill
+            {t("Adjustment-Origin Rebill")}
           </span>
           {rebillStrategy ? (
             <span className="text-2xs rounded bg-blue-600/10 px-1.5 py-0.5 font-medium text-blue-600 dark:text-blue-400">
@@ -241,7 +246,7 @@ function AdjustmentOriginBanner({
           ) : null}
           {requiresReplacementReview ? (
             <span className="text-2xs rounded bg-yellow-600/10 px-1.5 py-0.5 font-medium text-yellow-700 dark:text-yellow-400">
-              Review required
+              {t("Review required")}
             </span>
           ) : null}
         </div>
@@ -252,7 +257,7 @@ function AdjustmentOriginBanner({
               className="text-2xs font-medium text-blue-600 hover:underline dark:text-blue-400"
               onClick={(e) => e.stopPropagation()}
             >
-              Original
+              {t("Original")}
             </Link>
           ) : null}
           {sourceInvoiceId && sourceCreditMemoInvoiceId ? (
@@ -264,7 +269,7 @@ function AdjustmentOriginBanner({
               className="text-2xs font-medium text-blue-600 hover:underline dark:text-blue-400"
               onClick={(e) => e.stopPropagation()}
             >
-              Credit Memo
+              {t("Credit Memo")}
             </Link>
           ) : null}
           <ChevronDownIcon
@@ -277,7 +282,7 @@ function AdjustmentOriginBanner({
           <div className="text-2xs flex flex-wrap gap-x-5 gap-y-1">
             {sourceInvoiceAdjustmentId ? (
               <span className="text-muted-foreground">
-                Adjustment{" "}
+                {t("Adjustment")}{" "}
                 <span className="text-foreground font-medium">
                   {sourceInvoiceAdjustmentId.slice(0, 12)}
                 </span>
@@ -285,7 +290,7 @@ function AdjustmentOriginBanner({
             ) : null}
             {correctionGroupId ? (
               <span className="text-muted-foreground">
-                Group{" "}
+                {t("Group")}{" "}
                 <span className="text-foreground font-medium">
                   {correctionGroupId.slice(0, 12)}
                 </span>
@@ -293,7 +298,7 @@ function AdjustmentOriginBanner({
             ) : null}
             {rerateVariancePercent != null ? (
               <span className="text-muted-foreground">
-                Rerate variance{" "}
+                {t("Rerate variance")}{" "}
                 <span className="text-foreground font-medium">
                   {Number(rerateVariancePercent).toFixed(2)}%
                 </span>
@@ -301,9 +306,9 @@ function AdjustmentOriginBanner({
             ) : null}
             {requiresReplacementReview ? (
               <span className="text-muted-foreground">
-                Replacement review{" "}
+                {t("Replacement review")}{" "}
                 <span className="text-foreground font-medium">
-                  Required before invoice creation
+                  {t("Required before invoice creation")}
                 </span>
               </span>
             ) : null}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -58,6 +59,8 @@ function VersionSelect({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   const selected = versions.find((v) => v.id === value);
@@ -89,12 +92,11 @@ function VersionSelect({
                     {selected.status}
                   </Badge>
                   <span className="truncate">
-                    Version {selected.versionNumber}
-                    {selected.label ? ` — ${selected.label}` : ""}
+                    {t("Version {0}{1}", selected.versionNumber, selected.label ? ` — ${selected.label}` : "")}
                   </span>
                 </>
               ) : (
-                "Select a version..."
+                t("Select a version...")
               )}
             </span>
             <ChevronDownIcon
@@ -112,9 +114,9 @@ function VersionSelect({
         positionerClassName="min-w-(--anchor-width) rounded-lg dark"
       >
         <Command>
-          <CommandInput placeholder="Search versions..." />
+          <CommandInput placeholder={t("Search versions...")} />
           <CommandList>
-            <CommandEmpty>No versions found.</CommandEmpty>
+            <CommandEmpty>{t("No versions found.")}</CommandEmpty>
             <CommandGroup>
               {versions.map((v) => (
                 <CommandItem
@@ -131,8 +133,7 @@ function VersionSelect({
                     {v.status}
                   </Badge>
                   <span className="truncate text-xs">
-                    Version {v.versionNumber}
-                    {v.label ? ` — ${v.label}` : ""}
+                    {t("Version {0}{1}", v.versionNumber, v.label ? ` — ${v.label}` : "")}
                   </span>
                 </CommandItem>
               ))}
@@ -158,6 +159,8 @@ function SectionHeading({ title, description }: { title: string; description: st
 }
 
 export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
+  const t = useT();
+
   const { data: versions, isLoading } = useQuery({
     ...queries.documentParsingRule.versions(ruleSetId),
   });
@@ -216,37 +219,35 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <FlaskConicalIcon className="text-muted-foreground size-4" />
-            <CardTitle>Rule Simulation</CardTitle>
+            <CardTitle>{t("Rule Simulation")}</CardTitle>
           </div>
           <CardDescription>
-            Run a rule version against sample document text to verify parsing behavior before
-            publishing. Useful for testing new rules, debugging extraction issues, or comparing
-            results against a known baseline.
+            {t("Run a rule version against sample document text to verify parsing behavior before publishing. Useful for testing new rules, debugging extraction issues, or comparing results against a known baseline.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* -- Document Input Section -- */}
           <div className="space-y-4">
             <SectionHeading
-              title="Document Input"
-              description="Select the rule version to test and provide the document text to parse."
+              title={t("Document Input")}
+              description={t("Select the rule version to test and provide the document text to parse.")}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-0.5">
-                <Label className="required text-xs font-medium">Version</Label>
+                <Label className="required text-xs font-medium">{t("Version")}</Label>
                 <VersionSelect
                   versions={eligibleVersions}
                   value={selectedVersionId}
                   onChange={setSelectedVersionId}
                 />
-                <HelpText>Only Draft and Published versions are available for simulation.</HelpText>
+                <HelpText>{t("Only Draft and Published versions are available for simulation.")}</HelpText>
               </div>
             </div>
 
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center justify-between">
-                <Label className="required text-xs font-medium">Document Text</Label>
+                <Label className="required text-xs font-medium">{t("Document Text")}</Label>
                 {text && (
                   <span className="text-2xs text-muted-foreground tabular-nums">
                     {lineCount} {lineCount === 1 ? "line" : "lines"}
@@ -256,13 +257,12 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste the full extracted document text here..."
+                placeholder={t("Paste the full extracted document text here...")}
                 className="min-h-[200px] font-mono text-xs"
                 minRows={8}
               />
               <HelpText>
-                The raw text content extracted from the document. This is what the rule engine
-                parses to extract fields, stops, and other structured data.
+                {t("The raw text content extracted from the document. This is what the rule engine parses to extract fields, stops, and other structured data.")}
               </HelpText>
             </div>
           </div>
@@ -270,50 +270,46 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           {/* -- Optional Context Section -- */}
           <div className="space-y-4">
             <SectionHeading
-              title="Optional Context"
-              description="Additional metadata that helps the rule engine match and parse more accurately."
+              title={t("Optional Context")}
+              description={t("Additional metadata that helps the rule engine match and parse more accurately.")}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-0.5">
-                <Label className="text-xs font-medium">File Name</Label>
+                <Label className="text-xs font-medium">{t("File Name")}</Label>
                 <Input
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
-                  placeholder="e.g. rate_confirmation_ch_robinson.pdf"
+                  placeholder={t("e.g. rate_confirmation_ch_robinson.pdf")}
                 />
                 <HelpText>
-                  Used by fileNameContains match rules. Provide the original document file name to
-                  test file-name-based matching.
+                  {t("Used by fileNameContains match rules. Provide the original document file name to test file-name-based matching.")}
                 </HelpText>
               </div>
               <div className="flex flex-col gap-0.5">
-                <Label className="text-xs font-medium">Provider Fingerprint</Label>
+                <Label className="text-xs font-medium">{t("Provider Fingerprint")}</Label>
                 <Input
                   value={providerFingerprint}
                   onChange={(e) => setProviderFingerprint(e.target.value)}
-                  placeholder="e.g. ch_robinson"
+                  placeholder={t("e.g. ch_robinson")}
                 />
                 <HelpText>
-                  A known provider identifier used by providerFingerprints match rules. Simulates
-                  what the document intelligence pipeline would detect.
+                  {t("A known provider identifier used by providerFingerprints match rules. Simulates what the document intelligence pipeline would detect.")}
                 </HelpText>
               </div>
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <Label className="text-xs font-medium">Baseline Analysis JSON</Label>
+              <Label className="text-xs font-medium">{t("Baseline Analysis JSON")}</Label>
               <Textarea
                 value={baselineJson}
                 onChange={(e) => setBaselineJson(e.target.value)}
-                placeholder='{"fields": {}, "stops": [], "overallConfidence": 0.95, ...}'
+                placeholder={t("{\"fields\": {}, \"stops\": [], \"overallConfidence\": 0.95, ...}")}
                 className="min-h-[80px] font-mono text-xs"
                 minRows={3}
               />
               <HelpText>
-                Provide a previous analysis result as JSON to enable diff comparison. The simulation
-                will show what changed between the baseline and the new candidate result — useful
-                when iterating on rules to ensure changes produce the expected improvements.
+                {t("Provide a previous analysis result as JSON to enable diff comparison. The simulation will show what changed between the baseline and the new candidate result — useful when iterating on rules to ensure changes produce the expected improvements.")}
               </HelpText>
             </div>
           </div>
@@ -329,12 +325,12 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
               {isPending ? (
                 <>
                   <Loader2Icon className="size-4 animate-spin" />
-                  Running...
+                  {t("Running...")}
                 </>
               ) : (
                 <>
                   <PlayIcon className="size-4" />
-                  Run Simulation
+                  {t("Run Simulation")}
                 </>
               )}
             </Button>
@@ -346,7 +342,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 className="gap-1.5"
               >
                 <EraserIcon className="size-3.5" />
-                Clear Results
+                {t("Clear Results")}
               </Button>
             )}
           </div>
@@ -358,16 +354,14 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
           <CardContent className="flex items-start gap-3 pt-4">
             <AlertTriangleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">
-              <p className="text-destructive text-sm font-medium">Simulation failed</p>
+              <p className="text-destructive text-sm font-medium">{t("Simulation failed")}</p>
               <p className="text-muted-foreground text-xs">
-                {error instanceof Error ? error.message : "An unexpected error occurred."}
+                {error instanceof Error ? error.message : t("An unexpected error occurred.")}
               </p>
               <div className="flex items-start gap-1.5 pt-1">
                 <InfoIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
                 <p className="text-2xs text-muted-foreground">
-                  Check that the selected version has valid rule configuration and the document text
-                  is not empty. If the issue persists, verify the rule version status on the
-                  Versions tab.
+                  {t("Check that the selected version has valid rule configuration and the document text is not empty. If the issue persists, verify the rule version status on the Versions tab.")}
                 </p>
               </div>
             </div>

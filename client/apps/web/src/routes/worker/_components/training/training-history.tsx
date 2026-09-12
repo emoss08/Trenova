@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerTrainingRecordRow } from "@/lib/graphql/worker-training";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,6 +17,8 @@ import { useState } from "react";
  * completed and when, not because anybody reads them day to day.
  */
 export function TrainingHistory({ records }: { records: WorkerTrainingRecordRow[] }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   if (records.length === 0) return null;
 
@@ -29,7 +32,7 @@ export function TrainingHistory({ records }: { records: WorkerTrainingRecordRow[
         onClick={() => setOpen((value) => !value)}
       >
         <ChevronDownIcon className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-        History ({records.length})
+        {t("History ({0})", records.length)}
       </Button>
       {open ? (
         <ul className="divide-border divide-y rounded-lg border">
@@ -39,7 +42,7 @@ export function TrainingHistory({ records }: { records: WorkerTrainingRecordRow[
               className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 px-3 py-2.5 text-xs"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{record.course?.name ?? "Course"}</p>
+                <p className="truncate text-sm font-medium">{record.course?.name ?? t("Course")}</p>
                 <p className="text-muted-foreground truncate">
                   {[
                     `${WORKER_TRAINING_STATUS_LABELS[record.status as WorkerTrainingStatus]}${

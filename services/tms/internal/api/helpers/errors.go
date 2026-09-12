@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -37,6 +38,7 @@ type TimeoutResponseContext struct {
 	Method    string
 	Path      string
 	IP        string
+	Locale    i18n.Locale
 }
 
 func NewErrorHandler(params ErrorHandlerParams) *ErrorHandler {
@@ -75,6 +77,7 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 	h.logError(c, err, problemType, requestID)
 
 	problem := NewProblemBuilder(h.baseURI).
+		WithLocale(i18n.FromContext(c.Request.Context())).
 		WithType(problemType).
 		WithDetail(detail).
 		WithInstance(c.Request.URL.Path, requestID).
@@ -98,6 +101,7 @@ func (h *ErrorHandler) WriteRequestTimeout(
 	h.logTimeoutError(ctx, err, problemType)
 
 	problem := NewProblemBuilder(h.baseURI).
+		WithLocale(ctx.Locale).
 		WithType(problemType).
 		WithDetail(h.sanitizer.SanitizeMessage(err, problemType)).
 		WithInstance(ctx.Path, ctx.RequestID).
@@ -206,6 +210,7 @@ func (h *ErrorHandler) Middleware() gin.HandlerFunc {
 func (h *ErrorHandler) handlePanic(c *gin.Context, err error) {
 	requestID := extractRequestID(c)
 	problem := NewProblemBuilder(h.baseURI).
+		WithLocale(i18n.FromContext(c.Request.Context())).
 		WithType(ProblemTypeInternal).
 		WithDetail(h.sanitizer.SanitizeMessage(err, ProblemTypeInternal)).
 		WithInstance(c.Request.URL.Path, requestID).

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PdfViewer } from "@/components/elements/pdf-viewer";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { apiService } from "@/services/api";
@@ -11,6 +12,8 @@ export default function BillingQueueDocumentPreview({
   documentId: string | null;
   fileName?: string | null;
 }) {
+  const t = useT();
+
   const { data: viewUrl, isLoading } = useQuery({
     queryKey: ["document-view-url", documentId],
     queryFn: () => apiService.documentService.getViewUrl(documentId!),
@@ -22,7 +25,7 @@ export default function BillingQueueDocumentPreview({
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4">
         <FileSearchIcon className="size-10" />
-        <p className="text-center text-sm">Select a document to preview it here</p>
+        <p className="text-center text-sm">{t("Select a document to preview it here")}</p>
       </div>
     );
   }
@@ -31,7 +34,7 @@ export default function BillingQueueDocumentPreview({
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <TextShimmer as="span" className="text-sm" duration={1.5}>
-          Loading document preview
+          {t("Loading document preview")}
         </TextShimmer>
       </div>
     );
@@ -42,7 +45,7 @@ export default function BillingQueueDocumentPreview({
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <div className="text-muted-foreground flex flex-col items-center gap-2">
           <FileTextIcon className="size-6 opacity-40" />
-          <span className="text-xs">Preview unavailable</span>
+          <span className="text-xs">{t("Preview unavailable")}</span>
         </div>
       </div>
     );

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiCard } from "@/components/kpi/kpi-card";
 import { rotaCellMode, type RotaDensity } from "@/lib/scheduling-board";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -114,8 +115,10 @@ function ToolbarSkeleton() {
 }
 
 function AttentionSkeleton() {
+  const t = useT();
+
   return (
-    <section aria-label="Needs a look" className="bg-card overflow-hidden rounded-lg border">
+    <section aria-label={t("Needs a look")} className="bg-card overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div className="flex items-center gap-2">
           <Skeleton className="size-3.5 rounded-sm" />
@@ -155,6 +158,8 @@ type RotaBoardSkeletonProps = {
  * chose, so the loaded week lands in the same place its outline was.
  */
 export function RotaBoardSkeleton({ density = "comfortable", weeks = 1 }: RotaBoardSkeletonProps) {
+  const t = useT();
+
   const compact = density === "compact";
   const mode = rotaCellMode(density, weeks);
   const cellHeight = mode === "block" && !compact ? "h-8" : CELL_HEIGHT[mode];
@@ -162,7 +167,7 @@ export function RotaBoardSkeleton({ density = "comfortable", weeks = 1 }: RotaBo
   const days = Array.from({ length: dayCount }, (_, index) => index);
 
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading the board">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading the board")}>
       <div className="contents" aria-hidden>
         <AttentionSkeleton />
         <div
@@ -171,7 +176,7 @@ export function RotaBoardSkeleton({ density = "comfortable", weeks = 1 }: RotaBo
           className="border-border max-h-[75vh] overflow-auto rounded-lg border"
         >
           <table
-            aria-label="Rota"
+            aria-label={t("Rota")}
             className={cn(
               "w-full border-separate border-spacing-0 text-xs",
               mode === "block" ? "min-w-[48rem]" : "min-w-[56rem]",
@@ -324,8 +329,10 @@ type SchedulingSkeletonProps = {
  * panels' labels only so the two trees can be compared like for like.
  */
 export function SchedulingSkeleton({ showSwaps = true }: SchedulingSkeletonProps) {
+  const t = useT();
+
   return (
-    <div className="flex flex-col gap-4" aria-busy aria-label="Loading scheduling">
+    <div className="flex flex-col gap-4" aria-busy aria-label={t("Loading scheduling")}>
       <div className="contents" aria-hidden>
         <OverviewSkeleton showSwaps={showSwaps} />
         <TabsSkeleton />

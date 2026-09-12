@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -30,6 +31,8 @@ export function ReconciliationSummaryEmpty({
   description,
   className,
 }: ReconciliationSummaryEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -39,7 +42,7 @@ export function ReconciliationSummaryEmpty({
       action={
         <Link to="/accounting/reconciliation/import-batches">
           <Button variant="outline" size="sm">
-            Import a batch
+            {t("Import a batch")}
             <ArrowRightIcon className="size-3.5" />
           </Button>
         </Link>

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { WorkerCredentialRow } from "@/lib/graphql/worker-credential";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
@@ -10,6 +11,8 @@ import { useState } from "react";
  * was held and when, not because anybody reads them day to day.
  */
 export function CredentialHistory({ archived }: { archived: readonly WorkerCredentialRow[] }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   if (archived.length === 0) return null;
 
@@ -23,7 +26,7 @@ export function CredentialHistory({ archived }: { archived: readonly WorkerCrede
         onClick={() => setOpen((value) => !value)}
       >
         <ChevronDownIcon className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-        History ({archived.length})
+        {t("History ({0})", archived.length)}
       </Button>
       {open ? (
         <ul className="divide-border divide-y rounded-lg border">
@@ -35,7 +38,7 @@ export function CredentialHistory({ archived }: { archived: readonly WorkerCrede
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {credential.credentialType?.name ?? "Credential"}
+                  {credential.credentialType?.name ?? t("Credential")}
                 </p>
                 <p className="text-muted-foreground truncate">
                   {[

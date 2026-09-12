@@ -1,1 +1,1 @@
-Your pay dispute was {{ if .Approved }}resolved{{ else }}denied{{ end }}
+{{ if .Approved }}{{ t "Your pay dispute was resolved" }}{{ else }}{{ t "Your pay dispute was denied" }}{{ end }}

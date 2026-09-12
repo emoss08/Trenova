@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
@@ -70,15 +71,17 @@ export function PanelEmpty({ icon: Icon, message }: { icon: IconComponent; messa
 }
 
 export function PanelError({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <TriangleAlertIcon className="size-5 text-amber-500" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
-        These figures could not be loaded. The window may be too wide, or the aggregation timed out.
+        {t("These figures could not be loaded. The window may be too wide, or the aggregation timed out.")}
       </p>
       <Button type="button" size="sm" variant="outline" className="h-7" onClick={onRetry}>
         <RotateCwIcon className="mr-1.5 size-3.5" />
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
@@ -141,13 +144,15 @@ export function PanelExpandToggle({
   noun: string;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
       onClick={onToggle}
       className="text-2xs text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 ml-auto rounded-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
     >
-      {expanded ? "Show fewer" : `Show ${hiddenCount} more ${noun}`}
+      {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
     </button>
   );
 }

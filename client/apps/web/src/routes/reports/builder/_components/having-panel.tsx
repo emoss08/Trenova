@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -36,13 +37,15 @@ function measureKey(filter: ReportFieldFilter): string {
 }
 
 export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
+  const t = useT();
+
   const measures = measureColumns(ir);
   const filters = ir.having?.filters ?? [];
 
   if (measures.length === 0) {
     return (
       <p className="text-muted-foreground px-2 py-4 text-center text-sm">
-        Add measure columns to filter on aggregated values.
+        {t("Add measure columns to filter on aggregated values.")}
       </p>
     );
   }
@@ -83,7 +86,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
             items={measureChoices}
           >
             <SelectTrigger className="h-7 w-56">
-              <SelectValue placeholder="Select measure" />
+              <SelectValue placeholder={t("Select measure")} />
             </SelectTrigger>
             <SelectContent>
               {measures.map((column) => (
@@ -91,7 +94,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
                   key={column.id}
                   value={measureKey({ ref: column.ref, operator: "", agg: column.agg })}
                 >
-                  {column.agg ? `${REPORT_AGGREGATION_LABELS[column.agg]} of ` : ""}
+                  {column.agg ? `${t("{0} of", REPORT_AGGREGATION_LABELS[column.agg])} ` : ""}
                   {refLabel(index, ir.entity, column.ref)}
                 </SelectItem>
               ))}
@@ -111,7 +114,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
             <SelectContent>
               {HAVING_OPERATORS.map((op) => (
                 <SelectItem key={op.value} value={op.value}>
-                  {op.label}
+                  {t(op.label)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -137,7 +140,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
             size="icon"
             className="size-6"
             onClick={() => updateFilters(filters.filter((_, i) => i !== filterIndex))}
-            aria-label="Remove measure filter"
+            aria-label={t("Remove measure filter")}
           >
             <XIcon className="size-3.5" />
           </Button>
@@ -156,7 +159,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
         }}
       >
         <PlusIcon className="size-3.5" />
-        Measure Filter
+        {t("Measure Filter")}
       </Button>
     </div>
   );

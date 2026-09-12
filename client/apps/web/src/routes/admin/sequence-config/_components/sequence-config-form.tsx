@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
@@ -22,6 +23,8 @@ const sectionParser = parseAsStringLiteral(sequenceTypes)
   .withDefault(sequenceTypes[0]);
 
 export default function SequenceConfigForm() {
+  const t = useT();
+
   const { data } = useSuspenseQuery({
     ...queries.sequenceConfig.get(),
   });
@@ -73,7 +76,7 @@ export default function SequenceConfigForm() {
           ) : null}
         </div>
 
-        <FormSaveDock saveButtonContent="Save Changes" />
+        <FormSaveDock saveButtonContent={t("Save Changes")} />
       </Form>
     </FormProvider>
   );

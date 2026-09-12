@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -22,6 +23,8 @@ import { toast } from "sonner";
 const AGENT_CONTROL_QUERY_KEY = ["agent-control"];
 
 export default function AgentControlForm() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: AGENT_CONTROL_QUERY_KEY,
@@ -44,7 +47,7 @@ export default function AgentControlForm() {
   const mutation = useApiMutation({
     mutationFn: (values: AgentControlFormValues) => updateAgentControl(values),
     onSuccess: (_, values) => {
-      toast.success("Agent control updated");
+      toast.success(t("Agent control updated"));
       reset(values);
       void queryClient.invalidateQueries({ queryKey: AGENT_CONTROL_QUERY_KEY });
     },
@@ -62,7 +65,7 @@ export default function AgentControlForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
           <BillingAgentCard />
-          <FormSaveDock saveButtonContent="Save Changes" />
+          <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
     </FormProvider>
@@ -70,6 +73,8 @@ export default function AgentControlForm() {
 }
 
 function BillingAgentCard() {
+  const t = useT();
+
   const { control } = useFormContext<AgentControlFormValues>();
   const shadowMode = useWatch({ control, name: "shadowMode" });
   const billingAgentEnabled = useWatch({ control, name: "billingAgentEnabled" });
@@ -77,11 +82,9 @@ function BillingAgentCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Billing Exception Agent</CardTitle>
+        <CardTitle>{t("Billing Exception Agent")}</CardTitle>
         <CardDescription>
-          The billing exception agent inspects blocked billing queue items, diagnoses why they are
-          held, and proposes resolutions for a human to approve. It never approves or transitions an
-          item itself.
+          {t("The billing exception agent inspects blocked billing queue items, diagnoses why they are held, and proposes resolutions for a human to approve. It never approves or transitions an item itself.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -90,8 +93,8 @@ function BillingAgentCard() {
             <SwitchField
               control={control}
               name="billingAgentEnabled"
-              label="Enable Billing Exception Agent"
-              description="Allow the agent to run against this organization's blocked billing queue items."
+              label={t("Enable Billing Exception Agent")}
+              description={t("Allow the agent to run against this organization's blocked billing queue items.")}
               position="left"
             />
           </FormControl>
@@ -99,18 +102,16 @@ function BillingAgentCard() {
             <SwitchField
               control={control}
               name="shadowMode"
-              label="Shadow Mode"
-              description="While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions."
+              label={t("Shadow Mode")}
+              description={t("While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions.")}
               position="left"
             />
           </FormControl>
           {shadowMode && billingAgentEnabled ? (
             <Alert variant="warning">
-              <AlertTitle>Proposals are hidden</AlertTitle>
+              <AlertTitle>{t("Proposals are hidden")}</AlertTitle>
               <AlertDescription>
-                Shadow mode is on, so runs complete and persist proposals but nothing appears for
-                review and no decisions are awaited. Turn shadow mode off to surface proposals and
-                enable human decisions.
+                {t("Shadow mode is on, so runs complete and persist proposals but nothing appears for review and no decisions are awaited. Turn shadow mode off to surface proposals and enable human decisions.")}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -118,8 +119,8 @@ function BillingAgentCard() {
             <NumberField
               control={control}
               name="decisionTimeoutSeconds"
-              label="Decision Timeout (seconds)"
-              description="How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours)."
+              label={t("Decision Timeout (seconds)")}
+              description={t("How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours).")}
               rules={{ required: true }}
             />
           </FormControl>

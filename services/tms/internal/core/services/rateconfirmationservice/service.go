@@ -285,7 +285,7 @@ func (s *Service) Send(
 	}
 	if !entity.CanSend() {
 		return nil, errortypes.NewBusinessError(
-			fmt.Sprintf("A %s rate confirmation cannot be sent", entity.Status),
+			"A {0} rate confirmation cannot be sent", entity.Status,
 		)
 	}
 	if s.emailService == nil {
@@ -432,7 +432,7 @@ func (s *Service) MarkConfirmed(
 	}
 	if !entity.CanConfirm() {
 		return nil, errortypes.NewBusinessError(
-			fmt.Sprintf("A %s rate confirmation cannot be confirmed", entity.Status),
+			"A {0} rate confirmation cannot be confirmed", entity.Status,
 		)
 	}
 	if confirmedByName == "" {

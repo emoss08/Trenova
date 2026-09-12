@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -78,6 +79,7 @@ type User struct {
 	ProfilePicURL         string                 `json:"profilePicUrl"         bun:"profile_pic_url,type:VARCHAR(255)"`
 	ThumbnailURL          string                 `json:"thumbnailUrl"          bun:"thumbnail_url,type:VARCHAR(255)"`
 	Timezone              string                 `json:"timezone"              bun:"timezone,type:VARCHAR(50),notnull"`
+	Locale                string                 `json:"locale"                bun:"locale,type:VARCHAR(10),notnull,default:'en'"`
 	IsLocked              bool                   `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull"`
 	MustChangePassword    bool                   `json:"mustChangePassword"    bun:"must_change_password,type:BOOLEAN,notnull"`
 	Version               int64                  `json:"version"               bun:"version,type:BIGINT,notnull"`
@@ -197,6 +199,9 @@ func (u *User) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&u.Timezone,
 			validation.Required.Error("Timezone is required"),
+		),
+		validation.Field(&u.Locale,
+			validation.By(domainvalidation.ValidateLocale),
 		),
 	)
 	if err != nil {

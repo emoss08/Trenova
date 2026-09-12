@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
 import {
@@ -148,11 +149,11 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
     }
 
     if (isError) {
-      return <div className="p-2 text-sm text-red-500">Failed to load suggestions</div>;
+      return <div className="p-2 text-sm text-red-500">{translate("Failed to load suggestions")}</div>;
     }
 
     if (items.length === 0) {
-      return <div className="p-2 text-sm text-muted-foreground">No matches found</div>;
+      return <div className="p-2 text-sm text-muted-foreground">{translate("No matches found")}</div>;
     }
 
     return (
@@ -181,10 +182,10 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
             }}
           >
             <span className="flex min-w-0 flex-1 flex-col items-start">
-              <span className="w-full truncate">{item.label}</span>
+              <span className="w-full truncate">{translate(item.label)}</span>
               {item.description && (
                 <span className="w-full truncate text-2xs text-muted-foreground">
-                  {item.description}
+                  {translate(item.description)}
                 </span>
               )}
             </span>
@@ -201,7 +202,7 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
           </div>
         )}
         {hasNextPage && !isFetchingNextPage && (
-          <div className="p-1.5 text-center text-2xs text-muted-foreground">Scroll for more</div>
+          <div className="p-1.5 text-center text-2xs text-muted-foreground">{translate("Scroll for more")}</div>
         )}
       </div>
     );

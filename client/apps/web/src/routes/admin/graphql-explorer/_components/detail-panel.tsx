@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { CopyIconButton } from "@/components/copy-icon-button";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
@@ -30,6 +31,8 @@ const KIND_TINT: Record<BadgeKind, string> = {
 };
 
 function HashChip({ hash }: { hash: string }) {
+  const t = useT();
+
   const short = `${hash.slice(0, 13)}…${hash.slice(-6)}`;
   return (
     <span
@@ -37,7 +40,7 @@ function HashChip({ hash }: { hash: string }) {
       className="bg-muted/40 text-2xs text-muted-foreground inline-flex items-center gap-0.5 rounded-md border py-0.5 pr-0.5 pl-1.5 font-mono"
     >
       {short}
-      <CopyIconButton value={hash} label="Copy hash" size="icon-xxs" />
+      <CopyIconButton value={hash} label={t("Copy hash")} size="icon-xxs" />
     </span>
   );
 }
@@ -57,6 +60,8 @@ function DocumentHeader({
   sourceFile: string;
   hash?: string | null;
 }) {
+  const t = useT();
+
   return (
     <m.div
       key={`${kind}:${name}`}
@@ -77,7 +82,7 @@ function DocumentHeader({
           <span className={cn("font-mono text-sm font-medium", KIND_TEXT[kind])}>{kind}</span>
           <h2 className="font-mono text-lg font-semibold tracking-tight">{name}</h2>
           {suffix}
-          <CopyIconButton value={name} label="Copy name" />
+          <CopyIconButton value={name} label={t("Copy name")} />
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <Badge variant="secondary" className="font-normal">
@@ -126,13 +131,15 @@ function Chips({ values, onSelect }: { values: string[]; onSelect?: (name: strin
 }
 
 function UsagesTab({ usages }: { usages: string[] }) {
+  const t = useT();
+
   if (usages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <FileCodeIcon className="text-muted-foreground size-6" />
-        <p className="mt-2 text-sm font-medium">No references found</p>
+        <p className="mt-2 text-sm font-medium">{t("No references found")}</p>
         <p className="text-muted-foreground mt-1 text-xs">
-          This document is not referenced by any TypeScript source in <code>src/</code>.
+          {t("This document is not referenced by any TypeScript source in")} <code>{t("src/")}</code>.
         </p>
       </div>
     );
@@ -140,7 +147,7 @@ function UsagesTab({ usages }: { usages: string[] }) {
   return (
     <div className="flex flex-col gap-1 py-1">
       <SectionLabel>
-        {usages.length} file{usages.length === 1 ? "" : "s"}
+        {t("{0, plural, one {# file} other {# files}}", usages.length)}
       </SectionLabel>
       <ul className="mt-1 flex flex-col gap-1">
         {usages.map((usage) => (
@@ -164,6 +171,8 @@ function OperationDetail({
   operation: CatalogOperation;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const t = useT();
+
   const { catalog } = useCatalog();
   const inputTypeSdl = useMemo(() => {
     const names = referencedTypeNames(catalog, operation.variables);
@@ -184,9 +193,9 @@ function OperationDetail({
       />
 
       <TabsList variant="underline" className="border-border w-full justify-start border-b">
-        <TabsTrigger value="definition">Definition</TabsTrigger>
-        <TabsTrigger value="run">Run</TabsTrigger>
-        <TabsTrigger value="usages">Usages ({operation.usages.length})</TabsTrigger>
+        <TabsTrigger value="definition">{t("Definition")}</TabsTrigger>
+        <TabsTrigger value="run">{t("Run")}</TabsTrigger>
+        <TabsTrigger value="usages">{t("Usages ({0})", operation.usages.length)}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-hidden">
@@ -194,7 +203,7 @@ function OperationDetail({
           <div className="flex flex-col gap-4">
             {operation.variables.length > 0 && (
               <div>
-                <SectionLabel>Variables</SectionLabel>
+                <SectionLabel>{t("Variables")}</SectionLabel>
                 <div className="mt-1.5 overflow-hidden rounded-md border">
                   <table className="w-full text-xs">
                     <tbody>
@@ -220,7 +229,7 @@ function OperationDetail({
 
             {inputTypeSdl && (
               <div>
-                <SectionLabel>Input types</SectionLabel>
+                <SectionLabel>{t("Input types")}</SectionLabel>
                 <div className="mt-1.5">
                   <ShikiCodeBlock code={inputTypeSdl} lang="graphql" darkTheme="vitesse-dark" />
                 </div>
@@ -229,14 +238,14 @@ function OperationDetail({
 
             {operation.rootFields.length > 0 && (
               <div>
-                <SectionLabel>Root fields</SectionLabel>
+                <SectionLabel>{t("Root fields")}</SectionLabel>
                 <Chips values={operation.rootFields} />
               </div>
             )}
 
             {operation.fragments.length > 0 && (
               <div>
-                <SectionLabel>Fragments ({operation.fragments.length})</SectionLabel>
+                <SectionLabel>{t("Fragments ({0})", operation.fragments.length)}</SectionLabel>
                 <Chips
                   values={operation.fragments}
                   onSelect={(name) => onSelect({ kind: "fragment", name })}
@@ -246,8 +255,8 @@ function OperationDetail({
 
             <div>
               <div className="flex items-center justify-between">
-                <SectionLabel>Definition</SectionLabel>
-                <CopyIconButton value={operation.sdl} label="Copy definition" />
+                <SectionLabel>{t("Definition")}</SectionLabel>
+                <CopyIconButton value={operation.sdl} label={t("Copy definition")} />
               </div>
               <div className="mt-1.5">
                 <ShikiCodeBlock code={operation.sdl} lang="graphql" darkTheme="vitesse-dark" />
@@ -277,6 +286,8 @@ function FragmentDetail({
   fragment: CatalogFragment;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const t = useT();
+
   return (
     <Tabs defaultValue="definition" className="flex min-h-0 flex-1 flex-col gap-3">
       <DocumentHeader
@@ -284,7 +295,7 @@ function FragmentDetail({
         name={fragment.name}
         suffix={
           <span className="text-muted-foreground font-mono text-sm">
-            on {fragment.typeCondition}
+            {t("on {0}", fragment.typeCondition)}
           </span>
         }
         domain={fragment.domain}
@@ -292,8 +303,8 @@ function FragmentDetail({
       />
 
       <TabsList variant="underline" className="border-border w-full justify-start border-b">
-        <TabsTrigger value="definition">Definition</TabsTrigger>
-        <TabsTrigger value="usages">Usages ({fragment.usages.length})</TabsTrigger>
+        <TabsTrigger value="definition">{t("Definition")}</TabsTrigger>
+        <TabsTrigger value="usages">{t("Usages ({0})", fragment.usages.length)}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="definition" className="m-0 min-h-0 flex-1 overflow-hidden">
@@ -301,7 +312,7 @@ function FragmentDetail({
           <div className="flex flex-col gap-4">
             {fragment.usedByOperations.length > 0 && (
               <div>
-                <SectionLabel>Used by ({fragment.usedByOperations.length})</SectionLabel>
+                <SectionLabel>{t("Used by ({0})", fragment.usedByOperations.length)}</SectionLabel>
                 <Chips
                   values={fragment.usedByOperations}
                   onSelect={(name) => onSelect({ kind: "operation", name })}
@@ -311,7 +322,7 @@ function FragmentDetail({
 
             {fragment.fragments.length > 0 && (
               <div>
-                <SectionLabel>Nested fragments</SectionLabel>
+                <SectionLabel>{t("Nested fragments")}</SectionLabel>
                 <Chips
                   values={fragment.fragments}
                   onSelect={(name) => onSelect({ kind: "fragment", name })}
@@ -321,8 +332,8 @@ function FragmentDetail({
 
             <div>
               <div className="flex items-center justify-between">
-                <SectionLabel>Definition</SectionLabel>
-                <CopyIconButton value={fragment.sdl} label="Copy definition" />
+                <SectionLabel>{t("Definition")}</SectionLabel>
+                <CopyIconButton value={fragment.sdl} label={t("Copy definition")} />
               </div>
               <div className="mt-1.5">
                 <ShikiCodeBlock code={fragment.sdl} lang="graphql" darkTheme="vitesse-dark" />
@@ -350,6 +361,8 @@ export function DetailPanel({
   fragment: CatalogFragment | null;
   onSelect: (selection: CatalogSelection) => void;
 }) {
+  const t = useT();
+
   if (operation) {
     return <OperationDetail operation={operation} onSelect={onSelect} />;
   }
@@ -361,9 +374,9 @@ export function DetailPanel({
       <div className="text-border/70 pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] [background-size:14px_14px]" />
       <div className="relative flex flex-col items-center">
         <FileCodeIcon className="text-muted-foreground size-8" />
-        <p className="mt-3 text-sm font-medium">Select an operation</p>
+        <p className="mt-3 text-sm font-medium">{t("Select an operation")}</p>
         <p className="text-muted-foreground mt-1 max-w-xs text-xs">
-          Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.
+          {t("Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.")}
         </p>
         <div className="text-2xs text-muted-foreground/70 mt-4 flex items-center gap-3">
           <span className="flex items-center gap-1">

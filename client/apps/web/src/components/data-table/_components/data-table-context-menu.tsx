@@ -1,4 +1,5 @@
 "use no memo";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import {
   ContextMenu,
@@ -53,6 +54,8 @@ export function DataTableContextMenu<TData extends RowData>({
   row,
   actions = [],
 }: DataTableContextMenuProps<TData>) {
+  const t = useT();
+
   const { openPanelEdit, hasPanel, canOpenPanel, canUpdate } = useDataTable<TData, unknown>();
 
   const allActions: RowAction<TData>[] = [];
@@ -86,7 +89,7 @@ export function DataTableContextMenu<TData extends RowData>({
         {standardGroups.map((group, groupIndex) => (
           <ContextMenuGroup key={group.id}>
             {groupIndex > 0 && <ContextMenuSeparator />}
-            {group.label && <ContextMenuLabel>{group.label}</ContextMenuLabel>}
+            {group.label && <ContextMenuLabel>{t(group.label)}</ContextMenuLabel>}
             {group.actions.map((action) => {
               const Icon = action.icon;
               return (
@@ -96,7 +99,7 @@ export function DataTableContextMenu<TData extends RowData>({
                   onClick={() => void action.onClick(row)}
                 >
                   {Icon && <Icon className="size-4" />}
-                  {action.label}
+                  {t(action.label)}
                 </ContextMenuItem>
               );
             })}
@@ -116,7 +119,7 @@ export function DataTableContextMenu<TData extends RowData>({
                     onClick={() => void action.onClick(row)}
                   >
                     {Icon && <Icon className="size-4" />}
-                    {action.label}
+                    {t(action.label)}
                   </ContextMenuItem>
                 );
               })}

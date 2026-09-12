@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { NumberField } from "@/components/fields/number-field";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
@@ -27,6 +28,8 @@ const dataRetentionFormSchema = z.object({
 type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
 
 export function DataRetentionPage() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.Organization, Operation.Update),
@@ -61,7 +64,7 @@ export function DataRetentionPage() {
     form,
     resourceName: "Data Retention",
     onSuccess: async () => {
-      toast.success("Data retention settings saved");
+      toast.success(t("Data retention settings saved"));
       await queryClient.invalidateQueries({ queryKey: ["data-retention"] });
     },
   });
@@ -69,15 +72,15 @@ export function DataRetentionPage() {
   return (
     <AdminPageLayout>
       <PageHeader
-        title="Data Retention"
-        description="Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them."
+        title={t("Data Retention")}
+        description={t("Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.")}
       />
       <div className="flex flex-col gap-4 p-4">
         {isLoading ? (
-          <ComponentLoader message="Loading data retention settings" />
+          <ComponentLoader message={t("Loading data retention settings")} />
         ) : isError ? (
           <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
-            The data retention settings could not be loaded.
+            {t("The data retention settings could not be loaded.")}
           </div>
         ) : (
           <Form
@@ -86,31 +89,31 @@ export function DataRetentionPage() {
               void handleSubmit((values) => mutation.mutate(values))(event);
             }}
           >
-            <FormSection title="Retention Windows" className="bg-muted/20 rounded-md border p-3">
+            <FormSection title={t("Retention Windows")} className="bg-muted/20 rounded-md border p-3">
               <FormGroup cols={1}>
                 <FormControl>
                   <NumberField
                     control={control}
                     name="auditRetentionPeriod"
-                    label="Audit Retention (days)"
+                    label={t("Audit Retention (days)")}
                     rules={{ required: true }}
-                    description="Audit entries older than this are deleted by the nightly audit retention purge."
+                    description={t("Audit entries older than this are deleted by the nightly audit retention purge.")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField
                     control={control}
                     name="ediInboundFileRetentionPeriod"
-                    label="EDI Inbound File Retention (days)"
-                    description="Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever."
+                    label={t("EDI Inbound File Retention (days)")}
+                    description={t("Raw inbound EDI file contents older than this are blanked while metadata is kept. 0 keeps raw payloads forever.")}
                   />
                 </FormControl>
                 <FormControl>
                   <NumberField
                     control={control}
                     name="ediMessageRetentionPeriod"
-                    label="EDI Message Retention (days)"
-                    description="Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed."
+                    label={t("EDI Message Retention (days)")}
+                    description={t("Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.")}
                   />
                 </FormControl>
               </FormGroup>
@@ -118,7 +121,7 @@ export function DataRetentionPage() {
             {canUpdate && (
               <div className="mt-3 flex justify-end">
                 <Button type="submit" isLoading={mutation.isPending}>
-                  Save Settings
+                  {t("Save Settings")}
                 </Button>
               </div>
             )}

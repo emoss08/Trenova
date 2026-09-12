@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { describeApiError } from "@/lib/api-error-message";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -56,6 +57,8 @@ export function AiGeneratePanel({
   templateId,
   onInsert,
 }: AiGeneratePanelProps) {
+  const t = useT();
+
   const [instruction, setInstruction] = useState("");
   const [addedScenarios, setAddedScenarios] = useState<ReadonlySet<string>>(new Set());
   const queryClient = useQueryClient();
@@ -137,8 +140,8 @@ export function AiGeneratePanel({
       expression: data.expression,
       variableDefinitions: data.variableDefinitions,
     });
-    toast.success("Formula inserted into the editor", {
-      description: "Review and test it before saving.",
+    toast.success(t("Formula inserted into the editor"), {
+      description: t("Review and test it before saving."),
     });
     onOpenChange(false);
   };
@@ -154,11 +157,10 @@ export function AiGeneratePanel({
         <SheetHeader className="border-b pb-3">
           <SheetTitle className="flex items-center gap-2">
             <WandSparklesIcon className="size-4" />
-            Generate Formula
+            {t("Generate Formula")}
           </SheetTitle>
           <SheetDescription>
-            Describe how this template should price a shipment. The generated formula lands in the
-            editor for you to review and test — nothing is saved automatically.
+            {t("Describe how this template should price a shipment. The generated formula lands in the editor for you to review and test — nothing is saved automatically.")}
           </SheetDescription>
         </SheetHeader>
 
@@ -168,24 +170,24 @@ export function AiGeneratePanel({
               <Textarea
                 value={instruction}
                 onChange={(event) => setInstruction(event.target.value)}
-                placeholder="e.g. Charge $2.85 per mile, add a 20% fuel surcharge, and never bill under $350"
+                placeholder={t("e.g. Charge $2.85 per mile, add a 20% fuel surcharge, and never bill under $350")}
                 rows={4}
               />
               <div className="flex items-center justify-between gap-2">
                 <p className="text-2xs text-muted-foreground">
-                  Reference shipment values like distance, weight, stops, or hazmat.
+                  {t("Reference shipment values like distance, weight, stops, or hazmat.")}
                 </p>
                 <Button
                   type="button"
                   size="sm"
                   onClick={() => handleGenerate(instruction)}
                   isLoading={isPending}
-                  loadingText="Generating..."
+                  loadingText={t("Generating...")}
                   disabled={!instruction.trim()}
                   className="gap-1.5"
                 >
                   <SparklesIcon className="size-3.5" />
-                  Generate
+                  {t("Generate")}
                 </Button>
               </div>
             </div>
@@ -193,7 +195,7 @@ export function AiGeneratePanel({
             {!data && !isPending && (
               <div className="space-y-1.5">
                 <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                  Try one of these
+                  {t("Try one of these")}
                 </p>
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
@@ -210,7 +212,7 @@ export function AiGeneratePanel({
 
             {error && (
               <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs">
-                {error.message || "Formula generation failed. Try again."}
+                {error.message || t("Formula generation failed. Try again.")}
               </div>
             )}
 
@@ -218,7 +220,7 @@ export function AiGeneratePanel({
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    Generated Expression
+                    {t("Generated Expression")}
                   </p>
                   <pre className="bg-muted overflow-x-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
                     {data.expression}
@@ -228,7 +230,7 @@ export function AiGeneratePanel({
                 {data.variableDefinitions.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      Custom Variables
+                      {t("Custom Variables")}
                     </p>
                     <div className="overflow-hidden rounded-md border">
                       {data.variableDefinitions.map((variable) => (
@@ -257,7 +259,7 @@ export function AiGeneratePanel({
                 {data.explanation && (
                   <div className="space-y-1.5">
                     <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                      How it works
+                      {t("How it works")}
                     </p>
                     <p className="text-sm leading-relaxed">{data.explanation}</p>
                   </div>
@@ -278,12 +280,10 @@ export function AiGeneratePanel({
                       <AlertTriangleIcon className="size-3.5 shrink-0" />
                     )}
                     {validation.valid
-                      ? `Validated against sample data${
-                          typeof validation.result === "number"
-                            ? ` — result ${formatCurrency(validation.result)}`
-                            : ""
-                        }`
-                      : `Validation warning: ${validation.error || validation.message}`}
+                      ? t("Validated against sample data{0}", typeof validation.result === "number"
+                            ? ` ${t("— result {0}", formatCurrency(validation.result))}`
+                            : "")
+                      : t("Validation warning: {0}", validation.error || validation.message)}
                   </div>
                 )}
 
@@ -291,7 +291,7 @@ export function AiGeneratePanel({
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                        Proposed scenarios
+                        {t("Proposed scenarios")}
                       </p>
                       {templateId && pendingScenarios.length > 1 && (
                         <Button
@@ -303,7 +303,7 @@ export function AiGeneratePanel({
                           className="h-6 gap-1 px-2 text-xs"
                         >
                           <PlusIcon className="size-3" />
-                          Add all
+                          {t("Add all")}
                         </Button>
                       )}
                     </div>
@@ -318,16 +318,16 @@ export function AiGeneratePanel({
                             <div className="min-w-0 space-y-0.5">
                               <p className="font-medium">{scenario.name}</p>
                               {scenario.description && (
-                                <p className="text-muted-foreground">{scenario.description}</p>
+                                <p className="text-muted-foreground">{t(scenario.description)}</p>
                               )}
                               {scenario.valid && typeof scenario.expectedAmount === "number" ? (
                                 <p className="font-mono tabular-nums">
-                                  Expects {formatCurrency(scenario.expectedAmount)}
+                                  {t("Expects {0}", formatCurrency(scenario.expectedAmount))}
                                 </p>
                               ) : (
                                 <p className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
                                   <AlertTriangleIcon className="size-3 shrink-0" />
-                                  {scenario.error || "Could not be priced"}
+                                  {scenario.error || t("Could not be priced")}
                                 </p>
                               )}
                             </div>
@@ -344,12 +344,12 @@ export function AiGeneratePanel({
                               {added ? (
                                 <>
                                   <CheckIcon className="size-3" />
-                                  Added
+                                  {t("Added")}
                                 </>
                               ) : (
                                 <>
                                   <PlusIcon className="size-3" />
-                                  Add
+                                  {t("Add")}
                                 </>
                               )}
                             </Button>
@@ -359,18 +359,18 @@ export function AiGeneratePanel({
                     </div>
                     <p className="text-2xs text-muted-foreground">
                       {templateId
-                        ? "Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it."
-                        : "Save the template first, then generate again to add these as scenarios."}
+                        ? t("Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it.")
+                        : t("Save the template first, then generate again to add these as scenarios.")}
                     </p>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2">
                   <Button type="button" size="sm" onClick={handleInsert} className="gap-1.5">
-                    Insert into editor
+                    {t("Insert into editor")}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={handleStartOver}>
-                    Start over
+                    {t("Start over")}
                   </Button>
                 </div>
               </div>

@@ -181,7 +181,7 @@ func (c *WorkerCredential) ValidateAgainstType(
 		multiErr.Add(
 			"number",
 			errortypes.ErrRequired,
-			credentialType.Name+" requires a credential number",
+			"{0} requires a credential number", credentialType.Name,
 		)
 	}
 	if credentialType.ProfileField == CredentialProfileFieldLicenseExpiry && c.ExpiresAt == nil {

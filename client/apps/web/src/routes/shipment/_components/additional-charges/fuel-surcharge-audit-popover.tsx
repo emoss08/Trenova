@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -20,6 +21,8 @@ function money(value: number | null | undefined, digits = 2) {
 }
 
 export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDetail }) {
+  const t = useT();
+
   const derivation: Array<{ label: string; value: string | null }> = [];
 
   if (detail.ratePerMile != null) {
@@ -72,7 +75,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             variant="ghost"
             size="icon"
             className="size-7"
-            title="Fuel surcharge audit detail"
+            title={t("Fuel surcharge audit detail")}
           >
             <FuelIcon className="text-primary size-3.5" />
           </Button>
@@ -81,13 +84,13 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
       <PopoverContent align="end" className="w-80 space-y-3">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium">{detail.programName ?? "Fuel Surcharge"}</p>
+            <p className="text-sm font-medium">{detail.programName ?? t("Fuel Surcharge")}</p>
             <Badge variant="secondary" className="text-2xs">
               {detail.method ?? ""}
             </Badge>
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Every input frozen at rating time — the full defense for a fuel surcharge dispute
+            {t("Every input frozen at rating time — the full defense for a fuel surcharge dispute")}
           </p>
         </div>
 
@@ -96,23 +99,25 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
             <span>
               {detail.stale
-                ? "Rated with a price more than 3 weeks old."
-                : "Rated before this week's DOE price published — it will re-rate automatically once the price arrives."}
+                ? t("Rated with a price more than 3 weeks old.")
+                : t(
+                    "Rated before this week's DOE price published — it will re-rate automatically once the price arrives.",
+                  )}
             </span>
           </div>
         )}
 
         <div className="space-y-1.5">
           <DetailRow
-            label="Fuel index"
+            label={t("Fuel index")}
             value={detail.indexCode ? `${detail.indexCode} (${detail.indexSource ?? ""})` : null}
           />
-          <DetailRow label="Region" value={detail.indexRegion ?? null} />
-          <DetailRow label="Fuel type" value={detail.indexFuelType ?? null} />
-          <DetailRow label="Price week" value={detail.priceDate ?? null} />
-          <DetailRow label="Fuel price" value={money(detail.price ?? null, 3)} />
+          <DetailRow label={t("Region")} value={detail.indexRegion ?? null} />
+          <DetailRow label={t("Fuel type")} value={detail.indexFuelType ?? null} />
+          <DetailRow label={t("Price week")} value={detail.priceDate ?? null} />
+          <DetailRow label={t("Fuel price")} value={money(detail.price ?? null, 3)} />
           <DetailRow
-            label="Basis"
+            label={t("Basis")}
             value={detail.basisDate ? `${detail.basisDate} (${detail.dateBasis ?? ""})` : null}
           />
         </div>
@@ -122,7 +127,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             <Separator />
             <div className="space-y-1.5">
               {derivation.map((row) => (
-                <DetailRow key={row.label} label={row.label} value={row.value} />
+                <DetailRow key={row.label} label={t(row.label)} value={row.value} />
               ))}
             </div>
           </>
@@ -131,12 +136,12 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
         <Separator />
         <div className="space-y-1.5">
           {detail.rawAmount != null && detail.rawAmount !== detail.amount && (
-            <DetailRow label="Before cap/floor" value={money(detail.rawAmount)} />
+            <DetailRow label={t("Before cap/floor")} value={money(detail.rawAmount)} />
           )}
-          {detail.capApplied && <DetailRow label="Cap applied" value="Yes" />}
-          {detail.floorApplied && <DetailRow label="Floor applied" value="Yes" />}
+          {detail.capApplied && <DetailRow label={t("Cap applied")} value="Yes" />}
+          {detail.floorApplied && <DetailRow label={t("Floor applied")} value="Yes" />}
           <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="font-medium">Surcharge</span>
+            <span className="font-medium">{t("Surcharge")}</span>
             <span className="font-semibold tabular-nums">{money(detail.amount ?? null)}</span>
           </div>
         </div>

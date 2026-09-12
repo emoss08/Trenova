@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { HazardousMaterialAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -15,6 +16,8 @@ import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<HazmatSegregationRule>();
 
   const [hasExceptions, segregationType] = useWatch({
@@ -31,9 +34,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="status"
-          label="Status"
-          placeholder="Status"
-          description="The status of the segregation rule"
+          label={t("Status")}
+          placeholder={t("Status")}
+          description={t("The status of the segregation rule")}
           options={statusChoices}
           isReadOnly={disabled}
         />
@@ -43,9 +46,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="name"
-          label="Name"
-          placeholder="Name"
-          description="Human-readable name for the segregation rule"
+          label={t("Name")}
+          placeholder={t("Name")}
+          description={t("Human-readable name for the segregation rule")}
           disabled={disabled}
         />
       </FormControl>
@@ -53,9 +56,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <TextareaField
           control={control}
           name="description"
-          label="Description"
-          placeholder="Description"
-          description="Detailed description for this rule"
+          label={t("Description")}
+          placeholder={t("Description")}
+          description={t("Detailed description for this rule")}
           disabled={disabled}
         />
       </FormControl>
@@ -64,9 +67,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="classA"
-          label="Class A"
-          placeholder="Class A"
-          description="First hazardous material class"
+          label={t("Class A")}
+          placeholder={t("Class A")}
+          description={t("First hazardous material class")}
           options={hazardousClassChoices}
           isReadOnly={disabled}
         />
@@ -76,9 +79,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="classB"
-          label="Class B"
-          placeholder="Class B"
-          description="Second hazardous material class"
+          label={t("Class B")}
+          placeholder={t("Class B")}
+          description={t("Second hazardous material class")}
           options={hazardousClassChoices}
           isReadOnly={disabled}
         />
@@ -87,20 +90,20 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <HazardousMaterialAutocompleteField<HazmatSegregationRule>
           name="hazmatAId"
           control={control}
-          label="Hazardous Material A"
+          label={t("Hazardous Material A")}
           clearable
-          placeholder="Select Hazardous Material A"
-          description="Optional specific hazardous material"
+          placeholder={t("Select Hazardous Material A")}
+          description={t("Optional specific hazardous material")}
         />
       </FormControl>
       <FormControl>
         <HazardousMaterialAutocompleteField<HazmatSegregationRule>
           name="hazmatBId"
           control={control}
-          label="Hazardous Material B"
+          label={t("Hazardous Material B")}
           clearable
-          placeholder="Select Hazardous Material B"
-          description="Optional specific hazardous material"
+          placeholder={t("Select Hazardous Material B")}
+          description={t("Optional specific hazardous material")}
         />
       </FormControl>
       <FormControl cols="full">
@@ -108,9 +111,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           rules={{ required: true }}
           name="segregationType"
-          label="Segregation Type"
-          placeholder="Segregation Type"
-          description="Type of segregation required"
+          label={t("Segregation Type")}
+          placeholder={t("Segregation Type")}
+          description={t("Type of segregation required")}
           options={segregationTypeChoices}
           isReadOnly={disabled}
         />
@@ -122,9 +125,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
               control={control}
               rules={{ required: showDistanceOptions }}
               name="minimumDistance"
-              label="Minimum Distance"
-              placeholder="Minimum Distance"
-              description="Minimum required distance"
+              label={t("Minimum Distance")}
+              placeholder={t("Minimum Distance")}
+              description={t("Minimum required distance")}
               min={0}
               step={0.1}
               disabled={disabled}
@@ -135,9 +138,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
               control={control}
               rules={{ required: showDistanceOptions }}
               name="distanceUnit"
-              label="Distance Unit"
-              placeholder="Distance Unit"
-              description="Measurement unit for minimum distance"
+              label={t("Distance Unit")}
+              placeholder={t("Distance Unit")}
+              description={t("Measurement unit for minimum distance")}
               options={segregationDistanceUnitChoices}
               isReadOnly={disabled}
             />
@@ -149,8 +152,8 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           control={control}
           outlined
           name="hasExceptions"
-          label="Has Exceptions"
-          description="Indicates whether exceptions to this rule exist"
+          label={t("Has Exceptions")}
+          description={t("Indicates whether exceptions to this rule exist")}
           disabled={disabled}
         />
       </FormControl>
@@ -159,9 +162,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           <TextareaField
             control={control}
             name="exceptionNotes"
-            label="Exception Notes"
-            placeholder="Exception Notes"
-            description="Document exceptions or special cases"
+            label={t("Exception Notes")}
+            placeholder={t("Exception Notes")}
+            description={t("Document exceptions or special cases")}
             rules={{ required: hasExceptions }}
             disabled={disabled}
           />
@@ -171,9 +174,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <InputField
           control={control}
           name="referenceCode"
-          label="Reference Code"
-          placeholder="49 CFR 177.848"
-          description="Regulatory code reference"
+          label={t("Reference Code")}
+          placeholder={t("49 CFR 177.848")}
+          description={t("Regulatory code reference")}
           disabled={disabled}
         />
       </FormControl>
@@ -181,9 +184,9 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
         <InputField
           control={control}
           name="regulationSource"
-          label="Regulation Source"
-          placeholder="DOT"
-          description="Source of the regulation"
+          label={t("Regulation Source")}
+          placeholder={t("DOT")}
+          description={t("Source of the regulation")}
           disabled={disabled}
         />
       </FormControl>

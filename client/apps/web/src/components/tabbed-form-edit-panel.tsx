@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -88,9 +89,11 @@ const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
 ];
 
 function TabFallback() {
+  const t = useT();
+
   return (
     <div className="flex items-center justify-center py-12">
-      <ComponentLoader message="Loading..." />
+      <ComponentLoader message={t("Loading...")} />
     </div>
   );
 }
@@ -116,6 +119,8 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   recordFailed = false,
   mutationFn,
 }: TabbedFormEditPanelProps<T, TData>) {
+  const t = useT();
+
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -163,7 +168,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       return { previousRecord, newValues };
     },
     onSuccess: () => {
-      toast.success("Changes have been saved", {
+      toast.success(t("Changes have been saved"), {
         description: `${title} updated successfully`,
       });
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
@@ -297,7 +302,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                   }
                 >
                   <XIcon className="size-4" />
-                  <span className="sr-only">Close panel</span>
+                  <span className="sr-only">{t("Close panel")}</span>
                 </Dialog.Close>
               </div>
             </div>
@@ -320,8 +325,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
           ) : recordFailed ? (
             <div className="flex-1 p-4">
               <p className="text-destructive text-sm">
-                This {title.toLowerCase()} could not be loaded, so it cannot be edited safely. Close
-                the panel and try again.
+                {t("This {0} could not be loaded, so it cannot be edited safely. Close the panel and try again.", title.toLowerCase())}
               </p>
             </div>
           ) : hasFormTabs ? (
@@ -452,7 +456,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             )}
           >
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <SplitButton
               options={SAVE_OPTIONS}
@@ -460,7 +464,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
               disabled={saveBlocked}
-              loadingText="Saving..."
+              loadingText={t("Saving...")}
               formId="panel-edit-form"
             />
           </div>

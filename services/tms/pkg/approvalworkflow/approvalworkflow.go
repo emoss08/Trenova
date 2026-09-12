@@ -16,7 +16,6 @@ package approvalworkflow
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -109,12 +108,7 @@ func (e Engine[T, S]) Apply(
 		return zero, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Cannot transition %s status from %v to %v",
-				e.Label,
-				current,
-				transition.To,
-			),
+			"Cannot transition {0} status from {1} to {2}", e.Label, current, transition.To,
 		)
 	}
 
@@ -164,7 +158,7 @@ func RequireComment(req *Request, action string) error {
 	return errortypes.NewValidationError(
 		"comment",
 		errortypes.ErrRequired,
-		"A comment is required when "+action,
+		"A comment is required when {0}", action,
 	)
 }
 

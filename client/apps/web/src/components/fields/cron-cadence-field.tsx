@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import {
   Select,
@@ -77,6 +78,8 @@ function TimeSelect({
   minute: number;
   onChange: (next: { hour: number; minute: number }) => void;
 }) {
+  const t = useT();
+
   const options = timeOptions(hour, minute);
 
   return (
@@ -89,13 +92,13 @@ function TimeSelect({
         onChange({ hour: Math.floor(total / 60), minute: total % 60 });
       }}
     >
-      <SelectTrigger size="sm" className={pillTrigger} aria-label="Time of day">
+      <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Time of day")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-64" alignItemWithTrigger={false}>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {t(option.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -143,6 +146,8 @@ export function CronCadenceField<T extends FieldValues>({
   name,
   verb = "Run",
 }: CronCadenceFieldProps<T>) {
+  const t = useT();
+
   const { field } = useController({
     control,
     name,
@@ -178,13 +183,13 @@ export function CronCadenceField<T extends FieldValues>({
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm">
         <span className="text-muted-foreground">{verb}</span>
         <Select items={FREQUENCY_OPTIONS} value={tab} onValueChange={handleFrequencyChange}>
-          <SelectTrigger size="sm" className={pillTrigger} aria-label="Frequency">
+          <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Frequency")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FREQUENCY_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -192,7 +197,7 @@ export function CronCadenceField<T extends FieldValues>({
 
         {tab === "monthly" && (
           <>
-            <span className="text-muted-foreground">on the</span>
+            <span className="text-muted-foreground">{t("on the")}</span>
             <Select
               items={DAY_OF_MONTH_OPTIONS}
               value={String(parts.dayOfMonth)}
@@ -201,13 +206,13 @@ export function CronCadenceField<T extends FieldValues>({
                 applyParts({ ...parts, dayOfMonth: Number(value) });
               }}
             >
-              <SelectTrigger size="sm" className={pillTrigger} aria-label="Day of month">
+              <SelectTrigger size="sm" className={pillTrigger} aria-label={t("Day of month")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-64" alignItemWithTrigger={false}>
                 {DAY_OF_MONTH_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -235,7 +240,7 @@ export function CronCadenceField<T extends FieldValues>({
               active={parts.weekdays.includes(chip.value)}
               onClick={() => toggleWeekday(chip.value)}
             >
-              {chip.label}
+              {t(chip.label)}
             </CadenceToggleChip>
           ))}
         </div>
@@ -246,7 +251,7 @@ export function CronCadenceField<T extends FieldValues>({
           control={control}
           name={name}
           placeholder="0 8 * * 1"
-          description="Five fields: minute, hour, day-of-month, month, day-of-week."
+          description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
           rules={{ required: "A schedule is required" }}
         />
       )}

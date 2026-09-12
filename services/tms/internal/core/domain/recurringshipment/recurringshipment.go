@@ -140,7 +140,7 @@ func (rs *RecurringShipment) validateSchedule(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"leadTimeDays",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Lead time must be between 0 and %d days", MaxLeadTimeDays),
+			"Lead time must be between 0 and {0} days", MaxLeadTimeDays,
 		)
 	}
 
@@ -156,7 +156,7 @@ func (rs *RecurringShipment) validateSchedule(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"blackoutDates",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("A series supports at most %d blackout dates", MaxBlackoutDates),
+			"A series supports at most {0} blackout dates", MaxBlackoutDates,
 		)
 	}
 

@@ -665,8 +665,8 @@ func (s *Service) buildSpotOffers(
 			lineErr.Add(
 				"carrierId",
 				errortypes.ErrInvalid,
-				"Carrier is not eligible for tendering: "+
-					strings.Join(eligibility.Blockers, "; "),
+				"Carrier is not eligible for tendering: {0}",
+				strings.Join(eligibility.Blockers, "; "),
 			)
 			continue
 		}
@@ -724,8 +724,8 @@ func (s *Service) buildSpotOffers(
 	}
 	if len(warnings) > 0 && !req.OverrideInsuranceWarnings {
 		return nil, errortypes.NewBusinessError(
-			"Carrier has insurance warnings: "+strings.Join(warnings, "; ")+
-				". Confirm the override to proceed",
+			"Carrier has insurance warnings: {0}. Confirm the override to proceed",
+			strings.Join(warnings, "; "),
 		).WithParam("overridable", "true")
 	}
 	return offers, nil

@@ -23,6 +23,8 @@ import (
 	"text/template/parse"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 // Defaults applied when a Config field is zero.
@@ -114,7 +116,15 @@ type ParseRequest struct {
 
 	// CacheKey enables reuse across renders. Published version ids are stable and
 	// immutable, so they make good keys; leave empty for drafts and previews.
+	//
+	// A key must include the locale when one is set: `t` is bound at parse time,
+	// so a compiled template carries the language it was compiled in, and reusing
+	// one across locales would answer a Spanish recipient in English.
 	CacheKey string
+
+	// Locale binds the `t` function. Empty compiles against the source language,
+	// which is what a draft preview and every English render want.
+	Locale i18n.Locale
 }
 
 // Parse validates a template body and compiles it.
@@ -180,7 +190,7 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 
 	if req.Channel.IsHTML() {
 		tmpl, err := template.New(name).
-			Funcs(FuncMap()).
+			Funcs(FuncMapFor(req.Locale)).
 			Option("missingkey=error").
 			Parse(req.Source)
 		if err != nil {
@@ -194,7 +204,7 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 		associatedCount = len(tmpl.Templates())
 	} else {
 		tmpl, err := texttemplate.New(name).
-			Funcs(TextFuncMap()).
+			Funcs(TextFuncMapFor(req.Locale)).
 			Option("missingkey=error").
 			Parse(req.Source)
 		if err != nil {

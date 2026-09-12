@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -145,6 +146,8 @@ export function InjuryDialog({
   injury,
   safetyEventId = null,
 }: InjuryDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(injury);
   const form = useForm<InjuryFormValues>({
@@ -231,10 +234,9 @@ export function InjuryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit case" : "Record an injury or illness"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit case") : t("Record an injury or illness")}</DialogTitle>
           <DialogDescription>
-            Every case is kept, recordable or not — the decision not to record one is itself worth a
-            record.
+            {t("Every case is kept, recordable or not — the decision not to record one is itself worth a record.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -250,9 +252,9 @@ export function InjuryDialog({
                 <AutoCompleteDateField<InjuryFormValues>
                   control={control}
                   name="occurredAt"
-                  label="When it happened"
-                  placeholder="MM/DD/YYYY"
-                  description="Sets the log year the case is numbered in."
+                  label={t("When it happened")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("Sets the log year the case is numbered in.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -260,18 +262,18 @@ export function InjuryDialog({
                 <AutoCompleteDateField<InjuryFormValues>
                   control={control}
                   name="reportedAt"
-                  label="When it was reported"
-                  placeholder="MM/DD/YYYY"
-                  description="When the injury was first reported to the company."
+                  label={t("When it was reported")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the injury was first reported to the company.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<InjuryFormValues>
                   control={control}
                   name="description"
-                  label="What happened"
-                  placeholder="How the injury occurred, as it would read on the 301 form"
-                  description="The narrative for the 301 incident report: what the employee was doing and how it happened."
+                  label={t("What happened")}
+                  placeholder={t("How the injury occurred, as it would read on the 301 form")}
+                  description={t("The narrative for the 301 incident report: what the employee was doing and how it happened.")}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -280,37 +282,37 @@ export function InjuryDialog({
                 <InputField<InjuryFormValues>
                   control={control}
                   name="location"
-                  label="Where"
-                  placeholder="e.g. Dock 4, Joliet terminal"
-                  description="Where the event occurred; the 300 log asks for it."
+                  label={t("Where")}
+                  placeholder={t("e.g. Dock 4, Joliet terminal")}
+                  description={t("Where the event occurred; the 300 log asks for it.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<InjuryFormValues>
                   control={control}
                   name="bodyPart"
-                  label="Body part"
-                  placeholder="e.g. Lower back"
-                  description="The part of the body affected; it goes in the 300 log description."
+                  label={t("Body part")}
+                  placeholder={t("e.g. Lower back")}
+                  description={t("The part of the body affected; it goes in the 300 log description.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<InjuryFormValues>
                   control={control}
                   name="harmfulAgent"
-                  label="What harmed them"
-                  placeholder="Object or substance"
-                  description="The object or substance that directly caused the injury, as the 300 log asks."
+                  label={t("What harmed them")}
+                  placeholder={t("Object or substance")}
+                  description={t("The object or substance that directly caused the injury, as the 300 log asks.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<InjuryFormValues>
                   control={control}
                   name="illnessType"
-                  label="Injury or illness"
+                  label={t("Injury or illness")}
                   options={ILLNESS_OPTIONS}
-                  placeholder="Pick a type"
-                  description="Which column of the 300 log the case is tallied in."
+                  placeholder={t("Pick a type")}
+                  description={t("Which column of the 300 log the case is tallied in.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -318,10 +320,10 @@ export function InjuryDialog({
                 <SelectField<InjuryFormValues>
                   control={control}
                   name="treatment"
-                  label="Treatment given"
+                  label={t("Treatment given")}
                   options={TREATMENT_OPTIONS}
-                  placeholder="Pick the treatment"
-                  description="Feeds the classification suggestion; first aid alone does not make a case recordable."
+                  placeholder={t("Pick the treatment")}
+                  description={t("Feeds the classification suggestion; first aid alone does not make a case recordable.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -329,28 +331,28 @@ export function InjuryDialog({
                 <NumberField<InjuryFormValues>
                   control={control}
                   name="daysAway"
-                  label="Days away from work"
+                  label={t("Days away from work")}
                   placeholder="0"
-                  description="Calendar days away from work; drives the classification suggestion and the log totals."
+                  description={t("Calendar days away from work; drives the classification suggestion and the log totals.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField<InjuryFormValues>
                   control={control}
                   name="daysRestricted"
-                  label="Days on restriction or transfer"
+                  label={t("Days on restriction or transfer")}
                   placeholder="0"
-                  description="Calendar days on restricted work or job transfer; counted in the DART rate."
+                  description={t("Calendar days on restricted work or job transfer; counted in the DART rate.")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField<InjuryFormValues>
                   control={control}
                   name="classification"
-                  label="OSHA classification"
+                  label={t("OSHA classification")}
                   options={CLASSIFICATION_OPTIONS}
-                  placeholder="Pick a classification"
-                  description="The employer's judgement; suggested from treatment and days lost until you choose one yourself."
+                  placeholder={t("Pick a classification")}
+                  description={t("The employer's judgement; suggested from treatment and days lost until you choose one yourself.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -359,10 +361,10 @@ export function InjuryDialog({
                   <SelectField<InjuryFormValues>
                     control={control}
                     name="status"
-                    label="Case status"
+                    label={t("Case status")}
                     options={STATUS_OPTIONS}
-                    placeholder="Pick a status"
-                    description="An open case can still accrue days away or restricted; close it once the count is final."
+                    placeholder={t("Pick a status")}
+                    description={t("An open case can still accrue days away or restricted; close it once the count is final.")}
                     rules={{ required: true }}
                   />
                 </FormControl>
@@ -372,8 +374,8 @@ export function InjuryDialog({
                 <Alert variant={classificationIsRecordable(classification) ? "default" : undefined}>
                   <AlertDescription>
                     {classificationIsRecordable(classification)
-                      ? "This case goes on the OSHA 300 log."
-                      : "This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii))."}
+                      ? t("This case goes on the OSHA 300 log.")
+                      : t("This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii)).")}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -382,17 +384,17 @@ export function InjuryDialog({
                 <AutoCompleteDateField<InjuryFormValues>
                   control={control}
                   name="returnedToWorkAt"
-                  label="Returned to work"
-                  placeholder="MM/DD/YYYY"
-                  description="When the employee came back to full duty."
+                  label={t("Returned to work")}
+                  placeholder={t("MM/DD/YYYY")}
+                  description={t("When the employee came back to full duty.")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField<InjuryFormValues>
                   control={control}
                   name="privacyCase"
-                  label="Privacy concern case"
-                  description="The name is withheld from the posted log (29 CFR 1904.29(b)(6))."
+                  label={t("Privacy concern case")}
+                  description={t("The name is withheld from the posted log (29 CFR 1904.29(b)(6)).")}
                 />
               </FormControl>
 
@@ -400,10 +402,10 @@ export function InjuryDialog({
                 <SelectField<InjuryFormValues>
                   control={control}
                   name="claimStatus"
-                  label="Workers' compensation"
+                  label={t("Workers' compensation")}
                   options={CLAIM_OPTIONS}
-                  placeholder="Pick a status"
-                  description="Tracks the workers' compensation claim; the claim dates are dropped while it is not filed."
+                  placeholder={t("Pick a status")}
+                  description={t("Tracks the workers' compensation claim; the claim dates are dropped while it is not filed.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -413,9 +415,9 @@ export function InjuryDialog({
                     <AutoCompleteDateField<InjuryFormValues>
                       control={control}
                       name="claimFiledAt"
-                      label="Claim filed"
-                      placeholder="MM/DD/YYYY"
-                      description="The date the claim was submitted to the carrier."
+                      label={t("Claim filed")}
+                      placeholder={t("MM/DD/YYYY")}
+                      description={t("The date the claim was submitted to the carrier.")}
                       rules={{ required: true }}
                     />
                   </FormControl>
@@ -423,18 +425,18 @@ export function InjuryDialog({
                     <InputField<InjuryFormValues>
                       control={control}
                       name="claimNumber"
-                      label="Claim number"
-                      placeholder="e.g. WC-2026-001234"
-                      description="The carrier's claim number, for matching correspondence."
+                      label={t("Claim number")}
+                      placeholder={t("e.g. WC-2026-001234")}
+                      description={t("The carrier's claim number, for matching correspondence.")}
                     />
                   </FormControl>
                   <FormControl>
                     <InputField<InjuryFormValues>
                       control={control}
                       name="claimCarrier"
-                      label="Carrier"
-                      placeholder="Insurer handling the claim"
-                      description="The workers' compensation insurer handling the claim."
+                      label={t("Carrier")}
+                      placeholder={t("Insurer handling the claim")}
+                      description={t("The workers' compensation insurer handling the claim.")}
                     />
                   </FormControl>
                   {claimStatus === "Closed" ? (
@@ -442,9 +444,9 @@ export function InjuryDialog({
                       <AutoCompleteDateField<InjuryFormValues>
                         control={control}
                         name="claimClosedAt"
-                        label="Claim closed"
-                        placeholder="MM/DD/YYYY"
-                        description="When the carrier closed the claim."
+                        label={t("Claim closed")}
+                        placeholder={t("MM/DD/YYYY")}
+                        description={t("When the carrier closed the claim.")}
                         rules={{ required: true }}
                       />
                     </FormControl>
@@ -456,19 +458,19 @@ export function InjuryDialog({
                 <TextareaField<InjuryFormValues>
                   control={control}
                   name="notes"
-                  placeholder="Anything else the case file should carry"
-                  description="Internal notes kept with the case."
-                  label="Notes"
+                  placeholder={t("Anything else the case file should carry")}
+                  description={t("Internal notes kept with the case.")}
+                  label={t("Notes")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Record"}
+                {isEdit ? t("Save") : t("Record")}
               </Button>
             </DialogFooter>
           </Form>

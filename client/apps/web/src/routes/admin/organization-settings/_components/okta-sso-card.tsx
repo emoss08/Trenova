@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -81,6 +82,8 @@ function SectionHeader({ title, description }: { title: string; description: str
 }
 
 export function OktaSSOCard({ organizationId }: { organizationId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const redirectUrl =
@@ -158,7 +161,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
       await queryClient.invalidateQueries({
         queryKey: queries.organization.oktaSSO(organizationId).queryKey,
       });
-      toast.success("Okta SSO settings updated");
+      toast.success(t("Okta SSO settings updated"));
     },
   });
 
@@ -177,9 +180,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
             <OktaLogo className="h-5 w-auto" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-sm font-semibold tracking-tight">Okta</span>
+            <span className="text-sm font-semibold tracking-tight">{t("Okta")}</span>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {enabled ? "Active" : "Not configured"} &middot; OpenID Connect
+              {t("{0} · OpenID Connect", enabled ? t("Active") : t("Not configured"))}
             </p>
           </div>
           <ChevronRightIcon
@@ -200,17 +203,16 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                     <InfoIcon />
                     <AlertDescription>
                       <p>
-                        To configure SSO, create an OIDC application in the{" "}
+                        {t("To configure SSO, create an OIDC application in the")}{" "}
                         <a
                           href="https://login.okta.com/"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium underline underline-offset-2"
                         >
-                          Okta Admin Console
+                          {t("Okta Admin Console")}
                         </a>
-                        , copy the redirect URL below into the app&apos;s sign-in redirect URIs,
-                        then paste the credentials here.
+                        {t(", copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.")}
                       </p>
                     </AlertDescription>
                   </Alert>
@@ -219,16 +221,16 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
                   <div className="space-y-3">
                     <SectionHeader
-                      title="Authentication Policy"
-                      description="Control how users authenticate to this tenant."
+                      title={t("Authentication Policy")}
+                      description={t("Control how users authenticate to this tenant.")}
                     />
                     <FormGroup cols={1}>
                       <FormControl cols="full">
                         <SwitchField
                           control={control}
                           name="enabled"
-                          label="Enable Okta sign-in"
-                          description='Allow users to sign in with a "Continue with Okta" button.'
+                          label={t("Enable Okta sign-in")}
+                          description={t("Allow users to sign in with a \"Continue with Okta\" button.")}
                           outlined
                         />
                       </FormControl>
@@ -237,8 +239,8 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                           <SwitchField
                             control={control}
                             name="enforceSso"
-                            label="Require Okta SSO"
-                            description="Disable password login and require all users to sign in with Okta."
+                            label={t("Require Okta SSO")}
+                            description={t("Disable password login and require all users to sign in with Okta.")}
                             outlined
                             warning={{
                               show: Boolean(enforceSso),
@@ -251,10 +253,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                     {enabled && enforceSso && (
                       <Alert variant="warning">
                         <AlertTriangleIcon />
-                        <AlertTitle>Password login will be disabled</AlertTitle>
+                        <AlertTitle>{t("Password login will be disabled")}</AlertTitle>
                         <AlertDescription>
-                          Users without an Okta account linked to an allowed domain will be locked
-                          out. Ensure all users have Okta accounts before enabling this.
+                          {t("Users without an Okta account linked to an allowed domain will be locked out. Ensure all users have Okta accounts before enabling this.")}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -266,31 +267,31 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
                       <div className="space-y-3">
                         <SectionHeader
-                          title="Service Provider"
-                          description="Copy this value into your Okta application configuration."
+                          title={t("Service Provider")}
+                          description={t("Copy this value into your Okta application configuration.")}
                         />
                         <Alert variant="info">
                           <LinkIcon />
                           <AlertDescription>
-                            Add this redirect URL to your Okta app under Sign-in redirect URIs.
+                            {t("Add this redirect URL to your Okta app under Sign-in redirect URIs.")}
                           </AlertDescription>
                         </Alert>
-                        <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
+                        <CopyableInput value={redirectUrl} label={t("Redirect URL (OAuth Callback)")} />
                       </div>
 
                       <Separator />
 
                       <div className="space-y-3">
                         <SectionHeader
-                          title="Identity Provider"
-                          description="Paste these values from your Okta application settings."
+                          title={t("Identity Provider")}
+                          description={t("Paste these values from your Okta application settings.")}
                         />
                         <FormGroup cols={1}>
                           <FormControl cols="full">
                             <InputField
                               control={control}
                               name="issuerUrl"
-                              label="Okta Domain"
+                              label={t("Okta Domain")}
                               placeholder="https://your-domain.okta.com"
                               rules={{ required: enabled }}
                             />
@@ -299,8 +300,8 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                             <InputField
                               control={control}
                               name="clientId"
-                              label="Client ID"
-                              placeholder="0oa..."
+                              label={t("Client ID")}
+                              placeholder={t("0oa...")}
                               rules={{ required: enabled }}
                             />
                           </FormControl>
@@ -308,8 +309,8 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                             <SensitiveField
                               control={control}
                               name="clientSecret"
-                              label="Client Secret"
-                              placeholder="Paste a new client secret"
+                              label={t("Client Secret")}
+                              placeholder={t("Paste a new client secret")}
                               description={
                                 configQuery.data?.secretConfigured
                                   ? "A secret is already stored. Leave blank to keep it."
@@ -321,9 +322,9 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                             <InputField
                               control={control}
                               name="scopesText"
-                              label="Scopes"
-                              placeholder="openid, profile, email"
-                              description="Comma-separated list of OIDC scopes."
+                              label={t("Scopes")}
+                              placeholder={t("openid, profile, email")}
+                              description={t("Comma-separated list of OIDC scopes.")}
                             />
                           </FormControl>
                         </FormGroup>
@@ -333,17 +334,17 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
                       <div className="space-y-3">
                         <SectionHeader
-                          title="Domain Restrictions"
-                          description="Limit which email domains can sign in with Okta."
+                          title={t("Domain Restrictions")}
+                          description={t("Limit which email domains can sign in with Okta.")}
                         />
                         <FormGroup cols={1}>
                           <FormControl cols="full">
                             <InputField
                               control={control}
                               name="allowedDomainsText"
-                              label="Allowed Email Domains"
-                              placeholder="company.com, contractor.com"
-                              description="Comma-separated list. Leave blank to allow all Okta account domains."
+                              label={t("Allowed Email Domains")}
+                              placeholder={t("company.com, contractor.com")}
+                              description={t("Comma-separated list. Leave blank to allow all Okta account domains.")}
                             />
                           </FormControl>
                         </FormGroup>
@@ -353,16 +354,16 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
 
                       <div className="space-y-3">
                         <SectionHeader
-                          title="Tenant Login URL"
-                          description="Share this URL with your users for Okta SSO sign-in."
+                          title={t("Tenant Login URL")}
+                          description={t("Share this URL with your users for Okta SSO sign-in.")}
                         />
-                        <CopyableInput value={tenantLoginUrl} label="Login URL" />
+                        <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
-                          Replace{" "}
+                          {t("Replace")}{" "}
                           <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
-                            {"{loginSlug}"}
+                            {t("{loginSlug}")}
                           </code>{" "}
-                          with your organization&apos;s login slug from General settings.
+                          {t("with your organization's login slug from General settings.")}
                         </p>
                       </div>
                     </>

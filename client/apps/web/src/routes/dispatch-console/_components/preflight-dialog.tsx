@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchAssignmentPreview } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import type { PreflightTarget } from "@/stores/dispatch-console-store";
@@ -143,6 +144,8 @@ export function PreflightDialog({
   }) => void;
   isAssigning: boolean;
 }) {
+  const t = useT();
+
   const { move, driver } = target;
   const reducedMotion = useReducedMotion();
   const { data, isLoading } = useQuery(
@@ -187,18 +190,18 @@ export function PreflightDialog({
             </span>
             <div className="flex min-w-0 flex-col gap-1">
               <DialogTitle className="truncate text-sm leading-none font-semibold">
-                {move.isCovered ? "Reassign" : "Assign"} {driver.firstName} {driver.lastName}
+                {move.isCovered ? t("Reassign") : t("Assign")} {driver.firstName} {driver.lastName}
               </DialogTitle>
               <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] leading-none">
                 {tractorId ? (
                   <span className="font-mono">{driver.tractorCode || tractorId}</span>
                 ) : (
-                  <span className="text-red-600 dark:text-red-400">No tractor assigned</span>
+                  <span className="text-red-600 dark:text-red-400">{t("No tractor assigned")}</span>
                 )}
                 {data?.trailerId ? (
                   <>
                     <span aria-hidden>·</span>
-                    <span>trailer continues</span>
+                    <span>{t("trailer continues")}</span>
                   </>
                 ) : null}
               </div>
@@ -224,7 +227,7 @@ export function PreflightDialog({
                       : "text-muted-foreground",
                   )}
                 >
-                  pickup {formatMinutesToPickup(minutesToPickup)}
+                  {t("pickup {0}", formatMinutesToPickup(minutesToPickup))}
                 </span>
               )}
             </div>
@@ -237,7 +240,7 @@ export function PreflightDialog({
                 <span className="text-muted-foreground text-[10.5px] tabular-nums">
                   {move.originWindowStart > 0
                     ? formatUnixDateTimeShort(move.originWindowStart)
-                    : "Unscheduled"}
+                    : t("Unscheduled")}
                 </span>
               </div>
               <div aria-hidden className="text-muted-foreground/50 flex items-center">
@@ -278,7 +281,7 @@ export function PreflightDialog({
                   />
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className={cn("text-xs leading-none font-semibold", banner.iconClass)}>
-                      {verdict.label}
+                      {t(verdict.label)}
                     </span>
                     <span className="text-foreground/80 text-[11px] leading-snug">
                       {lead.message}
@@ -291,10 +294,10 @@ export function PreflightDialog({
                 {...section(1)}
                 className="divide-border border-border grid grid-cols-3 divide-x rounded-md border"
               >
-                <Stat value={formatMiles(data.score.deadheadMiles)} label="Empty miles" />
+                <Stat value={formatMiles(data.score.deadheadMiles)} label={t("Empty miles")} />
                 <Stat
                   value={formatClockDurationMs(data.score.driveRemainingMs)}
-                  label="Drive left"
+                  label={t("Drive left")}
                 />
                 <Stat
                   value={formatMinutesSpan(slack)}
@@ -305,7 +308,7 @@ export function PreflightDialog({
 
               {!tractorId ? (
                 <motion.p {...section(2)} className="text-[11px] text-red-600 dark:text-red-400">
-                  This driver has no tractor assigned; assign one before dispatching.
+                  {t("This driver has no tractor assigned; assign one before dispatching.")}
                 </motion.p>
               ) : null}
 
@@ -323,7 +326,7 @@ export function PreflightDialog({
         )}
         <DialogFooter className="pb-7 px-8">
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             variant={data?.requiresOverride ? "destructive" : "default"}
@@ -340,10 +343,10 @@ export function PreflightDialog({
             }
           >
             {data?.requiresOverride
-              ? "Blocked by policy"
+              ? t("Blocked by policy")
               : move.isCovered
-                ? "Reassign driver"
-                : "Assign driver"}
+                ? t("Reassign driver")
+                : t("Assign driver")}
           </Button>
         </DialogFooter>
       </DialogContent>

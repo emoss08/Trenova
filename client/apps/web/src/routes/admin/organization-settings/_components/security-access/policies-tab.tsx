@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
@@ -20,6 +21,8 @@ import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
 
 export function PoliciesTab({ organizationId }: { organizationId: string }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const policiesQuery = useQuery(queries.organization.accessPolicies(organizationId));
   const resourcesQuery = useQuery({
@@ -77,7 +80,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
     mutationFn: async (policyId: string) =>
       apiService.organizationService.deleteAccessPolicy(organizationId, policyId),
     onSuccess: async () => {
-      toast.success("Access policy removed");
+      toast.success(t("Access policy removed"));
       await invalidateAccessPolicies();
     },
   });
@@ -102,11 +105,11 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   return (
     <div className="space-y-3">
       <ConsoleToolbar
-        title="Access policies"
-        description="Priority-ordered authorization decisions for protected resources."
+        title={t("Access policies")}
+        description={t("Priority-ordered authorization decisions for protected resources.")}
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search policies or resources"
+        searchPlaceholder={t("Search policies or resources")}
         action={
           <div className="flex flex-wrap gap-2">
             <Select
@@ -136,14 +139,14 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
                         style={{ backgroundColor: option?.color }}
                       />
                     ) : null}
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Button size="sm" onClick={createPolicy}>
               <PlusIcon />
-              Add policy
+              {t("Add policy")}
             </Button>
           </div>
         }
@@ -152,7 +155,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
       {policiesQuery.isLoading ? (
         <RowSkeleton rows={4} />
       ) : policiesQuery.isError ? (
-        <ErrorState label="Access policies could not be loaded." />
+        <ErrorState label={t("Access policies could not be loaded.")} />
       ) : filteredPolicies.length > 0 ? (
         <div className="bg-background overflow-hidden rounded-lg border">
           {filteredPolicies.map((policy) => (
@@ -204,6 +207,8 @@ const PolicyRow = memo(function PolicyRow({
   onEditPolicy: (policy: AccessPolicy) => void;
   onDeletePolicy: (policyId: string) => void;
 }) {
+  const t = useT();
+
   const conditionCount = Object.keys(policy.conditions).length;
   const isAllow = policy.effect === "allow";
   const EffectIcon = isAllow ? ShieldCheckIcon : ShieldXIcon;
@@ -236,7 +241,7 @@ const PolicyRow = memo(function PolicyRow({
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
             <span className="text-foreground truncate text-sm font-medium">{policy.name}</span>
             {!policy.enabled && (
-              <span className="text-muted-foreground text-xs font-medium">Disabled</span>
+              <span className="text-muted-foreground text-xs font-medium">{t("Disabled")}</span>
             )}
           </div>
           <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -252,16 +257,16 @@ const PolicyRow = memo(function PolicyRow({
               {effectLabel}
             </span>
             <span aria-hidden="true">/</span>
-            <span>Priority {policy.priority}</span>
+            <span>{t("Priority {0}", policy.priority)}</span>
             <span aria-hidden="true">/</span>
             <span className="text-muted-foreground text-xs">
               {conditionCount === 0
-                ? "No conditions"
-                : `${conditionCount} condition${conditionCount === 1 ? "" : "s"}`}
+                ? t("No conditions")
+                : t("{0, plural, one {# condition} other {# conditions}}", conditionCount)}
             </span>
           </div>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
-            <span className="text-muted-foreground">Scope</span>
+            <span className="text-muted-foreground">{t("Scope")}</span>
             <span className="text-foreground/80 max-w-full truncate font-mono text-[11px]">
               {resourceLabel}
             </span>
@@ -275,7 +280,7 @@ const PolicyRow = memo(function PolicyRow({
       <div className="flex items-center justify-end gap-1">
         <Button size="sm" variant="ghost" onClick={() => onEditPolicy(policy)}>
           <PencilIcon />
-          Edit
+          {t("Edit")}
         </Button>
         <Button
           size="icon-sm"

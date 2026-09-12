@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
   LocationAutocompleteField,
@@ -10,6 +11,8 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 export function DistanceOverrideForm() {
+  const t = useT();
+
   const { control } = useFormContext<DistanceOverride>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -23,9 +26,9 @@ export function DistanceOverrideForm() {
           control={control}
           rules={{ required: true }}
           name="originLocationId"
-          label="Origin Location"
-          placeholder="Select origin location"
-          description="The origin location for this distance override"
+          label={t("Origin Location")}
+          placeholder={t("Select origin location")}
+          description={t("The origin location for this distance override")}
         />
       </FormControl>
       <FormControl>
@@ -33,9 +36,9 @@ export function DistanceOverrideForm() {
           control={control}
           rules={{ required: true }}
           name="destinationLocationId"
-          label="Destination Location"
-          placeholder="Select destination location"
-          description="The destination location for this distance override"
+          label={t("Destination Location")}
+          placeholder={t("Select destination location")}
+          description={t("The destination location for this distance override")}
         />
       </FormControl>
       <FormControl>
@@ -43,25 +46,25 @@ export function DistanceOverrideForm() {
           control={control}
           rules={{ required: true }}
           name="distance"
-          label="Distance"
-          placeholder="Distance"
-          description="The override distance between the two locations"
+          label={t("Distance")}
+          placeholder={t("Distance")}
+          description={t("The override distance between the two locations")}
         />
       </FormControl>
       <FormControl>
         <CustomerAutocompleteField
           control={control}
           name="customerId"
-          label="Customer"
-          placeholder="Select customer (optional)"
-          description="Optionally scope this override to a specific customer"
+          label={t("Customer")}
+          placeholder={t("Select customer (optional)")}
+          description={t("Optionally scope this override to a specific customer")}
           clearable
         />
       </FormControl>
       <FormControl cols="full">
         <FormSection
-          title="Intermediate Stops"
-          description="Add optional stops between origin and destination in travel order"
+          title={t("Intermediate Stops")}
+          description={t("Add optional stops between origin and destination in travel order")}
           action={
             <Button
               type="button"
@@ -70,12 +73,12 @@ export function DistanceOverrideForm() {
               onClick={() => append({ locationId: "" })}
             >
               <PlusIcon className="size-3" />
-              Add Stop
+              {t("Add Stop")}
             </Button>
           }
         >
           {fields.length === 0 ? (
-            <p className="text-muted-foreground text-xs">No intermediate stops configured.</p>
+            <p className="text-muted-foreground text-xs">{t("No intermediate stops configured.")}</p>
           ) : (
             <div className="space-y-2">
               {fields.map((field, index) => (
@@ -85,7 +88,7 @@ export function DistanceOverrideForm() {
                     rules={{ required: true }}
                     name={`intermediateStops.${index}.locationId`}
                     label={`Stop ${index + 1}`}
-                    placeholder="Select stop location"
+                    placeholder={t("Select stop location")}
                   />
                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                     <TrashIcon className="text-destructive size-4" />

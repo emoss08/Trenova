@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -69,7 +70,7 @@ export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} truncateLength={50} />
+        <DataTableDescription description={translate(row.original.description)} truncateLength={50} />
       ),
       meta: {
         label: "Description",

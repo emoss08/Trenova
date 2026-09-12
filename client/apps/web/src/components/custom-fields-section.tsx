@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import type { CustomFieldDefinition, SelectOption } from "@/types/custom-field";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +34,8 @@ function CustomFieldRenderer<T extends FieldValues>({
   control: Control<T>;
   fieldPrefix: string;
 }) {
+  const t = useT();
+
   const fieldName = `${fieldPrefix}.${definition.id}` as Path<T>;
   const rules = {
     required: definition.isRequired ? `${definition.label} is required` : false,
@@ -44,8 +47,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <InputField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           maxLength={definition.validationRules?.maxLength ?? undefined}
@@ -59,8 +62,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <NumberField<FieldValues>
           control={control as Control<FieldValues>}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
         />
@@ -71,8 +74,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <AutoCompleteDateField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
         />
@@ -83,8 +86,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SwitchField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
         />
       );
 
@@ -93,8 +96,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SelectField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           options={mapSelectOptions(definition.options)}
@@ -106,8 +109,8 @@ function CustomFieldRenderer<T extends FieldValues>({
         <SelectField
           control={control}
           name={fieldName}
-          label={definition.label}
-          description={definition.description}
+          label={t(definition.label)}
+          description={t(definition.description)}
           placeholder={definition.uiAttributes?.placeholder || definition.label}
           rules={rules}
           options={mapSelectOptions(definition.options)}
@@ -124,6 +127,8 @@ export function CustomFieldsSection<T extends FieldValues>({
   control,
   fieldPrefix = "customFields",
 }: CustomFieldsSectionProps<T>) {
+  const t = useT();
+
   const { data: customFields, isLoading } = useQuery({
     queryKey: ["custom-fields", resourceType],
     queryFn: () => apiService.customFieldService.getByResourceType(resourceType),
@@ -146,7 +151,7 @@ export function CustomFieldsSection<T extends FieldValues>({
   }
 
   return (
-    <FormSection title="Custom Fields" className="border-t pt-2">
+    <FormSection title={t("Custom Fields")} className="border-t pt-2">
       <FormGroup cols={2}>
         {sortedFields.map((definition) => (
           <FormControl key={definition.id} cols={definition.fieldType === "boolean" ? "full" : 1}>

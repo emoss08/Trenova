@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
@@ -29,6 +30,8 @@ export function RandomTestingEmpty({
   onNewPool,
   className,
 }: RandomTestingEmptyProps) {
+  const t = useT();
+
   return (
     <EmptySheet
       className={className}
@@ -39,7 +42,7 @@ export function RandomTestingEmpty({
         onNewPool ? (
           <Button variant="outline" size="sm" onClick={onNewPool}>
             <PlusIcon className="size-3.5" />
-            New pool
+            {t("New pool")}
           </Button>
         ) : null
       }

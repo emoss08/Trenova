@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { cn, formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -7,6 +8,8 @@ import { ProfitabilityBreakdownPopover } from "../../profitability/profitability
 type FinancialRow = { label: string; value: string; bold?: boolean; tone?: string };
 
 function RowList({ rows }: { rows: FinancialRow[] }) {
+  const t = useT();
+
   return (
     <dl className="grid grid-cols-1 gap-1 text-[11px]">
       {rows.map((row) => (
@@ -17,7 +20,7 @@ function RowList({ rows }: { rows: FinancialRow[] }) {
             row.bold ? "border-border mt-1 border-t pt-2" : "",
           )}
         >
-          <dt className="text-muted-foreground">{row.label}</dt>
+          <dt className="text-muted-foreground">{t(row.label)}</dt>
           <dd
             className={cn("font-table tabular-nums", row.bold ? "font-semibold" : "font-medium")}
             style={row.tone ? { color: row.tone } : undefined}
@@ -31,6 +34,8 @@ function RowList({ rows }: { rows: FinancialRow[] }) {
 }
 
 export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const freight = parseDecimal(shipment.freightChargeAmount as unknown as string);
   const other = parseDecimal(shipment.otherChargeAmount as unknown as string);
   const total = parseDecimal(shipment.totalChargeAmount as unknown as string);
@@ -95,7 +100,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
         <div className="border-border border-t pt-2">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
-              Cost estimate
+              {t("Cost estimate")}
             </span>
             <ProfitabilityBreakdownPopover
               shipmentId={shipment.id as string}
@@ -105,7 +110,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
                   type="button"
                   className="text-primary cursor-pointer text-[10px] font-medium hover:underline"
                 >
-                  View breakdown
+                  {t("View breakdown")}
                 </button>
               }
             />

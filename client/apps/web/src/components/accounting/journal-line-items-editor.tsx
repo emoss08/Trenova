@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
@@ -16,6 +17,8 @@ type JournalLineItemsEditorProps = {
 };
 
 export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProps) {
+  const t = useT();
+
   const { control, getValues, setValue } = useFormContext<LineFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "lines" });
 
@@ -70,10 +73,10 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
           <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
               <th className="w-8 px-2 py-2 text-center text-xs font-medium">#</th>
-              <th className="px-2 py-2 text-xs font-medium">GL Account</th>
-              <th className="px-2 py-2 text-xs font-medium">Memo</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-medium">Debit</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-medium">Credit</th>
+              <th className="px-2 py-2 text-xs font-medium">{t("GL Account")}</th>
+              <th className="px-2 py-2 text-xs font-medium">{t("Memo")}</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Debit")}</th>
+              <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Credit")}</th>
               <th className="w-9 px-2 py-2" />
             </tr>
           </thead>
@@ -87,7 +90,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                   <GLAccountAutocompleteField
                     control={control}
                     name={`lines.${index}.glAccountId`}
-                    placeholder="Select account"
+                    placeholder={t("Select account")}
                     triggerClassName="sm:h-8 text-xs"
                     clearable={false}
                   />
@@ -96,7 +99,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                   <InputField
                     control={control}
                     name={`lines.${index}.description`}
-                    placeholder="What is this line for?"
+                    placeholder={t("What is this line for?")}
                     inputClassProps="text-xs h-8"
                   />
                 </td>
@@ -137,7 +140,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
           <tfoot className="bg-muted/30 border-t">
             <tr>
               <td colSpan={3} className="px-3 py-2 text-right text-xs font-medium">
-                Totals
+                {t("Totals")}
               </td>
               <td className="px-3 py-2 text-right">
                 <AmountDisplay value={totalDebit} className="text-xs font-semibold" />
@@ -154,18 +157,18 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
       <div className="flex items-center justify-between">
         <Button type="button" variant="outline" size="sm" onClick={handleAppend}>
           <PlusIcon className="mr-1.5 size-3.5" />
-          Add Line
+          {t("Add Line")}
         </Button>
 
         {hasAmounts &&
           (isBalanced ? (
             <p className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
               <CheckCircle2Icon className="size-3.5" />
-              Balanced
+              {t("Balanced")}
             </p>
           ) : (
             <p className="text-xs font-medium text-red-600 dark:text-red-400">
-              Out of balance by{" "}
+              {t("Out of balance by")}{" "}
               <AmountDisplay value={Math.abs(difference)} className="font-semibold" />
             </p>
           ))}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InfoPopover } from "@/components/info-popover";
 import { KpiCard, KpiHeader, KpiSub } from "@/components/kpi/kpi-card";
 import type { OpenTimeEntryRow, TimesheetRow } from "@/lib/graphql/timesheet";
@@ -43,6 +44,8 @@ export function TimeAttendanceOverview({
   now,
   showPayroll,
 }: OverviewProps) {
+  const t = useT();
+
   const awaitingSummary = useMemo(() => summarizeSheets(awaiting ?? []), [awaiting]);
   const weekSummary = useMemo(() => summarizeSheets(thisWeek ?? []), [thisWeek]);
   const unpaidSummary = useMemo(() => summarizeSheets(unpaid ?? []), [unpaid]);
@@ -69,17 +72,17 @@ export function TimeAttendanceOverview({
       <KpiCard span={2}>
         <KpiHeader
           icon={<ClipboardCheckIcon className="size-[11px]" />}
-          label="Awaiting approval"
+          label={t("Awaiting approval")}
           info={
-            <InfoPopover title="Awaiting approval">
+            <InfoPopover title={t("Awaiting approval")}>
               {
-                "Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted."
+                t("Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted.")
               }
             </InfoPopover>
           }
           right={
             oldestWait > 0 ? (
-              <Corner tone={oldestWait >= 3 ? "warning" : "muted"}>oldest {oldestWait}d</Corner>
+              <Corner tone={oldestWait >= 3 ? "warning" : "muted"}>{t("oldest {0}d", oldestWait)}</Corner>
             ) : null
           }
         />
@@ -87,57 +90,55 @@ export function TimeAttendanceOverview({
           <NumberFlow
             value={awaitingSummary.count}
             className={VALUE_CLASS}
-            aria-label="Awaiting approval"
+            aria-label={t("Awaiting approval")}
           />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
         <KpiSub>
           {awaitingSummary.count === 0
-            ? "Nothing waiting on you"
-            : `${formatHours(awaitingSummary.totalMinutes)} across ${awaitingSummary.workers} ${
-                awaitingSummary.workers === 1 ? "person" : "people"
-              }`}
+            ? t("Nothing waiting on you")
+            : t("{0} across {1} {2}", formatHours(awaitingSummary.totalMinutes), awaitingSummary.workers, awaitingSummary.workers === 1 ? "person" : "people")}
         </KpiSub>
       </KpiCard>
 
       <KpiCard span={2}>
         <KpiHeader
           icon={<TimerIcon className="size-[11px]" />}
-          label="On the clock now"
+          label={t("On the clock now")}
           info={
-            <InfoPopover title="On the clock now">
+            <InfoPopover title={t("On the clock now")}>
               {
-                "Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked."
+                t("Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked.")
               }
             </InfoPopover>
           }
-          right={overlong > 0 ? <Corner tone="warning">{overlong} past 12h</Corner> : null}
+          right={overlong > 0 ? <Corner tone="warning">{t("{0} past 12h", overlong)}</Corner> : null}
         />
         {openEntries ? (
           <NumberFlow
             value={openEntries.length}
             className={VALUE_CLASS}
-            aria-label="On the clock now"
+            aria-label={t("On the clock now")}
           />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
         <KpiSub>
           {longest
-            ? `Longest running: ${workerName(longest.entry)}, ${formatHours(longest.runningMinutes)}`
-            : "Nobody is punched in"}
+            ? t("Longest running: {0}, {1}", workerName(longest.entry), formatHours(longest.runningMinutes))
+            : t("Nobody is punched in")}
         </KpiSub>
       </KpiCard>
 
       <KpiCard span={2}>
         <KpiHeader
           icon={<CalendarRangeIcon className="size-[11px]" />}
-          label="This week so far"
+          label={t("This week so far")}
           info={
-            <InfoPopover title="This week so far">
+            <InfoPopover title={t("This week so far")}>
               {
-                "Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in."
+                t("Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in.")
               }
             </InfoPopover>
           }
@@ -157,7 +158,7 @@ export function TimeAttendanceOverview({
         <CompositionBar
           size="sm"
           className="mt-auto"
-          aria-label="This week's hours"
+          aria-label={t("This week's hours")}
           formatValue={formatHours}
           segments={[
             { key: "regular", label: "Regular", value: weekSummary.regularMinutes },
@@ -171,15 +172,15 @@ export function TimeAttendanceOverview({
         <KpiCard span={2}>
           <KpiHeader
             icon={<BanknoteIcon className="size-[11px]" />}
-            label="Approved, not paid"
+            label={t("Approved, not paid")}
             info={
-              <InfoPopover title="Approved, not paid">
-                {"Weeks a manager has approved that payroll has not yet locked into an export."}
+              <InfoPopover title={t("Approved, not paid")}>
+                {t("Weeks a manager has approved that payroll has not yet locked into an export.")}
               </InfoPopover>
             }
             right={
               unpaidSummary.overtimeWeeks > 0 ? (
-                <Corner tone="muted">{unpaidSummary.overtimeWeeks} with OT</Corner>
+                <Corner tone="muted">{t("{0} with OT", unpaidSummary.overtimeWeeks)}</Corner>
               ) : null
             }
           />
@@ -187,15 +188,15 @@ export function TimeAttendanceOverview({
             <NumberFlow
               value={unpaidSummary.count}
               className={VALUE_CLASS}
-              aria-label="Approved, not paid"
+              aria-label={t("Approved, not paid")}
             />
           ) : (
             <Skeleton className="h-6.5 w-10" />
           )}
           <KpiSub>
             {unpaidSummary.count === 0
-              ? "Every approved week has gone to payroll"
-              : `${formatHours(unpaidSummary.totalMinutes)} waiting for a run`}
+              ? t("Every approved week has gone to payroll")
+              : t("{0} waiting for a run", formatHours(unpaidSummary.totalMinutes))}
           </KpiSub>
         </KpiCard>
       ) : null}

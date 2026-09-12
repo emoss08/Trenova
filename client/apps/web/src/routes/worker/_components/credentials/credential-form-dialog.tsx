@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -125,6 +126,8 @@ export function CredentialFormDialog({
   credentialTypeId,
   onSaved,
 }: CredentialFormDialogProps) {
+  const t = useT();
+
   const invalidate = useCredentialInvalidation(workerId);
   const today = useMemo(() => getTodayDate(), []);
   const isEdit = mode === "edit";
@@ -194,7 +197,7 @@ export function CredentialFormDialog({
       setAttached({ id: document.id, name: document.originalName, size: document.fileSize });
     },
     onError: (error) => {
-      toast.error("Upload failed", { description: error.message });
+      toast.error(t("Upload failed"), { description: error.message });
     },
   });
   const activeUpload = uploads.find(
@@ -276,8 +279,8 @@ export function CredentialFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
+          <DialogTitle>{t(copy.title)}</DialogTitle>
+          <DialogDescription>{t(copy.description)}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <Form
@@ -292,7 +295,7 @@ export function CredentialFormDialog({
                 <SelectField<CredentialFormValues>
                   control={control}
                   name="credentialTypeId"
-                  label="Credential type"
+                  label={t("Credential type")}
                   options={typeOptions}
                   rules={{ required: true }}
                   placeholder={typesLoading ? "Loading types..." : "Choose a credential type"}
@@ -309,9 +312,9 @@ export function CredentialFormDialog({
                 <InputField<CredentialFormValues>
                   control={control}
                   name="number"
-                  label="Number"
-                  placeholder="e.g. 12345678"
-                  description="The number printed on the card or certificate."
+                  label={t("Number")}
+                  placeholder={t("e.g. 12345678")}
+                  description={t("The number printed on the card or certificate.")}
                   rules={{ required: Boolean(selectedType?.requiresNumber) }}
                 />
               </FormControl>
@@ -319,27 +322,27 @@ export function CredentialFormDialog({
                 <InputField<CredentialFormValues>
                   control={control}
                   name="issuingAuthority"
-                  label="Issuing authority"
-                  placeholder="e.g. TX DPS, FMCSA examiner"
-                  description="Who issued it, so a verifier knows where to check."
+                  label={t("Issuing authority")}
+                  placeholder={t("e.g. TX DPS, FMCSA examiner")}
+                  description={t("Who issued it, so a verifier knows where to check.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<CredentialFormValues>
                   control={control}
                   name="issuedAt"
-                  label="Issued"
-                  placeholder="Date on the card"
-                  description="Used with the type's validity to suggest an expiry."
+                  label={t("Issued")}
+                  placeholder={t("Date on the card")}
+                  description={t("Used with the type's validity to suggest an expiry.")}
                 />
               </FormControl>
               <FormControl>
                 <AutoCompleteDateField<CredentialFormValues>
                   control={control}
                   name="expiresAt"
-                  label="Expires"
-                  placeholder="Leave empty if it never expires"
-                  description="Drives the expiry warnings and the worker's compliance grade."
+                  label={t("Expires")}
+                  placeholder={t("Leave empty if it never expires")}
+                  description={t("Drives the expiry warnings and the worker's compliance grade.")}
                   rules={{ required: selectedType?.profileField === "LicenseExpiry" }}
                 />
               </FormControl>
@@ -347,19 +350,19 @@ export function CredentialFormDialog({
                 <TextareaField<CredentialFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Class A, no air-brake restriction"
-                  description="Kept on the credential and shown on the worker's file."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Class A, no air-brake restriction")}
+                  description={t("Kept on the credential and shown on the worker's file.")}
                   maxLength={2000}
                 />
               </FormControl>
               <FormControl cols="full">
                 <div className="flex flex-col gap-2">
                   <p className="text-sm font-medium">
-                    Document
+                    {t("Document")}
                     {selectedType?.requiresDocument ? (
                       <span className="text-muted-foreground ml-1 text-xs font-normal">
-                        needed before this credential can be verified
+                        {t("needed before this credential can be verified")}
                       </span>
                     ) : null}
                   </p>
@@ -379,7 +382,7 @@ export function CredentialFormDialog({
                         variant="ghost"
                         size="icon"
                         className="size-7"
-                        aria-label="Remove document"
+                        aria-label={t("Remove document")}
                         onClick={() => setAttached(null)}
                       >
                         <XIcon className="size-3.5" />
@@ -390,7 +393,7 @@ export function CredentialFormDialog({
                       <span className="flex min-w-0 items-center gap-2">
                         <PaperclipIcon className="text-muted-foreground size-4 shrink-0 animate-pulse" />
                         <span className="truncate">
-                          Uploading {activeUpload.file.name}… {Math.round(activeUpload.progress)}%
+                          {t("Uploading {0}… {1}%", activeUpload.file.name, Math.round(activeUpload.progress))}
                         </span>
                       </span>
                       <Button
@@ -399,7 +402,7 @@ export function CredentialFormDialog({
                         size="sm"
                         onClick={() => cancelUpload(activeUpload.id)}
                       >
-                        Cancel
+                        {t("Cancel")}
                       </Button>
                     </div>
                   ) : (
@@ -414,10 +417,10 @@ export function CredentialFormDialog({
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending || Boolean(activeUpload)}>
-                {isPending ? "Saving..." : copy.submit}
+                {isPending ? t("Saving...") : copy.submit}
               </Button>
             </DialogFooter>
           </Form>

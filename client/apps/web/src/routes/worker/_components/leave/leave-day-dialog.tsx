@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { NumberField } from "@/components/fields/number-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -34,6 +35,8 @@ function emptyDay(): LeaveDayFormValues {
 }
 
 export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: LeaveDayDialogProps) {
+  const t = useT();
+
   const invalidate = useLeaveInvalidation(workerId);
   const form = useForm<LeaveDayFormValues>({
     resolver: zodResolver(leaveDayFormSchema) as Resolver<LeaveDayFormValues>,
@@ -64,7 +67,7 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
       });
     },
     onSuccess: (saved) => {
-      toast.success("Day recorded", {
+      toast.success(t("Day recorded"), {
         description: saved.countsAgainstEntitlement
           ? "Drawn against the FMLA entitlement."
           : "Recorded, but not drawn against the entitlement — the case is not designated.",
@@ -80,10 +83,9 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Record a day of leave</DialogTitle>
+          <DialogTitle>{t("Record a day of leave")}</DialogTitle>
           <DialogDescription>
-            Hours rather than days, so intermittent leave can be taken in the increment the
-            organisation actually uses.
+            {t("Hours rather than days, so intermittent leave can be taken in the increment the organisation actually uses.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -99,9 +101,9 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                 <AutoCompleteDateField<LeaveDayFormValues>
                   control={control}
                   name="usedOn"
-                  label="Day"
-                  placeholder="Day the leave was taken"
-                  description="The calendar day these hours belong to."
+                  label={t("Day")}
+                  placeholder={t("Day the leave was taken")}
+                  description={t("The calendar day these hours belong to.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -109,9 +111,9 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                 <NumberField<LeaveDayFormValues>
                   control={control}
                   name="hours"
-                  label="Hours"
-                  placeholder="e.g. 8"
-                  description="Hours of leave taken that day, more than zero and up to 24."
+                  label={t("Hours")}
+                  placeholder={t("e.g. 8")}
+                  description={t("Hours of leave taken that day, more than zero and up to 24.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -119,8 +121,8 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                 <Alert variant={designated ? "info" : "warning"}>
                   <AlertDescription>
                     {designated
-                      ? "This case is designated as FMLA, so the day draws the entitlement down."
-                      : "This case is not designated as FMLA. The day is recorded but draws nothing down."}
+                      ? t("This case is designated as FMLA, so the day draws the entitlement down.")
+                      : t("This case is not designated as FMLA. The day is recorded but draws nothing down.")}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -128,19 +130,19 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                 <TextareaField<LeaveDayFormValues>
                   control={control}
                   name="notes"
-                  label="Notes"
-                  placeholder="e.g. Half day for a medical appointment"
-                  description="Kept on the entry and shown in the case's list of days."
+                  label={t("Notes")}
+                  placeholder={t("e.g. Half day for a medical appointment")}
+                  description={t("Kept on the entry and shown in the case's list of days.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                Record
+                {t("Record")}
               </Button>
             </DialogFooter>
           </Form>

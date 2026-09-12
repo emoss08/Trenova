@@ -205,14 +205,14 @@ func (s *Service) appendPayEventToSettlement(
 		return errortypes.NewValidationError(
 			"payEventIds",
 			errortypes.ErrInvalidOperation,
-			"Pay event "+event.ProNumber+" is not accrued; only unsettled events can be added",
+			"Pay event {0} is not accrued; only unsettled events can be added", event.ProNumber,
 		)
 	}
 	if event.WorkerID != entity.WorkerID {
 		return errortypes.NewValidationError(
 			"payEventIds",
 			errortypes.ErrInvalidOperation,
-			"Pay event "+event.ProNumber+" belongs to a different driver",
+			"Pay event {0} belongs to a different driver", event.ProNumber,
 		)
 	}
 

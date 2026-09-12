@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
@@ -82,6 +83,8 @@ function EarningCreatePanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useT();
+
   const form = useForm<RecurringEarningFormValues>({
     resolver: zodResolver(recurringEarningFormSchema) as Resolver<RecurringEarningFormValues>,
     defaultValues: buildDefaults(null),
@@ -91,8 +94,8 @@ function EarningCreatePanel({
     <FormCreatePanel<RecurringEarningFormValues, RecurringEarningRow>
       open={open}
       onOpenChange={onOpenChange}
-      title="Recurring Earning"
-      description="Added automatically to each qualifying settlement until its end date or cap."
+      title={t("Recurring Earning")}
+      description={t("Added automatically to each qualifying settlement until its end date or cap.")}
       queryKey="recurring-earning-list"
       form={form}
       formComponent={<EarningForm isEdit={false} />}
@@ -113,6 +116,8 @@ function EarningEditPanel({
   onOpenChange: (open: boolean) => void;
   row: RecurringEarningRow;
 }) {
+  const t = useT();
+
   const formRow = { ...row, ...buildDefaults(row) } as unknown as RecurringEarningRow &
     Record<string, unknown>;
   const form = useForm<RecurringEarningFormValues>({
@@ -125,7 +130,7 @@ function EarningEditPanel({
       open={open}
       onOpenChange={onOpenChange}
       row={formRow}
-      title="Recurring Earning"
+      title={t("Recurring Earning")}
       fieldKey="description"
       queryKey="recurring-earning-list"
       form={form}
@@ -158,6 +163,8 @@ function useDefaultAmountPrefill(control: Control<RecurringEarningFormValues>) {
 }
 
 function EarningForm({ isEdit }: { isEdit: boolean }) {
+  const t = useT();
+
   const { control } = useFormContext<RecurringEarningFormValues>();
   useDefaultAmountPrefill(control);
   const payCodeId = useWatch({ control, name: "payCodeId" });
@@ -171,10 +178,10 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <WorkerAutocompleteField
             control={control}
             name="workerId"
-            label="Driver"
-            placeholder="Select driver"
+            label={t("Driver")}
+            placeholder={t("Select driver")}
             rules={{ required: true }}
-            description="The driver whose settlements this earning is added to."
+            description={t("The driver whose settlements this earning is added to.")}
           />
         </FormControl>
         <FormControl>
@@ -182,17 +189,17 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="payCodeId"
             direction="Earning"
-            description="Earning code that categorizes the pay and routes it to the code's GL account when one is mapped."
+            description={t("Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name="frequency"
-            label="Frequency"
+            label={t("Frequency")}
             options={recurringEarningFrequencyChoices}
             rules={{ required: true }}
-            description="Every settlement pays each cycle; monthly pays only on the first settlement of each month."
+            description={t("Every settlement pays each cycle; monthly pays only on the first settlement of each month.")}
           />
         </FormControl>
         {isEdit && (
@@ -200,10 +207,10 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={recurringEarningStatusChoices}
               rules={{ required: true }}
-              description="Pause to skip upcoming settlements without losing history; completed earnings stop permanently."
+              description={t("Pause to skip upcoming settlements without losing history; completed earnings stop permanently.")}
             />
           </FormControl>
         )}
@@ -211,58 +218,56 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           <InputField
             control={control}
             name="description"
-            label="Description"
-            placeholder="e.g. OTR per diem — IRS substantiated M&IE"
+            label={t("Description")}
+            placeholder={t("e.g. OTR per diem — IRS substantiated M&IE")}
             rules={{ required: true }}
-            description="Shown verbatim on the driver's settlement statement, so make it recognizable."
+            description={t("Shown verbatim on the driver's settlement statement, so make it recognizable.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="amount"
-            label="Amount per Application"
+            label={t("Amount per Application")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
+            sideText={t("USD")}
             rules={{ required: true }}
-            description="The amount added each time the earning applies to a settlement."
+            description={t("The amount added each time the earning applies to a settlement.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="totalCap"
-            label="Total Cap"
+            label={t("Total Cap")}
             decimalScale={2}
             fixedDecimalScale
-            sideText="USD"
-            description="Earning stops automatically once this lifetime total is reached."
+            sideText={t("USD")}
+            description={t("Earning stops automatically once this lifetime total is reached.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="startDate"
-            label="Start Date"
+            label={t("Start Date")}
             rules={{ required: true }}
-            description="The earning begins applying to settlements whose period ends after this date."
+            description={t("The earning begins applying to settlements whose period ends after this date.")}
           />
         </FormControl>
         <FormControl>
           <AutoCompleteDateField
             control={control}
             name="endDate"
-            label="End Date"
-            description="Optional last day the earning applies; leave blank for open-ended."
+            label={t("End Date")}
+            description={t("Optional last day the earning applies; leave blank for open-ended.")}
           />
         </FormControl>
       </FormGroup>
       {selectedCode != null && !selectedCode.taxable && (
         <p className="text-muted-foreground text-xs">
-          This code is non-taxable — amounts post to the settlement as reimbursements, are excluded
-          from guaranteed-minimum checks, and post to the code&apos;s GL account (or the driver
-          reimbursement account) instead of wages expense.
+          {t("This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.")}
         </p>
       )}
     </div>

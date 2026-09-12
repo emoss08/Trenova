@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
 import {
@@ -35,6 +36,8 @@ export function SplitButton<T extends string = string>({
   className,
   formId,
 }: SplitButtonProps<T>) {
+  const t = useT();
+
   const selected = options.find((opt) => opt.id === selectedOption);
   const otherOptions = options.filter((opt) => opt.id !== selectedOption);
 
@@ -63,8 +66,8 @@ export function SplitButton<T extends string = string>({
           {otherOptions.map((option) => (
             <DropdownMenuItem
               key={option.id}
-              title={option.label}
-              description={option.description}
+              title={t(option.label)}
+              description={t(option.description)}
               onClick={() => onOptionSelect(option.id)}
               endContent={
                 option.id === selectedOption ? (

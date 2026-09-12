@@ -1,1 +1,1 @@
-Settlement {{ .SettlementNumber }}{{ if .Amount }} for {{ .Amount }}{{ end }} was paid{{ if .PaymentMethod }} via {{ .PaymentMethod }}{{ end }}.
+{{ if .Amount }}{{ if .PaymentMethod }}{{ t "Settlement {0} for {1} was paid via {2}." .SettlementNumber .Amount .PaymentMethod }}{{ else }}{{ t "Settlement {0} for {1} was paid." .SettlementNumber .Amount }}{{ end }}{{ else }}{{ if .PaymentMethod }}{{ t "Settlement {0} was paid via {1}." .SettlementNumber .PaymentMethod }}{{ else }}{{ t "Settlement {0} was paid." .SettlementNumber }}{{ end }}{{ end }}

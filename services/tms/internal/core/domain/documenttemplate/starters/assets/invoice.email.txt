@@ -1,18 +1,18 @@
-Hello{{ if .CustomerName }} {{ .CustomerName }}{{ end }},
+{{ if .CustomerName }}{{ t "Hello {0}," .CustomerName }}{{ else }}{{ t "Hello," }}{{ end }}
 
-Invoice {{ .InvoiceNumber }} is attached{{ if .PartLabel }} ({{ .PartLabel }}){{ end }}.
+{{ if .PartLabel }}{{ t "Invoice {0} is attached ({1})." .InvoiceNumber .PartLabel }}{{ else }}{{ t "Invoice {0} is attached." .InvoiceNumber }}{{ end }}
 
-Invoice: {{ .InvoiceNumber }}
-{{ if .InvoiceDate }}Issued: {{ .InvoiceDate }}
-{{ end }}{{ if .DueDate }}Due: {{ .DueDate }}
-{{ end }}{{ if .PaymentTerm }}Terms: {{ .PaymentTerm }}
-{{ end }}{{ if .Total }}Total: {{ .Total }}
+{{ t "Invoice" }}: {{ .InvoiceNumber }}
+{{ if .InvoiceDate }}{{ t "Issued" }}: {{ .InvoiceDate }}
+{{ end }}{{ if .DueDate }}{{ t "Due" }}: {{ .DueDate }}
+{{ end }}{{ if .PaymentTerm }}{{ t "Terms" }}: {{ .PaymentTerm }}
+{{ end }}{{ if .Total }}{{ t "Total" }}: {{ .Total }}
 {{ end }}{{ if .ShipmentProNumber }}
-Shipment {{ .ShipmentProNumber }}{{ if .ShipmentBOL }} / BOL {{ .ShipmentBOL }}{{ end }}
+{{ if .ShipmentBOL }}{{ t "Shipment {0} / BOL {1}" .ShipmentProNumber .ShipmentBOL }}{{ else }}{{ t "Shipment {0}" .ShipmentProNumber }}{{ end }}
 {{ end }}{{ if .Memo }}
 {{ .Memo }}
 {{ end }}{{ if .RemittanceInstructions }}
 {{ .RemittanceInstructions }}
 {{ end }}
-Reply to this message if any detail needs review.
+{{ t "Reply to this message if any detail needs review." }}
 {{ .CompanyName }}

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -56,6 +57,8 @@ function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProp
 }
 
 function ClockHero({ state }: { state: MyHosState }) {
+  const t = useT();
+
   const duty = dutyStatusInfo(state.dutyStatus);
 
   return (
@@ -67,25 +70,25 @@ function ClockHero({ state }: { state: MyHosState }) {
     >
       <div className="grid grid-cols-2 gap-x-4 gap-y-6">
         <ClockGauge
-          label="Until break"
+          label={t("Until break")}
           remainingMs={state.breakRemainingMs}
           limitMs={state.breakLimitMs}
           defaultTone="warning"
         />
         <ClockGauge
-          label="Drive"
+          label={t("Drive")}
           remainingMs={state.driveRemainingMs}
           limitMs={state.driveLimitMs}
           defaultTone="brand"
         />
         <ClockGauge
-          label="Shift"
+          label={t("Shift")}
           remainingMs={state.shiftRemainingMs}
           limitMs={state.shiftLimitMs}
           defaultTone="brand"
         />
         <ClockGauge
-          label="Cycle"
+          label={t("Cycle")}
           remainingMs={state.cycleRemainingMs}
           limitMs={state.cycleLimitMs}
           defaultTone="brand"
@@ -93,7 +96,7 @@ function ClockHero({ state }: { state: MyHosState }) {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-        <Badge variant={duty.variant}>{duty.label}</Badge>
+        <Badge variant={duty.variant}>{t(duty.label)}</Badge>
         {state.currentVehicleId ? (
           <span className="inline-flex max-w-40 items-center gap-1 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
             <TruckIcon className="size-3.5 shrink-0" />
@@ -104,7 +107,7 @@ function ClockHero({ state }: { state: MyHosState }) {
           <span className="text-xs text-muted-foreground">{state.rulesetCycle}</span>
         ) : null}
         <span className="ml-auto text-xs text-muted-foreground">
-          Updated {timeAgo(state.recordedAt)}
+          {t("Updated {0}", timeAgo(state.recordedAt))}
         </span>
       </div>
     </m.section>
@@ -112,29 +115,32 @@ function ClockHero({ state }: { state: MyHosState }) {
 }
 
 function DailyLogRow({ log }: { log: MyHosDailyLog }) {
+  const t = useT();
+
   const miles = Math.round(metersToMiles(log.driveDistanceMeters));
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
         <p className="text-sm font-medium">{formatUnixDate(log.startAt)}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatDurationMs(log.driveDurationMs)} drive · {formatDurationMs(log.onDutyDurationMs)}{" "}
-          on-duty · {miles} mi
+          {t("{0} drive · {1} on-duty · {2} mi", formatDurationMs(log.driveDurationMs), formatDurationMs(log.onDutyDurationMs), miles)}
         </p>
         {!log.isCertified ? (
-          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">Not yet certified</p>
+          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">{t("Not yet certified")}</p>
         ) : null}
       </div>
       {log.isCertified ? (
-        <Badge variant="active">Certified</Badge>
+        <Badge variant="active">{t("Certified")}</Badge>
       ) : (
-        <Badge variant="warning">Uncertified</Badge>
+        <Badge variant="warning">{t("Uncertified")}</Badge>
       )}
     </li>
   );
 }
 
 function RecentLogsSection({ enabled }: { enabled: boolean }) {
+  const t = useT();
+
   const [range] = useState(() => {
     const end = new Date();
     const start = new Date();
@@ -156,14 +162,14 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
       transition={{ duration: 0.22, ease: "easeOut", delay: 0.1 }}
       className="flex flex-col gap-3"
     >
-      <h2 className="text-sm font-semibold">Last 7 days</h2>
+      <h2 className="text-sm font-semibold">{t("Last 7 days")}</h2>
       {logs.isPending ? (
         <Skeleton className="h-40 w-full rounded-2xl" />
       ) : logs.isError ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">We couldn&apos;t load your daily logs.</p>
+          <p className="text-sm text-muted-foreground">{t("We couldn't load your daily logs.")}</p>
           <Button variant="outline" size="sm" className="h-8" onClick={() => logs.refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       ) : logs.data && logs.data.length > 0 ? (
@@ -174,7 +180,7 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
         </ul>
       ) : (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No daily logs in the last week.
+          {t("No daily logs in the last week.")}
         </div>
       )}
     </m.section>
@@ -182,6 +188,8 @@ function RecentLogsSection({ enabled }: { enabled: boolean }) {
 }
 
 function ViolationRow({ violation }: { violation: MyHosViolation }) {
+  const t = useT();
+
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
@@ -192,7 +200,7 @@ function ViolationRow({ violation }: { violation: MyHosViolation }) {
         </p>
         {violation.description ? (
           <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-            {violation.description}
+            {t(violation.description)}
           </p>
         ) : null}
       </div>
@@ -202,6 +210,8 @@ function ViolationRow({ violation }: { violation: MyHosViolation }) {
 }
 
 function ViolationsSection({ enabled }: { enabled: boolean }) {
+  const t = useT();
+
   const [since] = useState(() => Math.floor(Date.now() / 1000) - 30 * DAY_SECONDS);
 
   const violations = useQuery({
@@ -218,14 +228,14 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
       transition={{ duration: 0.22, ease: "easeOut", delay: 0.14 }}
       className="flex flex-col gap-3"
     >
-      <h2 className="text-sm font-semibold">Violations (last 30 days)</h2>
+      <h2 className="text-sm font-semibold">{t("Violations (last 30 days)")}</h2>
       {violations.isPending ? (
         <Skeleton className="h-24 w-full rounded-2xl" />
       ) : violations.isError ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">We couldn&apos;t load your violations.</p>
+          <p className="text-sm text-muted-foreground">{t("We couldn't load your violations.")}</p>
           <Button variant="outline" size="sm" className="h-8" onClick={() => violations.refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       ) : violations.data && violations.data.length > 0 ? (
@@ -240,7 +250,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
           <CircleCheckIcon className="size-6 text-green-600 dark:text-green-400" />
-          <p className="text-sm text-muted-foreground">No violations — nice work.</p>
+          <p className="text-sm text-muted-foreground">{t("No violations — nice work.")}</p>
         </div>
       )}
     </m.section>
@@ -248,6 +258,8 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
 }
 
 export function DashHosPage() {
+  const t = useT();
+
   const state = useQuery({
     queryKey: ["dash-hos-state"],
     queryFn: ({ signal }) => fetchMyHosState({ signal }),
@@ -262,8 +274,8 @@ export function DashHosPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
       >
-        <h1 className="text-xl font-semibold tracking-tight">Hours of service</h1>
-        <p className="text-sm text-muted-foreground">Your clocks, logs, and compliance.</p>
+        <h1 className="text-xl font-semibold tracking-tight">{t("Hours of service")}</h1>
+        <p className="text-sm text-muted-foreground">{t("Your clocks, logs, and compliance.")}</p>
       </m.div>
 
       {state.isPending ? (
@@ -276,19 +288,18 @@ export function DashHosPage() {
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-8 text-center">
           <GaugeIcon className="size-7 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            We couldn&apos;t load your hours of service.
+            {t("We couldn't load your hours of service.")}
           </p>
           <Button variant="outline" size="sm" onClick={() => state.refetch()}>
-            Try again
+            {t("Try again")}
           </Button>
         </div>
       ) : !state.data ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-8 text-center">
           <Clock4Icon className="size-7 text-muted-foreground" />
-          <p className="text-sm font-medium">Hours of service isn&apos;t available</p>
+          <p className="text-sm font-medium">{t("Hours of service isn't available")}</p>
           <p className="max-w-xs text-sm text-muted-foreground">
-            Your carrier hasn&apos;t connected an ELD provider yet, or your driver profile
-            isn&apos;t linked to one.
+            {t("Your carrier hasn't connected an ELD provider yet, or your driver profile isn't linked to one.")}
           </p>
         </div>
       ) : (
@@ -298,8 +309,8 @@ export function DashHosPage() {
           {state.data.shiftDrivingViolationMs > 0 || state.data.cycleViolationMs > 0 ? (
             <Alert variant="destructive">
               <TriangleAlertIcon />
-              <AlertTitle>You have an active HOS violation</AlertTitle>
-              <AlertDescription>Contact dispatch before you keep driving.</AlertDescription>
+              <AlertTitle>{t("You have an active HOS violation")}</AlertTitle>
+              <AlertDescription>{t("Contact dispatch before you keep driving.")}</AlertDescription>
             </Alert>
           ) : null}
 

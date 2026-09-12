@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -102,13 +103,15 @@ function Section({
 }
 
 function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
+  const t = useT();
+
   const marginNegative = occurrence.netMargin < 0;
 
   return (
     <dl className="divide-border grid grid-cols-3 divide-x">
       <DeskMetric
         size="md"
-        label="Billable"
+        label={t("Billable")}
         value={formatCurrency(occurrence.billableAmount, occurrence.currency)}
         sub={`${formatDetentionMinutes(occurrence.roundedMinutes)} of ${formatDetentionMinutes(
           occurrence.rawDwellMinutes,
@@ -117,14 +120,14 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
       />
       <DeskMetric
         size="md"
-        label="Driver pay"
+        label={t("Driver pay")}
         value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
         sub={`${formatDetentionMinutes(occurrence.driverPayMinutes)} payable`}
         className="px-4"
       />
       <DeskMetric
         size="md"
-        label="Net margin"
+        label={t("Net margin")}
         value={formatCurrency(occurrence.netMargin, occurrence.currency)}
         sub={marginNegative ? "You pay more than you bill" : "After driver pay"}
         valueClassName={cn(marginNegative && "text-red-600 dark:text-red-400")}
@@ -135,6 +138,8 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
 }
 
 function CollectabilityPanel({ collectability }: { collectability: CollectabilityAssessment }) {
+  const t = useT();
+
   const isWeak = collectability.score < WEAK_SCORE;
 
   return (
@@ -159,8 +164,8 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
         )}
       >
         {collectability.chainValid
-          ? "Evidence chain verified"
-          : "Evidence chain broken — the record no longer hashes clean"}
+          ? t("Evidence chain verified")
+          : t("Evidence chain broken — the record no longer hashes clean")}
       </p>
 
       <ul className="divide-border/60 mt-2 divide-y">
@@ -170,7 +175,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
           return (
             <li key={factor.key} className="flex items-start justify-between gap-3 py-2">
               <div className="min-w-0">
-                <p className="text-xs">{factor.label}</p>
+                <p className="text-xs">{t(factor.label)}</p>
                 {factor.detail && <p className="text-2xs text-muted-foreground">{factor.detail}</p>}
                 {!full && factor.remedy && (
                   <p className="text-2xs mt-0.5 text-amber-700 dark:text-amber-500">
@@ -195,8 +200,10 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
 }
 
 function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
+  const t = useT();
+
   if (evidence.length === 0) {
-    return <p className="text-muted-foreground text-xs">No evidence has been recorded yet.</p>;
+    return <p className="text-muted-foreground text-xs">{t("No evidence has been recorded yet.")}</p>;
   }
 
   return (
@@ -229,9 +236,11 @@ function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
 }
 
 function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
+  const t = useT();
+
   if (notices.length === 0) {
     return (
-      <p className="text-muted-foreground text-xs">No notices have been sent for this stop.</p>
+      <p className="text-muted-foreground text-xs">{t("No notices have been sent for this stop.")}</p>
     );
   }
 
@@ -247,10 +256,10 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
                   NOTICE_DELIVERY_DOT[notice.deliveryStatus],
                 )}
               />
-              <span className="truncate">{toTitleCase(notice.kind)} notice</span>
+              <span className="truncate">{t("{0} notice", toTitleCase(notice.kind))}</span>
               <span className="text-muted-foreground shrink-0">
                 {toTitleCase(notice.deliveryStatus)}
-                {notice.satisfiesRequirement ? " · in window" : ""}
+                {notice.satisfiesRequirement ? ` ${t("· in window")}` : ""}
               </span>
             </span>
             <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
@@ -261,7 +270,7 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
           </div>
           {notice.recipients && notice.recipients.length > 0 && (
             <p className="text-2xs text-muted-foreground truncate">
-              To {notice.recipients.join(", ")}
+              {t("To {0}", notice.recipients.join(", "))}
             </p>
           )}
           {notice.failureReason && (
@@ -281,6 +290,8 @@ type ActionDialogProps = {
 };
 
 function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogProps) {
+  const t = useT();
+
   const form = useForm<WaiveFormValues>({
     resolver: zodResolver(waiveFormSchema),
     defaultValues: { reason: "CustomerGoodwill", note: "" },
@@ -295,8 +306,8 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
   >({
     mutationFn: (values) => apiService.detentionService.waive(occurrenceId, values),
     onSuccess: () => {
-      toast.success("Detention waived", {
-        description: "The charge was forgiven and the reason recorded as evidence.",
+      toast.success(t("Detention waived"), {
+        description: t("The charge was forgiven and the reason recorded as evidence."),
       });
       reset();
       onOpenChange(false);
@@ -310,10 +321,9 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Waive this charge</DialogTitle>
+          <DialogTitle>{t("Waive this charge")}</DialogTitle>
           <DialogDescription>
-            Waiving forgives the money but keeps the record, so discretionary revenue loss stays
-            measurable instead of disappearing into free text.
+            {t("Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -323,30 +333,30 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
                 <SelectField
                   control={control}
                   name="reason"
-                  label="Reason"
-                  placeholder="Select a coded reason"
+                  label={t("Reason")}
+                  placeholder={t("Select a coded reason")}
                   rules={{ required: true }}
                   options={detentionWaiverReasonChoices}
-                  description="The coded reason waiver leakage is reported against."
+                  description={t("The coded reason waiver leakage is reported against.")}
                 />
               </FormControl>
               <FormControl>
                 <TextareaField
                   control={control}
                   name="note"
-                  label="Note"
-                  placeholder="Dock crew was short-staffed; customer asked for a one-time concession"
+                  label={t("Note")}
+                  placeholder={t("Dock crew was short-staffed; customer asked for a one-time concession")}
                   rules={{ required: true }}
-                  description="Context the next person reviewing this waiver will need."
+                  description={t("Context the next person reviewing this waiver will need.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Waiving">
-                Waive charge
+              <Button type="submit" isLoading={isPending} loadingText={t("Waiving")}>
+                {t("Waive charge")}
               </Button>
             </DialogFooter>
           </Form>
@@ -357,6 +367,8 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
 }
 
 function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogProps) {
+  const t = useT();
+
   const form = useForm<DisputeFormValues>({
     resolver: zodResolver(disputeFormSchema),
     defaultValues: { note: "" },
@@ -371,8 +383,8 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
   >({
     mutationFn: (values) => apiService.detentionService.dispute(occurrenceId, values),
     onSuccess: () => {
-      toast.success("Dispute recorded", {
-        description: "The original computation is preserved for the claim file.",
+      toast.success(t("Dispute recorded"), {
+        description: t("The original computation is preserved for the claim file."),
       });
       reset();
       onOpenChange(false);
@@ -386,10 +398,9 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record a dispute</DialogTitle>
+          <DialogTitle>{t("Record a dispute")}</DialogTitle>
           <DialogDescription>
-            Recording the customer&apos;s rejection keeps the original computation intact — exactly
-            what working the claim requires.
+            {t("Recording the customer's rejection keeps the original computation intact — exactly what working the claim requires.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -399,19 +410,19 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
                 <TextareaField
                   control={control}
                   name="note"
-                  label="What is the customer disputing?"
-                  placeholder="Customer claims the driver arrived 40 minutes later than our records show"
+                  label={t("What is the customer disputing?")}
+                  placeholder={t("Customer claims the driver arrived 40 minutes later than our records show")}
                   rules={{ required: true }}
-                  description="Their claim, verbatim where possible — it decides which evidence matters."
+                  description={t("Their claim, verbatim where possible — it decides which evidence matters.")}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isPending} loadingText="Recording">
-                Record dispute
+              <Button type="submit" isLoading={isPending} loadingText={t("Recording")}>
+                {t("Record dispute")}
               </Button>
             </DialogFooter>
           </Form>
@@ -435,6 +446,8 @@ type OccurrenceAction = {
  * row of five equally loud buttons tells you nothing about which one to press.
  */
 function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDone: () => void }) {
+  const t = useT();
+
   const { occurrence } = detail;
   const [waiveOpen, setWaiveOpen] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
@@ -443,8 +456,8 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   const approve = useApiMutation<DetentionOccurrence, undefined>({
     mutationFn: () => apiService.detentionService.approve(occurrence.id),
     onSuccess: () => {
-      toast.success("Charge approved", {
-        description: "The detention charge will post to the shipment.",
+      toast.success(t("Charge approved"), {
+        description: t("The detention charge will post to the shipment."),
       });
       onDone();
     },
@@ -459,8 +472,8 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
       return copy(JSON.stringify(packet, null, 2));
     },
     onSuccess: () => {
-      toast.success("Dispute packet copied", {
-        description: "The full claim file — receipt, evidence, and notices — is on your clipboard.",
+      toast.success(t("Dispute packet copied"), {
+        description: t("The full claim file — receipt, evidence, and notices — is on your clipboard."),
       });
     },
     resourceName: "Dispute Packet",
@@ -521,7 +534,7 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
             loadingText={action.pendingLabel}
             onClick={action.onSelect}
           >
-            {action.label}
+            {t(action.label)}
           </Button>
         ))}
       </div>
@@ -568,6 +581,8 @@ function DetailSkeleton() {
  * the same hairline sections the desk itself uses.
  */
 export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: OccurrenceDetailSheetProps) {
+  const t = useT();
+
   const invalidate = useInvalidateDetention();
 
   const { data: detail, isLoading } = useQuery({
@@ -597,11 +612,11 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
                 </span>
               </div>
               <SheetTitle className="truncate">
-                {occurrence.locationName || "Unknown facility"}
+                {occurrence.locationName || t("Unknown facility")}
               </SheetTitle>
               <SheetDescription className="truncate text-xs">
-                {occurrence.customerName || "Unknown customer"}
-                {occurrence.shipmentProNumber && <> · PRO {occurrence.shipmentProNumber}</>} ·{" "}
+                {occurrence.customerName || t("Unknown customer")}
+                {occurrence.shipmentProNumber && <> {t("· PRO {0}", occurrence.shipmentProNumber)}</>} ·{" "}
                 {occurrence.stopType}
               </SheetDescription>
             </SheetHeader>
@@ -616,7 +631,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
               </Section>
 
               <Section
-                title="Defensibility"
+                title={t("Defensibility")}
                 action={
                   <span className="text-xs tabular-nums">
                     {detail.collectability.score}
@@ -634,11 +649,11 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
                 />
               </Section>
 
-              <Section title="Evidence chain">
+              <Section title={t("Evidence chain")}>
                 <EvidenceChain evidence={detail.evidence ?? []} />
               </Section>
 
-              <Section title="Notices">
+              <Section title={t("Notices")}>
                 <NoticeHistory notices={detail.notices ?? []} />
               </Section>
             </ScrollArea>

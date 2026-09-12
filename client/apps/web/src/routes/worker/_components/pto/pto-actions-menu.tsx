@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { approveWorkerPTO } from "@/lib/graphql/worker-mutations";
 import {
@@ -44,6 +45,8 @@ export type PTOActionsMenuProps = {
  * so callers can drop it into any layout without checking first.
  */
 export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
+  const t = useT();
+
   const invalidate = usePTOInvalidation();
   const { allowed: canApprove } = usePermission(Resource.WorkerPTO, Operation.Approve);
   const { allowed: canReject } = usePermission(Resource.WorkerPTO, Operation.Reject);
@@ -59,18 +62,18 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
   const { mutateAsync: approvePTO, isPending: approving } = useMutation({
     mutationFn: () => approveWorkerPTO(pto.id ?? ""),
     onSuccess: () => {
-      toast.success("PTO approved", { description: "The worker has been notified." });
+      toast.success(t("PTO approved"), { description: t("The worker has been notified.") });
       setApproveDialogOpen(false);
       void invalidate();
     },
     onError: (error: ApiRequestError) => {
       if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description: "You have exceeded the rate limit. Please try again later.",
+        toast.error(t("Rate limit exceeded"), {
+          description: t("You have exceeded the rate limit. Please try again later."),
         });
         return;
       }
-      toast.error("Failed to approve PTO", {
+      toast.error(t("Failed to approve PTO"), {
         description: error.message,
       });
     },
@@ -87,7 +90,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
               size="sm"
               variant="ghostInvert"
               className={className ?? "size-6"}
-              aria-label="PTO actions"
+              aria-label={t("PTO actions")}
             >
               <EllipsisIcon />
             </Button>
@@ -95,28 +98,28 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
         />
         <DropdownMenuContent side="bottom" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {showApprove ? (
               <DropdownMenuItem
-                title="Approve"
-                description="Approve this PTO request"
+                title={t("Approve")}
+                description={t("Approve this PTO request")}
                 onClick={() => setApproveDialogOpen(true)}
                 color="success"
               />
             ) : null}
             {showReject ? (
               <DropdownMenuItem
-                title="Reject"
-                description="Reject this PTO request"
+                title={t("Reject")}
+                description={t("Reject this PTO request")}
                 onClick={() => setReasonMode("reject")}
                 color="danger"
               />
             ) : null}
             {showCancel ? (
               <DropdownMenuItem
-                title="Cancel"
-                description="Withdraw this PTO request"
+                title={t("Cancel")}
+                description={t("Withdraw this PTO request")}
                 onClick={() => setReasonMode("cancel")}
                 color="warning"
               />
@@ -130,14 +133,13 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
             <AlertDialogMedia>
               <CircleCheckIcon />
             </AlertDialogMedia>
-            <AlertDialogTitle>Approve PTO request</AlertDialogTitle>
+            <AlertDialogTitle>{t("Approve PTO request")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {pto.worker?.firstName} {pto.worker?.lastName} will be notified in Dash and by SMS
-              that their time off ({formatRange(pto.startDate, pto.endDate)}) is approved.
+              {t("{0} {1} will be notified in Dash and by SMS that their time off ({2}) is approved.", pto.worker?.firstName, pto.worker?.lastName, formatRange(pto.startDate, pto.endDate))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={approving}>Back</AlertDialogCancel>
+            <AlertDialogCancel disabled={approving}>{t("Back")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={approving}
               onClick={(event) => {
@@ -145,7 +147,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
                 void approvePTO();
               }}
             >
-              {approving ? "Approving..." : "Approve"}
+              {approving ? t("Approving...") : t("Approve")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

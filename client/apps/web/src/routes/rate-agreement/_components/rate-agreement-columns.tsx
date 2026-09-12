@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -13,7 +14,7 @@ import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 /** An agreement with no end date runs until somebody ends it. */
 function effectiveWindow(row: RateAgreementRow) {
   if (!row.effectiveTo) {
-    return <span className="text-muted-foreground">No end date</span>;
+    return <span className="text-muted-foreground">{translate("No end date")}</span>;
   }
 
   return <HoverCardTimestamp timestamp={row.effectiveTo} />;
@@ -70,7 +71,7 @@ export function getColumns(): ColumnDef<RateAgreementRow>[] {
           <span className="font-medium">{row.original.name}</span>
           {row.original.currentVersionNumber > 1 && (
             <Badge variant="outline" className="text-[10px]">
-              v{row.original.currentVersionNumber}
+              {translate("v{0}", row.original.currentVersionNumber)}
             </Badge>
           )}
         </div>
@@ -192,7 +193,7 @@ export function getColumns(): ColumnDef<RateAgreementRow>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <DataTableDescription description={row.original.description} />,
+      cell: ({ row }) => <DataTableDescription description={translate(row.original.description)} />,
       size: 280,
       minSize: 200,
       maxSize: 400,

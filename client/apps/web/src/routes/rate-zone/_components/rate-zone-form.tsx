@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -8,13 +9,15 @@ import { useFormContext } from "react-hook-form";
 import { ZoneMemberEditor } from "./zone-member-editor";
 
 export function RateZoneForm() {
+  const t = useT();
+
   const { control } = useFormContext<RateZone>();
 
   return (
     <div className="space-y-6">
       <FormSection
-        title="General Information"
-        description="How this zone is identified and whether it is live."
+        title={t("General Information")}
+        description={t("How this zone is identified and whether it is live.")}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -23,9 +26,9 @@ export function RateZoneForm() {
               control={control}
               rules={{ required: true }}
               name="status"
-              label="Status"
-              placeholder="Status"
-              description="An inactive zone stops matching, and every lane written against it stops with it"
+              label={t("Status")}
+              placeholder={t("Status")}
+              description={t("An inactive zone stops matching, and every lane written against it stops with it")}
               options={statusChoices}
             />
           </FormControl>
@@ -34,9 +37,9 @@ export function RateZoneForm() {
               control={control}
               rules={{ required: true }}
               name="kind"
-              label="Zone Kind"
-              placeholder="Select kind"
-              description="What sort of area this is, which is how somebody else reads it later"
+              label={t("Zone Kind")}
+              placeholder={t("Select kind")}
+              description={t("What sort of area this is, which is how somebody else reads it later")}
               options={rateZoneKindChoices}
             />
           </FormControl>
@@ -45,9 +48,9 @@ export function RateZoneForm() {
               control={control}
               rules={{ required: true }}
               name="code"
-              label="Code"
-              placeholder="SE"
-              description="The short name lanes and tariffs refer to"
+              label={t("Code")}
+              placeholder={t("SE")}
+              description={t("The short name lanes and tariffs refer to")}
             />
           </FormControl>
           <FormControl>
@@ -55,26 +58,26 @@ export function RateZoneForm() {
               control={control}
               rules={{ required: true }}
               name="name"
-              label="Name"
-              placeholder="Southeast"
-              description="What this area is called out loud"
+              label={t("Name")}
+              placeholder={t("Southeast")}
+              description={t("What this area is called out loud")}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Atlantic and Gulf states from Virginia through Louisiana"
-              description="What the zone actually covers, for the next person deciding whether to reuse it"
+              label={t("Description")}
+              placeholder={t("Atlantic and Gulf states from Virginia through Louisiana")}
+              description={t("What the zone actually covers, for the next person deciding whether to reuse it")}
             />
           </FormControl>
         </FormGroup>
       </FormSection>
 
       <FormSection
-        title="Places"
-        description="The states, cities, postal codes, and locations this zone is a union of."
+        title={t("Places")}
+        description={t("The states, cities, postal codes, and locations this zone is a union of.")}
       >
         <ZoneMemberEditor />
       </FormSection>

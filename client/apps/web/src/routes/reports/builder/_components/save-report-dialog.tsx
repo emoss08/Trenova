@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -72,27 +73,29 @@ export function SaveReportDialog({
   saving,
   isNew,
 }: SaveReportDialogProps) {
+  const t = useT();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isNew ? "Save Report" : "Save Changes"}</DialogTitle>
+          <DialogTitle>{isNew ? t("Save Report") : t("Save Changes")}</DialogTitle>
           <DialogDescription>
-            Saving creates a new revision — runs always execute against a specific revision.
+            {t("Saving creates a new revision — runs always execute against a specific revision.")}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="report-meta-name">Name</Label>
+            <Label htmlFor="report-meta-name">{t("Name")}</Label>
             <Input
               id="report-meta-name"
               value={meta.name}
               onChange={(event) => onMetaChange({ ...meta, name: event.target.value })}
-              placeholder="Weekly Revenue by Customer"
+              placeholder={t("Weekly Revenue by Customer")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="report-meta-description">Description</Label>
+            <Label htmlFor="report-meta-description">{t("Description")}</Label>
             <Textarea
               id="report-meta-description"
               value={meta.description}
@@ -102,7 +105,7 @@ export function SaveReportDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="report-meta-category">Category</Label>
+              <Label htmlFor="report-meta-category">{t("Category")}</Label>
               <Select
                 value={meta.category}
                 onValueChange={(category) => {
@@ -116,14 +119,14 @@ export function SaveReportDialog({
                 <SelectContent>
                   {REPORT_CATEGORY_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="report-meta-format">Default Format</Label>
+              <Label htmlFor="report-meta-format">{t("Default Format")}</Label>
               <Select
                 value={meta.defaultFormat}
                 onValueChange={(defaultFormat) => {
@@ -137,14 +140,14 @@ export function SaveReportDialog({
                 <SelectContent>
                   {REPORT_FORMAT_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="report-meta-visibility">Visibility</Label>
+              <Label htmlFor="report-meta-visibility">{t("Visibility")}</Label>
               <Select
                 value={meta.visibility}
                 onValueChange={(visibility) => {
@@ -158,14 +161,14 @@ export function SaveReportDialog({
                 <SelectContent>
                   {VISIBILITY_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="report-meta-status">Status</Label>
+              <Label htmlFor="report-meta-status">{t("Status")}</Label>
               <Select
                 value={meta.status}
                 onValueChange={(status) => {
@@ -179,7 +182,7 @@ export function SaveReportDialog({
                 <SelectContent>
                   {STATUS_CHOICES.map((choice) => (
                     <SelectItem key={choice.value} value={choice.value}>
-                      {choice.label}
+                      {t(choice.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -187,11 +190,11 @@ export function SaveReportDialog({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="report-meta-tags">Tags</Label>
+            <Label htmlFor="report-meta-tags">{t("Tags")}</Label>
             <Input
               id="report-meta-tags"
               value={meta.tags.join(", ")}
-              placeholder="revenue, weekly"
+              placeholder={t("revenue, weekly")}
               onChange={(event) =>
                 onMetaChange({
                   ...meta,
@@ -206,10 +209,10 @@ export function SaveReportDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={onSave} disabled={saving || meta.name.trim() === ""}>
-            {saving ? "Saving..." : "Save Report"}
+            {saving ? t("Saving...") : t("Save Report")}
           </Button>
         </DialogFooter>
       </DialogContent>

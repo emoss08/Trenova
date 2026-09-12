@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   serviceFailureReasonCodeTableGraphQLConfig,
@@ -13,6 +14,8 @@ import { getColumns } from "./service-failure-reason-code-columns";
 import { ServiceFailureReasonCodePanel } from "./service-failure-reason-code-panel";
 
 export default function ServiceFailureReasonCodeTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = getColumns();
 
@@ -24,13 +27,13 @@ export default function ServiceFailureReasonCodeTable() {
 
   const handleArchive = async (row: Row<ServiceFailureReasonCodeRow>) => {
     await apiService.serviceFailureReasonCodeService.archive(row.original.id);
-    toast.success("Reason code archived");
+    toast.success(t("Reason code archived"));
     invalidate();
   };
 
   const handleActivate = async (row: Row<ServiceFailureReasonCodeRow>) => {
     await apiService.serviceFailureReasonCodeService.activate(row.original.id);
-    toast.success("Reason code activated");
+    toast.success(t("Reason code activated"));
     invalidate();
   };
 

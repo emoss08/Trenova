@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,6 +104,8 @@ export default function CommandCenterTimeline({
   query,
   onSummaryChange,
 }: CommandCenterTimelineProps) {
+  const t = useT();
+
   const [{ at, zoom, tsort }, setUrl] = useCommandCenterUrl();
   const [, setPanelParams] = useQueryStates(panelSearchParamsParser);
   const queryClient = useQueryClient();
@@ -309,13 +312,13 @@ export default function CommandCenterTimeline({
     mutationFn: (moveId: string) => apiService.assignmentService.unassign(moveId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success("Move unassigned", {
-        description: "The load is back in the unassigned lane.",
+      toast.success(t("Move unassigned"), {
+        description: t("The load is back in the unassigned lane."),
       });
       setPendingUnassign(null);
     },
     onError: () => {
-      toast.error("Failed to unassign move");
+      toast.error(t("Failed to unassign move"));
     },
   });
 
@@ -566,20 +569,23 @@ export default function CommandCenterTimeline({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unassign this move?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Unassign this move?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingUnassign
-                ? `${pendingUnassign.shipment.proNumber ?? "This shipment"} will lose its driver and equipment and return to the unassigned lane.`
+                ? t(
+                    "{0} will lose its driver and equipment and return to the unassigned lane.",
+                    pendingUnassign.shipment.proNumber ?? t("This shipment"),
+                  )
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={isUnassigning}
               onClick={() => pendingUnassign && unassignMove(pendingUnassign.moveId)}
             >
-              Unassign
+              {t("Unassign")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -624,28 +630,33 @@ function TimelineSkeleton() {
 }
 
 function TimelineEmptyState() {
+  const t = useT();
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
       <CalendarClockIcon className="text-muted-foreground size-6" />
-      <p className="text-sm font-semibold">No scheduled activity in this window</p>
+      <p className="text-sm font-semibold">{t("No scheduled activity in this window")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        No shipments have stops scheduled in the visible range with the current filters. Move the
-        window, widen the zoom, or clear filters to see more.
+        {t(
+          "No shipments have stops scheduled in the visible range with the current filters. Move the window, widen the zoom, or clear filters to see more.",
+        )}
       </p>
     </div>
   );
 }
 
 function TimelineErrorState({ onRetry }: { onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
       <CircleAlertIcon className="text-destructive size-6" />
-      <p className="text-sm font-semibold">Couldn&apos;t load the timeline</p>
+      <p className="text-sm font-semibold">{t("Couldn't load the timeline")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        Something went wrong while fetching shipments for this window.
+        {t("Something went wrong while fetching shipments for this window.")}
       </p>
       <Button type="button" variant="outline" size="xs" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );

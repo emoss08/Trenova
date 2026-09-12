@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
@@ -20,6 +21,8 @@ type DocumentPreviewPanelProps = {
 };
 
 export default function DocumentPreviewPanel({ documentId, fileName }: DocumentPreviewPanelProps) {
+  const t = useT();
+
   const [numPages, setNumPages] = useState<number>(0);
   const [scale, setScale] = useState(1.0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,7 +44,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
     return (
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <TextShimmer as="span" className="text-sm" duration={1.5}>
-          Loading document preview
+          {t("Loading document preview")}
         </TextShimmer>
       </div>
     );
@@ -52,7 +55,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
       <div className="bg-muted/20 flex h-full items-center justify-center">
         <div className="text-muted-foreground flex flex-col items-center gap-2">
           <FileTextIcon className="size-6 opacity-40" />
-          <span className="text-xs">Preview unavailable</span>
+          <span className="text-xs">{t("Preview unavailable")}</span>
         </div>
       </div>
     );
@@ -77,9 +80,9 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
       {/* Toolbar */}
       <div className="bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-1.5">
         <span className="text-muted-foreground truncate text-xs">
-          {fileName || "Document"}
+          {fileName || t("Document")}
           {numPages > 0 && (
-            <span className="text-muted-foreground/50 ml-1.5">{numPages} pages</span>
+            <span className="text-muted-foreground/50 ml-1.5">{t("{0} pages", numPages)}</span>
           )}
         </span>
         <div className="flex items-center gap-1">
@@ -114,13 +117,13 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
             loading={
               <div className="flex items-center justify-center py-20">
                 <TextShimmer as="span" className="text-xs" duration={1.5}>
-                  Rendering document
+                  {t("Rendering document")}
                 </TextShimmer>
               </div>
             }
             error={
               <div className="text-muted-foreground flex items-center justify-center py-20 text-xs">
-                Failed to load PDF
+                {t("Failed to load PDF")}
               </div>
             }
           >
@@ -128,7 +131,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
               <div key={pageNum} className="relative mb-2">
                 {numPages > 1 && (
                   <div className="text-2xs text-muted-foreground/40 mb-1 text-center">
-                    Page {pageNum}
+                    {t("Page {0}", pageNum)}
                   </div>
                 )}
                 <Page
@@ -137,7 +140,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
                   loading={
                     <div className="flex h-40 items-center justify-center">
                       <TextShimmer as="span" className="text-2xs" duration={1.5}>
-                        Loading page
+                        {t("Loading page")}
                       </TextShimmer>
                     </div>
                   }

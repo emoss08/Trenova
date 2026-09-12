@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -71,6 +72,8 @@ export function StudioEditorPane({
   editorRef,
   onOpenAiGenerate,
 }: StudioEditorPaneProps) {
+  const t = useT();
+
   const { control, register } = useFormContext<FormulaTemplateFormValues>();
   const [detailsOpen, setDetailsOpen] = useState(true);
   const { errors } = useFormState({ control, name: ["name", "type", "description"] });
@@ -96,8 +99,8 @@ export function StudioEditorPane({
               <button type="button" className="flex w-full items-center justify-between">
                 <SectionHeader
                   icon={FileCode2}
-                  title="Template Details"
-                  description="Name, type, and description"
+                  title={t("Template Details")}
+                  description={t("Name, type, and description")}
                 />
                 {detailErrorCount > 0 && !detailsOpen && (
                   <Badge variant="inactive" className="text-2xs mr-2">
@@ -116,16 +119,16 @@ export function StudioEditorPane({
             <FormGroup cols={2} className="pt-3">
               <FormControl>
                 <InputField
-                  label="Name"
+                  label={t("Name")}
                   name="name"
                   control={control}
                   rules={{ required: true }}
-                  placeholder="Enter template name"
+                  placeholder={t("Enter template name")}
                 />
               </FormControl>
               <FormControl>
                 <SelectField
-                  label="Type"
+                  label={t("Type")}
                   name="type"
                   control={control}
                   rules={{ required: true }}
@@ -134,11 +137,11 @@ export function StudioEditorPane({
               </FormControl>
               <FormControl cols="full">
                 <TextareaField
-                  label="Description"
+                  label={t("Description")}
                   name="description"
                   control={control}
                   rules={{ required: true }}
-                  placeholder="Describe when this template applies and how it prices"
+                  placeholder={t("Describe when this template applies and how it prices")}
                   rows={2}
                 />
               </FormControl>
@@ -162,8 +165,8 @@ export function StudioEditorPane({
         <div className="flex items-center justify-between gap-2">
           <SectionHeader
             icon={CodeIcon}
-            title="Expression"
-            description="The formula that computes the charge"
+            title={t("Expression")}
+            description={t("The formula that computes the charge")}
           />
           <div className="flex items-center gap-1.5">
             <Button
@@ -174,7 +177,7 @@ export function StudioEditorPane({
               className="gap-1.5"
             >
               <WandSparklesIcon className="size-3" />
-              Generate with AI
+              {t("Generate with AI")}
             </Button>
           </div>
         </div>
@@ -185,7 +188,7 @@ export function StudioEditorPane({
           name="expression"
           control={control}
           rules={{ required: true }}
-          placeholder="e.g., round(baseRate * totalDistance, 2)"
+          placeholder={t("e.g., round(baseRate * totalDistance, 2)")}
           height="240px"
           knownIdentifiers={known}
           editorRef={editorRef}
@@ -194,7 +197,7 @@ export function StudioEditorPane({
         <div className="flex items-start justify-between gap-3">
           <p className="text-muted-foreground text-2xs flex items-center gap-1">
             <SparklesIcon className="size-3" />
-            Ctrl+Space for autocomplete. Click a variable in the reference to insert it.
+            {t("Ctrl+Space for autocomplete. Click a variable in the reference to insert it.")}
           </p>
         </div>
         <AiExplainPanel expression={expression ?? ""} schemaId={schemaId || "shipment"} />
@@ -202,16 +205,16 @@ export function StudioEditorPane({
         <Separator />
         <SectionHeader
           icon={ShieldCheckIcon}
-          title="Charge Policy"
-          description="Clamp the calculated charge to a range, then round it to what gets billed"
+          title={t("Charge Policy")}
+          description={t("Clamp the calculated charge to a range, then round it to what gets billed")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
-              label="Minimum Charge"
+              label={t("Minimum Charge")}
               name="minCharge"
               control={control}
-              placeholder="No minimum"
+              placeholder={t("No minimum")}
               sideText="$"
               decimalScale={2}
               thousandSeparator
@@ -219,10 +222,10 @@ export function StudioEditorPane({
           </FormControl>
           <FormControl>
             <NumberField
-              label="Maximum Charge"
+              label={t("Maximum Charge")}
               name="maxCharge"
               control={control}
-              placeholder="No maximum"
+              placeholder={t("No maximum")}
               sideText="$"
               decimalScale={2}
               thousandSeparator
@@ -230,16 +233,16 @@ export function StudioEditorPane({
           </FormControl>
           <FormControl>
             <SelectField
-              label="Rounding Mode"
+              label={t("Rounding Mode")}
               name="roundingMode"
               control={control}
               options={rateRoundingModeChoices}
-              description="Applied after guardrails; production, preview, and scenarios all round the same way"
+              description={t("Applied after guardrails; production, preview, and scenarios all round the same way")}
             />
           </FormControl>
           <FormControl>
             <NumberField
-              label="Rounding Precision"
+              label={t("Rounding Precision")}
               name="roundingPrecision"
               control={control}
               placeholder="2"

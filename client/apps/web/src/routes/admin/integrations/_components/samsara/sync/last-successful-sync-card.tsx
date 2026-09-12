@@ -1,7 +1,10 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 
 export function LastSuccessfulSyncCard() {
+  const t = useT();
+
   const lastSuccessfulSync = useSamsaraSyncStore.get("lastSuccessfulSync");
 
   if (!lastSuccessfulSync) {
@@ -10,19 +13,19 @@ export function LastSuccessfulSyncCard() {
 
   return (
     <div className="grid gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs sm:grid-cols-2 lg:grid-cols-6">
-      <ContentSection title="Last Successful Sync">
+      <ContentSection title={t("Last Successful Sync")}>
         {formatToUserTimezone(lastSuccessfulSync.closedAt)}
       </ContentSection>
-      <ContentSection title="Duration">
+      <ContentSection title={t("Duration")}>
         {formatDurationFromSeconds(lastSuccessfulSync.durationSeconds)}
       </ContentSection>
-      <ContentSection title="Workers">
+      <ContentSection title={t("Workers")}>
         {lastSuccessfulSync.result.activeWorkers}/{lastSuccessfulSync.result.totalWorkers}
       </ContentSection>
-      <ContentSection title="Created Drivers">
+      <ContentSection title={t("Created Drivers")}>
         {lastSuccessfulSync.result.createdDrivers}
       </ContentSection>
-      <ContentSection title="Updated Mappings">
+      <ContentSection title={t("Updated Mappings")}>
         {lastSuccessfulSync.result.updatedMappings}
       </ContentSection>
     </div>

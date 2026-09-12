@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
@@ -52,9 +53,9 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         const payload = row.original.tenderPayload;
         return (
           <div className="min-w-0">
-            <div className="truncate font-medium">{payload.bol || "Load tender"}</div>
+            <div className="truncate font-medium">{payload.bol || translate("Load tender")}</div>
             <div className="text-muted-foreground truncate text-xs">
-              {payload.customerLabel || payload.serviceTypeLabel || "No tender summary"}
+              {payload.customerLabel || payload.serviceTypeLabel || translate("No tender summary")}
             </div>
           </div>
         );
@@ -92,10 +93,10 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
             to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
           >
             <LinkIcon className="size-3.5" />
-            Open shipment
+            {translate("Open shipment")}
           </Link>
         ) : (
-          <DataTablePlaceholder text="Pending" />
+          <DataTablePlaceholder text={translate("Pending")} />
         ),
       size: 180,
       meta: {
@@ -115,15 +116,15 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         const totalCount = row.original.mappingSnapshot.length;
 
         if (totalCount === 0) {
-          return <DataTablePlaceholder text="No requirements" />;
+          return <DataTablePlaceholder text={translate("No requirements")} />;
         }
 
         return (
           <div className="flex flex-wrap gap-1">
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0 ? `${unresolvedCount} unresolved` : "Resolved"}
+              {unresolvedCount > 0 ? translate("{0} unresolved", unresolvedCount) : translate("Resolved")}
             </Badge>
-            <Badge variant="secondary">{totalCount} total</Badge>
+            <Badge variant="secondary">{translate("{0} total", totalCount)}</Badge>
           </div>
         );
       },

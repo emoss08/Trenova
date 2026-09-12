@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -31,6 +32,8 @@ const stopDotColor: Record<MoveStatus, string> = {
 };
 
 export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
+  const t = useT();
+
   const enabled = Boolean(shipmentId);
 
   const { data, isLoading, isError } = useQuery({
@@ -42,7 +45,7 @@ export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
   if (!shipmentId) {
     return (
       <div className="text-2xs text-muted-foreground flex h-full w-full items-center justify-center">
-        Hover a shipment to preview details
+        {t("Hover a shipment to preview details")}
       </div>
     );
   }
@@ -54,7 +57,7 @@ export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
   if (isError || !data) {
     return (
       <div className="text-2xs text-muted-foreground flex h-full items-center justify-center">
-        Unable to load shipment.
+        {t("Unable to load shipment.")}
       </div>
     );
   }
@@ -71,6 +74,8 @@ function formatCityState(stop: Stop | null | undefined): string | null {
 }
 
 function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const origin = getOriginStop(shipment);
   const destination = getDestinationStop(shipment);
   const originLabel = formatCityState(origin);
@@ -103,13 +108,13 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
           <p className="text-muted-foreground max-w-full truncate text-xs">
             {shipment.customer?.name}
             {shipment.customer?.code && ` (${shipment.customer.code})`}
-            {shipment.bol && ` · BOL: ${shipment.bol}`}
+            {shipment.bol && ` ${t("· BOL: {0}", shipment.bol)}`}
           </p>
         </div>
         <ShipmentRouteMap moves={shipment.moves} />
         {(originLabel || destLabel) && (
           <div className="flex flex-col gap-0.5 border-t pt-2">
-            <span className="text-2xs text-muted-foreground font-medium">Route</span>
+            <span className="text-2xs text-muted-foreground font-medium">{t("Route")}</span>
             <div className="flex items-center gap-1.5 text-xs font-medium">
               <span>{originLabel ?? "—"}</span>
               <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
@@ -119,11 +124,11 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
         )}
         {details.length > 0 && (
           <div className="flex flex-col gap-1.5 border-t pt-2">
-            <span className="text-2xs text-muted-foreground font-medium">Details</span>
+            <span className="text-2xs text-muted-foreground font-medium">{t("Details")}</span>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {details.map((d) => (
                 <div key={d.label} className="flex flex-col">
-                  <span className="text-2xs text-muted-foreground">{d.label}</span>
+                  <span className="text-2xs text-muted-foreground">{t(d.label)}</span>
                   <span className="text-xs font-medium">{d.value}</span>
                 </div>
               ))}
@@ -146,6 +151,8 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
 }
 
 function MoveCard({ move }: { move: ShipmentMove }) {
+  const t = useT();
+
   const config = moveStatusConfig[move.status];
   const sortedStops = [...move.stops].sort((a, b) => a.sequence - b.sequence);
 
@@ -153,15 +160,15 @@ function MoveCard({ move }: { move: ShipmentMove }) {
     <div className="bg-card rounded-lg border p-2.5">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold">Move {move.sequence + 1}</span>
+          <span className="text-xs font-semibold">{t("Move {0}", move.sequence + 1)}</span>
           {move.distance != null && move.distance > 0 && (
             <span className="text-2xs text-muted-foreground">
-              · {move.distance.toLocaleString()} mi
+              {t("· {0} mi", move.distance.toLocaleString())}
             </span>
           )}
         </div>
         <Badge variant={config.variant} className="text-2xs">
-          {config.label}
+          {t(config.label)}
         </Badge>
       </div>
       <div className="relative flex flex-col">
@@ -207,13 +214,13 @@ function MoveCard({ move }: { move: ShipmentMove }) {
         <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2">
           {move.assignment.tractor && (
             <div className="flex flex-col">
-              <span className="text-2xs text-muted-foreground">Tractor</span>
+              <span className="text-2xs text-muted-foreground">{t("Tractor")}</span>
               <span className="text-xs font-medium">{move.assignment.tractor.code}</span>
             </div>
           )}
           {move.assignment.primaryWorker && (
             <div className="flex flex-col">
-              <span className="text-2xs text-muted-foreground">Worker</span>
+              <span className="text-2xs text-muted-foreground">{t("Worker")}</span>
               <span className="truncate text-xs font-medium">
                 {move.assignment.primaryWorker.firstName}{" "}
                 {move.assignment.primaryWorker.lastName?.charAt(0)}.

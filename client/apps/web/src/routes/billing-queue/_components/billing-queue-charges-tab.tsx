@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -73,6 +74,8 @@ function chargeLineTotal(charge: AdditionalCharge): number {
 }
 
 export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
+  const t = useT();
+
   const shipment = item.shipment;
   const isEditable = item.status === "InReview";
   const queryClient = useQueryClient();
@@ -91,10 +94,10 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-      toast.success("Charges updated");
+      toast.success(t("Charges updated"));
     },
     onError: () => {
-      toast.error("Failed to update charges");
+      toast.error(t("Failed to update charges"));
     },
   });
 
@@ -158,7 +161,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   if (!shipment) {
     return (
       <div className="text-muted-foreground flex items-center justify-center py-12 text-sm">
-        Shipment details not available
+        {t("Shipment details not available")}
       </div>
     );
   }
@@ -189,7 +192,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       {formulaTemplate && (
         <div className="border-border bg-muted flex items-center justify-between rounded-md border px-3 py-2">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">Rating:</span>
+            <span className="text-muted-foreground">{t("Rating:")}</span>
             <span className="font-medium">{formulaTemplate.name}</span>
             {formulaTemplate.expression && (
               <>
@@ -215,7 +218,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 }
               />
               <TooltipContent side="top" sideOffset={10}>
-                Change Template
+                {t("Change Template")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -225,8 +228,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       <div className="flex flex-col">
         <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
-            <span className="text-sm">Base Rate</span>
-            <span className="text-muted-foreground text-[11px]">Per-unit rate before formula</span>
+            <span className="text-sm">{t("Base Rate")}</span>
+            <span className="text-muted-foreground text-[11px]">{t("Per-unit rate before formula")}</span>
           </div>
           {editingFreight ? (
             <div className="flex items-center gap-1">
@@ -302,7 +305,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                       }
                     />
                     <TooltipContent side="top" sideOffset={10}>
-                      Adjust Base Rate
+                      {t("Adjust Base Rate")}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -312,13 +315,13 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
 
         <div className="flex items-center justify-between gap-2 rounded-md p-2">
-          <span className="text-sm">Line Haul</span>
+          <span className="text-sm">{t("Line Haul")}</span>
           <span className="text-sm font-medium tabular-nums">{formatCurrency(freightCharge)}</span>
         </div>
         <Separator className="my-1" />
         <div className="flex items-center justify-between p-2">
           <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-            Accessorials
+            {t("Accessorials")}
           </span>
           {isEditable && (
             <Tooltip>
@@ -335,14 +338,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 }
               />
               <TooltipContent side="top" sideOffset={10}>
-                Add Charge
+                {t("Add Charge")}
               </TooltipContent>
             </Tooltip>
           )}
         </div>
 
         {additionalCharges.length === 0 && (
-          <p className="text-muted-foreground px-2 pb-2 text-xs">No accessorial charges</p>
+          <p className="text-muted-foreground px-2 pb-2 text-xs">{t("No accessorial charges")}</p>
         )}
 
         {additionalCharges.map((charge, index) => {
@@ -395,7 +398,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                         }
                       />
                       <TooltipContent side="top" sideOffset={10}>
-                        Edit
+                        {t("Edit")}
                       </TooltipContent>
                     </Tooltip>
                     <Tooltip>
@@ -412,7 +415,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                         }
                       />
                       <TooltipContent side="top" sideOffset={10}>
-                        Delete
+                        {t("Delete")}
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -424,14 +427,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
         {additionalCharges.length > 0 && (
           <div className="text-muted-foreground flex items-center justify-between p-2">
-            <span className="text-xs">Subtotal</span>
+            <span className="text-xs">{t("Subtotal")}</span>
             <span className="text-xs font-medium tabular-nums">{formatCurrency(otherCharge)}</span>
           </div>
         )}
       </div>
 
       <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
-        <span className="text-sm font-semibold">Total</span>
+        <span className="text-sm font-semibold">{t("Total")}</span>
         <span className="text-base font-bold tabular-nums">{formatCurrency(totalCharge)}</span>
       </div>
 

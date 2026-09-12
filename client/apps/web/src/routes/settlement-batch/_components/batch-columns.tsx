@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { SettlementBatchStatusBadge } from "@trenova/shared/components/status-badge";
 import type { SettlementBatchRow } from "@/lib/graphql/driver-settlement";
@@ -48,7 +49,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "settlementCount",
-      header: () => <div className="text-right">Settlements</div>,
+      header: () => <div className="text-right">{translate("Settlements")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">{row.original.settlementCount}</div>
       ),
@@ -57,7 +58,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "exceptionCount",
-      header: () => <div className="text-right">Exceptions</div>,
+      header: () => <div className="text-right">{translate("Exceptions")}</div>,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1 text-xs tabular-nums">
           {row.original.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
@@ -69,7 +70,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalGrossMinor",
-      header: () => <div className="text-right">Total Gross</div>,
+      header: () => <div className="text-right">{translate("Total Gross")}</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <AmountDisplay
@@ -83,7 +84,7 @@ export function getColumns(): ColumnDef<SettlementBatchRow>[] {
     },
     {
       accessorKey: "totalNetMinor",
-      header: () => <div className="text-right">Total Net</div>,
+      header: () => <div className="text-right">{translate("Total Net")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { SyntheticEvent } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -72,6 +73,8 @@ export function ImageCropUploadDialog({
   confirmLabel = "Upload",
   className,
 }: ImageCropUploadDialogProps) {
+  const t = useT();
+
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>();
@@ -151,7 +154,7 @@ export function ImageCropUploadDialog({
                   <img
                     ref={imageRef}
                     src={previewUrl}
-                    alt="Selected upload"
+                    alt={t("Selected upload")}
                     className="block max-h-[65vh] max-w-full object-contain"
                     onLoad={(event: SyntheticEvent<HTMLImageElement>) => {
                       const { width, height } = event.currentTarget;
@@ -167,13 +170,13 @@ export function ImageCropUploadDialog({
           </div>
         ) : (
           <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-            Select an image to continue.
+            {t("Select an image to continue.")}
           </div>
         )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="button" onClick={() => void handleConfirm()} disabled={!canSubmit}>
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}

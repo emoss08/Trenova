@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -62,6 +63,8 @@ export function ChecklistTemplateForm({
   isEdit: boolean;
   openChecklistCount?: number;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<ChecklistTemplateFormValues>();
   const itemsArray = useFieldArray({ control, name: "items" });
   const trigger = useWatch({ control, name: "trigger" });
@@ -80,60 +83,60 @@ export function ChecklistTemplateForm({
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
         <SectionTitle
-          title="General"
-          hint="Name and code identify the checklist; the trigger decides when it starts on its own."
+          title={t("General")}
+          hint={t("Name and code identify the checklist; the trigger decides when it starts on its own.")}
         />
         <FormGroup cols={2}>
           <FormControl>
             <InputField
               control={control}
               name="code"
-              label="Code"
-              placeholder="e.g. DRIVER-ONBOARDING"
+              label={t("Code")}
+              placeholder={t("e.g. DRIVER-ONBOARDING")}
               rules={{ required: true }}
-              description="Short unique identifier; saved in uppercase."
+              description={t("Short unique identifier; saved in uppercase.")}
             />
           </FormControl>
           <FormControl>
             <InputField
               control={control}
               name="name"
-              label="Name"
-              placeholder="e.g. Driver onboarding"
+              label={t("Name")}
+              placeholder={t("e.g. Driver onboarding")}
               rules={{ required: true }}
-              description="Shown on the worker's Checklist tab once a checklist is started from this template."
+              description={t("Shown on the worker's Checklist tab once a checklist is started from this template.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="kind"
-              label="Kind"
+              label={t("Kind")}
               options={KIND_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select a kind"
-              description="Onboarding completion marks the worker DQF-ready."
+              placeholder={t("Select a kind")}
+              description={t("Onboarding completion marks the worker DQF-ready.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="trigger"
-              label="Starts"
+              label={t("Starts")}
               options={TRIGGER_OPTIONS}
               rules={{ required: true }}
-              placeholder="Select an event"
-              description="The employment event that starts this checklist for a worker."
+              placeholder={t("Select an event")}
+              description={t("The employment event that starts this checklist for a worker.")}
             />
           </FormControl>
           <FormControl>
             <SelectField
               control={control}
               name="status"
-              label="Status"
+              label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
-              placeholder="Select a status"
+              placeholder={t("Select a status")}
               description={
                 isEdit && openChecklistCount > 0
                   ? `${openChecklistCount} checklist${openChecklistCount === 1 ? " is" : "s are"} in progress from this template; they keep their items either way.`
@@ -145,7 +148,7 @@ export function ChecklistTemplateForm({
             <SwitchField
               control={control}
               name="isDefault"
-              label="Default for this trigger"
+              label={t("Default for this trigger")}
               description={
                 trigger === "Manual"
                   ? "Manual checklists are started from the worker's Checklist tab and cannot be the default."
@@ -158,10 +161,10 @@ export function ChecklistTemplateForm({
             <TextareaField
               control={control}
               name="description"
-              label="Description"
-              placeholder="Who this checklist is for and what done looks like"
+              label={t("Description")}
+              placeholder={t("Who this checklist is for and what done looks like")}
               maxLength={1000}
-              description="Optional context for the people working through the checklist."
+              description={t("Optional context for the people working through the checklist.")}
             />
           </FormControl>
         </FormGroup>
@@ -170,8 +173,8 @@ export function ChecklistTemplateForm({
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <SectionTitle
-            title="Items"
-            hint="Each line has an owner and a due date counted from the day the checklist starts."
+            title={t("Items")}
+            hint={t("Each line has an owner and a due date counted from the day the checklist starts.")}
           />
           <Button
             type="button"
@@ -191,15 +194,14 @@ export function ChecklistTemplateForm({
             }
           >
             <PlusIcon className="size-3.5" />
-            Add item
+            {t("Add item")}
           </Button>
         </div>
         <Alert variant="default">
           <InfoIcon className="size-4" />
-          <AlertTitle>Items are copied when a checklist starts</AlertTitle>
+          <AlertTitle>{t("Items are copied when a checklist starts")}</AlertTitle>
           <AlertDescription>
-            Changes to the items below only affect checklists started after you save. Checklists
-            already in progress keep the items they were started with.
+            {t("Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.")}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -236,6 +238,8 @@ function ItemRow({
   onMoveUp?: () => void;
   onMoveDown?: () => void;
 }) {
+  const t = useT();
+
   const { control } = useFormContext<ChecklistTemplateFormValues>();
   const kind = useWatch({ control, name: `items.${index}.kind` });
 
@@ -244,7 +248,7 @@ function ItemRow({
       <div className="flex items-center justify-between gap-2">
         <span className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium uppercase">
           <GripVerticalIcon className="size-3.5" />
-          Item {index + 1}
+          {t("Item {0}", index + 1)}
         </span>
         <div className="flex items-center gap-0.5">
           <Button
@@ -254,7 +258,7 @@ function ItemRow({
             className={cn("h-7 px-2 text-xs", !onMoveUp && "invisible")}
             onClick={onMoveUp}
           >
-            Up
+            {t("Up")}
           </Button>
           <Button
             type="button"
@@ -263,7 +267,7 @@ function ItemRow({
             className={cn("h-7 px-2 text-xs", !onMoveDown && "invisible")}
             onClick={onMoveDown}
           >
-            Down
+            {t("Down")}
           </Button>
           {onRemove ? (
             <Button
@@ -284,20 +288,20 @@ function ItemRow({
           <InputField
             control={control}
             name={`items.${index}.label`}
-            label="Label"
-            placeholder="e.g. Fuel card issued"
+            label={t("Label")}
+            placeholder={t("e.g. Fuel card issued")}
             rules={{ required: true }}
-            description="Shown as the line the owner ticks off on the worker's checklist."
+            description={t("Shown as the line the owner ticks off on the worker's checklist.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name={`items.${index}.kind`}
-            label="Kind"
+            label={t("Kind")}
             options={ITEM_KIND_OPTIONS}
             rules={{ required: true }}
-            placeholder="Select a kind"
+            placeholder={t("Select a kind")}
             description={ITEM_KIND_HINT[kind ?? "Task"]}
           />
         </FormControl>
@@ -305,11 +309,11 @@ function ItemRow({
           <SelectField
             control={control}
             name={`items.${index}.owner`}
-            label="Owner"
+            label={t("Owner")}
             options={OWNER_OPTIONS}
             rules={{ required: true }}
-            placeholder="Select a team"
-            description="The team responsible for getting this item done."
+            placeholder={t("Select a team")}
+            description={t("The team responsible for getting this item done.")}
           />
         </FormControl>
         {kind === "Credential" ? (
@@ -317,11 +321,11 @@ function ItemRow({
             <SelectField
               control={control}
               name={`items.${index}.credentialTypeId`}
-              label="Credential type"
+              label={t("Credential type")}
               options={credentialTypeOptions}
               rules={{ required: true }}
-              placeholder="Which credential completes this item"
-              description="The item completes itself once the worker holds a valid credential of this type."
+              placeholder={t("Which credential completes this item")}
+              description={t("The item completes itself once the worker holds a valid credential of this type.")}
             />
           </FormControl>
         ) : null}
@@ -330,9 +334,9 @@ function ItemRow({
             <DocumentTypeAutocompleteField
               control={control}
               name={`items.${index}.documentTypeId`}
-              label="Document type"
-              placeholder="Which document completes this item"
-              description="The item completes itself once a worker document of this type is on file."
+              label={t("Document type")}
+              placeholder={t("Which document completes this item")}
+              description={t("The item completes itself once a worker document of this type is on file.")}
             />
           </FormControl>
         ) : null}
@@ -340,20 +344,20 @@ function ItemRow({
           <NumberField
             control={control}
             name={`items.${index}.dueOffsetDays`}
-            label="Due"
-            sideText="days after start"
+            label={t("Due")}
+            sideText={t("days after start")}
             min={0}
             max={365}
             placeholder="3"
-            description="Days after the checklist starts before this item counts as overdue."
+            description={t("Days after the checklist starts before this item counts as overdue.")}
           />
         </FormControl>
         <FormControl>
           <SwitchField
             control={control}
             name={`items.${index}.required`}
-            label="Required"
-            description="Required items must settle before the checklist closes."
+            label={t("Required")}
+            description={t("Required items must settle before the checklist closes.")}
             position="left"
           />
         </FormControl>
@@ -361,10 +365,10 @@ function ItemRow({
           <TextareaField
             control={control}
             name={`items.${index}.description`}
-            label="Description"
-            placeholder="What done looks like for this item"
+            label={t("Description")}
+            placeholder={t("What done looks like for this item")}
             maxLength={1000}
-            description="Optional guidance shown with the item to whoever completes it."
+            description={t("Optional guidance shown with the item to whoever completes it.")}
           />
         </FormControl>
       </FormGroup>

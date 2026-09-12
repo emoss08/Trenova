@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -12,6 +13,8 @@ export function HazardousMaterialPanel({
   mode,
   row,
 }: DataTablePanelProps<HazardousMaterial>) {
+  const t = useT();
+
   const form = useForm({
     resolver: zodResolver(hazardousMaterialSchema),
     defaultValues: {
@@ -47,7 +50,7 @@ export function HazardousMaterialPanel({
         form={form}
         url="/hazardous-materials/"
         queryKey="hazardous-material-list"
-        title="Hazardous Material"
+        title={t("Hazardous Material")}
         fieldKey="name"
         formComponent={<HazardousMaterialForm />}
       />
@@ -61,7 +64,7 @@ export function HazardousMaterialPanel({
       form={form}
       url="/hazardous-materials/"
       queryKey="hazardous-material-list"
-      title="Hazardous Material"
+      title={t("Hazardous Material")}
       formComponent={<HazardousMaterialForm isEditing />}
     />
   );

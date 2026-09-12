@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField, WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -59,6 +60,8 @@ type PositionHoldersSheetProps = {
  * thinks about titles, so this is where a title is filled.
  */
 export function PositionHoldersSheet({ position, onOpenChange }: PositionHoldersSheetProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { allowed: canAssign } = usePermission(Resource.JobPosition, Operation.Update);
   const driving = position?.isDrivingPosition ?? true;
@@ -89,7 +92,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
       form.reset({ holderId: "" });
       invalidate();
     },
-    onError: (error: Error) => toast.error("Could not change that", { description: error.message }),
+    onError: (error: Error) => toast.error(t("Could not change that"), { description: error.message }),
   });
 
   const rows = holders.data ?? [];
@@ -100,10 +103,10 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            {position?.title ?? "Position"}
+            {position?.title ?? t("Position")}
             {position ? (
               <Badge variant={position.isDrivingPosition ? "info" : "secondary"}>
-                {position.isDrivingPosition ? "Driving" : "Front office"}
+                {position.isDrivingPosition ? t("Driving") : t("Front office")}
               </Badge>
             ) : null}
           </SheetTitle>
@@ -114,7 +117,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                     ? "held by workers on the roster"
                     : "held by people who log in"
                 }`
-              : "Loading"}
+              : t("Loading")}
           </SheetDescription>
         </SheetHeader>
 
@@ -139,25 +142,25 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                           <WorkerAutocompleteField<PickerValues>
                             control={form.control}
                             name="holderId"
-                            label="Put a worker on it"
-                            placeholder="Find a worker"
-                            description="A worker holds one position, so this replaces any title they hold now."
+                            label={t("Put a worker on it")}
+                            placeholder={t("Find a worker")}
+                            description={t("A worker holds one position, so this replaces any title they hold now.")}
                             clearable
                           />
                         ) : (
                           <UserAutocompleteField<PickerValues>
                             control={form.control}
                             name="holderId"
-                            label="Put somebody on it"
-                            placeholder="Find a user"
-                            description="A person holds one position, so this replaces any title they hold now."
+                            label={t("Put somebody on it")}
+                            placeholder={t("Find a user")}
+                            description={t("A person holds one position, so this replaces any title they hold now.")}
                             clearable
                           />
                         )}
                       </div>
                       <Button type="submit" size="sm" isLoading={assign.isPending}>
                         <PlusIcon className="size-3.5" />
-                        Add
+                        {t("Add")}
                       </Button>
                     </div>
                   </FormControl>
@@ -166,14 +169,14 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
             </FormProvider>
           ) : null}
 
-          <section aria-label="People in the position" className="flex flex-col gap-1.5">
+          <section aria-label={t("People in the position")} className="flex flex-col gap-1.5">
             <header className="flex items-center justify-between px-1">
               <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                {driving ? "Workers" : "People"} in it
+                {t("{0} in it", driving ? t("Workers") : t("People"))}
               </h4>
               {holders.data ? (
                 <span className="text-muted-foreground text-xs tabular-nums">
-                  {active} active · {rows.length} on record
+                  {t("{0} active · {1} on record", active, rows.length)}
                 </span>
               ) : null}
             </header>
@@ -184,7 +187,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
               </div>
             ) : rows.length === 0 ? (
               <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-                Nobody holds this title yet.
+                {t("Nobody holds this title yet.")}
               </p>
             ) : (
               <ul className="bg-card divide-y overflow-hidden rounded-lg border">
@@ -205,7 +208,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">{holder.name}</span>
                         <span className="text-muted-foreground truncate text-xs">
-                          {holder.detail || (holder.kind === "Worker" ? "No terminal" : "")}
+                          {holder.detail || (holder.kind === "Worker" ? t("No terminal") : "")}
                         </span>
                       </span>
                     </Link>

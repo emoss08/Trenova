@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -13,6 +14,8 @@ export function FiscalYearPanel({
   mode,
   row,
 }: DataTablePanelProps<FiscalYearRow>) {
+  const t = useT();
+
   const currentYear = new Date().getFullYear();
 
   const form = useForm({
@@ -43,7 +46,7 @@ export function FiscalYearPanel({
         form={form}
         url="/fiscal-years/"
         queryKey="fiscal-year-list"
-        title="Fiscal Year"
+        title={t("Fiscal Year")}
         fieldKey="name"
         formComponent={<FiscalYearForm mode="edit" />}
         size="lg"
@@ -58,7 +61,7 @@ export function FiscalYearPanel({
       form={form}
       url="/fiscal-years/"
       queryKey="fiscal-year-list"
-      title="Fiscal Year"
+      title={t("Fiscal Year")}
       formComponent={<FiscalYearForm mode="create" />}
     />
   );

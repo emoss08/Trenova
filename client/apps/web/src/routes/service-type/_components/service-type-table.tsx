@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   serviceTypeTableGraphQLConfig,
@@ -19,6 +20,8 @@ import { ServiceTypePanel } from "./service-type-panel";
 const INLINE_EDITABLE_FIELDS = new Set<keyof ServiceTypeRow>(["code", "description"]);
 
 export default function EquipmentTypeTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(), []);
 
@@ -59,9 +62,9 @@ export default function EquipmentTypeTable() {
         queryKey: ["service-type-list"],
         refetchType: "all",
       });
-      toast.success("Service type updated");
+      toast.success(t("Service type updated"));
     },
-    [queryClient],
+    [queryClient, t],
   );
 
   const dockActions = useMemo<DockAction<ServiceTypeRow>[]>(

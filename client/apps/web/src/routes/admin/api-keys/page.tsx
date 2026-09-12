@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { MetricSkeleton } from "@/components/metric-skeleton";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
@@ -8,11 +9,13 @@ const ApiKeyAnalytics = lazy(() => import("./_components/analytics/api-key-analy
 const Table = lazy(() => import("./_components/api-key-table"));
 
 export function APIKeysPage() {
+  const t = useT();
+
   return (
     <AdminPageLayout>
       <PageHeader
-        title="API Keys"
-        description="Provision bearer credentials for third-party systems with direct, tenant-scoped permissions."
+        title={t("API Keys")}
+        description={t("Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.")}
       />
       <div className="p-4">
         <Suspense

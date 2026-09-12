@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -256,12 +257,14 @@ function HosEmptyState({
 }
 
 function HosErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const t = useT();
+
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
       <OctagonAlertIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-        Try again
+        {t("Try again")}
       </Button>
     </div>
   );
@@ -283,6 +286,8 @@ function HosLoadingState() {
 }
 
 function ActiveViolationAlert({ state }: { state: WorkerHosState }) {
+  const t = useT();
+
   if (state.shiftDrivingViolationMs <= 0 && state.cycleViolationMs <= 0) {
     return null;
   }
@@ -300,19 +305,21 @@ function ActiveViolationAlert({ state }: { state: WorkerHosState }) {
   return (
     <Alert variant="destructive">
       <OctagonAlertIcon />
-      <AlertTitle>Active HOS violation</AlertTitle>
+      <AlertTitle>{t("Active HOS violation")}</AlertTitle>
       <AlertDescription>{parts.join(". ")}.</AlertDescription>
     </Alert>
   );
 }
 
 function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
+  const t = useT();
+
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-2.5">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{toTitleCase(violation.violationType)}</p>
         {violation.description ? (
-          <p className="text-muted-foreground truncate text-xs">{violation.description}</p>
+          <p className="text-muted-foreground truncate text-xs">{t(violation.description)}</p>
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -326,6 +333,8 @@ function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
 }
 
 function ViolationsSection({ workerId, since }: { workerId: string; since: number }) {
+  const t = useT();
+
   const violationsQuery = useQuery({
     ...queries.telematics.workerHosViolations(workerId, since),
     enabled: workerId.length > 0,
@@ -335,9 +344,9 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h3 className="text-sm font-semibold">Violations</h3>
+        <h3 className="text-sm font-semibold">{t("Violations")}</h3>
         <p className="text-muted-foreground text-xs">
-          Hours-of-service violations detected in the last 30 days.
+          {t("Hours-of-service violations detected in the last 30 days.")}
         </p>
       </div>
       {violationsQuery.isPending ? (
@@ -347,14 +356,14 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
         </div>
       ) : violationsQuery.isError ? (
         <HosErrorState
-          message="Violations could not be loaded"
+          message={t("Violations could not be loaded")}
           onRetry={() => void violationsQuery.refetch()}
         />
       ) : violationsQuery.data.length === 0 ? (
         <HosEmptyState
           icon={<ShieldCheckIcon className="mx-auto size-5 text-green-600 dark:text-green-400" />}
-          title="No violations in the last 30 days"
-          description="This driver has a clean hours-of-service record for the past month."
+          title={t("No violations in the last 30 days")}
+          description={t("This driver has a clean hours-of-service record for the past month.")}
         />
       ) : (
         <div className="border-border rounded-lg border">
@@ -381,6 +390,8 @@ function DayPillButton({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
@@ -393,10 +404,10 @@ function DayPillButton({
           : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
-      {slot.label}
+      {t(slot.label)}
       {slot.dailyLog?.isCertified ? (
         <span
-          aria-label="Certified"
+          aria-label={t("Certified")}
           className={cn(
             "size-1.5 rounded-full",
             isSelected ? "bg-primary-foreground" : "bg-green-600 dark:bg-green-400",
@@ -418,6 +429,8 @@ function EldGraph({
   dayEnd: number;
   laneTotals: number[];
 }) {
+  const t = useT();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ index: number; x: number; y: number } | null>(null);
 
@@ -488,7 +501,7 @@ function EldGraph({
             preserveAspectRatio="none"
             className="block h-32 w-full"
             role="img"
-            aria-label="Duty status graph for the selected day"
+            aria-label={t("Duty status graph for the selected day")}
           >
             {Array.from({ length: ELD_LANE_COUNT + 1 }, (_, lane) => (
               <line
@@ -570,10 +583,10 @@ function EldGraph({
               className="bg-foreground text-background pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md px-3 py-1.5 text-xs shadow-md"
               style={{ left: hover.x, top: hover.y - 8 }}
             >
-              <p className="font-medium">{hoveredMeta.label}</p>
+              <p className="font-medium">{t(hoveredMeta.label)}</p>
               <p className="text-background/80 tabular-nums">
                 {formatUnixTime(hovered.startSec)} –{" "}
-                {hovered.ongoing ? "Ongoing" : formatUnixTime(hovered.endSec)} ·{" "}
+                {hovered.ongoing ? t("Ongoing") : formatUnixTime(hovered.endSec)} ·{" "}
                 {formatDurationMs((hovered.endSec - hovered.startSec) * 1000)}
               </p>
               {hovered.entry.vehicleName ? (
@@ -602,6 +615,8 @@ function EldGraph({
 }
 
 function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
+  const t = useT();
+
   const chips: { label: string; value: string }[] = [
     { label: "Drive", value: formatDurationMs(dailyLog.driveDurationMs) },
     { label: "On duty", value: formatDurationMs(dailyLog.onDutyDurationMs) },
@@ -620,9 +635,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
   }
 
   const certifiedBadge = dailyLog.isCertified ? (
-    <Badge variant="active">Certified</Badge>
+    <Badge variant="active">{t("Certified")}</Badge>
   ) : (
-    <Badge variant="outline">Uncertified</Badge>
+    <Badge variant="outline">{t("Uncertified")}</Badge>
   );
 
   return (
@@ -632,14 +647,14 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
           key={chip.label}
           className="border-border flex items-center gap-1.5 rounded-md border px-2 py-1"
         >
-          <span className="text-muted-foreground text-[11px]">{chip.label}</span>
+          <span className="text-muted-foreground text-[11px]">{t(chip.label)}</span>
           <span className="text-xs font-medium tabular-nums">{chip.value}</span>
         </div>
       ))}
       {dailyLog.isCertified && dailyLog.certifiedAt ? (
         <Tooltip>
           <TooltipTrigger render={certifiedBadge} />
-          <TooltipContent>Certified {formatUnixDateTime(dailyLog.certifiedAt)}</TooltipContent>
+          <TooltipContent>{t("Certified {0}", formatUnixDateTime(dailyLog.certifiedAt))}</TooltipContent>
         </Tooltip>
       ) : (
         certifiedBadge
@@ -649,6 +664,8 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
 }
 
 function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: number }) {
+  const t = useT();
+
   const meta = getDutyStatusMeta(entry.hosStatusType);
   const endAt = entry.logEndAt ?? null;
   const durationMs = Math.max((endAt ?? nowCap) - entry.logStartAt, 0) * 1000;
@@ -656,11 +673,11 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
   return (
     <li className="flex items-center gap-3 px-4 py-2.5">
       <div className="w-36 shrink-0">
-        <Badge variant={meta.variant}>{meta.label}</Badge>
+        <Badge variant={meta.variant}>{t(meta.label)}</Badge>
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm tabular-nums">
-          {formatUnixTime(entry.logStartAt)} – {endAt ? formatUnixTime(endAt) : "Ongoing"}
+          {formatUnixTime(entry.logStartAt)} – {endAt ? formatUnixTime(endAt) : t("Ongoing")}
         </p>
         {entry.vehicleName || entry.remark ? (
           <div className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
@@ -695,6 +712,8 @@ function DailyLogsSkeleton() {
 }
 
 function DailyLogsSection({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const [dateRange] = useState(() => {
     const today = userWallClockNow();
     return {
@@ -734,23 +753,23 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h3 className="text-sm font-semibold">Daily Logs</h3>
+        <h3 className="text-sm font-semibold">{t("Daily Logs")}</h3>
         <p className="text-muted-foreground text-xs">
-          Duty status graph and log entries for the last 7 days.
+          {t("Duty status graph and log entries for the last 7 days.")}
         </p>
       </div>
       {dailyLogsQuery.isPending ? (
         <DailyLogsSkeleton />
       ) : dailyLogsQuery.isError ? (
         <HosErrorState
-          message="Daily logs could not be loaded"
+          message={t("Daily logs could not be loaded")}
           onRetry={() => void dailyLogsQuery.refetch()}
         />
       ) : !hasHistory ? (
         <HosEmptyState
           icon={<CalendarRangeIcon className="text-muted-foreground mx-auto size-5" />}
-          title="No log history yet"
-          description="Daily logs appear once Samsara reports driver activity."
+          title={t("No log history yet")}
+          description={t("Daily logs appear once Samsara reports driver activity.")}
         />
       ) : (
         <>
@@ -771,7 +790,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
             </div>
           ) : logsQuery.isError ? (
             <HosErrorState
-              message="Duty status logs could not be loaded"
+              message={t("Duty status logs could not be loaded")}
               onRetry={() => void logsQuery.refetch()}
             />
           ) : (
@@ -788,14 +807,14 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
                 <DailySummaryRow dailyLog={selectedDay.dailyLog} />
               ) : (
                 <p className="text-muted-foreground text-xs">
-                  No daily summary reported for this day.
+                  {t("No daily summary reported for this day.")}
                 </p>
               )}
               {sortedEntries.length === 0 ? (
                 <HosEmptyState
                   icon={<ListXIcon className="text-muted-foreground mx-auto size-5" />}
-                  title="No duty status changes recorded for this day."
-                  description="Entries appear here as Samsara logs duty status transitions."
+                  title={t("No duty status changes recorded for this day.")}
+                  description={t("Entries appear here as Samsara logs duty status transitions.")}
                 />
               ) : (
                 <div className="border-border rounded-lg border">
@@ -819,6 +838,8 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
 }
 
 function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission }) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
   const hasFields = submission.fields.length > 0;
 
@@ -854,7 +875,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
-                <dt className="text-muted-foreground text-[11px]">{field.label}</dt>
+                <dt className="text-muted-foreground text-[11px]">{t(field.label)}</dt>
                 <dd className="text-sm break-words">{field.value || "—"}</dd>
               </div>
             ))}
@@ -866,6 +887,8 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
 }
 
 function FormsSection({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const [dateWindow] = useState(() => {
     const now = Math.floor(Date.now() / 1000);
     return { startTime: now - THIRTY_DAYS_SECONDS, endTime: now };
@@ -885,9 +908,9 @@ function FormsSection({ workerId }: { workerId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h3 className="text-sm font-semibold">Driver forms</h3>
+        <h3 className="text-sm font-semibold">{t("Driver forms")}</h3>
         <p className="text-muted-foreground text-xs">
-          Form submissions reported by this driver in the last 30 days.
+          {t("Form submissions reported by this driver in the last 30 days.")}
         </p>
       </div>
       {formsQuery.isPending ? (
@@ -897,14 +920,14 @@ function FormsSection({ workerId }: { workerId: string }) {
         </div>
       ) : formsQuery.isError ? (
         <HosErrorState
-          message="Form submissions could not be loaded"
+          message={t("Form submissions could not be loaded")}
           onRetry={() => void formsQuery.refetch()}
         />
       ) : submissions.length === 0 ? (
         <HosEmptyState
           icon={<ClipboardListIcon className="text-muted-foreground mx-auto size-5" />}
-          title="No form submissions in the last 30 days."
-          description="Driver form submissions appear here once Samsara reports them for this worker."
+          title={t("No form submissions in the last 30 days.")}
+          description={t("Driver form submissions appear here once Samsara reports them for this worker.")}
         />
       ) : (
         <div className="border-border overflow-hidden rounded-lg border">
@@ -928,6 +951,8 @@ function HosLiveState({
   workerId: string;
   since: number;
 }) {
+  const t = useT();
+
   const statusMeta = getDutyStatusMeta(state.dutyStatus);
   const cycleExtras: string[] = [`Tomorrow: ${formatDurationMs(state.cycleTomorrowMs)}`];
   if (state.cycleStartedAt) {
@@ -937,7 +962,7 @@ function HosLiveState({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+        <Badge variant={statusMeta.variant}>{t(statusMeta.label)}</Badge>
         {state.currentVehicleId ? (
           <Badge variant="outline" className="gap-1">
             <TruckIcon className="size-3" />
@@ -945,10 +970,9 @@ function HosLiveState({
           </Badge>
         ) : null}
         <span className="text-muted-foreground text-xs">
-          as of{" "}
-          {formatDistanceToNowStrict(new Date(state.recordedAt * 1000), {
+          {t("as of {0}", formatDistanceToNowStrict(new Date(state.recordedAt * 1000), {
             addSuffix: true,
-          })}
+          }))}
         </span>
       </div>
 
@@ -956,26 +980,26 @@ function HosLiveState({
 
       <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         <HosClockCard
-          label="Until Break"
+          label={t("Until Break")}
           limitLabel={limitLabel(state.breakLimitMs)}
           remainingMs={state.breakRemainingMs}
           limitMs={state.breakLimitMs || BREAK_LIMIT_MS}
           baseTone="warning"
         />
         <HosClockCard
-          label="Drive"
+          label={t("Drive")}
           limitLabel={limitLabel(state.driveLimitMs)}
           remainingMs={state.driveRemainingMs}
           limitMs={state.driveLimitMs || DRIVE_LIMIT_MS}
         />
         <HosClockCard
-          label="Shift"
+          label={t("Shift")}
           limitLabel={limitLabel(state.shiftLimitMs)}
           remainingMs={state.shiftRemainingMs}
           limitMs={state.shiftLimitMs || SHIFT_LIMIT_MS}
         />
         <HosClockCard
-          label="Cycle"
+          label={t("Cycle")}
           limitLabel={limitLabel(state.cycleLimitMs)}
           remainingMs={state.cycleRemainingMs}
           limitMs={state.cycleLimitMs || CYCLE_LIMIT_MS}
@@ -993,6 +1017,8 @@ function HosLiveState({
 }
 
 export default function WorkerHosTab({ workerId }: { workerId: string }) {
+  const t = useT();
+
   const [since] = useState(() => Math.floor(Date.now() / 1000) - THIRTY_DAYS_SECONDS);
 
   const statusQuery = useQuery({
@@ -1013,7 +1039,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (statusQuery.isError) {
     return (
       <HosErrorState
-        message="Telematics status could not be loaded"
+        message={t("Telematics status could not be loaded")}
         onRetry={() => void statusQuery.refetch()}
       />
     );
@@ -1023,8 +1049,8 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
     return (
       <HosEmptyState
         icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
-        title="Samsara telematics is not connected"
-        description="Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver."
+        title={t("Samsara telematics is not connected")}
+        description={t("Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver.")}
         action={
           <Button
             variant="outline"
@@ -1032,7 +1058,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            Open Integrations
+            {t("Open Integrations")}
           </Button>
         }
       />
@@ -1046,7 +1072,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (hosQuery.isError) {
     return (
       <HosErrorState
-        message="Hours-of-service data could not be loaded"
+        message={t("Hours-of-service data could not be loaded")}
         onRetry={() => void hosQuery.refetch()}
       />
     );
@@ -1056,8 +1082,8 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
     return (
       <HosEmptyState
         icon={<UserRoundXIcon className="text-muted-foreground mx-auto size-6" />}
-        title="Not linked to a Samsara driver"
-        description="Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them."
+        title={t("Not linked to a Samsara driver")}
+        description={t("Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them.")}
         action={
           <Button
             variant="outline"
@@ -1065,7 +1091,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             className="mt-3"
             render={<Link to="/admin/integrations?type=Samsara" />}
           >
-            Open Samsara Integration
+            {t("Open Samsara Integration")}
           </Button>
         }
       />

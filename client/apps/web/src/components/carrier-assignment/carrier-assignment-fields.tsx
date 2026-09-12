@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AccessorialChargeAutocompleteField,
   CarrierAutocompleteField,
@@ -59,6 +60,8 @@ export function CarrierEligibilityAlerts({
   eligibility: CarrierEligibility | undefined;
   isLoading: boolean;
 }) {
+  const t = useT();
+
   if (isLoading) {
     return <Skeleton className="h-14 rounded-lg" />;
   }
@@ -72,7 +75,7 @@ export function CarrierEligibilityAlerts({
       {eligibility.blockers.length > 0 && (
         <Alert variant="destructive">
           <OctagonXIcon />
-          <AlertTitle>Carrier cannot be assigned</AlertTitle>
+          <AlertTitle>{t("Carrier cannot be assigned")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-4">
               {eligibility.blockers.map((blocker) => (
@@ -85,7 +88,7 @@ export function CarrierEligibilityAlerts({
       {eligibility.warnings.length > 0 && (
         <Alert variant="warning">
           <TriangleAlertIcon />
-          <AlertTitle>Insurance warnings</AlertTitle>
+          <AlertTitle>{t("Insurance warnings")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-4">
               {eligibility.warnings.map((warning) => (
@@ -97,8 +100,8 @@ export function CarrierEligibilityAlerts({
                 <CheckboxField
                   control={control}
                   name="overrideInsuranceWarning"
-                  label="Assign anyway"
-                  description="Proceed despite the insurance warnings above."
+                  label={t("Assign anyway")}
+                  description={t("Proceed despite the insurance warnings above.")}
                 />
               </div>
             )}
@@ -114,6 +117,8 @@ export function CarrierEligibilityAlerts({
  * shipment panel's carrier tab so the two entry points cannot drift apart.
  */
 export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormReturn }) {
+  const t = useT();
+
   const { control, getValues, setValue } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "accessorials" });
 
@@ -134,102 +139,102 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           <CarrierAutocompleteField
             control={control}
             name="carrierId"
-            label="Carrier"
-            placeholder="Select carrier"
+            label={t("Carrier")}
+            placeholder={t("Select carrier")}
             rules={{ required: true }}
-            description="External carrier that will run this move."
+            description={t("External carrier that will run this move.")}
           />
         </FormControl>
         <FormControl>
           <SelectField
             control={control}
             name="rateMethod"
-            label="Rate Method"
-            placeholder="Select rate method"
+            label={t("Rate Method")}
+            placeholder={t("Select rate method")}
             rules={{ required: true }}
             options={carrierRateMethodChoices}
-            description="How the carrier's pay is calculated for this move."
+            description={t("How the carrier's pay is calculated for this move.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="baseRate"
-            label="Base Rate"
+            label={t("Base Rate")}
             placeholder="0.00"
             sideText="$"
             rules={{ required: true }}
             decimalScale={4}
             thousandSeparator
-            description="Flat amount, or the per-mile rate multiplied by the move distance."
+            description={t("Flat amount, or the per-mile rate multiplied by the move distance.")}
           />
         </FormControl>
         <FormControl>
           <NumberField
             control={control}
             name="fuelSurcharge"
-            label="Fuel Surcharge"
+            label={t("Fuel Surcharge")}
             placeholder="0.00"
             sideText="$"
             decimalScale={4}
             thousandSeparator
-            description="Fuel surcharge paid to the carrier on top of the base rate."
+            description={t("Fuel surcharge paid to the carrier on top of the base rate.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="proNumber"
-            label="Carrier Pro Number"
-            placeholder="e.g., PRO-482910"
+            label={t("Carrier Pro Number")}
+            placeholder={t("e.g., PRO-482910")}
             maxLength={50}
-            description="The carrier's own tracking reference for this move."
+            description={t("The carrier's own tracking reference for this move.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="externalDriverName"
-            label="Driver Name"
-            placeholder="e.g., John Smith"
+            label={t("Driver Name")}
+            placeholder={t("e.g., John Smith")}
             maxLength={255}
-            description="Name of the carrier's driver running this move."
+            description={t("Name of the carrier's driver running this move.")}
           />
         </FormControl>
         <FormControl>
           <PhoneNumberField
             control={control}
             name="externalDriverPhone"
-            label="Driver Phone"
+            label={t("Driver Phone")}
             placeholder="(555) 555-5555"
-            description="Contact number for the carrier's driver while in transit."
+            description={t("Contact number for the carrier's driver while in transit.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="externalTractorNumber"
-            label="Tractor Number"
-            placeholder="e.g., T-4521"
+            label={t("Tractor Number")}
+            placeholder={t("e.g., T-4521")}
             maxLength={50}
-            description="Unit number of the carrier's tractor on this move."
+            description={t("Unit number of the carrier's tractor on this move.")}
           />
         </FormControl>
         <FormControl>
           <InputField
             control={control}
             name="externalTrailerNumber"
-            label="Trailer Number"
-            placeholder="e.g., TR-8834"
+            label={t("Trailer Number")}
+            placeholder={t("e.g., TR-8834")}
             maxLength={50}
-            description="Unit number of the carrier's trailer on this move."
+            description={t("Unit number of the carrier's trailer on this move.")}
           />
         </FormControl>
       </FormGroup>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium">Accessorials</span>
+          <span className="text-xs font-medium">{t("Accessorials")}</span>
           <Button
             type="button"
             size="sm"
@@ -238,19 +243,18 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             onClick={() => append({ accessorialChargeId: null, description: "", amount: 0 })}
           >
             <PlusIcon className="size-3" />
-            Add accessorial
+            {t("Add accessorial")}
           </Button>
         </div>
         {fields.length === 0 && (
           <p className="text-muted-foreground text-xs">
-            No accessorials. Add lumper fees, detention, or other pass-through charges the carrier
-            bills for this move.
+            {t("No accessorials. Add lumper fees, detention, or other pass-through charges the carrier bills for this move.")}
           </p>
         )}
         {fields.map((field, index) => (
           <div key={field.id} className="rounded-md border p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium">Accessorial {index + 1}</p>
+              <p className="text-xs font-medium">{t("Accessorial {0}", index + 1)}</p>
               <Button
                 type="button"
                 size="sm"
@@ -259,7 +263,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 onClick={() => remove(index)}
               >
                 <TrashIcon className="size-3" />
-                Remove
+                {t("Remove")}
               </Button>
             </div>
             <FormGroup cols={2}>
@@ -267,10 +271,10 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 <AccessorialChargeAutocompleteField
                   control={control}
                   name={`accessorials.${index}.accessorialChargeId`}
-                  label="Accessorial Charge"
-                  placeholder="Link a configured charge (optional)"
+                  label={t("Accessorial Charge")}
+                  placeholder={t("Link a configured charge (optional)")}
                   clearable
-                  description="Optionally link a configured charge to prefill the description."
+                  description={t("Optionally link a configured charge to prefill the description.")}
                   onOptionChange={(option) => handleAccessorialChargeChange(index, option)}
                 />
               </FormControl>
@@ -278,24 +282,24 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 <InputField
                   control={control}
                   name={`accessorials.${index}.description`}
-                  label="Description"
-                  placeholder="e.g., Lumper fee"
+                  label={t("Description")}
+                  placeholder={t("e.g., Lumper fee")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description="What the carrier is billing this charge for."
+                  description={t("What the carrier is billing this charge for.")}
                 />
               </FormControl>
               <FormControl>
                 <NumberField
                   control={control}
                   name={`accessorials.${index}.amount`}
-                  label="Amount"
+                  label={t("Amount")}
                   placeholder="0.00"
                   sideText="$"
                   rules={{ required: true }}
                   decimalScale={4}
                   thousandSeparator
-                  description="Amount the carrier bills for this charge."
+                  description={t("Amount the carrier bills for this charge.")}
                 />
               </FormControl>
             </FormGroup>

@@ -153,7 +153,7 @@ func validateBulkTemplateIDs(ids []pulid.ID) error {
 		return errortypes.NewValidationError(
 			"templateIds",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Cannot act on more than %d templates at once", maxBulkTemplateIDs),
+			"Cannot act on more than {0} templates at once", maxBulkTemplateIDs,
 		)
 	default:
 		return nil

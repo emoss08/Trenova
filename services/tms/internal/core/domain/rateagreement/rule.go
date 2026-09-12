@@ -462,14 +462,14 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 			multiErr.Add(
 				side.radiusField,
 				errortypes.ErrRequired,
-				side.label+" radius must be greater than zero",
+				"{0} radius must be greater than zero", side.label,
 			)
 		}
 		if side.latitude == nil || side.longitude == nil {
 			multiErr.Add(
 				side.field,
 				errortypes.ErrRequired,
-				side.label+" radius needs a centre point",
+				"{0} radius needs a centre point", side.label,
 			)
 		}
 		return
@@ -479,7 +479,7 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 		multiErr.Add(
 			side.radiusField,
 			errortypes.ErrInvalid,
-			side.label+" radius only applies to a radius lane",
+			"{0} radius only applies to a radius lane", side.label,
 		)
 	}
 
@@ -488,7 +488,7 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 	}
 
 	if side.scope.Value == "" {
-		multiErr.Add(side.field, errortypes.ErrRequired, side.label+" value is required")
+		multiErr.Add(side.field, errortypes.ErrRequired, "{0} value is required", side.label)
 		return
 	}
 
@@ -498,7 +498,7 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 		multiErr.Add(
 			side.field,
 			errortypes.ErrInvalid,
-			side.label+" value is not valid for a "+side.scope.Type.String()+" lane",
+			"{0} value is not valid for a {1} lane", side.label, side.scope.Type.String(),
 		)
 	}
 }
@@ -639,14 +639,14 @@ func validateDecimalRange(
 	label string,
 ) {
 	if minimum.Valid && minimum.Decimal.IsNegative() {
-		multiErr.Add(field, errortypes.ErrInvalid, "Minimum "+label+" cannot be negative")
+		multiErr.Add(field, errortypes.ErrInvalid, "Minimum {0} cannot be negative", label)
 	}
 
 	if minimum.Valid && maximum.Valid && maximum.Decimal.LessThanOrEqual(minimum.Decimal) {
 		multiErr.Add(
 			field,
 			errortypes.ErrInvalid,
-			"Maximum "+label+" must be greater than minimum "+label,
+			"Maximum {0} must be greater than minimum {1}", label, label,
 		)
 	}
 }

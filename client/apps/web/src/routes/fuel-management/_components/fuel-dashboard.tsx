@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
@@ -49,6 +50,8 @@ function shortDate(priceDate: string) {
 }
 
 export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () => void }) {
+  const t = useT();
+
   const { data: entries, isLoading } = useQuery(queries.fuelSurcharge.dashboard());
   const [selectedIndexId, setSelectedIndexId] = useState<string | null>(null);
   const [range, setRange] = useState<number>(26);
@@ -79,7 +82,7 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
   if (activeEntries.length === 0) {
     return (
       <FuelDashboardEmpty
-        title="No fuel indices yet"
+        title={t("No fuel indices yet")}
         description={
           "Enable the EIA Fuel Prices integration and the DOE diesel indices are provisioned and " +
           "fed each week on their own, or create a custom index from the Fuel Indices tab."
@@ -93,9 +96,9 @@ export default function FuelDashboard({ onOpenIndices }: { onOpenIndices?: () =>
     <div className="space-y-4">
       {latestWeek && (
         <p className="text-muted-foreground text-sm">
-          Latest DOE price week:{" "}
-          <span className="text-foreground font-medium">Mon {formatWeekOf(latestWeek)}</span>
-          {" · "}surcharge rates roll forward on each program&apos;s effective day
+          {t("Latest DOE price week:")}{" "}
+          <span className="text-foreground font-medium">{t("Mon {0}", formatWeekOf(latestWeek))}</span>
+          {" · "}{t("surcharge rates roll forward on each program's effective day")}
         </p>
       )}
 
@@ -131,6 +134,8 @@ function IndexPriceCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const delta = entry.delta !== null && entry.delta !== undefined ? Number(entry.delta) : null;
   const isUp = delta !== null && delta > 0;
   const isDown = delta !== null && delta < 0;
@@ -150,7 +155,7 @@ function IndexPriceCard({
         </span>
         {entry.index.source === "Custom" ? (
           <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5">
-            {entry.index.region || "Custom"}
+            {entry.index.region || t("Custom")}
           </span>
         ) : (
           entry.index.region && (
@@ -179,7 +184,7 @@ function IndexPriceCard({
         )}
       </div>
       <p className="text-2xs text-muted-foreground mt-1">
-        {entry.latest ? `Week of ${shortDate(entry.latest.priceDate)}` : "No price data yet"}
+        {entry.latest ? t("Week of {0}", shortDate(entry.latest.priceDate)) : t("No price data yet")}
       </p>
     </button>
   );
@@ -196,6 +201,8 @@ function PriceTrendChart({
   range: number;
   onRangeChange: (value: number) => void;
 }) {
+  const t = useT();
+
   const { data: history, isLoading } = useQuery(queries.fuelSurcharge.priceHistory(indexId, range));
 
   const chartData = useMemo(
@@ -213,7 +220,7 @@ function PriceTrendChart({
   return (
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
-        <CardTitle className="text-sm font-medium">{indexName} — weekly diesel price</CardTitle>
+        <CardTitle className="text-sm font-medium">{t("{0} — weekly diesel price", indexName)}</CardTitle>
         <div className="flex gap-1">
           {RANGE_OPTIONS.map((option) => (
             <Button
@@ -224,7 +231,7 @@ function PriceTrendChart({
               onClick={() => onRangeChange(option.value)}
               className="h-7 px-2 text-xs"
             >
-              {option.label}
+              {t(option.label)}
             </Button>
           ))}
         </div>
@@ -234,7 +241,7 @@ function PriceTrendChart({
           <Skeleton className="h-64 w-full" />
         ) : chartData.length === 0 ? (
           <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
-            No price history for this index yet
+            {t("No price history for this index yet")}
           </div>
         ) : (
           <ChartContainer config={priceChartConfig} className="h-64 w-full">

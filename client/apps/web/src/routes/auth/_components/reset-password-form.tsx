@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { authService } from "@trenova/shared/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,6 +35,8 @@ export function ResetPasswordForm({
   onDone: () => void;
   onRequestNewLink: () => void;
 }) {
+  const t = useT();
+
   const form = useForm<ResetPasswordRequest>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { newPassword: "", confirmPassword: "" },
@@ -55,8 +58,8 @@ export function ResetPasswordForm({
   return (
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Choose a password" />
-      <StepHeading title="Choose a new password">
-        This link works once. Pick a password you have not used here before.
+      <StepHeading title={t("Choose a new password")}>
+        {t("This link works once. Pick a password you have not used here before.")}
       </StepHeading>
 
       <form
@@ -67,18 +70,18 @@ export function ResetPasswordForm({
         <AuthTextField
           name="newPassword"
           control={control}
-          label="New password"
+          label={t("New password")}
           type="password"
           required
           revealable
-          placeholder="At least 8 characters"
+          placeholder={t("At least 8 characters")}
           autoComplete="new-password"
           disabled={isPending}
         />
         <AuthTextField
           name="confirmPassword"
           control={control}
-          label="Confirm new password"
+          label={t("Confirm new password")}
           type="password"
           required
           revealable
@@ -94,12 +97,12 @@ export function ResetPasswordForm({
               onClick={onRequestNewLink}
               className="text-muted-foreground hover:text-foreground cursor-pointer text-left text-[11.5px] underline underline-offset-[3px] transition-colors duration-150"
             >
-              Request a new link
+              {t("Request a new link")}
             </button>
           </>
         )}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText="Setting password">
-          Set new password
+        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Setting password")}>
+          {t("Set new password")}
         </AuthSubmit>
       </form>
     </AuthCardBody>
@@ -107,31 +110,34 @@ export function ResetPasswordForm({
 }
 
 function InvalidLink({ onRequestNewLink }: { onRequestNewLink: () => void }) {
+  const t = useT();
+
   return (
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Link problem" />
-      <StepHeading title="This link is incomplete">
-        The reset link is missing its token. Some mail clients wrap long links across lines — copy
-        the whole thing, or request a new one.
+      <StepHeading title={t("This link is incomplete")}>
+        {t("The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.")}
       </StepHeading>
 
       <div className="mt-4">
-        <AuthSubmit onClick={onRequestNewLink}>Request a new link</AuthSubmit>
+        <AuthSubmit onClick={onRequestNewLink}>{t("Request a new link")}</AuthSubmit>
       </div>
     </AuthCardBody>
   );
 }
 
 export function ResetPasswordDone({ onSignIn }: { onSignIn: () => void }) {
+  const t = useT();
+
   return (
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Done" />
-      <StepHeading title="Password changed">
-        Your new password is active. Any other sessions on this account have been signed out.
+      <StepHeading title={t("Password changed")}>
+        {t("Your new password is active. Any other sessions on this account have been signed out.")}
       </StepHeading>
 
       <div className="mt-4">
-        <AuthSubmit onClick={onSignIn}>Sign in</AuthSubmit>
+        <AuthSubmit onClick={onSignIn}>{t("Sign in")}</AuthSubmit>
       </div>
     </AuthCardBody>
   );

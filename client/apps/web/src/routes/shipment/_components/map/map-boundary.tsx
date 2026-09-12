@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { LoadingSkeletonState } from "@trenova/shared/components/loading-skeleton";
 import { Button } from "@trenova/shared/components/ui/button";
 import { GOOGLE_MAPS_ERROR_MESSAGE } from "@trenova/shared/lib/constants";
@@ -8,6 +9,8 @@ import { ErrorBoundary } from "react-error-boundary";
 import { useNavigate } from "react-router";
 
 export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNode }) {
+  const t = useT();
+
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
@@ -17,7 +20,10 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
         >
           <Suspense
             fallback={
-              <LoadingSkeletonState description="Loading map component..." className="h-full" />
+              <LoadingSkeletonState
+                description={t("Loading map component...")}
+                className="h-full"
+              />
             }
           >
             {children}
@@ -29,6 +35,8 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
 }
 
 function MapErrorFallback({ error }: { error: Error }) {
+  const t = useT();
+
   const isConfigError = error.message === GOOGLE_MAPS_ERROR_MESSAGE;
   const navigate = useNavigate();
 
@@ -36,7 +44,7 @@ function MapErrorFallback({ error }: { error: Error }) {
     <div className="border-border relative h-[clamp(420px,calc(100vh-380px),540px)] w-full overflow-hidden rounded-lg border">
       <img
         src="/integrations/empty-state/map-preview.webp"
-        alt="Empty state map preview"
+        alt={t("Empty state map preview")}
         className="absolute inset-0 size-full object-cover"
       />
       <div className="bg-background/70 absolute inset-0 backdrop-blur-sm" />
@@ -51,18 +59,22 @@ function MapErrorFallback({ error }: { error: Error }) {
           </div>
           <div className="space-y-1">
             <p className="text-foreground text-sm font-medium">
-              {isConfigError ? "Map integration not configured" : "Unable to load map"}
+              {isConfigError ? t("Map integration not configured") : t("Unable to load map")}
             </p>
             <p className="text-muted-foreground text-xs">
               {isConfigError
-                ? "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature."
-                : "An error occurred while loading the map component. Please try refreshing the page."}
+                ? t(
+                    "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature.",
+                  )
+                : t(
+                    "An error occurred while loading the map component. Please try refreshing the page.",
+                  )}
             </p>
           </div>
           {isConfigError && (
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
               <SettingsIcon className="size-3.5" />
-              Configure Integration
+              {t("Configure Integration")}
             </Button>
           )}
         </div>

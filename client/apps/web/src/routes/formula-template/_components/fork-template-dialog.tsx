@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -47,6 +48,8 @@ export function ForkTemplateDialog({
   template,
   onForkSuccess,
 }: ForkTemplateDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
 
   const form = useForm<ForkRequest>({
@@ -80,7 +83,7 @@ export function ForkTemplateDialog({
     await apiService.formulaTemplateService
       .fork(template.id, values)
       .then((forkedTemplate) => {
-        toast.success("Template forked successfully", {
+        toast.success(t("Template forked successfully"), {
           description: `Created "${forkedTemplate.name}"`,
         });
 
@@ -89,8 +92,8 @@ export function ForkTemplateDialog({
         onForkSuccess?.(forkedTemplate);
       })
       .catch(() => {
-        toast.error("Fork failed", {
-          description: "Could not fork the template. Please try again.",
+        toast.error(t("Fork failed"), {
+          description: t("Could not fork the template. Please try again."),
         });
       });
   };
@@ -99,10 +102,9 @@ export function ForkTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">Fork Template</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">{t("Fork Template")}</DialogTitle>
           <DialogDescription>
-            Create a new template based on &ldquo;{template?.name}&rdquo;. The forked template will
-            start with its own version history.
+            {t("Create a new template based on “{0}”. The forked template will start with its own version history.", template?.name)}
           </DialogDescription>
         </DialogHeader>
 
@@ -110,20 +112,20 @@ export function ForkTemplateDialog({
           <FormGroup>
             <FormControl cols="full">
               <InputField
-                label="New Template Name"
+                label={t("New Template Name")}
                 name="newName"
                 control={control}
                 rules={{ required: true }}
-                placeholder="Enter name for the forked template"
+                placeholder={t("Enter name for the forked template")}
               />
             </FormControl>
 
             <FormControl cols="full">
               <TextareaField
-                label="Description"
+                label={t("Description")}
                 name="changeMessage"
                 control={control}
-                placeholder="Why are you forking this template?"
+                placeholder={t("Why are you forking this template?")}
                 rows={3}
               />
             </FormControl>
@@ -132,10 +134,10 @@ export function ForkTemplateDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button type="submit" form="fork-form" disabled={isSubmitting}>
-            {isSubmitting ? "Forking..." : "Fork Template"}
+            {isSubmitting ? t("Forking...") : t("Fork Template")}
           </Button>
         </DialogFooter>
       </DialogContent>

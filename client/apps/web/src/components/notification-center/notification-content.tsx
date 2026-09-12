@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentFileTypeIcon } from "@/components/documents/document-file-type-icon";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -18,6 +19,8 @@ import {
 const REPORT_ATTACHMENT_EVENT_TYPES = new Set(["report_run_completed", "report_run_delivered"]);
 
 function ReportRunAttachment({ notification }: { notification: Notification }) {
+  const t = useT();
+
   const { allowed: canExport } = usePermission(Resource.Report, Operation.Export);
 
   const runId = notificationDataString(notification, "runId");
@@ -55,7 +58,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
       </div>
       {truncated && (
         <Badge variant="warning" className="text-2xs h-4.5 shrink-0">
-          Truncated
+          {t("Truncated")}
         </Badge>
       )}
       {canExport && !expired && (
@@ -77,6 +80,8 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
 }
 
 function TableChangeDetails({ notification }: { notification: Notification }) {
+  const t = useT();
+
   const operation = notificationDataString(notification, "operation");
   const tableName = notificationDataString(notification, "tableName");
   const changedFields = Array.isArray(notification.data?.changedFields)
@@ -106,7 +111,7 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
         </Badge>
       ))}
       {hiddenCount > 0 && (
-        <span className="text-2xs text-muted-foreground">+{hiddenCount} more</span>
+        <span className="text-2xs text-muted-foreground">{t("+{0} more", hiddenCount)}</span>
       )}
     </div>
   );
@@ -138,6 +143,8 @@ function AmountRow({
 }
 
 function ReconciliationDetails({ notification }: { notification: Notification }) {
+  const t = useT();
+
   const expected = notificationDataNumber(notification, "expectedTotal");
   const posted = notificationDataNumber(notification, "invoiceTotal");
   const discrepancy = notificationDataNumber(notification, "discrepancyAmount");
@@ -146,16 +153,18 @@ function ReconciliationDetails({ notification }: { notification: Notification })
 
   return (
     <div className="border-border bg-card mt-2 flex flex-col gap-1 rounded-md border px-2.5 py-2">
-      {expected !== null && <AmountRow label="Expected" value={formatCurrency(expected)} />}
-      {posted !== null && <AmountRow label="Posted" value={formatCurrency(posted)} />}
+      {expected !== null && <AmountRow label={t("Expected")} value={formatCurrency(expected)} />}
+      {posted !== null && <AmountRow label={t("Posted")} value={formatCurrency(posted)} />}
       {discrepancy !== null && (
-        <AmountRow label="Discrepancy" value={formatCurrency(discrepancy)} emphasis />
+        <AmountRow label={t("Discrepancy")} value={formatCurrency(discrepancy)} emphasis />
       )}
     </div>
   );
 }
 
 function BillingExceptionDetails({ notification }: { notification: Notification }) {
+  const t = useT();
+
   const missing = notificationDataNumber(notification, "missingRequirementCount");
   const failures = notificationDataNumber(notification, "validationFailureCount");
 
@@ -165,12 +174,12 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {missing !== null && missing > 0 && (
         <Badge variant="warning" className="text-2xs h-4.5">
-          {missing} missing requirement{missing === 1 ? "" : "s"}
+          {t("{0, plural, one {# missing requirement} other {# missing requirements}}", missing)}
         </Badge>
       )}
       {failures !== null && failures > 0 && (
         <Badge variant="warning" className="text-2xs h-4.5">
-          {failures} rate validation failure{failures === 1 ? "" : "s"}
+          {t("{0, plural, one {# rate validation failure} other {# rate validation failures}}", failures)}
         </Badge>
       )}
     </div>
@@ -178,6 +187,8 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
 }
 
 function BankReceiptDetails({ notification }: { notification: Notification }) {
+  const t = useT();
+
   const amountMinor = notificationDataNumber(notification, "amountMinor");
   const reference = notificationDataString(notification, "referenceNumber");
 
@@ -187,7 +198,7 @@ function BankReceiptDetails({ notification }: { notification: Notification }) {
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {reference && (
         <Badge variant="outline" className="text-2xs h-4.5 font-mono">
-          Ref {reference}
+          {t("Ref {0}", reference)}
         </Badge>
       )}
       {amountMinor !== null && (

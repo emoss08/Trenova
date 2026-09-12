@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -85,6 +86,8 @@ export function PositionDialog({
   positions,
   defaultReportsToPositionId = null,
 }: PositionDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEdit = Boolean(position);
   const form = useForm<JobPositionFormValues>({
@@ -144,10 +147,9 @@ export function PositionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit the position" : "Add a position"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit the position") : t("Add a position")}</DialogTitle>
           <DialogDescription>
-            A terminal is where somebody works; a position is what they do. Headcount is read both
-            ways.
+            {t("A terminal is where somebody works; a position is what they do. Headcount is read both ways.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -163,19 +165,19 @@ export function PositionDialog({
                 <InputField<JobPositionFormValues>
                   control={control}
                   name="code"
-                  label="Code"
-                  placeholder="e.g. DRV-OTR"
+                  label={t("Code")}
+                  placeholder={t("e.g. DRV-OTR")}
                   rules={{ required: true }}
-                  description="A short identifier that must be unique across the organisation, whatever its case."
+                  description={t("A short identifier that must be unique across the organisation, whatever its case.")}
                 />
               </FormControl>
               <FormControl>
                 <InputField<JobPositionFormValues>
                   control={control}
                   name="title"
-                  label="Title"
-                  placeholder="e.g. Over-the-Road Driver"
-                  description="The name of the job as it appears on the chart and on each holder's record."
+                  label={t("Title")}
+                  placeholder={t("e.g. Over-the-Road Driver")}
+                  description={t("The name of the job as it appears on the chart and on each holder's record.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -183,10 +185,10 @@ export function PositionDialog({
                 <SelectField<JobPositionFormValues>
                   control={control}
                   name="department"
-                  label="Department"
+                  label={t("Department")}
                   options={DEPARTMENT_OPTIONS}
-                  placeholder="Pick a department"
-                  description="The part of the business the position sits in."
+                  placeholder={t("Pick a department")}
+                  description={t("The part of the business the position sits in.")}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -194,56 +196,56 @@ export function PositionDialog({
                 <SelectField<JobPositionFormValues>
                   control={control}
                   name="status"
-                  label="Status"
+                  label={t("Status")}
                   options={STATUS_OPTIONS}
-                  placeholder="Pick a status"
-                  description="Archiving is refused while anybody still holds the position."
+                  placeholder={t("Pick a status")}
+                  description={t("Archiving is refused while anybody still holds the position.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <SelectField<JobPositionFormValues>
                   control={control}
                   name="reportsToPositionId"
-                  label="Reports to"
+                  label={t("Reports to")}
                   options={reportsToOptions}
-                  placeholder="Pick a position"
+                  placeholder={t("Pick a position")}
                   isClearable
-                  description="The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers."
+                  description={t("The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField<JobPositionFormValues>
                   control={control}
                   name="isDrivingPosition"
-                  label="Driving position"
-                  description="Needs a CDL and is filled from the worker roster; a front-office position is filled by people who log in. This is the line most compliance rules are drawn along."
+                  label={t("Driving position")}
+                  description={t("Needs a CDL and is filled from the worker roster; a front-office position is filled by people who log in. This is the line most compliance rules are drawn along.")}
                 />
               </FormControl>
               <FormControl>
                 <SwitchField<JobPositionFormValues>
                   control={control}
                   name="flsaExempt"
-                  label="Exempt from overtime"
-                  description="Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied."
+                  label={t("Exempt from overtime")}
+                  description={t("Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied.")}
                 />
               </FormControl>
               <FormControl cols="full">
                 <TextareaField<JobPositionFormValues>
                   control={control}
                   name="description"
-                  label="Description"
-                  placeholder="e.g. Runs regional lanes out of the home terminal on a five-day schedule"
-                  description="Optional notes on the duties and expectations of the role."
+                  label={t("Description")}
+                  placeholder={t("e.g. Runs regional lanes out of the home terminal on a five-day schedule")}
+                  description={t("Optional notes on the duties and expectations of the role.")}
                   maxLength={2000}
                 />
               </FormControl>
             </FormGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add"}
+                {isEdit ? t("Save") : t("Add")}
               </Button>
             </DialogFooter>
           </Form>

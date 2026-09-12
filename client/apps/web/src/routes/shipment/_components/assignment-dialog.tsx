@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   TractorAutocompleteField,
   TrailerAutocompleteField,
@@ -89,6 +90,8 @@ export function AssignmentDialog({
   onAssigned,
   onCarrierAssigned,
 }: AssignmentDialogProps) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isEditing = !!existingAssignment?.id;
   const hasCarrierCoverage = isActiveCarrierAssignment(existingCarrierAssignment);
@@ -239,23 +242,23 @@ export function AssignmentDialog({
         <DialogHeader>
           <DialogTitle>
             {driverAssignmentBlocked
-              ? "Move Coverage"
+              ? t("Move Coverage")
               : mode === "carrier"
                 ? hasCarrierCoverage
-                  ? "Replace Carrier Assignment"
-                  : "Assign Move to Carrier"
+                  ? t("Replace Carrier Assignment")
+                  : t("Assign Move to Carrier")
                 : isEditing
-                  ? "Reassign Move"
-                  : "Assign Move"}
+                  ? t("Reassign Move")
+                  : t("Assign Move")}
           </DialogTitle>
           <DialogDescription>
             {driverAssignmentBlocked
-              ? "This move is covered by a driver, which this organization cannot reassign."
+              ? t("This move is covered by a driver, which this organization cannot reassign.")
               : mode === "carrier"
-                ? "Broker this move to an external carrier with its rate and reference details."
+                ? t("Broker this move to an external carrier with its rate and reference details.")
                 : isEditing
-                  ? "Update the tractor, trailer, and worker assignments for this move."
-                  : "Assign a tractor, trailer, and workers to this move."}
+                  ? t("Update the tractor, trailer, and worker assignments for this move.")
+                  : t("Assign a tractor, trailer, and workers to this move.")}
           </DialogDescription>
         </DialogHeader>
         {canAssignDrivers && (
@@ -263,15 +266,15 @@ export function AssignmentDialog({
             <TabsList
               variant="underline"
               className="border-border w-full border-b"
-              aria-label="Coverage type"
+              aria-label={t("Coverage type")}
             >
               <TabsTab value="driver">
                 <UserIcon className="size-4" />
-                Driver
+                {t("Driver")}
               </TabsTab>
               <TabsTab value="carrier">
                 <Building2Icon className="size-4" />
-                Carrier
+                {t("Carrier")}
               </TabsTab>
             </TabsList>
           </Tabs>
@@ -280,16 +283,16 @@ export function AssignmentDialog({
           <>
             <Alert variant="default">
               <TriangleAlertIcon />
-              <AlertTitle>Driver assignment is not enabled</AlertTitle>
+              <AlertTitle>{t("Driver assignment is not enabled")}</AlertTitle>
               <AlertDescription>
-                This organization does not run its own drivers, so an existing driver assignment
-                cannot be changed here. Unassign the driver to release the move, then cover it with
-                a carrier.
+                {t(
+                  "This organization does not run its own drivers, so an existing driver assignment cannot be changed here. Unassign the driver to release the move, then cover it with a carrier.",
+                )}
               </AlertDescription>
             </Alert>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
-                Close
+                {t("Close")}
               </Button>
             </DialogFooter>
           </>
@@ -298,15 +301,16 @@ export function AssignmentDialog({
             <>
               <Alert variant="default">
                 <TriangleAlertIcon />
-                <AlertTitle>Move is covered by a driver</AlertTitle>
+                <AlertTitle>{t("Move is covered by a driver")}</AlertTitle>
                 <AlertDescription>
-                  This move already has a driver assignment. Unassign the driver before brokering
-                  the move to an external carrier.
+                  {t(
+                    "This move already has a driver assignment. Unassign the driver before brokering the move to an external carrier.",
+                  )}
                 </AlertDescription>
               </Alert>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleClose}>
-                  Close
+                  {t("Close")}
                 </Button>
               </DialogFooter>
             </>
@@ -323,18 +327,19 @@ export function AssignmentDialog({
           <>
             <Alert variant="default">
               <TriangleAlertIcon />
-              <AlertTitle>Move is covered by a carrier</AlertTitle>
+              <AlertTitle>{t("Move is covered by a carrier")}</AlertTitle>
               <AlertDescription>
-                This move is brokered to
-                {existingCarrierAssignment?.carrier?.name
-                  ? ` ${existingCarrierAssignment.carrier.name}`
-                  : " an external carrier"}
-                . Cancel the carrier assignment before assigning a driver.
+                {t(
+                  "This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.",
+                  existingCarrierAssignment?.carrier?.name
+                    ? ` ${existingCarrierAssignment.carrier.name}`
+                    : ` ${t("an external carrier")}`,
+                )}
               </AlertDescription>
             </Alert>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
-                Close
+                {t("Close")}
               </Button>
             </DialogFooter>
           </>
@@ -343,7 +348,7 @@ export function AssignmentDialog({
             {complianceViolations.length > 0 && (
               <Alert variant="destructive">
                 <TriangleAlertIcon />
-                <AlertTitle>Compliance Violations</AlertTitle>
+                <AlertTitle>{t("Compliance Violations")}</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc pl-4">
                     {complianceViolations.map((msg, idx) => (
@@ -356,7 +361,7 @@ export function AssignmentDialog({
             {continuityError && (
               <Alert variant="default">
                 <TriangleAlertIcon />
-                <AlertTitle>Trailer Location Mismatch</AlertTitle>
+                <AlertTitle>{t("Trailer Location Mismatch")}</AlertTitle>
                 <AlertDescription>{continuityError.message}</AlertDescription>
                 <AlertAction>
                   <Button
@@ -365,7 +370,7 @@ export function AssignmentDialog({
                     variant="outline"
                     onClick={() => setLocateDialogOpen(true)}
                   >
-                    Locate Trailer
+                    {t("Locate Trailer")}
                   </Button>
                 </AlertAction>
               </Alert>
@@ -381,8 +386,8 @@ export function AssignmentDialog({
                   <TractorAutocompleteField
                     control={control}
                     name="tractorId"
-                    label="Tractor"
-                    placeholder="Select tractor"
+                    label={t("Tractor")}
+                    placeholder={t("Select tractor")}
                     rules={{ required: true }}
                     onOptionChange={handleTractorChange}
                   />
@@ -391,8 +396,8 @@ export function AssignmentDialog({
                   <TrailerAutocompleteField
                     control={control}
                     name="trailerId"
-                    label="Trailer"
-                    placeholder="Select trailer"
+                    label={t("Trailer")}
+                    placeholder={t("Select trailer")}
                     clearable
                   />
                 </FormControl>
@@ -400,8 +405,8 @@ export function AssignmentDialog({
                   <WorkerAutocompleteField
                     control={control}
                     name="primaryWorkerId"
-                    label="Primary Worker"
-                    placeholder="Select primary worker"
+                    label={t("Primary Worker")}
+                    placeholder={t("Select primary worker")}
                     rules={{ required: true }}
                     clearable
                   />
@@ -410,8 +415,8 @@ export function AssignmentDialog({
                   <WorkerAutocompleteField
                     control={control}
                     name="secondaryWorkerId"
-                    label="Secondary Worker"
-                    placeholder="Select secondary worker"
+                    label={t("Secondary Worker")}
+                    placeholder={t("Select secondary worker")}
                     clearable
                   />
                 </FormControl>
@@ -426,10 +431,10 @@ export function AssignmentDialog({
               />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleClose}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
-                <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-                  {isEditing ? "Reassign" : "Assign"}
+                <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
+                  {isEditing ? t("Reassign") : t("Assign")}
                 </Button>
               </DialogFooter>
             </Form>
@@ -490,6 +495,8 @@ function CarrierAssignmentTab({
   onCarrierAssigned?: (carrierAssignment: CarrierAssignment) => void;
   onClose: () => void;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const isReplacing = isActiveCarrierAssignment(existingCarrierAssignment);
 
@@ -579,15 +586,15 @@ function CarrierAssignmentTab({
       </ScrollArea>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="submit"
           disabled={submitBlocked}
           isLoading={isSubmitting}
-          loadingText="Saving..."
+          loadingText={t("Saving...")}
         >
-          {isReplacing ? "Replace carrier" : "Assign to carrier"}
+          {isReplacing ? t("Replace carrier") : t("Assign to carrier")}
         </Button>
       </DialogFooter>
     </Form>
