@@ -207,10 +207,7 @@ func (s *Service) UpdateTemplate(
 			return nil, errortypes.NewValidationError(
 				"status",
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"%d worker(s) are still on this shift — move or end their assignments first",
-					count,
-				),
+				"{0} worker(s) are still on this shift — move or end their assignments first", count,
 			)
 		}
 	}
@@ -320,8 +317,7 @@ func (s *Service) AssignShift(
 		return nil, errortypes.NewValidationError(
 			"cycleOffsetWeeks",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("This shift rotates over %d weeks, so the offset is 0 to %d",
-				template.CycleWeeks, template.CycleWeeks-1),
+			"This shift rotates over {0} weeks, so the offset is 0 to {1}", template.CycleWeeks, template.CycleWeeks-1,
 		)
 	}
 
@@ -610,7 +606,7 @@ func (s *Service) TransitionSwap(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("A %s swap cannot be %s", swap.Status, req.Status),
+			"A {0} swap cannot be {1}", swap.Status, req.Status,
 		)
 	}
 	if err = authoriseSwapActor(swap, req); err != nil {

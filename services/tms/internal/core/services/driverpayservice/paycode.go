@@ -133,7 +133,7 @@ func (s *Service) resolvePayCode(
 		return errortypes.NewValidationError(
 			"payCodeId",
 			errortypes.ErrInvalid,
-			"Pay code "+code.Code+" is a "+code.Direction.String()+" code and cannot be used here",
+			"Pay code {0} is a {1} code and cannot be used here", code.Code, code.Direction.String(),
 		)
 	}
 	return nil

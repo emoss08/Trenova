@@ -76,7 +76,7 @@ func (v *ValuesValidator) Validate(
 				multiErr.Add(
 					fmt.Sprintf("customFields.%s", def.ID.String()),
 					errortypes.ErrRequired,
-					fmt.Sprintf("%s is required", def.Label),
+					"{0} is required", def.Label,
 				)
 			}
 		}
@@ -88,7 +88,7 @@ func (v *ValuesValidator) Validate(
 			multiErr.Add(
 				"customFields",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown custom field ID: %s", fieldID),
+				"Unknown custom field ID: {0}", fieldID,
 			)
 			continue
 		}
@@ -108,7 +108,7 @@ func (v *ValuesValidator) validateValue(
 			multiErr.Add(
 				fieldPath,
 				errortypes.ErrRequired,
-				fmt.Sprintf("%s is required", def.Label),
+				"{0} is required", def.Label,
 			)
 		}
 		return
@@ -141,7 +141,7 @@ func (v *ValuesValidator) validateText(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be a string", def.Label),
+			"{0} must be a string", def.Label,
 		)
 		return
 	}
@@ -155,7 +155,7 @@ func (v *ValuesValidator) validateText(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be at least %d characters", def.Label, *rules.MinLength),
+			"{0} must be at least {1} characters", def.Label, *rules.MinLength,
 		)
 	}
 
@@ -163,7 +163,7 @@ func (v *ValuesValidator) validateText(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be at most %d characters", def.Label, *rules.MaxLength),
+			"{0} must be at most {1} characters", def.Label, *rules.MaxLength,
 		)
 	}
 
@@ -173,7 +173,7 @@ func (v *ValuesValidator) validateText(
 			multiErr.Add(
 				fieldPath,
 				errortypes.ErrInvalid,
-				fmt.Sprintf("%s does not match the required pattern", def.Label),
+				"{0} does not match the required pattern", def.Label,
 			)
 		}
 	}
@@ -197,7 +197,7 @@ func (v *ValuesValidator) validateNumber(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be a number", def.Label),
+			"{0} must be a number", def.Label,
 		)
 		return
 	}
@@ -211,7 +211,7 @@ func (v *ValuesValidator) validateNumber(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be at least %d", def.Label, *rules.Min),
+			"{0} must be at least {1}", def.Label, *rules.Min,
 		)
 	}
 
@@ -219,7 +219,7 @@ func (v *ValuesValidator) validateNumber(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be at most %d", def.Label, *rules.Max),
+			"{0} must be at most {1}", def.Label, *rules.Max,
 		)
 	}
 }
@@ -278,7 +278,7 @@ func (v *ValuesValidator) validateSelect(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be a string", def.Label),
+			"{0} must be a string", def.Label,
 		)
 		return
 	}
@@ -293,7 +293,7 @@ func (v *ValuesValidator) validateSelect(
 
 	if !valid {
 		multiErr.Add(fieldPath, errortypes.ErrInvalid,
-			fmt.Sprintf("%s is not a valid option for %s", str, def.Label))
+			"{0} is not a valid option for {1}", str, def.Label)
 	}
 }
 
@@ -308,7 +308,7 @@ func (v *ValuesValidator) validateMultiSelect(
 		multiErr.Add(
 			fieldPath,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s must be an array", def.Label),
+			"{0} must be an array", def.Label,
 		)
 		return
 	}
@@ -324,14 +324,14 @@ func (v *ValuesValidator) validateMultiSelect(
 			multiErr.Add(
 				fieldPath,
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Item %d must be a string", i),
+				"Item {0} must be a string", i,
 			)
 			continue
 		}
 
 		if !validOptions[str] {
 			multiErr.Add(fieldPath, errortypes.ErrInvalid,
-				fmt.Sprintf("%s is not a valid option for %s", str, def.Label))
+				"{0} is not a valid option for {1}", str, def.Label)
 		}
 	}
 }

@@ -61,8 +61,7 @@ func (s *Service) validateRates(
 			scoped.Add(
 				"fuelType",
 				errortypes.ErrDuplicate,
-				"This jurisdiction and fuel type already appears at row "+
-					strconv.Itoa(first+1)+"; each pair may be sent once per period",
+				"This jurisdiction and fuel type already appears at row {0}; each pair may be sent once per period", strconv.Itoa(first+1),
 			)
 		} else {
 			seen[key] = i

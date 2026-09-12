@@ -2,7 +2,6 @@ package shipmentmoveservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
@@ -160,11 +159,7 @@ func (s *service) UpdateStatus(
 
 		if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
 			return errortypes.NewBusinessError(
-				fmt.Sprintf(
-					"Move status transition from %s to %s is not allowed",
-					move.Status,
-					req.Status,
-				),
+				"Move status transition from {0} to {1} is not allowed", move.Status, req.Status,
 			).WithParam("moveId", req.MoveID.String())
 		}
 		if req.Status == shipment.MoveStatusInTransit {
@@ -253,11 +248,7 @@ func (s *service) BulkUpdateStatus(
 
 			if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
 				return errortypes.NewBusinessError(
-					fmt.Sprintf(
-						"Move status transition from %s to %s is not allowed",
-						move.Status,
-						req.Status,
-					),
+					"Move status transition from {0} to {1} is not allowed", move.Status, req.Status,
 				).WithParam("moveId", moveID.String())
 			}
 			if err = s.ensureEquipmentAvailableForProgressBulk(

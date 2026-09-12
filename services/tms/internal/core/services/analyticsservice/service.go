@@ -2,7 +2,6 @@ package analyticsservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,7 +42,7 @@ func (s *Service) GetAnalytics(
 	provider, exists := s.registry.GetProvider(opts.Page)
 	if !exists {
 		return nil, errortypes.NewValidationError("page", "invalid_page",
-			fmt.Sprintf("No analytics provider found for page: %s", opts.Page))
+			"No analytics provider found for page: {0}", opts.Page)
 	}
 
 	data, err := provider.GetAnalyticsData(ctx, opts)

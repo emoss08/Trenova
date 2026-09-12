@@ -29,7 +29,7 @@ func (d *Document) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"schemaVersion",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Schema version must be %d", DocumentSchemaVersion),
+			"Schema version must be {0}", DocumentSchemaVersion,
 		)
 	}
 
@@ -49,7 +49,7 @@ func (d *Document) validateSections(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				keyField,
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown sidebar section: %s", section.Key),
+				"Unknown sidebar section: {0}", section.Key,
 			)
 			continue
 		}
@@ -58,7 +58,7 @@ func (d *Document) validateSections(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				keyField,
 				errortypes.ErrDuplicate,
-				fmt.Sprintf("Duplicate sidebar section: %s", section.Key),
+				"Duplicate sidebar section: {0}", section.Key,
 			)
 			continue
 		}
@@ -68,7 +68,7 @@ func (d *Document) validateSections(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				fmt.Sprintf("sections[%d].hidden", idx),
 				errortypes.ErrInvalid,
-				fmt.Sprintf("The %s section cannot be hidden", definition.Label),
+				"The {0} section cannot be hidden", definition.Label,
 			)
 		}
 	}
@@ -83,7 +83,7 @@ func (d *Document) validateAttentionMetrics(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown attention metric: %s", key),
+				"Unknown attention metric: {0}", key,
 			)
 			continue
 		}
@@ -92,7 +92,7 @@ func (d *Document) validateAttentionMetrics(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				field,
 				errortypes.ErrDuplicate,
-				fmt.Sprintf("Duplicate attention metric: %s", key),
+				"Duplicate attention metric: {0}", key,
 			)
 			continue
 		}
@@ -105,7 +105,7 @@ func (d *Document) validateQuickActions(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"quickActionIds",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("At most %d quick actions can be selected", MaxQuickActions),
+			"At most {0} quick actions can be selected", MaxQuickActions,
 		)
 	}
 
@@ -117,7 +117,7 @@ func (d *Document) validateQuickActions(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown quick action: %s", id),
+				"Unknown quick action: {0}", id,
 			)
 			continue
 		}
@@ -126,7 +126,7 @@ func (d *Document) validateQuickActions(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				field,
 				errortypes.ErrDuplicate,
-				fmt.Sprintf("Duplicate quick action: %s", id),
+				"Duplicate quick action: {0}", id,
 			)
 			continue
 		}
@@ -139,7 +139,7 @@ func (d *Document) validateActivity(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"activity.pageSize",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Activity page size must be one of %v", ActivityPageSizes()),
+			"Activity page size must be one of {0}", ActivityPageSizes(),
 		)
 	}
 }

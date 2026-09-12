@@ -3,7 +3,6 @@ package assignmentservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
@@ -843,11 +842,7 @@ func (s *service) validateTrailerContinuity(
 	}
 
 	return errortypes.NewBusinessError(
-		fmt.Sprintf(
-			"Trailer %s is currently located at %s which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer",
-			trailerEntity.Code,
-			locationEntity.Name,
-		),
+		"Trailer {0} is currently located at {1} which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer", trailerEntity.Code, locationEntity.Name,
 	).
 		WithParam("trailerId", candidate.TrailerID.String()).
 		WithParam("trailerCode", trailerEntity.Code).

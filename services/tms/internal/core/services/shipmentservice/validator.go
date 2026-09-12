@@ -292,7 +292,7 @@ func createBOLValidationRule(
 				multiErr.Add(
 					"bol",
 					errortypes.ErrInvalid,
-					fmt.Sprintf("%s requires a BOL number for invoicing", customer.Code),
+					"{0} requires a BOL number for invoicing", customer.Code,
 				)
 			}
 

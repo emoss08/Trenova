@@ -344,7 +344,7 @@ func (s *Service) Commit(
 
 	if !batch.Status.CanCommit() {
 		return nil, errortypes.NewBusinessError(
-			"This import has already been " + strings.ToLower(batch.Status.String()),
+			"This import has already been {0}", strings.ToLower(batch.Status.String()),
 		)
 	}
 
@@ -446,7 +446,7 @@ func (s *Service) Discard(
 
 	if !batch.Status.CanCommit() {
 		return nil, errortypes.NewBusinessError(
-			"This import has already been " + strings.ToLower(batch.Status.String()),
+			"This import has already been {0}", strings.ToLower(batch.Status.String()),
 		)
 	}
 

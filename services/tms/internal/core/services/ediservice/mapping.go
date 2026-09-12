@@ -101,7 +101,7 @@ func unresolvedMappingsError(unresolved []edi.MappingResolution) error {
 		multiErr.Add(
 			string(item.EntityType),
 			errortypes.ErrRequired,
-			"Mapping is required for source ID "+item.SourceID.String(),
+			"Mapping is required for source ID {0}", item.SourceID.String(),
 		)
 	}
 	return multiErr

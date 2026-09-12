@@ -343,11 +343,7 @@ func (s *Service) BulkUpdateStatus(
 		return nil, errortypes.NewValidationError(
 			"templateIds",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Template %s is %s; only Active and Inactive templates can be bulk updated",
-				template.Name,
-				template.Status,
-			),
+			"Template {0} is {1}; only Active and Inactive templates can be bulk updated", template.Name, template.Status,
 		)
 	}
 

@@ -105,7 +105,7 @@ func (e *JurisdictionMileageEntry) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"shipmentMoveId",
 			errortypes.ErrRequired,
-			"A "+e.Source.Label()+" entry must reference the move it came from",
+			"A {0} entry must reference the move it came from", e.Source.Label(),
 		)
 	}
 }

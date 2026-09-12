@@ -2,7 +2,6 @@ package reporting
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -20,7 +19,7 @@ func (s *Service) GetCanned(key string) (*canned.Entry, error) {
 	entry, ok := s.canned.Get(key)
 	if !ok {
 		return nil, errortypes.NewNotFoundError(
-			fmt.Sprintf("Canned report %q not found", key),
+			"Canned report \"{0}\" not found", key,
 		)
 	}
 	return entry, nil

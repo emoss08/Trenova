@@ -220,12 +220,7 @@ func (s *Service) requireCourseRetirable(ctx context.Context, entity *worker.Tra
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"%d worker%s still %s this course assigned. Complete, waive or cancel those first",
-				count,
-				plural(count, "", "s"),
-				plural(count, "has", "have"),
-			),
+			"{0} worker{1} still {2} this course assigned. Complete, waive or cancel those first", count, plural(count, "", "s"), plural(count, "has", "have"),
 		)
 	}
 	return nil

@@ -276,7 +276,7 @@ func (s *Service) resolveJurisdiction(
 			return nil, errortypes.NewValidationError(
 				"jurisdictionId",
 				errortypes.ErrInvalid,
-				"\""+strings.TrimSpace(code)+"\" is not a recognised state or province",
+				"\"{0}\" is not a recognised state or province", strings.TrimSpace(code),
 			)
 		}
 		jurisdiction, err = s.jurisdictions.GetJurisdictionByCode(ctx, country, jurisdictionCode)
@@ -301,7 +301,7 @@ func (s *Service) resolveJurisdiction(
 		return nil, errortypes.NewValidationError(
 			"jurisdictionId",
 			errortypes.ErrInvalid,
-			jurisdiction.Label()+" is not an active jurisdiction",
+			"{0} is not an active jurisdiction", jurisdiction.Label(),
 		)
 	}
 

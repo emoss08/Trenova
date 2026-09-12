@@ -234,7 +234,7 @@ func (s *Service) RunDraw(
 		return nil, errortypes.NewValidationError(
 			"periodKey",
 			errortypes.ErrDuplicate,
-			"This pool has already been drawn for "+periodKey,
+			"This pool has already been drawn for {0}", periodKey,
 		)
 	}
 

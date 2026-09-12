@@ -184,11 +184,7 @@ func (c *Coordinator) resolveStopStatus(
 			multiErr.Add(
 				statusField,
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Stop status transition from %s to %s is not allowed",
-					current,
-					requested,
-				),
+				"Stop status transition from {0} to {1} is not allowed", current, requested,
 			)
 			return current
 		}
@@ -241,11 +237,7 @@ func (c *Coordinator) resolveMoveStatus(
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Move status transition from %s to %s is not allowed",
-					current,
-					requested,
-				),
+				"Move status transition from {0} to {1} is not allowed", current, requested,
 			)
 			return current
 		}
@@ -275,7 +267,7 @@ func (c *Coordinator) resolveMoveStatus(
 		multiErr.Add(
 			field,
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("Move status transition from %s to %s is not allowed", current, derived),
+			"Move status transition from {0} to {1} is not allowed", current, derived,
 		)
 		return current
 	}
@@ -296,11 +288,7 @@ func (c *Coordinator) resolveMoveStatus(
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Move status transition from %s to %s is not allowed",
-					current,
-					requested,
-				),
+				"Move status transition from {0} to {1} is not allowed", current, requested,
 			)
 			return current
 		}
@@ -348,11 +336,7 @@ func (c *Coordinator) resolveShipmentStatus(
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Shipment status transition from %s to %s is not allowed",
-					current,
-					requested,
-				),
+				"Shipment status transition from {0} to {1} is not allowed", current, requested,
 			)
 			return derived
 		}
@@ -364,7 +348,7 @@ func (c *Coordinator) resolveShipmentStatus(
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf("Shipment cannot transition to %s until it is completed", requested),
+				"Shipment cannot transition to {0} until it is completed", requested,
 			)
 			return derived
 		}
@@ -373,11 +357,7 @@ func (c *Coordinator) resolveShipmentStatus(
 			multiErr.Add(
 				"status",
 				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Shipment status transition from %s to %s is not allowed",
-					current,
-					requested,
-				),
+				"Shipment status transition from {0} to {1} is not allowed", current, requested,
 			)
 			return derived
 		}

@@ -2,7 +2,6 @@ package shipmentservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -37,10 +36,7 @@ func (s *service) checkDuplicateBOLsWithControl(
 	me.Add(
 		"bol",
 		errortypes.ErrInvalid,
-		fmt.Sprintf(
-			"BOL is already in use by shipment(s) with Pro Number(s): %s",
-			strings.Join(proNumbers, ", "),
-		),
+		"BOL is already in use by shipment(s) with Pro Number(s): {0}", strings.Join(proNumbers, ", "),
 	)
 
 	if me.HasErrors() {

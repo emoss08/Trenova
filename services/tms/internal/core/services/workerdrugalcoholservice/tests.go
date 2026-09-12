@@ -171,8 +171,7 @@ func (s *Service) RecordResult(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This test is already "+strings.ToLower(string(entity.Status))+
-				"; record a correction as a new test",
+			"This test is already {0}; record a correction as a new test", strings.ToLower(string(entity.Status)),
 		)
 	}
 
@@ -278,7 +277,7 @@ func (s *Service) CancelTest(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"A "+strings.ToLower(string(entity.Status))+" test cannot be cancelled",
+			"A {0} test cannot be cancelled", strings.ToLower(string(entity.Status)),
 		)
 	}
 

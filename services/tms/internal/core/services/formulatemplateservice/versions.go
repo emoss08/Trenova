@@ -414,7 +414,7 @@ func (s *Service) UpdateVersionTags(
 			return nil, errortypes.NewValidationError(
 				"tags",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Invalid tag: %s", tag),
+				"Invalid tag: {0}", tag,
 			)
 		}
 	}

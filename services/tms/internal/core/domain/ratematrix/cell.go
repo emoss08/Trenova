@@ -202,7 +202,7 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 				multiErr.Add(
 					keyFieldName(position),
 					errortypes.ErrRequired,
-					dimension.DisplayLabel()+" requires a value",
+					"{0} requires a value", dimension.DisplayLabel(),
 				)
 			}
 		case MatchModeRange:
@@ -210,7 +210,7 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 				multiErr.Add(
 					minFieldName(position),
 					errortypes.ErrRequired,
-					dimension.DisplayLabel()+" requires a range minimum",
+					"{0} requires a range minimum", dimension.DisplayLabel(),
 				)
 			}
 		}

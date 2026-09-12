@@ -376,7 +376,7 @@ func (r *repository) UpdateStatus(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("PTO cannot be moved to %s", req.Status),
+			"PTO cannot be moved to {0}", req.Status,
 		)
 	}
 
@@ -453,12 +453,7 @@ func (r *repository) explainStatusConflict(
 	return errortypes.NewValidationError(
 		"status",
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf(
-			"PTO is %s and can only be %s from %s",
-			strings.ToLower(string(current.Status)),
-			strings.ToLower(string(req.Status)),
-			strings.Join(labels, " or "),
-		),
+		"PTO is {0} and can only be {1} from {2}", strings.ToLower(string(current.Status)), strings.ToLower(string(req.Status)), strings.Join(labels, " or "),
 	)
 }
 

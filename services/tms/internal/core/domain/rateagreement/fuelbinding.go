@@ -85,7 +85,7 @@ func validateNonNegative(
 	label string,
 ) {
 	if value.Valid && value.Decimal.IsNegative() {
-		multiErr.Add(field, errortypes.ErrInvalid, label+" cannot be negative")
+		multiErr.Add(field, errortypes.ErrInvalid, "{0} cannot be negative", label)
 	}
 }
 

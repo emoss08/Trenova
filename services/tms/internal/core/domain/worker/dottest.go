@@ -290,7 +290,7 @@ func (t *WorkerDOTTest) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"reason",
 			errortypes.ErrRequired,
-			"A "+t.TestType.Label()+" test must record what prompted it",
+			"A {0} test must record what prompted it", t.TestType.Label(),
 		)
 	}
 

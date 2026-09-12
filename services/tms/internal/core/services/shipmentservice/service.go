@@ -898,7 +898,7 @@ func (s *service) validateExplicitOrder(
 		return errortypes.NewValidationError(
 			"orderId",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("New legs cannot be added to a %s order", ord.Status),
+			"New legs cannot be added to a {0} order", ord.Status,
 		)
 	}
 
@@ -944,7 +944,7 @@ func (s *service) syncOrderMembershipForUpdate(
 		return errortypes.NewValidationError(
 			"customerId",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("The customer of a leg of a %s order cannot be changed", ord.Status),
+			"The customer of a leg of a {0} order cannot be changed", ord.Status,
 		)
 	}
 

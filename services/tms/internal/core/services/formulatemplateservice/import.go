@@ -141,7 +141,7 @@ func normalizeImportRequest(req *ImportTemplatesRequest) ([]*ImportTemplatePaylo
 		multiErr.Add(
 			"exportVersion",
 			errortypes.ErrInvalid,
-			"Unsupported export version: "+req.ExportVersion,
+			"Unsupported export version: {0}", req.ExportVersion,
 		)
 	}
 
@@ -179,7 +179,7 @@ func normalizeImportRequest(req *ImportTemplatesRequest) ([]*ImportTemplatePaylo
 		multiErr.Add(
 			"templates",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Cannot import more than %d templates at once", importMaxTemplates),
+			"Cannot import more than {0} templates at once", importMaxTemplates,
 		)
 	}
 
@@ -345,10 +345,7 @@ func validateImportTestCases(indexed *errortypes.MultiError, testCases []*TestCa
 		indexed.Add(
 			"testCases",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Cannot import more than %d test scenarios per template",
-				importMaxTestCases,
-			),
+			"Cannot import more than {0} test scenarios per template", importMaxTestCases,
 		)
 		return
 	}

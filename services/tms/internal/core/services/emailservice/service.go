@@ -278,7 +278,7 @@ func (s *Service) Send(
 			return nil, err
 		}
 		if suppressed {
-			return nil, errortypes.NewBusinessError("recipient is suppressed: " + recipient)
+			return nil, errortypes.NewBusinessError("recipient is suppressed: {0}", recipient)
 		}
 	}
 

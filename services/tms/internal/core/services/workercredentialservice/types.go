@@ -275,12 +275,7 @@ func (s *Service) requireTypeRetirable(
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"%d worker%s still hold%s this credential. Archive those first",
-				count,
-				plural(count, "", "s"),
-				plural(count, "s", ""),
-			),
+			"{0} worker{1} still hold{2} this credential. Archive those first", count, plural(count, "", "s"), plural(count, "s", ""),
 		)
 	}
 	return nil

@@ -255,7 +255,7 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, errortypes.NewBusinessError(
-			fmt.Sprintf("NWS weather alerts request failed with status %d", resp.StatusCode),
+			"NWS weather alerts request failed with status {0}", resp.StatusCode,
 		)
 	}
 

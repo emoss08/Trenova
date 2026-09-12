@@ -854,10 +854,7 @@ func (s *Service) validateTemplateStatusTransition(
 	return errortypes.NewValidationError(
 		"status",
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf(
-			"Template cannot be marked %s without a certified or active template version",
-			req.Status,
-		),
+		"Template cannot be marked {0} without a certified or active template version", req.Status,
 	)
 }
 

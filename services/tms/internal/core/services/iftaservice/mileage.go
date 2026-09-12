@@ -69,7 +69,7 @@ func (s *Service) prepareMileageEntry(
 			multiErr.Add(
 				"jurisdictionId",
 				errortypes.ErrInvalid,
-				jurisdiction.Label()+" is inactive and cannot receive mileage",
+				"{0} is inactive and cannot receive mileage", jurisdiction.Label(),
 			)
 		}
 	}

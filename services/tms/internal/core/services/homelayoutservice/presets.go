@@ -2,7 +2,6 @@ package homelayoutservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
@@ -137,7 +136,7 @@ func (s *Service) validateRoleIDs(ctx context.Context, req *SavePresetRequest) e
 			return errortypes.NewValidationError(
 				"roleIds",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Role %s does not exist", roleID),
+				"Role {0} does not exist", roleID,
 			)
 		}
 	}

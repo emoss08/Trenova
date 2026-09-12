@@ -88,7 +88,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func requireActor(actor *serviceports.RequestActor, operation string) error {
 	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError(operation + " requires an authenticated user")
+		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
 	}
 	return nil
 }

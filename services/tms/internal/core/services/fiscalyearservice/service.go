@@ -895,7 +895,7 @@ func (s *Service) validateClose(
 
 	if entity.Status != fiscalyear.StatusOpen {
 		multiErr.Add("status", errortypes.ErrInvalid,
-			fmt.Sprintf("Only Open fiscal years can be closed. Current status: %s", entity.Status))
+			"Only Open fiscal years can be closed. Current status: {0}", entity.Status)
 		return multiErr
 	}
 
@@ -916,10 +916,7 @@ func (s *Service) validateClose(
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Cannot close fiscal year: %d period(s) are still open. Close all periods first.",
-				openCount,
-			),
+			"Cannot close fiscal year: {0} period(s) are still open. Close all periods first.", openCount,
 		)
 	}
 
@@ -940,10 +937,7 @@ func (s *Service) validateReopen(
 
 	if entity.Status != fiscalyear.StatusClosed {
 		multiErr.Add("status", errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Only Closed fiscal years can be reopened. Current status: %s",
-				entity.Status,
-			))
+			"Only Closed fiscal years can be reopened. Current status: {0}", entity.Status)
 	}
 
 	if strings.TrimSpace(reason) == "" {

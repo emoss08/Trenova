@@ -125,8 +125,7 @@ func (h *Handler) previewPDF(c *gin.Context) {
 
 	if len(result.PDF) == 0 {
 		h.eh.HandleError(c, errortypes.NewBusinessError(
-			"This template produced no printable output. "+
-				result.Diagnostics.Summary(),
+			"This template produced no printable output. {0}", result.Diagnostics.Summary(),
 		))
 		return
 	}

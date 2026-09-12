@@ -660,14 +660,13 @@ func enforceEligibility(entity *carrier.Carrier, overrideWarnings bool) error {
 
 	if result.IsBlocked() {
 		return errortypes.NewBusinessError(
-			"Carrier is not eligible for assignment: "+strings.Join(result.Blockers, "; "),
+			"Carrier is not eligible for assignment: {0}", strings.Join(result.Blockers, "; "),
 		).WithParam("carrierId", entity.ID.String())
 	}
 
 	if result.HasWarnings() && !overrideWarnings {
 		return errortypes.NewBusinessError(
-			"Carrier has insurance warnings: "+strings.Join(result.Warnings, "; ")+
-				". Confirm the override to proceed",
+			"Carrier has insurance warnings: {0}. Confirm the override to proceed", strings.Join(result.Warnings, "; "),
 		).WithParam("carrierId", entity.ID.String()).
 			WithParam("overridable", "true")
 	}

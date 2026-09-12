@@ -211,10 +211,7 @@ func (s *Service) Update(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"PTO is %s and can no longer be edited",
-				strings.ToLower(string(current.Status)),
-			),
+			"PTO is {0} and can no longer be edited", strings.ToLower(string(current.Status)),
 		)
 	}
 
@@ -444,11 +441,7 @@ func (s *Service) transition(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"PTO is %s and cannot be %s",
-				strings.ToLower(string(current.Status)),
-				strings.ToLower(string(params.target)),
-			),
+			"PTO is {0} and cannot be {1}", strings.ToLower(string(current.Status)), strings.ToLower(string(params.target)),
 		)
 	}
 
@@ -860,7 +853,7 @@ func (s *Service) prepareLedgerFields(
 		return nil, errortypes.NewValidationError(
 			"startDate",
 			errortypes.ErrInvalid,
-			"These dates fall on a blackout: "+blocked[0].Name,
+			"These dates fall on a blackout: {0}", blocked[0].Name,
 		)
 	}
 	entity.Days = worker.ComputePTODays(entity.StartDate, entity.EndDate, loc, countWeekends, holidays)

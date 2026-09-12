@@ -151,7 +151,7 @@ func (s *Service) Stage(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This import is "+strings.ToLower(batch.Status.Label())+" and cannot be staged again",
+			"This import is {0} and cannot be staged again", strings.ToLower(batch.Status.Label()),
 		)
 	}
 	if req.DocumentID.IsNil() {
@@ -754,7 +754,7 @@ func (s *Service) Commit(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This import is "+strings.ToLower(batch.Status.Label())+" and cannot be committed",
+			"This import is {0} and cannot be committed", strings.ToLower(batch.Status.Label()),
 		)
 	}
 
@@ -861,7 +861,7 @@ func (s *Service) Discard(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
-			"This import is "+strings.ToLower(batch.Status.Label())+" and cannot be discarded",
+			"This import is {0} and cannot be discarded", strings.ToLower(batch.Status.Label()),
 		)
 	}
 

@@ -319,7 +319,7 @@ func (r *PerformanceReview) ValidateForSubmit(multiErr *errortypes.MultiError) {
 			multiErr.Add(
 				"ratings["+strconv.Itoa(i)+"].score",
 				errortypes.ErrRequired,
-				"Rate "+rating.Label,
+				"Rate {0}", rating.Label,
 			)
 		}
 	}

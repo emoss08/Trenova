@@ -81,6 +81,12 @@ func isErrortypesConstructor(name string) bool {
 	return strings.HasPrefix(name, "New") && strings.HasSuffix(name, "Error")
 }
 
+type site struct {
+	Callee string
+	Where  string
+	Expr   string
+}
+
 type entry struct {
 	Message string `json:"message"`
 	File    string `json:"file"`
@@ -93,6 +99,7 @@ type extractor struct {
 	fset     *token.FileSet
 	entries  []entry
 	unknown  map[string][]string
+	dynamic  []site
 }
 
 func (e *extractor) walkDir(root string) error {
@@ -172,6 +179,13 @@ func (e *extractor) parseFile(path string) error {
 
 		msg, ok := stringLiteral(call.Args[idx])
 		if !ok {
+			if constructsProse(call.Args[idx]) {
+				e.dynamic = append(e.dynamic, site{
+					Callee: name,
+					Where:  fmt.Sprintf("%s:%d", rel, e.fset.Position(call.Pos()).Line),
+					Expr:   exprText(call.Args[idx]),
+				})
+			}
 			return true
 		}
 		if strings.TrimSpace(msg) == "" {
@@ -209,10 +223,6 @@ func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
 	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
 		return
 	}
-	// dbdialect describes database capabilities to whoever runs the dialect converter
-	// ("advisory locks", "trigram similarity search"). That is developer tooling, and
-	// translating it would put nonsense in front of a translator and nothing in front
-	// of a user.
 	if strings.Contains(rel, "pkg/dbdialect") {
 		return
 	}
@@ -309,11 +319,51 @@ func stringLiteral(expr ast.Expr) (string, bool) {
 	}
 }
 
+func constructsProse(expr ast.Expr) bool {
+	switch v := expr.(type) {
+	case *ast.CallExpr:
+		if calleeName(v.Fun) != "Sprintf" {
+			return false
+		}
+		format, ok := stringLiteral(v.Args[0])
+		return ok && strings.ContainsAny(format, "abcdefghijklmnopqrstuvwxyz")
+	case *ast.BinaryExpr:
+		if v.Op != token.ADD {
+			return false
+		}
+		_, leftLiteral := stringLiteral(v.X)
+		_, rightLiteral := stringLiteral(v.Y)
+		return leftLiteral != rightLiteral
+	default:
+		return false
+	}
+}
+
+func exprText(expr ast.Expr) string {
+	switch v := expr.(type) {
+	case *ast.CallExpr:
+		return calleeName(v.Fun) + "(...)"
+	case *ast.Ident:
+		return v.Name
+	case *ast.SelectorExpr:
+		return exprText(v.X) + "." + v.Sel.Name
+	case *ast.BinaryExpr:
+		return exprText(v.X) + " " + v.Op.String() + " " + exprText(v.Y)
+	case *ast.BasicLit:
+		return v.Value
+	default:
+		return fmt.Sprintf("%T", expr)
+	}
+}
+
 func main() {
 	var repoRoot string
 	var outPath string
 	flag.StringVar(&repoRoot, "root", ".", "repository root")
 	flag.StringVar(&outPath, "out", "", "output JSON path (default stdout)")
+	var reportDynamic bool
+	flag.BoolVar(&reportDynamic, "dynamic", false,
+		"report message arguments that are not string literals instead of writing entries")
 	flag.Parse()
 
 	absRoot, err := filepath.Abs(repoRoot)
@@ -337,6 +387,15 @@ func main() {
 			fmt.Fprintf(os.Stderr, "i18n-extract: %v\n", walkErr)
 			os.Exit(1)
 		}
+	}
+
+	if reportDynamic {
+		sort.Slice(e.dynamic, func(i, j int) bool { return e.dynamic[i].Where < e.dynamic[j].Where })
+		for _, d := range e.dynamic {
+			fmt.Printf("%s\t%s\t%s\n", d.Where, d.Callee, d.Expr)
+		}
+		fmt.Fprintf(os.Stderr, "i18n-extract: %d dynamic message arguments\n", len(e.dynamic))
+		return
 	}
 
 	if len(e.unknown) > 0 {

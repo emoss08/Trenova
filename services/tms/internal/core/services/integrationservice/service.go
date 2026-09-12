@@ -337,7 +337,7 @@ func (s *Service) TestConnection(
 			return nil, errortypes.NewBusinessError(err.Error()).WithInternal(err)
 		}
 		return nil, errortypes.NewBusinessError(
-			"failed to connect to " + string(typ),
+			"failed to connect to {0}", string(typ),
 		).WithInternal(err)
 	}
 
@@ -402,7 +402,7 @@ func (s *Service) GetClientRuntimeConfig(
 	allowedFields, ok := clientRuntimeConfigFields[typ]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
-			string(typ) + " runtime configuration is not available to clients",
+			"{0} runtime configuration is not available to clients", string(typ),
 		)
 	}
 
@@ -424,7 +424,7 @@ func (s *Service) GetClientRuntimeConfig(
 		}
 
 		return nil, errortypes.NewBusinessError(
-			"failed to retrieve " + string(typ) + " configuration",
+			"failed to retrieve {0} configuration", string(typ),
 		).WithInternal(err)
 	}
 
@@ -438,7 +438,7 @@ func (s *Service) GetClientRuntimeConfig(
 			value, err := s.readRuntimeConfigField(record.Configuration, fieldsByKey[key])
 			if err != nil {
 				return nil, errortypes.NewBusinessError(
-					"failed to decrypt " + string(typ) + " configuration",
+					"failed to decrypt {0} configuration", string(typ),
 				).WithInternal(err)
 			}
 			if value != "" {
@@ -470,16 +470,16 @@ func (s *Service) getRuntimeConfig(
 	record, err := s.repo.GetByType(ctx, tenantInfo, typ)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewBusinessError(string(typ) + " integration is not configured")
+			return nil, errortypes.NewBusinessError("{0} integration is not configured", string(typ))
 		}
 
 		return nil, errortypes.NewBusinessError(
-			"failed to retrieve " + string(typ) + " configuration",
+			"failed to retrieve {0} configuration", string(typ),
 		).WithInternal(err)
 	}
 
 	if requireEnabled && !record.Enabled {
-		return nil, errortypes.NewBusinessError(string(typ) + " integration is disabled")
+		return nil, errortypes.NewBusinessError("{0} integration is disabled", string(typ))
 	}
 
 	cfg := make(map[string]string, len(spec.Fields))
@@ -487,7 +487,7 @@ func (s *Service) getRuntimeConfig(
 		val, readErr := s.readRuntimeConfigField(record.Configuration, &field)
 		if readErr != nil {
 			return nil, errortypes.NewBusinessError(
-				"failed to decrypt " + string(typ) + " configuration",
+				"failed to decrypt {0} configuration", string(typ),
 			).WithInternal(readErr)
 		}
 		cfg[field.Key] = val
@@ -497,7 +497,7 @@ func (s *Service) getRuntimeConfig(
 	for _, field := range spec.Fields {
 		if field.Required && cfg[field.Key] == "" {
 			return nil, errortypes.NewBusinessError(
-				string(typ) + " integration " + field.Label + " is missing",
+				"{0} integration {1} is missing", string(typ), field.Label,
 			)
 		}
 	}
@@ -651,7 +651,7 @@ func validateRequiredFields(
 		val := integration.ReadConfigString(config, field.Key)
 		if val == "" {
 			return errortypes.NewBusinessError(
-				field.Label + " is required when integration is enabled",
+				"{0} is required when integration is enabled", field.Label,
 			)
 		}
 	}

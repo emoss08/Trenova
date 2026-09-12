@@ -74,8 +74,8 @@ func rateCoverageAdvisory(entity *shipment.Shipment) *errortypes.AdvisoryError {
 		return errortypes.NewAdvisory(
 			"freightChargeAmount",
 			errortypes.ErrInvalidOperation,
-			"The rate could not be calculated: "+entity.RatingDetail.Explanation,
-			errortypes.SeverityRequireReview,
+			"The rate could not be calculated: {0}",
+			errortypes.SeverityRequireReview, entity.RatingDetail.Explanation,
 		).WithRuleKey(rateCoverageRuleKey)
 
 	default:

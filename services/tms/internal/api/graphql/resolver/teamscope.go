@@ -2,7 +2,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -48,11 +47,7 @@ func (r *Resolver) requireTeamScope(
 	}
 	if !result.Allowed {
 		return nil, pulid.Nil, errortypes.NewAuthorizationError(
-			fmt.Sprintf(
-				"You don't have permission to perform this action: %s %s",
-				resource,
-				operation,
-			),
+			"You don't have permission to perform this action: {0} {1}", resource, operation,
 		)
 	}
 

@@ -186,7 +186,7 @@ func (s *Service) validateTileTargets(
 		if tile.CannedKey != "" {
 			if _, ok := s.canned.Get(tile.CannedKey); !ok {
 				multiErr.Add(fieldPath+".cannedKey", errortypes.ErrInvalid,
-					fmt.Sprintf("Unknown canned report %q", tile.CannedKey))
+					"Unknown canned report \"{0}\"", tile.CannedKey)
 			}
 			continue
 		}
@@ -223,7 +223,7 @@ func validateDashboardFilters(
 		entity, ok := reportcatalog.Default.Entity(filter.Entity)
 		if !ok {
 			multiErr.Add(fieldPath+".entity", errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown entity %q", filter.Entity))
+				"Unknown entity \"{0}\"", filter.Entity)
 			continue
 		}
 
@@ -241,12 +241,12 @@ func validateDashboardFilters(
 		field, ok := path.Terminal(entity).Field(filter.Ref.Field)
 		if !ok {
 			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
-				fmt.Sprintf("Unknown field %q", filter.Ref.String()))
+				"Unknown field \"{0}\"", filter.Ref.String())
 			continue
 		}
 		if !field.Filterable {
 			multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
-				fmt.Sprintf("Field %q is not filterable", field.Label))
+				"Field \"{0}\" is not filterable", field.Label)
 		}
 	}
 }

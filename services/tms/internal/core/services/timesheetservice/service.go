@@ -11,7 +11,6 @@ package timesheetservice
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -241,7 +240,7 @@ func (s *Service) ClockIn(
 		return nil, errortypes.NewValidationError(
 			"clockedInAt",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("That week has already been %s", sheet.Status),
+			"That week has already been {0}", sheet.Status,
 		)
 	}
 
@@ -419,7 +418,7 @@ func (s *Service) RecordEntry(
 		return nil, errortypes.NewValidationError(
 			"clockedInAt",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("That week has already been %s", sheet.Status),
+			"That week has already been {0}", sheet.Status,
 		)
 	}
 
@@ -549,7 +548,7 @@ func (s *Service) requireEditableSheet(
 		return errortypes.NewValidationError(
 			"id",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("That week has already been %s", sheet.Status),
+			"That week has already been {0}", sheet.Status,
 		)
 	}
 	return nil

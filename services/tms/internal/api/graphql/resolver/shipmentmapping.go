@@ -1178,7 +1178,7 @@ func int16FromInput(field string, value int) (int16, error) {
 		return 0, errortypes.NewValidationError(
 			field,
 			errortypes.ErrInvalid,
-			fmt.Sprintf("%s is outside the allowed range", field),
+			"{0} is outside the allowed range", field,
 		)
 	}
 	return int16(value), nil

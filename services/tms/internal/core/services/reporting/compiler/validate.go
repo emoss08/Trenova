@@ -71,11 +71,7 @@ func (c *Compiler) validateEnvelope(
 		multiErr.Add(
 			"definition.irVersion",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Unsupported IR version %d (expected %d)",
-				def.IRVersion,
-				report.CurrentIRVersion,
-			),
+			"Unsupported IR version {0} (expected {1})", def.IRVersion, report.CurrentIRVersion,
 		)
 		return nil, false
 	}
@@ -85,7 +81,7 @@ func (c *Compiler) validateEnvelope(
 		multiErr.Add(
 			"definition.entity",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown entity %q", def.Entity),
+			"Unknown entity \"{0}\"", def.Entity,
 		)
 		return nil, false
 	}
@@ -156,7 +152,7 @@ func (c *Compiler) validate(
 	}
 	if def.Limit > c.limits.maxLimit {
 		multiErr.Add("definition.limit", errortypes.ErrInvalid,
-			fmt.Sprintf("Limit exceeds the maximum of %d rows", c.limits.maxLimit))
+			"Limit exceeds the maximum of {0} rows", c.limits.maxLimit)
 	}
 	// The dimension cap protects GROUP BY width; plain list reports (no
 	// measures, no grouping) are only bounded by a looser column backstop.
@@ -166,7 +162,7 @@ func (c *Compiler) validate(
 	}
 	if dimensionCount > dimensionLimit {
 		multiErr.Add("definition.columns", errortypes.ErrInvalid,
-			fmt.Sprintf("Too many dimensions (%d > %d)", dimensionCount, dimensionLimit))
+			"Too many dimensions ({0} > {1})", dimensionCount, dimensionLimit)
 	}
 
 	if multiErr.HasErrors() {
@@ -352,7 +348,7 @@ func validateComputedShape(
 	}
 	if comp.Format != "" && !comp.Format.IsValid() {
 		multiErr.Add(fieldPath+".computed.format", errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown format hint %q", comp.Format))
+			"Unknown format hint \"{0}\"", comp.Format)
 		return false
 	}
 	return validateComputedOperandShape(multiErr, col, fieldPath)
@@ -430,13 +426,11 @@ func validateComputedOperands(v *validatedDef, multiErr *errortypes.MultiError) 
 			}
 			target := v.columnByID(operand.ColumnID)
 			if target == nil {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
-					"Computed operand %q does not reference a valid column", operand.ColumnID))
+				multiErr.Add(fieldPath, errortypes.ErrInvalid, "Computed operand \"{0}\" does not reference a valid column", operand.ColumnID)
 				continue
 			}
 			if target.spec.Kind != report.ColumnKindMeasure {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
-					"Computed operand %q must be a measure column", operand.ColumnID))
+				multiErr.Add(fieldPath, errortypes.ErrInvalid, "Computed operand \"{0}\" must be a measure column", operand.ColumnID)
 			}
 		}
 	}
@@ -479,19 +473,14 @@ func (c *Compiler) validateDimensionColumn(
 	hasMeasures bool,
 ) bool {
 	if ref.toMany {
-		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, fmt.Sprintf(
-			"Dimension %q crosses a to-many relationship; only measures may aggregate across to-many paths",
-			col.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, "Dimension \"{0}\" crosses a to-many relationship; only measures may aggregate across to-many paths", col.Ref.String())
 		return false
 	}
 	// Groupable marks a field as a sensible grouping key on its own. A band
 	// makes any numeric field one — a charge amount has far too many distinct
 	// values to group by, but its distribution across ranges is the point.
 	if !ref.field.Groupable && hasMeasures && col.Band.IsEmpty() {
-		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, fmt.Sprintf(
-			"Field %q cannot be used as a grouping dimension", col.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid, "Field \"{0}\" cannot be used as a grouping dimension", col.Ref.String())
 		return false
 	}
 	if col.Agg != "" {
@@ -543,16 +532,11 @@ func validateBand(
 		return false
 	}
 	if !bandableType(ref.field.Type) {
-		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, fmt.Sprintf(
-			"Ranges are only valid on numeric fields; %q is not one", col.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, "Ranges are only valid on numeric fields; \"{0}\" is not one", col.Ref.String())
 		return false
 	}
 	if ref.field.Type == reportcatalog.FieldInt && !col.Band.IsWhole() {
-		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, fmt.Sprintf(
-			"%q holds whole numbers, so its range boundaries must be whole numbers too",
-			col.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".band", errortypes.ErrInvalid, "\"{0}\" holds whole numbers, so its range boundaries must be whole numbers too", col.Ref.String())
 		return false
 	}
 	if col.Transform != nil && col.Transform.Op != report.TransformNone {
@@ -578,9 +562,7 @@ func (c *Compiler) validateMeasureColumn(
 		return false
 	}
 	if !ref.field.SupportsAggregation(col.Agg) {
-		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, fmt.Sprintf(
-			"Aggregation %q is not legal for field %q", col.Agg, col.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, "Aggregation \"{0}\" is not legal for field \"{1}\"", col.Agg, col.Ref.String())
 		return false
 	}
 	if ref.toMany && col.Agg == reportcatalog.AggCountDistinct {
@@ -702,7 +684,7 @@ func (c *Compiler) validateFilter(
 	if filter.Param != "" {
 		if _, ok := v.def.Parameter(filter.Param); !ok {
 			multiErr.Add(fieldPath+".param", errortypes.ErrInvalid,
-				fmt.Sprintf("Undeclared parameter %q", filter.Param))
+				"Undeclared parameter \"{0}\"", filter.Param)
 		}
 		return
 	}
@@ -733,9 +715,7 @@ func (c *Compiler) validateHavingFilter(
 		return false
 	}
 	if !ref.field.SupportsAggregation(filter.Agg) {
-		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, fmt.Sprintf(
-			"Aggregation %q is not legal for field %q", filter.Agg, filter.Ref.String(),
-		))
+		multiErr.Add(fieldPath+".agg", errortypes.ErrInvalid, "Aggregation \"{0}\" is not legal for field \"{1}\"", filter.Agg, filter.Ref.String())
 		return false
 	}
 	if ref.toMany && filter.Agg == reportcatalog.AggCountDistinct {
@@ -773,13 +753,11 @@ func (c *Compiler) validateRowFilter(
 	}
 	if !ref.field.Filterable {
 		multiErr.Add(fieldPath+".ref", errortypes.ErrInvalid,
-			fmt.Sprintf("Field %q is not filterable", filter.Ref.String()))
+			"Field \"{0}\" is not filterable", filter.Ref.String())
 		return false
 	}
 	if !operatorLegalForType(filter.Operator, ref.field.Type) {
-		multiErr.Add(fieldPath+".operator", errortypes.ErrInvalid, fmt.Sprintf(
-			"Operator %q is not valid for %s fields", filter.Operator, ref.field.Type,
-		))
+		multiErr.Add(fieldPath+".operator", errortypes.ErrInvalid, "Operator \"{0}\" is not valid for {1} fields", filter.Operator, ref.field.Type)
 		return false
 	}
 	return true
@@ -825,12 +803,7 @@ func validateMeasureFilterScope(
 		if reportcatalog.PathKey(filter.Ref.Path) == col.ref.pathKey {
 			return nil
 		}
-		multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf(
-			"A filter on %q can only use fields of %s, the records this measure aggregates; move %q to the report filters",
-			col.spec.ID,
-			col.ref.entity.PluralLabel,
-			filter.Ref.String(),
-		))
+		multiErr.Add(fieldPath, errortypes.ErrInvalid, "A filter on \"{0}\" can only use fields of {1}, the records this measure aggregates; move \"{2}\" to the report filters", col.spec.ID, col.ref.entity.PluralLabel, filter.Ref.String())
 		return nil
 	})
 }
@@ -849,25 +822,17 @@ func (c *Compiler) validateSort(v *validatedDef, multiErr *errortypes.MultiError
 		baseID, pivotValue, isPivotCell := strings.Cut(sortSpec.ColumnID, pivotIDSeparator)
 		if _, ok := v.def.ColumnByID(baseID); !ok {
 			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid,
-				fmt.Sprintf("Sort references unknown column %q", sortSpec.ColumnID))
+				"Sort references unknown column \"{0}\"", sortSpec.ColumnID)
 			continue
 		}
 
 		switch {
 		case isPivotCell && !pivoted[baseID]:
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
-				"Sort references pivot column %q, but %q is not spread across the pivot",
-				sortSpec.ColumnID, baseID,
-			))
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "Sort references pivot column \"{0}\", but \"{1}\" is not spread across the pivot", sortSpec.ColumnID, baseID)
 		case isPivotCell && !pivotValueExists(v.def.Pivot, pivotValue):
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
-				"Sort references pivot value %q, which this report does not produce",
-				pivotValue,
-			))
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "Sort references pivot value \"{0}\", which this report does not produce", pivotValue)
 		case !isPivotCell && pivoted[baseID]:
-			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, fmt.Sprintf(
-				"%q is spread across pivot columns; sort by one of them instead", baseID,
-			))
+			multiErr.Add(fieldPath+".columnId", errortypes.ErrInvalid, "\"{0}\" is spread across pivot columns; sort by one of them instead", baseID)
 		}
 	}
 }
@@ -936,8 +901,7 @@ func (c *Compiler) validatePivot(
 	}
 	if pivotColumns > c.limits.maxPivotColumns {
 		multiErr.Add("definition.pivot.values", errortypes.ErrInvalid,
-			fmt.Sprintf("Pivot produces %d columns, exceeding the maximum of %d",
-				pivotColumns, c.limits.maxPivotColumns))
+			"Pivot produces {0} columns, exceeding the maximum of {1}", pivotColumns, c.limits.maxPivotColumns)
 		return
 	}
 
@@ -953,7 +917,7 @@ func (c *Compiler) validatePivot(
 	}
 	if !ref.field.Groupable {
 		multiErr.Add("definition.pivot.ref", errortypes.ErrInvalid,
-			fmt.Sprintf("Field %q cannot be pivoted", pivot.Ref.String()))
+			"Field \"{0}\" cannot be pivoted", pivot.Ref.String())
 		return
 	}
 
@@ -964,7 +928,7 @@ func (c *Compiler) validatePivot(
 			multiErr.Add(
 				fmt.Sprintf("definition.pivot.measureIds[%d]", i),
 				errortypes.ErrInvalid,
-				fmt.Sprintf("Pivot measure %q does not reference a measure column", id),
+				"Pivot measure \"{0}\" does not reference a measure column", id,
 			)
 		}
 	}

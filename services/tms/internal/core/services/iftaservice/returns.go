@@ -324,8 +324,7 @@ func (s *Service) newDraft(
 	}
 	if open != nil {
 		return nil, errortypes.NewConflictError(
-			"A " + strings.ToLower(open.Status.Label()) + " return already exists for " +
-				period.Label() + "; recompute or reopen it instead of generating another",
+			"A {0} return already exists for {1}; recompute or reopen it instead of generating another", strings.ToLower(open.Status.Label()), period.Label(),
 		)
 	}
 
@@ -399,7 +398,7 @@ func (s *Service) Generate(
 	}
 	if latest != nil && latest.Status == ifta.ReturnStatusFiled {
 		return nil, errortypes.NewConflictError(
-			"The " + req.Period.Label() + " return has been filed; amend it instead of generating a new one",
+			"The {0} return has been filed; amend it instead of generating a new one", req.Period.Label(),
 		)
 	}
 

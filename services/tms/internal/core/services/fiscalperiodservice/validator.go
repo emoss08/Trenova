@@ -2,7 +2,6 @@ package fiscalperiodservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -129,10 +128,7 @@ func (v *Validator) ValidateClose(
 	multiErr.Add(
 		"reconciliation",
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf(
-			"Cannot close fiscal period while %d posted invoice reconciliation discrepancies remain unresolved",
-			count,
-		),
+		"Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved", count,
 	)
 	return multiErr
 }
@@ -166,10 +162,7 @@ func (v *Validator) validateAccountingCloseBlockers(
 		multiErr.Add(
 			"accounting",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"Cannot close fiscal period while %d manual journal requests are pending posting or approval",
-				pendingManualCount,
-			),
+			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval", pendingManualCount,
 		)
 	}
 
@@ -197,10 +190,7 @@ func (v *Validator) validateAccountingCloseBlockers(
 		multiErr.Add(
 			"accounting",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"Cannot close fiscal period while %d accounting sources remain unposted",
-				pendingSourceCount,
-			),
+			"Cannot close fiscal period while {0} accounting sources remain unposted", pendingSourceCount,
 		)
 	}
 }

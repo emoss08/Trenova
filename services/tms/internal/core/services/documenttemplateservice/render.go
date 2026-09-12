@@ -22,15 +22,11 @@ func (s *Service) RenderDocument(
 ) (*services.RenderedDocument, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q is not registered", req.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
 	}
 
 	if !def.HasChannel(documenttemplate.ChannelPDF) {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q does not produce a document", req.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" does not produce a document", req.Kind)
 	}
 
 	resolved, err := s.Resolve(ctx, &services.ResolveTemplateRequest{
@@ -223,9 +219,7 @@ func (s *Service) RenderMessage(
 ) (*services.RenderedMessage, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q is not registered", req.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
 	}
 
 	resolved, err := s.Resolve(ctx, &services.ResolveTemplateRequest{
@@ -353,9 +347,7 @@ func (s *Service) PreviewVersion(
 
 	def, ok := s.registry.Get(resolved.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q is not registered", resolved.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", resolved.Kind)
 	}
 
 	data := req.Data

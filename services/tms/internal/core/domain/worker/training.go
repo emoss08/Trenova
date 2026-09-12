@@ -313,7 +313,7 @@ func (c *TrainingCourse) Grade(score decimal.NullDecimal) (bool, error) {
 		return false, errortypes.NewValidationError(
 			"score",
 			errortypes.ErrRequired,
-			c.Name+" is scored; enter the result",
+			"{0} is scored; enter the result", c.Name,
 		)
 	}
 	return score.Decimal.GreaterThanOrEqual(c.PassingScore.Decimal), nil

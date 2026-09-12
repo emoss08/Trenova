@@ -197,7 +197,7 @@ func (s *Service) deliverByEmail(
 	})
 	if err != nil {
 		return errortypes.NewBusinessError(
-			"The tender offer email could not be rendered: " + err.Error(),
+			"The tender offer email could not be rendered: {0}", err.Error(),
 		)
 	}
 

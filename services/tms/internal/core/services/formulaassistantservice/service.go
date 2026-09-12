@@ -342,7 +342,7 @@ func validateGenerateRequest(req *GenerateFormulaRequest) error {
 		multiErr.Add(
 			"instruction",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Instruction cannot exceed %d characters", maxInstructionLength),
+			"Instruction cannot exceed {0} characters", maxInstructionLength,
 		)
 	}
 
@@ -363,7 +363,7 @@ func validateExplainRequest(req *ExplainFormulaRequest) error {
 		multiErr.Add(
 			"expression",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("Expression cannot exceed %d characters", maxExpressionLength),
+			"Expression cannot exceed {0} characters", maxExpressionLength,
 		)
 	}
 

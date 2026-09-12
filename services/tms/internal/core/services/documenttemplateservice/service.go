@@ -97,9 +97,7 @@ func (s *Service) Resolve(
 ) (*services.ResolvedTemplate, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
-		return nil, errortypes.NewBusinessError(fmt.Sprintf(
-			"Template kind %q is not registered", req.Kind,
-		))
+		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
 	}
 
 	// A customer only participates when the kind says a per-customer override

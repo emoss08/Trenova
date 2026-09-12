@@ -196,11 +196,7 @@ func (s *service) applyDerivedMoveStatus(
 
 	if !shipmentstate.CanTransitionMoveStatus(previousStatus, targetStatus) {
 		return nil, errortypes.NewBusinessError(
-			fmt.Sprintf(
-				"Move status transition from %s to %s is not allowed",
-				previousStatus,
-				targetStatus,
-			),
+			"Move status transition from {0} to {1} is not allowed", previousStatus, targetStatus,
 		).WithParam("moveId", req.MoveID.String())
 	}
 

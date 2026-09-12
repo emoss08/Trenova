@@ -55,7 +55,7 @@ func (r *repository) filterQuery(
 			return q.Err(errortypes.NewValidationError(
 				"type",
 				errortypes.ErrInvalid,
-				"Unknown template type: "+req.Type,
+				"Unknown template type: {0}", req.Type,
 			))
 		}
 
@@ -69,7 +69,7 @@ func (r *repository) filterQuery(
 			return q.Err(errortypes.NewValidationError(
 				"status",
 				errortypes.ErrInvalid,
-				"Unknown template status: "+req.Status,
+				"Unknown template status: {0}", req.Status,
 			))
 		}
 
@@ -595,7 +595,7 @@ func duplicateTemplateName(name string) error {
 	return errortypes.NewValidationError(
 		"name",
 		errortypes.ErrDuplicate,
-		fmt.Sprintf("A formula template named %q already exists", name),
+		"A formula template named \"{0}\" already exists", name,
 	)
 }
 

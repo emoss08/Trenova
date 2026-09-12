@@ -2,7 +2,6 @@ package reporting
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -104,7 +103,7 @@ func (s *Service) tileDefinition(
 		entry, ok := s.canned.Get(tile.CannedKey)
 		if !ok {
 			return nil, "", errortypes.NewNotFoundError(
-				fmt.Sprintf("Unknown canned report %q", tile.CannedKey),
+				"Unknown canned report \"{0}\"", tile.CannedKey,
 			)
 		}
 		return entry.Definition, entry.Name, nil

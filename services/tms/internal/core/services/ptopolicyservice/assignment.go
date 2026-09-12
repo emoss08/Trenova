@@ -121,7 +121,7 @@ func (s *Service) AssignWorkers(
 			return nil, errortypes.NewValidationError(
 				"openingBalances",
 				errortypes.ErrInvalid,
-				fmt.Sprintf("%s is not tracked by this policy", ob.PTOType),
+				"{0} is not tracked by this policy", ob.PTOType,
 			)
 		}
 		if ob.Days.IsNegative() {

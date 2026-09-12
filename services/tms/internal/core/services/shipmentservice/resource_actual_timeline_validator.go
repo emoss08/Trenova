@@ -3,7 +3,6 @@ package shipmentservice
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 
@@ -548,14 +547,7 @@ func addTimelineConflict(
 	multiErr.Add(
 		stopFieldPath(event.moveIndex, event.stopIndex, string(event.field)),
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf(
-			"%s time cannot be at %s because %s stop actual %s is %s",
-			humanizeActualField(event.field),
-			timeutils.UnixToHumanReadable(event.timestamp),
-			neighborPosition,
-			humanizeActualField(neighborField),
-			timeutils.UnixToHumanReadable(neighborTimestamp),
-		),
+		"{0} time cannot be at {1} because {2} stop actual {3} is {4}", humanizeActualField(event.field), timeutils.UnixToHumanReadable(event.timestamp), neighborPosition, humanizeActualField(neighborField), timeutils.UnixToHumanReadable(neighborTimestamp),
 	)
 }
 
@@ -593,15 +585,7 @@ func addCombinedTimelineWindowConflicts(
 		multiErr.Add(
 			key.field,
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"%s time cannot be at %s because this %s %s already in use from %s to %s",
-				humanizeActualField(key.actualField),
-				timeutils.UnixToHumanReadable(key.timestamp),
-				humanizeResourceKinds(kinds),
-				verb,
-				timeutils.UnixToHumanReadable(key.start),
-				timeutils.UnixToHumanReadable(key.end),
-			),
+			"{0} time cannot be at {1} because this {2} {3} already in use from {4} to {5}", humanizeActualField(key.actualField), timeutils.UnixToHumanReadable(key.timestamp), humanizeResourceKinds(kinds), verb, timeutils.UnixToHumanReadable(key.start), timeutils.UnixToHumanReadable(key.end),
 		)
 	}
 }

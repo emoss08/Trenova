@@ -353,8 +353,7 @@ func (r *mutationResolver) SendTestMessageTemplate(ctx context.Context, input gq
 
 	if preview.Diagnostics.HasErrors() {
 		return false, errortypes.NewBusinessError(
-			"This template does not render yet, so there is nothing to send. " +
-				preview.Diagnostics.Errors().Summary(),
+			"This template does not render yet, so there is nothing to send. {0}", preview.Diagnostics.Errors().Summary(),
 		)
 	}
 

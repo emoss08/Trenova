@@ -66,8 +66,7 @@ func (c *Compiler) authorize(
 
 	if len(denied) > 0 {
 		return nil, errortypes.NewAuthorizationError(
-			"This report references data you do not have access to: " +
-				strings.Join(dedupeStrings(denied), "; "),
+			"This report references data you do not have access to: {0}", strings.Join(dedupeStrings(denied), "; "),
 		)
 	}
 

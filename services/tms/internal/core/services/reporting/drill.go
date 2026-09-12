@@ -60,7 +60,7 @@ func (s *Service) DrillThrough(
 	if !ok {
 		return nil, errortypes.NewValidationError(
 			"definition.entity", errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown entity %q", req.Definition.Entity),
+			"Unknown entity \"{0}\"", req.Definition.Entity,
 		)
 	}
 
@@ -110,7 +110,7 @@ func (s *Service) detailDefinition(
 	}
 	if len(columns) == 0 {
 		return nil, errortypes.NewAuthorizationError(
-			"You do not have access to any fields of " + entity.PluralLabel,
+			"You do not have access to any fields of {0}", entity.PluralLabel,
 		)
 	}
 
@@ -143,7 +143,7 @@ func drillDimensionFilters(
 	if !ok || col.Kind != report.ColumnKindDimension {
 		return nil, errortypes.NewValidationError(
 			"dimensions", errortypes.ErrInvalid,
-			fmt.Sprintf("%q is not a grouping column of this report", value.ColumnID),
+			"\"{0}\" is not a grouping column of this report", value.ColumnID,
 		)
 	}
 
@@ -209,7 +209,7 @@ func bucketRange(
 	default:
 		return 0, 0, errortypes.NewValidationError(
 			"dimensions", errortypes.ErrInvalid,
-			fmt.Sprintf("Unknown date bucket %q", bucket),
+			"Unknown date bucket \"{0}\"", bucket,
 		)
 	}
 }
@@ -256,14 +256,14 @@ func drillNumber(value any) (float64, error) {
 		if err != nil {
 			return 0, errortypes.NewValidationError(
 				"dimensions", errortypes.ErrInvalid,
-				fmt.Sprintf("Expected a number for a ranged column, got %q", v),
+				"Expected a number for a ranged column, got \"{0}\"", v,
 			)
 		}
 		return parsed, nil
 	default:
 		return 0, errortypes.NewValidationError(
 			"dimensions", errortypes.ErrInvalid,
-			fmt.Sprintf("Expected a number for a ranged column, got %T", value),
+			"Expected a number for a ranged column, got {0}", fmt.Sprintf("%T", value),
 		)
 	}
 }
@@ -281,14 +281,14 @@ func drillEpoch(value any) (int64, error) {
 		if err != nil {
 			return 0, errortypes.NewValidationError(
 				"dimensions", errortypes.ErrInvalid,
-				fmt.Sprintf("Expected a timestamp for a bucketed column, got %q", v),
+				"Expected a timestamp for a bucketed column, got \"{0}\"", v,
 			)
 		}
 		return parsed, nil
 	default:
 		return 0, errortypes.NewValidationError(
 			"dimensions", errortypes.ErrInvalid,
-			fmt.Sprintf("Expected a timestamp for a bucketed column, got %T", value),
+			"Expected a timestamp for a bucketed column, got {0}", fmt.Sprintf("%T", value),
 		)
 	}
 }
@@ -310,7 +310,7 @@ func appendMeasureScope(
 	if !ok {
 		return errortypes.NewValidationError(
 			"columnId", errortypes.ErrInvalid,
-			fmt.Sprintf("%q is not a column of this report", columnID),
+			"\"{0}\" is not a column of this report", columnID,
 		)
 	}
 	if col.Kind == report.ColumnKindDimension {

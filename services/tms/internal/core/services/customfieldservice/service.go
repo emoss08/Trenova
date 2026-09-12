@@ -214,11 +214,7 @@ func (s *Service) Delete(
 
 	if usageStats.TotalValueCount > 0 {
 		return errortypes.NewConflictError(
-			fmt.Sprintf(
-				"Cannot delete custom field definition: %d values exist across %d resources. Deactivate the field instead to preserve data.",
-				usageStats.TotalValueCount,
-				usageStats.ResourceCount,
-			),
+			"Cannot delete custom field definition: {0} values exist across {1} resources. Deactivate the field instead to preserve data.", usageStats.TotalValueCount, usageStats.ResourceCount,
 		).WithUsageStats(usageStats)
 	}
 

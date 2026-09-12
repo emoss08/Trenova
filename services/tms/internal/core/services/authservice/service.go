@@ -214,7 +214,7 @@ func (s *Service) StartSSOLogin(
 ) (string, error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
 		return "", errortypes.NewBusinessError(
-			providerDisplayName(req.Provider) + " SSO is not configured",
+			"{0} SSO is not configured", providerDisplayName(req.Provider),
 		)
 	}
 
@@ -235,7 +235,7 @@ func (s *Service) StartSSOLogin(
 
 	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
 	if err != nil {
-		return "", errortypes.NewBusinessError("Failed to initialize " + providerDisplayName(req.Provider) + " identity provider").
+		return "", errortypes.NewBusinessError("Failed to initialize {0} identity provider", providerDisplayName(req.Provider)).
 			WithInternal(err)
 	}
 
@@ -319,7 +319,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("Failed to initialize " + displayName + " identity provider").
+		return nil, errortypes.NewBusinessError("Failed to initialize {0} identity provider", displayName).
 			WithInternal(err)
 	}
 
@@ -337,13 +337,13 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		oauth2.VerifierOption(loginState.CodeVerifier),
 	)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError(displayName + " login failed")
+		return nil, errortypes.NewAuthenticationError("{0} login failed", displayName)
 	}
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
 		return nil, errortypes.NewAuthenticationError(
-			displayName + " login did not return an ID token",
+			"{0} login did not return an ID token", displayName,
 		)
 	}
 
@@ -352,16 +352,16 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError(displayName + " identity token is invalid")
+		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
 	var claims oidcClaims
 	if err = idToken.Claims(&claims); err != nil {
-		return nil, errortypes.NewAuthenticationError(displayName + " identity token is invalid")
+		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
 	if claims.Nonce != loginState.Nonce {
-		return nil, errortypes.NewAuthenticationError(displayName + " login nonce mismatch")
+		return nil, errortypes.NewAuthenticationError("{0} login nonce mismatch", displayName)
 	}
 
 	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
@@ -376,7 +376,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	emailAddress := claims.EmailAddress()
 	if emailAddress == "" {
 		return nil, errortypes.NewAuthenticationError(
-			displayName + " account did not provide a usable email address",
+			"{0} account did not provide a usable email address", displayName,
 		)
 	}
 
@@ -387,7 +387,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	usr, err := s.ur.FindByEmail(ctx, emailAddress)
 	if err != nil {
 		return nil, errortypes.NewAuthenticationError(
-			"No Trenova user exists for this " + displayName + " account",
+			"No Trenova user exists for this {0} account", displayName,
 		)
 	}
 

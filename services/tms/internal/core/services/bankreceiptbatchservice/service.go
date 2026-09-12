@@ -173,7 +173,7 @@ func (s *Service) importBatchWithinTx(
 				return errortypes.NewValidationError(
 					"receipts",
 					errortypes.ErrInvalid,
-					"Receipt line "+strconv.Itoa(idx+1)+" is required",
+					"Receipt line {0} is required", strconv.Itoa(idx+1),
 				)
 			}
 

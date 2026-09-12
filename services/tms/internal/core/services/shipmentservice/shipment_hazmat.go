@@ -2,7 +2,6 @@ package shipmentservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
@@ -65,22 +64,12 @@ func addHazmatConflictsToMultiError(multiErr *errortypes.MultiError, conflicts [
 		multiErr.WithIndex("commodities", conflict.leftIndex).Add(
 			"commodityId",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-				conflict.rule.Name,
-				conflict.rule.SegregationType,
-				conflict.rightCommodity.Name,
-			),
+			"Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"", conflict.rule.Name, conflict.rule.SegregationType, conflict.rightCommodity.Name,
 		)
 		multiErr.WithIndex("commodities", conflict.rightIndex).Add(
 			"commodityId",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf(
-				"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-				conflict.rule.Name,
-				conflict.rule.SegregationType,
-				conflict.leftCommodity.Name,
-			),
+			"Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"", conflict.rule.Name, conflict.rule.SegregationType, conflict.leftCommodity.Name,
 		)
 	}
 }
