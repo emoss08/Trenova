@@ -5,7 +5,7 @@ import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { localeChoices, timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
+import { timeFormatChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
@@ -317,18 +317,6 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     label={t("Time Format")}
                     options={timeFormatChoices}
                     rules={{ required: "Time format is required" }}
-                  />
-                </FormControl>
-                <FormControl>
-                  <SelectField
-                    control={settingsForm.control}
-                    name="locale"
-                    label={t("Language")}
-                    description={t(
-                      "Applies to the interface, and to the emails and documents sent to you.",
-                    )}
-                    options={localeChoices}
-                    rules={{ required: "Language is required" }}
                   />
                 </FormControl>
               </FormGroup>

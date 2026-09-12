@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { LanguageSubmenu } from "@/components/navigation/language-submenu";
 import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -197,6 +198,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               }}
             />
             <SidebarLayoutSubmenu />
+            <LanguageSubmenu />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <Palette className="mr-2 size-4" />

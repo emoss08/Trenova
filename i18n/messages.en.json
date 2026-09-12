@@ -13641,15 +13641,6 @@
       "domain/servicefailure"
     ]
   },
-  "Applies to the interface, and to the emails and documents sent to you.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Applies to your organization only": {
     "sites": 1,
     "scope": [
@@ -72233,6 +72224,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Language updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lapsed {0}d ago": {
@@ -162239,6 +162239,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Your emails and documents will use it too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your expense for {0} was approved and will be reimbursed on your next settlement.": {
