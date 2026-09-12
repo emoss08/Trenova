@@ -1220,6 +1220,13 @@ func (shipIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
+func (shipIntgStubVersionRepo) ListScheduled(
+	_ context.Context,
+	_ *repositories.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return nil, nil
+}
+
 type shipIntgStubMatrixRepo struct {
 	repositories.RateMatrixRepository
 }

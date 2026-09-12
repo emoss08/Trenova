@@ -7750,6 +7750,189 @@ func (e CostRateSource) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type CustomerBillingCycleType string
+
+const (
+	CustomerBillingCycleTypeImmediate   CustomerBillingCycleType = "Immediate"
+	CustomerBillingCycleTypeDaily       CustomerBillingCycleType = "Daily"
+	CustomerBillingCycleTypeWeekly      CustomerBillingCycleType = "Weekly"
+	CustomerBillingCycleTypeBiWeekly    CustomerBillingCycleType = "BiWeekly"
+	CustomerBillingCycleTypeMonthly     CustomerBillingCycleType = "Monthly"
+	CustomerBillingCycleTypeQuarterly   CustomerBillingCycleType = "Quarterly"
+	CustomerBillingCycleTypePerShipment CustomerBillingCycleType = "PerShipment"
+)
+
+var AllCustomerBillingCycleType = []CustomerBillingCycleType{
+	CustomerBillingCycleTypeImmediate,
+	CustomerBillingCycleTypeDaily,
+	CustomerBillingCycleTypeWeekly,
+	CustomerBillingCycleTypeBiWeekly,
+	CustomerBillingCycleTypeMonthly,
+	CustomerBillingCycleTypeQuarterly,
+	CustomerBillingCycleTypePerShipment,
+}
+
+func (e CustomerBillingCycleType) IsValid() bool {
+	switch e {
+	case CustomerBillingCycleTypeImmediate, CustomerBillingCycleTypeDaily, CustomerBillingCycleTypeWeekly, CustomerBillingCycleTypeBiWeekly, CustomerBillingCycleTypeMonthly, CustomerBillingCycleTypeQuarterly, CustomerBillingCycleTypePerShipment:
+		return true
+	}
+	return false
+}
+
+func (e CustomerBillingCycleType) String() string {
+	return string(e)
+}
+
+func (e *CustomerBillingCycleType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CustomerBillingCycleType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CustomerBillingCycleType", str)
+	}
+	return nil
+}
+
+func (e CustomerBillingCycleType) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CustomerBillingCycleType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CustomerBillingCycleType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CustomerConsolidationGroupBy string
+
+const (
+	CustomerConsolidationGroupByNone     CustomerConsolidationGroupBy = "None"
+	CustomerConsolidationGroupByLocation CustomerConsolidationGroupBy = "Location"
+	CustomerConsolidationGroupByPONumber CustomerConsolidationGroupBy = "PONumber"
+	CustomerConsolidationGroupByBOL      CustomerConsolidationGroupBy = "BOL"
+	CustomerConsolidationGroupByDivision CustomerConsolidationGroupBy = "Division"
+)
+
+var AllCustomerConsolidationGroupBy = []CustomerConsolidationGroupBy{
+	CustomerConsolidationGroupByNone,
+	CustomerConsolidationGroupByLocation,
+	CustomerConsolidationGroupByPONumber,
+	CustomerConsolidationGroupByBOL,
+	CustomerConsolidationGroupByDivision,
+}
+
+func (e CustomerConsolidationGroupBy) IsValid() bool {
+	switch e {
+	case CustomerConsolidationGroupByNone, CustomerConsolidationGroupByLocation, CustomerConsolidationGroupByPONumber, CustomerConsolidationGroupByBOL, CustomerConsolidationGroupByDivision:
+		return true
+	}
+	return false
+}
+
+func (e CustomerConsolidationGroupBy) String() string {
+	return string(e)
+}
+
+func (e *CustomerConsolidationGroupBy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CustomerConsolidationGroupBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CustomerConsolidationGroupBy", str)
+	}
+	return nil
+}
+
+func (e CustomerConsolidationGroupBy) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CustomerConsolidationGroupBy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CustomerConsolidationGroupBy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CustomerInvoiceMethod string
+
+const (
+	CustomerInvoiceMethodIndividual        CustomerInvoiceMethod = "Individual"
+	CustomerInvoiceMethodSummary           CustomerInvoiceMethod = "Summary"
+	CustomerInvoiceMethodSummaryWithDetail CustomerInvoiceMethod = "SummaryWithDetail"
+)
+
+var AllCustomerInvoiceMethod = []CustomerInvoiceMethod{
+	CustomerInvoiceMethodIndividual,
+	CustomerInvoiceMethodSummary,
+	CustomerInvoiceMethodSummaryWithDetail,
+}
+
+func (e CustomerInvoiceMethod) IsValid() bool {
+	switch e {
+	case CustomerInvoiceMethodIndividual, CustomerInvoiceMethodSummary, CustomerInvoiceMethodSummaryWithDetail:
+		return true
+	}
+	return false
+}
+
+func (e CustomerInvoiceMethod) String() string {
+	return string(e)
+}
+
+func (e *CustomerInvoiceMethod) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CustomerInvoiceMethod(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CustomerInvoiceMethod", str)
+	}
+	return nil
+}
+
+func (e CustomerInvoiceMethod) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CustomerInvoiceMethod) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CustomerInvoiceMethod) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type DetentionDeskUrgency string
 
 const (

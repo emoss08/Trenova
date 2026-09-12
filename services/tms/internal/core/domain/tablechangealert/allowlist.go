@@ -22,7 +22,7 @@ type TCAAllowlistedTable struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	TableName      string   `json:"tableName"      bun:"table_name,type:VARCHAR(100),notnull"`
 	DisplayName    string   `json:"displayName"    bun:"display_name,type:VARCHAR(255),notnull"`
-	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

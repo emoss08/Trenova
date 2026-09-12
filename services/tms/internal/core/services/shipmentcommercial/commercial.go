@@ -175,6 +175,17 @@ func (c *Calculator) calculateCommercialTotals(
 		}
 	}
 
+	// A rating formula can read otherChargeAmount, and the figure it has to read
+	// is the one the shipment's own charge rows produce, not the total left on
+	// the record by the previous save — a charge added in the same edit would
+	// otherwise price the linehaul off a stale number and only take effect on
+	// the next recalculation. Percentage-method charges are seeded against the
+	// stored freight amount, the only base there is before the linehaul is
+	// priced; the authoritative total is returned below, against the real base.
+	entity.OtherChargeAmount = decimal.NewNullDecimal(
+		CalculateAdditionalCharges(entity.AdditionalCharges, entity.FreightChargeAmount.Decimal),
+	)
+
 	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)
 	if err != nil {
 		return decimal.Zero, decimal.Zero, nil, err

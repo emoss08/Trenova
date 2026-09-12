@@ -45,6 +45,10 @@ const useDataTableQueryMock = vi.hoisted(() =>
 );
 
 vi.mock("@/hooks/use-permission", () => ({
+  // Both hooks: the config manager inside the table reaches for the
+  // single-operation one, and a factory missing it throws only on the runs
+  // that get far enough to render it.
+  usePermission: () => ({ allowed: true, isLoading: false }),
   usePermissions: () => ({
     canRead: true,
     canCreate: true,

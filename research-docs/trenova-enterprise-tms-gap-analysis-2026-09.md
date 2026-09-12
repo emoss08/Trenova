@@ -210,7 +210,6 @@ credits AP.
 | No outbound webhooks | No webhook domain, service, or subscription; only inbound Samsara and Postmark receivers | No external system can subscribe to Trenova events; blocks any partner ecosystem |
 | No live ETA | `CandidateScore.ProjectedArrival` is dispatch-time only; nothing on shipment or stop | Cannot answer "where is my load and when will it arrive"; no ETA-vs-appointment slip detection |
 | No dock or appointment scheduling | `domain/location/location.go` has no operating hours, doors, capacity, or slots | Appointment windows exist on the stop, but nothing schedules against facility capacity |
-| No consolidated invoicing | `InvoiceLine` carries per-line shipment references, but there is zero grouping logic | Blocks LTL and any statement-billed customer |
 | No tax on invoices | Invoice has Subtotal, Other, and Total only; no tax code, rate, jurisdiction, or line | Blocks Canada GST/HST and any taxable accessorial |
 | Native MFA unimplemented | `iam.MFAAuthenticator` models TOTP and WebAuthn; only `ListMFAAuthenticators` exists. `authservice/service.go:883` only reads `amr` claims from an IdP | A customer without SSO cannot enforce 2FA; SOC2 blocker |
 | SAML modeled but disabled | `iamservice/service.go:124` — "SAML providers cannot be managed until SAML sign-in is available" | Large shippers and 3PLs still require SAML |

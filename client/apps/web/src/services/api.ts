@@ -53,6 +53,7 @@ import { HoldReasonService } from "./hold-reason";
 import { RecurringShipmentService } from "@/services/recurring-shipment";
 import { IntegrationService } from "./integration";
 import { InvoiceService } from "./invoice";
+import { InvoiceRunService } from "./invoice-run";
 import { InvoiceAdjustmentService } from "./invoice-adjustment";
 import { InvoiceAdjustmentControlService } from "./invoice-adjustment-control";
 import { JournalReversalService } from "./journal-reversal";
@@ -131,6 +132,7 @@ class APIService {
   public invoiceAdjustmentService: InvoiceAdjustmentService;
   public billingQueueService: BillingQueueService;
   public invoiceService: InvoiceService;
+  public invoiceRunService: InvoiceRunService;
   public dataEntryControlService: DataEntryControlService;
   public detentionService: DetentionService;
   public detentionPolicyService: DetentionPolicyService;
@@ -218,6 +220,7 @@ class APIService {
     this.invoiceAdjustmentService = new InvoiceAdjustmentService();
     this.billingQueueService = new BillingQueueService();
     this.invoiceService = new InvoiceService();
+    this.invoiceRunService = new InvoiceRunService();
     this.dataEntryControlService = new DataEntryControlService();
     this.detentionService = new DetentionService();
     this.detentionPolicyService = new DetentionPolicyService();

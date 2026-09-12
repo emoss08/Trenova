@@ -709,6 +709,7 @@ func (s *Service) runSynchronousFinalization(
 		CryptoMode:         session.CryptoMode,
 		CryptoVersion:      session.CryptoVersion,
 		Status:             document.StatusActive,
+		IsCurrentVersion:   true,
 		Description:        session.Description,
 		ResourceID:         session.ResourceID,
 		ResourceType:       session.ResourceType,

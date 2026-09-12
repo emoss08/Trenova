@@ -152,7 +152,7 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 		BillToCountry:      "US",
 		CurrencyCode:       "USD",
 		TotalAmount:        decimal.NewFromInt(1250),
-		Lines: []*invoice.InoviceLine{
+		Lines: []*invoice.InvoiceLine{
 			{
 				LineNumber:  2,
 				Type:        invoice.InvoiceLineTypeAccessorial,

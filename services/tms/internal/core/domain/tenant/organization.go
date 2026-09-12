@@ -39,8 +39,8 @@ type Organization struct {
 	Timezone               string    `json:"timezone"               bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
 	Locale                 string    `json:"locale"                 bun:"locale,type:VARCHAR(10),notnull,default:'en'"`
 	TaxID                  string    `json:"taxId"                  bun:"tax_id,type:VARCHAR(50)"`
-	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull,default:true"`
-	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull,default:true"`
+	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull"`
+	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull"`
 	Metadata               *Metadata `json:"-"                      bun:"metadata,type:JSONB"`
 	Version                int64     `json:"version"                bun:"version,type:BIGINT"`
 	CreatedAt              int64     `json:"createdAt"              bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

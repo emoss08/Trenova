@@ -31,18 +31,18 @@ type AccountingControl struct {
 	JournalPostingMode       JournalPostingModeType    `json:"journalPostingMode"       bun:"journal_posting_mode,type:journal_posting_mode_enum,notnull,default:'Manual'"`
 	AutoPostSourceEvents     []JournalSourceEventType  `json:"autoPostSourceEvents"     bun:"auto_post_source_events,type:journal_source_event_enum[],notnull,default:'{}'"`
 	ManualJournalEntryPolicy ManualJournalEntryPolicy  `json:"manualJournalEntryPolicy" bun:"manual_journal_entry_policy,type:manual_journal_entry_policy_enum,notnull,default:'AdjustmentOnly'"`
-	RequireManualJEApproval  bool                      `json:"requireManualJeApproval"  bun:"require_manual_je_approval,type:BOOLEAN,notnull,default:true"`
+	RequireManualJEApproval  bool                      `json:"requireManualJeApproval"  bun:"require_manual_je_approval,type:BOOLEAN,notnull"`
 	JournalReversalPolicy    JournalReversalPolicyType `json:"journalReversalPolicy"    bun:"journal_reversal_policy,type:journal_reversal_policy_enum,notnull,default:'NextOpenPeriod'"`
 
 	PeriodCloseMode              PeriodCloseModeType       `json:"periodCloseMode"              bun:"period_close_mode,type:period_close_mode_enum,notnull,default:'ManualOnly'"`
-	RequirePeriodCloseApproval   bool                      `json:"requirePeriodCloseApproval"   bun:"require_period_close_approval,type:BOOLEAN,notnull,default:true"`
+	RequirePeriodCloseApproval   bool                      `json:"requirePeriodCloseApproval"   bun:"require_period_close_approval,type:BOOLEAN,notnull"`
 	LockedPeriodPostingPolicy    LockedPeriodPostingPolicy `json:"lockedPeriodPostingPolicy"    bun:"locked_period_posting_policy,type:locked_period_posting_policy_enum,notnull,default:'BlockSubledgerAllowManualJe'"`
 	ClosedPeriodPostingPolicy    ClosedPeriodPostingPolicy `json:"closedPeriodPostingPolicy"    bun:"closed_period_posting_policy,type:closed_period_posting_policy_enum,notnull,default:'RequireReopen'"`
 	RequireReconciliationToClose bool                      `json:"requireReconciliationToClose" bun:"require_reconciliation_to_close,type:BOOLEAN,notnull"`
 
 	ReconciliationMode              ReconciliationModeType `json:"reconciliationMode"              bun:"reconciliation_mode,type:reconciliation_mode_enum,notnull,default:'Disabled'"`
 	ReconciliationToleranceAmount   decimal.Decimal        `json:"reconciliationToleranceAmount"   bun:"reconciliation_tolerance_amount,type:NUMERIC(19,4),notnull,default:0.0000"`
-	NotifyOnReconciliationException bool                   `json:"notifyOnReconciliationException" bun:"notify_on_reconciliation_exception,type:BOOLEAN,notnull,default:true"`
+	NotifyOnReconciliationException bool                   `json:"notifyOnReconciliationException" bun:"notify_on_reconciliation_exception,type:BOOLEAN,notnull"`
 
 	CurrencyMode               CurrencyModeType         `json:"currencyMode"               bun:"currency_mode,type:currency_mode_enum,notnull,default:'SingleCurrency'"`
 	FunctionalCurrencyCode     string                   `json:"functionalCurrencyCode"     bun:"functional_currency_code,type:VARCHAR(3),notnull,default:'USD'"`

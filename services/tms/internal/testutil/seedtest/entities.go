@@ -59,18 +59,20 @@ func NewOrganization(buID pulid.ID, stateID pulid.ID) *OrganizationBuilder {
 	now := timeutils.NowUnix()
 	return &OrganizationBuilder{
 		org: &tenant.Organization{
-			BusinessUnitID: buID,
-			Name:           "Test Organization",
-			ScacCode:       "TEST",
-			DOTNumber:      "1234567",
-			AddressLine1:   "123 Test St",
-			City:           "Test City",
-			StateID:        stateID,
-			PostalCode:     "12345",
-			Timezone:       "America/Los_Angeles",
-			BucketName:     "test-bucket",
-			CreatedAt:      now,
-			UpdatedAt:      now,
+			BusinessUnitID:         buID,
+			BrokerageEnabled:       true,
+			AssetOperationsEnabled: true,
+			Name:                   "Test Organization",
+			ScacCode:               "TEST",
+			DOTNumber:              "1234567",
+			AddressLine1:           "123 Test St",
+			City:                   "Test City",
+			StateID:                stateID,
+			PostalCode:             "12345",
+			Timezone:               "America/Los_Angeles",
+			BucketName:             "test-bucket",
+			CreatedAt:              now,
+			UpdatedAt:              now,
 		},
 	}
 }

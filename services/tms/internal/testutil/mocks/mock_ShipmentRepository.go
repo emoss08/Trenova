@@ -732,6 +732,74 @@ func (_c *MockShipmentRepository_GetByIDs_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListSummariesByIDs provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) ListSummariesByIDs(ctx context.Context, req *repositories.ListShipmentSummariesRequest) ([]*repositories.ShipmentSummary, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSummariesByIDs")
+	}
+
+	var r0 []*repositories.ShipmentSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentSummariesRequest) ([]*repositories.ShipmentSummary, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentSummariesRequest) []*repositories.ShipmentSummary); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.ShipmentSummary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListShipmentSummariesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_ListSummariesByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSummariesByIDs'
+type MockShipmentRepository_ListSummariesByIDs_Call struct {
+	*mock.Call
+}
+
+// ListSummariesByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListShipmentSummariesRequest
+func (_e *MockShipmentRepository_Expecter) ListSummariesByIDs(ctx any, req any) *MockShipmentRepository_ListSummariesByIDs_Call {
+	return &MockShipmentRepository_ListSummariesByIDs_Call{Call: _e.mock.On("ListSummariesByIDs", ctx, req)}
+}
+
+func (_c *MockShipmentRepository_ListSummariesByIDs_Call) Run(run func(ctx context.Context, req *repositories.ListShipmentSummariesRequest)) *MockShipmentRepository_ListSummariesByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListShipmentSummariesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListShipmentSummariesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListSummariesByIDs_Call) Return(shipmentSummaries []*repositories.ShipmentSummary, err error) *MockShipmentRepository_ListSummariesByIDs_Call {
+	_c.Call.Return(shipmentSummaries, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListSummariesByIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentSummariesRequest) ([]*repositories.ShipmentSummary, error)) *MockShipmentRepository_ListSummariesByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetDelayedShipments provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) GetDelayedShipments(ctx context.Context, req *repositories.GetDelayedShipmentsRequest, thresholdMinutes int16) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req, thresholdMinutes)

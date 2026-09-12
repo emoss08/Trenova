@@ -108,13 +108,15 @@ import type {
 } from "@trenova/shared/types/carrier-settlement";
 import type { FreightClass } from "@trenova/shared/types/commodity";
 import type {
-  BillingCycleType,
-  ConsolidationGroupBy,
+  BillingCycle,
+  InvoiceDelivery,
   CreditStatus,
   CustomerFuelSurchargeMode,
   CustomerPaymentTerm,
   InvoiceAdjustmentSupportingDocumentPolicy,
-  InvoiceMethod,
+  InvoiceDetail,
+  InvoiceSectionKey,
+  InvoiceSplitKey,
   InvoiceNumberFormat,
 } from "@trenova/shared/types/customer";
 import type { PaymentMethod } from "@trenova/shared/types/customer-payment";
@@ -1448,15 +1450,21 @@ export const complianceEnforcementLevelChoices = [
   { value: "Audit", label: "Audit", color: "#7e22ce" },
 ] satisfies ReadonlyArray<GenericSelectOption<ComplianceEnforcementLevel>>;
 
-export const billingCycleTypeChoices = [
+export const invoiceDeliveryChoices = [
+  { value: "PerShipment", label: "Per shipment" },
+  { value: "PerOrder", label: "Per order" },
+  { value: "Consolidated", label: "Statement (consolidated)" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceDelivery>>;
+
+export const billingCycleChoices = [
   { value: "Immediate", label: "Immediate" },
   { value: "Daily", label: "Daily" },
   { value: "Weekly", label: "Weekly" },
-  { value: "BiWeekly", label: "Bi-Weekly" },
+  { value: "BiWeekly", label: "Bi-weekly" },
+  { value: "SemiMonthly", label: "Semi-monthly" },
   { value: "Monthly", label: "Monthly" },
   { value: "Quarterly", label: "Quarterly" },
-  { value: "PerShipment", label: "Per Shipment" },
-] satisfies ReadonlyArray<GenericSelectOption<BillingCycleType>>;
+] satisfies ReadonlyArray<GenericSelectOption<BillingCycle>>;
 
 export const customerPaymentTermChoices = [
   { value: "DueOnReceipt", label: "Due on Receipt", color: "#15803d" },
@@ -1476,19 +1484,27 @@ export const creditStatusChoices = [
   { value: "Review", label: "Review", color: "#7e22ce" },
 ] satisfies ReadonlyArray<GenericSelectOption<CreditStatus>>;
 
-export const invoiceMethodChoices = [
-  { value: "Individual", label: "Individual" },
-  { value: "Summary", label: "Summary" },
-  { value: "SummaryWithDetail", label: "Summary with Detail" },
-] satisfies ReadonlyArray<GenericSelectOption<InvoiceMethod>>;
+export const invoiceSplitKeyChoices = [
+  { value: "Customer", label: "Nothing — one invoice for the period" },
+  { value: "CustomerAndPONumber", label: "PO number" },
+  { value: "CustomerAndShipmentBOL", label: "BOL" },
+  { value: "CustomerAndOrder", label: "Order" },
+  { value: "CustomerAndOrigin", label: "Pickup location" },
+  { value: "CustomerAndDestination", label: "Delivery location" },
+  { value: "CustomerAndServiceType", label: "Service type" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceSplitKey>>;
 
-export const consolidationGroupByChoices = [
-  { value: "None", label: "None" },
-  { value: "Location", label: "Location" },
-  { value: "PONumber", label: "PO Number" },
-  { value: "BOL", label: "BOL" },
-  { value: "Division", label: "Division" },
-] satisfies ReadonlyArray<GenericSelectOption<ConsolidationGroupBy>>;
+export const invoiceSectionKeyChoices = [
+  { value: "Shipment", label: "Shipment" },
+  { value: "PONumber", label: "PO number" },
+  { value: "Origin", label: "Pickup location" },
+  { value: "Destination", label: "Delivery location" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceSectionKey>>;
+
+export const invoiceDetailChoices = [
+  { value: "Detailed", label: "Itemised — every charge line" },
+  { value: "Summary", label: "Summary — one line per shipment" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceDetail>>;
 
 export const invoiceNumberFormatChoices = [
   { value: "Default", label: "Default" },

@@ -7,16 +7,21 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 
-export const billingCycleTypeSchema = z.enum([
+/** How many invoices a customer's freight turns into. */
+export const invoiceDeliverySchema = z.enum(["PerShipment", "PerOrder", "Consolidated"]);
+export type InvoiceDelivery = z.infer<typeof invoiceDeliverySchema>;
+
+/** How often a statement-billed customer is billed. */
+export const billingCycleSchema = z.enum([
   "Immediate",
   "Daily",
   "Weekly",
   "BiWeekly",
+  "SemiMonthly",
   "Monthly",
   "Quarterly",
-  "PerShipment",
 ]);
-export type BillingCycleType = z.infer<typeof billingCycleTypeSchema>;
+export type BillingCycle = z.infer<typeof billingCycleSchema>;
 
 export const customerPaymentTermSchema = z.enum([
   "Net10",
@@ -32,17 +37,30 @@ export type CustomerPaymentTerm = z.infer<typeof customerPaymentTermSchema>;
 export const creditStatusSchema = z.enum(["Active", "Warning", "Hold", "Suspended", "Review"]);
 export type CreditStatus = z.infer<typeof creditStatusSchema>;
 
-export const invoiceMethodSchema = z.enum(["Individual", "Summary", "SummaryWithDetail"]);
-export type InvoiceMethod = z.infer<typeof invoiceMethodSchema>;
-
-export const consolidationGroupBySchema = z.enum([
-  "None",
-  "Location",
-  "PONumber",
-  "BOL",
-  "Division",
+/**
+ * How many invoices a billing period yields. `Customer` means one; every other
+ * member means one per distinct value of that key.
+ *
+ * There is deliberately no `Division`: no division entity exists in the domain.
+ */
+export const invoiceSplitKeySchema = z.enum([
+  "Customer",
+  "CustomerAndPONumber",
+  "CustomerAndShipmentBOL",
+  "CustomerAndOrder",
+  "CustomerAndOrigin",
+  "CustomerAndDestination",
+  "CustomerAndServiceType",
 ]);
-export type ConsolidationGroupBy = z.infer<typeof consolidationGroupBySchema>;
+export type InvoiceSplitKey = z.infer<typeof invoiceSplitKeySchema>;
+
+/** How the lines inside one invoice are organised. Never changes how many there are. */
+export const invoiceSectionKeySchema = z.enum(["Shipment", "PONumber", "Origin", "Destination"]);
+export type InvoiceSectionKey = z.infer<typeof invoiceSectionKeySchema>;
+
+/** How verbose each section of a consolidated invoice is. */
+export const invoiceDetailSchema = z.enum(["Detailed", "Summary"]);
+export type InvoiceDetail = z.infer<typeof invoiceDetailSchema>;
 
 export const invoiceNumberFormatSchema = z.enum(["Default", "CustomPrefix", "POBased"]);
 export type InvoiceNumberFormat = z.infer<typeof invoiceNumberFormatSchema>;
@@ -68,8 +86,11 @@ export const customerBillingProfileSchema = z
     organizationId: z.string().optional(),
     businessUnitId: z.string().optional(),
     customerId: z.string().optional(),
-    billingCycleType: billingCycleTypeSchema.default("Immediate"),
-    billingCycleDayOfWeek: nullableIntegerSchema,
+    invoiceDelivery: invoiceDeliverySchema.default("PerShipment"),
+    billingCycle: billingCycleSchema.default("Immediate"),
+    billingCycleAnchorDay: z.number().int().default(1),
+    billingCycleTimezone: z.string().default("UTC"),
+    lastBilledPeriodEnd: nullableIntegerSchema,
     paymentTerm: customerPaymentTermSchema.default("Net30"),
     hasBillingControlOverrides: z.boolean().default(false),
     creditLimit: decimalStringSchema,
@@ -78,11 +99,13 @@ export const customerBillingProfileSchema = z
     enforceCreditLimit: z.boolean().default(false),
     autoCreditHold: z.boolean().default(false),
     creditHoldReason: z.string().default(""),
-    invoiceMethod: invoiceMethodSchema.default("Individual"),
     autoSendInvoiceOnGeneration: z.boolean().default(true),
-    allowInvoiceConsolidation: z.boolean().default(false),
-    consolidationPeriodDays: z.number().int().default(7),
-    consolidationGroupBy: consolidationGroupBySchema.default("None"),
+    splitBy: invoiceSplitKeySchema.default("Customer"),
+    sectionBy: invoiceSectionKeySchema.default("Shipment"),
+    invoiceDetail: invoiceDetailSchema.default("Detailed"),
+    consolidationLookbackDays: z.number().int().default(30),
+    minConsolidatedAmount: decimalStringSchema,
+    maxShipmentsPerInvoice: z.number().int().default(0),
     invoiceNumberFormat: invoiceNumberFormatSchema.default("Default"),
     customerInvoicePrefix: z.string().default(""),
     invoiceCopies: z.number().int().default(1),

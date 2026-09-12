@@ -9,6 +9,7 @@ import {
   nullableStringSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
 import { shipmentSchema } from "./shipment";
 
 export const invoiceStatusSchema = z.enum(["Draft", "Posted"]);
@@ -30,6 +31,9 @@ export const invoiceLineSchema = z.object({
   ...tenantInfoSchema.shape,
   id: z.string(),
   invoiceId: z.string(),
+  shipmentId: nullableStringSchema,
+  shipmentProNumber: nullableStringSchema,
+  shipmentBol: nullableStringSchema,
   lineNumber: z.number().int(),
   type: invoiceLineTypeSchema,
   description: z.string(),
@@ -186,6 +190,13 @@ export const invoiceSchema = z.object({
   id: z.string(),
   billingQueueItemId: z.string(),
   shipmentId: nullableStringSchema,
+  detail: invoiceDetailSchema.default("Detailed"),
+  sectionBy: invoiceSectionKeySchema.default("Shipment"),
+  /**
+   * Why this invoice was cut for a customer whose freight was supposed to
+   * accumulate onto a statement. Empty on every ordinary invoice.
+   */
+  offCycleReason: nullableStringSchema,
   orderId: nullableStringSchema,
   customerId: z.string(),
   number: z.string(),

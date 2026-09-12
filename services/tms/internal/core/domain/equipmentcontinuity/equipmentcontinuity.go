@@ -63,7 +63,7 @@ type EquipmentContinuity struct {
 	SourceShipmentID     pulid.ID      `json:"sourceShipmentId"     bun:"source_shipment_id,type:VARCHAR(100),nullzero"`
 	SourceShipmentMoveID pulid.ID      `json:"sourceShipmentMoveId" bun:"source_shipment_move_id,type:VARCHAR(100),nullzero"`
 	SourceAssignmentID   pulid.ID      `json:"sourceAssignmentId"   bun:"source_assignment_id,type:VARCHAR(100),nullzero"`
-	IsCurrent            bool          `json:"isCurrent"            bun:"is_current,type:BOOLEAN,notnull,default:true"`
+	IsCurrent            bool          `json:"isCurrent"            bun:"is_current,type:BOOLEAN,notnull"`
 	SupersededAt         *int64        `json:"supersededAt"         bun:"superseded_at,type:BIGINT,nullzero"`
 	Version              int64         `json:"version"              bun:"version,type:BIGINT"`
 	CreatedAt            int64         `json:"createdAt"            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

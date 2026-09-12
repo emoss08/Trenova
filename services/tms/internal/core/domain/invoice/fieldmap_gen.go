@@ -32,16 +32,16 @@ func (e *EmailAttemptAttachment) GetStaticFieldMap() map[string]string {
 	return buncolgen.EmailAttemptAttachmentFieldMap
 }
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InoviceLine].
-// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InoviceLineFieldMap] instead of parsing struct tags via reflection.
-func (e *InoviceLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.InoviceLineFieldMap
-}
-
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Invoice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.InvoiceFieldMap] instead of parsing struct tags via reflection.
 func (e *Invoice) GetStaticFieldMap() map[string]string {
 	return buncolgen.InvoiceFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceLine].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.InvoiceLineFieldMap] instead of parsing struct tags via reflection.
+func (e *InvoiceLine) GetStaticFieldMap() map[string]string {
+	return buncolgen.InvoiceLineFieldMap
 }

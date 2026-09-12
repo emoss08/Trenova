@@ -44,7 +44,7 @@ type RateMatrixCell struct {
 
 	Value           decimal.Decimal     `json:"value"           bun:"value,type:NUMERIC(19,6),notnull"`
 	MinCharge       decimal.NullDecimal `json:"minCharge"       bun:"min_charge,type:NUMERIC(19,4),nullzero"`
-	DeficitEligible bool                `json:"deficitEligible" bun:"deficit_eligible,type:BOOLEAN,notnull,default:true"`
+	DeficitEligible bool                `json:"deficitEligible" bun:"deficit_eligible,type:BOOLEAN,notnull"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

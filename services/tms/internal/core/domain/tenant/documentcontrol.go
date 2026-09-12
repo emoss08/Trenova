@@ -25,16 +25,16 @@ type DocumentControl struct {
 	ID                              pulid.ID `json:"id"                              bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID                  pulid.ID `json:"businessUnitId"                  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID                  pulid.ID `json:"organizationId"                  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull,default:true"`
-	EnableOCR                       bool     `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull,default:true"`
-	EnableAutoClassification        bool     `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull,default:true"`
-	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull,default:true"`
-	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull,default:true"`
-	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull,default:true"`
+	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"      bun:"enable_document_intelligence,type:BOOLEAN,notnull"`
+	EnableOCR                       bool     `json:"enableOcr"                       bun:"enable_ocr,type:BOOLEAN,notnull"`
+	EnableAutoClassification        bool     `json:"enableAutoClassification"        bun:"enable_auto_classification,type:BOOLEAN,notnull"`
+	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull"`
+	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull"`
+	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull"`
 	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull"`
 	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
 	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
-	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull,default:true"`
+	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
 	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
 	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

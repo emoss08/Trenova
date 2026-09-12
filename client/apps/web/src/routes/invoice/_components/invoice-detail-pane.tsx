@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
@@ -28,7 +27,6 @@ import { apiService } from "@/services/api";
 import type {
   Invoice,
   InvoiceEmailAttempt,
-  InvoiceLineType,
   InvoiceSendPlan,
   InvoiceSendStatus,
 } from "@trenova/shared/types/invoice";
@@ -47,6 +45,7 @@ import { lazy, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
+import { InvoiceChargesTab } from "./invoice-charges-tab";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
 
 const ShipmentRouteMap = lazy(() =>
@@ -66,8 +65,6 @@ export default function InvoiceDetailPane({
   selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
-  const t = useT();
-
   const { data: invoice, isLoading } = useQuery({
     ...queries.invoice.get(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
@@ -98,8 +95,8 @@ export default function InvoiceDetailPane({
     return (
       <BillingDetailUnselected
         layout="tabs"
-        title={t("Nothing open")}
-        description={t("Pick an invoice from the list to review its charges, documents and what has been sent or paid.")}
+        title="Nothing open"
+        description="Pick an invoice from the list to review its charges, documents and what has been sent or paid."
       />
     );
   }
@@ -118,6 +115,9 @@ export default function InvoiceDetailPane({
   const shipment = invoice.shipment;
   const customer = invoice.customer;
   const totalAmount = Number(invoice.totalAmount ?? 0);
+  const billedShipmentCount = new Set(
+    (invoice.lines ?? []).map((line) => line.shipmentId).filter(Boolean),
+  ).size;
   const customerName = customer?.name ?? invoice.billToName;
   const isCurrentVersion =
     !invoice.correctionGroupId ||
@@ -135,12 +135,12 @@ export default function InvoiceDetailPane({
             {invoice.status === "Posted" ? (
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                 <CheckIcon className="size-3.5 text-green-600" />
-                {t("Posted")}
+                Posted
               </span>
             ) : (
               <Button size="sm" onClick={() => postInvoice(invoice.id)} disabled={isPosting}>
                 <SendIcon className="size-3.5" />
-                {t("Post Invoice")}
+                Post Invoice
               </Button>
             )}
             <InvoiceAdjustmentPanel invoice={invoice} />
@@ -155,14 +155,19 @@ export default function InvoiceDetailPane({
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-          <MetadataCell label={t("Invoice Date")} value={formatUnixDate(invoice.invoiceDate)} />
-          <MetadataCell label={t("Due Date")} value={formatUnixDate(invoice.dueDate)} />
-          <MetadataCell label={t("Payment Terms")} value={invoice.paymentTerm} />
-          <MetadataCell label={t("Bill Type")} value={invoice.billType} />
-          {invoice.shipmentProNumber ? (
-            <MetadataCell label={t("PRO Number")} value={invoice.shipmentProNumber} />
+          <MetadataCell label="Invoice Date" value={formatUnixDate(invoice.invoiceDate)} />
+          <MetadataCell label="Due Date" value={formatUnixDate(invoice.dueDate)} />
+          <MetadataCell label="Payment Terms" value={invoice.paymentTerm} />
+          <MetadataCell label="Bill Type" value={invoice.billType} />
+          {billedShipmentCount > 1 ? (
+            <MetadataCell label="Shipments" value={String(billedShipmentCount)} />
           ) : null}
-          {invoice.shipmentBol ? <MetadataCell label={t("BOL")} value={invoice.shipmentBol} /> : null}
+          {billedShipmentCount <= 1 && invoice.shipmentProNumber ? (
+            <MetadataCell label="PRO Number" value={invoice.shipmentProNumber} />
+          ) : null}
+          {billedShipmentCount <= 1 && invoice.shipmentBol ? (
+            <MetadataCell label="BOL" value={invoice.shipmentBol} />
+          ) : null}
         </div>
       </div>
 
@@ -174,11 +179,11 @@ export default function InvoiceDetailPane({
 
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
         <TabsList variant="underline" className="border-border w-full border-b">
-          <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
-          <TabsTrigger value="delivery">{t("Delivery")}</TabsTrigger>
-          <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
-          <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
-          <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="delivery">Delivery</TabsTrigger>
+          <TabsTrigger value="charges">Charges</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 min-h-0 flex-1">
@@ -196,76 +201,7 @@ export default function InvoiceDetailPane({
         </TabsContent>
 
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <div className="border-border overflow-hidden rounded-xl border">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-muted-foreground text-left">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">{t("Line")}</th>
-                      <th className="px-4 py-3 font-medium">{t("Description")}</th>
-                      <th className="px-4 py-3 font-medium">{t("Type")}</th>
-                      <th className="px-4 py-3 text-right font-medium">{t("Quantity")}</th>
-                      <th className="px-4 py-3 text-right font-medium">{t("Unit Price")}</th>
-                      <th className="px-4 py-3 text-right font-medium">{t("Amount")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.lines.map((line) => (
-                      <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
-                        <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
-                        <td className="px-4 py-3">{t(line.description)}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant={LINE_TYPE_VARIANTS[line.type]}>{line.type}</Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {Number(line.quantity ?? 0)}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {formatCurrency(Number(line.unitPrice ?? 0), invoice.currencyCode)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium tabular-nums">
-                          {formatCurrency(Number(line.amount ?? 0), invoice.currencyCode)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-muted/30 border-t">
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
-                      >
-                        {t("Subtotal")}
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-sm tabular-nums">
-                        {formatCurrency(Number(invoice.subtotalAmount ?? 0), invoice.currencyCode)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
-                      >
-                        {t("Other Charges")}
-                      </td>
-                      <td className="px-4 py-2.5 text-right text-sm tabular-nums">
-                        {formatCurrency(Number(invoice.otherAmount ?? 0), invoice.currencyCode)}
-                      </td>
-                    </tr>
-                    <tr className="border-t">
-                      <td colSpan={5} className="px-4 py-3 text-right text-sm font-semibold">
-                        {t("Total")}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm font-bold tabular-nums">
-                        {formatCurrency(totalAmount, invoice.currencyCode)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-          </ScrollArea>
+          <InvoiceChargesTab invoice={invoice} />
         </TabsContent>
         <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
           <div className="flex h-full flex-col">
@@ -281,8 +217,8 @@ export default function InvoiceDetailPane({
               ) : (
                 <div className="flex h-full items-center justify-center p-6">
                   <EmptyState
-                    title={t("No shipment documents available")}
-                    description={t("This invoice does not currently have shipment context loaded for document review.")}
+                    title="No shipment documents available"
+                    description="This invoice does not currently have shipment context loaded for document review."
                     icons={[FileTextIcon, ReceiptTextIcon, PackageCheckIcon]}
                     className="max-w-xl border-none p-8 shadow-none"
                   />
@@ -304,8 +240,6 @@ export default function InvoiceDetailPane({
 }
 
 function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
-  const t = useT();
-
   const queryClient = useQueryClient();
   const sendPlanQuery = useQuery(queries.invoice.sendPlan(invoice.id));
 
@@ -323,7 +257,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
       invalidateInvoiceDelivery();
       toast.success(`${invoice.number} PDF generation started`);
     },
-    onError: () => toast.error(t("Failed to generate invoice PDF")),
+    onError: () => toast.error("Failed to generate invoice PDF"),
   });
 
   const sendMutation = useMutation({
@@ -366,20 +300,20 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold">{t("Email Delivery")}</h3>
+                  <h3 className="text-sm font-semibold">Email Delivery</h3>
                   <Badge variant={SEND_STATUS_VARIANTS[invoice.sendStatus ?? "NotSent"]}>
-                    {invoice.sendStatus ?? t("NotSent")}
+                    {invoice.sendStatus ?? "NotSent"}
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  {invoice.sentAt ? t("Last sent {0}", formatUnixDate(invoice.sentAt)) : t("Not sent yet")}
+                  {invoice.sentAt ? `Last sent ${formatUnixDate(invoice.sentAt)}` : "Not sent yet"}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {hasGeneratedPDF ? (
                   <Button size="sm" variant="outline" onClick={() => void reprintPDF()}>
                     <DownloadIcon className="size-3.5" />
-                    {t("Reprint")}
+                    Reprint
                   </Button>
                 ) : null}
                 <Button
@@ -401,7 +335,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                           disabled={!canSend || sendMutation.isPending}
                         >
                           <MailIcon className="size-3.5" />
-                          {invoice.sendStatus === "Sent" ? t("Resend") : t("Send")}
+                          {invoice.sendStatus === "Sent" ? "Resend" : "Send"}
                         </Button>
                       </span>
                     }
@@ -423,7 +357,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
           </div>
 
           <div className="border-border rounded-md border p-4">
-            <h3 className="text-sm font-semibold">{t("Send Plan")}</h3>
+            <h3 className="text-sm font-semibold">Send Plan</h3>
             {sendPlanQuery.isLoading ? (
               <Skeleton className="mt-3 h-24 w-full" />
             ) : sendPlan ? (
@@ -439,7 +373,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                 <DeliveryPackageList parts={sendPlan.parts} />
               </div>
             ) : (
-              <p className="text-muted-foreground mt-2 text-sm">{t("Send plan unavailable.")}</p>
+              <p className="text-muted-foreground mt-2 text-sm">Send plan unavailable.</p>
             )}
           </div>
         </div>
@@ -451,24 +385,22 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
 }
 
 function SendPlanSummary({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
-  const t = useT();
-
   const attachmentCount = getSendPlanAttachmentCount(sendPlan);
   const linkCount = getSendPlanLinkCount(sendPlan);
 
   return (
     <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-      <SendPlanSummaryCell label={t("To recipients")}>
+      <SendPlanSummaryCell label="To recipients">
         <RecipientPreview recipients={sendPlan.recipients.to} />
       </SendPlanSummaryCell>
-      <SendPlanSummaryCell label={t("Provider limit")}>
+      <SendPlanSummaryCell label="Provider limit">
         {formatFileSize(sendPlan.providerLimitBytes)}
       </SendPlanSummaryCell>
-      <SendPlanSummaryCell label={t("Body size")}>
+      <SendPlanSummaryCell label="Body size">
         {formatFileSize(sendPlan.estimatedBodyBytes)}
       </SendPlanSummaryCell>
       <SendPlanSummaryCell
-        label={t("Email parts")}
+        label="Email parts"
         detail={formatPackageBreakdown(attachmentCount, linkCount)}
       >
         {formatCount(sendPlan.parts.length, "part")}
@@ -496,10 +428,8 @@ function SendPlanSummaryCell({
 }
 
 function RecipientPreview({ recipients }: { recipients: string[] }) {
-  const t = useT();
-
   if (recipients.length === 0) {
-    return <span className="text-muted-foreground">{t("No recipients")}</span>;
+    return <span className="text-muted-foreground">No recipients</span>;
   }
 
   if (recipients.length === 1) {
@@ -519,7 +449,7 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
               className="focus-visible:ring-ring shrink-0 rounded-sm text-xs font-medium text-blue-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none dark:text-blue-400"
               aria-label={`Show ${recipients.length} To recipients`}
             >
-              {t("+{0} more", remainingCount)}
+              +{remainingCount} more
             </button>
           }
         />
@@ -530,11 +460,9 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
 }
 
 function RecipientHoverList({ recipients }: { recipients: string[] }) {
-  const t = useT();
-
   return (
     <HoverCardContent side="top" align="start" className="w-80 max-w-[calc(100vw-2rem)] p-3">
-      <p className="text-muted-foreground text-xs font-medium">{t("To recipients")}</p>
+      <p className="text-muted-foreground text-xs font-medium">To recipients</p>
       <ul className="mt-2 max-h-60 space-y-1 overflow-y-auto text-sm">
         {recipients.map((recipient, index) => (
           <li
@@ -550,33 +478,31 @@ function RecipientHoverList({ recipients }: { recipients: string[] }) {
 }
 
 function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
-  const t = useT();
-
   return (
     <div className="bg-muted/20 rounded-md border p-3">
       <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         <span className="min-w-0">
-          {t("From")}{" "}
+          From{" "}
           <span className="text-foreground font-medium">
-            {sendPlan.fromEmail || t("Assigned profile")}
+            {sendPlan.fromEmail || "Assigned profile"}
           </span>
         </span>
         <span className="flex items-center gap-1.5">
-          {t("Read receipt")}
+          Read receipt
           <Badge variant={sendPlan.openTracking ? "active" : "outline"}>
-            {sendPlan.openTracking ? t("Enabled") : t("Disabled")}
+            {sendPlan.openTracking ? "Enabled" : "Disabled"}
           </Badge>
         </span>
       </div>
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
-          <p className="text-muted-foreground text-xs font-medium">{t("Subject")}</p>
-          <p className="truncate text-sm font-semibold">{sendPlan.subject || t("No subject")}</p>
+          <p className="text-muted-foreground text-xs font-medium">Subject</p>
+          <p className="truncate text-sm font-semibold">{sendPlan.subject || "No subject"}</p>
         </div>
         <div>
-          <p className="text-muted-foreground text-xs font-medium">{t("Body")}</p>
+          <p className="text-muted-foreground text-xs font-medium">Body</p>
           <p className="text-muted-foreground line-clamp-4 text-sm whitespace-pre-line">
-            {sendPlan.body || t("No body content")}
+            {sendPlan.body || "No body content"}
           </p>
         </div>
       </div>
@@ -585,12 +511,10 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
 }
 
 function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
-  const t = useT();
-
   if (parts.length === 0) {
     return (
       <div className="bg-muted/20 text-muted-foreground rounded-md border p-3 text-sm">
-        {t("No delivery package parts.")}
+        No delivery package parts.
       </div>
     );
   }
@@ -604,7 +528,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
           <div key={part.partNumber} className="bg-muted/20 rounded-md border p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="text-sm font-semibold">{t("Part {0}", part.partNumber)}</span>
+                <span className="text-sm font-semibold">Part {part.partNumber}</span>
                 <Badge variant="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
@@ -650,7 +574,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
               </div>
             ) : (
               <p className="text-muted-foreground mt-3 text-xs">
-                {t("No attachments or links in this part.")}
+                No attachments or links in this part.
               </p>
             )}
           </div>
@@ -707,8 +631,6 @@ function formatCount(count: number, singular: string): string {
 }
 
 function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
-  const t = useT();
-
   const queryKey = queries.invoice.emailAttempts(invoiceId).queryKey;
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -758,7 +680,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
 
   return (
     <div className="border-border flex min-h-[20rem] flex-col rounded-md border p-4 lg:h-full lg:min-h-0">
-      <h3 className="text-sm font-semibold">{t("Send History")}</h3>
+      <h3 className="text-sm font-semibold">Send History</h3>
       <ScrollArea className="mt-3 min-h-0 flex-1" viewportClassName="pr-2">
         {query.isLoading ? (
           <div className="space-y-3">
@@ -768,10 +690,10 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
           </div>
         ) : query.isError ? (
           <p className="rounded-md border border-red-600/30 bg-red-600/10 p-3 text-sm text-red-700 dark:text-red-400">
-            {t("Send history could not be loaded.")}
+            Send history could not be loaded.
           </p>
         ) : attempts.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("No email attempts recorded.")}</p>
+          <p className="text-muted-foreground text-sm">No email attempts recorded.</p>
         ) : (
           <div className="space-y-3">
             {attempts.map((attempt) => (
@@ -780,7 +702,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
             {query.isFetchingNextPage ? (
               <div className="flex items-center justify-center py-4">
                 <TextShimmer className="font-mono text-sm" duration={1}>
-                  {t("Loading more...")}
+                  Loading more...
                 </TextShimmer>
               </div>
             ) : null}
@@ -793,8 +715,6 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
 }
 
 function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
-  const t = useT();
-
   const status = invoiceAttemptDisplayStatus(attempt);
   const error = invoiceAttemptDisplayError(attempt);
   const sentAt = attempt.email?.sentAt ?? attempt.sentAt;
@@ -806,7 +726,7 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
       <div className="flex items-center justify-between gap-2">
         <Badge variant={SEND_STATUS_VARIANTS[status]}>{status}</Badge>
         <span className="text-muted-foreground text-xs">
-          {t("Part {0} of {1}", attempt.partNumber, attempt.totalParts)}
+          Part {attempt.partNumber} of {attempt.totalParts}
         </span>
       </div>
       <p className="mt-2 truncate text-sm font-medium">{attempt.subject}</p>
@@ -814,12 +734,12 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
         {sentAt
           ? formatUnixDate(sentAt)
           : failedAt
-            ? t("Failed {0}", formatUnixDate(failedAt))
-            : t("Not sent")}
+            ? `Failed ${formatUnixDate(failedAt)}`
+            : "Not sent"}
       </p>
       {providerMessageId ? (
         <p className="text-muted-foreground mt-1 truncate text-xs">
-          {t("Provider ID: {0}", providerMessageId)}
+          Provider ID: {providerMessageId}
         </p>
       ) : null}
       {error ? <DeliveryNotice tone="error" message={error} /> : null}
@@ -897,11 +817,6 @@ function MetadataCell({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-const LINE_TYPE_VARIANTS: Record<InvoiceLineType, BadgeVariant> = {
-  Freight: "info",
-  Accessorial: "purple",
-};
 
 const SEND_STATUS_VARIANTS: Record<InvoiceSendStatus, BadgeVariant> = {
   NotSent: "outline",

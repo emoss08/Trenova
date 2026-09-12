@@ -12,6 +12,10 @@ import (
 type CreateInvoiceFromBillingQueueRequest struct {
 	BillingQueueItemID pulid.ID
 	TenantInfo         pagination.TenantInfo
+	// OffCycleReason acknowledges billing this item on its own for a customer whose
+	// freight was supposed to accumulate onto a periodic statement. See
+	// CreateInvoiceFromShipmentsRequest.
+	OffCycleReason string
 }
 
 type CreateInvoiceFromBillingQueueResult struct {
@@ -28,6 +32,12 @@ type PostInvoiceRequest struct {
 type CreateInvoiceFromShipmentsRequest struct {
 	ShipmentIDs []pulid.ID
 	TenantInfo  pagination.TenantInfo
+	// OffCycleReason acknowledges that this customer's freight was supposed to
+	// accumulate onto a periodic statement. Required only for those customers, and
+	// only because taking freight off a statement without a record is how a
+	// customer ends up with an invoice they were not expecting and nobody can
+	// explain. Ignored for everyone else.
+	OffCycleReason string
 }
 
 type CreateInvoiceFromOrderRequest struct {
@@ -36,6 +46,10 @@ type CreateInvoiceFromOrderRequest struct {
 	// order's billable legs. Empty means every billable leg.
 	ShipmentIDs []pulid.ID
 	TenantInfo  pagination.TenantInfo
+	// OffCycleReason acknowledges billing this order on its own for a customer whose
+	// freight was supposed to accumulate onto a periodic statement. See
+	// CreateInvoiceFromShipmentsRequest.
+	OffCycleReason string
 }
 
 type UpdateInvoiceDraftRequest struct {

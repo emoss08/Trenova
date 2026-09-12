@@ -183,7 +183,7 @@ type TrainingCourse struct {
 	IsRequired              bool                `json:"isRequired"              bun:"is_required,type:BOOLEAN,notnull"`
 	RequiredForDriverTypes  []DriverType        `json:"requiredForDriverTypes"  bun:"required_for_driver_types,type:JSONB,notnull,default:'[]'"`
 	DueDaysAfterAssignment  int32               `json:"dueDaysAfterAssignment"  bun:"due_days_after_assignment,type:INTEGER,notnull,default:30"`
-	RequiresAcknowledgement bool                `json:"requiresAcknowledgement" bun:"requires_acknowledgement,type:BOOLEAN,notnull,default:true"`
+	RequiresAcknowledgement bool                `json:"requiresAcknowledgement" bun:"requires_acknowledgement,type:BOOLEAN,notnull"`
 	SortOrder               int32               `json:"sortOrder"               bun:"sort_order,type:INTEGER,notnull"`
 	Version                 int64               `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -150,10 +150,20 @@ func (f *fixture) insertCompletedMove(
 	return move
 }
 
-func row(country, code string, distance float64) *shipment.ShipmentMoveJurisdictionMile {
+// row mirrors what buildJurisdictionMiles produces, sequence included: the
+// column carries the order the truck crossed the jurisdictions, and
+// ListByMoveIDs orders by it before falling back to the code. Rows left at a
+// shared sequence would come back alphabetically and say nothing about the
+// ordering the reader depends on.
+func row(
+	country, code string,
+	sequence int,
+	distance float64,
+) *shipment.ShipmentMoveJurisdictionMile {
 	return &shipment.ShipmentMoveJurisdictionMile{
 		CountryCode:      country,
 		JurisdictionCode: code,
+		Sequence:         sequence,
 		Distance:         distance,
 		DistanceUnits:    shipment.JurisdictionDistanceUnitsMiles,
 		Loaded:           true,
@@ -167,8 +177,8 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 	move := f.insertCompletedMove(t, 150, completedAt)
 
 	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{
-		row("US", "TX", 100),
-		row("US", "OK", 50),
+		row("US", "TX", 0, 100),
+		row("US", "OK", 1, 50),
 	}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 	assert.False(t, move.JurisdictionMilesDirty)
@@ -185,7 +195,7 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 	assert.Equal(t, f.tenantInfo.OrgID, rows[0].OrganizationID)
 	assert.False(t, rows[0].ID.IsNil())
 
-	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "NM", 30)}
+	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "NM", 0, 30)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
 	rows, err = f.repo.ListByMoveIDs(f.ctx, repositories.ListJurisdictionMilesByMoveIDsRequest{
@@ -210,7 +220,7 @@ func TestReplaceForMoveReplacesRows(t *testing.T) {
 func TestListByMoveIDsIsTenantIsolated(t *testing.T) {
 	f := setup(t)
 	move := f.insertCompletedMove(t, 150, completedAt)
-	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 150)}
+	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 0, 150)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
 	rows, err := f.repo.ListByMoveIDs(f.ctx, repositories.ListJurisdictionMilesByMoveIDsRequest{
@@ -273,7 +283,7 @@ func TestListUnattributedMovesCountsCompletedMovesInPeriod(t *testing.T) {
 	assert.Empty(t, otherTenant.MoveIDs)
 	assert.Equal(t, 0, otherTenant.TotalMoves)
 
-	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 120)}
+	move.JurisdictionMiles = []*shipment.ShipmentMoveJurisdictionMile{row("US", "TX", 0, 120)}
 	require.NoError(t, f.repo.ReplaceForMove(f.ctx, move))
 
 	attributed, err := f.repo.ListUnattributedMoves(f.ctx, repositories.UnattributedMovesRequest{

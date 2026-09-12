@@ -205,7 +205,7 @@ func (r *repository) ListImportRows(
 					Where(cols.ImportBatchID.Eq(), req.BatchID).
 					Where(cols.ID.Eq(), cursor.ID)
 			})
-		q = q.Where(buncolgen.Expr("({0}, {1}) > ?", cols.RowNumber, cols.ID), anchor)
+		q = q.Where(buncolgen.Expr("({0}, {1}) > (?)", cols.RowNumber, cols.ID), anchor)
 	}
 
 	err = q.Order(cols.RowNumber.OrderAsc()).

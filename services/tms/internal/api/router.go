@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
@@ -237,6 +238,7 @@ type RouterParams struct {
 	DetentionHandler                *detentionhandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
+	InvoiceRunHandler               *invoicerunhandler.Handler
 	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
 	JournalEntryHandler             *journalentryhandler.Handler
 	JournalReversalHandler          *journalreversalhandler.Handler
@@ -362,6 +364,7 @@ type Router struct {
 	detentionHandler                *detentionhandler.Handler
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
+	invoiceRunHandler               *invoicerunhandler.Handler
 	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
 	journalEntryHandler             *journalentryhandler.Handler
 	journalReversalHandler          *journalreversalhandler.Handler
@@ -489,6 +492,7 @@ func NewRouter(p RouterParams) *Router {
 		detentionHandler:                p.DetentionHandler,
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
+		invoiceRunHandler:               p.InvoiceRunHandler,
 		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
 		journalEntryHandler:             p.JournalEntryHandler,
 		journalReversalHandler:          p.JournalReversalHandler,
@@ -684,6 +688,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.detentionHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
+	r.invoiceRunHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentHandler.RegisterRoutes(protected)
 	r.journalEntryHandler.RegisterRoutes(protected)
 	r.journalReversalHandler.RegisterRoutes(protected)

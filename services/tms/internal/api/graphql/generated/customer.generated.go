@@ -23,12 +23,19 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type CustomerBillingProfileResolver interface {
+	BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error)
 	BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error)
+
+	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
 
+	InvoiceMethod(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceMethod, error)
+
+	AllowInvoiceConsolidation(ctx context.Context, obj *customer.CustomerBillingProfile) (bool, error)
 	ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
+	ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error)
 
 	InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 
@@ -811,18 +818,18 @@ func (ec *executionContext) _CustomerBillingProfile_billingCycleType(ctx context
 			return ec.fieldContext_CustomerBillingProfile_billingCycleType(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.BillingCycleType, nil
+			return ec.Resolvers.CustomerBillingProfile().BillingCycleType(ctx, obj)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v customer.BillingCycleType) graphql.Marshaler {
-			return ec.marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycleType(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.CustomerBillingCycleType) graphql.Marshaler {
+			return ec.marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingCycleType(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_billingCycleType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerBillingCycleType does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type CustomerBillingCycleType does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_billingCycleDayOfWeek(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -846,6 +853,259 @@ func (ec *executionContext) _CustomerBillingProfile_billingCycleDayOfWeek(ctx co
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_billingCycleDayOfWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_invoiceDelivery(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_invoiceDelivery(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InvoiceDelivery, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceDelivery) graphql.Marshaler {
+			return ec.marshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDelivery(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_invoiceDelivery(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerInvoiceDelivery does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_billingCycle(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_billingCycle(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingCycle, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customer.BillingCycle) graphql.Marshaler {
+			return ec.marshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycle(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_billingCycle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerBillingCycle does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_billingCycleAnchorDay(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_billingCycleAnchorDay(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingCycleAnchorDay, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_billingCycleAnchorDay(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_billingCycleTimezone(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_billingCycleTimezone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingCycleTimezone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_billingCycleTimezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_lastBilledPeriodEnd(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_lastBilledPeriodEnd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastBilledPeriodEnd, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_lastBilledPeriodEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_splitBy(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_splitBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SplitBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceSplitKey) graphql.Marshaler {
+			return ec.marshalNInvoiceSplitKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSplitKey(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_splitBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type InvoiceSplitKey does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_sectionBy(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_sectionBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SectionBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceSectionKey) graphql.Marshaler {
+			return ec.marshalNInvoiceSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSectionKey(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_sectionBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type InvoiceSectionKey does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_invoiceDetail(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_invoiceDetail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InvoiceDetail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceDetail) graphql.Marshaler {
+			return ec.marshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDetail(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_invoiceDetail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type InvoiceDetail does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_consolidationLookbackDays(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_consolidationLookbackDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConsolidationLookbackDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_consolidationLookbackDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_minConsolidatedAmount(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_minConsolidatedAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CustomerBillingProfile().MinConsolidatedAmount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalODecimal2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_minConsolidatedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_maxShipmentsPerInvoice(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_maxShipmentsPerInvoice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxShipmentsPerInvoice, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_maxShipmentsPerInvoice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_paymentTerm(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -1041,18 +1301,18 @@ func (ec *executionContext) _CustomerBillingProfile_invoiceMethod(ctx context.Co
 			return ec.fieldContext_CustomerBillingProfile_invoiceMethod(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.InvoiceMethod, nil
+			return ec.Resolvers.CustomerBillingProfile().InvoiceMethod(ctx, obj)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceMethod) graphql.Marshaler {
-			return ec.marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceMethod(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.CustomerInvoiceMethod) graphql.Marshaler {
+			return ec.marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceMethod(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_invoiceMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerInvoiceMethod does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type CustomerInvoiceMethod does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_autoSendInvoiceOnGeneration(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -1087,7 +1347,7 @@ func (ec *executionContext) _CustomerBillingProfile_allowInvoiceConsolidation(ct
 			return ec.fieldContext_CustomerBillingProfile_allowInvoiceConsolidation(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.AllowInvoiceConsolidation, nil
+			return ec.Resolvers.CustomerBillingProfile().AllowInvoiceConsolidation(ctx, obj)
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
@@ -1098,7 +1358,7 @@ func (ec *executionContext) _CustomerBillingProfile_allowInvoiceConsolidation(ct
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_allowInvoiceConsolidation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_consolidationPeriodDays(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -1133,18 +1393,18 @@ func (ec *executionContext) _CustomerBillingProfile_consolidationGroupBy(ctx con
 			return ec.fieldContext_CustomerBillingProfile_consolidationGroupBy(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ConsolidationGroupBy, nil
+			return ec.Resolvers.CustomerBillingProfile().ConsolidationGroupBy(ctx, obj)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v customer.ConsolidationGroupBy) graphql.Marshaler {
-			return ec.marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐConsolidationGroupBy(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.CustomerConsolidationGroupBy) graphql.Marshaler {
+			return ec.marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConsolidationGroupBy(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_consolidationGroupBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerConsolidationGroupBy does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type CustomerConsolidationGroupBy does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_invoiceNumberFormat(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -2569,10 +2829,43 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "billingCycleType":
-			out.Values[i] = ec._CustomerBillingProfile_billingCycleType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_billingCycleType(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "billingCycleDayOfWeek":
 			field := field
 
@@ -2611,6 +2904,94 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "invoiceDelivery":
+			out.Values[i] = ec._CustomerBillingProfile_invoiceDelivery(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "billingCycle":
+			out.Values[i] = ec._CustomerBillingProfile_billingCycle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "billingCycleAnchorDay":
+			out.Values[i] = ec._CustomerBillingProfile_billingCycleAnchorDay(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "billingCycleTimezone":
+			out.Values[i] = ec._CustomerBillingProfile_billingCycleTimezone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lastBilledPeriodEnd":
+			out.Values[i] = ec._CustomerBillingProfile_lastBilledPeriodEnd(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "splitBy":
+			out.Values[i] = ec._CustomerBillingProfile_splitBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sectionBy":
+			out.Values[i] = ec._CustomerBillingProfile_sectionBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "invoiceDetail":
+			out.Values[i] = ec._CustomerBillingProfile_invoiceDetail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "consolidationLookbackDays":
+			out.Values[i] = ec._CustomerBillingProfile_consolidationLookbackDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "minConsolidatedAmount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_minConsolidatedAmount(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "maxShipmentsPerInvoice":
+			out.Values[i] = ec._CustomerBillingProfile_maxShipmentsPerInvoice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "paymentTerm":
 			out.Values[i] = ec._CustomerBillingProfile_paymentTerm(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2718,20 +3099,86 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "invoiceMethod":
-			out.Values[i] = ec._CustomerBillingProfile_invoiceMethod(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_invoiceMethod(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "autoSendInvoiceOnGeneration":
 			out.Values[i] = ec._CustomerBillingProfile_autoSendInvoiceOnGeneration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "allowInvoiceConsolidation":
-			out.Values[i] = ec._CustomerBillingProfile_allowInvoiceConsolidation(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_allowInvoiceConsolidation(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "consolidationPeriodDays":
 			field := field
 
@@ -2771,10 +3218,43 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "consolidationGroupBy":
-			out.Values[i] = ec._CustomerBillingProfile_consolidationGroupBy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_consolidationGroupBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "invoiceNumberFormat":
 			out.Values[i] = ec._CustomerBillingProfile_invoiceNumberFormat(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3263,13 +3743,13 @@ func (ec *executionContext) marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return ec._Customer(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycleType(ctx context.Context, v any) (customer.BillingCycleType, error) {
+func (ec *executionContext) unmarshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycle(ctx context.Context, v any) (customer.BillingCycle, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := customer.BillingCycleType(tmp)
+	res := customer.BillingCycle(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycleType(ctx context.Context, sel ast.SelectionSet, v customer.BillingCycleType) graphql.Marshaler {
+func (ec *executionContext) marshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐBillingCycle(ctx context.Context, sel ast.SelectionSet, v customer.BillingCycle) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -3278,6 +3758,16 @@ func (ec *executionContext) marshalNCustomerBillingCycleType2githubᚗcomᚋemos
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingCycleType(ctx context.Context, v any) (gqlmodel.CustomerBillingCycleType, error) {
+	var res gqlmodel.CustomerBillingCycleType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCustomerBillingCycleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingCycleType(ctx context.Context, sel ast.SelectionSet, v gqlmodel.CustomerBillingCycleType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNCustomerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.CustomerConnection) graphql.Marshaler {
@@ -3290,21 +3780,14 @@ func (ec *executionContext) marshalNCustomerConnection2ᚖgithubᚗcomᚋemoss08
 	return ec._CustomerConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐConsolidationGroupBy(ctx context.Context, v any) (customer.ConsolidationGroupBy, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := customer.ConsolidationGroupBy(tmp)
+func (ec *executionContext) unmarshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConsolidationGroupBy(ctx context.Context, v any) (gqlmodel.CustomerConsolidationGroupBy, error) {
+	var res gqlmodel.CustomerConsolidationGroupBy
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐConsolidationGroupBy(ctx context.Context, sel ast.SelectionSet, v customer.ConsolidationGroupBy) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+func (ec *executionContext) marshalNCustomerConsolidationGroupBy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerConsolidationGroupBy(ctx context.Context, sel ast.SelectionSet, v gqlmodel.CustomerConsolidationGroupBy) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCreditStatus(ctx context.Context, v any) (customer.CreditStatus, error) {
@@ -3384,13 +3867,13 @@ func (ec *executionContext) marshalNCustomerInvoiceAdjustmentSupportingDocumentP
 	return res
 }
 
-func (ec *executionContext) unmarshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceMethod(ctx context.Context, v any) (customer.InvoiceMethod, error) {
+func (ec *executionContext) unmarshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDelivery(ctx context.Context, v any) (customer.InvoiceDelivery, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := customer.InvoiceMethod(tmp)
+	res := customer.InvoiceDelivery(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceMethod(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceMethod) graphql.Marshaler {
+func (ec *executionContext) marshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDelivery(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceDelivery) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -3399,6 +3882,16 @@ func (ec *executionContext) marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceMethod(ctx context.Context, v any) (gqlmodel.CustomerInvoiceMethod, error) {
+	var res gqlmodel.CustomerInvoiceMethod
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCustomerInvoiceMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceMethod(ctx context.Context, sel ast.SelectionSet, v gqlmodel.CustomerInvoiceMethod) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNCustomerInvoiceNumberFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceNumberFormat(ctx context.Context, v any) (customer.InvoiceNumberFormat, error) {
@@ -3425,6 +3918,57 @@ func (ec *executionContext) unmarshalNCustomerPaymentTerm2githubᚗcomᚋemoss08
 }
 
 func (ec *executionContext) marshalNCustomerPaymentTerm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐPaymentTerm(ctx context.Context, sel ast.SelectionSet, v customer.PaymentTerm) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDetail(ctx context.Context, v any) (customer.InvoiceDetail, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceDetail(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDetail(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceDetail) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInvoiceSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSectionKey(ctx context.Context, v any) (customer.InvoiceSectionKey, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceSectionKey(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInvoiceSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSectionKey(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceSectionKey) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInvoiceSplitKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSplitKey(ctx context.Context, v any) (customer.InvoiceSplitKey, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceSplitKey(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInvoiceSplitKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceSplitKey(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceSplitKey) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {

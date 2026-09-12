@@ -1350,11 +1350,15 @@ type ComplexityRoot struct {
 		AutoSendInvoiceOnGeneration               func(childComplexity int) int
 		AutoTransfer                              func(childComplexity int) int
 		BillingCurrency                           func(childComplexity int) int
+		BillingCycle                              func(childComplexity int) int
+		BillingCycleAnchorDay                     func(childComplexity int) int
 		BillingCycleDayOfWeek                     func(childComplexity int) int
+		BillingCycleTimezone                      func(childComplexity int) int
 		BillingCycleType                          func(childComplexity int) int
 		BillingNotes                              func(childComplexity int) int
 		BusinessUnitID                            func(childComplexity int) int
 		ConsolidationGroupBy                      func(childComplexity int) int
+		ConsolidationLookbackDays                 func(childComplexity int) int
 		ConsolidationPeriodDays                   func(childComplexity int) int
 		CountLateOnlyOnAppointmentStops           func(childComplexity int) int
 		CreatedAt                                 func(childComplexity int) int
@@ -1375,15 +1379,22 @@ type ComplexityRoot struct {
 		ID                                        func(childComplexity int) int
 		InvoiceAdjustmentSupportingDocumentPolicy func(childComplexity int) int
 		InvoiceCopies                             func(childComplexity int) int
+		InvoiceDelivery                           func(childComplexity int) int
+		InvoiceDetail                             func(childComplexity int) int
 		InvoiceMethod                             func(childComplexity int) int
 		InvoiceNumberFormat                       func(childComplexity int) int
+		LastBilledPeriodEnd                       func(childComplexity int) int
 		LateChargeRate                            func(childComplexity int) int
+		MaxShipmentsPerInvoice                    func(childComplexity int) int
+		MinConsolidatedAmount                     func(childComplexity int) int
 		OrganizationID                            func(childComplexity int) int
 		PaymentTerm                               func(childComplexity int) int
 		RequireBOLNumber                          func(childComplexity int) int
 		RequireDeliveryNumber                     func(childComplexity int) int
 		RequirePONumber                           func(childComplexity int) int
 		RevenueAccountID                          func(childComplexity int) int
+		SectionBy                                 func(childComplexity int) int
+		SplitBy                                   func(childComplexity int) int
 		TaxExempt                                 func(childComplexity int) int
 		TaxExemptNumber                           func(childComplexity int) int
 		UpdatedAt                                 func(childComplexity int) int
@@ -4251,6 +4262,7 @@ type ComplexityRoot struct {
 		CurrencyCode         func(childComplexity int) int
 		Customer             func(childComplexity int) int
 		CustomerID           func(childComplexity int) int
+		Detail               func(childComplexity int) int
 		DisputeStatus        func(childComplexity int) int
 		DueDate              func(childComplexity int) int
 		ID                   func(childComplexity int) int
@@ -4258,18 +4270,24 @@ type ComplexityRoot struct {
 		IsAdjustmentArtifact func(childComplexity int) int
 		Lines                func(childComplexity int) int
 		Number               func(childComplexity int) int
+		OffCycleReason       func(childComplexity int) int
 		Order                func(childComplexity int) int
 		OrderID              func(childComplexity int) int
 		OrderNumber          func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
 		OtherAmount          func(childComplexity int) int
 		PaymentTerm          func(childComplexity int) int
+		PeriodEnd            func(childComplexity int) int
+		PeriodStart          func(childComplexity int) int
 		PostedAt             func(childComplexity int) int
+		Scope                func(childComplexity int) int
+		SectionBy            func(childComplexity int) int
 		SendStatus           func(childComplexity int) int
 		SentAt               func(childComplexity int) int
 		ServiceDate          func(childComplexity int) int
 		SettlementStatus     func(childComplexity int) int
 		ShipmentBOL          func(childComplexity int) int
+		ShipmentCount        func(childComplexity int) int
 		ShipmentID           func(childComplexity int) int
 		ShipmentProNumber    func(childComplexity int) int
 		Status               func(childComplexity int) int
@@ -4751,8 +4769,8 @@ type ComplexityRoot struct {
 		CreateFuelSurchargeProgram            func(childComplexity int, input gqlmodel.FuelSurchargeProgramInput) int
 		CreateHomeLayoutPreset                func(childComplexity int, input gqlmodel.SaveHomeLayoutPresetInput) int
 		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
-		CreateInvoiceFromOrder                func(childComplexity int, orderID string) int
-		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string) int
+		CreateInvoiceFromOrder                func(childComplexity int, orderID string, offCycleReason *string) int
+		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string, offCycleReason *string) int
 		CreateJobPosition                     func(childComplexity int, input gqlmodel.JobPositionInput) int
 		CreateMyLoadComment                   func(childComplexity int, input gqlmodel.CreateMyLoadCommentInput) int
 		CreateOrder                           func(childComplexity int, input gqlmodel.OrderInput) int
@@ -15367,12 +15385,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.BillingCurrency(childComplexity), true
+	case "CustomerBillingProfile.billingCycle":
+		if e.ComplexityRoot.CustomerBillingProfile.BillingCycle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.BillingCycle(childComplexity), true
+	case "CustomerBillingProfile.billingCycleAnchorDay":
+		if e.ComplexityRoot.CustomerBillingProfile.BillingCycleAnchorDay == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.BillingCycleAnchorDay(childComplexity), true
 	case "CustomerBillingProfile.billingCycleDayOfWeek":
 		if e.ComplexityRoot.CustomerBillingProfile.BillingCycleDayOfWeek == nil {
 			break
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.BillingCycleDayOfWeek(childComplexity), true
+	case "CustomerBillingProfile.billingCycleTimezone":
+		if e.ComplexityRoot.CustomerBillingProfile.BillingCycleTimezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.BillingCycleTimezone(childComplexity), true
 	case "CustomerBillingProfile.billingCycleType":
 		if e.ComplexityRoot.CustomerBillingProfile.BillingCycleType == nil {
 			break
@@ -15397,6 +15433,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.ConsolidationGroupBy(childComplexity), true
+	case "CustomerBillingProfile.consolidationLookbackDays":
+		if e.ComplexityRoot.CustomerBillingProfile.ConsolidationLookbackDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.ConsolidationLookbackDays(childComplexity), true
 	case "CustomerBillingProfile.consolidationPeriodDays":
 		if e.ComplexityRoot.CustomerBillingProfile.ConsolidationPeriodDays == nil {
 			break
@@ -15517,6 +15559,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.InvoiceCopies(childComplexity), true
+	case "CustomerBillingProfile.invoiceDelivery":
+		if e.ComplexityRoot.CustomerBillingProfile.InvoiceDelivery == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.InvoiceDelivery(childComplexity), true
+	case "CustomerBillingProfile.invoiceDetail":
+		if e.ComplexityRoot.CustomerBillingProfile.InvoiceDetail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.InvoiceDetail(childComplexity), true
 	case "CustomerBillingProfile.invoiceMethod":
 		if e.ComplexityRoot.CustomerBillingProfile.InvoiceMethod == nil {
 			break
@@ -15529,12 +15583,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.InvoiceNumberFormat(childComplexity), true
+	case "CustomerBillingProfile.lastBilledPeriodEnd":
+		if e.ComplexityRoot.CustomerBillingProfile.LastBilledPeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.LastBilledPeriodEnd(childComplexity), true
 	case "CustomerBillingProfile.lateChargeRate":
 		if e.ComplexityRoot.CustomerBillingProfile.LateChargeRate == nil {
 			break
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.LateChargeRate(childComplexity), true
+	case "CustomerBillingProfile.maxShipmentsPerInvoice":
+		if e.ComplexityRoot.CustomerBillingProfile.MaxShipmentsPerInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.MaxShipmentsPerInvoice(childComplexity), true
+	case "CustomerBillingProfile.minConsolidatedAmount":
+		if e.ComplexityRoot.CustomerBillingProfile.MinConsolidatedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.MinConsolidatedAmount(childComplexity), true
 	case "CustomerBillingProfile.organizationId":
 		if e.ComplexityRoot.CustomerBillingProfile.OrganizationID == nil {
 			break
@@ -15571,6 +15643,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.RevenueAccountID(childComplexity), true
+	case "CustomerBillingProfile.sectionBy":
+		if e.ComplexityRoot.CustomerBillingProfile.SectionBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.SectionBy(childComplexity), true
+	case "CustomerBillingProfile.splitBy":
+		if e.ComplexityRoot.CustomerBillingProfile.SplitBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.SplitBy(childComplexity), true
 	case "CustomerBillingProfile.taxExempt":
 		if e.ComplexityRoot.CustomerBillingProfile.TaxExempt == nil {
 			break
@@ -28851,6 +28935,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.CustomerID(childComplexity), true
+	case "Invoice.detail":
+		if e.ComplexityRoot.Invoice.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.Detail(childComplexity), true
 	case "Invoice.disputeStatus":
 		if e.ComplexityRoot.Invoice.DisputeStatus == nil {
 			break
@@ -28893,6 +28983,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.Number(childComplexity), true
+	case "Invoice.offCycleReason":
+		if e.ComplexityRoot.Invoice.OffCycleReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.OffCycleReason(childComplexity), true
 	case "Invoice.order":
 		if e.ComplexityRoot.Invoice.Order == nil {
 			break
@@ -28929,12 +29025,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.PaymentTerm(childComplexity), true
+	case "Invoice.periodEnd":
+		if e.ComplexityRoot.Invoice.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.PeriodEnd(childComplexity), true
+	case "Invoice.periodStart":
+		if e.ComplexityRoot.Invoice.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.PeriodStart(childComplexity), true
 	case "Invoice.postedAt":
 		if e.ComplexityRoot.Invoice.PostedAt == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Invoice.PostedAt(childComplexity), true
+	case "Invoice.scope":
+		if e.ComplexityRoot.Invoice.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.Scope(childComplexity), true
+	case "Invoice.sectionBy":
+		if e.ComplexityRoot.Invoice.SectionBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.SectionBy(childComplexity), true
 	case "Invoice.sendStatus":
 		if e.ComplexityRoot.Invoice.SendStatus == nil {
 			break
@@ -28965,6 +29085,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.ShipmentBOL(childComplexity), true
+	case "Invoice.shipmentCount":
+		if e.ComplexityRoot.Invoice.ShipmentCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ShipmentCount(childComplexity), true
 	case "Invoice.shipmentId":
 		if e.ComplexityRoot.Invoice.ShipmentID == nil {
 			break
@@ -31770,7 +31896,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateInvoiceFromOrder(childComplexity, args["orderId"].(string)), true
+		return e.ComplexityRoot.Mutation.CreateInvoiceFromOrder(childComplexity, args["orderId"].(string), args["offCycleReason"].(*string)), true
 	case "Mutation.createInvoiceFromShipments":
 		if e.ComplexityRoot.Mutation.CreateInvoiceFromShipments == nil {
 			break
@@ -31781,7 +31907,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateInvoiceFromShipments(childComplexity, args["shipmentIds"].([]string)), true
+		return e.ComplexityRoot.Mutation.CreateInvoiceFromShipments(childComplexity, args["shipmentIds"].([]string), args["offCycleReason"].(*string)), true
 	case "Mutation.createJobPosition":
 		if e.ComplexityRoot.Mutation.CreateJobPosition == nil {
 			break
@@ -62464,6 +62590,55 @@ enum CustomerConsolidationGroupBy {
   Division
 }
 
+"""How many invoices a customer's freight turns into."""
+enum CustomerInvoiceDelivery {
+  """One invoice per shipment."""
+  PerShipment
+  """One invoice per order, covering every billable leg."""
+  PerOrder
+  """One or more invoices per billing period, covering the period's shipments."""
+  Consolidated
+}
+
+"""How often a statement-billed customer is billed."""
+enum CustomerBillingCycle {
+  Immediate
+  Daily
+  Weekly
+  BiWeekly
+  SemiMonthly
+  Monthly
+  Quarterly
+}
+
+"""
+How many invoices a billing period yields. Customer means one; every other
+member means one per distinct value of that key.
+"""
+enum InvoiceSplitKey {
+  Customer
+  CustomerAndPONumber
+  CustomerAndShipmentBOL
+  CustomerAndOrder
+  CustomerAndOrigin
+  CustomerAndDestination
+  CustomerAndServiceType
+}
+
+"""How the lines inside one invoice are organised. Never changes how many there are."""
+enum InvoiceSectionKey {
+  Shipment
+  PONumber
+  Origin
+  Destination
+}
+
+"""How verbose each section of a consolidated invoice is."""
+enum InvoiceDetail {
+  Detailed
+  Summary
+}
+
 enum CustomerInvoiceNumberFormat {
   Default
   CustomPrefix
@@ -62488,7 +62663,26 @@ type CustomerBillingProfile {
   organizationId: ID!
   customerId: ID!
   billingCycleType: CustomerBillingCycleType!
+    @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
   billingCycleDayOfWeek: Int
+    @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
+  invoiceDelivery: CustomerInvoiceDelivery!
+  billingCycle: CustomerBillingCycle!
+  """Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer."""
+  billingCycleAnchorDay: Int!
+  """IANA zone the period boundaries are evaluated in."""
+  billingCycleTimezone: String!
+  """End of the last period billed, so a missed cycle catches up rather than skipping."""
+  lastBilledPeriodEnd: Timestamp
+  splitBy: InvoiceSplitKey!
+  sectionBy: InvoiceSectionKey!
+  invoiceDetail: InvoiceDetail!
+  """How far before the period start to sweep shipments approved late."""
+  consolidationLookbackDays: Int!
+  """Below this, a group defers to the next period instead of billing."""
+  minConsolidatedAmount: Decimal
+  """Zero means unbounded."""
+  maxShipmentsPerInvoice: Int!
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
@@ -62498,10 +62692,14 @@ type CustomerBillingProfile {
   autoCreditHold: Boolean!
   creditHoldReason: String!
   invoiceMethod: CustomerInvoiceMethod!
+    @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
   allowInvoiceConsolidation: Boolean!
+    @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   consolidationPeriodDays: Int!
+    @deprecated(reason: "Split into billingCycle (cadence) and consolidationLookbackDays (how far back to sweep). Removed in a later release.")
   consolidationGroupBy: CustomerConsolidationGroupBy!
+    @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!
@@ -69333,6 +69531,21 @@ enum InvoiceSendStatus {
   Failed
 }
 
+"""
+What an invoice covers. Read this rather than inferring shape from which of
+shipmentId / orderId happens to be set.
+"""
+enum InvoiceScope {
+  """One shipment."""
+  Shipment
+  """Every billable leg of one order."""
+  Order
+  """A customer's shipments across a billing period, spanning orders."""
+  Consolidated
+  """A credit memo, rebill or reversal in a correction chain."""
+  Adjustment
+}
+
 type Invoice {
   id: ID!
   organizationId: ID!
@@ -69342,6 +69555,25 @@ type Invoice {
   orderId: ID
   orderNumber: String
   customerId: ID!
+  scope: InvoiceScope!
+  """Start of the period billed. Consolidated invoices only."""
+  periodStart: Timestamp
+  """End of the period billed. Consolidated invoices only."""
+  periodEnd: Timestamp
+  """Distinct shipments this invoice bills."""
+  shipmentCount: Int!
+  """
+  How much charge detail this invoice shows, fixed when it was billed rather
+  than read back from the customer.
+  """
+  detail: InvoiceDetail!
+  """How the lines on this invoice are organised for the reader."""
+  sectionBy: InvoiceSectionKey!
+  """
+  Why this invoice was cut for a customer whose freight was supposed to
+  accumulate onto a periodic statement. Null on every ordinary invoice.
+  """
+  offCycleReason: String
   number: String!
   billType: BillType!
   status: InvoiceStatus!
@@ -69411,8 +69643,14 @@ extend type Query {
 }
 
 extend type Mutation {
-  createInvoiceFromShipments(shipmentIds: [ID!]!): Invoice!
-  createInvoiceFromOrder(orderId: ID!): Invoice!
+  """
+  Bills the given shipments. offCycleReason is required only when the customer
+  is on a periodic statement, where invoicing freight on its own takes it off
+  that statement; omitting it there fails with a validation error on
+  ` + "`" + `offCycleReason` + "`" + ` so the client can ask for one.
+  """
+  createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
+  createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
 }
 `, BuiltIn: false},
 	{Name: "../schema/journal_entry.graphqls", Input: `type JournalEntryLineAccount {
@@ -80829,6 +81067,28 @@ func (ec *executionContext) childFields_CustomerBillingProfile(ctx context.Conte
 		return ec.fieldContext_CustomerBillingProfile_billingCycleType(ctx, field)
 	case "billingCycleDayOfWeek":
 		return ec.fieldContext_CustomerBillingProfile_billingCycleDayOfWeek(ctx, field)
+	case "invoiceDelivery":
+		return ec.fieldContext_CustomerBillingProfile_invoiceDelivery(ctx, field)
+	case "billingCycle":
+		return ec.fieldContext_CustomerBillingProfile_billingCycle(ctx, field)
+	case "billingCycleAnchorDay":
+		return ec.fieldContext_CustomerBillingProfile_billingCycleAnchorDay(ctx, field)
+	case "billingCycleTimezone":
+		return ec.fieldContext_CustomerBillingProfile_billingCycleTimezone(ctx, field)
+	case "lastBilledPeriodEnd":
+		return ec.fieldContext_CustomerBillingProfile_lastBilledPeriodEnd(ctx, field)
+	case "splitBy":
+		return ec.fieldContext_CustomerBillingProfile_splitBy(ctx, field)
+	case "sectionBy":
+		return ec.fieldContext_CustomerBillingProfile_sectionBy(ctx, field)
+	case "invoiceDetail":
+		return ec.fieldContext_CustomerBillingProfile_invoiceDetail(ctx, field)
+	case "consolidationLookbackDays":
+		return ec.fieldContext_CustomerBillingProfile_consolidationLookbackDays(ctx, field)
+	case "minConsolidatedAmount":
+		return ec.fieldContext_CustomerBillingProfile_minConsolidatedAmount(ctx, field)
+	case "maxShipmentsPerInvoice":
+		return ec.fieldContext_CustomerBillingProfile_maxShipmentsPerInvoice(ctx, field)
 	case "paymentTerm":
 		return ec.fieldContext_CustomerBillingProfile_paymentTerm(ctx, field)
 	case "hasBillingControlOverrides":
@@ -86637,6 +86897,20 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_orderNumber(ctx, field)
 	case "customerId":
 		return ec.fieldContext_Invoice_customerId(ctx, field)
+	case "scope":
+		return ec.fieldContext_Invoice_scope(ctx, field)
+	case "periodStart":
+		return ec.fieldContext_Invoice_periodStart(ctx, field)
+	case "periodEnd":
+		return ec.fieldContext_Invoice_periodEnd(ctx, field)
+	case "shipmentCount":
+		return ec.fieldContext_Invoice_shipmentCount(ctx, field)
+	case "detail":
+		return ec.fieldContext_Invoice_detail(ctx, field)
+	case "sectionBy":
+		return ec.fieldContext_Invoice_sectionBy(ctx, field)
+	case "offCycleReason":
+		return ec.fieldContext_Invoice_offCycleReason(ctx, field)
 	case "number":
 		return ec.fieldContext_Invoice_number(ctx, field)
 	case "billType":

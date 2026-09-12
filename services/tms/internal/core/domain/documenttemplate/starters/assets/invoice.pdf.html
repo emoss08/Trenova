@@ -13,6 +13,8 @@
       {{ if .InvoiceDate }}<dt>{{ t "Issued" }}</dt><dd>{{ .InvoiceDate }}</dd>{{ end }}
       {{ if .DueDate }}<dt>{{ t "Due" }}</dt><dd>{{ .DueDate }}</dd>{{ end }}
       {{ if .PaymentTerm }}<dt>{{ t "Terms" }}</dt><dd>{{ .PaymentTerm }}</dd>{{ end }}
+      {{ if .Period }}<dt>{{ t "Period" }}</dt><dd>{{ .Period }}</dd>{{ end }}
+      {{ if .ShipmentCount }}<dt>{{ t "Shipments" }}</dt><dd>{{ .ShipmentCount }}</dd>{{ end }}
       {{ range .HeaderRows }}<dt>{{ .Label }}</dt><dd>{{ .Value }}</dd>{{ end }}
     </dl>
   </div>
@@ -34,6 +36,7 @@
   </div>
 </section>
 
+{{ if not .ShipmentRows }}
 <section class="parties">
   <div class="party">
     <h2>{{ t "Shipper" }}</h2>
@@ -49,6 +52,37 @@
     {{ range .Consignee.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
   </div>
 </section>
+{{ end }}
+
+{{ if .ShipmentRows }}
+<section class="block">
+  <h2>Shipments</h2>
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Pro Number</th>
+        <th>BOL</th>
+        <th>PO</th>
+        <th>Delivered</th>
+        <th>Lane</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .ShipmentRows }}
+      <tr>
+        <td>{{ .ProNumber }}</td>
+        <td>{{ .BOL }}</td>
+        <td>{{ .PONumber }}</td>
+        <td>{{ .ServiceDate }}</td>
+        <td>{{ .Origin }}{{ if .Destination }} &rarr; {{ .Destination }}{{ end }}</td>
+        <td class="num">{{ .Amount }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
 
 {{ if .CommodityRows }}
 <section class="block">
@@ -96,7 +130,7 @@
       {{ range .ChargeRows }}
       <tr>
         <td class="line-col">{{ .Line }}</td>
-        <td>{{ .Description }}</td>
+        <td>{{ .Description }}{{ if .ProNumber }}<div class="party-detail">{{ .ProNumber }}</div>{{ end }}</td>
         <td class="num">{{ .Quantity }}</td>
         <td class="num">{{ .UnitPrice }}</td>
         <td class="num">{{ .Amount }}</td>

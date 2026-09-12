@@ -70,9 +70,9 @@ type SettlementControl struct {
 	PayTrigger                    PayTrigger         `json:"payTrigger"                    bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'"`
 	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           bun:"auto_generate_batches,type:BOOLEAN,notnull"`
 	AutoApproveClean              bool               `json:"autoApproveClean"              bun:"auto_approve_clean,type:BOOLEAN,notnull"`
-	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            bun:"auto_attach_accruals,type:BOOLEAN,notnull,default:true"`
+	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            bun:"auto_attach_accruals,type:BOOLEAN,notnull"`
 	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             bun:"auto_post_on_approve,type:BOOLEAN,notnull"`
-	AllowNegativeNet              bool               `json:"allowNegativeNet"              bun:"allow_negative_net,type:BOOLEAN,notnull,default:true"`
+	AllowNegativeNet              bool               `json:"allowNegativeNet"              bun:"allow_negative_net,type:BOOLEAN,notnull"`
 	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct"          bun:"variance_threshold_pct,type:NUMERIC(7,4),notnull,default:25"`
 	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         bun:"variance_lookback_weeks,type:INTEGER,notnull,default:8"`
 	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     bun:"default_escrow_interest_rate,type:NUMERIC(7,4),notnull,default:0"`

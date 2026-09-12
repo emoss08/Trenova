@@ -60,8 +60,6 @@ var _ interface {
 } = (*FeatureAccessExtension)(nil)
 
 func NewFeatureAccessExtension(p FeatureAccessParams) *FeatureAccessExtension {
-	errcode.RegisterErrorType(FeatureAccessErrorCode, errcode.KindProtocol)
-
 	return &FeatureAccessExtension{
 		cfg:        p.Config,
 		registry:   p.Registry,

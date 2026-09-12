@@ -45,3 +45,31 @@ func customerConnectionToModel(
 		TotalCount: page.TotalCount,
 	}, nil
 }
+
+
+// legacyBillingCycleType renders the new delivery mode and cadence back into the
+// single enum the old API exposed, for clients still reading the deprecated
+// field. SemiMonthly has no legacy member and reports as BiWeekly, the closest
+// cadence such a client can act on.
+func legacyBillingCycleType(
+	obj *customer.CustomerBillingProfile,
+) gqlmodel.CustomerBillingCycleType {
+	if obj.InvoiceDelivery != customer.InvoiceDeliveryConsolidated {
+		return gqlmodel.CustomerBillingCycleTypeImmediate
+	}
+
+	switch obj.BillingCycle {
+	case customer.BillingCycleDaily:
+		return gqlmodel.CustomerBillingCycleTypeDaily
+	case customer.BillingCycleWeekly:
+		return gqlmodel.CustomerBillingCycleTypeWeekly
+	case customer.BillingCycleBiWeekly, customer.BillingCycleSemiMonthly:
+		return gqlmodel.CustomerBillingCycleTypeBiWeekly
+	case customer.BillingCycleMonthly:
+		return gqlmodel.CustomerBillingCycleTypeMonthly
+	case customer.BillingCycleQuarterly:
+		return gqlmodel.CustomerBillingCycleTypeQuarterly
+	default:
+		return gqlmodel.CustomerBillingCycleTypeImmediate
+	}
+}

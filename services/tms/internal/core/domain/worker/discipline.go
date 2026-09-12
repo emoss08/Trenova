@@ -328,7 +328,7 @@ type WorkerRecognition struct {
 	Message         string          `json:"message"         bun:"message,type:TEXT,nullzero"`
 	OccurredAt      int64           `json:"occurredAt"      bun:"occurred_at,type:BIGINT,notnull"`
 	AwardedByID     pulid.ID        `json:"awardedById"     bun:"awarded_by_id,type:VARCHAR(100),nullzero"`
-	VisibleToWorker bool            `json:"visibleToWorker" bun:"visible_to_worker,type:BOOLEAN,notnull,default:true"`
+	VisibleToWorker bool            `json:"visibleToWorker" bun:"visible_to_worker,type:BOOLEAN,notnull"`
 	Version         int64           `json:"version"         bun:"version,type:BIGINT"`
 	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

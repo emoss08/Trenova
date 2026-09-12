@@ -58,7 +58,7 @@ type RecurringShipment struct {
 	SkipWeekends            bool            `json:"skipWeekends"            bun:"skip_weekends,type:BOOLEAN,notnull"`
 	ExceptionPolicy         ExceptionPolicy `json:"exceptionPolicy"         bun:"exception_policy,type:recurring_shipment_exception_policy_enum,notnull,default:'Skip'"`
 	BlackoutDates           []string        `json:"blackoutDates"           bun:"blackout_dates,type:TEXT[],array,nullzero"`
-	AutoGenerate            bool            `json:"autoGenerate"            bun:"auto_generate,type:BOOLEAN,notnull,default:true"`
+	AutoGenerate            bool            `json:"autoGenerate"            bun:"auto_generate,type:BOOLEAN,notnull"`
 	NextOccurrenceAt        *int64          `json:"nextOccurrenceAt"        bun:"next_occurrence_at,type:BIGINT,nullzero"`
 	NextOccurrenceSourceAt  *int64          `json:"nextOccurrenceSourceAt"  bun:"next_occurrence_source_at,type:BIGINT,nullzero"`
 	LastOccurrenceAt        *int64          `json:"lastOccurrenceAt"        bun:"last_occurrence_at,type:BIGINT,nullzero"`

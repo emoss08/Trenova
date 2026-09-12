@@ -803,6 +803,35 @@ export function CustomerAutocompleteField<T extends FieldValues>({
   );
 }
 
+export function CustomerMultiSelectAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
+      link="/customers/select-options/"
+      graphql={customerSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      getOptionLabel={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+          </div>
+        );
+      }}
+      {...props}
+    />
+  );
+}
+
 export function CarrierAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {

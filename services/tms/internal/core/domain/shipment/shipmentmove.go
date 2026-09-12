@@ -22,7 +22,9 @@ type ShipmentMove struct {
 	ShipmentID             pulid.ID           `json:"shipmentId"                  bun:"shipment_id,type:VARCHAR(100),notnull"`
 	Status                 MoveStatus         `json:"status"                      bun:"status,type:move_status_enum,notnull,default:'New'"`
 	CoverageType           MoveCoverageType   `json:"coverageType"                bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
-	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull,default:true"`
+	// Loaded is false for a deadhead move. Deadhead miles are not recorded as
+	// loaded.
+	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull"`
 	Sequence               int64              `json:"sequence"                    bun:"sequence,type:INTEGER,notnull"`
 	Distance               *float64           `json:"distance"                    bun:"distance,type:FLOAT,nullzero"`
 	DistanceSource         string             `json:"distanceSource"              bun:"distance_source,type:VARCHAR(50),nullzero"`

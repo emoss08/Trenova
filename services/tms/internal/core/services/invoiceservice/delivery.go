@@ -57,10 +57,21 @@ var invoiceTemplateVariablePattern = regexp.MustCompile(
 )
 
 type invoiceDeliveryProfile struct {
-	Customer       *customer.Customer
-	Email          *customer.CustomerEmailProfile
-	Organization   *tenant.Organization
-	Shipment       *shipment.Shipment
+	Customer     *customer.Customer
+	Email        *customer.CustomerEmailProfile
+	Organization *tenant.Organization
+
+	// Shipment is the one shipment this invoice is about, and is nil for an
+	// invoice that covers several. Every consumer that reads it — the email
+	// context, the Shipper and Consignee blocks, the commodity table — is asking
+	// a question that only has an answer for a single shipment.
+	Shipment *shipment.Shipment
+
+	// Shipments is the group of shipments the invoice bills, one flat row each.
+	// Populated only when there is more than one, which is what a document keys
+	// off to print a manifest instead of freight detail.
+	Shipments []*repositories.ShipmentSummary
+
 	BillingControl *tenant.BillingControl
 }
 
@@ -140,18 +151,34 @@ func (s *Service) CreateFromShipments(
 		)
 	}
 
-	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
-		ctx,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-		"",
-		"",
-	)
+	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         shp.CustomerID,
+		TenantInfo: req.TenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return s.createSingleShipmentInvoice(ctx, req.TenantInfo, shp, number, actor)
+	if err = guardStatementCadence(cus, req.OffCycleReason); err != nil {
+		return nil, err
+	}
+
+	number, err := s.generateInvoiceNumber(ctx, req.TenantInfo, billingProfileOf(cus))
+	if err != nil {
+		return nil, err
+	}
+
+	return s.createSingleShipmentInvoice(
+		ctx,
+		req.TenantInfo,
+		shp,
+		number,
+		offCycleReasonFor(cus, req.OffCycleReason),
+		actor,
+	)
 }
 
 func (s *Service) createSingleShipmentInvoice(
@@ -159,6 +186,7 @@ func (s *Service) createSingleShipmentInvoice(
 	tenantInfo pagination.TenantInfo,
 	shp *shipment.Shipment,
 	number string,
+	offCycleReason string,
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	var created *invoice.Invoice
@@ -181,6 +209,7 @@ func (s *Service) createSingleShipmentInvoice(
 			&servicesports.CreateInvoiceFromBillingQueueRequest{
 				BillingQueueItemID: queueItem.ID,
 				TenantInfo:         tenantInfo,
+				OffCycleReason:     offCycleReason,
 			},
 			actor,
 		)
@@ -315,9 +344,10 @@ func (s *Service) groupedInvoiceFromShipments(
 	}
 
 	return s.CreateFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
-		OrderID:     orderID,
-		ShipmentIDs: req.ShipmentIDs,
-		TenantInfo:  req.TenantInfo,
+		OrderID:        orderID,
+		ShipmentIDs:    req.ShipmentIDs,
+		TenantInfo:     req.TenantInfo,
+		OffCycleReason: req.OffCycleReason,
 	}, actor)
 }
 
@@ -352,12 +382,29 @@ func (s *Service) CreateFromOrder(
 		)
 	}
 
-	number, err := s.sequenceGenerator.GenerateInvoiceNumber(
+	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ID:         req.OrderID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orderCustomer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         ord.CustomerID,
+		TenantInfo: req.TenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	number, err := s.generateInvoiceNumber(
 		ctx,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-		"",
-		"",
+		req.TenantInfo,
+		billingProfileOf(orderCustomer),
 	)
 	if err != nil {
 		return nil, err
@@ -403,10 +450,11 @@ func (s *Service) createOrderInvoiceTx(
 		)
 	}
 
-	anchor, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, ord.ID, legs, number)
+	queueItems, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, legs, number)
 	if txErr != nil {
 		return nil, txErr
 	}
+	anchor := queueItems.Anchor
 
 	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
 		ID:         ord.CustomerID,
@@ -433,7 +481,20 @@ func (s *Service) createOrderInvoiceTx(
 		return nil, txErr
 	}
 
-	entity := s.buildInvoiceEntityForOrder(anchor, ord, legs, charges, cus, control)
+	if txErr = guardStatementCadence(cus, req.OffCycleReason); txErr != nil {
+		return nil, txErr
+	}
+
+	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+		Anchor:         anchor,
+		Scope:          invoice.ScopeOrder,
+		Customer:       cus,
+		Control:        control,
+		Legs:           legs,
+		Order:          ord,
+		OrderCharges:   charges,
+		OffCycleReason: offCycleReasonFor(cus, req.OffCycleReason),
+	})
 	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -467,20 +528,31 @@ func (s *Service) createOrderInvoiceTx(
 	return created, nil
 }
 
-// createLegQueueItems creates one approved billing-queue item per billable leg. Only
-// the anchor item carries the invoice number; sibling items leave it null (the
-// billing-queue number is tenant-unique) — the whole group is correlated by OrderID.
+// legQueueItems is the queue items an invoice will bill: the anchor whose id backs
+// the invoice's single-valued FK and idempotency lookup, plus every id so the
+// invoice back-link can be written in one statement.
+type legQueueItems struct {
+	Anchor  *billingqueue.BillingQueueItem
+	ItemIDs []pulid.ID
+}
+
+// createLegQueueItems creates one approved billing-queue item per billable leg.
+//
+// Only the anchor carries the invoice number; siblings leave it null, because the
+// billing-queue number is tenant-unique. Each item takes its order from its own
+// leg rather than from one order-wide value, which is what lets a selection span
+// orders — or carry legs with no order at all.
 func (s *Service) createLegQueueItems(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	orderID pulid.ID,
 	legs []*shipment.Shipment,
 	number string,
-) (*billingqueue.BillingQueueItem, error) {
-	var anchor *billingqueue.BillingQueueItem
+) (*legQueueItems, error) {
+	result := &legQueueItems{ItemIDs: make([]pulid.ID, 0, len(legs))}
+
 	for _, leg := range legs {
 		itemNumber := ""
-		if anchor == nil {
+		if result.Anchor == nil {
 			itemNumber = number
 		}
 
@@ -488,7 +560,7 @@ func (s *Service) createLegQueueItems(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			ShipmentID:     leg.ID,
-			OrderID:        orderID,
+			OrderID:        leg.OrderID,
 			Status:         billingqueue.StatusApproved,
 			BillType:       billingqueue.BillTypeInvoice,
 			Number:         itemNumber,
@@ -496,12 +568,13 @@ func (s *Service) createLegQueueItems(
 		if err != nil {
 			return nil, err
 		}
-		if anchor == nil {
-			anchor = item
+		if result.Anchor == nil {
+			result.Anchor = item
 		}
+		result.ItemIDs = append(result.ItemIDs, item.ID)
 	}
 
-	return anchor, nil
+	return result, nil
 }
 
 func (s *Service) markOrderChargesInvoiced(
@@ -1387,6 +1460,61 @@ func (s *Service) resolveDeliveryProfile(
 	}, params)
 }
 
+// resolveDeliveryShipments loads whichever shape of freight this invoice bills.
+//
+// The header ShipmentID is only set on a single-shipment invoice, so reading it
+// alone left a grouped invoice with no shipment at all — which is how every
+// grouped invoice went out with an empty Shipper, an empty Consignee and no
+// commodity rows. The lines are the authority on what an invoice covers, and
+// LegShipmentIDs falls back to the header for the single case, so both shapes
+// resolve from one source.
+//
+// One shipment still loads in full, because that is what the email context and
+// the freight detail need. Several load as flat summaries instead: a document
+// listing forty shipments prints a line about each, and fetching forty whole
+// shipments to render forty lines would be forty round trips for data it throws
+// away.
+func resolveDeliveryShipments(
+	ctx context.Context,
+	shipmentRepo repositories.ShipmentRepository,
+	result *invoiceDeliveryProfile,
+	params resolveDeliveryProfileParams,
+) error {
+	legIDs := params.Entity.LegShipmentIDs()
+
+	switch len(legIDs) {
+	case 0:
+		return nil
+
+	case 1:
+		shp, err := shipmentRepo.GetByID(
+			ctx,
+			expandedShipmentByIDRequest(legIDs[0], params.TenantInfo),
+		)
+		if err != nil && !errortypes.IsNotFoundError(err) {
+			return err
+		}
+		if shp != nil {
+			result.Shipment = shp
+		}
+		return nil
+
+	default:
+		summaries, err := shipmentRepo.ListSummariesByIDs(
+			ctx,
+			&repositories.ListShipmentSummariesRequest{
+				TenantInfo:  params.TenantInfo,
+				ShipmentIDs: legIDs,
+			},
+		)
+		if err != nil && !errortypes.IsNotFoundError(err) {
+			return err
+		}
+		result.Shipments = summaries
+		return nil
+	}
+}
+
 func resolveDeliveryProfileWith(
 	ctx context.Context,
 	repos deliveryProfileRepos,
@@ -1431,16 +1559,9 @@ func resolveDeliveryProfileWith(
 			}
 		}
 	}
-	if params.IncludeShipmentDetails && repos.shipmentRepo != nil && entity.ShipmentID.IsNotNil() {
-		shp, err := repos.shipmentRepo.GetByID(
-			ctx,
-			expandedShipmentByIDRequest(entity.ShipmentID, params.TenantInfo),
-		)
-		if err != nil && !errortypes.IsNotFoundError(err) {
+	if params.IncludeShipmentDetails && repos.shipmentRepo != nil {
+		if err := resolveDeliveryShipments(ctx, repos.shipmentRepo, result, params); err != nil {
 			return nil, err
-		}
-		if shp != nil {
-			result.Shipment = shp
 		}
 	}
 	if params.IncludeBillingControl && repos.billingRepo != nil {
