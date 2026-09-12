@@ -11,12 +11,13 @@ import {
 } from "@trenova/shared/components/ui/message-scroller";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { fromUnixTime, isSameDay } from "date-fns";
-import { MessageSquareIcon, RotateCcwIcon, SearchXIcon } from "lucide-react";
+import { MessageSquareIcon, RotateCcwIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useNewCommentsPill } from "@/hooks/shipment-comments/use-new-comments-pill";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
 import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { CommentsEmpty } from "./comments-empty";
 import { NewCommentsPill } from "./new-comments-pill";
 
 export interface CommentJumpRequest {
@@ -137,27 +138,18 @@ export function CommentStream({
 
   if (comments.length === 0) {
     return isFiltered ? (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
-        <SearchXIcon className="mb-3 size-8 opacity-40" />
-        <p className="text-sm font-medium">{t("No comments match your filters")}</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          className="mt-2 text-xs"
-          onClick={onClearFilters}
-        >
-          {t("Clear filters")}
-        </Button>
-      </div>
+      <CommentsEmpty
+        title={t("Nothing matches")}
+        description={t("No comment on this shipment matches the filters you have set.")}
+        onClearFilters={onClearFilters}
+      />
     ) : (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
-        <MessageSquareIcon className="mb-3 size-8 opacity-40" />
-        <p className="text-sm font-medium">{t("No comments yet")}</p>
-        <p className="mt-1 max-w-[260px] text-center text-xs">
-          {t("Add operational notes, tag team members, and coordinate on this shipment.")}
-        </p>
-      </div>
+      <CommentsEmpty
+        title={t("No comments yet")}
+        description={t(
+          "Leave a note for whoever picks this shipment up next, or @mention a teammate to bring them in.",
+        )}
+      />
     );
   }
 
