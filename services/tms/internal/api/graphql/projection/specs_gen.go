@@ -3235,8 +3235,8 @@ func init() {
 				FieldMapKey: "invoiceDetail",
 			},
 			{
-				Name:        "consolidationLookbackDays",
-				FieldMapKey: "consolidationLookbackDays",
+				Name:    "consolidationLookbackDays",
+				Special: "consolidationLookbackDays",
 			},
 			{
 				Name:        "minConsolidatedAmount",
@@ -3353,6 +3353,10 @@ func init() {
 			{
 				Name:        "autoMarkReadyToBill",
 				FieldMapKey: "autoMarkReadyToBill",
+			},
+			{
+				Name:        "autoApprove",
+				FieldMapKey: "autoApprove",
 			},
 			{
 				Name:        "autoBill",
