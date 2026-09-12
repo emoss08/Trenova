@@ -70,7 +70,9 @@ export function GeofencePopover({
           </div>
 
           {location?.description && (
-            <p className="text-2xs text-muted-foreground leading-relaxed">{t(location.description)}</p>
+            <p className="text-2xs text-muted-foreground leading-relaxed">
+              {t(location.description)}
+            </p>
           )}
 
           {location && (location.addressLine1 || addressTail) && (

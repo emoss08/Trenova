@@ -72,7 +72,9 @@ function MiniLocationDisplay({
   });
 
   if (!location) {
-    return <span className="text-muted-foreground text-xs">{fallbackLabel ?? t("Loading...")}</span>;
+    return (
+      <span className="text-muted-foreground text-xs">{fallbackLabel ?? t("Loading...")}</span>
+    );
   }
 
   return (
@@ -336,7 +338,9 @@ export function SplitMoveDialog({
         <DialogHeader className="border-border gap-0 border-b p-4">
           <DialogTitle>{t("Split Move")}</DialogTitle>
           <DialogDescription>
-            {t("The original delivery becomes the handoff point. A new move continues from there to a new destination.")}
+            {t(
+              "The original delivery becomes the handoff point. A new move continues from there to a new destination.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -351,7 +355,9 @@ export function SplitMoveDialog({
                 <div className="flex shrink-0 items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/50">
                   <InfoIcon className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
                   <p className="text-xs text-blue-700 dark:text-blue-300">
-                    {t("The current assignment will remain on the original move. The new move will be unassigned.")}
+                    {t(
+                      "The current assignment will remain on the original move. The new move will be unassigned.",
+                    )}
                   </p>
                 </div>
               )}
@@ -379,7 +385,9 @@ export function SplitMoveDialog({
               <Separator />
               <Section
                 label={t("Handoff Pickup Times")}
-                description={t("Pre-filled from the original delivery. The new carrier picks up at the same location, so these times should match or follow the original delivery.")}
+                description={t(
+                  "Pre-filled from the original delivery. The new carrier picks up at the same location, so these times should match or follow the original delivery.",
+                )}
               >
                 <FormGroup cols={2}>
                   <FormControl>
@@ -403,7 +411,9 @@ export function SplitMoveDialog({
               </Section>
               <Section
                 label={t("New Delivery Times")}
-                description={t("When the new move arrives at the final destination. These should be after the handoff pickup departure above.")}
+                description={t(
+                  "When the new move arrives at the final destination. These should be after the handoff pickup departure above.",
+                )}
               >
                 <FormGroup cols={2}>
                   <FormControl>

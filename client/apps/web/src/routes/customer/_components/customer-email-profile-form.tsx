@@ -40,7 +40,9 @@ export function CustomerEmailProfileForm() {
       <SectionHeader
         icon={MailIcon}
         title={t("Email Delivery")}
-        description={t("Configure how invoices are emailed to this customer's accounts payable team")}
+        description={t(
+          "Configure how invoices are emailed to this customer's accounts payable team",
+        )}
       />
       <FormGroup cols={2}>
         <FormControl>
@@ -49,7 +51,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.subject"
             label={t("Subject Line")}
             placeholder={t("e.g., Invoice #{number} from {company}")}
-            description={t("Email subject used when sending invoices. Supports {number}, {customer}, and {company}.")}
+            description={t(
+              "Email subject used when sending invoices. Supports {number}, {customer}, and {company}.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -58,7 +62,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.fromEmail"
             label={t("From Address")}
             placeholder={t("e.g., billing@yourcompany.com")}
-            description={t("The sender address that appears on invoice emails. Must be a verified email domain in your organization's email settings.")}
+            description={t(
+              "The sender address that appears on invoice emails. Must be a verified email domain in your organization's email settings.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -67,7 +73,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.toRecipients"
             label={t("To Recipients")}
             placeholder={t("e.g., ap@customer.com, billing@customer.com")}
-            description={t("Primary recipient addresses for invoice delivery. Separate multiple addresses with commas.")}
+            description={t(
+              "Primary recipient addresses for invoice delivery. Separate multiple addresses with commas.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -76,7 +84,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.ccRecipients"
             label={t("CC Recipients")}
             placeholder={t("e.g., controller@customer.com")}
-            description={t("Carbon copy recipients who receive a copy of every invoice email. Useful for the customer's management or your internal billing team.")}
+            description={t(
+              "Carbon copy recipients who receive a copy of every invoice email. Useful for the customer's management or your internal billing team.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -85,7 +95,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.bccRecipients"
             label={t("BCC Recipients")}
             placeholder={t("e.g., billing-archive@yourcompany.com")}
-            description={t("Blind carbon copy recipients. Other recipients will not see these addresses — useful for internal archiving or compliance.")}
+            description={t(
+              "Blind carbon copy recipients. Other recipients will not see these addresses — useful for internal archiving or compliance.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -104,7 +116,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.attachmentName"
             label={t("Attachment Filename")}
             placeholder={t("e.g., Invoice-{number}-{customer}.pdf")}
-            description={t("Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}.")}
+            description={t(
+              "Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}.",
+            )}
           />
         </FormControl>
         <FormControl cols="full">
@@ -113,7 +127,9 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.comment"
             label={t("Email Body")}
             placeholder={t("e.g., Please find invoice {number} attached for {customer}.")}
-            description={t("Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}.")}
+            description={t(
+              "Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -131,7 +147,9 @@ export function CustomerEmailProfileForm() {
             control={control}
             name="emailProfile.includeShipmentDetail"
             label={t("Include Shipment Details")}
-            description={t("Append a detailed breakdown of each shipment (origin, destination, dates, charges) in the email body below the invoice summary.")}
+            description={t(
+              "Append a detailed breakdown of each shipment (origin, destination, dates, charges) in the email body below the invoice summary.",
+            )}
             position="left"
           />
         </FormControl>
@@ -140,7 +158,9 @@ export function CustomerEmailProfileForm() {
             control={control}
             name="emailProfile.readReceipt"
             label={t("Request Read Receipt")}
-            description={t("Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.")}
+            description={t(
+              "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.",
+            )}
             position="left"
           />
         </FormControl>

@@ -205,7 +205,11 @@ export function TimelineBarItem({
               )}
             >
               <TimerIcon className="size-3" />
-              {t("Dwelling {0} at {1}", formatDurationFromSeconds(bar.dwell.seconds), bar.dwell.locationCode)}
+              {t(
+                "Dwelling {0} at {1}",
+                formatDurationFromSeconds(bar.dwell.seconds),
+                bar.dwell.locationCode,
+              )}
             </p>
           )}
           {bar.hasOverlap && (

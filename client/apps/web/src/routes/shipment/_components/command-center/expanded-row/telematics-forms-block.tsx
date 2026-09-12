@@ -39,7 +39,9 @@ function FormsEmptyState() {
       <ClipboardListIcon className="text-muted-foreground mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{t("No telematics forms for this shipment yet.")}</p>
       <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-        {t("Driver form submissions mapped to this shipment appear here once your telematics provider reports them.")}
+        {t(
+          "Driver form submissions mapped to this shipment appear here once your telematics provider reports them.",
+        )}
       </p>
     </div>
   );
@@ -84,7 +86,11 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
         <div className="flex shrink-0 items-center gap-2">
           {submission.applied ? (
             <Badge variant="active">
-              {t("Applied {0} {1}", submission.appliedFields, pluralize("field", submission.appliedFields))}
+              {t(
+                "Applied {0} {1}",
+                submission.appliedFields,
+                pluralize("field", submission.appliedFields),
+              )}
             </Badge>
           ) : (
             <Badge variant="secondary">{t("Not applied")}</Badge>

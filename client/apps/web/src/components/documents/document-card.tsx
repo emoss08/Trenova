@@ -125,7 +125,8 @@ export function DocumentCard({
                 variant="secondary"
                 className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-[10px]"
               >
-                <HistoryIcon className="mr-0.5 size-3" />{t("v{0}", document.versionNumber)}
+                <HistoryIcon className="mr-0.5 size-3" />
+                {t("v{0}", document.versionNumber)}
               </Badge>
             </button>
           )}

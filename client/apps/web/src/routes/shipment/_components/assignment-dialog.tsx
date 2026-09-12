@@ -285,7 +285,9 @@ export function AssignmentDialog({
               <TriangleAlertIcon />
               <AlertTitle>{t("Driver assignment is not enabled")}</AlertTitle>
               <AlertDescription>
-                {t("This organization does not run its own drivers, so an existing driver assignment cannot be changed here. Unassign the driver to release the move, then cover it with a carrier.")}
+                {t(
+                  "This organization does not run its own drivers, so an existing driver assignment cannot be changed here. Unassign the driver to release the move, then cover it with a carrier.",
+                )}
               </AlertDescription>
             </Alert>
             <DialogFooter>
@@ -301,7 +303,9 @@ export function AssignmentDialog({
                 <TriangleAlertIcon />
                 <AlertTitle>{t("Move is covered by a driver")}</AlertTitle>
                 <AlertDescription>
-                  {t("This move already has a driver assignment. Unassign the driver before brokering the move to an external carrier.")}
+                  {t(
+                    "This move already has a driver assignment. Unassign the driver before brokering the move to an external carrier.",
+                  )}
                 </AlertDescription>
               </Alert>
               <DialogFooter>
@@ -325,9 +329,12 @@ export function AssignmentDialog({
               <TriangleAlertIcon />
               <AlertTitle>{t("Move is covered by a carrier")}</AlertTitle>
               <AlertDescription>
-                {t("This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.", existingCarrierAssignment?.carrier?.name
-                  ? ` ${existingCarrierAssignment.carrier.name}`
-                  : ` ${t("an external carrier")}`)}
+                {t(
+                  "This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.",
+                  existingCarrierAssignment?.carrier?.name
+                    ? ` ${existingCarrierAssignment.carrier.name}`
+                    : ` ${t("an external carrier")}`,
+                )}
               </AlertDescription>
             </Alert>
             <DialogFooter>

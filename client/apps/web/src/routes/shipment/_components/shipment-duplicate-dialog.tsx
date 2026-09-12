@@ -108,7 +108,9 @@ export function ShipmentDuplicateDialog({
                 control={control}
                 name="overrideDates"
                 label={t("Override Dates")}
-                description={t("Reset planned arrival and departure times on the duplicated shipment stops.")}
+                description={t(
+                  "Reset planned arrival and departure times on the duplicated shipment stops.",
+                )}
               />
             </FormControl>
           </FormGroup>

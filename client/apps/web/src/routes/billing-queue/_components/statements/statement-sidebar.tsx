@@ -157,7 +157,12 @@ export function StatementSidebar({
 
       {!loading && visible.length > 0 && (
         <p className="text-muted-foreground border-t px-3 py-1.5 text-[11px]">
-          {t("{0} of {1, plural, one {# statement} other {# statements}} {2}", visible.length, statements.length, selectedCustomerId ? "" : ` ${t("· pick one to see what it will bill")}`)}
+          {t(
+            "{0} of {1, plural, one {# statement} other {# statements}} {2}",
+            visible.length,
+            statements.length,
+            selectedCustomerId ? "" : ` ${t("· pick one to see what it will bill")}`,
+          )}
         </p>
       )}
     </div>

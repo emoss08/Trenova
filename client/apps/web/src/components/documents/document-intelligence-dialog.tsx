@@ -227,7 +227,8 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 {t("{0} stop #{1}", stop.role, stop.sequence)}
               </div>
               <div className="mt-1 text-sm font-medium">
-                {stop.name || t("{0} location", stop.role === "pickup" ? t("Pickup") : t("Delivery"))}
+                {stop.name ||
+                  t("{0} location", stop.role === "pickup" ? t("Pickup") : t("Delivery"))}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -237,7 +238,9 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 </Badge>
               ) : null}
               {stop.reviewRequired ? <Badge variant="outline">{t("Review")}</Badge> : null}
-              {stop.pageNumber ? <Badge variant="secondary">{t("Page {0}", stop.pageNumber)}</Badge> : null}
+              {stop.pageNumber ? (
+                <Badge variant="secondary">{t("Page {0}", stop.pageNumber)}</Badge>
+              ) : null}
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -435,7 +438,9 @@ function AIDiagnosticsSection({
       <div>
         <h3 className="text-sm font-medium">{t("AI Extraction Diagnostics")}</h3>
         <p className="text-muted-foreground text-xs">
-          {t("Compare the non-AI fallback result with the AI candidate and see why the AI output was accepted, rejected, or skipped.")}
+          {t(
+            "Compare the non-AI fallback result with the AI candidate and see why the AI output was accepted, rejected, or skipped.",
+          )}
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -462,7 +467,10 @@ function AIDiagnosticsSection({
         </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-2">
-        <AnalysisSnapshotCard title={t("Fallback Analysis")} analysis={diagnostics.fallbackAnalysis} />
+        <AnalysisSnapshotCard
+          title={t("Fallback Analysis")}
+          analysis={diagnostics.fallbackAnalysis}
+        />
         <AnalysisSnapshotCard title={t("AI Candidate")} analysis={diagnostics.candidateAnalysis} />
       </div>
     </div>
@@ -501,7 +509,9 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (entries.length === 0) {
     return (
       <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-        {t("The system classified this as a rate confirmation, but no structured shipment fields were extracted.")}
+        {t(
+          "The system classified this as a rate confirmation, but no structured shipment fields were extracted.",
+        )}
       </div>
     );
   }
@@ -537,9 +547,15 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="font-medium">{t("This document is already attached to a shipment.")}</div>
+              <div className="font-medium">
+                {t("This document is already attached to a shipment.")}
+              </div>
               <div className="mt-1 text-emerald-900/80">
-                {t("Shipment {0} attached {1} .", draft.attachedShipmentId, formatUnixTimestamp(draft.attachedAt))}
+                {t(
+                  "Shipment {0} attached {1} .",
+                  draft.attachedShipmentId,
+                  formatUnixTimestamp(draft.attachedAt),
+                )}
               </div>
             </div>
             <Button
@@ -614,7 +630,9 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           {field.excerpt ? (
             <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
               {field.pageNumber ? (
-                <div className="mb-1 font-sans text-[10px] uppercase">{t("Page {0}", field.pageNumber)}</div>
+                <div className="mb-1 font-sans text-[10px] uppercase">
+                  {t("Page {0}", field.pageNumber)}
+                </div>
               ) : null}
               {field.excerpt}
             </div>
@@ -686,7 +704,9 @@ function ContentSection({
             {content.pages.slice(0, 6).map((page) => (
               <div key={page.id} className="text-muted-foreground rounded-lg border p-3 text-xs">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="text-foreground font-medium">{t("Page {0}", page.pageNumber)}</span>
+                  <span className="text-foreground font-medium">
+                    {t("Page {0}", page.pageNumber)}
+                  </span>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{page.sourceKind}</Badge>
                     {page.preprocessingApplied ? (
@@ -695,7 +715,9 @@ function ContentSection({
                   </div>
                 </div>
                 {page.ocrConfidence > 0 ? (
-                  <div className="mb-1">{t("OCR confidence: {0}", formatConfidence(page.ocrConfidence))}</div>
+                  <div className="mb-1">
+                    {t("OCR confidence: {0}", formatConfidence(page.ocrConfidence))}
+                  </div>
                 ) : null}
                 <div className="line-clamp-4 font-mono text-[11px] whitespace-pre-wrap">
                   {page.extractedText?.trim() || t("No extracted text")}
@@ -828,7 +850,9 @@ export function DocumentIntelligenceDialog({
                   ) : null}
                 </div>
                 <DialogDescription>
-                  {t("Review extracted text, document classification, and any structured shipment draft fields.")}
+                  {t(
+                    "Review extracted text, document classification, and any structured shipment draft fields.",
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
@@ -844,7 +868,9 @@ export function DocumentIntelligenceDialog({
                     <div className="grid gap-3">
                       {!supportsTargetedReextract ? (
                         <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-                          {t("Extraction was not requested for this document. OCR and AI extraction now run only through the targeted rate confirmation import flow.")}
+                          {t(
+                            "Extraction was not requested for this document. OCR and AI extraction now run only through the targeted rate confirmation import flow.",
+                          )}
                         </div>
                       ) : null}
                       <IntelligenceSummary
@@ -892,7 +918,9 @@ export function DocumentIntelligenceDialog({
                         document.detectedKind &&
                         document.detectedKind !== "RateConfirmation" ? (
                           <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-                            {t("This document is available for classification, search, and extracted-text review, but it does not produce a shipment draft.")}
+                            {t(
+                              "This document is available for classification, search, and extracted-text review, but it does not produce a shipment draft.",
+                            )}
                           </div>
                         ) : null}
                       </>

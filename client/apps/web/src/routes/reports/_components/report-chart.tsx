@@ -333,7 +333,9 @@ function KpiTile({
             <TrendingDownIcon className="size-3.5" />
           )}
           {(delta * 100).toFixed(1)}%
-          <span className="text-muted-foreground">{t("vs {0}", compareColumn?.label ?? "previous")}</span>
+          <span className="text-muted-foreground">
+            {t("vs {0}", compareColumn?.label ?? "previous")}
+          </span>
         </p>
       )}
       {attainment !== null && (

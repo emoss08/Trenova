@@ -17113,6 +17113,15 @@
       "routes/settlement-control"
     ]
   },
+  "Auto-Approve Clean Shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Auto-Attach New Pay to Open Drafts": {
     "sites": 1,
     "scope": [
@@ -19817,7 +19826,7 @@
     ]
   },
   "Billing": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -19825,7 +19834,8 @@
       "apps/web/lib",
       "apps/web/types",
       "packages/shared/lib",
-      "routes/admin"
+      "routes/admin",
+      "routes/shipment"
     ]
   },
   "Billing & Rating": {
@@ -27013,6 +27023,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Clear sort": {
@@ -55702,6 +55721,15 @@
       "routes/order"
     ]
   },
+  "Failed to cancel the run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Failed to cancel transfer": {
     "sites": 1,
     "scope": [
@@ -56829,15 +56857,6 @@
     ]
   },
   "Failed to submit EDI load tender": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "Failed to transfer shipment to billing": {
     "sites": 1,
     "scope": [
       "ts"
@@ -64694,15 +64713,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "How far before the period start to sweep shipments that were approved late.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "How far from the centre point this end reaches": {
@@ -76365,15 +76375,6 @@
       "domain/telematics"
     ]
   },
-  "Lookback": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Lookback (settlements)": {
     "sites": 1,
     "scope": [
@@ -76381,24 +76382,6 @@
     ],
     "areas": [
       "routes/settlement-control"
-    ]
-  },
-  "Lookback cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/customer"
-    ]
-  },
-  "Lookback cannot exceed a year": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/customer"
     ]
   },
   "Looks like we hit a snag. Please try again later.": {
@@ -77850,6 +77833,15 @@
       "routes/driver-settlement"
     ]
   },
+  "Mark Ready & Transfer to Billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Mark Ready To Invoice": {
     "sites": 1,
     "scope": [
@@ -77857,6 +77849,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Mark Ready to Bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Mark a credential as verified against its document": {
@@ -86238,15 +86239,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "No order": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoicerunservice"
     ]
   },
   "No order has taken anybody off the road": {
@@ -117454,6 +117446,15 @@
       "routes/invoice"
     ]
   },
+  "Review them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Review this expense": {
     "sites": 1,
     "scope": [
@@ -128623,13 +128624,13 @@
       "domain/permission"
     ]
   },
-  "Shipment marked ready to invoice": {
+  "Shipment marked ready to bill": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/hooks"
     ]
   },
   "Shipment move ID is required": {
@@ -142661,7 +142662,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/hooks"
     ]
   },
   "The shipment has been canceled.": {
@@ -149501,7 +149502,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/hooks"
     ]
   },
   "Transfer to billing request is required": {
@@ -149519,7 +149520,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/hooks"
     ]
   },
   "Transferring...": {
@@ -163016,6 +163017,15 @@
       "service/roleservice"
     ]
   },
+  "change how they're split": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "coaching conversation": {
     "sites": 1,
     "scope": [
@@ -165735,12 +165745,11 @@
     ]
   },
   "of {0}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
       "routes/formula-template",
       "routes/my-team",
       "routes/scheduling"
@@ -167386,6 +167395,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# more shipment for this period is} other {# more shipments for this period are}} still in review and will not be on this invoice. Billing now leaves {1} unbilled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {# move} other {# moves}}": {
     "sites": 1,
     "scope": [
@@ -167560,6 +167578,24 @@
       "routes/shipment"
     ]
   },
+  "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# shipment} other {# shipments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {# shipment} other {# shipments}} held back": {
     "sites": 1,
     "scope": [
@@ -167579,6 +167615,15 @@
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}} ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# shipment} other {# shipments}} worth {1} {0, plural, one {is} other {are}} still in review and will not be on this invoice.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -169222,6 +169267,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} of {1, plural, one {# shipment} other {# shipments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} of {1, plural, one {# statement} other {# statements}} {2}": {
@@ -170955,15 +171009,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "{0}{1} shp": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
     ]
   },
   "{0}{1} · {2} gal": {

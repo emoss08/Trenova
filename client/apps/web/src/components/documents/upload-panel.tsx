@@ -162,14 +162,18 @@ function UploadItem({
           {status === "verifying" && (
             <span className="text-muted-foreground text-xs">{t("Verifying...")}</span>
           )}
-          {status === "paused" && <span className="text-muted-foreground text-xs">{t("Paused")}</span>}
+          {status === "paused" && (
+            <span className="text-muted-foreground text-xs">{t("Paused")}</span>
+          )}
           {status === "retrying" && (
             <span className="text-muted-foreground text-xs">{t("Retrying...")}</span>
           )}
           {status === "completing" && (
             <span className="text-muted-foreground text-xs">{t("Finalizing...")}</span>
           )}
-          {status === "quarantined" && <span className="text-xs text-red-400">{t("Quarantined")}</span>}
+          {status === "quarantined" && (
+            <span className="text-xs text-red-400">{t("Quarantined")}</span>
+          )}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
               {retryCount && retryCount > 0 ? t("Retrying ({0})...", retryCount) : t("Waiting...")}

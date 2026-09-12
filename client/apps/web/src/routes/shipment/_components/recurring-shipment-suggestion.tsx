@@ -80,8 +80,9 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
           ? `Shipment ${result.shipment.proNumber} generated from "${series.name}"`
           : `Occurrence processed for "${series.name}"`,
         {
-          description:
-            t("The recurring series created this shipment for you — you can discard this manual entry."),
+          description: t(
+            "The recurring series created this shipment for you — you can discard this manual entry.",
+          ),
         },
       );
       await queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
@@ -99,9 +100,17 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("A recurring shipment already covers this lane")}</p>
         <p className="text-muted-foreground text-xs">
-          {t("{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.", t("\"{0}\" runs {1}", series.name, (describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()), series.nextOccurrenceAt
-            ? ` ${t("— next pickup {0}", formatToUserTimezone(series.nextOccurrenceAt))}`
-            : "")}
+          {t(
+            "{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.",
+            t(
+              '"{0}" runs {1}',
+              series.name,
+              (describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase(),
+            ),
+            series.nextOccurrenceAt
+              ? ` ${t("— next pickup {0}", formatToUserTimezone(series.nextOccurrenceAt))}`
+              : "",
+          )}
         </p>
         <div className="mt-1 flex items-center gap-2">
           <Button
@@ -144,7 +153,10 @@ function PatternHint({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("This looks like a repeating lane")}</p>
         <p className="text-muted-foreground text-xs">
-          {t("This customer has shipped this lane {0} times in the last 90 days. Set it up as a recurring shipment and it will generate itself on schedule.", shipmentCount)}
+          {t(
+            "This customer has shipped this lane {0} times in the last 90 days. Set it up as a recurring shipment and it will generate itself on schedule.",
+            shipmentCount,
+          )}
         </p>
         <div className="mt-1">
           <Button

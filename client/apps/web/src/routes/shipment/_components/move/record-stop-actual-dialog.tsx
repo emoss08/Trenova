@@ -96,7 +96,9 @@ export function RecordStopActualDialog({
           {error ? (
             <p className="text-destructive text-xs">{error}</p>
           ) : (
-            <p className="text-muted-foreground text-xs">{t("Leave empty to record the time as now.")}</p>
+            <p className="text-muted-foreground text-xs">
+              {t("Leave empty to record the time as now.")}
+            </p>
           )}
         </div>
         <DialogFooter>

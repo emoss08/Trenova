@@ -356,7 +356,8 @@ export function ImportWorkspace() {
             <p className="text-muted-foreground text-xs">
               {currentPhase === "upload" &&
                 t("Upload a rate confirmation to extract shipment details.")}
-              {currentPhase === "processing" && t("Extracting shipment details from your document...")}
+              {currentPhase === "processing" &&
+                t("Extracting shipment details from your document...")}
               {currentPhase === "reconciliation" &&
                 t("Review extracted fields, resolve issues, and create the shipment.")}
               {currentPhase === "success" && t("Import complete.")}

@@ -150,7 +150,9 @@ function RuleValueInput({
         onValueChange={(val) => onChange(val === "true")}
       >
         <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue>{value === true ? t("Yes") : value === false ? t("No") : t("Select...")}</SelectValue>
+          <SelectValue>
+            {value === true ? t("Yes") : value === false ? t("No") : t("Select...")}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>

@@ -192,7 +192,9 @@ export function CommentsToolbar({
               checked={filters.pinnedOnly}
               onToggle={() => onFiltersChange({ ...filters, pinnedOnly: !filters.pinnedOnly })}
             />
-            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">{t("Priority")}</div>
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">
+              {t("Priority")}
+            </div>
             {commentPriorityChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}

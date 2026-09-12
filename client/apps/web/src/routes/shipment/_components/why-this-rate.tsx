@@ -79,7 +79,9 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           <p className="text-2xs text-muted-foreground mt-0.5">{winner.ruleLabel}</p>
         )}
         {trace?.tieBreak && (
-          <p className="text-2xs text-muted-foreground mt-1">{t("Chosen on {0}.", trace.tieBreak)}</p>
+          <p className="text-2xs text-muted-foreground mt-1">
+            {t("Chosen on {0}.", trace.tieBreak)}
+          </p>
         )}
       </div>
 
@@ -128,7 +130,12 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
       {quote.foregoneAmount != null && (
         <div className="border-b p-3">
           <p className="text-2xs text-muted-foreground">
-            {t("This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}", formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)), formatCurrency(Number(quote.foregoneAmount)), quote.overrideReason ? ` ${t("Reason given: {0}", quote.overrideReason)}` : "")}
+            {t(
+              "This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}",
+              formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)),
+              formatCurrency(Number(quote.foregoneAmount)),
+              quote.overrideReason ? ` ${t("Reason given: {0}", quote.overrideReason)}` : "",
+            )}
           </p>
         </div>
       )}

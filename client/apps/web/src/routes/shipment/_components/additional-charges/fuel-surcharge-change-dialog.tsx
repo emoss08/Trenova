@@ -39,7 +39,9 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">
-              {t("A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from")}{" "}
+              {t(
+                "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from",
+              )}{" "}
               <span className="text-foreground font-medium tabular-nums">
                 {change ? money(change.previousAmount) : ""}
               </span>{" "}
@@ -50,7 +52,9 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
               {t(". Only one fuel surcharge line is kept — choose which amount to bill.")}
             </span>
             <span className="block">
-              {t("Keeping the original locks the fuel surcharge so future changes won't re-rate it. You can unlock it from the charge list at any time.")}
+              {t(
+                "Keeping the original locks the fuel surcharge so future changes won't re-rate it. You can unlock it from the charge list at any time.",
+              )}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -136,7 +136,9 @@ function AttachmentLightbox({
               <DialogTitle className="truncate pr-8 text-sm">
                 {current.originalName ?? current.fileName}
               </DialogTitle>
-              <DialogDescription className="sr-only">{t("Image attachment preview")}</DialogDescription>
+              <DialogDescription className="sr-only">
+                {t("Image attachment preview")}
+              </DialogDescription>
             </DialogHeader>
             <div className="bg-muted/40 relative flex max-h-[70vh] items-center justify-center overflow-hidden rounded-md">
               <img
@@ -172,7 +174,9 @@ function AttachmentLightbox({
             <div className="flex items-center justify-between">
               <span className="text-2xs text-muted-foreground">
                 {formatFileSize(current.fileSize)}
-                {images.length > 1 && index != null && ` ${t("· {0} of {1}", index + 1, images.length)}`}
+                {images.length > 1 &&
+                  index != null &&
+                  ` ${t("· {0} of {1}", index + 1, images.length)}`}
               </span>
               <div className="flex items-center gap-1">
                 <Button

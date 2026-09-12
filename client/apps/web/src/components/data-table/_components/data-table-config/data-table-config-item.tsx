@@ -233,7 +233,9 @@ export function DataTableConfigItem({
                   title={t("Save current state to view")}
                   disabled={isUpdatingConfig}
                   onClick={withStopPropagation(() => updateConfig(currentConfig))}
-                  description={t("Overwrite this view with the current filters, sorting, and columns")}
+                  description={t(
+                    "Overwrite this view with the current filters, sorting, and columns",
+                  )}
                   startContent={<SaveIcon className="size-4" />}
                 />
               )}

@@ -400,7 +400,9 @@ export function ShipmentRateConfirmationImportPanel({
                 <Badge variant="secondary">{t("Guided workflow")}</Badge>
               </div>
               <DialogDescription>
-                {t("Upload a rate confirmation, wait for extraction to finish, review the shipment draft, and create the shipment without leaving this flow.")}
+                {t(
+                  "Upload a rate confirmation, wait for extraction to finish, review the shipment draft, and create the shipment without leaving this flow.",
+                )}
               </DialogDescription>
             </div>
             {currentStep !== "success" ? (
@@ -460,7 +462,9 @@ export function ShipmentRateConfirmationImportPanel({
                   <CardTitle>{t("Upload rate confirmation")}</CardTitle>
                 </div>
                 <CardDescription>
-                  {t("Use a PDF or image of the rate confirmation. We will extract shipment details only for this import workflow.")}
+                  {t(
+                    "Use a PDF or image of the rate confirmation. We will extract shipment details only for this import workflow.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -593,7 +597,9 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                 ) : (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-                    {t("Stay on this screen while we process the rate confirmation. The workflow will advance automatically when the shipment draft is ready.")}
+                    {t(
+                      "Stay on this screen while we process the rate confirmation. The workflow will advance automatically when the shipment draft is ready.",
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -606,7 +612,9 @@ export function ShipmentRateConfirmationImportPanel({
             <div className="border-b px-6 pt-6 pb-4">
               <div className="text-sm font-medium">{t("Review shipment draft")}</div>
               <div className="text-muted-foreground mt-1 text-sm">
-                {t("Confirm the extracted details, complete any missing shipment fields, and create the shipment from this draft.")}
+                {t(
+                  "Confirm the extracted details, complete any missing shipment fields, and create the shipment from this draft.",
+                )}
               </div>
             </div>
             <DocumentShipmentDraftReviewDialog
@@ -633,7 +641,9 @@ export function ShipmentRateConfirmationImportPanel({
                   <CheckCircle2Icon className="size-5 text-emerald-600" />
                   <CardTitle>{t("Shipment created")}</CardTitle>
                 </div>
-                <CardDescription>{t("The rate confirmation workflow is complete.")}</CardDescription>
+                <CardDescription>
+                  {t("The rate confirmation workflow is complete.")}
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="bg-background/80 rounded-lg border border-emerald-200 p-4">
@@ -644,7 +654,9 @@ export function ShipmentRateConfirmationImportPanel({
                 </div>
                 {attachErrorMessage ? (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-                    {t("Shipment creation succeeded, but the source document could not be attached.")}
+                    {t(
+                      "Shipment creation succeeded, but the source document could not be attached.",
+                    )}
                     <div className="mt-1 text-amber-900/80">{attachErrorMessage}</div>
                   </div>
                 ) : (

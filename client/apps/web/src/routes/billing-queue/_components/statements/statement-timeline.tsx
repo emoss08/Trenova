@@ -26,7 +26,13 @@ export function StatementTimeline({
   const due = statement.periodEnd <= nowSeconds;
   const hasFreight = statement.shipmentCount > 0;
 
-  const steps: { key: string; label: string; detail: string; state: StepState; Icon: typeof CheckIcon }[] = [
+  const steps: {
+    key: string;
+    label: string;
+    detail: string;
+    state: StepState;
+    Icon: typeof CheckIcon;
+  }[] = [
     {
       key: "accrue",
       label: "Accruing",

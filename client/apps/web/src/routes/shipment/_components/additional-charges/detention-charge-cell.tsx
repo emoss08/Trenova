@@ -66,11 +66,15 @@ export function DetentionChargeLabel({
     <>
       <TimerIcon className="text-primary size-3 shrink-0" />
       {code}
-      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">{t("Detention")}</span>
+      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
+        {t("Detention")}
+      </span>
       {risk && (
         <Tooltip>
           <TooltipTrigger>
-            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>{t(risk.label)}</span>
+            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>
+              {t(risk.label)}
+            </span>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6}>
             <p className="max-w-56 text-xs">{risk.detail}</p>
@@ -141,7 +145,10 @@ export function DetentionChargeAction({
       <TooltipContent side="top" sideOffset={6}>
         <p className="max-w-56 text-xs">
           {occurrence
-            ? t("{0} — open the claim file for the derivation, evidence and notices", OCCURRENCE_STATUS_LABEL[occurrence.status])
+            ? t(
+                "{0} — open the claim file for the derivation, evidence and notices",
+                OCCURRENCE_STATUS_LABEL[occurrence.status],
+              )
             : t("Open the detention claim file")}
         </p>
       </TooltipContent>

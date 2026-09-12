@@ -75,7 +75,9 @@ function ConnectSamsaraState() {
       </span>
       <p className="text-[11.5px] font-medium">{t("Connect Samsara to track log certification")}</p>
       <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-        {t("Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled for your organization.")}
+        {t(
+          "Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled for your organization.",
+        )}
       </p>
       <Button
         variant="outline"
@@ -158,9 +160,14 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
         <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
           <ShieldCheckIcon className="size-4" />
         </span>
-        <p className="text-[11.5px] font-medium">{t("All drivers certified — no outstanding logs.")}</p>
+        <p className="text-[11.5px] font-medium">
+          {t("All drivers certified — no outstanding logs.")}
+        </p>
         <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-          {t("Every driver has certified their ELD logs for the last {0} days.", CERTIFICATION_WINDOW_DAYS)}
+          {t(
+            "Every driver has certified their ELD logs for the last {0} days.",
+            CERTIFICATION_WINDOW_DAYS,
+          )}
         </p>
       </div>
     );

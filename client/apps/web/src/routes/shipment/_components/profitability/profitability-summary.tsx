@@ -94,7 +94,11 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
                 ),
               }}
             >
-              {t("{0} vs {1}", formatCurrency(parseDecimal(data.revenuePerLoadedMile)), formatCurrency(parseDecimal(data.breakEvenRpm)))}
+              {t(
+                "{0} vs {1}",
+                formatCurrency(parseDecimal(data.revenuePerLoadedMile)),
+                formatCurrency(parseDecimal(data.breakEvenRpm)),
+              )}
             </span>
           ) : (
             "—"

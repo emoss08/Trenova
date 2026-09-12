@@ -572,7 +572,10 @@ export default function CommandCenterTimeline({
             <AlertDialogTitle>{t("Unassign this move?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingUnassign
-                ? t("{0} will lose its driver and equipment and return to the unassigned lane.", pendingUnassign.shipment.proNumber ?? t("This shipment"))
+                ? t(
+                    "{0} will lose its driver and equipment and return to the unassigned lane.",
+                    pendingUnassign.shipment.proNumber ?? t("This shipment"),
+                  )
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -634,7 +637,9 @@ function TimelineEmptyState() {
       <CalendarClockIcon className="text-muted-foreground size-6" />
       <p className="text-sm font-semibold">{t("No scheduled activity in this window")}</p>
       <p className="text-muted-foreground max-w-sm text-xs">
-        {t("No shipments have stops scheduled in the visible range with the current filters. Move the window, widen the zoom, or clear filters to see more.")}
+        {t(
+          "No shipments have stops scheduled in the visible range with the current filters. Move the window, widen the zoom, or clear filters to see more.",
+        )}
       </p>
     </div>
   );

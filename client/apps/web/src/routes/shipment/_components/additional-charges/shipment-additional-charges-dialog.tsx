@@ -101,7 +101,9 @@ export function AdditionalChargeDialog({
               clearable
               rules={{ required: true }}
               placeholder={t("Select Accessorial Charge")}
-              description={t("Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.")}
+              description={t(
+                "Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.",
+              )}
               onOptionChange={handleChargeSelected}
             />
           </FormControl>
@@ -112,7 +114,9 @@ export function AdditionalChargeDialog({
               label={t("Unit")}
               rules={{ required: true, min: 1 }}
               placeholder={t("Unit")}
-              description={t("Quantity of units this charge applies to (number of pallets, hours of detention, etc.)")}
+              description={t(
+                "Quantity of units this charge applies to (number of pallets, hours of detention, etc.)",
+              )}
               sideText={t("unit(s)")}
             />
           </FormControl>
@@ -124,7 +128,9 @@ export function AdditionalChargeDialog({
               options={accessorialChargeMethodChoices}
               rules={{ required: true }}
               placeholder={t("Select Method")}
-              description={t("Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)")}
+              description={t(
+                "Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)",
+              )}
             />
           </FormControl>
           <FormControl className="col-span-2">
@@ -136,7 +142,9 @@ export function AdditionalChargeDialog({
               rules={{ required: true, min: 1 }}
               placeholder={t("Amount")}
               sideText={t("USD")}
-              description={t("Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement")}
+              description={t(
+                "Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement",
+              )}
             />
           </FormControl>
         </FormGroup>

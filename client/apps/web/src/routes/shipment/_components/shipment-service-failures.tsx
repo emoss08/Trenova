@@ -186,7 +186,12 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                     )}
                   </div>
                   <div className="text-muted-foreground mt-1 text-xs">
-                    {t("{0} minute(s) late after {1} minute grace ·", failure.lateMinutes, failure.gracePeriodMinutes)} <HoverCardTimestamp timestamp={failure.detectedAt} />
+                    {t(
+                      "{0} minute(s) late after {1} minute grace ·",
+                      failure.lateMinutes,
+                      failure.gracePeriodMinutes,
+                    )}{" "}
+                    <HoverCardTimestamp timestamp={failure.detectedAt} />
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -282,7 +287,12 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
           <DialogHeader>
             <DialogTitle>{t("Service Failure Evaluation")}</DialogTitle>
             <DialogDescription>
-              {t("{0} created, {1} updated, {2} skipped.", evaluationSummary?.created ?? 0, evaluationSummary?.updated ?? 0, evaluationSummary?.skipped ?? 0)}
+              {t(
+                "{0} created, {1} updated, {2} skipped.",
+                evaluationSummary?.created ?? 0,
+                evaluationSummary?.updated ?? 0,
+                evaluationSummary?.skipped ?? 0,
+              )}
             </DialogDescription>
           </DialogHeader>
 

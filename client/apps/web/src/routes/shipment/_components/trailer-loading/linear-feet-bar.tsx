@@ -82,7 +82,9 @@ export function LinearFeetBar({
             </div>
           ))}
           {commodities.length > 4 && (
-            <span className="text-2xs text-muted-foreground">{t("+{0} more", commodities.length - 4)}</span>
+            <span className="text-2xs text-muted-foreground">
+              {t("+{0} more", commodities.length - 4)}
+            </span>
           )}
         </div>
       )}

@@ -145,7 +145,9 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
           {field.evidenceExcerpt && !isEditing && (
             <p className="text-2xs text-muted-foreground/40 mt-0.5 max-w-[320px] truncate">
               &ldquo;{field.evidenceExcerpt}&rdquo;
-              {field.pageNumber != null && <span className="ml-1">{t("p.{0}", field.pageNumber)}</span>}
+              {field.pageNumber != null && (
+                <span className="ml-1">{t("p.{0}", field.pageNumber)}</span>
+              )}
             </p>
           )}
 

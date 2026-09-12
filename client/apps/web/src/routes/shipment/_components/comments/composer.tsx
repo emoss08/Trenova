@@ -179,7 +179,8 @@ export function CommentComposer({
     priority,
     clearAll,
     onStopTyping,
-  t]);
+    t,
+  ]);
 
   const handleDragOver = useCallback((event: DragEvent) => {
     if (event.dataTransfer.types.includes("Files")) {
@@ -271,7 +272,8 @@ export function CommentComposer({
       isSubmitting,
       isUploading,
       hasFailedUploads,
-    t],
+      t,
+    ],
   );
 
   return (

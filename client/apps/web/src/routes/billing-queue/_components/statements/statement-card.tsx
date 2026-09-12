@@ -12,7 +12,13 @@ import { BotIcon, PauseCircleIcon } from "lucide-react";
  * A statement's most-asked question is "how much longer", and a date alone does
  * not answer it at a glance the way a bar filling up does.
  */
-function PeriodProgress({ statement, nowSeconds }: { statement: OpenStatement; nowSeconds: number }) {
+function PeriodProgress({
+  statement,
+  nowSeconds,
+}: {
+  statement: OpenStatement;
+  nowSeconds: number;
+}) {
   const span = statement.periodEnd - statement.periodStart;
   const elapsed = nowSeconds - statement.periodStart;
   const pct = span > 0 ? Math.min(100, Math.max(0, (elapsed / span) * 100)) : 100;
@@ -108,7 +114,9 @@ export function StatementCard({
                       }
                     />
                     <TooltipContent side="right">
-                      {t("Under this customer's invoice minimum — it will roll into next period instead of billing")}
+                      {t(
+                        "Under this customer's invoice minimum — it will roll into next period instead of billing",
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -116,7 +124,9 @@ export function StatementCard({
               <span
                 className={cn(
                   "text-[11px]",
-                  due ? "font-medium text-amber-600 dark:text-amber-400" : "text-muted-foreground/70",
+                  due
+                    ? "font-medium text-amber-600 dark:text-amber-400"
+                    : "text-muted-foreground/70",
                 )}
               >
                 {billsInLabel(statement.periodEnd, nowSeconds)}

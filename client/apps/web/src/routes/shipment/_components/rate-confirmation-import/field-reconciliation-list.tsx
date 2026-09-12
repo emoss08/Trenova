@@ -122,7 +122,9 @@ export function FieldReconciliationList({
   if (groupedSections.length === 0 && ungroupedFields.length === 0) {
     return (
       <div className="text-muted-foreground/50 px-4 py-6 text-center text-xs">
-        {showIssuesOnly ? t("All fields accepted. No issues to review.") : t("No fields extracted.")}
+        {showIssuesOnly
+          ? t("All fields accepted. No issues to review.")
+          : t("No fields extracted.")}
       </div>
     );
   }

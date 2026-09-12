@@ -45,7 +45,7 @@ export const DocumentUploadZone = forwardRef<DocumentUploadZoneHandle, DocumentU
     },
     ref,
   ) {
-  const t = useT();
+    const t = useT();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);

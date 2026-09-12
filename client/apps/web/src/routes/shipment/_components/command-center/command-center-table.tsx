@@ -463,7 +463,11 @@ export function CommandCenterTable({
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={countsEnabled} />
       <div className="border-border flex items-center gap-2 border-b px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
-          <DataTableSearch value={query} onChange={setQuery} placeholder={t("Search shipments...")} />
+          <DataTableSearch
+            value={query}
+            onChange={setQuery}
+            placeholder={t("Search shipments...")}
+          />
         </Suspense>
         <Suspense fallback={<ToolbarButtonSkeleton />}>
           <DataTableFilterBuilder
@@ -648,7 +652,13 @@ function CommandCenterFooter({
         <Skeleton className="h-3.5 w-44" />
       ) : (
         <p className="font-table tabular-nums">
-          {t("{0} rows · page {1} of {2} · {3} total", rowCount, pageIndex + 1, totalPages, totalCount)}
+          {t(
+            "{0} rows · page {1} of {2} · {3} total",
+            rowCount,
+            pageIndex + 1,
+            totalPages,
+            totalCount,
+          )}
         </p>
       )}
       <div className="flex items-center gap-3">

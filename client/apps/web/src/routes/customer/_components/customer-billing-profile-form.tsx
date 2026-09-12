@@ -139,7 +139,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.paymentTerm"
             label={t("Payment Term")}
-            description={t("The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.")}
+            description={t(
+              "The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.",
+            )}
             options={customerPaymentTermChoices}
           />
         </FormControl>
@@ -148,7 +150,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.billingCurrency"
             label={t("Currency")}
-            description={t("Currency used on all invoices for this customer. Determines how amounts are formatted and displayed on billing documents.")}
+            description={t(
+              "Currency used on all invoices for this customer. Determines how amounts are formatted and displayed on billing documents.",
+            )}
             options={currencyChoices}
           />
         </FormControl>
@@ -157,7 +161,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.hasBillingControlOverrides"
             label={t("Override Global Billing Settings")}
-            description={t("When enabled, this customer's billing profile takes precedence over your organization's global billing control settings.")}
+            description={t(
+              "When enabled, this customer's billing profile takes precedence over your organization's global billing control settings.",
+            )}
             outlined
           />
         </FormControl>
@@ -174,7 +180,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.creditStatus"
             label={t("Credit Status")}
-            description={t("Reflects this customer's current creditworthiness. 'Hold' and 'Suspended' block new shipments from being dispatched.")}
+            description={t(
+              "Reflects this customer's current creditworthiness. 'Hold' and 'Suspended' block new shipments from being dispatched.",
+            )}
             options={creditStatusChoices}
           />
         </FormControl>
@@ -184,7 +192,9 @@ export function CustomerBillingProfileForm() {
             name="billingProfile.creditLimit"
             label={t("Credit Limit")}
             placeholder="0.00"
-            description={t("Maximum outstanding balance allowed before shipments are blocked. Leave empty for unlimited credit.")}
+            description={t(
+              "Maximum outstanding balance allowed before shipments are blocked. Leave empty for unlimited credit.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -193,7 +203,9 @@ export function CustomerBillingProfileForm() {
             name="billingProfile.creditBalance"
             label={t("Outstanding Balance")}
             placeholder="0.00"
-            description={t("Current unpaid invoice total. Automatically updated as invoices are generated and payments received.")}
+            description={t(
+              "Current unpaid invoice total. Automatically updated as invoices are generated and payments received.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -201,7 +213,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.enforceCreditLimit"
             label={t("Enforce Credit Limit")}
-            description={t("When enabled, the system will prevent new shipments from being created once the outstanding balance exceeds the credit limit.")}
+            description={t(
+              "When enabled, the system will prevent new shipments from being created once the outstanding balance exceeds the credit limit.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -209,7 +223,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoCreditHold"
             label={t("Auto Credit Hold")}
-            description={t("Automatically change credit status to 'Hold' when the outstanding balance exceeds the credit limit, without requiring manual intervention.")}
+            description={t(
+              "Automatically change credit status to 'Hold' when the outstanding balance exceeds the credit limit, without requiring manual intervention.",
+            )}
           />
         </FormControl>
         {showCreditHoldReason && (
@@ -219,7 +235,9 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.creditHoldReason"
               label={t("Hold Reason")}
               placeholder={t("e.g., Past due on Invoice #1234, awaiting payment...")}
-              description={t("Document why this customer is on hold or suspended. This is visible to dispatch and billing staff when they attempt to create shipments.")}
+              description={t(
+                "Document why this customer is on hold or suspended. This is visible to dispatch and billing staff when they attempt to create shipments.",
+              )}
             />
           </FormControl>
         )}
@@ -228,7 +246,9 @@ export function CustomerBillingProfileForm() {
       <SectionHeader
         icon={FileTextIcon}
         title={t("Invoice Configuration")}
-        description={t("Control how invoices are formatted, numbered, and which GL accounts they post to")}
+        description={t(
+          "Control how invoices are formatted, numbered, and which GL accounts they post to",
+        )}
       />
       <FormGroup cols={2}>
         <FormControl>
@@ -236,7 +256,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.invoiceNumberFormat"
             label={t("Invoice Number Format")}
-            description={t("How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier.")}
+            description={t(
+              "How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier.",
+            )}
             options={invoiceNumberFormatChoices}
           />
         </FormControl>
@@ -247,7 +269,9 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.customerInvoicePrefix"
               label={t("Invoice Prefix")}
               placeholder={t("e.g., ACME-")}
-              description={t("Custom string prepended to all invoice numbers for this customer, useful when customers require a specific format for their AP system.")}
+              description={t(
+                "Custom string prepended to all invoice numbers for this customer, useful when customers require a specific format for their AP system.",
+              )}
             />
           </FormControl>
         )}
@@ -257,7 +281,9 @@ export function CustomerBillingProfileForm() {
             name="billingProfile.invoiceCopies"
             label={t("Invoice Copies")}
             placeholder="1"
-            description={t("Number of invoice copies to generate per billing run. Additional copies are often required for customers with multiple AP departments.")}
+            description={t(
+              "Number of invoice copies to generate per billing run. Additional copies are often required for customers with multiple AP departments.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -265,7 +291,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoSendInvoiceOnGeneration"
             label={t("Auto-Send After PDF Generation")}
-            description={t("Email the invoice to the configured recipients after the invoice PDF is generated.")}
+            description={t(
+              "Email the invoice to the configured recipients after the invoice PDF is generated.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -273,7 +301,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.revenueAccountId"
             label={t("Revenue Account")}
-            description={t("GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.")}
+            description={t(
+              "GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.",
+            )}
             clearable
           />
         </FormControl>
@@ -282,7 +312,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.arAccountId"
             label={t("Accounts Receivable")}
-            description={t("GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.")}
+            description={t(
+              "GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.",
+            )}
             clearable
           />
         </FormControl>
@@ -291,7 +323,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.documentTypes"
             label={t("Required Document Types")}
-            description={t("Documents that must be attached before an invoice can be generated (e.g., signed BOL, proof of delivery). Missing documents will block billing.")}
+            description={t(
+              "Documents that must be attached before an invoice can be generated (e.g., signed BOL, proof of delivery). Missing documents will block billing.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -309,7 +343,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.invoiceDelivery"
             label={t("Invoice Delivery")}
-            description={t("Whether this customer gets an invoice per shipment, per order, or one statement covering a billing period.")}
+            description={t(
+              "Whether this customer gets an invoice per shipment, per order, or one statement covering a billing period.",
+            )}
             options={invoiceDeliveryChoices}
           />
         </FormControl>
@@ -344,7 +380,9 @@ export function CustomerBillingProfileForm() {
                   control={control}
                   name="billingProfile.billingCycleTimezone"
                   label={t("Time Zone")}
-                  description={t("The zone period boundaries are evaluated in. Getting this wrong moves loads into the wrong period.")}
+                  description={t(
+                    "The zone period boundaries are evaluated in. Getting this wrong moves loads into the wrong period.",
+                  )}
                   options={timezoneChoices}
                 />
               </FormControl>
@@ -353,7 +391,9 @@ export function CustomerBillingProfileForm() {
                   control={control}
                   name="billingProfile.splitBy"
                   label={t("Separate Invoice For Each")}
-                  description={t("Decides how many invoices a period produces. Choose nothing for a single statement.")}
+                  description={t(
+                    "Decides how many invoices a period produces. Choose nothing for a single statement.",
+                  )}
                   options={invoiceSplitKeyChoices}
                 />
               </FormControl>
@@ -362,7 +402,9 @@ export function CustomerBillingProfileForm() {
                   control={control}
                   name="billingProfile.sectionBy"
                   label={t("Group Lines By")}
-                  description={t("How the lines inside each invoice are organised. Never changes how many invoices there are.")}
+                  description={t(
+                    "How the lines inside each invoice are organised. Never changes how many invoices there are.",
+                  )}
                   options={invoiceSectionKeyChoices}
                 />
               </FormControl>
@@ -371,7 +413,9 @@ export function CustomerBillingProfileForm() {
                   control={control}
                   name="billingProfile.invoiceDetail"
                   label={t("Detail Level")}
-                  description={t("Whether each section lists every charge or collapses to one line per shipment.")}
+                  description={t(
+                    "Whether each section lists every charge or collapses to one line per shipment.",
+                  )}
                   options={invoiceDetailChoices}
                 />
               </FormControl>
@@ -381,7 +425,9 @@ export function CustomerBillingProfileForm() {
                   name="billingProfile.maxShipmentsPerInvoice"
                   label={t("Max Shipments Per Invoice")}
                   placeholder="0"
-                  description={t("Splits an oversized group across several invoices. Zero means no limit.")}
+                  description={t(
+                    "Splits an oversized group across several invoices. Zero means no limit.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -390,7 +436,9 @@ export function CustomerBillingProfileForm() {
                   name="billingProfile.minConsolidatedAmount"
                   label={t("Minimum Invoice Amount")}
                   placeholder="0.00"
-                  description={t("A group worth less than this defers to the next period instead of billing.")}
+                  description={t(
+                    "A group worth less than this defers to the next period instead of billing.",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -413,7 +461,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.applyLateCharges"
             label={t("Apply Late Charges")}
-            description={t("Automatically assess a percentage-based late fee on invoices that remain unpaid past the grace period.")}
+            description={t(
+              "Automatically assess a percentage-based late fee on invoices that remain unpaid past the grace period.",
+            )}
             position="left"
           />
         </FormControl>
@@ -426,7 +476,9 @@ export function CustomerBillingProfileForm() {
                 label={t("Late Charge Rate")}
                 placeholder="1.50"
                 sideText="%"
-                description={t("Monthly percentage applied to the overdue balance after the grace period expires.")}
+                description={t(
+                  "Monthly percentage applied to the overdue balance after the grace period expires.",
+                )}
               />
             </FormControl>
             <FormControl className="min-h-[3em] max-w-[400px]">
@@ -436,7 +488,9 @@ export function CustomerBillingProfileForm() {
                 label={t("Grace Period")}
                 placeholder="0"
                 sideText="days"
-                description={t("Number of days after the invoice due date before late charges begin accruing.")}
+                description={t(
+                  "Number of days after the invoice due date before late charges begin accruing.",
+                )}
               />
             </FormControl>
           </div>
@@ -446,7 +500,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.taxExempt"
             label={t("Tax Exempt")}
-            description={t("Mark this customer as exempt from sales tax. You must have a valid tax exemption certificate on file.")}
+            description={t(
+              "Mark this customer as exempt from sales tax. You must have a valid tax exemption certificate on file.",
+            )}
             position="left"
           />
         </FormControl>
@@ -457,7 +513,9 @@ export function CustomerBillingProfileForm() {
               name="billingProfile.taxExemptNumber"
               label={t("Exemption Certificate Number")}
               placeholder={t("e.g., EX-2024-00123")}
-              description={t("The customer's tax exemption certificate or resale number, required for audit compliance.")}
+              description={t(
+                "The customer's tax exemption certificate or resale number, required for audit compliance.",
+              )}
             />
           </FormControl>
         )}
@@ -466,7 +524,9 @@ export function CustomerBillingProfileForm() {
       <SectionHeader
         icon={FuelIcon}
         title={t("Fuel Surcharge")}
-        description={t("How fuel is billed for this customer — not everyone uses a fuel table, so pick the arrangement that matches the contract")}
+        description={t(
+          "How fuel is billed for this customer — not everyone uses a fuel table, so pick the arrangement that matches the contract",
+        )}
       />
       <FormGroup cols={1}>
         <FormControl className="min-h-[3em] max-w-[400px]">
@@ -486,7 +546,9 @@ export function CustomerBillingProfileForm() {
               label={t("Fuel Surcharge Program")}
               placeholder={t("Select a program")}
               rules={{ required: true }}
-              description={t("Every shipment for this customer gets the correct week's indexed surcharge from this program automatically.")}
+              description={t(
+                "Every shipment for this customer gets the correct week's indexed surcharge from this program automatically.",
+              )}
             />
           </FormControl>
         )}
@@ -495,7 +557,9 @@ export function CustomerBillingProfileForm() {
       <SectionHeader
         icon={SettingsIcon}
         title={t("Billing Automation")}
-        description={t("Control which steps in the billing pipeline happen automatically vs. requiring manual action")}
+        description={t(
+          "Control which steps in the billing pipeline happen automatically vs. requiring manual action",
+        )}
       />
       <FormGroup cols={1}>
         <FormControl className="min-h-[3em]">
@@ -503,7 +567,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoTransfer"
             label={t("Auto-Transfer to Billing")}
-            description={t("Automatically move completed shipments from operations into the billing queue without manual handoff.")}
+            description={t(
+              "Automatically move completed shipments from operations into the billing queue without manual handoff.",
+            )}
             position="left"
           />
         </FormControl>
@@ -512,7 +578,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoMarkReadyToBill"
             label={t("Auto-Mark Ready to Bill")}
-            description={t("Automatically flag transferred shipments as 'Ready to Bill' once all required documents and validations are satisfied.")}
+            description={t(
+              "Automatically flag transferred shipments as 'Ready to Bill' once all required documents and validations are satisfied.",
+            )}
             position="left"
           />
         </FormControl>
@@ -520,8 +588,10 @@ export function CustomerBillingProfileForm() {
           <SwitchField
             control={control}
             name="billingProfile.autoApprove"
-            label="Auto-Approve Clean Shipments"
-            description="Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer."
+            label={t("Auto-Approve Clean Shipments")}
+            description={t(
+              "Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer.",
+            )}
             position="left"
           />
         </FormControl>
@@ -530,7 +600,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoBill"
             label={t("Auto-Generate Invoices")}
-            description={t("Automatically create invoices for shipments marked as ready to bill, removing the need for a billing clerk to manually trigger invoice generation.")}
+            description={t(
+              "Automatically create invoices for shipments marked as ready to bill, removing the need for a billing clerk to manually trigger invoice generation.",
+            )}
             position="left"
           />
         </FormControl>
@@ -539,7 +611,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.autoApplyAccessorials"
             label={t("Auto-Apply Accessorial Charges")}
-            description={t("Automatically add applicable accessorial charges (fuel surcharge, detention, liftgate, etc.) to shipments based on service rules.")}
+            description={t(
+              "Automatically add applicable accessorial charges (fuel surcharge, detention, liftgate, etc.) to shipments based on service rules.",
+            )}
             position="left"
           />
         </FormControl>
@@ -556,7 +630,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.invoiceAdjustmentSupportingDocumentPolicy"
             label={t("Invoice Adjustment Supporting Documents")}
-            description={t("Controls whether supporting documents are required for this customer's invoice adjustments. 'Inherit Organization Default' uses the organization invoice-adjustment policy.")}
+            description={t(
+              "Controls whether supporting documents are required for this customer's invoice adjustments. 'Inherit Organization Default' uses the organization invoice-adjustment policy.",
+            )}
             options={invoiceAdjustmentSupportingDocumentPolicyChoices}
           />
         </FormControl>
@@ -565,7 +641,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.enforceCustomerBillingReq"
             label={t("Enforce Customer Billing Requirements")}
-            description={t("Require that all customer-mandated documentation, reference numbers, and special instructions are present before a shipment can enter the billing queue.")}
+            description={t(
+              "Require that all customer-mandated documentation, reference numbers, and special instructions are present before a shipment can enter the billing queue.",
+            )}
             position="left"
           />
         </FormControl>
@@ -574,7 +652,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.validateCustomerRates"
             label={t("Validate Rates Against Contracts")}
-            description={t("Cross-check all applied rates against this customer's contracted rate agreements before invoicing. Mismatches will block billing and flag for review.")}
+            description={t(
+              "Cross-check all applied rates against this customer's contracted rate agreements before invoicing. Mismatches will block billing and flag for review.",
+            )}
             position="left"
           />
         </FormControl>
@@ -583,7 +663,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.requirePONumber"
             label={t("Require PO Number")}
-            description={t("Shipments cannot be billed without a customer purchase order number. Ensures the customer's AP department can match invoices to approved POs.")}
+            description={t(
+              "Shipments cannot be billed without a customer purchase order number. Ensures the customer's AP department can match invoices to approved POs.",
+            )}
             position="left"
           />
         </FormControl>
@@ -592,7 +674,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.requireBOLNumber"
             label={t("Require BOL Number")}
-            description={t("Shipments must have a bill of lading number before they can be invoiced. Required by many customers for freight payment verification.")}
+            description={t(
+              "Shipments must have a bill of lading number before they can be invoiced. Required by many customers for freight payment verification.",
+            )}
             position="left"
           />
         </FormControl>
@@ -601,7 +685,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.requireDeliveryNumber"
             label={t("Require Delivery Number")}
-            description={t("A delivery confirmation number must be recorded before the shipment can move to billing. Commonly required for retail and distribution customers.")}
+            description={t(
+              "A delivery confirmation number must be recorded before the shipment can move to billing. Commonly required for retail and distribution customers.",
+            )}
             position="left"
           />
         </FormControl>
@@ -618,7 +704,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.countLateOnlyOnAppointmentStops"
             label={t("Count Late Only on Appointment Stops")}
-            description={t("When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions.")}
+            description={t(
+              "When enabled, late-performance evaluation only applies to stops explicitly marked as appointment stops. Open stops remain operationally scheduled but do not count as late exceptions.",
+            )}
             position="left"
           />
         </FormControl>
@@ -627,7 +715,9 @@ export function CustomerBillingProfileForm() {
       <SectionHeader
         icon={UserCheckIcon}
         title={t("Default Biller")}
-        description={t("Assign a default biller for this customer. New billing queue items will be auto-assigned to this user.")}
+        description={t(
+          "Assign a default biller for this customer. New billing queue items will be auto-assigned to this user.",
+        )}
       />
       <FormGroup cols={1}>
         <FormControl>
@@ -635,7 +725,9 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.defaultBillerId"
             label={t("Default Biller")}
-            description={t("When shipments for this customer are transferred to the billing queue, they will be automatically assigned to this biller.")}
+            description={t(
+              "When shipments for this customer are transferred to the billing queue, they will be automatically assigned to this biller.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -643,7 +735,9 @@ export function CustomerBillingProfileForm() {
       <SectionHeader
         icon={StickyNoteIcon}
         title={t("Billing Notes")}
-        description={t("Internal notes visible to billing staff when processing this customer's invoices")}
+        description={t(
+          "Internal notes visible to billing staff when processing this customer's invoices",
+        )}
       />
       <FormGroup cols={1}>
         <FormControl cols="full">
@@ -651,8 +745,12 @@ export function CustomerBillingProfileForm() {
             control={control}
             name="billingProfile.billingNotes"
             label={t("Notes")}
-            placeholder={t("e.g., Customer requires invoices sent to AP@acme.com with PO reference in subject line...")}
-            description={t("Free-form notes for your billing team. These are not printed on invoices — use the email profile tab for customer-facing communication settings.")}
+            placeholder={t(
+              "e.g., Customer requires invoices sent to AP@acme.com with PO reference in subject line...",
+            )}
+            description={t(
+              "Free-form notes for your billing team. These are not printed on invoices — use the email profile tab for customer-facing communication settings.",
+            )}
           />
         </FormControl>
       </FormGroup>

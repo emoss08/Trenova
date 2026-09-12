@@ -80,7 +80,9 @@ function ShipmentServiceDetailsForm() {
           name="tractorTypeId"
           label={t("Tractor Type")}
           placeholder={t("Select Tractor Type")}
-          description={t("Select the type of tractor used, considering any special requirements (e.g., refrigeration).")}
+          description={t(
+            "Select the type of tractor used, considering any special requirements (e.g., refrigeration).",
+          )}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
           }}
@@ -99,7 +101,9 @@ function ShipmentServiceDetailsForm() {
           name="trailerTypeId"
           label={t("Trailer Type")}
           placeholder={t("Select Trailer Type")}
-          description={t("Select the type of trailer used, considering any special requirements (e.g., refrigeration).")}
+          description={t(
+            "Select the type of trailer used, considering any special requirements (e.g., refrigeration).",
+          )}
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
           }}

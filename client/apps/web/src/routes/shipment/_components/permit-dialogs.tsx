@@ -157,7 +157,9 @@ export function PermitRecordDialog({
                 control={control}
                 name="permitNumber"
                 label={t("Permit Number")}
-                description={t("Exactly as printed on the permit — this is the number enforcement matches at an inspection.")}
+                description={t(
+                  "Exactly as printed on the permit — this is the number enforcement matches at an inspection.",
+                )}
                 placeholder={t("e.g. 2026-084311")}
                 rules={{ required: true }}
                 maxLength={100}
@@ -168,7 +170,9 @@ export function PermitRecordDialog({
                 control={control}
                 name="stateId"
                 label={t("Issuing State")}
-                description={t("The state that issued this permit. A permit covers one jurisdiction — record one per state on the route.")}
+                description={t(
+                  "The state that issued this permit. A permit covers one jurisdiction — record one per state on the route.",
+                )}
                 placeholder={t("Select issuing state")}
                 rules={{ required: true }}
               />
@@ -199,7 +203,9 @@ export function PermitRecordDialog({
                 control={control}
                 name="cost"
                 label={t("Cost")}
-                description={t("What the state actually charged, so the estimated fees on this load can be reconciled against actuals.")}
+                description={t(
+                  "What the state actually charged, so the estimated fees on this load can be reconciled against actuals.",
+                )}
                 placeholder="125.00"
               />
             </FormControl>
@@ -208,7 +214,9 @@ export function PermitRecordDialog({
                 control={control}
                 name="notes"
                 label={t("Notes")}
-                description={t("Conditions printed on the permit the driver must honor — approved routing, travel hours, flags, signs, or escort details.")}
+                description={t(
+                  "Conditions printed on the permit the driver must honor — approved routing, travel hours, flags, signs, or escort details.",
+                )}
                 placeholder={t("e.g. I-35 only, daylight travel, flags on all corners")}
               />
             </FormControl>
@@ -314,7 +322,9 @@ export function PermitWaiveDialog({
         <div className="flex items-start gap-2 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-4 py-3">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
           <p className="text-muted-foreground text-xs">
-            {t("Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.")}
+            {t(
+              "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.",
+            )}
           </p>
         </div>
 

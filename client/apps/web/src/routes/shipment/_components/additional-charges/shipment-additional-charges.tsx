@@ -119,7 +119,9 @@ export default function AdditionalChargesSection() {
     <>
       <FormSection
         title={t("Additional Charges")}
-        description={t("Additional fees charged for services such as detention, fuel surcharge, and more.")}
+        description={t(
+          "Additional fees charged for services such as detention, fuel surcharge, and more.",
+        )}
         action={
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
@@ -200,7 +202,9 @@ export default function AdditionalChargesSection() {
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={6}>
                             <p className="max-w-56 text-xs">
-                              {t("Kept at its original amount — shipment changes won't re-rate it. Click to unlock and re-rate automatically.")}
+                              {t(
+                                "Kept at its original amount — shipment changes won't re-rate it. Click to unlock and re-rate automatically.",
+                              )}
                             </p>
                           </TooltipContent>
                         </Tooltip>

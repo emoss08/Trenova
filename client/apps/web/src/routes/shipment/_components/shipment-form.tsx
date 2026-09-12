@@ -66,8 +66,12 @@ export function ShipmentForm() {
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {isCanceled
-                      ? t("Billing for this shipment has been canceled. No further modifications can be made.")
-                      : t("This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.")}
+                      ? t(
+                          "Billing for this shipment has been canceled. No further modifications can be made.",
+                        )
+                      : t(
+                          "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.",
+                        )}
                   </p>
                 </div>
               </div>
@@ -93,7 +97,9 @@ function InvoicedBanner() {
       <div>
         <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{t("Invoiced")}</p>
         <p className="text-xs text-blue-700 dark:text-blue-300">
-          {t("This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.")}
+          {t(
+            "This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.",
+          )}
         </p>
       </div>
     </div>

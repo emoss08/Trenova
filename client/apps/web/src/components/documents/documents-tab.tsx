@@ -374,23 +374,29 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     });
   }, []);
 
-  const handlePreview = useCallback(async (document: Document) => {
-    try {
-      const url = await apiService.documentService.getViewUrl(document.id);
-      window.open(url, "_blank");
-    } catch {
-      toast.error(t("Failed to open document"));
-    }
-  }, [t]);
+  const handlePreview = useCallback(
+    async (document: Document) => {
+      try {
+        const url = await apiService.documentService.getViewUrl(document.id);
+        window.open(url, "_blank");
+      } catch {
+        toast.error(t("Failed to open document"));
+      }
+    },
+    [t],
+  );
 
-  const handleDownload = useCallback(async (document: Document) => {
-    try {
-      const url = await apiService.documentService.getDownloadUrl(document.id);
-      window.open(url, "_blank");
-    } catch {
-      toast.error(t("Failed to get download URL"));
-    }
-  }, [t]);
+  const handleDownload = useCallback(
+    async (document: Document) => {
+      try {
+        const url = await apiService.documentService.getDownloadUrl(document.id);
+        window.open(url, "_blank");
+      } catch {
+        toast.error(t("Failed to get download URL"));
+      }
+    },
+    [t],
+  );
 
   const { mutate: deleteDocument } = deleteMutation;
 
@@ -453,7 +459,9 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground text-sm">{t("Save the record first to manage documents.")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t("Save the record first to manage documents.")}
+        </p>
       </div>
     );
   }

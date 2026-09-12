@@ -91,7 +91,9 @@ function EmptyState({ onAddComment }: { onAddComment: () => void }) {
   return (
     <div className="text-muted-foreground flex flex-col items-start px-1.5 py-1 text-xs leading-snug">
       <p>
-        {t("No comments yet. Use")} <span className="font-table text-foreground">{t("@mentions")}</span> {t("to ping a teammate.")}
+        {t("No comments yet. Use")}{" "}
+        <span className="font-table text-foreground">{t("@mentions")}</span>{" "}
+        {t("to ping a teammate.")}
       </p>
       <button
         type="button"

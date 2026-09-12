@@ -289,7 +289,9 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Source Document")}
               </div>
-              <div className="mt-1 text-sm font-medium">{document?.originalName ?? t("Document")}</div>
+              <div className="mt-1 text-sm font-medium">
+                {document?.originalName ?? t("Document")}
+              </div>
               {document?.detectedKind ? (
                 <div className="mt-2">
                   <Badge variant="info">{document.detectedKind}</Badge>
@@ -325,7 +327,11 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
                 <div className="font-medium">{t("This source document is already attached.")}</div>
                 <div className="mt-1 text-emerald-900/80">
-                  {t("Shipment {0} attached {1}.", draft?.attachedShipmentId, formatUnixTimestamp(draft?.attachedAt))}
+                  {t(
+                    "Shipment {0} attached {1}.",
+                    draft?.attachedShipmentId,
+                    formatUnixTimestamp(draft?.attachedAt),
+                  )}
                 </div>
                 <div className="mt-3">
                   <Button
@@ -405,7 +411,9 @@ export function DocumentShipmentDraftReviewDialog({
               )}
             </div>
             <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-              {t("Location, customer, service type, shipment type, and formula template still need to be confirmed before the shipment can be created.")}
+              {t(
+                "Location, customer, service type, shipment type, and formula template still need to be confirmed before the shipment can be created.",
+              )}
             </div>
           </div>
         </ScrollArea>
@@ -422,7 +430,10 @@ export function DocumentShipmentDraftReviewDialog({
                 <div className="p-6">
                   {isAttached ? (
                     <div className="text-muted-foreground mb-4 rounded-lg border border-dashed p-3 text-sm">
-                      {t("Shipment creation from this draft is disabled because the source document has already been linked to shipment {0}.", draft?.attachedShipmentId)}
+                      {t(
+                        "Shipment creation from this draft is disabled because the source document has already been linked to shipment {0}.",
+                        draft?.attachedShipmentId,
+                      )}
                     </div>
                   ) : null}
                   <ShipmentForm />
@@ -458,7 +469,9 @@ export function DocumentShipmentDraftReviewDialog({
             {draft?.status ? <Badge variant="secondary">{draft.status}</Badge> : null}
           </div>
           <DialogDescription>
-            {t("Review the extracted shipment draft, fill in the required shipment details, then create a shipment and attach this document lineage to it.")}
+            {t(
+              "Review the extracted shipment draft, fill in the required shipment details, then create a shipment and attach this document lineage to it.",
+            )}
           </DialogDescription>
         </DialogHeader>
         {content}

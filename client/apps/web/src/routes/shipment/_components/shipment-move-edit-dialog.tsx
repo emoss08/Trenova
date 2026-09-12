@@ -77,7 +77,9 @@ export function MoveEditDialog({
                   name={`moves.${moveIndex}.status`}
                   rules={{ required: true }}
                   label={t("Status")}
-                  description={t("Tracks where this move is in its lifecycle, from new through completion")}
+                  description={t(
+                    "Tracks where this move is in its lifecycle, from new through completion",
+                  )}
                   isReadOnly
                   options={moveStatusChoices}
                 />
@@ -87,7 +89,9 @@ export function MoveEditDialog({
                   control={control}
                   name={`moves.${moveIndex}.distance`}
                   label={t("Distance (mi)")}
-                  description={t("Total miles for this leg, used for rate calculations and driver pay")}
+                  description={t(
+                    "Total miles for this leg, used for rate calculations and driver pay",
+                  )}
                   placeholder="0"
                 />
               </FormControl>
@@ -96,7 +100,9 @@ export function MoveEditDialog({
                   control={control}
                   name={`moves.${moveIndex}.loaded`}
                   label={t("Loaded")}
-                  description={t("Indicates whether this move is carrying freight or is an empty repositioning leg")}
+                  description={t(
+                    "Indicates whether this move is carrying freight or is an empty repositioning leg",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -141,7 +147,9 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-muted-foreground text-xs font-medium">{t("Stops ({0})", fields.length)}</span>
+        <span className="text-muted-foreground text-xs font-medium">
+          {t("Stops ({0})", fields.length)}
+        </span>
         <Button type="button" variant="outline" size="xxs" onClick={() => addStop(fields.length)}>
           <PlusIcon className="size-3" />
           {t("Add Stop")}
@@ -263,7 +271,9 @@ function StopCard({
               name={`moves.${moveIndex}.stops.${stopIndex}.type`}
               rules={{ required: true }}
               label={t("Stop Type")}
-              description={t("Defines the purpose of the stop — pickup, delivery, or a split operation")}
+              description={t(
+                "Defines the purpose of the stop — pickup, delivery, or a split operation",
+              )}
               options={stopTypeChoices}
             />
           </FormControl>
@@ -275,7 +285,9 @@ function StopCard({
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.pieces`}
               label={t("Pieces")}
-              description={t("Count of individual freight units (pallets, crates, etc.) handled at this stop")}
+              description={t(
+                "Count of individual freight units (pallets, crates, etc.) handled at this stop",
+              )}
               placeholder="0"
             />
           </FormControl>
@@ -284,7 +296,9 @@ function StopCard({
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.weight`}
               label={t("Weight (lbs)")}
-              description={t("Combined weight of all freight being loaded or unloaded at this stop")}
+              description={t(
+                "Combined weight of all freight being loaded or unloaded at this stop",
+              )}
               placeholder="0"
             />
           </FormControl>
@@ -303,7 +317,9 @@ function StopCard({
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduleType`}
                   rules={{ required: true }}
                   label={t("Schedule Type")}
-                  description={t("How this stop is scheduled — an open arrival window or a fixed appointment time")}
+                  description={t(
+                    "How this stop is scheduled — an open arrival window or a fixed appointment time",
+                  )}
                   options={stopScheduleTypeChoices}
                 />
               </FormControl>
@@ -324,7 +340,9 @@ function StopCard({
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduledWindowEnd`}
                   label={endLabel}
-                  description={t("The latest acceptable arrival time, leave blank for exact appointments")}
+                  description={t(
+                    "The latest acceptable arrival time, leave blank for exact appointments",
+                  )}
                   placeholder={endPlaceholder}
                 />
               </FormControl>
@@ -342,7 +360,9 @@ function StopCard({
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualDeparture`}
                   label={t("Actual Departure")}
-                  description={t("Recorded time the driver left the facility after loading or unloading")}
+                  description={t(
+                    "Recorded time the driver left the facility after loading or unloading",
+                  )}
                   placeholder={t("Departure time")}
                 />
               </FormControl>

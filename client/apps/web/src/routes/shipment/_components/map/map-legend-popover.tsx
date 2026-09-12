@@ -103,9 +103,18 @@ export function MapLegendPopover() {
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
           <LegendItem swatch={<GradientBar from="#22c55e" to="#ef4444" />} label={t("Traffic")} />
-          <LegendItem swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />} label={t("Precipitation")} />
-          <LegendItem swatch={<GradientBar from="#dbeafe" to="#6366f1" />} label={t("Wind Speed")} />
-          <LegendItem swatch={<GradientBar from="#3b82f6" to="#ef4444" />} label={t("Temperature")} />
+          <LegendItem
+            swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />}
+            label={t("Precipitation")}
+          />
+          <LegendItem
+            swatch={<GradientBar from="#dbeafe" to="#6366f1" />}
+            label={t("Wind Speed")}
+          />
+          <LegendItem
+            swatch={<GradientBar from="#3b82f6" to="#ef4444" />}
+            label={t("Temperature")}
+          />
         </div>
       </PopoverContent>
     </Popover>

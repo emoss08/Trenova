@@ -51,7 +51,9 @@ export function ReconciliationHeader({
           {counts.conflicting > 0 && (
             <div className="flex items-center gap-1.5">
               <div className="size-1.5 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">{t("{0} conflicting", counts.conflicting)}</span>
+              <span className="text-muted-foreground">
+                {t("{0} conflicting", counts.conflicting)}
+              </span>
             </div>
           )}
         </div>

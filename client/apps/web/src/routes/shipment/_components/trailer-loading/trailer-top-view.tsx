@@ -173,7 +173,12 @@ export function TrailerTopView({
                         dominantBaseline="middle"
                         className={`${palette.text} text-[8px] opacity-50`}
                       >
-                        {t("{0}ft{1} · {2}pc", p.lengthFeet, p.estimatedLength ? "*" : "", p.pieces)}
+                        {t(
+                          "{0}ft{1} · {2}pc",
+                          p.lengthFeet,
+                          p.estimatedLength ? "*" : "",
+                          p.pieces,
+                        )}
                       </text>
                       {/* Hazmat badge */}
                       {p.isHazmat && (

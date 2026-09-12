@@ -120,7 +120,10 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                   </span>
                   {(layout.parameters?.length ?? 0) > 0 && (
                     <span className="tabular-nums">
-                      {t("· {0, plural, one {# filter} other {# filters}}", layout.parameters?.length)}
+                      {t(
+                        "· {0, plural, one {# filter} other {# filters}}",
+                        layout.parameters?.length,
+                      )}
                     </span>
                   )}
                   <div className="flex-1" />

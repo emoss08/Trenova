@@ -81,7 +81,9 @@ export function ShipmentCancelDialog({
         <DialogHeader>
           <DialogTitle>{t("Cancel Shipment")}</DialogTitle>
           <DialogDescription>
-            {t("Are you sure you want to cancel this shipment? You can optionally provide a reason.")}
+            {t(
+              "Are you sure you want to cancel this shipment? You can optionally provide a reason.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form

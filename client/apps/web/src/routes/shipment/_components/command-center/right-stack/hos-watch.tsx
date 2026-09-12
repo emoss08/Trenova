@@ -151,7 +151,9 @@ function ConnectSamsaraState() {
       </span>
       <p className="text-[11.5px] font-medium">{t("Connect Samsara to watch driver clocks")}</p>
       <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
-        {t("Live hours-of-service visibility turns on once the Samsara telematics integration is enabled for your organization.")}
+        {t(
+          "Live hours-of-service visibility turns on once the Samsara telematics integration is enabled for your organization.",
+        )}
       </p>
       <Button
         variant="outline"

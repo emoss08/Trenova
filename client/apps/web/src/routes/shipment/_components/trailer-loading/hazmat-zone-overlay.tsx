@@ -74,7 +74,11 @@ export function HazmatZoneOverlay({
               dominantBaseline="middle"
               className={`text-[8px] font-semibold ${satisfied ? "fill-emerald-600 dark:fill-emerald-400" : "fill-destructive"}`}
             >
-              {t("{0}ft {1}", zone.actualDistanceFeet, zone.requiredDistanceFeet != null ? ` / ${zone.requiredDistanceFeet}ft` : "")}
+              {t(
+                "{0}ft {1}",
+                zone.actualDistanceFeet,
+                zone.requiredDistanceFeet != null ? ` / ${zone.requiredDistanceFeet}ft` : "",
+              )}
             </text>
           </g>
         );

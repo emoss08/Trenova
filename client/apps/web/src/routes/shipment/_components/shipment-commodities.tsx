@@ -457,7 +457,11 @@ export default function CommoditiesSection() {
             </div>
             <div className="border-border bg-muted flex flex-row items-center justify-end gap-3 rounded-b-lg border-t px-4 py-2">
               <span className="text-muted-foreground text-xs">
-                {t("{0} total {1}", truncateText(totalPieces.toLocaleString(), 10), pluralize("piece", totalPieces))}
+                {t(
+                  "{0} total {1}",
+                  truncateText(totalPieces.toLocaleString(), 10),
+                  pluralize("piece", totalPieces),
+                )}
               </span>
               <div className="flex flex-row items-center gap-0.5">
                 <TooltipProvider>

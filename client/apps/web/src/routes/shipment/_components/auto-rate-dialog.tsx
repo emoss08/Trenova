@@ -126,7 +126,9 @@ function ConfirmDialog({
             {t("Re-rate from contract")}
           </DialogTitle>
           <DialogDescription>
-            {t("The rate agreement covering this lane will replace the rating method, the base rate and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.")}
+            {t(
+              "The rate agreement covering this lane will replace the rating method, the base rate and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -163,7 +165,11 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
             {t("Rate applied")}
           </DialogTitle>
           <DialogDescription>
-            {t("{0}{1} priced this shipment.", rate.agreementName || t("A rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+            {t(
+              "{0}{1} priced this shipment.",
+              rate.agreementName || t("A rate agreement"),
+              rate.ruleLabel ? ` — ${rate.ruleLabel}` : "",
+            )}
           </DialogDescription>
         </DialogHeader>
 

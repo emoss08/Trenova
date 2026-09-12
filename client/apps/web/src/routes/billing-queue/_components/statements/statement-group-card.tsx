@@ -98,7 +98,9 @@ export function StatementGroupCard({
               }
             />
             <TooltipContent side="left">
-              {t("Under the customer's invoice minimum. Billing the statement skips this invoice and its shipments stay on next period.")}
+              {t(
+                "Under the customer's invoice minimum. Billing the statement skips this invoice and its shipments stay on next period.",
+              )}
             </TooltipContent>
           </Tooltip>
         )}

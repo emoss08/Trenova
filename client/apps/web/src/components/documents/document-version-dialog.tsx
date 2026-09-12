@@ -255,7 +255,9 @@ export function DocumentVersionDialog({
                             >
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium">{version.originalName}</span>
-                                <Badge variant="secondary">{t("v{0}", version.versionNumber)}</Badge>
+                                <Badge variant="secondary">
+                                  {t("v{0}", version.versionNumber)}
+                                </Badge>
                                 <ChevronDownIcon
                                   className={`text-muted-foreground size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                                 />

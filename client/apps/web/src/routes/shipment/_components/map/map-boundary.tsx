@@ -20,7 +20,10 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
         >
           <Suspense
             fallback={
-              <LoadingSkeletonState description={t("Loading map component...")} className="h-full" />
+              <LoadingSkeletonState
+                description={t("Loading map component...")}
+                className="h-full"
+              />
             }
           >
             {children}
@@ -60,8 +63,12 @@ function MapErrorFallback({ error }: { error: Error }) {
             </p>
             <p className="text-muted-foreground text-xs">
               {isConfigError
-                ? t("A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature.")
-                : t("An error occurred while loading the map component. Please try refreshing the page.")}
+                ? t(
+                    "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature.",
+                  )
+                : t(
+                    "An error occurred while loading the map component. Please try refreshing the page.",
+                  )}
             </p>
           </div>
           {isConfigError && (

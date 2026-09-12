@@ -133,8 +133,12 @@ function CreditHoldAlert({ customerId }: { customerId: string }) {
           (billingProfile.creditStatus === "Warning"
             ? t("This customer is approaching their credit limit. Review before dispatching.")
             : billingProfile.creditStatus === "Review"
-              ? t("This customer's credit is under review. Shipments may be delayed pending approval.")
-              : t("This customer's account is restricted. New shipments may not be invoiced until the hold is resolved."))}
+              ? t(
+                  "This customer's credit is under review. Shipments may be delayed pending approval.",
+                )
+              : t(
+                  "This customer's account is restricted. New shipments may not be invoiced until the hold is resolved.",
+                ))}
       </AlertDescription>
     </Alert>
   );
@@ -196,7 +200,9 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
       <div className="mb-3">
         <span className="text-xs font-medium">{t("Charge Summary")}</span>
         <p className="text-2xs text-muted-foreground mt-0.5">
-          {t("Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.")}
+          {t(
+            "Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.",
+          )}
         </p>
       </div>
       <div className="space-y-2">
@@ -229,13 +235,24 @@ function ContractRateAppliedAlert({
     <Alert variant="info" className="mb-3">
       <SparklesIcon className="size-4" />
       <AlertTitle>
-        {t("Rated from {0}{1}", rate.agreementName || t("a rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+        {t(
+          "Rated from {0}{1}",
+          rate.agreementName || t("a rate agreement"),
+          rate.ruleLabel ? ` — ${rate.ruleLabel}` : "",
+        )}
       </AlertTitle>
       <AlertDescription>
         <span>
-          {t("The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.", rate.accessorials.length > 0
-            ? t(", along with {0} automatic {1}", rate.accessorials.length, rate.accessorials.length === 1 ? "charge" : "charges")
-            : "")}
+          {t(
+            "The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.",
+            rate.accessorials.length > 0
+              ? t(
+                  ", along with {0} automatic {1}",
+                  rate.accessorials.length,
+                  rate.accessorials.length === 1 ? "charge" : "charges",
+                )
+              : "",
+          )}
         </span>
         <Button
           type="button"
@@ -278,7 +295,9 @@ function RateDepartureReason() {
         name="rateOverrideReason"
         label={t("Reason for the rate change")}
         placeholder={t("Why is this shipment priced differently from its contract?")}
-        description={t("This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report.")}
+        description={t(
+          "This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report.",
+        )}
       />
     </div>
   );
@@ -359,9 +378,14 @@ function RatingBreakdownCard() {
         >
           <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
           <p className="text-2xs text-muted-foreground">
-            {t("{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .", guardrail.bound === "min" ? t("Minimum") : t("Maximum"), formatCurrency(guardrail.rawResult), formatCurrency(
-              (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
-            ))}
+            {t(
+              "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .",
+              guardrail.bound === "min" ? t("Minimum") : t("Maximum"),
+              formatCurrency(guardrail.rawResult),
+              formatCurrency(
+                (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
+              ),
+            )}
           </p>
         </div>
       )}
@@ -388,7 +412,10 @@ function RatingBreakdownCard() {
                 to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
                 className="text-2xs text-primary hover:underline"
               >
-                {t("Open template {0}", ratingDetail.versionNumber ? ` ${t("v{0}", ratingDetail.versionNumber)}` : "")}
+                {t(
+                  "Open template {0}",
+                  ratingDetail.versionNumber ? ` ${t("v{0}", ratingDetail.versionNumber)}` : "",
+                )}
               </Link>
             )}
           </div>
@@ -429,7 +456,9 @@ export default function ShipmentBillingDetails() {
           name="orderId"
           label={t("Order")}
           placeholder={t("Select Order")}
-          description={t("Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards.")}
+          description={t(
+            "Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards.",
+          )}
           disabled={!customerId}
           extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
         />
@@ -457,7 +486,9 @@ export default function ShipmentBillingDetails() {
           name="formulaTemplateId"
           label={t("Rating Method")}
           placeholder={t("Select Rating Method")}
-          description={t("Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate).")}
+          description={t(
+            "Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate).",
+          )}
           rules={{ required: true }}
         />
       ),
@@ -474,7 +505,9 @@ export default function ShipmentBillingDetails() {
           name="baseRate"
           label={t("Base Rate")}
           placeholder={t("Enter Base Rate")}
-          description={t("Per-unit rate used by the formula template to calculate freight charges.")}
+          description={t(
+            "Per-unit rate used by the formula template to calculate freight charges.",
+          )}
           sideText={t("USD")}
         />
       ),

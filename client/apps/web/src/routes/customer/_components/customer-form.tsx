@@ -54,7 +54,9 @@ export function CustomerForm() {
             name="status"
             label={t("Status")}
             placeholder={t("Status")}
-            description={t("Controls whether this customer appears in active lookups. Inactive customers cannot be assigned to new shipments.")}
+            description={t(
+              "Controls whether this customer appears in active lookups. Inactive customers cannot be assigned to new shipments.",
+            )}
             options={statusChoices}
           />
         </FormControl>
@@ -65,7 +67,9 @@ export function CustomerForm() {
             name="code"
             label={t("Code")}
             placeholder={t("e.g., ACME")}
-            description={t("Short alphanumeric identifier used in shipment references, invoice numbers, and quick-search. Must be unique across your organization.")}
+            description={t(
+              "Short alphanumeric identifier used in shipment references, invoice numbers, and quick-search. Must be unique across your organization.",
+            )}
             maxLength={10}
           />
         </FormControl>
@@ -76,7 +80,9 @@ export function CustomerForm() {
             name="name"
             label={t("Name")}
             placeholder={t("e.g., Acme Logistics Inc.")}
-            description={t("Full legal or trading name of the customer. This appears on invoices, BOLs, and all printed documents.")}
+            description={t(
+              "Full legal or trading name of the customer. This appears on invoices, BOLs, and all printed documents.",
+            )}
             maxLength={255}
           />
         </FormControl>
@@ -87,7 +93,9 @@ export function CustomerForm() {
       <SectionHeader
         icon={BuildingIcon}
         title={t("Address")}
-        description={t("Primary business address used for invoicing and geocoded distance calculations")}
+        description={t(
+          "Primary business address used for invoicing and geocoded distance calculations",
+        )}
       />
       <FormGroup cols={2}>
         <FormControl cols="full" id="address-field-container">
@@ -99,7 +107,9 @@ export function CustomerForm() {
             name="addressLine2"
             label={t("Address Line 2")}
             placeholder={t("Suite, floor, building, etc.")}
-            description={t("Additional address details such as suite number, floor, or building name.")}
+            description={t(
+              "Additional address details such as suite number, floor, or building name.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -109,7 +119,9 @@ export function CustomerForm() {
             rules={{ required: true }}
             label={t("City")}
             placeholder={t("City")}
-            description={t("City where the customer's primary office or billing address is located.")}
+            description={t(
+              "City where the customer's primary office or billing address is located.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -118,7 +130,9 @@ export function CustomerForm() {
             name="stateId"
             label={t("State")}
             placeholder={t("State")}
-            description={t("U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.")}
+            description={t(
+              "U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.",
+            )}
           />
         </FormControl>
         <FormControl cols="full">
@@ -128,7 +142,9 @@ export function CustomerForm() {
             name="postalCode"
             label={t("Postal Code")}
             placeholder={t("e.g., 90210")}
-            description={t("ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.")}
+            description={t(
+              "ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -138,7 +154,9 @@ export function CustomerForm() {
       <SectionHeader
         icon={LinkIcon}
         title={t("External Identifiers")}
-        description={t("Link this customer to records in external systems like your ERP, CRM, or mapping provider")}
+        description={t(
+          "Link this customer to records in external systems like your ERP, CRM, or mapping provider",
+        )}
       />
       <FormGroup cols={2}>
         <FormControl>
@@ -147,7 +165,9 @@ export function CustomerForm() {
             name="placeId"
             label={t("Place ID")}
             placeholder={t("Automatically populated")}
-            description={t("Google Maps Place ID, set automatically when an address is geocoded. Used for precise location matching and map rendering.")}
+            description={t(
+              "Google Maps Place ID, set automatically when an address is geocoded. Used for precise location matching and map rendering.",
+            )}
             readOnly
           />
         </FormControl>
@@ -157,7 +177,9 @@ export function CustomerForm() {
             name="externalId"
             label={t("External ID")}
             placeholder={t("e.g., CRM-10042")}
-            description={t("Identifier from an external system (ERP, CRM, EDI partner ID). Useful for data imports, API integrations, and cross-system reconciliation.")}
+            description={t(
+              "Identifier from an external system (ERP, CRM, EDI partner ID). Useful for data imports, API integrations, and cross-system reconciliation.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -167,7 +189,9 @@ export function CustomerForm() {
       <SectionHeader
         icon={PackageIcon}
         title={t("Shipment Consolidation")}
-        description={t("Control whether multiple shipments for this customer can share trailer space")}
+        description={t(
+          "Control whether multiple shipments for this customer can share trailer space",
+        )}
       />
       <FormGroup cols={2}>
         <FormControl>
@@ -175,7 +199,9 @@ export function CustomerForm() {
             control={control}
             name="allowConsolidation"
             label={t("Allow Consolidation")}
-            description={t("Permit this customer's shipments to be combined with other shipments on the same trailer to improve load utilization and reduce costs.")}
+            description={t(
+              "Permit this customer's shipments to be combined with other shipments on the same trailer to improve load utilization and reduce costs.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -183,7 +209,9 @@ export function CustomerForm() {
             control={control}
             name="exclusiveConsolidation"
             label={t("Exclusive Consolidation")}
-            description={t("Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.")}
+            description={t(
+              "Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -192,7 +220,9 @@ export function CustomerForm() {
             name="consolidationPriority"
             label={t("Priority")}
             placeholder="1"
-            description={t("Lower numbers are consolidated first when trailer space is limited. Use 1 for highest priority customers.")}
+            description={t(
+              "Lower numbers are consolidated first when trailer space is limited. Use 1 for highest priority customers.",
+            )}
           />
         </FormControl>
       </FormGroup>

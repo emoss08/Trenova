@@ -99,7 +99,12 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
           </Badge>
         </div>
         <p className="text-muted-foreground mt-0.5 text-xs">
-          {t("{0} mi total · {1} loaded · {2} empty", data.totalMiles.toFixed(0), data.loadedMiles.toFixed(0), data.deadheadMiles.toFixed(0))}
+          {t(
+            "{0} mi total · {1} loaded · {2} empty",
+            data.totalMiles.toFixed(0),
+            data.loadedMiles.toFixed(0),
+            data.deadheadMiles.toFixed(0),
+          )}
         </p>
       </div>
 
@@ -107,7 +112,9 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
         <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            {t("Some moves are missing distance — the estimate only covers moves with a calculated distance.")}
+            {t(
+              "Some moves are missing distance — the estimate only covers moves with a calculated distance.",
+            )}
           </span>
         </div>
       )}
@@ -178,7 +185,10 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       </div>
 
       <p className="text-2xs text-muted-foreground">
-        {t("Estimated from your cost profile as of {0}. Rates come from industry benchmarks unless overridden, mapped to GL actuals, or resolved from a live fuel index.", data.profile.asOfDate)}
+        {t(
+          "Estimated from your cost profile as of {0}. Rates come from industry benchmarks unless overridden, mapped to GL actuals, or resolved from a live fuel index.",
+          data.profile.asOfDate,
+        )}
       </p>
     </>
   );

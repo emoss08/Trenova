@@ -274,7 +274,11 @@ function VehicleDetailCard({
 
           <Separator />
           <span className="font-table text-2xs text-muted-foreground tabular-nums">
-            {t("Updated {0}{1}", formatTimeAgo(position.recordedAt * 1000, now), stale && ` ${t("· position may be out of date")}`)}
+            {t(
+              "Updated {0}{1}",
+              formatTimeAgo(position.recordedAt * 1000, now),
+              stale && ` ${t("· position may be out of date")}`,
+            )}
           </span>
         </div>
       </div>

@@ -51,12 +51,17 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
           ) : !rates || rates.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <HistoryIcon className="text-muted-foreground/40 mb-2 size-6" />
-              <p className="text-muted-foreground text-sm">{t("No previous rates found for this lane")}</p>
+              <p className="text-muted-foreground text-sm">
+                {t("No previous rates found for this lane")}
+              </p>
             </div>
           ) : (
             <>
               <p className="text-muted-foreground mb-2 text-xs">
-                {t("{0, plural, one {# previous rate} other {# previous rates}} found", rates.total)}
+                {t(
+                  "{0, plural, one {# previous rate} other {# previous rates}} found",
+                  rates.total,
+                )}
               </p>
               <div className="space-y-2">
                 {rates.items.map((rate) => (

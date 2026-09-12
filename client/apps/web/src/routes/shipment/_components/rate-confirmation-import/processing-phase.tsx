@@ -178,7 +178,9 @@ export function ProcessingPhase({
                   {t("Analyzing rate confirmation")}
                 </TextShimmer>
               ) : (
-                <span className="text-destructive text-[13px] font-medium">{t("Extraction failed")}</span>
+                <span className="text-destructive text-[13px] font-medium">
+                  {t("Extraction failed")}
+                </span>
               )}
               {fileName && (
                 <m.p

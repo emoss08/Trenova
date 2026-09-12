@@ -185,7 +185,9 @@ export function DataTableSaveConfigDialog({
                 name="isDefault"
                 control={control}
                 label={t("Set as default")}
-                description={t("When enabled, the system will automatically apply this table configuration to the table")}
+                description={t(
+                  "When enabled, the system will automatically apply this table configuration to the table",
+                )}
                 rules={{ required: false }}
               />
             </FormControl>

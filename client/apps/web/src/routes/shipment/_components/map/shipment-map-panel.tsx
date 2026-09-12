@@ -125,7 +125,9 @@ export default function ShipmentMapPanel({
           isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-full",
         )}
       >
-        {t("Google Maps is not configured for this environment, so the live shipment map cannot be displayed.")}
+        {t(
+          "Google Maps is not configured for this environment, so the live shipment map cannot be displayed.",
+        )}
       </div>
     );
   }

@@ -60,10 +60,17 @@ export function BillStatementDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {t("Bill {0, plural, one {# invoice} other {# invoices}} for {1}", billable.length, statement.customerName)}
+            {t(
+              "Bill {0, plural, one {# invoice} other {# invoices}} for {1}",
+              billable.length,
+              statement.customerName,
+            )}
           </DialogTitle>
           <DialogDescription>
-            {t("Covers {0}. Each invoice is created as a draft — it still has to be posted and sent.", periodRange(statement.periodStart, statement.periodEnd))}
+            {t(
+              "Covers {0}. Each invoice is created as a draft — it still has to be posted and sent.",
+              periodRange(statement.periodStart, statement.periodEnd),
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -79,15 +86,16 @@ export function BillStatementDialog({
             ))}
             <div className="mt-1 flex items-center justify-between gap-3 border-t pt-2 text-sm font-semibold">
               <span>{t("Total")}</span>
-              <span className="tabular-nums">
-                {formatCurrency(total, statement.currencyCode)}
-              </span>
+              <span className="tabular-nums">{formatCurrency(total, statement.currencyCode)}</span>
             </div>
           </div>
 
           {heldCount > 0 && (
             <p className="text-muted-foreground text-xs">
-              {t("{0, plural, one {# shipment} other {# shipments}} you held back stay approved and uninvoiced, and land on next period's statement.", heldCount)}
+              {t(
+                "{0, plural, one {# shipment} other {# shipments}} you held back stay approved and uninvoiced, and land on next period's statement.",
+                heldCount,
+              )}
             </p>
           )}
 
@@ -95,18 +103,23 @@ export function BillStatementDialog({
             <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
               <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
               <p className="text-xs text-amber-800 dark:text-amber-200">
-                {statement.heldCount} more shipment{statement.heldCount === 1 ? "" : "s"} for this
-                period {statement.heldCount === 1 ? "is" : "are"} still in review and will not be
-                on this invoice. Billing now leaves{" "}
-                {formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode)}{" "}
-                unbilled.
+                {t(
+                  "{0, plural, one {# more shipment for this period is} other {# more shipments for this period are}} still in review and will not be on this invoice. Billing now leaves {1} unbilled.",
+                  statement.heldCount,
+                  formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
+                )}
               </p>
             </div>
           )}
 
           {held > 0 && (
             <p className="text-muted-foreground text-xs">
-              {t("{0, plural, one {# invoice} other {# invoices}} under the customer's minimum {1} skipped, and {2} shipments roll into next period.", held, held === 1 ? "is" : "are", held === 1 ? "its" : "their")}
+              {t(
+                "{0, plural, one {# invoice} other {# invoices}} under the customer's minimum {1} skipped, and {2} shipments roll into next period.",
+                held,
+                held === 1 ? "is" : "are",
+                held === 1 ? "its" : "their",
+              )}
             </p>
           )}
 
@@ -115,13 +128,18 @@ export function BillStatementDialog({
               <div className="flex items-start gap-2">
                 <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <p className="text-xs text-amber-800 dark:text-amber-200">
-                  {t("This period has not closed yet. Billing now does not move {0}'s cycle — anything delivered for the rest of the period still bills on the original date.", statement.customerName)}
+                  {t(
+                    "This period has not closed yet. Billing now does not move {0}'s cycle — anything delivered for the rest of the period still bills on the original date.",
+                    statement.customerName,
+                  )}
                 </p>
               </div>
               <Textarea
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                placeholder={t("Why is this being billed early? (e.g. customer is closing their books)")}
+                placeholder={t(
+                  "Why is this being billed early? (e.g. customer is closing their books)",
+                )}
                 rows={2}
                 className="text-xs"
                 aria-label={t("Reason for billing before the cycle closes")}
@@ -130,7 +148,9 @@ export function BillStatementDialog({
           ) : (
             <div className="text-muted-foreground flex items-start gap-2 text-xs">
               <CalendarClockIcon className="mt-0.5 size-3.5 shrink-0" />
-              <span>{t("This period has closed, so this is the invoice the customer expects.")}</span>
+              <span>
+                {t("This period has closed, so this is the invoice the customer expects.")}
+              </span>
             </div>
           )}
         </div>

@@ -31,7 +31,8 @@ export function DataTableSelectionBanner({
   return (
     <div className="border-border bg-muted/40 flex items-center justify-center gap-2 rounded-md border px-3 py-1 text-xs">
       <span className="text-muted-foreground">
-        {t("All")} <span className="text-foreground font-medium">{selectedCount}</span> {t("rows on this page are selected.")}
+        {t("All")} <span className="text-foreground font-medium">{selectedCount}</span>{" "}
+        {t("rows on this page are selected.")}
       </span>
       {selectedCount < target && (
         <Button

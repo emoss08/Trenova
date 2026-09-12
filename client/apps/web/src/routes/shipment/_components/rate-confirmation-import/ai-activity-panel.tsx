@@ -351,11 +351,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     if (data.accepted)
       return <span className="text-2xs text-emerald-500">{t("Accepted: {0}", data.accepted)}</span>;
     if (data.set)
-      return (
-        <span className="text-2xs">
-          {t("Set {0} = {1}", data.set, data.value)}
-        </span>
-      );
+      return <span className="text-2xs">{t("Set {0} = {1}", data.set, data.value)}</span>;
     if (data.set_required) {
       const label = data.entity_id
         ? `Set to ${data.label || data.entity_id}`
@@ -821,7 +817,9 @@ export default function AIActivityPanel({
         </div>
         <div className="mt-2">
           <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
-            <span>{isReady ? t("Ready to create") : t("{0} fields remaining", 4 - filledRequired)}</span>
+            <span>
+              {isReady ? t("Ready to create") : t("{0} fields remaining", 4 - filledRequired)}
+            </span>
           </div>
           <div className="bg-muted h-0.5 overflow-hidden rounded-full">
             <m.div

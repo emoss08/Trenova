@@ -37,7 +37,9 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
         )}
 
         {!attachError && (
-          <p className="text-muted-foreground text-xs">{t("Source document attached successfully.")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("Source document attached successfully.")}
+          </p>
         )}
 
         <div className="flex gap-2">

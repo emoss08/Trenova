@@ -140,7 +140,9 @@ export function RunReportDialog({
         <DialogHeader>
           <DialogTitle>{t("Run {0}", reportName)}</DialogTitle>
           <DialogDescription>
-            {t("The report is generated in the background — you'll be notified when it's ready to download.")}
+            {t(
+              "The report is generated in the background — you'll be notified when it's ready to download.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">

@@ -100,7 +100,9 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             <span>
               {detail.stale
                 ? t("Rated with a price more than 3 weeks old.")
-                : t("Rated before this week's DOE price published — it will re-rate automatically once the price arrives.")}
+                : t(
+                    "Rated before this week's DOE price published — it will re-rate automatically once the price arrives.",
+                  )}
             </span>
           </div>
         )}

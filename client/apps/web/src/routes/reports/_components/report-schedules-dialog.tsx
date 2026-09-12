@@ -333,11 +333,20 @@ function AlertConditionFields({
             <p className="text-2xs text-muted-foreground">
               {targetsMeasure ? (
                 <>
-                  {t("Sends only when {0} is {1} {2}.", measureLabel, operatorLabel, Number(value) || 0)}
+                  {t(
+                    "Sends only when {0} is {1} {2}.",
+                    measureLabel,
+                    operatorLabel,
+                    Number(value) || 0,
+                  )}
                 </>
               ) : (
                 <>
-                  {t("Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.", operatorLabel, Number(threshold) || 0)}
+                  {t(
+                    "Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.",
+                    operatorLabel,
+                    Number(threshold) || 0,
+                  )}
                 </>
               )}
             </p>
@@ -345,7 +354,9 @@ function AlertConditionFields({
               control={control}
               name="alertSuppress"
               label={t("Only alert me when it changes")}
-              description={t("Stays quiet while the condition keeps holding, and alerts again once it clears and returns.")}
+              description={t(
+                "Stays quiet while the condition keeps holding, and alerts again once it clears and returns.",
+              )}
               outlined
             />
           </m.div>
@@ -649,7 +660,9 @@ function ScheduleForm({
           name="emailRecipients"
           label={t("Email Recipients")}
           placeholder={t("Add an email and press Enter")}
-          description={t("Each recipient gets an email with a link to the report when it completes.")}
+          description={t(
+            "Each recipient gets an email with a link to the report when it completes.",
+          )}
         />
         {emailRecipients.length > 0 && (
           <>
@@ -657,14 +670,18 @@ function ScheduleForm({
               control={control}
               name="emailInline"
               label={t("Show the results in the email")}
-              description={t("Puts the first rows in the message body, so recipients read the answer without opening a file.")}
+              description={t(
+                "Puts the first rows in the message body, so recipients read the answer without opening a file.",
+              )}
               outlined
             />
             <SwitchField
               control={control}
               name="emailAttach"
               label={t("Attach the report file")}
-              description={t("Attached when within the size limit; larger files are linked instead.")}
+              description={t(
+                "Attached when within the size limit; larger files are linked instead.",
+              )}
               outlined
             />
           </>
@@ -674,7 +691,9 @@ function ScheduleForm({
           name="notifyUserIds"
           label={t("In-App Recipients")}
           placeholder={t("Search teammates...")}
-          description={t("Teammates get an in-app notification with the download when it completes.")}
+          description={t(
+            "Teammates get an in-app notification with the download when it completes.",
+          )}
           maxCount={2}
           triggerClassName="h-7 text-xs"
         />
@@ -738,7 +757,10 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
                 }
               />
               <TooltipContent side="bottom">
-                {t("{0, plural, one {# in-app recipient} other {# in-app recipients}}", notifyCount)}
+                {t(
+                  "{0, plural, one {# in-app recipient} other {# in-app recipients}}",
+                  notifyCount,
+                )}
               </TooltipContent>
             </Tooltip>
           )}
@@ -952,7 +974,9 @@ export function ReportSchedulesDialog({
         <DialogHeader>
           <DialogTitle>{t("Schedules{0}", definition ? ` — ${definition.name}` : "")}</DialogTitle>
           <DialogDescription>
-            {t("Scheduled runs execute with your permissions. Deliver completed reports by email or straight to teammates in the app.")}
+            {t(
+              "Scheduled runs execute with your permissions. Deliver completed reports by email or straight to teammates in the app.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-2">

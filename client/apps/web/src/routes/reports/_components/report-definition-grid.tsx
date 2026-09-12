@@ -205,7 +205,12 @@ function DefinitionCard({
           <span className="text-border">•</span>
           <span className="tabular-nums">
             {definition.lastRunAt
-              ? t("Ran {0}", formatDistanceToNowStrict(new Date(definition.lastRunAt * 1000), { addSuffix: true }))
+              ? t(
+                  "Ran {0}",
+                  formatDistanceToNowStrict(new Date(definition.lastRunAt * 1000), {
+                    addSuffix: true,
+                  }),
+                )
               : t("Never run")}
           </span>
         </div>
@@ -345,7 +350,11 @@ export function ReportDefinitionGrid({
         <div className="space-y-6 p-4">
           {groups.map((group) => (
             <section key={group.key} className="space-y-3">
-              <CategoryGroupHeader label={t(group.label)} count={group.items.length} noun="report" />
+              <CategoryGroupHeader
+                label={t(group.label)}
+                count={group.items.length}
+                noun="report"
+              />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {group.items.map((definition, indexInGroup) => (
                   <DefinitionCard
@@ -402,7 +411,9 @@ export function ReportDefinitionGrid({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Delete {0}?", deleteTarget?.name)}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("The report definition and its revision history will be permanently removed. Completed run artifacts are kept until they expire.")}
+              {t(
+                "The report definition and its revision history will be permanently removed. Completed run artifacts are kept until they expire.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

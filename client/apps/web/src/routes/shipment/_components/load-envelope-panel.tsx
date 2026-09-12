@@ -74,7 +74,9 @@ export default function LoadEnvelopePanel() {
   return (
     <FormSection
       title={t("Load Envelope")}
-      description={t("Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment")}
+      description={t(
+        "Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment",
+      )}
       className="border-border border-t pt-4"
       action={assessment ? <EnvelopeStatusBadge assessment={assessment} /> : null}
     >
@@ -87,7 +89,9 @@ export default function LoadEnvelopePanel() {
           shipmentId={shipmentId as string}
         />
       ) : (
-        <EmptyNotice>{t("The permit assessment could not be loaded for this shipment.")}</EmptyNotice>
+        <EmptyNotice>
+          {t("The permit assessment could not be loaded for this shipment.")}
+        </EmptyNotice>
       )}
     </FormSection>
   );
@@ -148,7 +152,9 @@ function EnvelopeBody({
   if (assessment.measurements.widthFeet === 0 && assessment.measurements.lengthFeet === 0) {
     return (
       <EmptyNotice>
-        {t("Add length, width, and height to the commodity lines. Deck fit, permits, escorts, and lead time are all derived from those numbers.")}
+        {t(
+          "Add length, width, and height to the commodity lines. Deck fit, permits, escorts, and lead time are all derived from those numbers.",
+        )}
       </EmptyNotice>
     );
   }
@@ -159,7 +165,9 @@ function EnvelopeBody({
 
       {!assessment.routeResolved && (
         <EmptyNotice>
-          {t("No jurisdiction rules matched the stops on this shipment, so no limits were checked. This is not the same as a legal load — add stop locations, or confirm the states on this route have jurisdiction rules configured.")}
+          {t(
+            "No jurisdiction rules matched the stops on this shipment, so no limits were checked. This is not the same as a legal load — add stop locations, or confirm the states on this route have jurisdiction rules configured.",
+          )}
         </EmptyNotice>
       )}
 
@@ -219,7 +227,8 @@ function EnvelopeBody({
               {escorts.map((escort) => (
                 <li key={escort.role} className="text-muted-foreground text-xs">
                   <span className="text-foreground">{t(escort.label)}</span>
-                  {escort.stateCodes.length > 0 && ` ${t("— required by {0}", escort.stateCodes.join(", "))}`}
+                  {escort.stateCodes.length > 0 &&
+                    ` ${t("— required by {0}", escort.stateCodes.join(", "))}`}
                 </li>
               ))}
             </ul>
@@ -230,7 +239,9 @@ function EnvelopeBody({
           <SummaryCard
             icon={<ClockIcon className="size-3.5" />}
             label={t("Movement restrictions")}
-            hint={t("Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times.")}
+            hint={t(
+              "Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times.",
+            )}
           >
             <ul className="space-y-0.5">
               {restrictions.map((restriction) => (
@@ -255,7 +266,10 @@ function EnvelopeBody({
             tone={pickupTooSoon ? "warning" : undefined}
           >
             <p className="text-muted-foreground text-xs">
-              {t("{0, plural, one {# day} other {# days}} of permit lead time on this route.", assessment.maxLeadTimeDays)}
+              {t(
+                "{0, plural, one {# day} other {# days}} of permit lead time on this route.",
+                assessment.maxLeadTimeDays,
+              )}
             </p>
             {pickupTooSoon && (
               <p className="mt-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
@@ -273,7 +287,9 @@ function EnvelopeBody({
           >
             {assessment.feeIsBaseOnly && (
               <p className="text-muted-foreground text-xs">
-                {t("Base fees only — per-mile charges are excluded because per-state mileage is not available for this route, so the real cost will be higher where a jurisdiction charges by distance.")}
+                {t(
+                  "Base fees only — per-mile charges are excluded because per-state mileage is not available for this route, so the real cost will be higher where a jurisdiction charges by distance.",
+                )}
               </p>
             )}
           </SummaryCard>
@@ -288,7 +304,9 @@ function EnvelopeBody({
               {t("Unconfirmed limits for {0}", unverified.map((j) => j.stateCode).join(", "))}
             </p>
             <p className="text-muted-foreground text-xs">
-              {t("These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.")}
+              {t(
+                "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.",
+              )}
             </p>
           </div>
         </div>
@@ -443,7 +461,11 @@ function RequirementRow({
         <StateChip code={code} />
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-medium">
-            {stateName ? t("{0} permit", stateName) : code ? t("{0} permit", code) : t("Permit required")}
+            {stateName
+              ? t("{0} permit", stateName)
+              : code
+                ? t("{0} permit", code)
+                : t("Permit required")}
           </p>
           {exceedances.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -463,10 +485,16 @@ function RequirementRow({
             </div>
           )}
           <p className="text-2xs text-muted-foreground">
-            {t("{0, plural, one {# day} other {# days}} lead time {1}", requirement.leadTimeDays, requirement.validityDays > 0 && ` ${t("· valid {0} days", requirement.validityDays)}`)}
+            {t(
+              "{0, plural, one {# day} other {# days}} lead time {1}",
+              requirement.leadTimeDays,
+              requirement.validityDays > 0 && ` ${t("· valid {0} days", requirement.validityDays)}`,
+            )}
           </p>
           {requirement.status === "Waived" && requirement.waiverReason && (
-            <p className="text-2xs text-muted-foreground">{t("Waived: {0}", requirement.waiverReason)}</p>
+            <p className="text-2xs text-muted-foreground">
+              {t("Waived: {0}", requirement.waiverReason)}
+            </p>
           )}
         </div>
       </div>
@@ -505,10 +533,13 @@ function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
           <p className="text-xs font-medium tabular-nums">{permit.permitNumber}</p>
           <p className="text-2xs text-muted-foreground">
             {permit.expiresAt
-              ? t("Expires {0}", formatToUserTimezone(permit.expiresAt, {
-                  showTimeZone: false,
-                  showTime: false,
-                }))
+              ? t(
+                  "Expires {0}",
+                  formatToUserTimezone(permit.expiresAt, {
+                    showTimeZone: false,
+                    showTime: false,
+                  }),
+                )
               : t("No expiry recorded")}
           </p>
         </div>

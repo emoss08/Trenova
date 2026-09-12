@@ -9,7 +9,12 @@ import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { EmptySheet, GhostBar, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
+import {
+  EmptySheet,
+  GhostBar,
+  GhostBox,
+  GhostLine,
+} from "@trenova/shared/components/ui/empty-sheet";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -57,9 +62,7 @@ export function StatementDetail({
           total +
           (group.shipments ?? []).reduce(
             (sum, shipment) =>
-              heldIds.has(shipment.billingQueueItemId)
-                ? sum
-                : sum + Number(shipment.amount ?? 0),
+              heldIds.has(shipment.billingQueueItemId) ? sum : sum + Number(shipment.amount ?? 0),
             0,
           )
         );
@@ -104,7 +107,9 @@ export function StatementDetail({
       <BillingDetailUnselected
         layout="cards"
         title={t("Pick a statement")}
-        description={t("See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.")}
+        description={t(
+          "See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.",
+        )}
       />
     );
   }
@@ -157,7 +162,9 @@ export function StatementDetail({
               }
             />
             <TooltipContent>
-              {t("This statement bills itself when the period closes. Billing it here is only for getting ahead of that.")}
+              {t(
+                "This statement bills itself when the period closes. Billing it here is only for getting ahead of that.",
+              )}
             </TooltipContent>
           </Tooltip>
         )}
@@ -199,14 +206,16 @@ export function StatementDetail({
               <div className="bg-muted/40 flex items-start gap-2 rounded-lg border p-2.5">
                 <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
                 <p className="text-muted-foreground text-xs">
-                  {standalone} shipments aren&apos;t booked as orders, so splitting by order bills
-                  each on its own invoice. If {statement.customerName} expects one invoice for the
-                  period,{" "}
+                  {t(
+                    "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,",
+                    standalone,
+                    statement.customerName,
+                  )}{" "}
                   <Link
                     to={`/billing/configuration-files/customers?panelType=edit&panelEntityId=${statement.customerId}`}
                     className="text-foreground font-medium underline underline-offset-2"
                   >
-                    change how they&apos;re split
+                    {t("change how they're split")}
                   </Link>
                   .
                 </p>
@@ -216,14 +225,16 @@ export function StatementDetail({
               <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-2.5 dark:border-amber-900 dark:bg-amber-950/30">
                 <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <p className="text-xs text-amber-800 dark:text-amber-200">
-                  {statement.heldCount} shipment{statement.heldCount === 1 ? "" : "s"} worth{" "}
-                  {formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode)} are
-                  still in review and will not be on this invoice.{" "}
+                  {t(
+                    "{0, plural, one {# shipment} other {# shipments}} worth {1} {0, plural, one {is} other {are}} still in review and will not be on this invoice.",
+                    statement.heldCount,
+                    formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
+                  )}{" "}
                   <Link
                     to={`/billing/queue?view=shipments&query=${encodeURIComponent(statement.customerName)}`}
                     className="font-medium underline underline-offset-2"
                   >
-                    Review them
+                    {t("Review them")}
                   </Link>
                 </p>
               </div>
@@ -267,7 +278,10 @@ export function StatementDetail({
           <span className="text-muted-foreground text-[11px]">
             {heldCount > 0
               ? t("{0, plural, one {# shipment} other {# shipments}} held back", heldCount)
-              : t("{0, plural, one {# shipment} other {# shipments}} ready", statement.shipmentCount)}
+              : t(
+                  "{0, plural, one {# shipment} other {# shipments}} ready",
+                  statement.shipmentCount,
+                )}
           </span>
           {heldCount > 0 && (
             <Button

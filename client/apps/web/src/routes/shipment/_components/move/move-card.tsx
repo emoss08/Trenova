@@ -654,7 +654,9 @@ function StopTimelineItem({
             <span className="text-destructive text-xs">
               {t("Error in {0} stop", stopTypeLabels[stop.type])}
             </span>
-            <span className="text-muted-foreground text-xs">{t("Click to edit and fix errors")}</span>
+            <span className="text-muted-foreground text-xs">
+              {t("Click to edit and fix errors")}
+            </span>
           </div>
         ) : (
           <span className="text-muted-foreground text-xs">
@@ -761,7 +763,9 @@ function CarrierAssignmentDetails({
         <span aria-hidden>+</span>
         <span>{t("Fuel {0}", formatCarrierMoney(carrierAssignment.fuelSurcharge, currency))}</span>
         <span aria-hidden>+</span>
-        <span>{t("Accessorials {0}", formatCarrierMoney(carrierAssignment.accessorialTotal, currency))}</span>
+        <span>
+          {t("Accessorials {0}", formatCarrierMoney(carrierAssignment.accessorialTotal, currency))}
+        </span>
         <span aria-hidden>=</span>
         <span className="text-foreground font-medium">
           {formatCarrierMoney(carrierAssignment.totalCost, currency)}
