@@ -16,12 +16,12 @@ const maxDistanceFieldLength = 50
 type ShipmentMove struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_moves,alias:sm"`
 
-	ID             pulid.ID         `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID         `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID     pulid.ID         `json:"shipmentId"                  bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status         MoveStatus       `json:"status"                      bun:"status,type:move_status_enum,notnull,default:'New'"`
-	CoverageType   MoveCoverageType `json:"coverageType"                bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
+	ID                     pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID         pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ShipmentID             pulid.ID           `json:"shipmentId"                  bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status                 MoveStatus         `json:"status"                      bun:"status,type:move_status_enum,notnull,default:'New'"`
+	CoverageType           MoveCoverageType   `json:"coverageType"                bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
 	// Loaded is false for a deadhead move. Deadhead miles are not recorded as
 	// loaded.
 	Loaded                 bool               `json:"loaded"                      bun:"loaded,type:BOOLEAN,notnull"`
