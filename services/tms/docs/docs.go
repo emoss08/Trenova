@@ -45336,6 +45336,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "locale": {
+                    "type": "string"
+                },
                 "loginSlug": {
                     "type": "string"
                 },
@@ -45772,6 +45775,9 @@ const docTemplate = `{
                 },
                 "lastLoginAt": {
                     "type": "integer"
+                },
+                "locale": {
+                    "type": "string"
                 },
                 "memberships": {
                     "type": "array",
@@ -53468,6 +53474,9 @@ const docTemplate = `{
         "internal_api_handlers_userhandler.UpdateMySettingsRequest": {
             "type": "object",
             "properties": {
+                "locale": {
+                    "type": "string"
+                },
                 "timeFormat": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_domaintypes.TimeFormat"
                 },
