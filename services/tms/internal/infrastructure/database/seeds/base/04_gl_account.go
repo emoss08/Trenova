@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
@@ -134,7 +135,9 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 		Column("id", "account_code").
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).
-		Where("account_code IN (?)", bun.List([]string{"1110", "6940"})).
+		// Every code the switch below reads has to be selected here, or its id
+		// stays nil and the guard fails for an account that was seeded correctly.
+		Where("account_code IN (?)", bun.List([]string{"1110", "6940", "3030"})).
 		Scan(ctx, &rows); err != nil {
 		return err
 	}
@@ -152,8 +155,21 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 			retainedEarningsAccountID = rows[i].ID
 		}
 	}
-	if arAccountID.IsNil() || writeOffAccountID.IsNil() || retainedEarningsAccountID.IsNil() {
-		return fmt.Errorf("required accounting default accounts were not created")
+	missing := make([]string, 0, 3)
+	if arAccountID.IsNil() {
+		missing = append(missing, "1110 (AR)")
+	}
+	if writeOffAccountID.IsNil() {
+		missing = append(missing, "6940 (write-off)")
+	}
+	if retainedEarningsAccountID.IsNil() {
+		missing = append(missing, "3030 (retained earnings)")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf(
+			"required accounting default accounts were not created: %s",
+			strings.Join(missing, ", "),
+		)
 	}
 
 	_, err := tx.NewUpdate().
