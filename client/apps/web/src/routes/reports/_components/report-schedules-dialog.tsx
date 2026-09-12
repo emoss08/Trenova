@@ -723,7 +723,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
               />
               <TooltipContent side="bottom">
                 {schedule.emailRecipients.join(", ")}
-                {schedule.emailAttach ? t("— file attached") : ""}
+                {schedule.emailAttach ? ` ${t("— file attached")}` : ""}
               </TooltipContent>
             </Tooltip>
           )}

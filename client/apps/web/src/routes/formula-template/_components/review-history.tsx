@@ -59,7 +59,7 @@ function RoundHeader({ round }: { round: ReviewRound }) {
         {round.baseVersionNumber > 0
           ? t("against approved v{0}", round.baseVersionNumber)
           : t("first approval")}
-        {round.outcome === null && t("· open")}
+        {round.outcome === null && ` ${t("· open")}`}
       </span>
     </div>
   );

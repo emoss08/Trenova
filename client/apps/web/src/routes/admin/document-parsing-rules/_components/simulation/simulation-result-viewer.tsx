@@ -127,7 +127,7 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          {t("Confidence: {0}% {1}", ((analysis.overallConfidence ?? 0) * 100).toFixed(1), analysis.reviewStatus ? t("· Status: {0}", analysis.reviewStatus) : "")}
+          {t("Confidence: {0}% {1}", ((analysis.overallConfidence ?? 0) * 100).toFixed(1), analysis.reviewStatus ? ` ${t("· Status: {0}", analysis.reviewStatus)}` : "")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -362,7 +362,7 @@ function MoveInspector({
                   ))}
               {!isLoading && candidates.length === 0 && (
                 <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-                  {t("No eligible driver for this move. {0}", !includeBlocked ? t("Show ineligible drivers to see why.") : "")}
+                  {t("No eligible driver for this move. {0}", !includeBlocked ? ` ${t("Show ineligible drivers to see why.")}` : "")}
                 </p>
               )}
             </>

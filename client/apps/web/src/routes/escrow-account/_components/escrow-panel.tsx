@@ -216,7 +216,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       <div className="flex flex-wrap items-center gap-2">
         <EscrowAccountStatusBadge status={account.status as EscrowAccountStatus} />
         <span className="text-muted-foreground text-xs">
-          {t("Opened {0} {1}", formatDate(account.openedDate), account.closedDate ? t("· Closed {0}", formatDate(account.closedDate)) : "")}
+          {t("Opened {0}{1}", formatDate(account.openedDate), account.closedDate ? ` ${t("· Closed {0}", formatDate(account.closedDate))}` : "")}
         </span>
         {account.status === "Active" && (
           <div className="ml-auto flex gap-2">

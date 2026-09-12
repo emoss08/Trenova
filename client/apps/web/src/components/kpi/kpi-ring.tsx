@@ -61,7 +61,7 @@ export function KpiRing({
           </div>
           {target !== undefined && (
             <span className="text-muted-foreground/80 font-mono text-[9.5px] tracking-wide uppercase">
-              {t("Target {0} {1}", target, unit ?? "")}
+              {t("Target {0}{1}", target, unit ?? "")}
             </span>
           )}
         </div>

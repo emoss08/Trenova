@@ -103,7 +103,7 @@ export function ReadinessPanel({
           ready ? "bg-emerald-500/10" : "bg-destructive/10",
         )}
       >
-        <span>{ready ? t("Ready to") + step : t("Not ready to") + step}</span>
+        <span>{ready ? `${t("Ready to")} ` + step : `${t("Not ready to")} ` + step}</span>
         {failing.length > 0 && (
           <span className="text-destructive font-normal">
             {t("{0} blocking {1}", failing.length, failing.length === 1 ? "issue" : "issues")}

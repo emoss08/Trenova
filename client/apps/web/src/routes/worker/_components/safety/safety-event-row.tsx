@@ -192,7 +192,7 @@ export function SafetyEventRow({
               {formatUnixDate(event.occurredAt)}
               {event.location ? ` · ${event.location}` : ""}
               {event.referenceNumber ? ` · ${event.referenceNumber}` : ""}
-              {event.recordedBy?.name ? t("· recorded by {0}", event.recordedBy.name) : ""}
+              {event.recordedBy?.name ? ` ${t("· recorded by {0}", event.recordedBy.name)}` : ""}
             </p>
           </div>
           <RowActionsMenu label={`Actions for ${headline}`} actions={actions} />

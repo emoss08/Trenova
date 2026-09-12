@@ -13,6 +13,32 @@
 //   <a><Logo /> Continue with {provider.name}</a>
 //     -> 'Continue with {0}', with <Logo /> left exactly where it was.
 
+// renderedText applies JSX's own whitespace rule, which is not "collapse runs to a space":
+// a whitespace run containing a newline is removed entirely, so `{name}\n{suffix}` renders
+// with nothing between them. Collapsing it to a space instead puts a space into the message
+// that React never rendered, and the fold's output then reads `by Jane Smith , Manager`.
+// This is the algorithm Babel uses to clean a JSX literal child.
+function renderedText(value) {
+  const lines = value.split(/\r\n|\n|\r/);
+
+  let lastNonEmpty = 0;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/[^ \t]/.test(lines[i])) lastNonEmpty = i;
+  }
+
+  let out = "";
+  for (let i = 0; i < lines.length; i += 1) {
+    let line = lines[i].replace(/\t/g, " ");
+    if (i !== 0) line = line.replace(/^ +/, "");
+    if (i !== lines.length - 1) line = line.replace(/ +$/, "");
+    if (line === "") continue;
+    if (i !== lastNonEmpty) line += " ";
+    out += line;
+  }
+
+  return out;
+}
+
 function isWhitespaceText(child) {
   return child.type === "JSXText" && child.value.trim() === "";
 }
@@ -88,7 +114,7 @@ function buildMessage(run) {
 
   for (const child of run) {
     if (child.type === "JSXText") {
-      message += child.value;
+      message += renderedText(child.value);
       continue;
     }
     const expr = child.expression;

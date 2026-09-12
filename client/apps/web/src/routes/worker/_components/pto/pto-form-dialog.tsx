@@ -143,7 +143,7 @@ function DaysPreview({
           data-testid="pto-availability-hint"
         >
           {result.allowed
-            ? t("{0} {1} days available on the start date{2}", Number(result.projectedAvailableDays).toFixed(2), ptoType.toLowerCase(), result.enforced ? "" : t("(not enforced)"))
+            ? t("{0} {1} days available on the start date{2}", Number(result.projectedAvailableDays).toFixed(2), ptoType.toLowerCase(), result.enforced ? "" : ` ${t("(not enforced)")}`)
             : result.message}
         </p>
       ) : null}

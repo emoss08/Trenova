@@ -140,7 +140,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
             : t("No round has been drawn yet")}
         </KpiSub>
         <KpiSub>
-          {t("{0, plural, one {# active pool} other {# active pools}} {1}", overview.activePools, overview.belowMinimum > 0 ? t("· {0} below the DOT minimum", overview.belowMinimum) : "")}
+          {t("{0, plural, one {# active pool} other {# active pools}}{1}", overview.activePools, overview.belowMinimum > 0 ? ` ${t("· {0} below the DOT minimum", overview.belowMinimum)}` : "")}
         </KpiSub>
       </KpiCard>
     </div>

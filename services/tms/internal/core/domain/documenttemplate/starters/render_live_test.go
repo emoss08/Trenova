@@ -79,8 +79,8 @@ func pdfPageCount(t *testing.T, pdf []byte) int {
 	return doc.NumPage()
 }
 
-// renderStarter runs one document kind all the way to PDF bytes.
-func renderStarter(t *testing.T, kind documenttemplate.Kind) []byte {
+// renderStarterPDF runs one document kind all the way to PDF bytes.
+func renderStarterPDF(t *testing.T, kind documenttemplate.Kind) []byte {
 	t.Helper()
 
 	renderer := liveRenderer(t)
@@ -126,7 +126,7 @@ func renderStarter(t *testing.T, kind documenttemplate.Kind) []byte {
 }
 
 func TestLiveInvoiceStarterProducesALegibleInvoice(t *testing.T) {
-	pdf := renderStarter(t, documenttemplate.KindInvoicePDF)
+	pdf := renderStarterPDF(t, documenttemplate.KindInvoicePDF)
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 	assert.LessOrEqual(t, pdfPageCount(t, pdf), 2,
@@ -153,7 +153,7 @@ func TestLiveInvoiceStarterProducesALegibleInvoice(t *testing.T) {
 }
 
 func TestLiveDetentionNoticeStarterRenders(t *testing.T) {
-	pdf := renderStarter(t, documenttemplate.KindDetentionNoticePDF)
+	pdf := renderStarterPDF(t, documenttemplate.KindDetentionNoticePDF)
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 
@@ -170,7 +170,7 @@ func TestLiveDetentionNoticeStarterRenders(t *testing.T) {
 }
 
 func TestLiveReportStarterRendersLandscape(t *testing.T) {
-	pdf := renderStarter(t, documenttemplate.KindReportPDF)
+	pdf := renderStarterPDF(t, documenttemplate.KindReportPDF)
 
 	require.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
 

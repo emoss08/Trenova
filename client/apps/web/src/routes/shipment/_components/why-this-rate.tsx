@@ -118,8 +118,8 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
             <p key={guardrail.kind} className="text-2xs text-muted-foreground">
               {t(guardrail.label)}
               {guardrail.applied
-                ? t("applied — {0} became {1}.", formatCurrency(Number(guardrail.rawAmount ?? 0)), formatCurrency(Number(guardrail.amount ?? 0)))
-                : t("did not apply.")}
+                ? ` ${t("applied — {0} became {1}.", formatCurrency(Number(guardrail.rawAmount ?? 0)), formatCurrency(Number(guardrail.amount ?? 0)))}`
+                : ` ${t("did not apply.")}`}
             </p>
           ))}
         </div>
@@ -128,7 +128,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
       {quote.foregoneAmount != null && (
         <div className="border-b p-3">
           <p className="text-2xs text-muted-foreground">
-            {t("This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}", formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)), formatCurrency(Number(quote.foregoneAmount)), quote.overrideReason ? t("Reason given: {0}", quote.overrideReason) : "")}
+            {t("This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}", formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)), formatCurrency(Number(quote.foregoneAmount)), quote.overrideReason ? ` ${t("Reason given: {0}", quote.overrideReason)}` : "")}
           </p>
         </div>
       )}

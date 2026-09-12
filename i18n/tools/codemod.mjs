@@ -100,8 +100,16 @@ function templateMessage(node, source) {
   // it already is.
   if (collapsed.replace(/\{\d+\}/g, "").trim() === "") return null;
 
+  // Whitespace around the template is layout, not part of the sentence: ` · ${n} open`
+  // renders beside a sibling and the leading space is what separates them. It stays out of
+  // the catalog key, where a translator would lose it, and is restored around the call.
   const args = node.expressions.map((expr) => source.slice(expr.start, expr.end));
-  return { message: collapsed, args };
+  return {
+    message: collapsed,
+    args,
+    leading: message.match(/^\s*/)[0],
+    trailing: message.match(/\s*$/)[0],
+  };
 }
 
 const VERBATIM_ELEMENTS = new Set(["style", "script"]);
@@ -276,10 +284,12 @@ export function transformSource(source, filePath, { labels = false } = {}) {
       const built = templateMessage(expr, source);
       if (built === null) return;
       const call = callFor(stack, deps);
+      const invocation = `${call}(${[quote(built.message), ...built.args].join(", ")})`;
+      const padded = built.leading === "" && built.trailing === "";
       edits.push({
         start: expr.start,
         end: expr.end,
-        text: `${call}(${[quote(built.message), ...built.args].join(", ")})`,
+        text: padded ? invocation : `\`${built.leading}\${${invocation}}${built.trailing}\``,
       });
       return;
     }

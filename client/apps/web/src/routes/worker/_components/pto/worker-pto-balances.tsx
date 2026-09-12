@@ -203,7 +203,7 @@ function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) 
       <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
         {assignment.ptoPolicy.code}
       </Badge>
-      {t("{0} · since {1} {2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? t("· informational") : "")}
+      {t("{0} · since {1}{2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? ` ${t("· informational")}` : "")}
     </p>
   );
 }

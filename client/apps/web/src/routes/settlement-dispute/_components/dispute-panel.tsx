@@ -112,8 +112,8 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <SettlementDisputeStatusBadge status={dispute.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Submitted {0} {1}", formatDate(dispute.createdAt), dispute.worker
-            ? t("by {0}", `${dispute.worker.firstName} ${dispute.worker.lastName}`.trim())
+          {t("Submitted {0}{1}", formatDate(dispute.createdAt), dispute.worker
+            ? ` ${t("by {0}", `${dispute.worker.firstName} ${dispute.worker.lastName}`.trim())}`
             : "")}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(dispute.description)}</p>
@@ -155,8 +155,8 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <p className="mt-1 text-sm whitespace-pre-wrap">{dispute.resolutionNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatDate(dispute.resolvedAt)}
-            {dispute.resolvedBy ? t("by {0}", dispute.resolvedBy.name) : ""}
-            {dispute.resolutionLineId ? t("· correcting adjustment applied") : ""}
+            {dispute.resolvedBy ? ` ${t("by {0}", dispute.resolvedBy.name)}` : ""}
+            {dispute.resolutionLineId ? ` ${t("· correcting adjustment applied")}` : ""}
           </p>
         </div>
       ) : (

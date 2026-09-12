@@ -76,8 +76,8 @@ function PlannedAssignmentRow({
         <span className="text-muted-foreground text-[10.5px]">
           {assignment.rationale}
           {assignment.score.deadheadMiles != null &&
-            t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}
-          {t("· {0}% confidence", Math.round(assignment.confidence * 100))}
+            ` ${t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}`}
+          {` ${t("· {0}% confidence", Math.round(assignment.confidence * 100))}`}
         </span>
         {!assignment.tractorId && (
           <span className="text-[10px] text-red-600 dark:text-red-400">

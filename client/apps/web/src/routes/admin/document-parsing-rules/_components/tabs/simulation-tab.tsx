@@ -92,7 +92,7 @@ function VersionSelect({
                     {selected.status}
                   </Badge>
                   <span className="truncate">
-                    {t("Version {0} {1}", selected.versionNumber, selected.label ? ` — ${selected.label}` : "")}
+                    {t("Version {0}{1}", selected.versionNumber, selected.label ? ` — ${selected.label}` : "")}
                   </span>
                 </>
               ) : (
@@ -133,7 +133,7 @@ function VersionSelect({
                     {v.status}
                   </Badge>
                   <span className="truncate text-xs">
-                    {t("Version {0} {1}", v.versionNumber, v.label ? ` — ${v.label}` : "")}
+                    {t("Version {0}{1}", v.versionNumber, v.label ? ` — ${v.label}` : "")}
                   </span>
                 </CommandItem>
               ))}

@@ -167,7 +167,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             className={cn("text-xs", hasUnresolved ? "text-destructive" : "text-muted-foreground")}
           >
             {inspection.defectCount} {pluralize("defect", inspection.defectCount)}
-            {hasUnresolved ? t("· {0} unresolved", inspection.unresolvedDefectCount) : ""}
+            {hasUnresolved ? ` ${t("· {0} unresolved", inspection.unresolvedDefectCount)}` : ""}
           </span>
         ) : (
           <span className="text-muted-foreground text-xs">{t("No defects")}</span>

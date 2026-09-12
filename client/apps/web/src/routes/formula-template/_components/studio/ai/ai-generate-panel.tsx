@@ -281,7 +281,7 @@ export function AiGeneratePanel({
                     )}
                     {validation.valid
                       ? t("Validated against sample data{0}", typeof validation.result === "number"
-                            ? t("— result {0}", formatCurrency(validation.result))
+                            ? ` ${t("— result {0}", formatCurrency(validation.result))}`
                             : "")
                       : t("Validation warning: {0}", validation.error || validation.message)}
                   </div>

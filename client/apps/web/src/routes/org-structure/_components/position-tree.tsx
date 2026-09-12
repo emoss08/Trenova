@@ -384,7 +384,7 @@ function TreeRow({
             {hasChildren
               ? t("· {0, plural, one {# reporting position} other {# reporting positions}}", node.children.length)
               : ""}
-            {node.terminated > 0 ? t("· {0} left", node.terminated) : ""}
+            {node.terminated > 0 ? ` ${t("· {0} left", node.terminated)}` : ""}
           </span>
         </div>
       </div>

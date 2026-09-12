@@ -50,8 +50,8 @@ export function TotalCompCard() {
       </p>
       <p className="text-muted-foreground text-xs">
         {t("{0} paid {1} {2}", formatMinor(data.grossPayMinor), data.employerBenefitMinor > 0
-          ? t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))
-          : "", share > 0 ? t("· {0}% of it is benefits", share) : "")}
+          ? ` ${t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))}`
+          : "", share > 0 ? ` ${t("· {0}% of it is benefits", share)}` : "")}
       </p>
 
       {data.employeeBenefitMinor > 0 ? (

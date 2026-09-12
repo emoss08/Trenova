@@ -73,7 +73,7 @@ export function StatementGroupCard({
         </button>
 
         <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
-          {t("{0} {1} shp", included.length, heldCount > 0 ? t("of {0}", shipments.length) : "")}
+          {t("{0}{1} shp", included.length, heldCount > 0 ? ` ${t("of {0}", shipments.length)}` : "")}
             </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
           {formatCurrency(liveTotal, currencyCode)}

@@ -241,7 +241,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
       <p className="text-sm font-semibold">
         <AmountDisplay value={balance} currency="USD" />
         <span className="text-muted-foreground ml-1 text-[10px] font-normal">
-          {t("open balance{0}", list.length >= 100 ? t("(latest 100 entries)") : "")}
+          {t("open balance{0}", list.length >= 100 ? ` ${t("(latest 100 entries)")}` : "")}
         </span>
       </p>
       {list.length > 0 && (

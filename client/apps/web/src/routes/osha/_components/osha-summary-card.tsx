@@ -174,7 +174,7 @@ export function OshaSummaryCard({
                 ) : null}
               </p>
               <p className="text-muted-foreground">
-                {t("Certified {0} {1}", formatUnixDateMedium(summary?.certifiedAt), summary?.executivePhone?.trim() ? ` · ${summary.executivePhone.trim()}` : "")}
+                {t("Certified {0}{1}", formatUnixDateMedium(summary?.certifiedAt), summary?.executivePhone?.trim() ? ` · ${summary.executivePhone.trim()}` : "")}
               </p>
               <p className="text-muted-foreground">
                 {summary?.submittedAt

@@ -67,7 +67,7 @@ export function DeleteIftaMileageEntryDialog({
           <AlertDialogDescription>
             {entry ? (
               <span className="block">
-                {t("{0} miles in {1} on {2} {3} will be removed outright.", formatDecimalString(entry.miles, IFTA_MILES_SCALE), entry.jurisdiction.code, formatUnixDate(entry.traveledAt), entry.tractor?.code ? t("for tractor {0}", entry.tractor.code) : "")}
+                {t("{0} miles in {1} on {2}{3} will be removed outright.", formatDecimalString(entry.miles, IFTA_MILES_SCALE), entry.jurisdiction.code, formatUnixDate(entry.traveledAt), entry.tractor?.code ? ` ${t("for tractor {0}", entry.tractor.code)}` : "")}
               </span>
             ) : null}
             <span className="mt-2 block">

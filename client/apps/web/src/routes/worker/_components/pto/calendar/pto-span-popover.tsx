@@ -144,7 +144,7 @@ export function PTODayList({ items, dayUnix }: PTODayListProps) {
                   <p className="truncate text-xs font-medium">{ptoWorkerName(pto)}</p>
                   <p className="text-muted-foreground truncate text-[11px] tabular-nums">
                     {t(meta.label)} · {formatRange(pto.startDate, pto.endDate)}
-                    {pto.status === "Requested" ? t("· awaiting decision") : ""}
+                    {pto.status === "Requested" ? ` ${t("· awaiting decision")}` : ""}
                   </p>
                 </div>
                 <PTOActionsMenu pto={pto} className="size-5.5" />

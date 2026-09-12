@@ -94,7 +94,7 @@ export function BarDetailPopover({
             )}
           >
             <TimerIcon className="size-3 shrink-0" />
-            {t("Dwelling {0} at {1} {2}", formatDurationFromSeconds(bar.dwell.seconds), bar.dwell.locationName, bar.dwell.severity === "critical" && t("· detention risk"))}
+            {t("Dwelling {0} at {1}{2}", formatDurationFromSeconds(bar.dwell.seconds), bar.dwell.locationName, bar.dwell.severity === "critical" && ` ${t("· detention risk")}`)}
           </div>
         )}
 

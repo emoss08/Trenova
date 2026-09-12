@@ -377,7 +377,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={earning.amountMinor} currency="USD" /> ·{" "}
                   {earning.frequency === "Monthly" ? "monthly" : t("every settlement")}
-                  {earning.status === "Paused" && t("· paused")}
+                  {earning.status === "Paused" && ` ${t("· paused")}`}
                 </p>
               </div>
               <Button
@@ -478,7 +478,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={deduction.amountMinor} currency="USD" /> ·{" "}
                   {deduction.frequency === "Monthly" ? "monthly" : t("every settlement")}
-                  {deduction.status === "Paused" && t("· paused")}
+                  {deduction.status === "Paused" && ` ${t("· paused")}`}
                 </p>
               </div>
               <Button

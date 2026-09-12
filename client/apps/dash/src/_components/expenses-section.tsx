@@ -73,7 +73,7 @@ export function ExpensesSection() {
               <div className="mt-1 flex items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground">
                   {formatRange(expense.incurredDate, expense.incurredDate)}
-                  {expense.receiptDocumentId ? t("· Receipt attached") : ""}
+                  {expense.receiptDocumentId ? ` ${t("· Receipt attached")}` : ""}
                 </p>
                 <ExpenseStatusBadge status={expense.status} />
               </div>

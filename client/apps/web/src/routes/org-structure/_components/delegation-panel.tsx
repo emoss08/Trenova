@@ -173,7 +173,7 @@ export function DelegationPanel() {
                   {formatUnixDate(delegation.startsAt)}
                   {delegation.endsAt
                     ? ` – ${formatUnixDate(delegation.endsAt)}`
-                    : t("– until called back")}
+                    : ` ${t("– until called back")}`}
                   {delegation.reason ? ` · ${delegation.reason}` : ""}
                 </span>
               </div>

@@ -152,7 +152,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? t("(leave blank to keep existing secret)") : "")}
+                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? ` ${t("(leave blank to keep existing secret)")}` : "")}
                   <ResendWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }

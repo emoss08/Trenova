@@ -218,7 +218,7 @@ export function AssignPayProfileDialog({
                     {component.description || `${component.kind} (${component.method})`}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
-                    {t("profile: {0} {1}", Number(component.rate), component.method === "PercentOfRevenue" ? "%" : "")}
+                    {t("profile: {0}{1}", Number(component.rate), component.method === "PercentOfRevenue" ? "%" : "")}
                   </span>
                   <Input
                     value={overrides[component.id] ?? ""}

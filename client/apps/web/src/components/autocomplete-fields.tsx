@@ -1543,7 +1543,7 @@ export function DistanceProfileAutocompleteField<T extends FieldValues>({
           <span className="text-2xs text-muted-foreground w-full truncate">
             {selectOptionMetaString(option, "routingType")} ·{" "}
             {selectOptionMetaString(option, "distanceUnits")}
-            {selectOptionMetaBoolean(option, "isDefault") ? t("· Default") : ""}
+            {selectOptionMetaBoolean(option, "isDefault") ? ` ${t("· Default")}` : ""}
           </span>
         </div>
       )}

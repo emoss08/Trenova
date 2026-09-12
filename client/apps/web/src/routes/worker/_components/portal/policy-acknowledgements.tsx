@@ -79,7 +79,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                         <span>{ack.signatureName}</span>
                       </>
                     ) : (
-                      t("· read")
+                      ` ${t("· read")}`
                     )}
                   </span>
                 </div>

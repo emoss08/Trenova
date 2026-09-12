@@ -219,7 +219,7 @@ function EnvelopeBody({
               {escorts.map((escort) => (
                 <li key={escort.role} className="text-muted-foreground text-xs">
                   <span className="text-foreground">{t(escort.label)}</span>
-                  {escort.stateCodes.length > 0 && t("— required by {0}", escort.stateCodes.join(", "))}
+                  {escort.stateCodes.length > 0 && ` ${t("— required by {0}", escort.stateCodes.join(", "))}`}
                 </li>
               ))}
             </ul>
@@ -463,7 +463,7 @@ function RequirementRow({
             </div>
           )}
           <p className="text-2xs text-muted-foreground">
-            {t("{0, plural, one {# day} other {# days}} lead time {1}", requirement.leadTimeDays, requirement.validityDays > 0 && t("· valid {0} days", requirement.validityDays))}
+            {t("{0, plural, one {# day} other {# days}} lead time {1}", requirement.leadTimeDays, requirement.validityDays > 0 && ` ${t("· valid {0} days", requirement.validityDays)}`)}
           </p>
           {requirement.status === "Waived" && requirement.waiverReason && (
             <p className="text-2xs text-muted-foreground">{t("Waived: {0}", requirement.waiverReason)}</p>

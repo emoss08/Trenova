@@ -201,7 +201,7 @@ function FuelPurchaseEditPanel({
       title={t("Fuel Purchase")}
       titleComponent={(record) => (
         <span>
-          {t("{0} {1} · {2} gal", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.gallons)}
+          {t("{0}{1} · {2} gal", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.gallons)}
         </span>
       )}
       queryKey={FUEL_PURCHASE_LIST_KEY}

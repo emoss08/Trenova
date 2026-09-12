@@ -336,10 +336,10 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
 
                 <p className="text-muted-foreground mt-1">
                   {formatUnixDate(leaveCase.startsAt)}
-                  {leaveCase.endsAt ? ` – ${formatUnixDate(leaveCase.endsAt)}` : t("– open")}
+                  {leaveCase.endsAt ? ` – ${formatUnixDate(leaveCase.endsAt)}` : ` ${t("– open")}`}
                   {leaveCase.reason ? ` · ${leaveCase.reason}` : ""}
                   {leaveCase.certificationDueAt
-                    ? t("· certification due {0}", formatUnixDate(leaveCase.certificationDueAt))
+                    ? ` ${t("· certification due {0}", formatUnixDate(leaveCase.certificationDueAt))}`
                     : ""}
                 </p>
 

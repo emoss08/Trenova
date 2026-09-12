@@ -115,7 +115,7 @@ export function ClockBoard({
         </div>
       ) : ranked.length === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
-          {t("Nobody is punched in{0} right now.", teamOnly ? t("on your team") : "")}
+          {t("Nobody is punched in{0} right now.", teamOnly ? ` ${t("on your team")}` : "")}
         </p>
       ) : (
         <BoardList
@@ -207,7 +207,7 @@ function BoardList({
                     </span>
                   ) : null}
                   <span className="text-muted-foreground text-xs tabular-nums">
-                    {t("since {0} {1}", formatPunchTime(entry.clockedInAt), entry.source !== "Clock" ? ` · ${entry.source}` : "")}
+                    {t("since {0}{1}", formatPunchTime(entry.clockedInAt), entry.source !== "Clock" ? ` · ${entry.source}` : "")}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">

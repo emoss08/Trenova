@@ -397,7 +397,7 @@ function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRo
       </ol>
       <p className="text-muted-foreground text-xs tabular-nums">
         {running
-          ? t("{0} is {1}% through · {2}/{3} required settled{4}", running.name, running.progress.percent, running.progress.requiredDone, running.progress.requiredTotal, running.progress.overdue > 0 ? t("· {0} overdue", running.progress.overdue) : "")
+          ? t("{0} is {1}% through · {2}/{3} required settled{4}", running.name, running.progress.percent, running.progress.requiredDone, running.progress.requiredTotal, running.progress.overdue > 0 ? ` ${t("· {0} overdue", running.progress.overdue)}` : "")
           : stage === "left"
             ? t("Everything for this employment is settled.")
             : t("Nothing is running for this employment.")}

@@ -286,7 +286,7 @@ function EventRow({
         <p className="truncate font-mono text-xs font-medium">{event.proNumber || t("No pro #")}</p>
         <p className="text-muted-foreground text-[11px]">
           {formatUnixDate(event.eventDate)}
-          {Number(event.totalMiles) > 0 ? t("· {0} mi", Number(event.totalMiles).toFixed(0)) : ""}
+          {Number(event.totalMiles) > 0 ? ` ${t("· {0} mi", Number(event.totalMiles).toFixed(0))}` : ""}
         </p>
       </div>
       <span className="shrink-0 text-xs font-semibold tabular-nums">

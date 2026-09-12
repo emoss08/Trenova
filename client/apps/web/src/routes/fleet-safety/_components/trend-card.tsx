@@ -58,7 +58,7 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
           )}
           {direction === "up" ? t("Rising") : direction === "down" ? t("Falling") : t("Holding steady")}
           {peak && rows.length > 1
-            ? t("· busiest {0}", formatUnixInUserTimezone(peak.periodStart, { month: "short", year: "numeric", timezone: "UTC" }))
+            ? ` ${t("· busiest {0}", formatUnixInUserTimezone(peak.periodStart, { month: "short", year: "numeric", timezone: "UTC" }))}`
             : ""}
         </span>
       </header>
@@ -135,9 +135,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
             <span className="font-medium">{safetyEventKindLabel(kind.kind)}</span>
             <span className="text-muted-foreground tabular-nums">
               {kind.events}
-              {kind.preventable > 0 ? t("· {0} preventable", kind.preventable) : ""}
-              {kind.outOfService > 0 ? t("· {0} out of service", kind.outOfService) : ""}
-              {kind.open > 0 ? t("· {0} open", kind.open) : ""}
+              {kind.preventable > 0 ? ` ${t("· {0} preventable", kind.preventable)}` : ""}
+              {kind.outOfService > 0 ? ` ${t("· {0} out of service", kind.outOfService)}` : ""}
+              {kind.open > 0 ? ` ${t("· {0} open", kind.open)}` : ""}
             </span>
           </li>
         ))}

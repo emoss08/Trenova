@@ -60,7 +60,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
     <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
       <ShieldIcon className="mt-0.5 size-3 shrink-0" />
       <span>
-        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? t("of {0}", formatCurrency(limit)) : "")}
+        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? ` ${t("of {0}", formatCurrency(limit))}` : "")}
       </span>
     </div>
   );

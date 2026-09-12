@@ -333,3 +333,31 @@ test("leaves style element text alone", () => {
   );
   assert.equal(result.changed, false);
 });
+
+test("keeps the space that separates a folded template from its sibling", () => {
+  const out = run(
+    `export function Row({ n }: any) {\n  return <span>{count}{n > 0 ? \` · \${n} open\` : ""}</span>;\n}\n`,
+  ).output;
+  assert.match(out, /\` \$\{t\("· \{0\} open", n\)\}\`/);
+});
+
+test("does not pad a template that had no surrounding whitespace", () => {
+  const out = run(
+    `export function Row({ n }: any) {\n  return <span>{n > 0 ? \`\${n} open\` + "!" : ""}</span>;\n}\n`,
+  ).output;
+  assert.doesNotMatch(out, /\`\$\{t\(/);
+});
+
+test("does not invent a space where JSX removed the newline between interpolations", () => {
+  const out = run(
+    `export function Row({ name, title }: any) {\n  return (\n    <p>\n      by {name}\n      {title ? \`, \${title}\` : ""}\n    </p>\n  );\n}\n`,
+  ).output;
+  assert.match(out, /t\("by \{0\}\{1\}"/);
+});
+
+test("keeps the space where the interpolations sat on one line", () => {
+  const out = run(
+    `export function Row({ first, last }: any) {\n  return <p>Driver {first} {last} is here</p>;\n}\n`,
+  ).output;
+  assert.match(out, /t\("Driver \{0\} \{1\} is here"/);
+});

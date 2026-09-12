@@ -226,7 +226,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                   ? t("Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.", validCount, pluralize("rate", validCount), quarter, year)
                   : t("No row in this file can be published as it stands.")}
                 {errorCount > 0
-                  ? t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))
+                  ? ` ${t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))}`
                   : ""}
               </p>
             </div>

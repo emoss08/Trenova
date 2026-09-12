@@ -163,7 +163,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
             {t("Rate applied")}
           </DialogTitle>
           <DialogDescription>
-            {t("{0} {1} priced this shipment.", rate.agreementName || t("A rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+            {t("{0}{1} priced this shipment.", rate.agreementName || t("A rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
           </DialogDescription>
         </DialogHeader>
 

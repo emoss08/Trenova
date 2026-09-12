@@ -108,7 +108,7 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
           <p className="text-muted-foreground max-w-full truncate text-xs">
             {shipment.customer?.name}
             {shipment.customer?.code && ` (${shipment.customer.code})`}
-            {shipment.bol && t("· BOL: {0}", shipment.bol)}
+            {shipment.bol && ` ${t("· BOL: {0}", shipment.bol)}`}
           </p>
         </div>
         <ShipmentRouteMap moves={shipment.moves} />

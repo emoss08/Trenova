@@ -131,7 +131,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                   {coverageTierLabel(enrollment.coverageTier)}
                 </span>
                 <span className="text-muted-foreground">
-                  {t("from {0} {1}", formatUnixDate(enrollment.effectiveFrom), enrollment.effectiveTo ? t("to {0}", formatUnixDate(enrollment.effectiveTo)) : "")}
+                  {t("from {0}{1}", formatUnixDate(enrollment.effectiveFrom), enrollment.effectiveTo ? ` ${t("to {0}", formatUnixDate(enrollment.effectiveTo))}` : "")}
                 </span>
                 {enrollment.waivedReason ? (
                   <span className="text-muted-foreground truncate">{enrollment.waivedReason}</span>

@@ -479,7 +479,7 @@ function InvoiceList({
             </span>
           </div>
           <p className="text-muted-foreground mt-1 text-[11px]">
-            {invoice.proNumber ? t("PRO {0} ·", invoice.proNumber) : ""}
+            {invoice.proNumber ? `${t("PRO {0} ·", invoice.proNumber)} ` : ""}
             {invoice.billToName || t("Unknown bill-to")}
           </p>
           <div className="mt-1 flex items-center justify-between text-[11px]">
@@ -584,7 +584,7 @@ function MatchList({
           <p className="text-muted-foreground mt-1 truncate text-[11px]">
             {match.carrier?.name ?? t("Unknown carrier")}
             {match.carrierAssignment?.proNumber
-              ? t("· PRO {0}", match.carrierAssignment.proNumber)
+              ? ` ${t("· PRO {0}", match.carrierAssignment.proNumber)}`
               : ""}
           </p>
           <div className="mt-1 flex items-center justify-between text-[11px]">

@@ -388,7 +388,7 @@ export function RateIncreaseDialog({
                 ? t("{0} lanes across {1} agreements move.", lines.length, plan.agreementCount)
                 : t("No lane in scope carries a rate this change could move.")}
               {plan.skippedNoRate > 0 &&
-                t("{0} matrix-priced lanes are untouched — their rates live in the matrix cells.", plan.skippedNoRate)}
+                ` ${t("{0} matrix-priced lanes are untouched — their rates live in the matrix cells.", plan.skippedNoRate)}`}
             </p>
 
             {plan.negativeCount > 0 && (

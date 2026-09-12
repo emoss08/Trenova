@@ -94,7 +94,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
                   key={column.id}
                   value={measureKey({ ref: column.ref, operator: "", agg: column.agg })}
                 >
-                  {column.agg ? t("{0} of", REPORT_AGGREGATION_LABELS[column.agg]) : ""}
+                  {column.agg ? `${t("{0} of", REPORT_AGGREGATION_LABELS[column.agg])} ` : ""}
                   {refLabel(index, ir.entity, column.ref)}
                 </SelectItem>
               ))}

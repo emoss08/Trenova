@@ -510,7 +510,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               />
               <span className="font-medium tabular-nums">
                 {formatPunchTime(row.clockedInAt)}
-                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : t("– now")}
+                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : ` ${t("– now")}`}
               </span>
               {row.source !== "Clock" ? <Badge variant="secondary">{row.source}</Badge> : null}
               {row.editReason ? (

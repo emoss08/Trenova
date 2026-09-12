@@ -94,8 +94,8 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <DriverExpenseStatusBadge status={expense.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Incurred {0} · Submitted {1} {2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
-            ? t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())
+          {t("Incurred {0} · Submitted {1}{2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
+            ? ` ${t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())}`
             : "")}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(expense.description)}</p>
@@ -127,8 +127,8 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <p className="mt-1 text-sm whitespace-pre-wrap">{expense.reviewNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatUnixDate(expense.reviewedAt ?? 0) || "—"}
-            {expense.reviewedBy ? t("by {0}", expense.reviewedBy.name) : ""}
-            {expense.settlementLineId ? t("· reimbursement applied to open settlement") : ""}
+            {expense.reviewedBy ? ` ${t("by {0}", expense.reviewedBy.name)}` : ""}
+            {expense.settlementLineId ? ` ${t("· reimbursement applied to open settlement")}` : ""}
           </p>
         </div>
       ) : (

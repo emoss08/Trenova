@@ -229,7 +229,7 @@ function ContractRateAppliedAlert({
     <Alert variant="info" className="mb-3">
       <SparklesIcon className="size-4" />
       <AlertTitle>
-        {t("Rated from {0} {1}", rate.agreementName || t("a rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+        {t("Rated from {0}{1}", rate.agreementName || t("a rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
       </AlertTitle>
       <AlertDescription>
         <span>
@@ -324,7 +324,7 @@ function RatingBreakdownCard() {
         <div className="flex items-center gap-1">
           {ratingDetail.versionNumber ? (
             <Badge variant="outline" className="text-2xs font-mono">
-              {t("v{0}", ratingDetail.versionNumber)}
+              {` ${t("v{0}", ratingDetail.versionNumber)}`}
             </Badge>
           ) : null}
         </div>
@@ -388,7 +388,7 @@ function RatingBreakdownCard() {
                 to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
                 className="text-2xs text-primary hover:underline"
               >
-                {t("Open template {0}", ratingDetail.versionNumber ? t("v{0}", ratingDetail.versionNumber) : "")}
+                {t("Open template {0}", ratingDetail.versionNumber ? ` ${t("v{0}", ratingDetail.versionNumber)}` : "")}
               </Link>
             )}
           </div>

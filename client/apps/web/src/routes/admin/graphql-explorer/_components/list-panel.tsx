@@ -325,7 +325,7 @@ export function ListPanel({
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
             <SearchXIcon className="text-muted-foreground/50 size-5" />
             <p className="text-muted-foreground text-xs">
-              {t("No matches{0}", query ? t("for “{0}”", query) : "")}
+              {t("No matches{0}", query ? ` ${t("for “{0}”", query)}` : "")}
             </p>
           </div>
         ) : (

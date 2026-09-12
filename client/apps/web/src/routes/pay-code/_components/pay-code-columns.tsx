@@ -101,7 +101,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
         return (
           <span className="text-muted-foreground text-[11px]">
             {row.original.taxable ? translate("Taxable") : translate("Reimbursement")}
-            {!row.original.countsTowardGuarantee && translate("· excl. guarantee")}
+            {!row.original.countsTowardGuarantee && ` ${translate("· excl. guarantee")}`}
           </span>
         );
       },

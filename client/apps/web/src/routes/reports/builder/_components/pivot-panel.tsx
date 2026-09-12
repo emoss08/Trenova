@@ -206,7 +206,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
                       })
                     }
                   />
-                  {column.agg ? t("{0} of", REPORT_AGGREGATION_LABELS[column.agg]) : ""}
+                  {column.agg ? `${t("{0} of", REPORT_AGGREGATION_LABELS[column.agg])} ` : ""}
                   {columnDisplayLabel(index, ir, column)}
                 </label>
               ))}

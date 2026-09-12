@@ -170,7 +170,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
           <p className="text-[11px] text-muted-foreground">
             {formatUnixDate(action.issuedAt)}
             {action.issuedBy?.name ? ` · ${action.issuedBy.name}` : ""}
-            {action.suspensionDays ? t("· {0} days", action.suspensionDays) : ""}
+            {action.suspensionDays ? ` ${t("· {0} days", action.suspensionDays)}` : ""}
           </p>
         </div>
         {acknowledged ? (

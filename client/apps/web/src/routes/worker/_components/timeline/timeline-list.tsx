@@ -189,7 +189,7 @@ function TimelineItem({
         ) : null}
         {event.amendedAt ? (
           <span>
-            {t("· Amended by {0} {1}", event.amendedBy?.name ?? "someone", event.amendmentNote ? ` — ${event.amendmentNote}` : "")}
+            {t("· Amended by {0}{1}", event.amendedBy?.name ?? "someone", event.amendmentNote ? ` — ${event.amendmentNote}` : "")}
           </span>
         ) : null}
       </p>

@@ -191,7 +191,7 @@ export function DashHomePage() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatRange(event.eventDate, event.eventDate)}
-                    {Number(event.totalMiles) > 0 ? t("· {0} mi", event.totalMiles) : ""}
+                    {Number(event.totalMiles) > 0 ? ` ${t("· {0} mi", event.totalMiles)}` : ""}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

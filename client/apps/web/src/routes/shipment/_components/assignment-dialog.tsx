@@ -327,7 +327,7 @@ export function AssignmentDialog({
               <AlertDescription>
                 {t("This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.", existingCarrierAssignment?.carrier?.name
                   ? ` ${existingCarrierAssignment.carrier.name}`
-                  : t("an external carrier"))}
+                  : ` ${t("an external carrier")}`)}
               </AlertDescription>
             </Alert>
             <DialogFooter>

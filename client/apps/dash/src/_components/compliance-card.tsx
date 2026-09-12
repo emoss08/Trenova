@@ -66,7 +66,7 @@ export function ComplianceCard() {
           <dd className="font-medium">
             {data.licenseNumber}
             {data.licenseState ? ` · ${data.licenseState}` : ""}
-            {data.cdlClass ? t("· Class {0}", data.cdlClass) : ""}
+            {data.cdlClass ? ` ${t("· Class {0}", data.cdlClass)}` : ""}
           </dd>
         </div>
         {data.endorsement ? (

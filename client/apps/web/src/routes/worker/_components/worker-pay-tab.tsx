@@ -216,8 +216,8 @@ function CurrentAssignmentCard({
           />
         )}
         <span className="text-muted-foreground text-xs">
-          {t("since {0} {1}", formatDate(assignment.effectiveFrom), Number(assignment.splitPercent) !== 100 &&
-            t("· {0}% split", Number(assignment.splitPercent)))}
+          {t("since {0}{1}", formatDate(assignment.effectiveFrom), Number(assignment.splitPercent) !== 100 &&
+            ` ${t("· {0}% split", Number(assignment.splitPercent))}`)}
         </span>
         <Button
           size="sm"
@@ -260,7 +260,7 @@ function CurrentAssignmentCard({
                     <td className="px-3 py-1.5 text-right font-medium tabular-nums">
                       {override != null ? (
                         <span className="text-blue-600 dark:text-blue-400">
-                          {t("{0} {1} (override)", Number(override), suffix)}
+                          {t("{0}{1} (override)", Number(override), suffix)}
                         </span>
                       ) : (
                         <>

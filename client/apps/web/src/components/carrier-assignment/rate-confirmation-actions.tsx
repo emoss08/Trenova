@@ -117,7 +117,7 @@ export function RateConfirmationActions({
             )}
             {latest.status === "Confirmed" && latest.confirmedByName && (
               <span className="text-2xs text-muted-foreground">
-                {t("by {0} {1}", latest.confirmedByName, latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "")}
+                {t("by {0}{1}", latest.confirmedByName, latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "")}
               </span>
             )}
             {latest.status === "Voided" && latest.voidReason && (

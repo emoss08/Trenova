@@ -259,7 +259,7 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
               <span className="truncate">{t("{0} notice", toTitleCase(notice.kind))}</span>
               <span className="text-muted-foreground shrink-0">
                 {toTitleCase(notice.deliveryStatus)}
-                {notice.satisfiesRequirement ? t("· in window") : ""}
+                {notice.satisfiesRequirement ? ` ${t("· in window")}` : ""}
               </span>
             </span>
             <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
