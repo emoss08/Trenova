@@ -115,7 +115,7 @@ export function RoleSelection({
             `${selectedCount} of ${roles.length} selected`
           ) : (
             <>
-              <Tally value={permissionTotal} /> {t("permission{0}", permissionTotal === 1 ? "" : "s")}
+              <Tally value={permissionTotal} /> {t("{0, plural, one {permission} other {permissions}}", permissionTotal)}
             </>
           )
         }
@@ -156,7 +156,7 @@ export function RoleSelection({
       >
         {selectedCount === 0
           ? t("Select at least one role")
-          : t("Activate {0} role{1}", selectedCount, selectedCount === 1 ? "" : "s")}
+          : t("Activate {0, plural, one {# role} other {# roles}}", selectedCount)}
       </AuthSubmit>
 
       {onBack ? (

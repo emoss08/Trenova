@@ -116,11 +116,11 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                 <div className="border-border/60 text-2xs text-muted-foreground mt-3 flex items-center gap-2 border-t pt-3">
                   <LayoutDashboardIcon className="size-3.5" />
                   <span className="tabular-nums">
-                    {t("{0} tile{1}", layout.tiles.length, layout.tiles.length === 1 ? "" : "s")}
+                    {t("{0, plural, one {# tile} other {# tiles}}", layout.tiles.length)}
                   </span>
                   {(layout.parameters?.length ?? 0) > 0 && (
                     <span className="tabular-nums">
-                      {t("· {0} filter {1}", layout.parameters?.length, layout.parameters?.length === 1 ? "" : "s")}
+                      {t("· {0, plural, one {# filter} other {# filters}}", layout.parameters?.length)}
                     </span>
                   )}
                   <div className="flex-1" />

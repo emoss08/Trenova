@@ -121,7 +121,7 @@ export function DashHomePage() {
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
-                {t("{0} load{1}", period.data.eventCount, period.data.eventCount === 1 ? "" : "s")}
+                {t("{0, plural, one {# load} other {# loads}}", period.data.eventCount)}
               </span>
               <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
                 {formatRange(period.data.periodStart, period.data.periodEnd)}

@@ -84,7 +84,7 @@ export function SafetyCard() {
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {t("{0} point{1} on your record", card.activePoints, card.activePoints === 1 ? "" : "s")}
+            {t("{0, plural, one {# point} other {# points}} on your record", card.activePoints)}
           </p>
         </div>
       </div>

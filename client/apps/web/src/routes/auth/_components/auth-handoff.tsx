@@ -53,9 +53,9 @@ export function AuthHandoff({
           {organizationName ? t("Entering {0}", organizationName) : t("Entering Trenova")}
         </div>
         <div className="text-subtle-foreground font-table mt-1.5 text-[11.5px]">
-          {t("{0} role{1}{2}", roleCount, roleCount === 1 ? "" : "s", permissionCount === undefined
+          {t("{0, plural, one {# role} other {# roles}}{1}", roleCount, permissionCount === undefined
             ? null
-            : t("· {0} permission{1}", permissionCount.toLocaleString(), permissionCount === 1 ? "" : "s"))}
+            : t("· {0} {1, plural, one {permission} other {permissions}}", permissionCount.toLocaleString(), permissionCount))}
         </div>
       </div>
       <div className="bg-border-2 h-0.5 w-full overflow-hidden rounded-sm">

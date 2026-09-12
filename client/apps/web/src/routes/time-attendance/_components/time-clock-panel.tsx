@@ -367,7 +367,7 @@ export function TimeClockPanel({
                 {t("Last two weeks")}
               </h3>
               <span className="text-muted-foreground text-xs tabular-nums">
-                {t("{0} punch{1} · {2}", entries.length, entries.length === 1 ? "" : "es", formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)))}
+                {t("{0, plural, one {# punch} other {# punches}} · {1}", entries.length, formatHours(entries.reduce((sum, row) => sum + row.paidMinutes, 0)))}
               </span>
             </header>
             {recentEntries.isLoading ? (

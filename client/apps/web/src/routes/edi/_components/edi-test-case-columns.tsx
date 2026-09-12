@@ -99,12 +99,12 @@ export function getTestCaseColumns(): ColumnDef<EDITestCaseTableRow>[] {
           <div className="flex items-center gap-1.5">
             {expectedWarnings > 0 && (
               <Badge variant="secondary">
-                {translate("{0} warning{1}", expectedWarnings, expectedWarnings === 1 ? "" : "s")}
+                {translate("{0, plural, one {# warning} other {# warnings}}", expectedWarnings)}
               </Badge>
             )}
             {expectedErrors > 0 && (
               <Badge variant="warning">
-                {translate("{0} error{1}", expectedErrors, expectedErrors === 1 ? "" : "s")}
+                {translate("{0, plural, one {# error} other {# errors}}", expectedErrors)}
               </Badge>
             )}
           </div>

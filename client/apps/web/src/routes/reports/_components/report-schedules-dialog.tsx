@@ -337,7 +337,7 @@ function AlertConditionFields({
                 </>
               ) : (
                 <>
-                  {t("Sends only when the report returns {0} {1} row {2}.", operatorLabel, Number(threshold) || 0, Number(threshold) === 1 ? "" : "s")}
+                  {t("Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.", operatorLabel, Number(threshold) || 0)}
                 </>
               )}
             </p>
@@ -738,7 +738,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
                 }
               />
               <TooltipContent side="bottom">
-                {t("{0} in-app recipient{1}", notifyCount, notifyCount === 1 ? "" : "s")}
+                {t("{0, plural, one {# in-app recipient} other {# in-app recipients}}", notifyCount)}
               </TooltipContent>
             </Tooltip>
           )}

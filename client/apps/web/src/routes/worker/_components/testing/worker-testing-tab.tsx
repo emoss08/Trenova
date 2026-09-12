@@ -365,7 +365,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                   </Badge>
                   {query.violationCount > 0 ? (
                     <span className="text-muted-foreground">
-                      {t("{0} violation{1}", query.violationCount, query.violationCount === 1 ? "" : "s")}
+                      {t("{0, plural, one {# violation} other {# violations}}", query.violationCount)}
                     </span>
                   ) : null}
                 </span>

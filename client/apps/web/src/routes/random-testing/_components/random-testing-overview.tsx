@@ -43,7 +43,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
         <KpiSub>
           {overview.missed > 0
-            ? t("{0} round{1} missed this year", overview.missed, overview.missed === 1 ? "" : "s")
+            ? t("{0, plural, one {# round} other {# rounds}} missed this year", overview.missed)
             : overview.owedNow > 0
               ? t("{0} waiting on this period's draw", overview.owedNow === 1 ? t("A pool is") : t("Pools are"))
               : overview.activePools === 0
@@ -140,7 +140,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
             : t("No round has been drawn yet")}
         </KpiSub>
         <KpiSub>
-          {t("{0} active pool{1} {2}", overview.activePools, overview.activePools === 1 ? "" : "s", overview.belowMinimum > 0 ? t("· {0} below the DOT minimum", overview.belowMinimum) : "")}
+          {t("{0, plural, one {# active pool} other {# active pools}} {1}", overview.activePools, overview.belowMinimum > 0 ? t("· {0} below the DOT minimum", overview.belowMinimum) : "")}
         </KpiSub>
       </KpiCard>
     </div>

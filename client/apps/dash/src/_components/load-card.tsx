@@ -107,7 +107,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
               <ArrowRightIcon className="size-4 text-muted-foreground" />
               {load.stops.length > 2 ? (
                 <span className="text-2xs text-muted-foreground">
-                  {t("+{0} stop{1}", load.stops.length - 2, load.stops.length - 2 === 1 ? "" : "s")}
+                  {t("+{0, plural, one {# stop} other {# stops}}", load.stops.length - 2)}
                 </span>
               ) : null}
             </div>

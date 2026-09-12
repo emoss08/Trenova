@@ -108,7 +108,7 @@ function SectionItem({
             <span>{defaultName || t("Section {0}", index + 1)}</span>
             {anchorCount > 0 && (
               <Badge variant="secondary">
-                {t("{0} anchor{1}", anchorCount, anchorCount !== 1 ? "s" : "")}
+                {t("{0, plural, one {# anchor} other {# anchors}}", anchorCount)}
               </Badge>
             )}
           </div>

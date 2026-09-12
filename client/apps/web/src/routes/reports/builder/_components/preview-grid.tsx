@@ -125,7 +125,7 @@ export function PreviewGrid({
           </button>
         ))}
         <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-px tabular-nums">
-          {t("{0} row{1}", rows.length, rows.length === 1 ? "" : "s")}
+          {t("{0, plural, one {# row} other {# rows}}", rows.length)}
         </span>
         {preview.truncated && (
           <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">

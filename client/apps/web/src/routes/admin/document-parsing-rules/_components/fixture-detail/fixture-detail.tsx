@@ -195,7 +195,7 @@ function FixtureForm({
             action={
               lineCount > 0 ? (
                 <Badge variant="outline" className="font-normal">
-                  {t("{0} line{1}", lineCount, lineCount !== 1 ? "s" : "")}
+                  {t("{0, plural, one {# line} other {# lines}}", lineCount)}
                 </Badge>
               ) : undefined
             }

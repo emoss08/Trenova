@@ -114,7 +114,7 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
         <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
           <div className="flex items-center gap-2">
             <span className="text-foreground text-sm font-medium">
-              {t("{0} change {1} will be applied", changeEntries.length, changeEntries.length !== 1 ? "s" : "")}
+              {t("{0, plural, one {# change} other {# changes}} will be applied", changeEntries.length)}
             </span>
           </div>
           <div className="flex items-center gap-2">

@@ -41,7 +41,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
           <h3 className="text-sm font-semibold">{t("Policies signed")}</h3>
         </div>
         <span className="text-muted-foreground text-xs tabular-nums">
-          {t("{0} signature{1}", rows.length, rows.length === 1 ? "" : "s")}
+          {t("{0, plural, one {# signature} other {# signatures}}", rows.length)}
         </span>
       </div>
       {rows.length === 0 ? (

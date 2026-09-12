@@ -241,7 +241,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
               </div>
               {fixtureCount !== null && (
                 <p className="text-destructive/80 mb-1 text-xs">
-                  {t("{0} fixture{1} tested", fixtureCount, fixtureCount !== 1 ? "s" : "")}
+                  {t("{0, plural, one {# fixture} other {# fixtures}} tested", fixtureCount)}
                 </p>
               )}
               {fixtureFailures.length > 0 && (

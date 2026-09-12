@@ -196,7 +196,7 @@ export default function PTODataTable() {
               <CircleCheckIcon />
             </AlertDialogMedia>
             <AlertDialogTitle>
-              {t("Approve {0} PTO request{1}", approvalCount, approvalCount === 1 ? "" : "s")}
+              {t("Approve {0, plural, one {# PTO request} other {# PTO requests}}", approvalCount)}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t("Workers are notified in Dash and by SMS once their time off is approved. {0}", pendingApproval && pendingApproval.skipped > 0

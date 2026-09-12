@@ -353,7 +353,7 @@ function QueueRow({
               <span className={cn("tabular-nums", waited >= 3 && "text-warning-foreground")}>
                 {waited === 0
                   ? t("Handed over today")
-                  : t("Waiting {0} day{1}", waited, waited === 1 ? "" : "s")}
+                  : t("Waiting {0, plural, one {# day} other {# days}}", waited)}
               </span>
             ) : null}
             {meta.length > 0 ? <span className="truncate">{meta.join(" · ")}</span> : null}
@@ -466,7 +466,7 @@ function TimesheetSheet({
                   {formatHours(sheet.totalMinutes)}
                 </span>
                 <span className="text-muted-foreground text-xs tabular-nums">
-                  {t("{0} punch{1}", sheet.entryCount, sheet.entryCount === 1 ? "" : "es")}
+                  {t("{0, plural, one {# punch} other {# punches}}", sheet.entryCount)}
                 </span>
               </div>
               <CompositionBar

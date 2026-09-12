@@ -66,7 +66,7 @@ export function RotaAttention({ rows, swaps, onOpenSwaps }: RotaAttentionProps) 
         {swapSummary.awaitingOffice > 0 && onOpenSwaps ? (
           <Button size="xs" variant="outline" onClick={onOpenSwaps}>
             <RepeatIcon className="size-3" />
-            {t("{0} swap{1} to decide", swapSummary.awaitingOffice, swapSummary.awaitingOffice === 1 ? "" : "s")}
+            {t("{0, plural, one {# swap} other {# swaps}} to decide", swapSummary.awaitingOffice)}
           </Button>
         ) : null}
       </header>

@@ -86,7 +86,7 @@ export default function EscrowTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t("Close {0} escrow account{1}", closeRows.length, closeRows.length === 1 ? "" : "s")}
+              {t("Close {0, plural, one {# escrow account} other {# escrow accounts}}", closeRows.length)}
             </DialogTitle>
             <DialogDescription>
               {t("Closed accounts stop accepting contributions and accruing interest. Refund or apply each balance first — accounts holding funds cannot be closed.")}

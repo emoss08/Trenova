@@ -360,7 +360,7 @@ function DiffCard({
           <span>{t("Diff")}</span>
           {totalChanges > 0 && (
             <Badge variant="info" className="font-normal">
-              {t("{0} change{1}", totalChanges, totalChanges !== 1 ? "s" : "")}
+              {t("{0, plural, one {# change} other {# changes}}", totalChanges)}
             </Badge>
           )}
         </CardTitle>

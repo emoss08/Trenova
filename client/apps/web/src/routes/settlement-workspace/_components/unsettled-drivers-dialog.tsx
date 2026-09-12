@@ -153,7 +153,7 @@ export function UnsettledDriversDialog({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{worker.workerName}</p>
                       <p className="text-muted-foreground text-[11px]">
-                        {t("{0} event{1} ·", worker.eventCount, worker.eventCount === 1 ? "" : "s")}
+                        {t("{0, plural, one {# event} other {# events}} ·", worker.eventCount)}
                         <AmountDisplay value={worker.grossAmountMinor} currency="USD" />
                         {worker.heldCount > 0 && (
                           <span className="ml-1.5 inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400">

@@ -429,7 +429,7 @@ function ShiftPreview({
         <div className="flex items-center gap-2">
           <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
           <dd className="tabular-nums">
-            {t("{0} day{1} · {2} a week", selectedDays.length, selectedDays.length === 1 ? "" : "s", formatHours(weeklyMinutes))}
+            {t("{0, plural, one {# day} other {# days}} · {1} a week", selectedDays.length, formatHours(weeklyMinutes))}
           </dd>
         </div>
         <div className="flex items-center gap-2">

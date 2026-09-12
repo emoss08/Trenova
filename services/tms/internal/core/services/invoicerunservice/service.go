@@ -2,7 +2,6 @@ package invoicerunservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -277,7 +276,7 @@ func (s *Service) Cancel(
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
-			fmt.Sprintf("An invoice run that is %s cannot be canceled", run.Status),
+			"An invoice run that is {0} cannot be canceled", run.Status,
 		)
 	}
 

@@ -627,7 +627,7 @@ export function UploadPanel({
             <div className="border-border bg-muted/50 flex items-center justify-between border-t px-3 py-2">
               <span className="text-muted-foreground text-xs">
                 {activeCount > 0
-                  ? t("Uploading {0} file{1}...", activeCount, activeCount > 1 ? "s" : "")
+                  ? t("Uploading {0, plural, one {# file} other {# files}}...", activeCount)
                   : t("{0} completed", counts.completed)}
               </span>
               <Button

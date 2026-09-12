@@ -89,7 +89,7 @@ export function getColumns(): ColumnDef<RoutingGuideRow>[] {
         const count = row.original.entries?.length ?? 0;
         return (
           <span className="text-muted-foreground tabular-nums">
-            {translate("{0} carrier{1}", count, count === 1 ? "" : "s")}
+            {translate("{0, plural, one {# carrier} other {# carriers}}", count)}
           </span>
         );
       },

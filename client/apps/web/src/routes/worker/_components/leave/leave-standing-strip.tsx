@@ -54,7 +54,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
           )}
           {owing > 0 ? (
             <Badge variant="warning">
-              {t("{0} certification{1} owed", owing, owing === 1 ? "" : "s")}
+              {t("{0, plural, one {# certification} other {# certifications}} owed", owing)}
             </Badge>
           ) : null}
         </span>
@@ -70,7 +70,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
         className="mt-2"
       />
       <p className="text-muted-foreground mt-1.5 text-[11px]">
-        {t("{0} · {1} to {2} · {3} case {4}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through), file.cases.length, file.cases.length === 1 ? "" : "s")}
+        {t("{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through), file.cases.length)}
       </p>
     </section>
   );

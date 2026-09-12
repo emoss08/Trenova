@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { billsInLabel, periodRange, splitLabel } from "@/lib/billing-schedule";
 import { cn } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
@@ -20,6 +21,8 @@ export function StatementTimeline({
   statement: OpenStatement;
   nowSeconds: number;
 }) {
+  const t = useT();
+
   const due = statement.periodEnd <= nowSeconds;
   const hasFreight = statement.shipmentCount > 0;
 
@@ -73,7 +76,7 @@ export function StatementTimeline({
                 step.state === "pending" && "text-muted-foreground",
               )}
             >
-              {step.label}
+              {t(step.label)}
             </span>
             <span className="text-muted-foreground block truncate text-[11px]">{step.detail}</span>
           </span>

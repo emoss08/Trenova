@@ -75,9 +75,9 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
           <DialogTitle>{t("Void this payroll run")}</DialogTitle>
           <DialogDescription>
             {t("{0} Every week in it goes back to approved so the period can be run again once whatever was wrong is fixed. The run itself is kept, not deleted.", run
-              ? t("{0} – {1} · {2} timesheet{3}.", formatShiftDate(run.periodStart), formatShiftDate(
+              ? t("{0} – {1} · {2, plural, one {# timesheet} other {# timesheets}}.", formatShiftDate(run.periodStart), formatShiftDate(
                   run.periodEnd - 86400,
-                ), run.timesheetCount, run.timesheetCount === 1 ? "" : "s")
+                ), run.timesheetCount)
               : "")}
           </DialogDescription>
         </DialogHeader>

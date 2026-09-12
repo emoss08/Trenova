@@ -91,7 +91,7 @@ export default function AdvancesTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t("Write off {0} advance{1}", writeOffRows.length, writeOffRows.length === 1 ? "" : "s")}
+              {t("Write off {0, plural, one {# advance} other {# advances}}", writeOffRows.length)}
             </DialogTitle>
             <DialogDescription>
               {t("Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.")}

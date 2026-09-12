@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { describeBillingSchedule, periodRange } from "@/lib/billing-schedule";
 import { apiService } from "@/services/api";
@@ -28,6 +29,8 @@ export function StatementDetail({
   customerId: string | null;
   nowSeconds: number;
 }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { data: statement, isLoading } = useQuery(statementDetailQuery(customerId));
 
@@ -95,8 +98,8 @@ export function StatementDetail({
     return (
       <BillingDetailUnselected
         layout="cards"
-        title="Pick a statement"
-        description="See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to."
+        title={t("Pick a statement")}
+        description={t("See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.")}
       />
     );
   }
@@ -143,13 +146,12 @@ export function StatementDetail({
               render={
                 <Badge variant="outline" tabIndex={0} className="gap-1">
                   <BotIcon className="size-3" />
-                  Auto-bills
+                  {t("Auto-bills")}
                 </Badge>
               }
             />
             <TooltipContent>
-              This statement bills itself when the period closes. Billing it here is only for
-              getting ahead of that.
+              {t("This statement bills itself when the period closes. Billing it here is only for getting ahead of that.")}
             </TooltipContent>
           </Tooltip>
         )}
@@ -165,7 +167,7 @@ export function StatementDetail({
       <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0" maskVariant="card">
         {groups.length === 0 ? (
           <EmptySheet
-            title="Nothing on this statement yet"
+            title={t("Nothing on this statement yet")}
             description={`No approved, uninvoiced shipment for ${statement.customerName} was delivered in ${periodRange(statement.periodStart, statement.periodEnd)}. Approving one in the Shipments view puts it here straight away.`}
             sketch={
               <div className="flex flex-col gap-2">
@@ -225,8 +227,8 @@ export function StatementDetail({
         <div className="bg-muted/40 flex flex-wrap items-center gap-2 border-t p-2">
           <span className="text-muted-foreground text-[11px]">
             {heldCount > 0
-              ? `${heldCount} shipment${heldCount === 1 ? "" : "s"} held back`
-              : `${statement.shipmentCount} shipment${statement.shipmentCount === 1 ? "" : "s"} ready`}
+              ? t("{0, plural, one {# shipment} other {# shipments}} held back", heldCount)
+              : t("{0, plural, one {# shipment} other {# shipments}} ready", statement.shipmentCount)}
           </span>
           {heldCount > 0 && (
             <Button
@@ -236,7 +238,7 @@ export function StatementDetail({
               onClick={() => setHeldIds(new Set())}
             >
               <RotateCcwIcon className="size-3" />
-              Put them back
+              {t("Put them back")}
             </Button>
           )}
           <Tooltip>
@@ -248,19 +250,19 @@ export function StatementDetail({
                     disabled={billable.length === 0 || statement.shipmentCount === 0}
                     onClick={() => setBillOpen(true)}
                   >
-                    {offCycle ? "Bill early" : "Bill now"}
+                    {offCycle ? t("Bill early") : t("Bill now")}
                   </Button>
                 </span>
               }
             />
             <TooltipContent side="left">
               {statement.shipmentCount === 0
-                ? "Nothing has accrued to this statement yet"
+                ? t("Nothing has accrued to this statement yet")
                 : billable.length === 0
-                  ? "Every invoice on this statement is under the customer's minimum"
+                  ? t("Every invoice on this statement is under the customer's minimum")
                   : offCycle
-                    ? "Bills this period before it closes, without moving the customer's cycle"
-                    : "This period has closed — bill it"}
+                    ? t("Bills this period before it closes, without moving the customer's cycle")
+                    : t("This period has closed — bill it")}
             </TooltipContent>
           </Tooltip>
         </div>

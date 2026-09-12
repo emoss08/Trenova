@@ -304,7 +304,7 @@ export function RolePermissionBuilder({
           <h3 className="text-sm font-medium">{t("Start with a template")}</h3>
           {grantedCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {t("{0} resource{1} granted", grantedCount, grantedCount !== 1 ? "s" : "")}
+              {t("{0, plural, one {# resource} other {# resources}} granted", grantedCount)}
             </Badge>
           )}
         </div>

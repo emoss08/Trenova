@@ -84,7 +84,7 @@ export function ScoreBreakdown({
                   className={cn("size-3 transition-transform", showFlat && "rotate-180")}
                   aria-hidden
                 />
-                {t("{0} factor{1} contributed nothing", flat.length, flat.length === 1 ? "" : "s")}
+                {t("{0, plural, one {# factor} other {# factors}} contributed nothing", flat.length)}
               </button>
               {showFlat ? (
                 <ul className="border-border flex flex-col gap-1.5 border-l pl-3">

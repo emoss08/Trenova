@@ -176,7 +176,7 @@ export function ScheduleCard() {
                 ? formatShiftWindow(focused.startMinute, focused.durationMinutes)
                 : rotaStateTone(focused.state).label}
               {focused.assignmentCount > 0
-                ? t("· {0} load{1} assigned", focused.assignmentCount, focused.assignmentCount === 1 ? "" : "s")
+                ? t("· {0, plural, one {# load} other {# loads}} assigned", focused.assignmentCount)
                 : ""}
             </p>
           </div>

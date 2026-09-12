@@ -182,7 +182,7 @@ export function ExploreView({
           </button>
         ))}
         <Badge variant="secondary" className="tabular-nums">
-          {t("{0} row{1}", rows.length, rows.length === 1 ? "" : "s")}
+          {t("{0, plural, one {# row} other {# rows}}", rows.length)}
         </Badge>
         {preview.data?.truncated && (
           <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">

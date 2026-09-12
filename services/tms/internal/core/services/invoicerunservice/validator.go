@@ -35,7 +35,7 @@ func (v *Validator) ValidateCommit(entity *invoicerun.InvoiceRun) *errortypes.Mu
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalidOperation,
-			"An invoice run that is "+string(entity.Status)+" cannot be committed",
+			"An invoice run that is {0} cannot be committed", string(entity.Status),
 		)
 	}
 	if len(entity.Groups) == 0 {
@@ -63,7 +63,7 @@ func (v *Validator) ValidateAdjust(entity *invoicerun.InvoiceRun) *errortypes.Mu
 	multiErr.Add(
 		"status",
 		errortypes.ErrInvalidOperation,
-		"An invoice run that is "+string(entity.Status)+" can no longer be adjusted",
+		"An invoice run that is {0} can no longer be adjusted", string(entity.Status),
 	)
 
 	return multiErr

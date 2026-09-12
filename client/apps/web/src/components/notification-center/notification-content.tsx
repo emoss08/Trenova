@@ -174,12 +174,12 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {missing !== null && missing > 0 && (
         <Badge variant="warning" className="text-2xs h-4.5">
-          {t("{0} missing requirement{1}", missing, missing === 1 ? "" : "s")}
+          {t("{0, plural, one {# missing requirement} other {# missing requirements}}", missing)}
         </Badge>
       )}
       {failures !== null && failures > 0 && (
         <Badge variant="warning" className="text-2xs h-4.5">
-          {t("{0} rate validation failure{1}", failures, failures === 1 ? "" : "s")}
+          {t("{0, plural, one {# rate validation failure} other {# rate validation failures}}", failures)}
         </Badge>
       )}
     </div>

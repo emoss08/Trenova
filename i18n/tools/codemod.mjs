@@ -104,6 +104,14 @@ function templateMessage(node, source) {
   return { message: collapsed, args };
 }
 
+const VERBATIM_ELEMENTS = new Set(["style", "script"]);
+
+function isVerbatimHost(node) {
+  if (node === null || node.type !== "JSXElement") return false;
+  const name = node.openingElement.name;
+  return name.type === "JSXIdentifier" && VERBATIM_ELEMENTS.has(name.name);
+}
+
 const HOOK_IMPORT = 'import { useT } from "@trenova/shared/i18n/use-t";';
 const TRANSLATE_IMPORT = 'import { translate } from "@trenova/shared/i18n/runtime";';
 
@@ -308,6 +316,7 @@ export function transformSource(source, filePath, { labels = false } = {}) {
   visit(ast.program, null, (node, parent, stack, deps) => {
     switch (node.type) {
       case "JSXExpressionContainer": {
+        if (isVerbatimHost(parent)) return;
         if (parent !== null && (parent.type === "JSXElement" || parent.type === "JSXFragment")) {
           wrapRendered(node.expression, stack, deps);
         }
@@ -335,6 +344,7 @@ export function transformSource(source, filePath, { labels = false } = {}) {
 
       case "JSXElement":
       case "JSXFragment": {
+        if (isVerbatimHost(node)) return;
         for (const run of foldableRuns(node.children)) {
           if (reject(run.message, {}) !== null) continue;
           for (const child of run.nodes) {
@@ -354,6 +364,7 @@ export function transformSource(source, filePath, { labels = false } = {}) {
       }
 
       case "JSXText": {
+        if (isVerbatimHost(parent)) return;
         if (node.value.trim() === "" || consumed.has(node)) return;
         const reason = reject(node.value, {});
         if (reason !== null) return;

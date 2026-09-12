@@ -459,7 +459,7 @@ function RotaCell({
         ) : null}
         {day.assignmentCount > 0 ? (
           <p className="text-muted-foreground">
-            {t("{0} load{1} already assigned", day.assignmentCount, day.assignmentCount === 1 ? "" : "s")}
+            {t("{0, plural, one {# load} other {# loads}} already assigned", day.assignmentCount)}
           </p>
         ) : null}
         {day.isConflict ? (

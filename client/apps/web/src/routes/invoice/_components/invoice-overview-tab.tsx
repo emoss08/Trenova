@@ -45,7 +45,7 @@ export function InvoiceOverviewTab({
               <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
               <div>
                 <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                  Billed outside this customer&apos;s statement
+                  {t("Billed outside this customer's statement")}
                 </p>
                 <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
                   {invoice.offCycleReason}

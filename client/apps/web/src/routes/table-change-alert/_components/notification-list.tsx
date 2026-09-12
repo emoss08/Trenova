@@ -153,7 +153,7 @@ export default function NotificationList() {
         <>
           <div className="flex items-center justify-between py-2">
             <p className="text-2xs text-muted-foreground font-medium">
-              {t("{0} unread notification{1}", unreadCount, unreadCount !== 1 ? "s" : "")}
+              {t("{0, plural, one {# unread notification} other {# unread notifications}}", unreadCount)}
             </p>
             <Button
               variant="ghost"

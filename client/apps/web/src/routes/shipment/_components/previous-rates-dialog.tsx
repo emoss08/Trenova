@@ -56,7 +56,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
           ) : (
             <>
               <p className="text-muted-foreground mb-2 text-xs">
-                {t("{0} previous rate{1} found", rates.total, rates.total !== 1 ? "s" : "")}
+                {t("{0, plural, one {# previous rate} other {# previous rates}} found", rates.total)}
               </p>
               <div className="space-y-2">
                 {rates.items.map((rate) => (

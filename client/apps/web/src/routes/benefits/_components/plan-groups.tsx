@@ -88,7 +88,7 @@ function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitC
       <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {t(group.label)}
         <span className="ml-1.5 font-normal normal-case tabular-nums">
-          {t("{0} plan{1}", group.plans.length, group.plans.length === 1 ? "" : "s")}
+          {t("{0, plural, one {# plan} other {# plans}}", group.plans.length)}
         </span>
       </h4>
       <span className="text-muted-foreground text-xs tabular-nums">

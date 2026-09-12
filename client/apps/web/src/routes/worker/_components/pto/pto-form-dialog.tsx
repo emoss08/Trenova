@@ -135,7 +135,7 @@ function DaysPreview({
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-muted-foreground text-xs" data-testid="pto-days-preview">
-        {t("{0} day{1} · {2}", days, days === 1 ? "" : "s", formatRange(startDate, endDate))}
+        {t("{0, plural, one {# day} other {# days}} · {1}", days, formatRange(startDate, endDate))}
       </p>
       {result?.tracked ? (
         <p

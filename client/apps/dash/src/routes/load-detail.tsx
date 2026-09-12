@@ -210,7 +210,7 @@ export function DashLoadDetailPage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Route")}</h2>
           <Badge variant="secondary">
-            {t("{0} stop{1}", load.stops.length, load.stops.length === 1 ? "" : "s")}
+            {t("{0, plural, one {# stop} other {# stops}}", load.stops.length)}
           </Badge>
         </div>
         <StopTimeline

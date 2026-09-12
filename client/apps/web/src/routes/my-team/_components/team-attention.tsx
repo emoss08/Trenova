@@ -96,7 +96,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
                         variant={reason.severity === "critical" ? "inactive" : "warning"}
                         className="text-2xs h-4 px-1"
                       >
-                        {reason.label}
+                        {t(reason.label)}
                       </Badge>
                     ))}
                   </span>

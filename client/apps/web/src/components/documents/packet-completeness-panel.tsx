@@ -114,7 +114,7 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
         )}
         {item.documentCount > 0 ? (
           <Badge variant="secondary" className="text-2xs">
-            {t("{0} doc{1}", item.documentCount, item.documentCount !== 1 ? "s" : "")}
+            {t("{0, plural, one {# doc} other {# docs}}", item.documentCount)}
           </Badge>
         ) : (
           <Badge variant="outline" className="text-2xs text-muted-foreground">

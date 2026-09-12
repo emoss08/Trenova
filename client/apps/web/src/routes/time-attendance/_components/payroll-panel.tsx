@@ -201,7 +201,7 @@ export function PayrollPanel() {
               <PlayIcon className="size-3.5" />
               {readySheets.length === 0
                 ? t("Nothing to run")
-                : t("Run {0} timesheet{1}", readySheets.length, readySheets.length === 1 ? "" : "s")}
+                : t("Run {0, plural, one {# timesheet} other {# timesheets}}", readySheets.length)}
             </Button>
           </div>
         </header>
@@ -342,7 +342,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <Badge variant={voided ? "inactive" : "active"}>{voided ? t("Voided") : t("Sent")}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
-          {t("{0} timesheet{1} {2} {3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? t(", sent {0}", formatShiftDate(run.generatedAt)) : "", run.voidReason ? t(". Voided: {0}", run.voidReason) : "")}
+          {t("{0, plural, one {# timesheet} other {# timesheets}} {1} {2}", run.timesheetCount, run.generatedAt ? t(", sent {0}", formatShiftDate(run.generatedAt)) : "", run.voidReason ? t(". Voided: {0}", run.voidReason) : "")}
         </span>
       </div>
       <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">

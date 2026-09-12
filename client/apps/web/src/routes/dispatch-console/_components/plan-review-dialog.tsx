@@ -136,7 +136,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-medium">{group.reason}</span>
         <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
-          {t("{0} move{1}", group.proNumbers.length, group.proNumbers.length === 1 ? "" : "s")}
+          {t("{0, plural, one {# move} other {# moves}}", group.proNumbers.length)}
         </span>
       </div>
       <FindingList findings={group.findings} limit={3} />
@@ -235,7 +235,7 @@ export function PlanReviewDialog({
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5 text-xs">
             <span className="text-foreground font-medium tabular-nums">
-              {t("{0} pairing{1}", plan.assignments.length, plan.assignments.length === 1 ? "" : "s")}
+              {t("{0, plural, one {# pairing} other {# pairings}}", plan.assignments.length)}
             </span>
             {plan.uncovered.length > 0 && (
               <>
@@ -293,7 +293,7 @@ export function PlanReviewDialog({
               onClick={apply}
               isLoading={isAssigning}
             >
-              {t("Assign {0} move{1}", selected.length, selected.length === 1 ? "" : "s")}
+              {t("Assign {0, plural, one {# move} other {# moves}}", selected.length)}
             </Button>
           )}
         </DialogFooter>

@@ -60,7 +60,7 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
         <Fact icon={CalendarRangeIcon} label={t("Dates")}>
           <span className="tabular-nums">{formatRange(pto.startDate, pto.endDate)}</span>
           <span className="text-muted-foreground ml-auto tabular-nums">
-            {t("{0} day{1}", days, days === 1 ? "" : "s")}
+            {t("{0, plural, one {# day} other {# days}}", days)}
           </span>
         </Fact>
         <Fact icon={ClockIcon} label={t("Timing")}>

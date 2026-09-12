@@ -147,7 +147,7 @@ function UsagesTab({ usages }: { usages: string[] }) {
   return (
     <div className="flex flex-col gap-1 py-1">
       <SectionLabel>
-        {t("{0} file{1}", usages.length, usages.length === 1 ? "" : "s")}
+        {t("{0, plural, one {# file} other {# files}}", usages.length)}
       </SectionLabel>
       <ul className="mt-1 flex flex-col gap-1">
         {usages.map((usage) => (

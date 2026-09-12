@@ -319,3 +319,17 @@ test("folds a template literal inside a ternary branch", () => {
   ).output;
   assert.match(out, /many \? t\("\{0\} shipments selected", n\) : t\("One shipment selected"\)/);
 });
+
+test("leaves the contents of a style element alone", () => {
+  const result = run(
+    `export function Spinner() {\n  return <svg><style>{".bar { animation: spin 0.8s linear infinite; }"}</style></svg>;\n}\n`,
+  );
+  assert.equal(result.changed, false, "a style element's children are CSS, not display text");
+});
+
+test("leaves style element text alone", () => {
+  const result = run(
+    `export function Spinner() {\n  return <svg><style>.bar {'{'} color: red; {'}'}</style></svg>;\n}\n`,
+  );
+  assert.equal(result.changed, false);
+});

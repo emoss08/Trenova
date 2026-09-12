@@ -49,7 +49,7 @@ export function VersionCompareDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            {t("{0} change{1} detected", data?.changeCount ?? 0, data?.changeCount !== 1 ? "s" : "")}
+            {t("{0, plural, one {# change} other {# changes}} detected", data?.changeCount ?? 0)}
           </DialogDescription>
         </DialogHeader>
 

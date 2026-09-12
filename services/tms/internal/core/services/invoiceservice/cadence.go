@@ -1,7 +1,6 @@
 package invoiceservice
 
 import (
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,11 +34,7 @@ func guardStatementCadence(
 	return errortypes.NewValidationError(
 		"offCycleReason",
 		errortypes.ErrRequired,
-		fmt.Sprintf(
-			"%s is billed on a %s statement. Invoicing this freight on its own takes it off that statement — say why to continue.",
-			cus.Name,
-			profile.BillingCycle.Describe(),
-		),
+		"{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.", cus.Name, profile.BillingCycle.Describe(),
 	)
 }
 

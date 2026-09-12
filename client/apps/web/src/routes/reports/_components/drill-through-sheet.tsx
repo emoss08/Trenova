@@ -93,7 +93,7 @@ export function DrillThroughSheet({
             <>
               <div className="flex h-8 shrink-0 items-center gap-2">
                 <Badge variant="secondary">
-                  {t("{0} record{1}", rows.length, rows.length === 1 ? "" : "s")}
+                  {t("{0, plural, one {# record} other {# records}}", rows.length)}
                 </Badge>
                 {drill.data?.truncated && (
                   <span className="text-2xs text-amber-600 dark:text-amber-400">

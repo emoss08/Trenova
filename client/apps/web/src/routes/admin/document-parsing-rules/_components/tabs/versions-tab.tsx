@@ -115,7 +115,7 @@ function VersionList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-muted-foreground text-sm font-medium">
-          {t("{0} version{1}", sortedVersions.length, sortedVersions.length !== 1 ? "s" : "")}
+          {t("{0, plural, one {# version} other {# versions}}", sortedVersions.length)}
         </h3>
         {canCreate && (
           <Button
@@ -170,11 +170,11 @@ function VersionList({
                   </span>
                   <span className="flex items-center gap-1">
                     <TextIcon className="size-3" />
-                    {t("{0} field{1}", fieldCount, fieldCount !== 1 ? "s" : "")}
+                    {t("{0, plural, one {# field} other {# fields}}", fieldCount)}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPinIcon className="size-3" />
-                    {t("{0} stop{1}", stopCount, stopCount !== 1 ? "s" : "")}
+                    {t("{0, plural, one {# stop} other {# stops}}", stopCount)}
                   </span>
                 </div>
               </div>

@@ -102,7 +102,7 @@ function FixtureList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-muted-foreground text-sm font-medium">
-          {t("{0} fixture{1}", fixtures?.length ?? 0, (fixtures?.length ?? 0) !== 1 ? "s" : "")}
+          {t("{0, plural, one {# fixture} other {# fixtures}}", fixtures?.length ?? 0)}
         </h3>
         {canCreate && (
           <Button
@@ -152,7 +152,7 @@ function FixtureList({
                 </div>
                 {assertionCount > 0 && (
                   <p className="text-muted-foreground text-xs">
-                    {t("{0} assertion{1}", assertionCount, assertionCount !== 1 ? "s" : "")}
+                    {t("{0, plural, one {# assertion} other {# assertions}}", assertionCount)}
                   </p>
                 )}
               </div>

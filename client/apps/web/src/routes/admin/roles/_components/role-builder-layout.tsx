@@ -45,7 +45,7 @@ export function RolePageLayout({
           <div className="flex items-center gap-3">
             {permissionCount !== undefined && permissionCount > 0 && (
               <Badge variant="outline" className="text-xs font-normal">
-                {t("{0} resource{1} configured", permissionCount, permissionCount !== 1 ? "s" : "")}
+                {t("{0, plural, one {# resource} other {# resources}} configured", permissionCount)}
               </Badge>
             )}
             <Button type="button" variant="outline" size="sm" onClick={onCancel}>

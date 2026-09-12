@@ -241,7 +241,7 @@ function OperationSummary({ operation, changeCount }: { operation: string; chang
   if (operation === "update" && changeCount > 0) {
     return (
       <p className="text-muted-foreground text-xs">
-        {t("{0} field{1} changed", changeCount, changeCount !== 1 ? "s" : "")}
+        {t("{0, plural, one {# field} other {# fields}} changed", changeCount)}
       </p>
     );
   }

@@ -221,7 +221,7 @@ function BreakdownResultTable({
                   ? t("Unallocated")
                   : t("Lines exceed the total")}
               {reconciliation.failedCount > 0 &&
-                t("· {0} line{1} failed", reconciliation.failedCount, reconciliation.failedCount === 1 ? "" : "s")}
+                t("· {0, plural, one {# line} other {# lines}} failed", reconciliation.failedCount)}
             </span>
             <span className="font-mono tabular-nums">
               {reconciliation.balanced

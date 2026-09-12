@@ -112,7 +112,7 @@ export default function PayEventsTable() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t("Hold {0} pay event{1}", holdRows.length, holdRows.length === 1 ? "" : "s")}
+              {t("Hold {0, plural, one {# pay event} other {# pay events}}", holdRows.length)}
             </DialogTitle>
             <DialogDescription>
               {t("Held pay skips settlement generation and auto-attach until released. One reason is recorded on every selected event.")}

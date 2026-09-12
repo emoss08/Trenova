@@ -60,7 +60,7 @@ export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
         if (count === 0) return <span className="text-muted-foreground">{translate("None")}</span>;
         return (
           <Badge variant="info">
-            {translate("{0} condition{1}", count, count !== 1 ? "s" : "")}
+            {translate("{0, plural, one {# condition} other {# conditions}}", count)}
           </Badge>
         );
       },

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { LayersIcon, ListChecksIcon } from "lucide-react";
 import type { BillingQueueView } from "../use-billing-queue-state";
@@ -39,10 +40,12 @@ export function BillingQueueViewSwitch({
   statementCount: number | null;
   onChange: (next: BillingQueueView) => void;
 }) {
+  const t = useT();
+
   return (
     <div
       role="tablist"
-      aria-label="Billing queue view"
+      aria-label={t("Billing queue view")}
       className="bg-muted/60 inline-flex items-center gap-0.5 rounded-lg p-0.5"
     >
       {VIEWS.map(({ key, label, hint, Icon }) => {

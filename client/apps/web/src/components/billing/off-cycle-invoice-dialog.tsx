@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -61,6 +62,8 @@ export function OffCycleInvoiceDialog({
   onOpenChange: (next: boolean) => void;
   onConfirm: (reason: string) => void;
 }) {
+  const t = useT();
+
   const [reason, setReason] = useState("");
 
   return (
@@ -73,7 +76,7 @@ export function OffCycleInvoiceDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invoice this outside the statement?</DialogTitle>
+          <DialogTitle>{t("Invoice this outside the statement?")}</DialogTitle>
           <DialogDescription>{warning}</DialogDescription>
         </DialogHeader>
 
@@ -81,32 +84,31 @@ export function OffCycleInvoiceDialog({
           <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
             <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-xs text-amber-800 dark:text-amber-200">
-              This freight will not appear on the customer&apos;s next statement. Their cycle does
-              not change — everything else still bills on schedule.
+              {t("This freight will not appear on the customer's next statement. Their cycle does not change — everything else still bills on schedule.")}
             </p>
           </div>
           <Textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Why does this bill on its own? (e.g. billing to a different party)"
+            placeholder={t("Why does this bill on its own? (e.g. billing to a different party)")}
             rows={2}
             className="text-xs"
-            aria-label="Reason for invoicing outside the statement"
+            aria-label={t("Reason for invoicing outside the statement")}
           />
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             disabled={reason.trim().length === 0}
             isLoading={pending}
-            loadingText="Creating..."
+            loadingText={t("Creating...")}
             onClick={() => onConfirm(reason.trim())}
             title={reason.trim().length === 0 ? "Say why this bills on its own" : undefined}
           >
-            Invoice anyway
+            {t("Invoice anyway")}
           </Button>
         </DialogFooter>
       </DialogContent>

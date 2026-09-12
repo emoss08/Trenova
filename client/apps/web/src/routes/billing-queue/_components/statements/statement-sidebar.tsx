@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -74,6 +75,8 @@ export function StatementSidebar({
   selectedCustomerId: string | null;
   onSelect: (customerId: string) => void;
 }) {
+  const t = useT();
+
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("soonest");
   const deferredSearch = useDeferredValue(search);
@@ -89,7 +92,7 @@ export function StatementSidebar({
     <div className="flex h-full flex-col">
       <div className="flex flex-col gap-1.5 border-b p-2">
         <Input
-          placeholder="Search customer..."
+          placeholder={t("Search customer...")}
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -111,7 +114,7 @@ export function StatementSidebar({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>
@@ -154,9 +157,7 @@ export function StatementSidebar({
 
       {!loading && visible.length > 0 && (
         <p className="text-muted-foreground border-t px-3 py-1.5 text-[11px]">
-          {visible.length} of {statements.length} statement
-          {statements.length === 1 ? "" : "s"}
-          {selectedCustomerId ? "" : " · pick one to see what it will bill"}
+          {t("{0} of {1, plural, one {# statement} other {# statements}} {2}", visible.length, statements.length, selectedCustomerId ? "" : t("· pick one to see what it will bill"))}
         </p>
       )}
     </div>

@@ -182,7 +182,7 @@ export function ShipmentBillingReadinessPanel({
                   href={`/shipment-management/service-failures?shipmentId=${shipment?.id ?? ""}`}
                   className="text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium underline-offset-4 hover:underline"
                 >
-                  {t("View {0} service failure {1}", readiness.serviceFailureContext.unresolvedCount, readiness.serviceFailureContext.unresolvedCount === 1 ? "" : "s")}
+                  {t("View {0, plural, one {# service failure} other {# service failures}}", readiness.serviceFailureContext.unresolvedCount)}
                   <ExternalLinkIcon className="size-3" />
                 </a>
               )}

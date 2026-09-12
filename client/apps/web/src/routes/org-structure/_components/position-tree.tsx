@@ -382,7 +382,7 @@ function TreeRow({
           <span className="text-muted-foreground text-xs">
             {jobDepartmentLabel(position.department)}
             {hasChildren
-              ? t("· {0} reporting position{1}", node.children.length, node.children.length === 1 ? "" : "s")
+              ? t("· {0, plural, one {# reporting position} other {# reporting positions}}", node.children.length)
               : ""}
             {node.terminated > 0 ? t("· {0} left", node.terminated) : ""}
           </span>

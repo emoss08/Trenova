@@ -162,7 +162,7 @@ export function JsonEditor() {
           </Tooltip>
         </div>
         <span className="text-muted-foreground text-xs">
-          {t("{0} line{1} · {2} chars", lineCount, lineCount !== 1 ? "s" : "", charCount.toLocaleString())}
+          {t("{0, plural, one {# line} other {# lines}} · {1} chars", lineCount, charCount.toLocaleString())}
         </span>
       </div>
 

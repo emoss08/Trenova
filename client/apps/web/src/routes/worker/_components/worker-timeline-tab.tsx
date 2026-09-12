@@ -90,7 +90,7 @@ export default function WorkerTimelineTab({
           <p className="text-muted-foreground text-xs">
             {events.length === 0
               ? t("Nothing recorded yet.")
-              : t("{0} of {1} event{2} shown.", visible.length, events.length, events.length === 1 ? "" : "s")}
+              : t("{0} of {1, plural, one {# event} other {# events}} shown.", visible.length, events.length)}
           </p>
           <InfoPopover title={t("Employment events")}>
             <p>

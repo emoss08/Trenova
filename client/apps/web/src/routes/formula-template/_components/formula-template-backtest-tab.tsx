@@ -356,7 +356,7 @@ export default function FormulaTemplateBacktestTab({
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-muted-foreground text-xs">
-              {t("{0} shipment {1} re-rated. Click a Pro # to open the shipment.", mutation.data.results.length, mutation.data.results.length === 1 ? "" : "s")}
+              {t("{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.", mutation.data.results.length)}
             </p>
             <Button
               type="button"

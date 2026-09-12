@@ -103,7 +103,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
             <p className="text-muted-foreground text-[11px]">
-              {t("{0} pay event {1} awaiting settlement", earnings.accruedEventCount, earnings.accruedEventCount === 1 ? "" : "s")}
+              {t("{0, plural, one {# pay event} other {# pay events}} awaiting settlement", earnings.accruedEventCount)}
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">

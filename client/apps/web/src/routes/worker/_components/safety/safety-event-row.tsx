@@ -184,7 +184,7 @@ export function SafetyEventRow({
               </Badge>
               {event.activePoints > 0 ? (
                 <Badge variant="outline" className="tabular-nums">
-                  {t("{0} pt{1}", event.activePoints, event.activePoints === 1 ? "" : "s")}
+                  {t("{0, plural, one {# pt} other {# pts}}", event.activePoints)}
                 </Badge>
               ) : null}
             </div>

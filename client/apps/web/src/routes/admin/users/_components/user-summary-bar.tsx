@@ -41,7 +41,7 @@ export function UserSummaryBar({
         <div className="flex items-center gap-2">
           <ShieldIcon className="text-muted-foreground size-4" />
           <span className="font-medium tabular-nums">{roleCount}</span>
-          <span className="text-muted-foreground">{t("role{0} assigned", roleCount !== 1 ? "s" : "")}</span>
+          <span className="text-muted-foreground">{t("{0, plural, one {role} other {roles}} assigned", roleCount)}</span>
         </div>
       </div>
 

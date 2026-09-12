@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { OpenStatement } from "@trenova/shared/types/statement";
 
@@ -54,6 +55,8 @@ export function StatementKPIStrip({
   statements: readonly OpenStatement[];
   nowSeconds: number;
 }) {
+  const t = useT();
+
   const metrics = summarizeStatements(statements, nowSeconds);
 
   const tiles: { key: string; label: string; value: string; muted?: boolean }[] = [
@@ -84,7 +87,7 @@ export function StatementKPIStrip({
             key={tile.key}
             className={cn("flex items-center gap-2 px-4 py-2.5", index > 0 && "border-l")}
           >
-            <span className="text-muted-foreground text-xs">{tile.label}</span>
+            <span className="text-muted-foreground text-xs">{t(tile.label)}</span>
             <span
               className={cn(
                 "text-sm font-semibold tabular-nums",

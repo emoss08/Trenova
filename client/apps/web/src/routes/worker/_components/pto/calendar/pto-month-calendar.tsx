@@ -615,7 +615,7 @@ function DayCell({
             data-testid="pto-selection-pill"
             className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold shadow-sm duration-150"
           >
-            {t("{0} day{1}", selectionDays, selectionDays === 1 ? "" : "s")}
+            {t("{0, plural, one {# day} other {# days}}", selectionDays)}
           </span>
         ) : null}
       </div>

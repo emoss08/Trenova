@@ -255,7 +255,7 @@ function EnvelopeBody({
             tone={pickupTooSoon ? "warning" : undefined}
           >
             <p className="text-muted-foreground text-xs">
-              {t("{0} day {1} of permit lead time on this route.", assessment.maxLeadTimeDays, assessment.maxLeadTimeDays === 1 ? "" : "s")}
+              {t("{0, plural, one {# day} other {# days}} of permit lead time on this route.", assessment.maxLeadTimeDays)}
             </p>
             {pickupTooSoon && (
               <p className="mt-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
@@ -463,7 +463,7 @@ function RequirementRow({
             </div>
           )}
           <p className="text-2xs text-muted-foreground">
-            {t("{0} day {1} lead time {2}", requirement.leadTimeDays, requirement.leadTimeDays === 1 ? "" : "s", requirement.validityDays > 0 && t("· valid {0} days", requirement.validityDays))}
+            {t("{0, plural, one {# day} other {# days}} lead time {1}", requirement.leadTimeDays, requirement.validityDays > 0 && t("· valid {0} days", requirement.validityDays))}
           </p>
           {requirement.status === "Waived" && requirement.waiverReason && (
             <p className="text-2xs text-muted-foreground">{t("Waived: {0}", requirement.waiverReason)}</p>
