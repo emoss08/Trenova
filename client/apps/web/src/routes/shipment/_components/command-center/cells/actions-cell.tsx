@@ -42,7 +42,7 @@ export function ActionsCell({
                 startContent={Icon ? <Icon className="size-3.5" /> : undefined}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!disabled) action.onClick(row);
+                  if (!disabled) void action.onClick(row);
                 }}
               />
             );

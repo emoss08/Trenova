@@ -23,7 +23,7 @@ export default function CustomFieldDefinitionTable() {
     null,
   );
 
-  const toggleActiveMutation = useMutation({
+  const { mutateAsync: toggleActive } = useMutation({
     mutationFn: async ({
       id,
       isActive,
@@ -55,19 +55,13 @@ export default function CustomFieldDefinitionTable() {
   }, []);
 
   const handleToggleActive = useCallback(
-    (row: Row<CustomFieldDefinitionRow>) => {
-      toggleActiveMutation.mutate({
+    (row: Row<CustomFieldDefinitionRow>) =>
+      toggleActive({
         id: row.original.id,
         isActive: !row.original.isActive,
-      });
-    },
-    // eslint-disable-next-line @tanstack/query/no-unstable-deps
-    [toggleActiveMutation],
+      }).catch(() => undefined),
+    [toggleActive],
   );
-
-  const togglePendingId = toggleActiveMutation.isPending
-    ? (toggleActiveMutation.variables?.id ?? null)
-    : null;
 
   const columns = useMemo(() => getColumns(), []);
 
@@ -79,7 +73,6 @@ export default function CustomFieldDefinitionTable() {
         icon: PowerOffIcon,
         onClick: handleToggleActive,
         hidden: (row) => !row.original.isActive,
-        disabled: (row) => togglePendingId === row.original.id,
       },
       {
         id: "activate",
@@ -87,7 +80,6 @@ export default function CustomFieldDefinitionTable() {
         icon: PowerIcon,
         onClick: handleToggleActive,
         hidden: (row) => row.original.isActive,
-        disabled: (row) => togglePendingId === row.original.id,
       },
       {
         id: "delete",
@@ -97,7 +89,7 @@ export default function CustomFieldDefinitionTable() {
         onClick: handleDelete,
       },
     ],
-    [handleToggleActive, handleDelete, togglePendingId],
+    [handleToggleActive, handleDelete],
   );
 
   return (

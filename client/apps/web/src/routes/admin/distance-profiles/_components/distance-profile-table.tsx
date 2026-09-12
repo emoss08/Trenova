@@ -67,11 +67,10 @@ export default function DistanceProfileTable() {
     setDeleteDialogOpen(true);
   };
 
-  const handleSetDefault = (row: Row<DistanceProfileRow>) => {
-    if (row.original.id) {
-      setDefaultMutation.mutate(row.original.id);
-    }
-  };
+  const handleSetDefault = (row: Row<DistanceProfileRow>) =>
+    row.original.id
+      ? setDefaultMutation.mutateAsync(row.original.id).catch(() => undefined)
+      : undefined;
 
   const contextMenuActions: RowAction<DistanceProfileRow>[] = [
     {
