@@ -227,6 +227,15 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
+	// Approving a statement customer's freight puts it on their statement; it does
+	// not bill it. Checked before the cadence guard because this is not a
+	// deviation to be justified — it is the schedule working.
+	if req.DeferToStatement && isStatementBilled(dependencies.Customer) {
+		return &servicesports.CreateInvoiceFromBillingQueueResult{
+			DeferredToStatement: true,
+		}, nil
+	}
+
 	// The last gate before an invoice exists, so it cannot be bypassed by any of
 	// the paths that reach this one.
 	if err = guardStatementCadence(dependencies.Customer, req.OffCycleReason); err != nil {

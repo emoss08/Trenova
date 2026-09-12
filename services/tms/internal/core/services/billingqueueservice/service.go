@@ -471,11 +471,15 @@ func (s *service) UpdateStatus(
 		updated = updatedEntity
 
 		if req.NewStatus == billingqueue.StatusApproved && s.invoiceSvc != nil {
+			// Approving means the freight is verified, not that it bills today. A
+			// statement customer's item is approved onto their statement and waits
+			// for their cycle; everyone else is invoiced here as before.
 			createResult, updateErr = s.invoiceSvc.CreateFromApprovedBillingQueueItem(
 				txCtx,
 				&services.CreateInvoiceFromBillingQueueRequest{
 					BillingQueueItemID: updated.ID,
 					TenantInfo:         req.TenantInfo,
+					DeferToStatement:   true,
 				},
 				actor,
 			)
