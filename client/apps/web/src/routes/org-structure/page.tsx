@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -31,12 +32,15 @@ export const prefetch: RoutePrefetch = () => {
 };
 
 export function OrgStructurePage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Org Structure",
-        description:
+        title: t("Org Structure"),
+        description: t(
           "The shape of the organisation: the positions the roster is counted by, the headcount in each, and who is approving in whose place.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

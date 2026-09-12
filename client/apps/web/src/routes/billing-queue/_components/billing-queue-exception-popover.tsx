@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -42,7 +43,7 @@ function buildExceptionSchema(targetStatus: ExceptionTargetStatus) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["exceptionReasonCode"],
-          message: "Exception reason is required",
+          message: translate("Exception reason is required"),
         });
       }
 
@@ -52,7 +53,7 @@ function buildExceptionSchema(targetStatus: ExceptionTargetStatus) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["exceptionNotes"],
-          message: "Exception notes are required",
+          message: translate("Exception notes are required"),
         });
       }
     });
@@ -175,7 +176,12 @@ export function BillingQueueExceptionPopover({
             </FormControl>
           </FormGroup>
           <div className="mt-3 flex justify-end">
-            <Button type="submit" size="sm" isLoading={isSubmitting} loadingText={t("Submitting...")}>
+            <Button
+              type="submit"
+              size="sm"
+              isLoading={isSubmitting}
+              loadingText={t("Submitting...")}
+            >
               {t("Submit")}
             </Button>
           </div>

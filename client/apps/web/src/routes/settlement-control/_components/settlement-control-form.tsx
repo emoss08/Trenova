@@ -125,7 +125,9 @@ function PayPeriodCard() {
               label={t("Frequency")}
               options={payPeriodFrequencyChoices}
               rules={{ required: true }}
-              description={t("How often drivers are settled — weekly is the industry norm for asset carriers.")}
+              description={t(
+                "How often drivers are settled — weekly is the industry norm for asset carriers.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -154,7 +156,9 @@ function PayPeriodCard() {
               label={t("Pay Trigger")}
               options={settlementPayTriggerChoices}
               rules={{ required: true }}
-              description={t("The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.")}
+              description={t(
+                "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -182,7 +186,9 @@ function WorkflowCard() {
               control={control}
               name="autoGenerateBatches"
               label={t("Auto-Generate Batches")}
-              description={t("Generate a settlement batch automatically when each pay period closes.")}
+              description={t(
+                "Generate a settlement batch automatically when each pay period closes.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -190,7 +196,9 @@ function WorkflowCard() {
               control={control}
               name="autoApproveClean"
               label={t("Auto-Approve Clean Settlements")}
-              description={t("Settlements without exceptions skip manual review and go straight to approved.")}
+              description={t(
+                "Settlements without exceptions skip manual review and go straight to approved.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -198,7 +206,9 @@ function WorkflowCard() {
               control={control}
               name="autoAttachAccruals"
               label={t("Auto-Attach New Pay to Open Drafts")}
-              description={t("As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.")}
+              description={t(
+                "As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -206,7 +216,9 @@ function WorkflowCard() {
               control={control}
               name="autoPostOnApprove"
               label={t("Auto-Post on Approval")}
-              description={t("Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.")}
+              description={t(
+                "Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -214,7 +226,9 @@ function WorkflowCard() {
               control={control}
               name="allowNegativeNet"
               label={t("Allow Negative Net (Carry Forward)")}
-              description={t("When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.")}
+              description={t(
+                "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -243,7 +257,9 @@ function ExceptionCard() {
               name="varianceThresholdPct"
               label={t("Variance Threshold")}
               sideText="%"
-              description={t("Flag when net pay deviates from the trailing average by more than this percentage.")}
+              description={t(
+                "Flag when net pay deviates from the trailing average by more than this percentage.",
+              )}
             />
           </FormControl>
           <FormControl>

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { intlLocale } from "@trenova/shared/i18n/format";
 import { TimeFormat, type TimeFormatType } from "@trenova/shared/types/user";
 import { parseDate } from "@trenova/shared/lib/chrono";
@@ -754,7 +755,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
 
   return [
     {
-      label: "Today",
+      label: translate("Today"),
       getValue: () => {
         const now = today();
         return {
@@ -764,7 +765,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: "Next 7 days",
+      label: translate("Next 7 days"),
       getValue: () => {
         const now = today();
         return {
@@ -774,7 +775,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: "Next 30 days",
+      label: translate("Next 30 days"),
       getValue: () => {
         const now = today();
         return {
@@ -784,7 +785,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: "This month",
+      label: translate("This month"),
       getValue: () => {
         const now = today();
         return {
@@ -794,7 +795,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: "Next month",
+      label: translate("Next month"),
       getValue: () => {
         const now = today();
         const firstDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -805,7 +806,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       },
     },
     {
-      label: "This Quarter",
+      label: translate("This Quarter"),
       getValue: () => {
         const now = today();
         return {

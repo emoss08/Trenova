@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { equipmentManufacturerTableGraphQLConfig } from "@/lib/graphql/equipment-manufacturer-table";
 import { statusChoices } from "@/lib/choices";
@@ -13,8 +14,10 @@ import { getColumns } from "./equipment-manufacturer-columns";
 import { EquipmentManufacturerPanel } from "./equipment-manufacturer-panel";
 
 export default function EquipmentManufacturerTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: EquipmentManufacturer[], status: string) => {
@@ -45,15 +48,15 @@ export default function EquipmentManufacturerTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -51,7 +52,7 @@ function noteSchema(required: string) {
       .string()
       .trim()
       .min(1, { message: required })
-      .max(500, { message: "Note cannot exceed 500 characters" }),
+      .max(500, { message: translate("Note cannot exceed 500 characters") }),
   });
 }
 

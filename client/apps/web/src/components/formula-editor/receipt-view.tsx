@@ -85,11 +85,17 @@ export function ReceiptView({ receipt, onUseValues, className }: ReceiptViewProp
   return (
     <div className={cn("space-y-3", className)}>
       <div className="text-muted-foreground text-2xs flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span>{t("Raw {0} before guardrails and rounding", formatCurrency(receipt.rawAmount))}</span>
-        {receipt.versionNumber ? <span className="font-mono">{t("v{0}", receipt.versionNumber)}</span> : null}
+        <span>
+          {t("Raw {0} before guardrails and rounding", formatCurrency(receipt.rawAmount))}
+        </span>
+        {receipt.versionNumber ? (
+          <span className="font-mono">{t("v{0}", receipt.versionNumber)}</span>
+        ) : null}
         {receipt.effectiveFrom ? <span>{t("scheduled version")}</span> : null}
         {receipt.durationMicros ? (
-          <span className="tabular-nums">{t("{0} ms", (receipt.durationMicros / 1000).toFixed(1))}</span>
+          <span className="tabular-nums">
+            {t("{0} ms", (receipt.durationMicros / 1000).toFixed(1))}
+          </span>
         ) : null}
       </div>
 

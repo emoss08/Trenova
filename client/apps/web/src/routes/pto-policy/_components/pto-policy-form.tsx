@@ -147,7 +147,9 @@ export function PTOPolicyForm({
               options={YEAR_BASIS_OPTIONS}
               rules={{ required: true }}
               placeholder={t("Select a year basis")}
-              description={t("Carryover caps, expiries, and annual grants apply at the start of this year.")}
+              description={t(
+                "Carryover caps, expiries, and annual grants apply at the start of this year.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -158,7 +160,9 @@ export function PTOPolicyForm({
               sideText="days"
               min={0}
               placeholder="90"
-              description={t("Days after hire before any accrual starts. Skipped periods are not back-filled.")}
+              description={t(
+                "Days after hire before any accrual starts. Skipped periods are not back-filled.",
+              )}
             />
           </FormControl>
           <FormControl className="col-span-2">
@@ -166,7 +170,9 @@ export function PTOPolicyForm({
               control={control}
               name="countWeekends"
               label={t("Count weekends")}
-              description={t("On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.")}
+              description={t(
+                "On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.",
+              )}
               position="left"
               outlined
             />
@@ -178,7 +184,9 @@ export function PTOPolicyForm({
         <div className="flex items-start justify-between gap-2">
           <SectionTitle
             title={t("Accrual rules")}
-            hint={t("One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance.")}
+            hint={t(
+              "One rule per PTO type. Types without a rule are still requestable but are not tracked against a balance.",
+            )}
           />
           <Button
             type="button"
@@ -205,7 +213,9 @@ export function PTOPolicyForm({
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Rule changes apply going forward")}</AlertTitle>
           <AlertDescription>
-            {t("Accruals are posted once per period. Changing an amount, cap or tier affects periods that have not been posted yet; days already in a worker's ledger are not recalculated.")}
+            {t(
+              "Accruals are posted once per period. Changing an amount, cap or tier affects periods that have not been posted yet; days already in a worker's ledger are not recalculated.",
+            )}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -222,7 +232,9 @@ export function PTOPolicyForm({
       <section className="flex flex-col gap-3">
         <SectionTitle
           title={t("Enforcement")}
-          hint={t("Whether requests are blocked when a balance runs out, and whether dispatch must approve them.")}
+          hint={t(
+            "Whether requests are blocked when a balance runs out, and whether dispatch must approve them.",
+          )}
         />
         <FormGroup cols={2}>
           <FormControl>
@@ -283,7 +295,9 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Rule {0}", index + 1)}</p>
+        <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          {t("Rule {0}", index + 1)}
+        </p>
         {onRemove ? (
           <Button
             type="button"
@@ -371,7 +385,9 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             options={TERMINATION_OPTIONS}
             rules={{ required: true }}
             placeholder={t("Select an action")}
-            description={t("Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date.")}
+            description={t(
+              "Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date.",
+            )}
           />
         </FormControl>
       </FormGroup>
@@ -382,7 +398,9 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             <p className="text-xs font-medium">{t("Tenure tiers")}</p>
             <p className="text-muted-foreground text-[11px]">
               {accrues
-                ? t("Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.")
+                ? t(
+                    "Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.",
+                  )
                 : t("Tiers need an accruing rule.")}
             </p>
           </div>
@@ -407,7 +425,9 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
         {tiersArray.fields.length > 0 ? (
           <div className="mt-2 flex flex-col gap-2">
             <p className="text-muted-foreground text-[11px]">
-              {t("After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.")}
+              {t(
+                "After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.",
+              )}
             </p>
             {tiersArray.fields.map((tier, tierIndex) => (
               <div

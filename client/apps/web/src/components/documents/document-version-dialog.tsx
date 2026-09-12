@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -66,42 +67,42 @@ function buildComparison(selected: Document, current: Document): CompareField[] 
 
   if (selected.originalName !== current.originalName) {
     fields.push({
-      label: "File Name",
+      label: translate("File Name"),
       selected: selected.originalName,
       current: current.originalName,
     });
   }
   if (selected.fileSize !== current.fileSize) {
     fields.push({
-      label: "File Size",
+      label: translate("File Size"),
       selected: formatFileSize(selected.fileSize),
       current: formatFileSize(current.fileSize),
     });
   }
   if (selected.fileType !== current.fileType) {
     fields.push({
-      label: "File Type",
+      label: translate("File Type"),
       selected: selected.fileType,
       current: current.fileType,
     });
   }
   if (selected.detectedKind !== current.detectedKind) {
     fields.push({
-      label: "Detected Kind",
+      label: translate("Detected Kind"),
       selected: selected.detectedKind || "Unclassified",
       current: current.detectedKind || "Unclassified",
     });
   }
   if (selected.previewStatus !== current.previewStatus) {
     fields.push({
-      label: "Preview",
+      label: translate("Preview"),
       selected: selected.previewStatus,
       current: current.previewStatus,
     });
   }
   if (selected.contentStatus !== current.contentStatus) {
     fields.push({
-      label: "Text Extraction",
+      label: translate("Text Extraction"),
       selected: selected.contentStatus,
       current: current.contentStatus,
     });

@@ -70,7 +70,9 @@ export function DriverContextRail({
           <div>
             <h3 className="text-sm font-semibold">{workerName ?? t("Driver")}</h3>
             <p className="text-muted-foreground text-[11px]">
-              {t("Everything affecting this driver's pay — manage it without leaving the workspace.")}
+              {t(
+                "Everything affecting this driver's pay — manage it without leaving the workspace.",
+              )}
             </p>
           </div>
           <UnsettledPaySection
@@ -233,7 +235,9 @@ function UnsettledPaySection({
                     variant="ghost"
                     className="text-muted-foreground h-6 px-2 text-[10px]"
                     onClick={() => setHoldTarget(event)}
-                    title={t("Defer this pay to a later settlement — it will skip generation until released")}
+                    title={t(
+                      "Defer this pay to a later settlement — it will skip generation until released",
+                    )}
                   >
                     <Pause className="size-3" />
                     {t("Hold")}
@@ -284,13 +288,17 @@ function HoldDialog({
         <DialogHeader>
           <DialogTitle>{t("Hold pay event")}</DialogTitle>
           <DialogDescription>
-            {t("Held pay stays accrued but is skipped by settlement generation and auto-attach until you release it — use it for disputed loads or pay you want on a later statement.")}
+            {t(
+              "Held pay stays accrued but is skipped by settlement generation and auto-attach until you release it — use it for disputed loads or pay you want on a later statement.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder={t("Reason (required) — e.g. Disputed detention, awaiting customer confirmation")}
+          placeholder={t(
+            "Reason (required) — e.g. Disputed detention, awaiting customer confirmation",
+          )}
           rows={3}
         />
         <DialogFooter>
@@ -367,7 +375,9 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("No active earnings for this driver.")}</p>
+        <p className="text-muted-foreground text-[11px]">
+          {t("No active earnings for this driver.")}
+        </p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((earning) => (
@@ -468,7 +478,9 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("No active deductions for this driver.")}</p>
+        <p className="text-muted-foreground text-[11px]">
+          {t("No active deductions for this driver.")}
+        </p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((deduction) => (
@@ -590,7 +602,9 @@ function EscrowSection({ workerId }: { workerId: string }) {
   return (
     <RailSection
       title={t("Escrow")}
-      hint={t("Reserve funded through settlement contributions; interest accrues per 49 CFR 376.12(k).")}
+      hint={t(
+        "Reserve funded through settlement contributions; interest accrues per 49 CFR 376.12(k).",
+      )}
       action={
         <Link
           to="/payroll/escrow-accounts"

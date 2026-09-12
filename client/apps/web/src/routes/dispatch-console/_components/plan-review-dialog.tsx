@@ -254,7 +254,9 @@ export function PlanReviewDialog({
               <SearchXIcon className="text-muted-foreground size-5" aria-hidden />
               <span className="text-xs font-medium">{t("No pairings to propose")}</span>
               <span className="text-muted-foreground max-w-sm text-[11px] leading-snug">
-                {t("Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.")}
+                {t(
+                  "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.",
+                )}
               </span>
             </div>
           ) : (

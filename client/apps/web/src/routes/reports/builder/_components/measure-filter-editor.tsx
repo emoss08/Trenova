@@ -186,7 +186,9 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
 
       {filters.length === 0 ? (
         <p className="text-2xs text-muted-foreground">
-          {t("This measure counts every matching record. Add a condition to make it a subset — the other columns keep their full totals.")}
+          {t(
+            "This measure counts every matching record. Add a condition to make it a subset — the other columns keep their full totals.",
+          )}
         </p>
       ) : (
         filters.map((filter, filterIndex) => {

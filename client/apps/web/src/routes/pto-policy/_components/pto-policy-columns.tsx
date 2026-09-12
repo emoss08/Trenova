@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ptoTypeChoices, statusChoices } from "@/lib/choices";
 import type { PTOPolicyRow } from "@/lib/graphql/pto-policy";
@@ -22,11 +22,11 @@ function ruleSummary(row: PTOPolicyRow): string[] {
   });
 }
 
-export function getColumns(): ColumnDef<PTOPolicyRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 110,
       meta: {
@@ -40,13 +40,13 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <span className="flex items-center gap-2 font-medium">
           {row.original.code}
           {row.original.isDefault ? (
             <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
-              {translate("Default")}
+              {t("Default")}
             </Badge>
           ) : null}
         </span>
@@ -61,7 +61,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       meta: {
         apiField: "name",
         filterable: true,
@@ -72,7 +72,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       accessorKey: "yearBasis",
-      header: "Year",
+      header: t("Year"),
       cell: ({ row }) => PTO_YEAR_BASIS_LABELS[row.original.yearBasis],
       meta: {
         apiField: "yearBasis",
@@ -82,7 +82,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       id: "rules",
-      header: "Tracked Types",
+      header: t("Tracked Types"),
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           {ruleSummary(row.original).map((summary) => (
@@ -102,7 +102,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       accessorKey: "openAssignmentCount",
-      header: "Workers",
+      header: t("Workers"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">{row.original.openAssignmentCount}</span>
       ),
@@ -115,7 +115,7 @@ export function getColumns(): ColumnDef<PTOPolicyRow>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"

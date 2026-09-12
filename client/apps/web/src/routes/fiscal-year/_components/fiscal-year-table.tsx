@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { fiscalYearTableGraphQLConfig, type FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import { AlertDialog } from "@trenova/shared/components/ui/alert-dialog";
@@ -16,6 +17,8 @@ import { FiscalYearPanel } from "./fiscal-year-panel";
 export type FiscalYearAction = "activate" | "close" | "reopen";
 
 export default function FiscalYearTable() {
+  const t = useT();
+
   const [selectedFiscalYear, setSelectedFiscalYear] = useState<FiscalYearRow | null>(null);
   const [yearAction, setYearAction] = useState<FiscalYearAction>("close");
 
@@ -26,20 +29,20 @@ export default function FiscalYearTable() {
 
   const handleDialogClose = useCallback(() => setSelectedFiscalYear(null), []);
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const contextMenuActions = useMemo<RowAction<FiscalYearRow>[]>(
     () => [
       {
         id: "activate",
-        label: "Set as Current",
+        label: t("Set as Current"),
         icon: PlayIcon,
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "activate"),
         hidden: (row: Row<FiscalYearRow>) => row.original.isCurrent,
       },
       {
         id: "close",
-        label: "Close Year",
+        label: t("Close Year"),
         icon: XCircleIcon,
         variant: "destructive",
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "close"),
@@ -47,14 +50,14 @@ export default function FiscalYearTable() {
       },
       {
         id: "reopen",
-        label: "Reopen Year",
+        label: t("Reopen Year"),
         icon: RotateCcwIcon,
         variant: "destructive",
         onClick: (row: Row<FiscalYearRow>) => handleYearAction(row.original, "reopen"),
         hidden: (row: Row<FiscalYearRow>) => row.original.status !== "Closed",
       },
     ],
-    [handleYearAction],
+    [handleYearAction, t],
   );
 
   return (

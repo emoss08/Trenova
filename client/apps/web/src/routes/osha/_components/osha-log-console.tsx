@@ -186,7 +186,9 @@ export default function OshaLogConsole() {
             <MilestoneIcon className="text-muted-foreground size-3.5" />
             <h2 className="text-sm font-medium">{t("Where {0} stands", log.year)}</h2>
             <InfoPopover title={`Where ${log.year} stands`}>
-              {t("The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).")}
+              {t(
+                "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).",
+              )}
             </InfoPopover>
           </header>
           <div className="p-3">
@@ -240,9 +242,13 @@ export default function OshaLogConsole() {
             <AlertDialogMedia>
               <Trash2Icon />
             </AlertDialogMedia>
-            <AlertDialogTitle>{t("Delete case {0}?", deleting ? caseLabel(deleting) : "")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("Delete case {0}?", deleting ? caseLabel(deleting) : "")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("The case comes off the log and out of the totals. Its number is never reused, and the rule expects a recordable case to stay on the log for five years, so delete only a case that was recorded in error.")}
+              {t(
+                "The case comes off the log and out of the totals. Its number is never reused, and the rule expects a recordable case to stay on the log for five years, so delete only a case that was recorded in error.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

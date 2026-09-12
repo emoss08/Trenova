@@ -285,7 +285,9 @@ export function DashboardFiltersEditor({
           {t("Add from your reports")}
         </h3>
         <p className="text-2xs text-muted-foreground">
-          {t("What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.")}
+          {t(
+            "What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.",
+          )}
         </p>
 
         {groups.map((group) => (

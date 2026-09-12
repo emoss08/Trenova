@@ -102,7 +102,9 @@ function AutoAssignmentForm() {
       <CardHeader>
         <CardTitle>{t("Automated Resource Assignment")}</CardTitle>
         <CardDescription>
-          {t("Configure how the system chooses workers and equipment for shipments. These controls influence assignment consistency, utilization, and dispatch throughput.")}
+          {t(
+            "Configure how the system chooses workers and equipment for shipments. These controls influence assignment consistency, utilization, and dispatch throughput.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -112,7 +114,9 @@ function AutoAssignmentForm() {
               control={control}
               name="enableAutoAssignment"
               label={t("Enable Automated Assignment")}
-              description={t("When enabled, the system can automatically assign available resources to shipments.")}
+              description={t(
+                "When enabled, the system can automatically assign available resources to shipments.",
+              )}
               position="left"
             />
           </FormControl>
@@ -123,7 +127,9 @@ function AutoAssignmentForm() {
                   control={control}
                   name="autoAssignmentStrategy"
                   label={t("Assignment Optimization Strategy")}
-                  description={t("Select the primary strategy used when matching resources to shipments.")}
+                  description={t(
+                    "Select the primary strategy used when matching resources to shipments.",
+                  )}
                   options={autoAssignmentStrategyChoices}
                 />
               </FormControl>
@@ -132,7 +138,9 @@ function AutoAssignmentForm() {
                   control={control}
                   name="autoAssignConfidenceThreshold"
                   label={t("Auto-Execute Confidence Threshold")}
-                  description={t("Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review.")}
+                  description={t(
+                    "Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review.",
+                  )}
                   placeholder="0.85"
                   decimalScale={2}
                 />
@@ -142,7 +150,9 @@ function AutoAssignmentForm() {
                   control={control}
                   name="autoAssignMaxDeadheadMiles"
                   label={t("Maximum Deadhead Miles")}
-                  description={t("Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.")}
+                  description={t(
+                    "Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.",
+                  )}
                   placeholder={t("No limit")}
                 />
               </FormControl>
@@ -181,7 +191,9 @@ function ServiceFailureForm() {
       <CardHeader>
         <CardTitle>{t("Service Failure Monitoring")}</CardTitle>
         <CardDescription>
-          {t("Define which service failures to track and when they should be recorded. These settings drive operational reporting and exception visibility.")}
+          {t(
+            "Define which service failures to track and when they should be recorded. These settings drive operational reporting and exception visibility.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -203,7 +215,9 @@ function ServiceFailureForm() {
                   name="serviceFailureGracePeriod"
                   label={t("Service Failure Grace Period")}
                   placeholder={t("Enter grace period in minutes")}
-                  description={t("Defines the delay buffer before an eligible incident is recorded as a failure.")}
+                  description={t(
+                    "Defines the delay buffer before an eligible incident is recorded as a failure.",
+                  )}
                   sideText="minutes"
                   min={1}
                 />
@@ -263,7 +277,9 @@ function ComplianceForm() {
       <CardHeader>
         <CardTitle>{t("DOT Compliance Enforcement")}</CardTitle>
         <CardDescription>
-          {t("Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.")}
+          {t(
+            "Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -273,7 +289,9 @@ function ComplianceForm() {
               control={control}
               name="enforceHosCompliance"
               label={t("Enable DOT Compliance Enforcement")}
-              description={t("When enabled, the system applies configured compliance checks before assignments proceed.")}
+              description={t(
+                "When enabled, the system applies configured compliance checks before assignments proceed.",
+              )}
               position="left"
             />
           </FormControl>
@@ -293,7 +311,9 @@ function ComplianceForm() {
                   control={control}
                   name="enforceDriverQualificationCompliance"
                   label={t("Driver Qualification Verification")}
-                  description={t("Require valid driver qualification and license state before assignment.")}
+                  description={t(
+                    "Require valid driver qualification and license state before assignment.",
+                  )}
                   position="left"
                 />
               </FormControl>
@@ -349,7 +369,9 @@ function ComplianceForm() {
               control={control}
               name="enforceWorkerPtaRestrictions"
               label={t("Enforce Worker PTA Restrictions")}
-              description={t("Apply worker availability and paid-time-away restrictions during assignment.")}
+              description={t(
+                "Apply worker availability and paid-time-away restrictions during assignment.",
+              )}
               position="left"
             />
           </FormControl>

@@ -102,7 +102,11 @@ describe("sortStatements", () => {
 
 describe("filterStatements", () => {
   it("matches on name and on code, case-insensitively", () => {
-    const acme = statement({ customerId: "acme", customerName: "Acme Freight", customerCode: "ACM" });
+    const acme = statement({
+      customerId: "acme",
+      customerName: "Acme Freight",
+      customerCode: "ACM",
+    });
     const other = statement({ customerId: "other", customerName: "Globex", customerCode: "GLX" });
 
     expect(filterStatements([acme, other], "acme").map((s) => s.customerId)).toEqual(["acme"]);

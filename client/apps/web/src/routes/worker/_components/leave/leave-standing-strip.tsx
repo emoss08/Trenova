@@ -59,7 +59,9 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
           ) : null}
         </span>
         <span className="text-xs tabular-nums">
-          <span className="font-semibold">{t("{0} h", formatLeaveHours(entitlement.remainingHours))}</span>
+          <span className="font-semibold">
+            {t("{0} h", formatLeaveHours(entitlement.remainingHours))}
+          </span>
           <span className="text-muted-foreground">
             {t("of {0} left", formatLeaveHours(entitlement.totalHours))}
           </span>
@@ -70,7 +72,13 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
         className="mt-2"
       />
       <p className="text-muted-foreground mt-1.5 text-[11px]">
-        {t("{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through), file.cases.length)}
+        {t(
+          "{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}",
+          measurementMethodLabel(entitlement.method),
+          formatUnixDate(entitlement.window.from),
+          formatUnixDate(entitlement.window.through),
+          file.cases.length,
+        )}
       </p>
     </section>
   );

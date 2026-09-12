@@ -158,7 +158,11 @@ function TerminateButton({ row }: { row: DatabaseSessionChain }) {
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Terminate database session?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("This will terminate backend PID {0} to release blocked PID {1}. The in-flight transaction on the blocker will be cancelled.", row.blockingPid, row.blockedPid)}
+            {t(
+              "This will terminate backend PID {0} to release blocked PID {1}. The in-flight transaction on the blocker will be cancelled.",
+              row.blockingPid,
+              row.blockedPid,
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -179,9 +183,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
     <Collapsible>
       <Card size="sm">
         <CardHeader className="border-b">
-          <CardTitle>
-            {t("PID {0} blocked by PID {1}", row.blockedPid, row.blockingPid)}
-          </CardTitle>
+          <CardTitle>{t("PID {0} blocked by PID {1}", row.blockedPid, row.blockingPid)}</CardTitle>
           <CardDescription className="flex items-center gap-2">
             <Badge variant="secondary">{row.blockedWaitEventType || t("Unknown")}</Badge>
             <span>{row.databaseName}</span>
@@ -268,7 +270,9 @@ function EmptyState() {
         <ShieldCheckIcon className="text-muted-foreground size-7" />
       </div>
       <h3 className="mt-4 text-sm font-medium">{t("No blocked sessions")}</h3>
-      <p className="text-muted-foreground mt-1 text-xs">{t("All database sessions are running clean")}</p>
+      <p className="text-muted-foreground mt-1 text-xs">
+        {t("All database sessions are running clean")}
+      </p>
     </div>
   );
 }

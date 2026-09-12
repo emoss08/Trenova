@@ -232,7 +232,10 @@ export function ExploreView({
           <ExploreEmpty>
             <p className="text-sm font-medium">{t("This report needs a value first")}</p>
             <p className="text-muted-foreground max-w-sm text-xs">
-              {t("Fill in {0} above to load the results.", missing.map((param) => param.label || param.name).join(", "))}
+              {t(
+                "Fill in {0} above to load the results.",
+                missing.map((param) => param.label || param.name).join(", "),
+              )}
             </p>
           </ExploreEmpty>
         ) : preview.isError ? (

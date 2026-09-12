@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
@@ -8,11 +8,12 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(
   documentTypeMap: Map<string, DocumentType>,
+  t: TranslateFn,
 ): ColumnDef<DocumentPacketRuleRow>[] {
   return [
     {
       accessorKey: "resourceType",
-      header: "Resource Type",
+      header: t("Resource Type"),
       cell: ({ row }) => {
         return <p>{row.original.resourceType}</p>;
       },
@@ -20,7 +21,7 @@ export function getColumns(
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: "Resource Type",
+        label: t("Resource Type"),
         apiField: "resourceType",
         filterable: true,
         sortable: true,
@@ -31,7 +32,7 @@ export function getColumns(
     },
     {
       accessorKey: "documentTypeId",
-      header: "Document Type",
+      header: t("Document Type"),
       cell: ({ row }) => {
         const docType = documentTypeMap.get(row.original.documentTypeId);
         return docType ? (
@@ -44,7 +45,7 @@ export function getColumns(
       minSize: 150,
       maxSize: 300,
       meta: {
-        label: "Document Type",
+        label: t("Document Type"),
         apiField: "documentTypeId",
         filterable: false,
         sortable: false,
@@ -52,17 +53,17 @@ export function getColumns(
     },
     {
       accessorKey: "required",
-      header: "Required",
+      header: t("Required"),
       cell: ({ row }) => (
         <Badge variant={row.original.required ? "active" : "outline"}>
-          {row.original.required ? translate("Yes") : translate("No")}
+          {row.original.required ? t("Yes") : t("No")}
         </Badge>
       ),
       size: 100,
       minSize: 80,
       maxSize: 120,
       meta: {
-        label: "Required",
+        label: t("Required"),
         apiField: "required",
         filterable: true,
         sortable: true,
@@ -72,17 +73,17 @@ export function getColumns(
     },
     {
       accessorKey: "allowMultiple",
-      header: "Allow Multiple",
+      header: t("Allow Multiple"),
       cell: ({ row }) => (
         <Badge variant={row.original.allowMultiple ? "info" : "outline"}>
-          {row.original.allowMultiple ? translate("Yes") : translate("No")}
+          {row.original.allowMultiple ? t("Yes") : t("No")}
         </Badge>
       ),
       size: 130,
       minSize: 100,
       maxSize: 160,
       meta: {
-        label: "Allow Multiple",
+        label: t("Allow Multiple"),
         apiField: "allowMultiple",
         filterable: false,
         sortable: true,
@@ -90,13 +91,13 @@ export function getColumns(
     },
     {
       accessorKey: "displayOrder",
-      header: "Order",
+      header: t("Order"),
       cell: ({ row }) => row.original.displayOrder,
       size: 80,
       minSize: 60,
       maxSize: 100,
       meta: {
-        label: "Order",
+        label: t("Order"),
         apiField: "displayOrder",
         filterable: false,
         sortable: true,
@@ -104,17 +105,17 @@ export function getColumns(
     },
     {
       accessorKey: "expirationRequired",
-      header: "Expiration Req.",
+      header: t("Expiration Req."),
       cell: ({ row }) => (
         <Badge variant={row.original.expirationRequired ? "warning" : "outline"}>
-          {row.original.expirationRequired ? translate("Yes") : translate("No")}
+          {row.original.expirationRequired ? t("Yes") : t("No")}
         </Badge>
       ),
       size: 140,
       minSize: 110,
       maxSize: 170,
       meta: {
-        label: "Expiration Required",
+        label: t("Expiration Required"),
         apiField: "expirationRequired",
         filterable: false,
         sortable: true,
@@ -122,10 +123,10 @@ export function getColumns(
     },
     {
       accessorKey: "expirationWarningDays",
-      header: "Warning Days",
+      header: t("Warning Days"),
       cell: ({ row }) =>
         row.original.expirationRequired ? (
-          <span>{translate("{0}d", row.original.expirationWarningDays)}</span>
+          <span>{t("{0}d", row.original.expirationWarningDays)}</span>
         ) : (
           <span className="text-muted-foreground">-</span>
         ),
@@ -133,7 +134,7 @@ export function getColumns(
       minSize: 90,
       maxSize: 150,
       meta: {
-        label: "Warning Days",
+        label: t("Warning Days"),
         apiField: "expirationWarningDays",
         filterable: false,
         sortable: true,
@@ -141,7 +142,7 @@ export function getColumns(
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",

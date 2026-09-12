@@ -117,36 +117,41 @@ export function StopReconciliationCard({
     field: ReconciliationField;
   }> = [];
   if (nameVal)
-    editableFields.push({ key: "name", label: "Name", value: nameVal, field: stop.name });
+    editableFields.push({ key: "name", label: t("Name"), value: nameVal, field: stop.name });
   if (toStr(stop.addressLine1))
     editableFields.push({
       key: "addressLine1",
-      label: "Address",
+      label: t("Address"),
       value: toStr(stop.addressLine1),
       field: stop.addressLine1,
     });
   if (toStr(stop.city))
-    editableFields.push({ key: "city", label: "City", value: toStr(stop.city), field: stop.city });
+    editableFields.push({
+      key: "city",
+      label: t("City"),
+      value: toStr(stop.city),
+      field: stop.city,
+    });
   if (toStr(stop.state))
     editableFields.push({
       key: "state",
-      label: "State",
+      label: t("State"),
       value: toStr(stop.state),
       field: stop.state,
     });
   if (toStr(stop.postalCode))
     editableFields.push({
       key: "postalCode",
-      label: "Zip",
+      label: t("Zip"),
       value: toStr(stop.postalCode),
       field: stop.postalCode,
     });
   if (dateVal)
-    editableFields.push({ key: "date", label: "Date", value: dateVal, field: stop.date });
+    editableFields.push({ key: "date", label: t("Date"), value: dateVal, field: stop.date });
   if (timeVal)
     editableFields.push({
       key: "timeWindow",
-      label: "Window",
+      label: t("Window"),
       value: timeVal,
       field: stop.timeWindow,
     });

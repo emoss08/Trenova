@@ -304,7 +304,9 @@ function IdentityProviderPanelController({
       url={identityProviderEndpoint(organizationId)}
       queryKey={identityProviderQueryKey(organizationId)}
       title={t("Identity Provider")}
-      description={t("Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.")}
+      description={t(
+        "Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings.",
+      )}
       size="lg"
       formComponent={<IdentityProviderForm mode="create" />}
       mutationFn={async (values) =>
@@ -356,8 +358,14 @@ const ProviderRow = memo(function ProviderRow({
         <div className="text-muted-foreground grid gap-2 text-xs md:grid-cols-2">
           <MetaLine label={t("Issuer")} value={provider.oidcIssuerUrl || "-"} />
           <MetaLine label={t("Redirect URI")} value={provider.oidcRedirectUrl || "-"} />
-          <MetaLine label={t("Domains")} value={provider.allowedDomains.join(", ") || "Any domain"} />
-          <MetaLine label={t("Scopes")} value={provider.oidcScopes.join(" ") || "Default OIDC scopes"} />
+          <MetaLine
+            label={t("Domains")}
+            value={provider.allowedDomains.join(", ") || "Any domain"}
+          />
+          <MetaLine
+            label={t("Scopes")}
+            value={provider.oidcScopes.join(" ") || "Default OIDC scopes"}
+          />
         </div>
       </div>
       <div className="flex justify-end gap-2">
@@ -421,7 +429,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
 
       <FormSection
         title={t("Provider")}
-        description={t("Name the sign-in provider and configure the identifier used by hosted login flows.")}
+        description={t(
+          "Name the sign-in provider and configure the identifier used by hosted login flows.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -523,7 +533,9 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
               name="allowedDomains"
               label={t("Allowed domains")}
               placeholder={t("example.com, subsidiary.com")}
-              description={t("Comma-separated domains allowed to authenticate. Leave blank to allow any domain.")}
+              description={t(
+                "Comma-separated domains allowed to authenticate. Leave blank to allow any domain.",
+              )}
               parseValue={parseCommaSeparatedList}
               formatValue={(value) => value.join(", ")}
             />

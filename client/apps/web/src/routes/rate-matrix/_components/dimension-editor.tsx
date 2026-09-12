@@ -45,7 +45,9 @@ export function DimensionEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it would quietly price nothing.")}
+          {t(
+            "No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it would quietly price nothing.",
+          )}
         </p>
       )}
 
@@ -53,7 +55,9 @@ export function DimensionEditor() {
         <Alert>
           <TriangleAlertIcon className="size-4" />
           <AlertDescription>
-            {t("Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.")}
+            {t(
+              "Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -110,7 +114,9 @@ export function DimensionEditor() {
                     name={`dimensions.${index}.rangeOverflow` as never}
                     label={t("Outside every band")}
                     placeholder={t("Select overflow policy")}
-                    description={t("What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break.")}
+                    description={t(
+                      "What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break.",
+                    )}
                     options={rateMatrixRangeOverflowChoices}
                   />
                 ) : (
@@ -119,7 +125,9 @@ export function DimensionEditor() {
                     name={`dimensions.${index}.keyNormalization` as never}
                     label={t("Key matching")}
                     placeholder={t("Select key normalization")}
-                    description={t("Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.")}
+                    description={t(
+                      "Applied to both the stored key and the value a formula looks up, so a ZIP+4 finds its ZIP3 zone and case does not matter.",
+                    )}
                     options={rateMatrixKeyNormalizationChoices}
                   />
                 )}
@@ -130,7 +138,9 @@ export function DimensionEditor() {
                   name={`dimensions.${index}.label` as never}
                   label={t("Label")}
                   placeholder={t("Origin zone")}
-                  description={t("What this axis is called in the grid — leave blank to use the kind")}
+                  description={t(
+                    "What this axis is called in the grid — leave blank to use the kind",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -160,7 +170,9 @@ export function DimensionEditor() {
 
       {atCapacity && (
         <p className="text-muted-foreground text-xs">
-          {t("Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.")}
+          {t(
+            "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.",
+          )}
         </p>
       )}
     </div>

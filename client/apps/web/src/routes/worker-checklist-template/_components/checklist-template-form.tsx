@@ -84,7 +84,9 @@ export function ChecklistTemplateForm({
       <section className="flex flex-col gap-3">
         <SectionTitle
           title={t("General")}
-          hint={t("Name and code identify the checklist; the trigger decides when it starts on its own.")}
+          hint={t(
+            "Name and code identify the checklist; the trigger decides when it starts on its own.",
+          )}
         />
         <FormGroup cols={2}>
           <FormControl>
@@ -104,7 +106,9 @@ export function ChecklistTemplateForm({
               label={t("Name")}
               placeholder={t("e.g. Driver onboarding")}
               rules={{ required: true }}
-              description={t("Shown on the worker's Checklist tab once a checklist is started from this template.")}
+              description={t(
+                "Shown on the worker's Checklist tab once a checklist is started from this template.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -174,7 +178,9 @@ export function ChecklistTemplateForm({
         <div className="flex items-start justify-between gap-2">
           <SectionTitle
             title={t("Items")}
-            hint={t("Each line has an owner and a due date counted from the day the checklist starts.")}
+            hint={t(
+              "Each line has an owner and a due date counted from the day the checklist starts.",
+            )}
           />
           <Button
             type="button"
@@ -201,7 +207,9 @@ export function ChecklistTemplateForm({
           <InfoIcon className="size-4" />
           <AlertTitle>{t("Items are copied when a checklist starts")}</AlertTitle>
           <AlertDescription>
-            {t("Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.")}
+            {t(
+              "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.",
+            )}
           </AlertDescription>
         </Alert>
         <div className="flex flex-col gap-3">
@@ -325,7 +333,9 @@ function ItemRow({
               options={credentialTypeOptions}
               rules={{ required: true }}
               placeholder={t("Which credential completes this item")}
-              description={t("The item completes itself once the worker holds a valid credential of this type.")}
+              description={t(
+                "The item completes itself once the worker holds a valid credential of this type.",
+              )}
             />
           </FormControl>
         ) : null}
@@ -336,7 +346,9 @@ function ItemRow({
               name={`items.${index}.documentTypeId`}
               label={t("Document type")}
               placeholder={t("Which document completes this item")}
-              description={t("The item completes itself once a worker document of this type is on file.")}
+              description={t(
+                "The item completes itself once a worker document of this type is on file.",
+              )}
             />
           </FormControl>
         ) : null}

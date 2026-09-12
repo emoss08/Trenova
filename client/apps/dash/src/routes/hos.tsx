@@ -123,10 +123,17 @@ function DailyLogRow({ log }: { log: MyHosDailyLog }) {
       <div className="min-w-0">
         <p className="text-sm font-medium">{formatUnixDate(log.startAt)}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {t("{0} drive · {1} on-duty · {2} mi", formatDurationMs(log.driveDurationMs), formatDurationMs(log.onDutyDurationMs), miles)}
+          {t(
+            "{0} drive · {1} on-duty · {2} mi",
+            formatDurationMs(log.driveDurationMs),
+            formatDurationMs(log.onDutyDurationMs),
+            miles,
+          )}
         </p>
         {!log.isCertified ? (
-          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">{t("Not yet certified")}</p>
+          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+            {t("Not yet certified")}
+          </p>
         ) : null}
       </div>
       {log.isCertified ? (
@@ -299,7 +306,9 @@ export function DashHosPage() {
           <Clock4Icon className="size-7 text-muted-foreground" />
           <p className="text-sm font-medium">{t("Hours of service isn't available")}</p>
           <p className="max-w-xs text-sm text-muted-foreground">
-            {t("Your carrier hasn't connected an ELD provider yet, or your driver profile isn't linked to one.")}
+            {t(
+              "Your carrier hasn't connected an ELD provider yet, or your driver profile isn't linked to one.",
+            )}
           </p>
         </div>
       ) : (

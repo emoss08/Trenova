@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -65,8 +66,10 @@ function UnassignedFuelCardsEmpty({
 }
 
 export default function FuelCardTable({ unassignedOnly = false }: { unassignedOnly?: boolean }) {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const { allowed: canCancel } = usePermission(Resource.FuelCard, Operation.Update);
   const { allowed: canAssign } = usePermission(Resource.FuelCard, Operation.Update);
   const [cancelling, setCancelling] = useState<FuelCardRow | null>(null);
@@ -89,7 +92,7 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
     if (canAssign) {
       actions.push({
         id: "assign",
-        label: "Assign card",
+        label: t("Assign card"),
         icon: LinkIcon,
         hidden: (row) => row.original.status === "Cancelled",
         onClick: (row) => setAssigning(row.original),
@@ -99,7 +102,7 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
     if (canCancel) {
       actions.push({
         id: "cancel",
-        label: "Cancel card",
+        label: t("Cancel card"),
         icon: BanIcon,
         variant: "destructive",
         hidden: (row) => row.original.status === "Cancelled",
@@ -108,7 +111,7 @@ export default function FuelCardTable({ unassignedOnly = false }: { unassignedOn
     }
 
     return actions;
-  }, [canAssign, canCancel]);
+  }, [canAssign, canCancel, t]);
 
   return (
     <>

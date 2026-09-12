@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -39,17 +39,17 @@ function EquipmentTypeStatusCell({ row }: { row: EquipmentType }) {
   );
 }
 
-export function getColumns(): ColumnDef<EquipmentType>[] {
+export function getColumns(t: TranslateFn): ColumnDef<EquipmentType>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => {
         const { color, code } = row.original;
         return <DataTableColorColumn text={code} color={color} />;
       },
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -59,13 +59,13 @@ export function getColumns(): ColumnDef<EquipmentType>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <EquipmentTypeStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -76,9 +76,9 @@ export function getColumns(): ColumnDef<EquipmentType>[] {
     },
     {
       accessorKey: "class",
-      header: "Equip. Class",
+      header: t("Equip. Class"),
       meta: {
-        label: "Equip. Class",
+        label: t("Equip. Class"),
         apiField: "class",
         filterable: true,
         sortable: true,
@@ -89,12 +89,12 @@ export function getColumns(): ColumnDef<EquipmentType>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={50} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={50} />
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -107,12 +107,12 @@ export function getColumns(): ColumnDef<EquipmentType>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },
       meta: {
-        label: "Created At",
+        label: t("Created At"),
         apiField: "createdAt",
         filterable: false,
         sortable: true,

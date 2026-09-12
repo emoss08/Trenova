@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import type { WorkerChecklistTemplateRow } from "@/lib/graphql/worker-checklist";
@@ -23,11 +23,11 @@ const TRIGGER_CHOICES = checklistTriggerSchema.options.map((value) => ({
   label: CHECKLIST_TRIGGER_LABELS[value],
 }));
 
-export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<WorkerChecklistTemplateRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 110,
       meta: {
@@ -41,13 +41,13 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <span className="flex items-center gap-2 font-medium">
           {row.original.code}
           {row.original.isDefault ? (
             <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
-              {translate("Default")}
+              {t("Default")}
             </Badge>
           ) : null}
         </span>
@@ -62,13 +62,13 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span>{row.original.name}</span>
           {row.original.description ? (
             <span className="text-muted-foreground max-w-md truncate text-xs">
-              {translate(row.original.description)}
+              {t(row.original.description)}
             </span>
           ) : null}
         </div>
@@ -83,7 +83,7 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       accessorKey: "kind",
-      header: "Kind",
+      header: t("Kind"),
       cell: ({ row }) =>
         CHECKLIST_KIND_LABELS[row.original.kind as ChecklistKind] ?? row.original.kind,
       size: 120,
@@ -98,7 +98,7 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       accessorKey: "trigger",
-      header: "Starts",
+      header: t("Starts"),
       cell: ({ row }) =>
         CHECKLIST_TRIGGER_LABELS[row.original.trigger as ChecklistTrigger] ?? row.original.trigger,
       size: 140,
@@ -113,13 +113,13 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       id: "items",
-      header: "Items",
+      header: t("Items"),
       cell: ({ row }) => {
         const required = row.original.items.filter((item) => item.required).length;
         return (
           <span className="tabular-nums">
             {row.original.items.length}
-            <span className="text-muted-foreground"> {translate("· {0} required", required)}</span>
+            <span className="text-muted-foreground"> {t("· {0} required", required)}</span>
           </span>
         );
       },
@@ -127,13 +127,13 @@ export function getColumns(): ColumnDef<WorkerChecklistTemplateRow>[] {
     },
     {
       accessorKey: "openChecklistCount",
-      header: "In progress",
+      header: t("In progress"),
       cell: ({ row }) => <span className="tabular-nums">{row.original.openChecklistCount}</span>,
       size: 100,
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: { apiField: "createdAt", sortable: true, filterable: true, filterType: "date" },
     },

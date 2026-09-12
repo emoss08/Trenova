@@ -79,7 +79,10 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
             {t("Export Template")}
           </DialogTitle>
           <DialogDescription>
-            {t("Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.", template?.name)}
+            {t(
+              "Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.",
+              template?.name,
+            )}
           </DialogDescription>
         </DialogHeader>
 

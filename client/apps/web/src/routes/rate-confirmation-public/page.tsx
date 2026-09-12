@@ -136,7 +136,10 @@ function RateConfirmationSummary({
             {t("Confirm rate")}
           </Button>
           <p className="text-muted-foreground text-[11px]">
-            {t("By confirming, you agree to the rate and terms shown above on behalf of {0}.", rateConfirmation.carrierName)}
+            {t(
+              "By confirming, you agree to the rate and terms shown above on behalf of {0}.",
+              rateConfirmation.carrierName,
+            )}
           </p>
         </div>
       </CardContent>
@@ -151,7 +154,9 @@ function InvalidLinkCard() {
     <StatusCard
       icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
       title={t("This rate confirmation link is no longer valid")}
-      body={t("The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.")}
+      body={t(
+        "The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error.",
+      )}
     />
   );
 }
@@ -215,7 +220,9 @@ export function RateConfirmationPublicPage() {
       <StatusCard
         icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Temporarily unavailable")}
-        body={t("Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.")}
+        body={t(
+          "Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.",
+        )}
         action={
           <Button
             type="button"
@@ -256,7 +263,9 @@ export function RateConfirmationPublicPage() {
         <StatusCard
           icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
           title={t("Temporarily unavailable")}
-          body={t("The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.")}
+          body={t(
+            "The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment.",
+          )}
           action={
             <Button
               type="button"
@@ -279,7 +288,9 @@ export function RateConfirmationPublicPage() {
       <StatusCard
         icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Already confirmed")}
-        body={t("This rate confirmation has already been signed. Contact the broker if anything changed.")}
+        body={t(
+          "This rate confirmation has already been signed. Contact the broker if anything changed.",
+        )}
       />
     );
   } else if (previewQuery.data) {
@@ -296,8 +307,15 @@ export function RateConfirmationPublicPage() {
 
   return (
     <>
-      <Metadata title={t("Rate Confirmation")} description={t("Review and sign a rate confirmation")} />
-      <PublicPageShell footer={t("Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.")}>
+      <Metadata
+        title={t("Rate Confirmation")}
+        description={t("Review and sign a rate confirmation")}
+      />
+      <PublicPageShell
+        footer={t(
+          "Powered by Trenova. Questions about this rate confirmation? Reply to the email it arrived in.",
+        )}
+      >
         {content}
       </PublicPageShell>
     </>

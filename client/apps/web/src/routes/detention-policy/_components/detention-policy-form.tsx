@@ -103,7 +103,9 @@ export function DetentionPolicyForm() {
               placeholder={t("Select status")}
               rules={{ required: true }}
               options={detentionPolicyStatusChoices}
-              description={t("Only Active policies participate in resolution; Draft lets you build and backtest safely.")}
+              description={t(
+                "Only Active policies participate in resolution; Draft lets you build and backtest safely.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -112,7 +114,9 @@ export function DetentionPolicyForm() {
               name="priority"
               label={t("Priority")}
               placeholder="0"
-              description={t("Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.")}
+              description={t(
+                "Overrides computed specificity when two policies tie. Leave at 0 unless you need an explicit override.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -120,8 +124,12 @@ export function DetentionPolicyForm() {
               control={control}
               name="description"
               label={t("Description")}
-              placeholder={t("Detention terms for standard dry van freight, per the 2026 master agreement")}
-              description={t("Context for the next person who has to understand why these terms exist.")}
+              placeholder={t(
+                "Detention terms for standard dry van freight, per the 2026 master agreement",
+              )}
+              description={t(
+                "Context for the next person who has to understand why these terms exist.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -129,7 +137,9 @@ export function DetentionPolicyForm() {
 
       <FormSection
         title={t("Scope")}
-        description={t("Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.")}
+        description={t(
+          "Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -137,7 +147,9 @@ export function DetentionPolicyForm() {
               control={control}
               name="isOrgDefault"
               label={t("Organization default")}
-              description={t("The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.")}
+              description={t(
+                "The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.",
+              )}
               outlined
               position="left"
             />
@@ -161,7 +173,9 @@ export function DetentionPolicyForm() {
                   name="locationId"
                   label={t("Facility")}
                   placeholder={t("Any facility")}
-                  description={t("Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones.")}
+                  description={t(
+                    "Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones.",
+                  )}
                   clearable
                 />
               </FormControl>
@@ -189,7 +203,9 @@ export function DetentionPolicyForm() {
                   name="commodityIds"
                   label={t("Commodities")}
                   placeholder={t("Any commodity")}
-                  description={t("Only shipments carrying these commodities are governed. Specificity +8.")}
+                  description={t(
+                    "Only shipments carrying these commodities are governed. Specificity +8.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -217,7 +233,9 @@ export function DetentionPolicyForm() {
                   name="effectiveEndDate"
                   label={t("Expires")}
                   placeholder={t("No expiration")}
-                  description={t("The policy stops governing after this date — set it when a contract term ends.")}
+                  description={t(
+                    "The policy stops governing after this date — set it when a contract term ends.",
+                  )}
                   clearable
                 />
               </FormControl>
@@ -229,7 +247,9 @@ export function DetentionPolicyForm() {
               control={control}
               name="appointmentStopsOnly"
               label={t("Appointment stops only")}
-              description={t("Open (first-come) stops will not accrue detention under this policy.")}
+              description={t(
+                "Open (first-come) stops will not accrue detention under this policy.",
+              )}
               outlined
               position="left"
             />
@@ -282,7 +302,9 @@ export function DetentionPolicyForm() {
               {t("Check the contract")}
             </Badge>
             <p className="mt-2 text-sm">
-              {t("Forfeit voids detention entirely on a late arrival, even by one minute. Only select this when the rate confirmation says so.")}
+              {t(
+                "Forfeit voids detention entirely on a late arrival, even by one minute. Only select this when the rate confirmation says so.",
+              )}
             </p>
           </div>
         )}
@@ -290,7 +312,9 @@ export function DetentionPolicyForm() {
 
       <FormSection
         title={t("Free time")}
-        description={t("What the contract grants before charges begin, on both the customer and driver sides")}
+        description={t(
+          "What the contract grants before charges begin, on both the customer and driver sides",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -301,7 +325,9 @@ export function DetentionPolicyForm() {
               placeholder="120"
               sideText="min"
               rules={{ required: true }}
-              description={t("Minutes the customer gets before charges begin. Industry standard is 120.")}
+              description={t(
+                "Minutes the customer gets before charges begin. Industry standard is 120.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -311,7 +337,9 @@ export function DetentionPolicyForm() {
               label={t("Driver pay free time")}
               placeholder={t("Match customer allowance")}
               sideText="min"
-              description={t("Leave empty to match the customer allowance. A longer customer allowance than this means you pay for time you cannot bill.")}
+              description={t(
+                "Leave empty to match the customer allowance. A longer customer allowance than this means you pay for time you cannot bill.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -321,7 +349,9 @@ export function DetentionPolicyForm() {
               label={t("Pickup override")}
               placeholder={t("Use base free time")}
               sideText="min"
-              description={t("Different allowance for pickup stops, when the contract splits them.")}
+              description={t(
+                "Different allowance for pickup stops, when the contract splits them.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -331,7 +361,9 @@ export function DetentionPolicyForm() {
               label={t("Delivery override")}
               placeholder={t("Use base free time")}
               sideText="min"
-              description={t("Different allowance for delivery stops, when the contract splits them.")}
+              description={t(
+                "Different allowance for delivery stops, when the contract splits them.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -341,7 +373,9 @@ export function DetentionPolicyForm() {
               label={t("Minimum billable")}
               placeholder="0"
               sideText="min"
-              description={t("Detention shorter than this bills nothing — filters out trivially small charges.")}
+              description={t(
+                "Detention shorter than this bills nothing — filters out trivially small charges.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -349,7 +383,9 @@ export function DetentionPolicyForm() {
 
       <FormSection
         title={t("Rounding")}
-        description={t("How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices.")}
+        description={t(
+          "How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -372,14 +408,19 @@ export function DetentionPolicyForm() {
                 placeholder="15"
                 sideText="min"
                 rules={{ required: true }}
-                description={t("The billing unit minutes are rounded onto. Typically 15, 30, or 60.")}
+                description={t(
+                  "The billing unit minutes are rounded onto. Typically 15, 30, or 60.",
+                )}
               />
             </FormControl>
           )}
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Rate")} description={t("What the customer pays once free time is exhausted")}>
+      <FormSection
+        title={t("Rate")}
+        description={t("What the customer pays once free time is exhausted")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
@@ -389,7 +430,9 @@ export function DetentionPolicyForm() {
               placeholder={t("Select rate source")}
               rules={{ required: true }}
               options={detentionRateSourceChoices}
-              description={t("A flat hourly accessorial rate, or a graduated ladder that escalates with dwell.")}
+              description={t(
+                "A flat hourly accessorial rate, or a graduated ladder that escalates with dwell.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -399,7 +442,9 @@ export function DetentionPolicyForm() {
               label={t("Accessorial charge")}
               placeholder={t("Select accessorial charge")}
               rules={{ required: true }}
-              description={t("The billing code detention posts against. Its rate applies when the source is Flat.")}
+              description={t(
+                "The billing code detention posts against. Its rate applies when the source is Flat.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -443,7 +488,9 @@ export function DetentionPolicyForm() {
               label={t("Max charge per day")}
               placeholder={t("No cap")}
               sideText="$"
-              description={t("Allocated across calendar days, so a stay spanning midnight is not charged two full daily maximums.")}
+              description={t(
+                "Allocated across calendar days, so a stay spanning midnight is not charged two full daily maximums.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -453,7 +500,9 @@ export function DetentionPolicyForm() {
               label={t("Max charge per shipment")}
               placeholder={t("No cap")}
               sideText="$"
-              description={t("Total detention across every stop on the shipment stops accruing here.")}
+              description={t(
+                "Total detention across every stop on the shipment stops accruing here.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -463,7 +512,9 @@ export function DetentionPolicyForm() {
               label={t("Convert to layover at")}
               placeholder={t("Never convert")}
               sideText="min"
-              description={t("Detention stops accruing here and layover takes over. Industry convention is 1440 (24h).")}
+              description={t(
+                "Detention stops accruing here and layover takes over. Industry convention is 1440 (24h).",
+              )}
             />
           </FormControl>
           {convertToLayover ? (
@@ -474,7 +525,9 @@ export function DetentionPolicyForm() {
                 label={t("Layover charge")}
                 placeholder={t("Select layover charge")}
                 rules={{ required: true }}
-                description={t("The billing code the stay converts to once the layover boundary is crossed.")}
+                description={t(
+                  "The billing code the stay converts to once the layover boundary is crossed.",
+                )}
               />
             </FormControl>
           ) : null}
@@ -483,7 +536,9 @@ export function DetentionPolicyForm() {
 
       <FormSection
         title={t("Customer notice")}
-        description={t("Contracts that pay detention reliably require written notice at or before free-time expiry. Missing it is the most common reason a valid claim goes uncollected.")}
+        description={t(
+          "Contracts that pay detention reliably require written notice at or before free-time expiry. Missing it is the most common reason a valid claim goes uncollected.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -494,7 +549,9 @@ export function DetentionPolicyForm() {
               placeholder={t("Select requirement")}
               rules={{ required: true }}
               options={detentionNotificationRequirementChoices}
-              description={t("Whether the contract obligates a written notice before detention can bill.")}
+              description={t(
+                "Whether the contract obligates a written notice before detention can bill.",
+              )}
             />
           </FormControl>
           {notificationRequirement !== "None" && (
@@ -539,7 +596,9 @@ export function DetentionPolicyForm() {
                   control={control}
                   name="autoSendNotice"
                   label={t("Send the notice automatically")}
-                  description={t("The sweep emails the customer the moment the notice window opens, using their configured recipients.")}
+                  description={t(
+                    "The sweep emails the customer the moment the notice window opens, using their configured recipients.",
+                  )}
                   outlined
                   position="left"
                 />
@@ -549,7 +608,9 @@ export function DetentionPolicyForm() {
                   control={control}
                   name="attachNoticePdf"
                   label={t("Attach the notice as a PDF")}
-                  description={t("Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute.")}
+                  description={t(
+                    "Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute.",
+                  )}
                   outlined
                   position="left"
                 />
@@ -559,7 +620,9 @@ export function DetentionPolicyForm() {
                   control={control}
                   name="sendDepartureSummary"
                   label={t("Send a summary on departure")}
-                  description={t("Customers rarely dispute a number they were told twice while it was happening.")}
+                  description={t(
+                    "Customers rarely dispute a number they were told twice while it was happening.",
+                  )}
                   outlined
                   position="left"
                 />
@@ -599,7 +662,9 @@ export function DetentionPolicyForm() {
               control={control}
               name="comments"
               label={t("Contract notes")}
-              placeholder={t("Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr")}
+              placeholder={t(
+                "Section 4.2 of the 2026 master agreement — detention after 2 free hours at $75/hr",
+              )}
               description={t("Reference the clause this policy encodes, so a dispute can cite it.")}
             />
           </FormControl>

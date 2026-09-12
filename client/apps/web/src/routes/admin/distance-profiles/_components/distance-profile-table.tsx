@@ -20,16 +20,16 @@ import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, Loader2Icon, TrashIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./distance-profile-columns";
 import { DistanceProfilePanel } from "./distance-profile-panel";
 
 const distanceProfileService = new DistanceProfileService();
-const columns = getColumns();
 
 export default function DistanceProfileTable() {
   const t = useT();
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -78,14 +78,14 @@ export default function DistanceProfileTable() {
   const contextMenuActions: RowAction<DistanceProfileRow>[] = [
     {
       id: "set-default",
-      label: "Set Default",
+      label: t("Set Default"),
       icon: CheckCircleIcon,
       disabled: (row) => row.original.isDefault || row.original.status !== "Active",
       onClick: handleSetDefault,
     },
     {
       id: "delete",
-      label: "Delete",
+      label: t("Delete"),
       icon: TrashIcon,
       variant: "destructive",
       disabled: (row) => row.original.isDefault,
@@ -120,7 +120,9 @@ export default function DistanceProfileTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete Distance Profile")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Are you sure you want to delete this distance profile? Default profiles cannot be deleted.")}
+              {t(
+                "Are you sure you want to delete this distance profile? Default profiles cannot be deleted.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

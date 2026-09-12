@@ -28,10 +28,10 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
       : "—";
 
   const segments = [
-    { key: "direct", label: "Direct", value: summary.direct },
-    { key: "terminal", label: "Terminal", value: summary.terminal },
+    { key: "direct", label: t("Direct"), value: summary.direct },
+    { key: "terminal", label: t("Terminal"), value: summary.terminal },
     ...(summary.covering > 0
-      ? [{ key: "covering", label: "Covering", value: summary.covering }]
+      ? [{ key: "covering", label: t("Covering"), value: summary.covering }]
       : []),
   ];
 
@@ -43,9 +43,9 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           label={t("On your team")}
           info={
             <InfoPopover title={t("On your team")}>
-              {
-                t("Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today.")
-              }
+              {t(
+                "Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today.",
+              )}
             </InfoPopover>
           }
         />
@@ -64,9 +64,9 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           label={t("In good standing")}
           info={
             <InfoPopover title={t("In good standing")}>
-              {
-                t("People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good.")
-              }
+              {t(
+                "People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good.",
+              )}
             </InfoPopover>
           }
         />
@@ -80,7 +80,9 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           />
           <div className="flex items-baseline gap-1">
             <NumberFlow value={summary.goodStanding} className={VALUE_CLASS} />
-            <span className="text-muted-foreground font-mono text-[11px]">{t("of {0}", summary.total)}</span>
+            <span className="text-muted-foreground font-mono text-[11px]">
+              {t("of {0}", summary.total)}
+            </span>
           </div>
         </div>
         <KpiSub>{t("Compliant, trained and rated Good or better")}</KpiSub>
@@ -92,9 +94,9 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           label={t("Needing attention")}
           info={
             <InfoPopover title={t("Needing attention")}>
-              {
-                t("Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here.")
-              }
+              {t(
+                "Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here.",
+              )}
             </InfoPopover>
           }
         />
@@ -112,20 +114,20 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           label={t("Average tenure")}
           info={
             <InfoPopover title={t("Average tenure")}>
-              {
-                t("Mean time since hire date across the team, for people with a hire date on file. A leaver is measured to their termination date.")
-              }
+              {t(
+                "Mean time since hire date across the team, for people with a hire date on file. A leaver is measured to their termination date.",
+              )}
             </InfoPopover>
           }
         />
         <span className={VALUE_CLASS}>{averageTenure}</span>
         <KpiSub>
           {summary.longestServing
-            ? t("Longest serving: {0}, {1}", summary.longestServing.member.name, formatTenure(
-                now - summary.longestServing.days * DAY_SECONDS,
-                null,
-                now,
-              ))
+            ? t(
+                "Longest serving: {0}, {1}",
+                summary.longestServing.member.name,
+                formatTenure(now - summary.longestServing.days * DAY_SECONDS, null, now),
+              )
             : t("No hire dates on record")}
         </KpiSub>
       </KpiCard>

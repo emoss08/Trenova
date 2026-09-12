@@ -80,7 +80,9 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
         <SparklesIcon className="size-4" />
         <AlertTitle>{t("Document AI requires two layers")}</AlertTitle>
         <AlertDescription>
-          {t("This integration stores the organization OpenAI credential. AI-assisted classification and extraction are still controlled separately in Document Controls.")}
+          {t(
+            "This integration stores the organization OpenAI credential. AI-assisted classification and extraction are still controlled separately in Document Controls.",
+          )}
         </AlertDescription>
       </Alert>
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
@@ -101,7 +103,9 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
               label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "Enter your OpenAI API key"}
-              description={t("Used for AI-assisted document classification and structured extraction.")}
+              description={t(
+                "Used for AI-assisted document classification and structured extraction.",
+              )}
             />
           </FormControl>
         </FormGroup>

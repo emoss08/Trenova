@@ -54,13 +54,13 @@ export function SavedViewField({
 
   const choices = useMemo(
     () => [
-      { value: NO_VIEW, label: "No saved view" },
+      { value: NO_VIEW, label: t("No saved view") },
       ...(views ?? []).map((view) => ({
         value: view.id,
         label: view.pinned ? `★ ${view.name}` : view.name,
       })),
     ],
-    [views],
+    [views, t],
   );
 
   const selected = useMemo(

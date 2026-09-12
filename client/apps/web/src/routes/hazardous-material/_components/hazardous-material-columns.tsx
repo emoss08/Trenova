@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
@@ -33,11 +34,11 @@ function HazardousMaterialStatusCell({ row }: { row: HazardousMaterial }) {
   );
 }
 
-export function getColumns(): ColumnDef<HazardousMaterial>[] {
+export function getColumns(t: TranslateFn): ColumnDef<HazardousMaterial>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <HazardousMaterialStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -53,7 +54,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       meta: {
         apiField: "code",
         filterable: true,
@@ -64,7 +65,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       meta: {
         apiField: "name",
@@ -76,7 +77,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "class",
-      header: "Class",
+      header: t("Class"),
       cell: ({ row }) => {
         const classLabel = hazardousClassChoices.find((c) => c.value === row.original.class)?.label;
         return <span>{classLabel || row.original.class}</span>;
@@ -95,7 +96,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "packingGroup",
-      header: "Packing Group",
+      header: t("Packing Group"),
       cell: ({ row }) => {
         const pgLabel = packingGroupChoices.find(
           (c) => c.value === row.original.packingGroup,
@@ -116,7 +117,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

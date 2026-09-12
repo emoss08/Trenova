@@ -44,7 +44,9 @@ export function PartnerDetailsForm({
     >
       <FormSection
         title={t("Profile")}
-        description={t("Core identifiers and ownership used to route documents for this trading partner.")}
+        description={t(
+          "Core identifiers and ownership used to route documents for this trading partner.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -53,7 +55,9 @@ export function PartnerDetailsForm({
               name="code"
               label={t("Partner Code")}
               placeholder={t("SCAC or ISA ID")}
-              description={t("Stable identifier used in EDI envelopes, searches, and cross-system references. Avoid changing it after documents are exchanged.")}
+              description={t(
+                "Stable identifier used in EDI envelopes, searches, and cross-system references. Avoid changing it after documents are exchanged.",
+              )}
               disabled={disabled || readOnlyInternalFields}
               rules={{ required: true }}
             />
@@ -64,7 +68,9 @@ export function PartnerDetailsForm({
               name="name"
               label={t("Partner Name")}
               placeholder={t("Partner name")}
-              description={t("Display name for dispatch, billing, and support teams. Internal partner names are controlled by the organization connection.")}
+              description={t(
+                "Display name for dispatch, billing, and support teams. Internal partner names are controlled by the organization connection.",
+              )}
               disabled={disabled || readOnlyInternalFields}
               rules={{ required: true }}
             />
@@ -74,7 +80,9 @@ export function PartnerDetailsForm({
               control={control}
               name="status"
               label={t("Status")}
-              description={t("Controls whether this partner is available for active EDI routing and profile selection.")}
+              description={t(
+                "Controls whether this partner is available for active EDI routing and profile selection.",
+              )}
               options={statusChoices}
               isReadOnly={disabled}
               rules={{ required: true }}
@@ -86,7 +94,9 @@ export function PartnerDetailsForm({
               name="customerId"
               label={t("Customer")}
               placeholder={t("Select customer")}
-              description={t("Links documents from this partner to a customer record for shipment, invoice, and billing workflows.")}
+              description={t(
+                "Links documents from this partner to a customer record for shipment, invoice, and billing workflows.",
+              )}
               clearable
               disabled={disabled}
             />
@@ -96,7 +106,9 @@ export function PartnerDetailsForm({
               control={control}
               name="country"
               label={t("Country")}
-              description={t("Primary country for this partner. Used as routing context for partner-specific defaults.")}
+              description={t(
+                "Primary country for this partner. Used as routing context for partner-specific defaults.",
+              )}
               options={partnerCountryOptions}
               isReadOnly={disabled}
               rules={{ required: true }}
@@ -107,7 +119,9 @@ export function PartnerDetailsForm({
               control={control}
               name="timezone"
               label={t("Timezone")}
-              description={t("Local timezone used when interpreting partner schedules, acknowledgments, and operational timestamps.")}
+              description={t(
+                "Local timezone used when interpreting partner schedules, acknowledgments, and operational timestamps.",
+              )}
               groups={timezoneGroupedChoices}
               renderOption={(option) => (
                 <span className="flex w-full items-center justify-between gap-3">
@@ -128,7 +142,9 @@ export function PartnerDetailsForm({
               name="description"
               label={t("Description")}
               placeholder={t("Operational notes for this partner")}
-              description={t("Optional notes for operations and implementation teams, such as onboarding status or partner-specific handling rules.")}
+              description={t(
+                "Optional notes for operations and implementation teams, such as onboarding status or partner-specific handling rules.",
+              )}
               disabled={disabled}
             />
           </FormControl>
@@ -137,7 +153,9 @@ export function PartnerDetailsForm({
 
       <FormSection
         title={t("Contact")}
-        description={t("Operational owner used when document delivery, mapping, or transport issues need escalation.")}
+        description={t(
+          "Operational owner used when document delivery, mapping, or transport issues need escalation.",
+        )}
       >
         <FormGroup cols={3}>
           <FormControl>
@@ -156,7 +174,9 @@ export function PartnerDetailsForm({
               name="contactEmail"
               label={t("Contact Email")}
               placeholder={t("ops@example.com")}
-              description={t("Email address used for EDI coordination, delivery failures, and onboarding follow-up.")}
+              description={t(
+                "Email address used for EDI coordination, delivery failures, and onboarding follow-up.",
+              )}
               disabled={disabled}
             />
           </FormControl>
@@ -175,7 +195,9 @@ export function PartnerDetailsForm({
 
       <FormSection
         title={t("Defaults")}
-        description={t("Fallback routing, transport, and translation settings used when a document does not specify a narrower profile.")}
+        description={t(
+          "Fallback routing, transport, and translation settings used when a document does not specify a narrower profile.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -204,7 +226,9 @@ export function PartnerDetailsForm({
               name="defaultTransportId"
               label={t("Default Transport Profile")}
               placeholder={t("Select transport profile")}
-              description={t("Transport profile used by default for this partner, such as AS2, SFTP, or internal delivery.")}
+              description={t(
+                "Transport profile used by default for this partner, such as AS2, SFTP, or internal delivery.",
+              )}
               extraSearchParams={{ status: "Active" }}
               clearable
               disabled={disabled}
@@ -216,7 +240,9 @@ export function PartnerDetailsForm({
               name="defaultMappingProfileId"
               label={t("Default Mapping Profile")}
               placeholder={t("Select mapping profile")}
-              description={t("Mapping profile used to translate partner payloads when no document-specific mapping overrides it.")}
+              description={t(
+                "Mapping profile used to translate partner payloads when no document-specific mapping overrides it.",
+              )}
               clearable
               disabled={disabled}
             />
@@ -226,7 +252,9 @@ export function PartnerDetailsForm({
 
       <FormSection
         title={t("Advanced")}
-        description={t("Structured partner settings reserved for integration-specific options and runtime overrides.")}
+        description={t(
+          "Structured partner settings reserved for integration-specific options and runtime overrides.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -235,7 +263,9 @@ export function PartnerDetailsForm({
               name="settingsJson"
               label={t("Settings JSON")}
               placeholder="{}"
-              description={t("JSON object stored with this partner and sent unchanged to EDI processing services.")}
+              description={t(
+                "JSON object stored with this partner and sent unchanged to EDI processing services.",
+              )}
               disabled={disabled}
               minHeight="220px"
             />

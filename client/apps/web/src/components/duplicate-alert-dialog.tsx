@@ -34,7 +34,11 @@ export function DuplicateAlertDialog({
             {t("Duplicate {0} {1}?", rowCount, pluralize("row", rowCount))}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("Are you sure you want to duplicate {0} {1}? This action cannot be undone.", rowCount, pluralize("row", rowCount))}
+            {t(
+              "Are you sure you want to duplicate {0} {1}? This action cannot be undone.",
+              rowCount,
+              pluralize("row", rowCount),
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

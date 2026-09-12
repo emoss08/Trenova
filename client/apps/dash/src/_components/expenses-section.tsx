@@ -101,7 +101,9 @@ export function ExpensesSection() {
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
           <ReceiptIcon className="size-6 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            {t("Paid a lumper, tolls, or a scale out of pocket? Submit it with a photo of the receipt and get it back on your next settlement.")}
+            {t(
+              "Paid a lumper, tolls, or a scale out of pocket? Submit it with a photo of the receipt and get it back on your next settlement.",
+            )}
           </p>
         </div>
       )}

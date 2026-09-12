@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import type { Extension } from "@codemirror/state";
 import {
@@ -200,7 +201,7 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
       from: Math.max(0, end - 2),
       to: end,
       severity: "error",
-      message: "Expression ends with an operator",
+      message: translate("Expression ends with an operator"),
     });
   }
 

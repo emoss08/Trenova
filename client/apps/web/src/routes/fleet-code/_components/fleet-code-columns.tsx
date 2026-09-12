@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -39,17 +39,17 @@ function StatusCell({ row }: { row: FleetCodeRow }) {
     />
   );
 }
-export function getColumns(): ColumnDef<FleetCodeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<FleetCodeRow>[] {
   return [
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => {
         const { color, code } = row.original;
         return <DataTableColorColumn text={code} color={color} />;
       },
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -59,13 +59,13 @@ export function getColumns(): ColumnDef<FleetCodeRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -76,9 +76,9 @@ export function getColumns(): ColumnDef<FleetCodeRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 100,
       minSize: 100,
@@ -93,7 +93,7 @@ export function getColumns(): ColumnDef<FleetCodeRow>[] {
     },
     {
       id: "manager",
-      header: "Manager",
+      header: t("Manager"),
       cell: ({ row }) => {
         const { manager } = row.original;
         if (!manager) return <p className="text-muted-foreground">-</p>;
@@ -112,7 +112,7 @@ export function getColumns(): ColumnDef<FleetCodeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
@@ -121,7 +121,7 @@ export function getColumns(): ColumnDef<FleetCodeRow>[] {
       maxSize: 250,
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

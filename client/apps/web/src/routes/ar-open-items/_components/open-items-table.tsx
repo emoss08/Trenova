@@ -72,7 +72,7 @@ export function OpenItemsTable({
       },
       {
         id: "invoiceNumber",
-        header: "Invoice",
+        header: t("Invoice"),
         accessorFn: (row) => row.invoiceNumber,
         cell: ({ row }) => (
           <span className="font-mono text-xs font-medium">{row.original.invoiceNumber}</span>
@@ -80,7 +80,7 @@ export function OpenItemsTable({
       },
       {
         id: "customerName",
-        header: "Customer",
+        header: t("Customer"),
         accessorFn: (row) => row.customerName,
         cell: ({ row }) => (
           <Link
@@ -94,7 +94,7 @@ export function OpenItemsTable({
       },
       {
         id: "billType",
-        header: "Type",
+        header: t("Type"),
         accessorFn: (row) => row.billType,
         cell: ({ row }) => (
           <span className="text-muted-foreground text-xs capitalize">{row.original.billType}</span>
@@ -102,7 +102,7 @@ export function OpenItemsTable({
       },
       {
         id: "reference",
-        header: "PRO / BOL",
+        header: t("PRO / BOL"),
         enableSorting: false,
         cell: ({ row }) => (
           <span className="text-muted-foreground font-mono text-xs">
@@ -112,19 +112,19 @@ export function OpenItemsTable({
       },
       {
         id: "invoiceDate",
-        header: "Invoice Date",
+        header: t("Invoice Date"),
         accessorFn: (row) => row.invoiceDate,
         cell: ({ row }) => <span className="text-xs">{formatDate(row.original.invoiceDate)}</span>,
       },
       {
         id: "dueDate",
-        header: "Due Date",
+        header: t("Due Date"),
         accessorFn: (row) => row.dueDate,
         cell: ({ row }) => <span className="text-xs">{formatDate(row.original.dueDate)}</span>,
       },
       {
         id: "status",
-        header: "Status",
+        header: t("Status"),
         accessorFn: (row) => row.daysPastDue,
         cell: ({ row }) => (
           <div className="flex flex-wrap items-center gap-1">
@@ -141,7 +141,7 @@ export function OpenItemsTable({
       },
       {
         id: "totalAmountMinor",
-        header: "Total",
+        header: t("Total"),
         accessorFn: (row) => row.totalAmountMinor,
         cell: ({ row }) => (
           <AmountDisplay value={row.original.totalAmountMinor} className="text-xs" />
@@ -150,7 +150,7 @@ export function OpenItemsTable({
       },
       {
         id: "appliedAmountMinor",
-        header: "Applied",
+        header: t("Applied"),
         accessorFn: (row) => row.appliedAmountMinor,
         cell: ({ row }) => (
           <AmountDisplay
@@ -162,7 +162,7 @@ export function OpenItemsTable({
       },
       {
         id: "openAmountMinor",
-        header: "Open",
+        header: t("Open"),
         accessorFn: (row) => row.openAmountMinor,
         cell: ({ row }) => (
           <AmountDisplay value={row.original.openAmountMinor} className="text-xs font-semibold" />

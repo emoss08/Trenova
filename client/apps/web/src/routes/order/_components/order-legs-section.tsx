@@ -279,7 +279,7 @@ export function OrderLegsSection() {
               membershipLocked
                 ? undefined
                 : {
-                    label: "Add First Leg",
+                    label: t("Add First Leg"),
                     onClick: () => setAddLegOpen(true),
                     icon: PlusIcon,
                   }
@@ -305,11 +305,15 @@ export function OrderLegsSection() {
             </Button>
             {invoiceableLegs.length === 0 ? (
               <p className="text-2xs text-muted-foreground">
-                {t("No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.")}
+                {t(
+                  "No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.",
+                )}
               </p>
             ) : selectedIds.length === 0 ? (
               <p className="text-2xs text-muted-foreground">
-                {t("Select the legs to bill. Legs billed together become one invoice with a charge block per leg.")}
+                {t(
+                  "Select the legs to bill. Legs billed together become one invoice with a charge block per leg.",
+                )}
               </p>
             ) : null}
           </div>
@@ -324,7 +328,9 @@ export function OrderLegsSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Detach leg {0}?", legPendingDetach?.proNumber)}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("The shipment moves onto its own new single-leg order and this order's status and total are recalculated. The only leg of an order cannot be detached.")}
+              {t(
+                "The shipment moves onto its own new single-leg order and this order's status and total are recalculated. The only leg of an order cannot be detached.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -341,7 +347,9 @@ export function OrderLegsSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Bill this leg on its own invoice?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("One leg produces a standalone invoice rather than a grouped one covering the order. The order's remaining legs will have to be billed separately.")}
+              {t(
+                "One leg produces a standalone invoice rather than a grouped one covering the order. The order's remaining legs will have to be billed separately.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

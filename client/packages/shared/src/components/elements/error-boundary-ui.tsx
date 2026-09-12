@@ -3,13 +3,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
-import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Copy, RefreshCw } from "lucide-react";
 
 import { cn } from "@trenova/shared/lib/utils";
 
@@ -28,8 +22,7 @@ function parseStackTrace(
   return lines
     .map((line) => {
       const match =
-        line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/) ||
-        line.match(/at\s+(.+?):(\d+):(\d+)/);
+        line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/) || line.match(/at\s+(.+?):(\d+):(\d+)/);
       if (match) {
         if (match.length === 5) {
           return {
@@ -111,9 +104,7 @@ export function ErrorBoundaryUi({
             {isDev ? error.name || t("Error") : t("Something went wrong")}
           </h3>
           <p className="mt-1 text-sm break-words text-red-600 dark:text-red-400">
-            {isDev
-              ? error.message
-              : t("An unexpected error occurred. Please try again.")}
+            {isDev ? error.message : t("An unexpected error occurred. Please try again.")}
           </p>
         </div>
       </div>
@@ -152,11 +143,7 @@ export function ErrorBoundaryUi({
             className="flex w-full items-center justify-between px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
           >
             <span className="font-medium">{t("Stack Trace")}</span>
-            {showStack ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            {showStack ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
           {showStack && (
             <div
@@ -166,16 +153,9 @@ export function ErrorBoundaryUi({
             >
               <div className="space-y-1 font-mono text-xs">
                 {stackFrames.map((frame, idx) => (
-                  <div
-                    key={idx}
-                    className="flex gap-2 text-red-600 dark:text-red-400"
-                  >
-                    <span className="shrink-0 text-red-400 dark:text-red-600">
-                      at
-                    </span>
-                    <span className="text-red-700 dark:text-red-300">
-                      {frame.fn}
-                    </span>
+                  <div key={idx} className="flex gap-2 text-red-600 dark:text-red-400">
+                    <span className="shrink-0 text-red-400 dark:text-red-600">at</span>
+                    <span className="text-red-700 dark:text-red-300">{frame.fn}</span>
                     <span className="truncate text-red-500">
                       ({frame.file}:{frame.line}:{frame.column})
                     </span>

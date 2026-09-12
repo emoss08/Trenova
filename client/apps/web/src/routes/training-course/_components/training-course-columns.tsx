@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
 import type { TrainingCourseRow } from "@/lib/graphql/worker-training";
@@ -32,11 +32,11 @@ function requiredSummary(row: TrainingCourseRow): string {
     .join(", ");
 }
 
-export function getColumns(): ColumnDef<TrainingCourseRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<TrainingCourseRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 110,
       meta: {
@@ -50,7 +50,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       meta: {
         apiField: "code",
@@ -62,13 +62,13 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span>{row.original.name}</span>
           {row.original.description ? (
             <span className="text-muted-foreground max-w-md truncate text-xs">
-              {translate(row.original.description)}
+              {t(row.original.description)}
             </span>
           ) : null}
         </div>
@@ -83,7 +83,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) =>
         TRAINING_CATEGORY_LABELS[row.original.category as TrainingCategory] ??
         row.original.category,
@@ -99,14 +99,14 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "delivery",
-      header: "Delivery",
+      header: t("Delivery"),
       cell: ({ row }) => (
         <span className="flex items-center gap-1.5">
           {TRAINING_DELIVERY_LABELS[row.original.delivery as TrainingDelivery] ??
             row.original.delivery}
           {row.original.durationMinutes > 0 ? (
             <span className="text-muted-foreground text-xs">
-              {translate("{0} min", row.original.durationMinutes)}
+              {t("{0} min", row.original.durationMinutes)}
             </span>
           ) : null}
         </span>
@@ -123,7 +123,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       id: "required",
-      header: "Required for",
+      header: t("Required for"),
       cell: ({ row }) => (
         <span className={row.original.isRequired ? "font-medium" : "text-muted-foreground"}>
           {requiredSummary(row.original)}
@@ -133,21 +133,21 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       id: "rules",
-      header: "Rules",
+      header: t("Rules"),
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1">
           {row.original.passingScore ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              {translate("Pass ≥ {0}%", Number(row.original.passingScore).toFixed(0))}
+              {t("Pass ≥ {0}%", Number(row.original.passingScore).toFixed(0))}
             </Badge>
           ) : null}
           {row.original.validityMonths ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              {translate("Every {0} mo", row.original.validityMonths)}
+              {t("Every {0} mo", row.original.validityMonths)}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-muted-foreground px-1.5 py-0 text-[10px]">
-              {translate("One-time")}
+              {t("One-time")}
             </Badge>
           )}
         </span>
@@ -156,7 +156,7 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "dueDaysAfterAssignment",
-      header: "Due after",
+      header: t("Due after"),
       cell: ({ row }) =>
         row.original.dueDaysAfterAssignment > 0 ? (
           `${row.original.dueDaysAfterAssignment} days`
@@ -168,13 +168,13 @@ export function getColumns(): ColumnDef<TrainingCourseRow>[] {
     },
     {
       accessorKey: "openRecordCount",
-      header: "In progress",
+      header: t("In progress"),
       cell: ({ row }) => <span className="tabular-nums">{row.original.openRecordCount}</span>,
       size: 100,
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: { apiField: "createdAt", sortable: true, filterable: true, filterType: "date" },
     },

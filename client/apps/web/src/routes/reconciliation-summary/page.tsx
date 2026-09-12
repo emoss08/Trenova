@@ -22,8 +22,8 @@ export function ReconciliationSummaryPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Reconciliation Summary",
-        description: "Overview of bank receipt reconciliation status.",
+        title: t("Reconciliation Summary"),
+        description: t("Overview of bank receipt reconciliation status."),
       }}
       className="p-0"
     >
@@ -36,7 +36,9 @@ export function ReconciliationSummaryPage() {
           ) : (
             <ReconciliationSummaryEmpty
               title={t("Nothing to reconcile yet")}
-              description={t("Import a bank receipt file and every receipt it carries is matched against open invoices; what matched, what did not, and how long the exceptions have waited are counted here.")}
+              description={t(
+                "Import a bank receipt file and every receipt it carries is matched against open invoices; what matched, what did not, and how long the exceptions have waited are counted here.",
+              )}
             />
           )
         ) : null}
@@ -51,8 +53,16 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-        <SummaryKPICard label={t("Imported")} count={data.importedCount} amount={data.importedAmount} />
-        <SummaryKPICard label={t("Matched")} count={data.matchedCount} amount={data.matchedAmount} />
+        <SummaryKPICard
+          label={t("Imported")}
+          count={data.importedCount}
+          amount={data.importedAmount}
+        />
+        <SummaryKPICard
+          label={t("Matched")}
+          count={data.matchedCount}
+          amount={data.matchedAmount}
+        />
         <SummaryKPICard
           label={t("Exceptions")}
           count={data.exceptionCount}

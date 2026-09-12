@@ -113,7 +113,9 @@ export function TileEditorDialog({
         <DialogHeader>
           <DialogTitle>{t("Tile")}</DialogTitle>
           <DialogDescription>
-            {t("Tiles read from a saved or gallery report, so the dashboard and the export always agree.")}
+            {t(
+              "Tiles read from a saved or gallery report, so the dashboard and the export always agree.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -245,7 +247,9 @@ export function TileEditorDialog({
             <div className="flex flex-col gap-1.5">
               <Label>{t("Dashboard parameters")}</Label>
               <p className="text-2xs text-muted-foreground">
-                {t("Link this report's parameters to the dashboard's. Matching names link themselves.")}
+                {t(
+                  "Link this report's parameters to the dashboard's. Matching names link themselves.",
+                )}
               </p>
               {reportParams.map((param) => {
                 const bound = draft.paramBindings?.[param.name];

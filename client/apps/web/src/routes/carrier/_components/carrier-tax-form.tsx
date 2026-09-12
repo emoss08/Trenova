@@ -25,7 +25,9 @@ export function CarrierTaxForm() {
               name="taxId"
               label={t("Tax ID")}
               placeholder={t("e.g., 12-3456789")}
-              description={t("EIN or SSN used for tax reporting. Selecting a tax ID type is required when this is set.")}
+              description={t(
+                "EIN or SSN used for tax reporting. Selecting a tax ID type is required when this is set.",
+              )}
               maxLength={20}
             />
           </FormControl>
@@ -35,7 +37,9 @@ export function CarrierTaxForm() {
               name="taxIdType"
               label={t("Tax ID Type")}
               placeholder={t("Tax ID Type")}
-              description={t("Whether the tax ID is an employer identification number or a social security number.")}
+              description={t(
+                "Whether the tax ID is an employer identification number or a social security number.",
+              )}
               options={carrierTaxIdTypeChoices}
               isClearable
             />

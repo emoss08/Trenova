@@ -162,7 +162,9 @@ function RegistrationInformationSecond({ control }: { control: Control<Trailer> 
             name="externalId"
             label={t("Samsara Asset ID")}
             placeholder={t("Samsara Asset ID")}
-            description={t("Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank.")}
+            description={t(
+              "Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank.",
+            )}
           />
         </FormControl>
         <FormControl>

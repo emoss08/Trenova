@@ -85,7 +85,9 @@ export function LocationForm() {
                 name="addressLine2"
                 label={t("Address Line 2")}
                 placeholder={t("Suite, floor, building, etc.")}
-                description={t("Additional address details such as suite number, floor, or building name.")}
+                description={t(
+                  "Additional address details such as suite number, floor, or building name.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -95,7 +97,9 @@ export function LocationForm() {
                 rules={{ required: true }}
                 label={t("City")}
                 placeholder={t("City")}
-                description={t("City where the customer's primary office or billing address is located.")}
+                description={t(
+                  "City where the customer's primary office or billing address is located.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -104,7 +108,9 @@ export function LocationForm() {
                 name="stateId"
                 label={t("State")}
                 placeholder={t("State")}
-                description={t("U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.")}
+                description={t(
+                  "U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">
@@ -114,7 +120,9 @@ export function LocationForm() {
                 name="postalCode"
                 label={t("Postal Code")}
                 placeholder={t("e.g., 90210")}
-                description={t("ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.")}
+                description={t(
+                  "ZIP or ZIP+4 code. Used for geocoding, mileage calculations, and tax jurisdiction lookups.",
+                )}
               />
             </FormControl>
             <FormControl cols="full">
@@ -124,7 +132,9 @@ export function LocationForm() {
                 label={t("Timezone")}
                 placeholder={t("Not set (UTC)")}
                 isClearable
-                description={t("Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.")}
+                description={t(
+                  "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.",
+                )}
                 groups={timezoneGroupedChoices}
                 renderOption={(option) => (
                   <span className="flex w-full items-center justify-between gap-3">

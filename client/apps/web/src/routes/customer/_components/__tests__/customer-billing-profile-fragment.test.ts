@@ -12,14 +12,16 @@ import { describe, expect, it } from "vitest";
  * how the consolidated-invoicing fields looked like they "never saved": they
  * were saved, the fragment just never asked for them.
  */
-const FORM = join(
-  import.meta.dirname,
-  "..",
-  "customer-billing-profile-form.tsx",
-);
+const FORM = join(import.meta.dirname, "..", "customer-billing-profile-form.tsx");
 const FRAGMENT = join(
   import.meta.dirname,
-  "..","..","..","..","..","..","..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
   "packages",
   "graphql",
   "src",
@@ -39,9 +41,7 @@ function selectedFragmentFields(): Set<string> {
 
 function boundFormFields(): string[] {
   const source = readFileSync(FORM, "utf8");
-  return [
-    ...new Set([...source.matchAll(/"billingProfile\.(\w+)"/g)].map((m) => m[1])),
-  ].sort();
+  return [...new Set([...source.matchAll(/"billingProfile\.(\w+)"/g)].map((m) => m[1]))].sort();
 }
 
 describe("CustomerBillingProfileFields fragment", () => {

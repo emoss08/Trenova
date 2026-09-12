@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
@@ -32,6 +33,8 @@ function mapConnectionState(state: string): RealtimeConnectionState {
 }
 
 export function useRealtimeConnection() {
+  const t = useT();
+
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
@@ -171,7 +174,7 @@ export function useRealtimeConnection() {
                 description: notif.message,
                 action: runId
                   ? {
-                      label: "Download",
+                      label: t("Download"),
                       onClick: () => downloadReportRun({ id: runId }),
                     }
                   : undefined,
@@ -251,5 +254,5 @@ export function useRealtimeConnection() {
       }
       pendingKeys.clear();
     };
-  }, [isAuthenticated, queryClient, user]);
+  }, [isAuthenticated, queryClient, user, t]);
 }

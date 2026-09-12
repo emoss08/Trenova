@@ -146,7 +146,8 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           <div className="mt-3 flex flex-col gap-1 text-sm">
             <p className="text-muted-foreground text-xs">
               {t("Invitation sent to")}{" "}
-              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span> {t("— expires {0}.", formatDate(data.pendingInvitation.expiresAt))}
+              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span>{" "}
+              {t("— expires {0}.", formatDate(data.pendingInvitation.expiresAt))}
             </p>
             <Button
               variant="outline"
@@ -161,7 +162,9 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         ) : (
           <div className="mt-3 flex flex-col gap-2">
             <p className="text-muted-foreground text-xs">
-              {t("Invite this driver to Dash so they can see their loads, settlement statements, pay history, and raise pay questions from their phone.")}
+              {t(
+                "Invite this driver to Dash so they can see their loads, settlement statements, pay history, and raise pay questions from their phone.",
+              )}
             </p>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="portal-invite-email">{t("Email (optional override)")}</Label>
@@ -208,9 +211,14 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm">{invitation.email}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Sent {0}{1}{2}", formatDate(invitation.createdAt), invitation.invitedBy ? ` ${t("by {0}", invitation.invitedBy.name)}` : "", invitation.acceptedAt
-                      ? ` ${t("· accepted {0}", formatDate(invitation.acceptedAt))}`
-                      : "")}
+                    {t(
+                      "Sent {0}{1}{2}",
+                      formatDate(invitation.createdAt),
+                      invitation.invitedBy ? ` ${t("by {0}", invitation.invitedBy.name)}` : "",
+                      invitation.acceptedAt
+                        ? ` ${t("· accepted {0}", formatDate(invitation.acceptedAt))}`
+                        : "",
+                    )}
                   </p>
                 </div>
                 <Badge variant={invitationStatusVariants[invitation.status] ?? "secondary"}>
@@ -231,7 +239,9 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Revoke portal access?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("The driver's Dash login is deactivated immediately and any pending invitations are canceled. Their settlement history stays intact, and you can re-invite them later.")}
+              {t(
+                "The driver's Dash login is deactivated immediately and any pending invitations are canceled. Their settlement history stays intact, and you can re-invite them later.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

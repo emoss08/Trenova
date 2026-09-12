@@ -132,7 +132,9 @@ export function RecordEntryDialog({
             ) : null}
           </DialogTitle>
           <DialogDescription>
-            {t("A period recorded by hand is marked as such, and the reason is kept with it. Hours can only be changed while the week is still open.")}
+            {t(
+              "A period recorded by hand is marked as such, and the reason is kept with it. Hours can only be changed while the week is still open.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -150,11 +152,15 @@ export function RecordEntryDialog({
               {clockedOutAt ? formatPunchTime(clockedOutAt) : "—"}
             </span>
             <span className="text-muted-foreground text-xs">
-              {backwards ? t("ends before it begins") : t("{0} on the clock", formatHours(spanMinutes))}
+              {backwards
+                ? t("ends before it begins")
+                : t("{0} on the clock", formatHours(spanMinutes))}
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Would be paid")}</p>
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+              {t("Would be paid")}
+            </p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">
               {formatHours(paidMinutes)}
             </p>
@@ -241,7 +247,9 @@ export function RecordEntryDialog({
                   name="note"
                   label={t("Note")}
                   placeholder={t("e.g. Yard shift covering for Ben")}
-                  description={t("Optional; anything worth knowing about the period, such as the job or site.")}
+                  description={t(
+                    "Optional; anything worth knowing about the period, such as the job or site.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

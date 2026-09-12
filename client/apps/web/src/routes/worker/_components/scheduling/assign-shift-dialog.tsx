@@ -136,7 +136,9 @@ export function AssignShiftDialog({
         <DialogHeader>
           <DialogTitle>{t("Put on a shift")}</DialogTitle>
           <DialogDescription>
-            {t("The shift in force is ended the day before this one starts, so the worker is never on two patterns at once.")}
+            {t(
+              "The shift in force is ended the day before this one starts, so the worker is never on two patterns at once.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

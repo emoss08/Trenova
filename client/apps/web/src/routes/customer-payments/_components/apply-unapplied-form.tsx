@@ -145,7 +145,9 @@ export function ApplyUnappliedForm({
                   label={t("Accounting Date")}
                   rules={{ required: "Accounting date is required" }}
                   placeholder={t("Select date")}
-                  description={t("The GL date for this application. It must fall within an open fiscal period.")}
+                  description={t(
+                    "The GL date for this application. It must fall within an open fiscal period.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

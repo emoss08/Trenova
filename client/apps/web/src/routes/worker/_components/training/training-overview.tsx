@@ -43,10 +43,14 @@ export function TrainingOverview({
           </Badge>
           <InfoPopover title={t("Training matrix")}>
             <p>
-              {t("The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.")}
+              {t(
+                "The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.",
+              )}
             </p>
             <p>
-              {t("Current and Expiring soon both count as current. The worker reads as not qualified while any required course is missing, failed, expired or overdue.")}
+              {t(
+                "Current and Expiring soon both count as current. The worker reads as not qualified while any required course is missing, failed, expired or overdue.",
+              )}
             </p>
           </InfoPopover>
         </div>
@@ -83,7 +87,11 @@ export function TrainingOverview({
           <p className="text-muted-foreground mt-1 text-xs">
             {summary.requiredCount === 0
               ? t("No courses are required for this worker's driver type.")
-              : t("{0} of {1} required courses are current.", progress.satisfied, summary.requiredCount)}
+              : t(
+                  "{0} of {1} required courses are current.",
+                  progress.satisfied,
+                  summary.requiredCount,
+                )}
           </p>
         </div>
         <dl className="grid grid-cols-5 gap-x-5 text-xs">

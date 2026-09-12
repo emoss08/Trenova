@@ -73,7 +73,9 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
         <Card>
           <CardHeader>
             <CardTitle>{t("Rule Metadata")}</CardTitle>
-            <CardDescription>{t("Details about which rule version matched and how.")}</CardDescription>
+            <CardDescription>
+              {t("Details about which rule version matched and how.")}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
@@ -102,7 +104,9 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
         </Card>
       )}
 
-      {result.candidate && <AnalysisCard title={t("Candidate Analysis")} analysis={result.candidate} />}
+      {result.candidate && (
+        <AnalysisCard title={t("Candidate Analysis")} analysis={result.candidate} />
+      )}
 
       {result.diff && (
         <DiffCard diff={result.diff} baseline={result.baseline} candidate={result.candidate} />
@@ -127,7 +131,11 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          {t("Confidence: {0}% {1}", ((analysis.overallConfidence ?? 0) * 100).toFixed(1), analysis.reviewStatus ? ` ${t("· Status: {0}", analysis.reviewStatus)}` : "")}
+          {t(
+            "Confidence: {0}% {1}",
+            ((analysis.overallConfidence ?? 0) * 100).toFixed(1),
+            analysis.reviewStatus ? ` ${t("· Status: {0}", analysis.reviewStatus)}` : "",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -142,7 +150,9 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
           <>
             <Separator />
             <div>
-              <h4 className="mb-2 text-sm font-medium">{t("Stops ({0})", analysis.stops?.length ?? 0)}</h4>
+              <h4 className="mb-2 text-sm font-medium">
+                {t("Stops ({0})", analysis.stops?.length ?? 0)}
+              </h4>
               <div className="space-y-2">
                 {analysis.stops?.map((stop, i) => (
                   <div key={i} className="rounded-md border p-3">
@@ -151,7 +161,9 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
                       <Badge variant="info" className="capitalize">
                         {stop.role}
                       </Badge>
-                      <span className="text-muted-foreground text-xs">{t("Seq {0}", stop.sequence)}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {t("Seq {0}", stop.sequence)}
+                      </span>
                       <Badge variant={confidenceVariant(stop.confidence)}>
                         {(stop.confidence * 100).toFixed(0)}%
                       </Badge>

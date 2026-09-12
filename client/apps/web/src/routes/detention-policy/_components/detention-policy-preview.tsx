@@ -246,7 +246,11 @@ function ScenarioResult({
               {formatCurrency(result.billableAmount, currency)}
             </m.p>
             <p className="text-muted-foreground mt-1.5 text-xs tabular-nums">
-              {t("{0} billed of {1} dwell", formatDetentionMinutes(result.roundedMinutes), formatDetentionMinutes(result.rawDwellMinutes))}
+              {t(
+                "{0} billed of {1} dwell",
+                formatDetentionMinutes(result.roundedMinutes),
+                formatDetentionMinutes(result.rawDwellMinutes),
+              )}
             </p>
           </div>
           <div className="shrink-0 text-right">
@@ -277,7 +281,10 @@ function ScenarioResult({
             {suppressed && <Signal tone="bad">{t("Suppressed — notice missed")}</Signal>}
             {result.netMargin < 0 && (
               <Signal tone="warn">
-                {t("Pays out {0} more than it bills", formatCurrency(Math.abs(result.netMargin), currency))}
+                {t(
+                  "Pays out {0} more than it bills",
+                  formatCurrency(Math.abs(result.netMargin), currency),
+                )}
               </Signal>
             )}
             {result.arrivedLate && <Signal tone="neutral">{t("Arrived late")}</Signal>}
@@ -293,7 +300,10 @@ function ScenarioResult({
 
       <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
         <StatCell label={t("Gross")} value={formatCurrency(result.grossAmount, currency)} />
-        <StatCell label={t("Driver pay")} value={formatCurrency(result.driverPayAmount, currency)} />
+        <StatCell
+          label={t("Driver pay")}
+          value={formatCurrency(result.driverPayAmount, currency)}
+        />
         <StatCell label={t("Status")} value={OCCURRENCE_STATUS_LABEL[result.status]} />
       </div>
 

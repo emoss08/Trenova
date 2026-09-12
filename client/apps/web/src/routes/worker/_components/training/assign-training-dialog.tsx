@@ -132,7 +132,9 @@ export function AssignTrainingDialog({
         <DialogHeader>
           <DialogTitle>{t("Assign a course")}</DialogTitle>
           <DialogDescription>
-            {t("The course appears on the driver's Training list in Dash. Self-serve courses complete when the driver acknowledges them; scored and in-person courses wait for you to record the result.")}
+            {t(
+              "The course appears on the driver's Training list in Dash. Self-serve courses complete when the driver acknowledges them; scored and in-person courses wait for you to record the result.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

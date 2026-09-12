@@ -184,7 +184,11 @@ export function CashApplicationEditor({
         </div>
         {totals.isOverBudget ? (
           <p className="text-xs font-medium text-red-600 dark:text-red-400">
-            {t("Applied exceeds {0} by {1}", budgetLabel.toLowerCase(), formatCurrency((totals.appliedMinor - budgetMinor) / 100))}
+            {t(
+              "Applied exceeds {0} by {1}",
+              budgetLabel.toLowerCase(),
+              formatCurrency((totals.appliedMinor - budgetMinor) / 100),
+            )}
           </p>
         ) : null}
       </div>

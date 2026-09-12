@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
 import { customerTableGraphQLConfig, type CustomerRow } from "@/lib/graphql/customer-table";
@@ -13,8 +14,10 @@ import { getColumns } from "./customer-columns";
 import { CustomerPanel } from "./customer-panel";
 
 export default function CustomerTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: CustomerRow[], status: string) => {
@@ -45,15 +48,15 @@ export default function CustomerTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

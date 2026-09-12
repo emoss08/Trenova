@@ -60,7 +60,12 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
     <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
       <ShieldIcon className="mt-0.5 size-3 shrink-0" />
       <span>
-        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? ` ${t("of {0}", formatCurrency(limit))}` : "")}
+        {t(
+          "The formula produced {0} and was clamped to the {1} charge{2}.",
+          formatCurrency(guardrail.rawAmount),
+          bound,
+          limit != null ? ` ${t("of {0}", formatCurrency(limit))}` : "",
+        )}
       </span>
     </div>
   );
@@ -226,7 +231,12 @@ function BreakdownResultTable({
             <span className="font-mono tabular-nums">
               {reconciliation.balanced
                 ? formatCurrency(reconciliation.sum)
-                : t("{0} of {1} · {2}", formatCurrency(reconciliation.sum), formatCurrency(total ?? 0), formatCurrency(Math.abs(reconciliation.residual)))}
+                : t(
+                    "{0} of {1} · {2}",
+                    formatCurrency(reconciliation.sum),
+                    formatCurrency(total ?? 0),
+                    formatCurrency(Math.abs(reconciliation.residual)),
+                  )}
             </span>
           </div>
         )}
@@ -235,7 +245,11 @@ function BreakdownResultTable({
         <div className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
           <ShieldIcon className="mt-0.5 size-3 shrink-0" />
           <span>
-            {t("A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.", formatCurrency(total ?? 0), formatCurrency(rawAmount ?? 0))}
+            {t(
+              "A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.",
+              formatCurrency(total ?? 0),
+              formatCurrency(rawAmount ?? 0),
+            )}
           </span>
         </div>
       )}
@@ -410,7 +424,9 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 clearable
               />
               <p className="text-2xs text-muted-foreground">
-                {t("Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.")}
+                {t(
+                  "Variables resolve from the selected shipment; sample data is ignored. Custom variable defaults still apply.",
+                )}
               </p>
             </div>
           )}

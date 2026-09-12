@@ -45,10 +45,10 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
   );
 
   const revenueRows: FinancialRow[] = [
-    { label: "Linehaul", value: formatCurrency(freight) },
-    { label: "Accessorials", value: formatCurrency(accessorialsTotal) },
-    { label: "Other charges", value: formatCurrency(other - accessorialsTotal) },
-    { label: "Total revenue", value: formatCurrency(total), bold: true },
+    { label: t("Linehaul"), value: formatCurrency(freight) },
+    { label: t("Accessorials"), value: formatCurrency(accessorialsTotal) },
+    { label: t("Other charges"), value: formatCurrency(other - accessorialsTotal) },
+    { label: t("Total revenue"), value: formatCurrency(total), bold: true },
   ];
 
   const estimate = shipment.profitabilityEstimate;
@@ -68,15 +68,17 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
 
     costRows = [
       {
-        label: "Est. cost",
+        label: t("Est. cost"),
         value: formatCurrency(parseDecimal(estimate.estimatedCost)),
       },
-      { label: "Est. profit", value: formatCurrency(profit), tone },
-      ...(marginPct !== null ? [{ label: "Margin", value: formatPercent(marginPct), tone }] : []),
+      { label: t("Est. profit"), value: formatCurrency(profit), tone },
+      ...(marginPct !== null
+        ? [{ label: t("Margin"), value: formatPercent(marginPct), tone }]
+        : []),
       ...(rpm !== null
         ? [
             {
-              label: "RPM vs CPM",
+              label: t("RPM vs CPM"),
               value: `${formatCurrency(rpm)} vs ${formatCurrency(parseDecimal(estimate.costPerMile))}`,
               tone: toneVar(rpm >= parseDecimal(estimate.costPerMile) ? "success" : "danger"),
             },
@@ -85,7 +87,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
       ...(estimate.breakEvenRpm !== null && estimate.breakEvenRpm !== undefined
         ? [
             {
-              label: "Break-even RPM",
+              label: t("Break-even RPM"),
               value: formatPerMile(parseDecimal(estimate.breakEvenRpm)),
             },
           ]

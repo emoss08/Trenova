@@ -23,8 +23,8 @@ export function IncomeStatementPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Income Statement",
-        description: "Revenue, expenses, and net income for a fiscal period.",
+        title: t("Income Statement"),
+        description: t("Revenue, expenses, and net income for a fiscal period."),
       }}
       className="p-0"
     >
@@ -34,7 +34,9 @@ export function IncomeStatementPage() {
         {!periodId ? (
           <FinancialReportEmpty
             title={t("Pick a period")}
-            description={t("Choose a fiscal period above and its revenue, cost of revenue, operating expenses and net income are laid out here.")}
+            description={t(
+              "Choose a fiscal period above and its revenue, cost of revenue, operating expenses and net income are laid out here.",
+            )}
           />
         ) : isLoading ? (
           <div className="space-y-4">

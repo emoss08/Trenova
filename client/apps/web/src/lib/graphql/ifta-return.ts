@@ -70,14 +70,12 @@ export async function fetchIftaReturnForPeriod(
   input: IftaPeriodInput,
   options?: RequestOptions,
 ): Promise<IftaReturn | null> {
-  const data = await requestGraphQL<IftaReturnForPeriodQuery, IftaReturnForPeriodQueryVariables>(
-    {
-      document: IftaReturnForPeriodDocument,
-      operationName: "IftaReturnForPeriod",
-      variables: { input },
-      signal: options?.signal,
-    },
-  );
+  const data = await requestGraphQL<IftaReturnForPeriodQuery, IftaReturnForPeriodQueryVariables>({
+    document: IftaReturnForPeriodDocument,
+    operationName: "IftaReturnForPeriod",
+    variables: { input },
+    signal: options?.signal,
+  });
   return (data.iftaReturnForPeriod as IftaReturn | null | undefined) ?? null;
 }
 
@@ -115,13 +113,14 @@ export async function fetchIftaPeriod(
 }
 
 export async function generateIftaReturn(period: IftaPeriodInput): Promise<IftaReturn> {
-  const data = await requestGraphQL<GenerateIftaReturnMutation, GenerateIftaReturnMutationVariables>(
-    {
-      document: GenerateIftaReturnDocument,
-      operationName: "GenerateIftaReturn",
-      variables: { period },
-    },
-  );
+  const data = await requestGraphQL<
+    GenerateIftaReturnMutation,
+    GenerateIftaReturnMutationVariables
+  >({
+    document: GenerateIftaReturnDocument,
+    operationName: "GenerateIftaReturn",
+    variables: { period },
+  });
   return data.generateIftaReturn as IftaReturn;
 }
 
@@ -138,13 +137,14 @@ export async function recomputeIftaReturn(id: string, version: number): Promise<
 }
 
 export async function finalizeIftaReturn(id: string, version: number): Promise<IftaReturn> {
-  const data = await requestGraphQL<FinalizeIftaReturnMutation, FinalizeIftaReturnMutationVariables>(
-    {
-      document: FinalizeIftaReturnDocument,
-      operationName: "FinalizeIftaReturn",
-      variables: { id, version },
-    },
-  );
+  const data = await requestGraphQL<
+    FinalizeIftaReturnMutation,
+    FinalizeIftaReturnMutationVariables
+  >({
+    document: FinalizeIftaReturnDocument,
+    operationName: "FinalizeIftaReturn",
+    variables: { id, version },
+  });
   return data.finalizeIftaReturn as IftaReturn;
 }
 

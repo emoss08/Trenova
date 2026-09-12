@@ -151,7 +151,9 @@ export function ProfileDocuments() {
         </ul>
       ) : !pendingFile && features.allowProfileDocumentUpload ? (
         <p className="text-xs text-muted-foreground">
-          {t("Snap photos of your CDL, medical card, and anything else your carrier needs for your qualification file — front and back for cards.")}
+          {t(
+            "Snap photos of your CDL, medical card, and anything else your carrier needs for your qualification file — front and back for cards.",
+          )}
         </p>
       ) : null}
     </div>

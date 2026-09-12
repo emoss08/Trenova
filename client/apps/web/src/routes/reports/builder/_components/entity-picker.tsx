@@ -85,7 +85,9 @@ export function EntityPicker({
         >
           <h2 className="text-lg font-semibold">{t("What is this report about?")}</h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            {t("Every report has one primary entity — it defines what each row represents. You can bring in related data through joins afterward.")}
+            {t(
+              "Every report has one primary entity — it defines what each row represents. You can bring in related data through joins afterward.",
+            )}
           </p>
           <div className="relative mt-4">
             <Input
@@ -102,7 +104,7 @@ export function EntityPicker({
         <div className="mt-6 flex flex-col gap-6">
           {grouped.length === 0 && (
             <p className="text-muted-foreground py-12 text-center text-sm">
-              {t("No entities match \"{0}\".", search)}
+              {t('No entities match "{0}".', search)}
             </p>
           )}
           {grouped.map(([category, entities], groupIndex) => {

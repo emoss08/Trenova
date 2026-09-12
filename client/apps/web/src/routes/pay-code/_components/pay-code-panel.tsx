@@ -80,7 +80,9 @@ function PayCodeCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Pay Code")}
-      description={t("Define a carrier-specific earning or deduction code, its settlement behavior, and where it posts in the GL.")}
+      description={t(
+        "Define a carrier-specific earning or deduction code, its settlement behavior, and where it posts in the GL.",
+      )}
       queryKey="pay-code-list"
       form={form}
       formComponent={<PayCodeForm isEdit={false} isSystem={false} />}
@@ -153,7 +155,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             options={payCodeDirectionChoices}
             rules={{ required: true }}
             isReadOnly={isEdit}
-            description={t("Earning codes add pay to settlements; deduction codes withhold it. Fixed after creation.")}
+            description={t(
+              "Earning codes add pay to settlements; deduction codes withhold it. Fixed after creation.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -164,7 +168,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             placeholder={t("e.g. CHAINPAY")}
             rules={{ required: true }}
             disabled={isSystem}
-            description={t("Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores.")}
+            description={t(
+              "Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores.",
+            )}
           />
         </FormControl>
         <FormControl className={isEdit ? undefined : "col-span-2"}>
@@ -185,7 +191,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
               label={t("Status")}
               options={statusChoices}
               rules={{ required: true }}
-              description={t("Inactive codes stay on historical records but disappear from new-entry dropdowns.")}
+              description={t(
+                "Inactive codes stay on historical records but disappear from new-entry dropdowns.",
+              )}
             />
           </FormControl>
         )}
@@ -195,7 +203,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             name="description"
             label={t("Description")}
             placeholder={t("Optional note about when this code applies")}
-            description={t("Optional internal note explaining when and how the code should be used.")}
+            description={t(
+              "Optional internal note explaining when and how the code should be used.",
+            )}
           />
         </FormControl>
         <FormControl className="col-span-2">
@@ -204,7 +214,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             name="glAccountId"
             label={t("GL Account")}
             placeholder={t("Select GL account")}
-            description={t("Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.")}
+            description={t(
+              "Settlement lines carrying this code post to this account; leave blank to use the accounting control defaults.",
+            )}
             clearable
           />
         </FormControl>
@@ -216,7 +228,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
-            description={t("Prefills the amount when creating recurring earnings or deductions with this code.")}
+            description={t(
+              "Prefills the amount when creating recurring earnings or deductions with this code.",
+            )}
           />
         </FormControl>
         {direction === "Earning" && (
@@ -226,7 +240,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
                 control={control}
                 name="taxable"
                 label={t("Taxable")}
-                description={t("Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements.")}
+                description={t(
+                  "Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements.",
+                )}
                 position="left"
               />
             </FormControl>
@@ -235,7 +251,9 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
                 control={control}
                 name="countsTowardGuarantee"
                 label={t("Counts Toward Guaranteed Minimum")}
-                description={t("When off, pay under this code is ignored when checking a driver's guaranteed period minimum.")}
+                description={t(
+                  "When off, pay under this code is ignored when checking a driver's guaranteed period minimum.",
+                )}
                 position="left"
               />
             </FormControl>

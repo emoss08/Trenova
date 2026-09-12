@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -16,17 +16,17 @@ const fieldTypeBadgeVariants: Record<FieldType, BadgeVariant> = {
   multiSelect: "pink",
 };
 
-export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[] {
   return [
     {
       accessorKey: "label",
-      header: "Label",
+      header: t("Label"),
       cell: ({ row }) => {
         const { color, label } = row.original;
         return <DataTableColorColumn text={label} color={color ?? undefined} />;
       },
       meta: {
-        label: "Label",
+        label: t("Label"),
         apiField: "label",
         filterable: true,
         sortable: true,
@@ -36,9 +36,9 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -48,14 +48,14 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
     },
     {
       accessorKey: "resourceType",
-      header: "Resource Type",
+      header: t("Resource Type"),
       cell: ({ row }) => (
         <Badge variant="outline" className="capitalize">
           {row.original.resourceType}
         </Badge>
       ),
       meta: {
-        label: "Resource Type",
+        label: t("Resource Type"),
         apiField: "resourceType",
         filterable: true,
         sortable: true,
@@ -65,7 +65,7 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
     },
     {
       accessorKey: "fieldType",
-      header: "Field Type",
+      header: t("Field Type"),
       cell: ({ row }) => {
         const fieldType = row.original.fieldType;
         const choice = fieldTypeChoices.find((c) => c.value === fieldType);
@@ -73,7 +73,7 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
         return <Badge variant={variant}>{choice?.label || fieldType}</Badge>;
       },
       meta: {
-        label: "Field Type",
+        label: t("Field Type"),
         apiField: "fieldType",
         filterable: true,
         sortable: true,
@@ -84,30 +84,30 @@ export function getColumns(): ColumnDef<CustomFieldDefinitionRow>[] {
     },
     {
       accessorKey: "isRequired",
-      header: "Required",
+      header: t("Required"),
       cell: ({ row }) => (
         <Badge variant={row.original.isRequired ? "active" : "inactive"}>
-          {row.original.isRequired ? translate("Yes") : translate("No")}
+          {row.original.isRequired ? t("Yes") : t("No")}
         </Badge>
       ),
       size: 100,
     },
     {
       accessorKey: "isActive",
-      header: "Active",
+      header: t("Active"),
       cell: ({ row }) => (
         <Badge variant={row.original.isActive ? "active" : "inactive"}>
-          {row.original.isActive ? translate("Active") : translate("Inactive")}
+          {row.original.isActive ? t("Active") : t("Inactive")}
         </Badge>
       ),
       size: 100,
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
-        label: "Created At",
+        label: t("Created At"),
         apiField: "createdAt",
         filterable: false,
         sortable: true,

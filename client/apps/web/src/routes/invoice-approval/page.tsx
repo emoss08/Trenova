@@ -184,8 +184,8 @@ export function InvoiceApprovalPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: "Pending Approvals",
-        description: "Review policy-controlled invoice adjustments awaiting finance approval.",
+        title: t("Pending Approvals"),
+        description: t("Review policy-controlled invoice adjustments awaiting finance approval."),
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
@@ -197,7 +197,10 @@ export function InvoiceApprovalPage() {
             label={t("Reconciliation")}
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
-          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard
+            label={t("Write-Offs")}
+            value={String(summaryQuery.data?.writeOffPending ?? 0)}
+          />
           <SummaryCard
             label={t("Batch Failures")}
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
@@ -317,7 +320,9 @@ export function InvoiceApprovalPage() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.")}
+              description={t(
+                "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.",
+              )}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">

@@ -110,7 +110,9 @@ export function AssertionsEditor() {
   return (
     <FormSection
       title={t("Assertions")}
-      description={t("Define the expected extraction results for this fixture. Use field assertions for presence, shape, and format checks; keep exact-value matches only for legacy or intentionally strict fixtures.")}
+      description={t(
+        "Define the expected extraction results for this fixture. Use field assertions for presence, shape, and format checks; keep exact-value matches only for legacy or intentionally strict fixtures.",
+      )}
       action={
         summary.length > 0 ? (
           <div className="flex items-center gap-1.5">
@@ -129,7 +131,9 @@ export function AssertionsEditor() {
             control={control}
             name="assertions.fieldAssertions"
             label={t("Field Assertions")}
-            description={t("Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values.")}
+            description={t(
+              "Recommended for production fixtures. Assert that fields exist, are non-empty, match regexes, or match one of several acceptable values.",
+            )}
           />
         </div>
 
@@ -140,7 +144,9 @@ export function AssertionsEditor() {
             control={control}
             name="assertions.expectedFields"
             label={t("Legacy Exact Matches")}
-            description={t("Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation.")}
+            description={t(
+              "Optional strict assertions for fixtures that intentionally require an exact extracted value. Prefer field assertions above for general template validation.",
+            )}
             keyPlaceholder="Field key (e.g. referenceNumber)"
             valuePlaceholder="Expected value"
           />
@@ -154,7 +160,9 @@ export function AssertionsEditor() {
               control={control}
               name="assertions.requiredStopRoles"
               label={t("Required Stop Roles")}
-              description={t("Stop roles that must appear in the extraction result (e.g. pickup, delivery).")}
+              description={t(
+                "Stop roles that must appear in the extraction result (e.g. pickup, delivery).",
+              )}
               placeholder={t("Add role...")}
             />
           </FormControl>
@@ -163,7 +171,9 @@ export function AssertionsEditor() {
               control={control}
               name="assertions.minimumStopCount"
               label={t("Minimum Stop Count")}
-              description={t("The minimum number of stops the parser must extract for this fixture to pass.")}
+              description={t(
+                "The minimum number of stops the parser must extract for this fixture to pass.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -171,7 +181,9 @@ export function AssertionsEditor() {
               control={control}
               name="assertions.reviewStatus"
               label={t("Review Status")}
-              description={t("Track whether this fixture's assertions have been verified as correct.")}
+              description={t(
+                "Track whether this fixture's assertions have been verified as correct.",
+              )}
               options={REVIEW_STATUS_OPTIONS}
             />
           </FormControl>
@@ -324,7 +336,9 @@ function FieldAssertionsEditorInner({
       <div className="space-y-3">
         {entries.length === 0 && (
           <div className="text-muted-foreground rounded-md border border-dashed px-3 py-4 text-xs">
-            {t("No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”")}
+            {t(
+              "No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”",
+            )}
           </div>
         )}
 
@@ -425,7 +439,9 @@ function FieldAssertionRow({
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-2xs text-muted-foreground font-medium uppercase">{t("Operator")}</label>
+            <label className="text-2xs text-muted-foreground font-medium uppercase">
+              {t("Operator")}
+            </label>
             <select
               value={assertion.operator}
               onChange={(event) =>

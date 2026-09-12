@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -23,11 +23,12 @@ const TAX_PAID_OPTIONS = [
 
 export function getColumns(
   jurisdictionOptions: readonly GenericSelectOption<string>[],
+  t: TranslateFn,
 ): ColumnDef<FuelPurchaseRow>[] {
   return [
     {
       accessorKey: "purchasedAt",
-      header: "Purchased",
+      header: t("Purchased"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"
@@ -45,7 +46,7 @@ export function getColumns(
     },
     {
       id: "tractor",
-      header: "Tractor",
+      header: t("Tractor"),
       cell: ({ row }) => {
         const { tractor } = row.original;
 
@@ -76,7 +77,7 @@ export function getColumns(
     },
     {
       id: "worker",
-      header: "Worker",
+      header: t("Worker"),
       cell: ({ row }) => {
         const { worker } = row.original;
 
@@ -108,7 +109,7 @@ export function getColumns(
     },
     {
       accessorKey: "jurisdictionId",
-      header: "Jurisdiction",
+      header: t("Jurisdiction"),
       cell: ({ row }) => (
         <span className="font-table">{jurisdictionLabel(row.original.jurisdiction)}</span>
       ),
@@ -126,7 +127,7 @@ export function getColumns(
     },
     {
       accessorKey: "vendor",
-      header: "Vendor",
+      header: t("Vendor"),
       cell: ({ row }) =>
         row.original.vendor ? (
           <span className="flex flex-col">
@@ -148,7 +149,7 @@ export function getColumns(
     },
     {
       accessorKey: "fuelType",
-      header: "Fuel",
+      header: t("Fuel"),
       cell: ({ row }) => IFTA_FUEL_TYPE_LABELS[row.original.fuelType],
       size: 110,
       meta: {
@@ -162,7 +163,7 @@ export function getColumns(
     },
     {
       accessorKey: "gallons",
-      header: "Gallons",
+      header: t("Gallons"),
       cell: ({ row }) => (
         <span className="font-table block text-right tabular-nums">
           {formatDecimalString(row.original.gallons, FUEL_QUANTITY_SCALE)}
@@ -179,7 +180,7 @@ export function getColumns(
     },
     {
       accessorKey: "totalAmount",
-      header: "Amount",
+      header: t("Amount"),
       cell: ({ row }) => (
         <span className="font-table block text-right tabular-nums">
           {formatCurrency(Number(row.original.totalAmount), row.original.currencyCode)}
@@ -196,13 +197,13 @@ export function getColumns(
     },
     {
       accessorKey: "taxPaid",
-      header: "Tax",
+      header: t("Tax"),
       cell: ({ row }) => (
         <Badge
           variant={row.original.taxPaid ? "active" : "warning"}
           className="px-1.5 py-0 text-[10px]"
         >
-          {row.original.taxPaid ? translate("Paid") : translate("Untaxed")}
+          {row.original.taxPaid ? t("Paid") : t("Untaxed")}
         </Badge>
       ),
       size: 90,
@@ -218,7 +219,7 @@ export function getColumns(
     },
     {
       accessorKey: "source",
-      header: "Source",
+      header: t("Source"),
       cell: ({ row }) => FUEL_PURCHASE_SOURCE_LABELS[row.original.source],
       size: 110,
       meta: {
@@ -232,7 +233,7 @@ export function getColumns(
     },
     {
       accessorKey: "transactionReference",
-      header: "Reference",
+      header: t("Reference"),
       cell: ({ row }) => (
         <span className="font-table text-xs">{row.original.transactionReference ?? "—"}</span>
       ),
@@ -246,7 +247,7 @@ export function getColumns(
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"

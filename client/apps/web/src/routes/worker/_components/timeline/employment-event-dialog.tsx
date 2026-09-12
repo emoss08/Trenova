@@ -226,7 +226,9 @@ function RecordSheet({
         <DialogHeader>
           <DialogTitle>{t("Record employment event")}</DialogTitle>
           <DialogDescription>
-            {t("Events are the only way employment status moves. Each one is kept on the worker's timeline with who recorded it.")}
+            {t(
+              "Events are the only way employment status moves. Each one is kept on the worker's timeline with who recorded it.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -244,7 +246,9 @@ function RecordSheet({
                     <TriangleAlertIcon className="size-4" />
                     <AlertTitle>{t("This ends employment")}</AlertTitle>
                     <AlertDescription>
-                      {t("The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.")}
+                      {t(
+                        "The worker becomes inactive, their PTO and pay assignments close on the effective date, and any time off starting after it is cancelled.",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -267,7 +271,9 @@ function RecordSheet({
                   label={t("Effective")}
                   rules={{ required: true }}
                   placeholder={t("Today")}
-                  description={t("Moves the worker to the new state from this date; the change cannot be replayed by editing it later.")}
+                  description={t(
+                    "Moves the worker to the new state from this date; the change cannot be replayed by editing it later.",
+                  )}
                 />
               </FormControl>
               {kind === "Transferred" ? (
@@ -329,7 +335,9 @@ function RecordSheet({
                       label={t("New rate")}
                       placeholder={t("e.g. 0.62")}
                       rules={{ required: true }}
-                      description={t("The new pay figure; it is recorded on the event exactly as typed.")}
+                      description={t(
+                        "The new pay figure; it is recorded on the event exactly as typed.",
+                      )}
                     />
                   </FormControl>
                   <FormControl>
@@ -379,7 +387,9 @@ function RecordSheet({
                 disabled={isPending}
                 className={cn(kind === "Terminated" && "min-w-40")}
               >
-                {isPending ? t("Saving...") : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
+                {isPending
+                  ? t("Saving...")
+                  : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
               </Button>
             </DialogFooter>
           </Form>
@@ -455,7 +465,9 @@ function AmendSheet({
         <DialogHeader>
           <DialogTitle>{t("Amend {0}", meta.label.toLowerCase())}</DialogTitle>
           <DialogDescription>
-            {t("Correct the date, reason or notes. What the event already did to the worker stays as it is — record a new event to change state again.")}
+            {t(
+              "Correct the date, reason or notes. What the event already did to the worker stays as it is — record a new event to change state again.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -474,7 +486,9 @@ function AmendSheet({
                   label={t("Effective")}
                   rules={{ required: true }}
                   placeholder={t("Pick a date")}
-                  description={t("Corrects the recorded date only; what the event already did is not replayed.")}
+                  description={t(
+                    "Corrects the recorded date only; what the event already did is not replayed.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -505,7 +519,9 @@ function AmendSheet({
                   placeholder={t("e.g. Wrong effective date was entered")}
                   rules={{ required: true }}
                   maxLength={255}
-                  description={t("Kept alongside the original record as the reason for the correction.")}
+                  description={t(
+                    "Kept alongside the original record as the reason for the correction.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

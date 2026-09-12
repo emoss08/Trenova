@@ -69,7 +69,9 @@ export function CredentialTypeForm({
               label={t("Name")}
               placeholder={t("e.g. Hazmat Endorsement")}
               rules={{ required: true }}
-              description={t("Shown on worker records, in credential pickers and on compliance reports.")}
+              description={t(
+                "Shown on worker records, in credential pickers and on compliance reports.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -117,13 +119,17 @@ export function CredentialTypeForm({
       <section className="flex flex-col gap-3">
         <SectionTitle
           title={t("Compliance")}
-          hint={t("Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant.")}
+          hint={t(
+            "Required types appear as slots on every matching worker; a missing or expired one makes the worker non-compliant.",
+          )}
         />
         <Alert variant="default">
           <InfoIcon className="size-4" />
           <AlertTitle>{t("One active credential per worker")}</AlertTitle>
           <AlertDescription>
-            {t("A worker holds a single active credential of each type. Renewing supersedes the earlier one instead of adding a second; the renewal window and validity below drive when that renewal is prompted.")}
+            {t(
+              "A worker holds a single active credential of each type. Renewing supersedes the earlier one instead of adding a second; the renewal window and validity below drive when that renewal is prompted.",
+            )}
           </AlertDescription>
         </Alert>
         <FormGroup cols={2}>
@@ -167,7 +173,9 @@ export function CredentialTypeForm({
               sideText="months"
               min={1}
               placeholder="24"
-              description={t("Pre-fills the expiry from the issue date when adding or renewing. Leave empty if it varies.")}
+              description={t(
+                "Pre-fills the expiry from the issue date when adding or renewing. Leave empty if it varies.",
+              )}
             />
           </FormControl>
           <FormControl>

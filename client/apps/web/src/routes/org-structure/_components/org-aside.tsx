@@ -48,7 +48,9 @@ function Breakdown({ rows, total, labelOf }: BreakdownProps) {
                   </span>
                 ) : null}
                 {row.staff > 0 ? (
-                  <span className="text-muted-foreground tabular-nums">{t("· {0} staff", row.staff)}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {t("· {0} staff", row.staff)}
+                  </span>
                 ) : null}
                 {row.terminated > 0 ? (
                   <span className="text-muted-foreground tabular-nums">
@@ -107,14 +109,18 @@ export function OrgAside({
         title={t("By terminal")}
         icon={<Building2Icon />}
         hint={`${total} active`}
-        help={t("Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster.")}
+        help={t(
+          "Active workers by the terminal they are assigned to, biggest first. Front-office users are not on this roster.",
+        )}
       >
         <Breakdown rows={byFleet} total={total} />
       </SectionPanel>
       <SectionPanel
         title={t("By department")}
         icon={<LayersIcon />}
-        help={t("Active workers by the department of the position they hold. Somebody with no position is not counted here.")}
+        help={t(
+          "Active workers by the department of the position they hold. Somebody with no position is not counted here.",
+        )}
       >
         <Breakdown
           rows={byDepartment}
@@ -125,11 +131,15 @@ export function OrgAside({
       <SectionPanel
         title={t("Titles nobody holds yet")}
         icon={<BriefcaseIcon />}
-        help={t("Positions still open that nobody on either roster holds. Assign a worker or a user from the position's holders view.")}
+        help={t(
+          "Positions still open that nobody on either roster holds. Assign a worker or a user from the position's holders view.",
+        )}
         hint={vacant.length > 0 ? String(vacant.length) : undefined}
       >
         {vacant.length === 0 ? (
-          <SectionPanelQuiet>{t("Every open title has at least one person in it.")}</SectionPanelQuiet>
+          <SectionPanelQuiet>
+            {t("Every open title has at least one person in it.")}
+          </SectionPanelQuiet>
         ) : (
           <>
             <ul className="divide-y">

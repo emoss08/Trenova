@@ -46,10 +46,14 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
           <Badge variant={chip.variant}>{t(chip.label)}</Badge>
           <InfoPopover title={t("Qualification file")}>
             <p>
-              {t("Each credential type holds one active credential per worker; renewing files a new one and archives the old. Health is graded from the expiry against the type's renewal window: Valid, Expiring soon while inside the window, Expired once past it, and Missing when nothing active is on file.")}
+              {t(
+                "Each credential type holds one active credential per worker; renewing files a new one and archives the old. Health is graded from the expiry against the type's renewal window: Valid, Expiring soon while inside the window, Expired once past it, and Missing when nothing active is on file.",
+              )}
             </p>
             <p>
-              {t("Expiring soon still counts as good standing. The file is Non-compliant while any required credential is expired or missing.")}
+              {t(
+                "Expiring soon still counts as good standing. The file is Non-compliant while any required credential is expired or missing.",
+              )}
             </p>
           </InfoPopover>
         </div>
@@ -72,7 +76,11 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
           <p className="text-muted-foreground mt-1 text-xs">
             {summary.requiredCount === 0
               ? t("No credential types are required for this worker.")
-              : t("{0} of {1} required credentials are in good standing.", healthy, summary.requiredCount)}
+              : t(
+                  "{0} of {1} required credentials are in good standing.",
+                  healthy,
+                  summary.requiredCount,
+                )}
           </p>
         </div>
         <dl className="grid grid-cols-3 gap-x-6 text-xs">

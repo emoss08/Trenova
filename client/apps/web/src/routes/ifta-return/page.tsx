@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { defaultIftaPeriod, periodFromSearch, type IftaPeriodKey } from "@/lib/ifta-return";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
@@ -29,6 +30,8 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 };
 
 export function IftaReturnsPage() {
+  const t = useT();
+
   const [search, setSearch] = useQueryStates(periodParsers);
   const fallback = useMemo(() => defaultIftaPeriod(nowUnix()), []);
   const period = periodFromSearch(search.year, search.quarter, fallback);
@@ -43,9 +46,10 @@ export function IftaReturnsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "IFTA Returns",
-        description:
+        title: t("IFTA Returns"),
+        description: t(
           "The quarterly fuel tax worksheet: every jurisdiction's miles and tax-paid gallons, the fleet MPG they are taxed through, and what the quarter owes or is owed. Draft figures move with the data until the return is finalized.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

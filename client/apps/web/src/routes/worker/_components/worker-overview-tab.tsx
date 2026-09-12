@@ -110,10 +110,14 @@ function Identity({ overview }: { overview: WorkerOverview }) {
             <Badge variant={meta.badgeVariant}>{t(meta.label)}</Badge>
             <InfoPopover title={t("Standing")}>
               <p>
-                {t("Status moves only through employment events on the Timeline tab. Dispatch says whether the worker can be assigned today; a leave or a suspension holds them until it ends.")}
+                {t(
+                  "Status moves only through employment events on the Timeline tab. Dispatch says whether the worker can be assigned today; a leave or a suspension holds them until it ends.",
+                )}
               </p>
               <p>
-                {t("Compliance comes from the credential file and reads Non-compliant while a required credential is expired or missing. Qualified is set when the onboarding checklist closes with every required item settled.")}
+                {t(
+                  "Compliance comes from the credential file and reads Non-compliant while a required credential is expired or missing. Qualified is set when the onboarding checklist closes with every required item settled.",
+                )}
               </p>
             </InfoPopover>
           </div>
@@ -400,9 +404,9 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
 
   const state: CardState =
     card.rating === "AtRisk"
-      ? { variant: "inactive", label: "At risk" }
+      ? { variant: "inactive", label: t("At risk") }
       : card.rating === "Watch"
-        ? { variant: "warning", label: "Watch" }
+        ? { variant: "warning", label: t("Watch") }
         : null;
 
   return (
@@ -523,7 +527,7 @@ function ReviewsCard({
       value={value}
       unit={unit}
       detail={detail}
-      state={open ? { variant: "info", label: "In progress" } : null}
+      state={open ? { variant: "info", label: t("In progress") } : null}
       onOpen={onOpen}
     />
   );

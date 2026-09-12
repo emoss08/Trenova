@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -9,15 +9,15 @@ import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<FiscalYearRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<FiscalYearRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = fiscalYearStatusChoices.find((c) => c.value === row.original.status);
         if (!choice) return row.original.status;
-        return <DataTableColorColumn text={translate(choice.label)} color={choice.color} />;
+        return <DataTableColorColumn text={t(choice.label)} color={choice.color} />;
       },
       size: 120,
       minSize: 100,
@@ -33,7 +33,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "year",
-      header: "Year",
+      header: t("Year"),
       cell: ({ row }) => row.original.year,
       size: 80,
       meta: {
@@ -46,7 +46,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => row.original.name,
       meta: {
         apiField: "name",
@@ -58,7 +58,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "startDate",
-      header: "Date Range",
+      header: t("Date Range"),
       cell: ({ row }) => {
         const { startDate, endDate } = row.original;
         if (!startDate || !endDate) return "-";
@@ -87,9 +87,9 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
@@ -104,7 +104,7 @@ export function getColumns(): ColumnDef<FiscalYearRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",

@@ -137,7 +137,9 @@ export function ReviewCard({
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
               {goal.dueAt ? (
-                <span className="text-muted-foreground">{t("by {0}", formatUnixDate(goal.dueAt))}</span>
+                <span className="text-muted-foreground">
+                  {t("by {0}", formatUnixDate(goal.dueAt))}
+                </span>
               ) : null}
             </li>
           ))}

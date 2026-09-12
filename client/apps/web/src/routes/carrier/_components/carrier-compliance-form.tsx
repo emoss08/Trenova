@@ -37,7 +37,9 @@ function CarrierInsurancePolicyEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No insurance policies on file. Add the carrier's active policies to track coverage and expirations.")}
+          {t(
+            "No insurance policies on file. Add the carrier's active policies to track coverage and expirations.",
+          )}
         </p>
       )}
 
@@ -126,7 +128,9 @@ function CarrierInsurancePolicyEditor() {
                 control={control}
                 name={`insurancePolicies.${index}.isVerified`}
                 label={t("Verified")}
-                description={t("A certificate of insurance has been received and verified for this policy.")}
+                description={t(
+                  "A certificate of insurance has been received and verified for this policy.",
+                )}
               />
             </FormControl>
           </FormGroup>
@@ -163,7 +167,9 @@ export function CarrierComplianceForm() {
               name="complianceStatus"
               label={t("Compliance Status")}
               placeholder={t("Compliance Status")}
-              description={t("Whether the carrier is qualified to haul freight for your organization.")}
+              description={t(
+                "Whether the carrier is qualified to haul freight for your organization.",
+              )}
               options={carrierComplianceStatusChoices}
             />
           </FormControl>
@@ -195,7 +201,9 @@ export function CarrierComplianceForm() {
                 name="disqualifiedReason"
                 label={t("Disqualification Reason")}
                 placeholder={t("Reason the carrier was disqualified")}
-                description={t("Required when a carrier is disqualified. Recorded for audit purposes.")}
+                description={t(
+                  "Required when a carrier is disqualified. Recorded for audit purposes.",
+                )}
               />
             </FormControl>
           )}

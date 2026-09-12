@@ -36,8 +36,8 @@ export function TrialBalancePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Trial Balance",
-        description: "View account balances for a fiscal period.",
+        title: t("Trial Balance"),
+        description: t("View account balances for a fiscal period."),
       }}
       className="p-0"
     >
@@ -47,7 +47,9 @@ export function TrialBalancePage() {
         {!periodId ? (
           <EmptyTable
             title={t("Pick a period")}
-            description={t("Choose a fiscal period above and every account's debits, credits and net change for it are listed here.")}
+            description={t(
+              "Choose a fiscal period above and every account's debits, credits and net change for it are listed here.",
+            )}
             columns={TRIAL_BALANCE_COLUMNS}
           />
         ) : isLoading ? (
@@ -59,7 +61,9 @@ export function TrialBalancePage() {
         ) : balances.length === 0 ? (
           <EmptyTable
             title={t("Nothing posted")}
-            description={t("No journal entry landed in this period, so every account stands where it did. Post one, or pick another period.")}
+            description={t(
+              "No journal entry landed in this period, so every account stands where it did. Post one, or pick another period.",
+            )}
             columns={TRIAL_BALANCE_COLUMNS}
           />
         ) : (

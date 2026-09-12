@@ -105,7 +105,10 @@ export function ARSnapshotWidget({ widget, data }: WidgetProps) {
             label={t("Unapplied")}
             value={formatCurrency((overview?.unappliedCashMinor ?? 0) / 100)}
           />
-          <Figure label={t("DSO")} value={`${(data.receivables.currentDsoDays ?? 0).toFixed(1)}d`} />
+          <Figure
+            label={t("DSO")}
+            value={`${(data.receivables.currentDsoDays ?? 0).toFixed(1)}d`}
+          />
         </div>
       )}
     </WidgetShell>
@@ -238,10 +241,10 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
 
   const breakdown = data.shipmentAnalytics.activeShipments.breakdown;
   const rows = [
-    { label: "In transit", value: breakdown.inTransit, color: "var(--brand)" },
-    { label: "Loading", value: breakdown.loading, color: "var(--info)" },
-    { label: "At risk", value: breakdown.atRisk, color: "var(--destructive)" },
-    { label: "Delivered", value: breakdown.done, color: "var(--success)" },
+    { label: t("In transit"), value: breakdown.inTransit, color: "var(--brand)" },
+    { label: t("Loading"), value: breakdown.loading, color: "var(--info)" },
+    { label: t("At risk"), value: breakdown.atRisk, color: "var(--destructive)" },
+    { label: t("Delivered"), value: breakdown.done, color: "var(--success)" },
   ];
   const total = rows.reduce((sum, row) => sum + row.value, 0);
 

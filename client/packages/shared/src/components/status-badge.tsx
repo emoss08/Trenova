@@ -130,22 +130,24 @@ export function BooleanBadge({ value }: { value: boolean }) {
 }
 
 export function PTOStatusBadge({ status }: { status: PTOStatus }) {
+  const t = useT();
+
   const ptoStatusAttrs: Record<PTOStatus, BadgeAttrProps> = {
     Requested: {
       variant: "purple",
-      text: "Requested",
+      text: t("Requested"),
     },
     Approved: {
       variant: "active",
-      text: "Approved",
+      text: t("Approved"),
     },
     Cancelled: {
       variant: "inactive",
-      text: "Cancelled",
+      text: t("Cancelled"),
     },
     Rejected: {
       variant: "inactive",
-      text: "Rejected",
+      text: t("Rejected"),
     },
   };
 
@@ -157,18 +159,20 @@ export function PTOStatusBadge({ status }: { status: PTOStatus }) {
 }
 
 export function PermissionScopeBadge({ scope }: { scope?: string }) {
+  const t = useT();
+
   if (!scope) {
     return "-";
   }
 
   const valueAttrs: Record<string, BadgeAttrProps> = {
     full: {
-      text: "Full Access",
+      text: t("Full Access"),
       variant: "secondary",
       icon: <CheckIcon />,
     },
     restricted: {
-      text: "Restricted",
+      text: t("Restricted"),
       variant: "secondary",
       icon: <LockIcon />,
     },
@@ -201,64 +205,76 @@ export function ShipmentStatusBadge({
   status?: ShipmentStatus;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
     ["New"]: {
       variant: "purple",
-      text: "New",
-      description: "Shipment has been created and is pending initial assignment.",
+      text: t("New"),
+      description: t("Shipment has been created and is pending initial assignment."),
     },
     [shipmentStatusSchema.enum.PartiallyAssigned]: {
       variant: "indigo",
-      text: "Partially Assigned",
-      description:
+      text: t("Partially Assigned"),
+      description: t(
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
+      ),
     },
     [shipmentStatusSchema.enum.PartiallyCompleted]: {
       variant: "indigo",
-      text: "Partially Completed",
-      description: "Some moves within this shipment have been completed, but not all.",
+      text: t("Partially Completed"),
+      description: t("Some moves within this shipment have been completed, but not all."),
     },
     [shipmentStatusSchema.enum.Assigned]: {
       variant: "warning",
-      text: "Assigned",
-      description:
+      text: t("Assigned"),
+      description: t(
         "All required equipment and workers have been assigned to this shipment's moves.",
+      ),
     },
     [shipmentStatusSchema.enum.InTransit]: {
       variant: "info",
-      text: "In Transit",
-      description:
+      text: t("In Transit"),
+      description: t(
         "Active shipment with cargo currently in transport between designated locations.",
+      ),
     },
     [shipmentStatusSchema.enum.Delayed]: {
       variant: "orange",
-      text: "Delayed",
-      description:
+      text: t("Delayed"),
+      description: t(
         "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
+      ),
     },
     [shipmentStatusSchema.enum.Completed]: {
       variant: "active",
-      text: "Completed",
-      description:
+      text: t("Completed"),
+      description: t(
         "All transportation activities for this shipment have been successfully completed.",
+      ),
     },
     [shipmentStatusSchema.enum.Invoiced]: {
       variant: "teal",
-      text: "Invoiced",
-      description: "Invoice has been generated and posted for completed transportation services.",
+      text: t("Invoiced"),
+      description: t(
+        "Invoice has been generated and posted for completed transportation services.",
+      ),
     },
     [shipmentStatusSchema.enum.ReadyToInvoice]: {
       variant: "pink",
-      text: "Ready to Invoice",
-      description:
+      text: t("Ready to Invoice"),
+      description: t(
         "All moves within this shipment have been completed, and the shipment is ready to be invoiced.",
+      ),
     },
     [shipmentStatusSchema.enum.Canceled]: {
       variant: "inactive",
-      text: "Canceled",
-      description: "Shipment has been terminated and will not be completed as originally planned.",
+      text: t("Canceled"),
+      description: t(
+        "Shipment has been terminated and will not be completed as originally planned.",
+      ),
     },
   };
 
@@ -279,28 +295,30 @@ export function ShipmentTenderStatusBadge({
   status?: ShipmentTenderStatus | null;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<ShipmentTenderStatus, BadgeAttrProps> = {
     Tendered: {
       variant: "info",
-      text: "Tendered",
+      text: t("Tendered"),
     },
     Accepted: {
       variant: "active",
-      text: "Accepted",
+      text: t("Accepted"),
     },
     Rejected: {
       variant: "inactive",
-      text: "Rejected",
+      text: t("Rejected"),
     },
     Expired: {
       variant: "orange",
-      text: "Expired",
+      text: t("Expired"),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
+      text: t("Canceled"),
     },
   };
 
@@ -321,40 +339,42 @@ export function BillingQueueStatusBadge({
   status?: BillingQueueStatus;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<BillingQueueStatus, BadgeAttrProps> = {
     ReadyForReview: {
       variant: "info",
-      text: "Ready for Review",
+      text: t("Ready for Review"),
     },
     InReview: {
       variant: "purple",
-      text: "In Review",
+      text: t("In Review"),
     },
     Approved: {
       variant: "active",
-      text: "Approved",
+      text: t("Approved"),
     },
     Posted: {
       variant: "teal",
-      text: "Posted",
+      text: t("Posted"),
     },
     OnHold: {
       variant: "warning",
-      text: "On Hold",
+      text: t("On Hold"),
     },
     SentBackToOps: {
       variant: "orange",
-      text: "Sent Back to Ops",
+      text: t("Sent Back to Ops"),
     },
     Exception: {
       variant: "inactive",
-      text: "Exception",
+      text: t("Exception"),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
+      text: t("Canceled"),
     },
   };
 
@@ -365,38 +385,40 @@ export function BillingQueueStatusBadge({
   );
 }
 export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
       className: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-      text: "Ready for Review",
+      text: t("Ready for Review"),
     },
     InReview: {
       className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
-      text: "In Review",
+      text: t("In Review"),
     },
     Approved: {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-      text: "Approved",
+      text: t("Approved"),
     },
     Posted: {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-      text: "Posted",
+      text: t("Posted"),
     },
     OnHold: {
       className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-      text: "On Hold",
+      text: t("On Hold"),
     },
     SentBackToOps: {
       className: "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
-      text: "Sent Back to Ops",
+      text: t("Sent Back to Ops"),
     },
     Exception: {
       className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-      text: "Exception",
+      text: t("Exception"),
     },
     Canceled: {
       className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-      text: "Canceled",
+      text: t("Canceled"),
     },
   };
 
@@ -419,16 +441,18 @@ export function InvoiceStatusBadge({
   status?: InvoiceStatus;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<InvoiceStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
-      text: "Draft",
+      text: t("Draft"),
     },
     Posted: {
       variant: "active",
-      text: "Posted",
+      text: t("Posted"),
     },
   };
 
@@ -440,18 +464,20 @@ export function InvoiceStatusBadge({
 }
 
 export function PlainSettlementStatusBadge({ status }: { status: SettlementStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<SettlementStatus, PlainBadgeAttrProps> = {
     Paid: {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-      text: "Paid",
+      text: t("Paid"),
     },
     PartiallyPaid: {
       className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-      text: "Partial",
+      text: t("Partial"),
     },
     Unpaid: {
       className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-      text: "Unpaid",
+      text: t("Unpaid"),
     },
   };
 
@@ -468,14 +494,16 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
 }
 
 export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPaymentStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<CustomerPaymentStatus, PlainBadgeAttrProps> = {
     Posted: {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-      text: "Posted",
+      text: t("Posted"),
     },
     Reversed: {
       className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
-      text: "Reversed",
+      text: t("Reversed"),
     },
   };
 
@@ -492,14 +520,16 @@ export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPa
 }
 
 export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
+  const t = useT();
+
   const statusAttributes: Record<InvoiceStatus, PlainBadgeAttrProps> = {
     Draft: {
       className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-      text: "Draft",
+      text: t("Draft"),
     },
     Posted: {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-      text: "Posted",
+      text: t("Posted"),
     },
   };
 
@@ -522,43 +552,45 @@ export function OrderStatusBadge({
   status?: OrderStatus;
   className?: string;
 }) {
+  const t = useT();
+
   if (!status) return null;
 
   const statusAttributes: Record<OrderStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
-      text: "Draft",
-      description: "Order has been created but not yet confirmed.",
+      text: t("Draft"),
+      description: t("Order has been created but not yet confirmed."),
     },
     Confirmed: {
       variant: "purple",
-      text: "Confirmed",
-      description: "Order has been confirmed and is ready to be worked.",
+      text: t("Confirmed"),
+      description: t("Order has been confirmed and is ready to be worked."),
     },
     InProgress: {
       variant: "info",
-      text: "In Progress",
-      description: "Order is actively being fulfilled.",
+      text: t("In Progress"),
+      description: t("Order is actively being fulfilled."),
     },
     Completed: {
       variant: "active",
-      text: "Completed",
-      description: "Order fulfillment has been completed.",
+      text: t("Completed"),
+      description: t("Order fulfillment has been completed."),
     },
     Billed: {
       variant: "teal",
-      text: "Billed",
-      description: "Order has been billed to the customer.",
+      text: t("Billed"),
+      description: t("Order has been billed to the customer."),
     },
     Closed: {
       variant: "outline",
-      text: "Closed",
-      description: "Order has been closed and finalized.",
+      text: t("Closed"),
+      description: t("Order has been closed and finalized."),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
-      description: "Order has been canceled and will not be fulfilled.",
+      text: t("Canceled"),
+      description: t("Order has been canceled and will not be fulfilled."),
     },
   };
 
@@ -577,48 +609,48 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
   const attrs: Record<EDITransferStatus, BadgeAttrProps> = {
     Submitted: {
       variant: "purple",
-      text: "Submitted",
-      description: "Tender has been submitted and is awaiting review by the receiving side.",
+      text: t("Submitted"),
+      description: t("Tender has been submitted and is awaiting review by the receiving side."),
     },
     MappingRequired: {
       variant: "warning",
-      text: "Mapping Required",
-      description: "Tender references entities that are not mapped for this partner yet.",
+      text: t("Mapping Required"),
+      description: t("Tender references entities that are not mapped for this partner yet."),
     },
     PendingApproval: {
       variant: "info",
-      text: "Pending Approval",
-      description: "Tender is ready for the receiving organization to approve or reject.",
+      text: t("Pending Approval"),
+      description: t("Tender is ready for the receiving organization to approve or reject."),
     },
     Processing: {
       variant: "secondary",
-      text: "Processing",
-      description: "Approval is running and the target shipment is being created.",
+      text: t("Processing"),
+      description: t("Approval is running and the target shipment is being created."),
     },
     Approved: {
       variant: "active",
-      text: "Approved",
-      description: "Tender was accepted and the target shipment has been created.",
+      text: t("Approved"),
+      description: t("Tender was accepted and the target shipment has been created."),
     },
     Rejected: {
       variant: "inactive",
-      text: "Rejected",
-      description: "Tender was rejected by the receiving side.",
+      text: t("Rejected"),
+      description: t("Tender was rejected by the receiving side."),
     },
     Expired: {
       variant: "outline",
-      text: "Expired",
-      description: "Tender expired before it was actioned.",
+      text: t("Expired"),
+      description: t("Tender expired before it was actioned."),
     },
     Canceled: {
       variant: "outline",
-      text: "Canceled",
-      description: "Tender was canceled or superseded.",
+      text: t("Canceled"),
+      description: t("Tender was canceled or superseded."),
     },
     Failed: {
       variant: "inactive",
-      text: "Failed",
-      description: "Tender processing failed. Review the failure reason for details.",
+      text: t("Failed"),
+      description: t("Tender processing failed. Review the failure reason for details."),
     },
   };
   const attr = attrs[status as EDITransferStatus];
@@ -695,28 +727,28 @@ export function EDIMessageDeliveryStatusBadge({
   const attrs: Record<EDIMessageDeliveryStatus, BadgeAttrProps> = {
     Queued: {
       variant: "purple",
-      text: "Queued",
-      description: "Message is queued for delivery to the trading partner.",
+      text: t("Queued"),
+      description: t("Message is queued for delivery to the trading partner."),
     },
     Sending: {
       variant: "info",
-      text: "Sending",
-      description: "Delivery to the trading partner is in progress.",
+      text: t("Sending"),
+      description: t("Delivery to the trading partner is in progress."),
     },
     Sent: {
       variant: "active",
-      text: "Sent",
-      description: "Message was delivered to the trading partner.",
+      text: t("Sent"),
+      description: t("Message was delivered to the trading partner."),
     },
     Failed: {
       variant: "warning",
-      text: "Failed",
-      description: "The last delivery attempt failed. Retries are scheduled automatically.",
+      text: t("Failed"),
+      description: t("The last delivery attempt failed. Retries are scheduled automatically."),
     },
     DeadLettered: {
       variant: "inactive",
-      text: "Dead Lettered",
-      description: "Delivery retries were exhausted. Retry manually after fixing the cause.",
+      text: t("Dead Lettered"),
+      description: t("Delivery retries were exhausted. Retry manually after fixing the cause."),
     },
   };
   const attr = attrs[status as EDIMessageDeliveryStatus];
@@ -742,28 +774,30 @@ export function EDIMessageAckStatusBadge({
   const attrs: Record<EDIMessageAcknowledgmentStatus, BadgeAttrProps> = {
     NotExpected: {
       variant: "outline",
-      text: "Not Expected",
-      description: "No acknowledgment is expected for this message.",
+      text: t("Not Expected"),
+      description: t("No acknowledgment is expected for this message."),
     },
     Pending: {
       variant: "warning",
-      text: "Ack Pending",
-      description: "Waiting for the trading partner to acknowledge this message.",
+      text: t("Ack Pending"),
+      description: t("Waiting for the trading partner to acknowledge this message."),
     },
     Accepted: {
       variant: "active",
-      text: "Accepted",
-      description: "The trading partner acknowledged and accepted this message.",
+      text: t("Accepted"),
+      description: t("The trading partner acknowledged and accepted this message."),
     },
     Rejected: {
       variant: "inactive",
-      text: "Rejected",
-      description: "The trading partner rejected this message. Review the acknowledgment errors.",
+      text: t("Rejected"),
+      description: t(
+        "The trading partner rejected this message. Review the acknowledgment errors.",
+      ),
     },
     Failed: {
       variant: "inactive",
-      text: "Ack Failed",
-      description: "Acknowledgment processing failed.",
+      text: t("Ack Failed"),
+      description: t("Acknowledgment processing failed."),
     },
   };
   const attr = attrs[status as EDIMessageAcknowledgmentStatus];
@@ -785,33 +819,33 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
   const attrs: Record<EDIInboundFileStatus, BadgeAttrProps> = {
     Received: {
       variant: "purple",
-      text: "Received",
-      description: "File was pulled from the partner mailbox and is awaiting processing.",
+      text: t("Received"),
+      description: t("File was pulled from the partner mailbox and is awaiting processing."),
     },
     Parsed: {
       variant: "info",
-      text: "Parsed",
-      description: "File envelope was parsed and transactions are being processed.",
+      text: t("Parsed"),
+      description: t("File envelope was parsed and transactions are being processed."),
     },
     Processed: {
       variant: "active",
-      text: "Processed",
-      description: "Every transaction in this file was processed successfully.",
+      text: t("Processed"),
+      description: t("Every transaction in this file was processed successfully."),
     },
     PartiallyProcessed: {
       variant: "warning",
-      text: "Partial",
-      description: "Some transactions processed with warnings. Review the failure reason.",
+      text: t("Partial"),
+      description: t("Some transactions processed with warnings. Review the failure reason."),
     },
     Quarantined: {
       variant: "inactive",
-      text: "Quarantined",
-      description: "The file could not be processed. Fix the cause and reprocess.",
+      text: t("Quarantined"),
+      description: t("The file could not be processed. Fix the cause and reprocess."),
     },
     Duplicate: {
       variant: "outline",
-      text: "Duplicate",
-      description: "This interchange was already processed and was skipped.",
+      text: t("Duplicate"),
+      description: t("This interchange was already processed and was skipped."),
     },
   };
   const attr = attrs[status as EDIInboundFileStatus];
@@ -837,34 +871,35 @@ export function DriverSettlementStatusBadge({
   const statusAttributes: Record<DriverSettlementStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
-      text: "Draft",
-      description:
+      text: t("Draft"),
+      description: t(
         "Settlement is being assembled — pay, earnings, and deductions can still change.",
+      ),
     },
     PendingApproval: {
       variant: "warning",
-      text: "Pending Approval",
-      description: "Submitted for review and waiting on an approver.",
+      text: t("Pending Approval"),
+      description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
       variant: "info",
-      text: "Approved",
-      description: "Approved and locked; deduction side effects have been applied.",
+      text: t("Approved"),
+      description: t("Approved and locked; deduction side effects have been applied."),
     },
     Posted: {
       variant: "purple",
-      text: "Posted",
-      description: "Journalized to the general ledger and awaiting payment.",
+      text: t("Posted"),
+      description: t("Journalized to the general ledger and awaiting payment."),
     },
     Paid: {
       variant: "active",
-      text: "Paid",
-      description: "Paid out to the driver; the settlement is final.",
+      text: t("Paid"),
+      description: t("Paid out to the driver; the settlement is final."),
     },
     Voided: {
       variant: "inactive",
-      text: "Voided",
-      description: "Reversed — pay events returned to the pool and side effects were undone.",
+      text: t("Voided"),
+      description: t("Reversed — pay events returned to the pool and side effects were undone."),
     },
   };
 
@@ -885,18 +920,18 @@ export function SettlementBatchStatusBadge({ status }: { status: SettlementBatch
   const statusAttributes: Record<SettlementBatchStatus, BadgeAttrProps> = {
     Open: {
       variant: "info",
-      text: "Open",
-      description: "Batch is accepting settlements; generation tops it up as pay accrues.",
+      text: t("Open"),
+      description: t("Batch is accepting settlements; generation tops it up as pay accrues."),
     },
     Completed: {
       variant: "active",
-      text: "Completed",
-      description: "Batch is closed; late accruals settle individually or in the next period.",
+      text: t("Completed"),
+      description: t("Batch is closed; late accruals settle individually or in the next period."),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
-      description: "Batch was canceled and no longer collects settlements.",
+      text: t("Canceled"),
+      description: t("Batch was canceled and no longer collects settlements."),
     },
   };
 
@@ -917,24 +952,25 @@ export function PayAdvanceStatusBadge({ status }: { status: PayAdvanceStatus }) 
   const statusAttributes: Record<PayAdvanceStatus, BadgeAttrProps> = {
     Outstanding: {
       variant: "warning",
-      text: "Outstanding",
-      description: "Nothing recovered yet — the full amount comes out of upcoming settlements.",
+      text: t("Outstanding"),
+      description: t("Nothing recovered yet — the full amount comes out of upcoming settlements."),
     },
     PartiallyRecovered: {
       variant: "info",
-      text: "Partially Recovered",
-      description:
+      text: t("Partially Recovered"),
+      description: t(
         "Some of the advance has been recovered; the rest is withheld from future settlements.",
+      ),
     },
     Recovered: {
       variant: "active",
-      text: "Recovered",
-      description: "Fully recovered from the driver's settlements.",
+      text: t("Recovered"),
+      description: t("Fully recovered from the driver's settlements."),
     },
     WrittenOff: {
       variant: "inactive",
-      text: "Written Off",
-      description: "Remaining balance was written off and will not be recovered.",
+      text: t("Written Off"),
+      description: t("Remaining balance was written off and will not be recovered."),
     },
   };
 
@@ -955,18 +991,18 @@ export function RecurringEarningStatusBadge({ status }: { status: RecurringEarni
   const statusAttributes: Record<RecurringEarningStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
-      text: "Active",
-      description: "Added automatically to each qualifying settlement.",
+      text: t("Active"),
+      description: t("Added automatically to each qualifying settlement."),
     },
     Paused: {
       variant: "warning",
-      text: "Paused",
-      description: "Temporarily skipped by settlements; resume to start paying again.",
+      text: t("Paused"),
+      description: t("Temporarily skipped by settlements; resume to start paying again."),
     },
     Completed: {
       variant: "secondary",
-      text: "Completed",
-      description: "Reached its lifetime cap and stopped permanently.",
+      text: t("Completed"),
+      description: t("Reached its lifetime cap and stopped permanently."),
     },
   };
 
@@ -987,18 +1023,18 @@ export function RecurringDeductionStatusBadge({ status }: { status: RecurringDed
   const statusAttributes: Record<RecurringDeductionStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
-      text: "Active",
-      description: "Withheld automatically from each qualifying settlement.",
+      text: t("Active"),
+      description: t("Withheld automatically from each qualifying settlement."),
     },
     Paused: {
       variant: "warning",
-      text: "Paused",
-      description: "Temporarily skipped by settlements; resume to start withholding again.",
+      text: t("Paused"),
+      description: t("Temporarily skipped by settlements; resume to start withholding again."),
     },
     Completed: {
       variant: "secondary",
-      text: "Completed",
-      description: "Reached its lifetime cap and stopped permanently.",
+      text: t("Completed"),
+      description: t("Reached its lifetime cap and stopped permanently."),
     },
   };
 
@@ -1019,13 +1055,13 @@ export function EscrowAccountStatusBadge({ status }: { status: EscrowAccountStat
   const statusAttributes: Record<EscrowAccountStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
-      text: "Active",
-      description: "Accepting contributions and accruing interest per 49 CFR 376.12(k).",
+      text: t("Active"),
+      description: t("Accepting contributions and accruing interest per 49 CFR 376.12(k)."),
     },
     Closed: {
       variant: "secondary",
-      text: "Closed",
-      description: "Closed out — the balance was refunded or applied.",
+      text: t("Closed"),
+      description: t("Closed out — the balance was refunded or applied."),
     },
   };
 
@@ -1046,18 +1082,18 @@ export function DriverPayEventStatusBadge({ status }: { status: DriverPayEventSt
   const statusAttributes: Record<DriverPayEventStatus, BadgeAttrProps> = {
     Accrued: {
       variant: "info",
-      text: "Accrued",
-      description: "Earned but not yet on a settlement — waiting in the unsettled pool.",
+      text: t("Accrued"),
+      description: t("Earned but not yet on a settlement — waiting in the unsettled pool."),
     },
     Settled: {
       variant: "active",
-      text: "Settled",
-      description: "Attached to a settlement as earning lines.",
+      text: t("Settled"),
+      description: t("Attached to a settlement as earning lines."),
     },
     Voided: {
       variant: "inactive",
-      text: "Voided",
-      description: "Canceled (move canceled or reverted) and excluded from pay.",
+      text: t("Voided"),
+      description: t("Canceled (move canceled or reverted) and excluded from pay."),
     },
   };
 
@@ -1082,13 +1118,13 @@ export function PayeeClassificationBadge({
   const attributes: Record<PayeeClassification, BadgeAttrProps> = {
     CompanyDriver: {
       variant: "info",
-      text: "Company Driver",
-      description: "W-2 employee — settlements post to the driver pay expense account.",
+      text: t("Company Driver"),
+      description: t("W-2 employee — settlements post to the driver pay expense account."),
     },
     OwnerOperator: {
       variant: "purple",
-      text: "Owner-Operator",
-      description: "1099 contractor — settlements post to the purchased transportation account.",
+      text: t("Owner-Operator"),
+      description: t("1099 contractor — settlements post to the purchased transportation account."),
     },
   };
 
@@ -1115,34 +1151,39 @@ export function CarrierSettlementStatusBadge({
   const statusAttributes: Record<CarrierSettlementStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
-      text: "Draft",
-      description: "Statement is being assembled — cost events and adjustments can still change.",
+      text: t("Draft"),
+      description: t(
+        "Statement is being assembled — cost events and adjustments can still change.",
+      ),
     },
     PendingApproval: {
       variant: "warning",
-      text: "Pending Approval",
-      description: "Submitted for review and waiting on an approver.",
+      text: t("Pending Approval"),
+      description: t("Submitted for review and waiting on an approver."),
     },
     Approved: {
       variant: "info",
-      text: "Approved",
-      description: "Approved and locked, ready to post to the general ledger.",
+      text: t("Approved"),
+      description: t("Approved and locked, ready to post to the general ledger."),
     },
     Posted: {
       variant: "purple",
-      text: "Posted",
-      description:
+      text: t("Posted"),
+      description: t(
         "Journalized as purchased transportation against accounts payable; awaiting payment.",
+      ),
     },
     Paid: {
       variant: "active",
-      text: "Paid",
-      description: "Disbursed to the carrier — the cash journal and ledger payment are recorded.",
+      text: t("Paid"),
+      description: t(
+        "Disbursed to the carrier — the cash journal and ledger payment are recorded.",
+      ),
     },
     Voided: {
       variant: "inactive",
-      text: "Voided",
-      description: "Reversed — cost events returned to the pool and GL postings were reversed.",
+      text: t("Voided"),
+      description: t("Reversed — cost events returned to the pool and GL postings were reversed."),
     },
   };
 
@@ -1167,18 +1208,18 @@ export function CarrierSettlementBatchStatusBadge({
   const statusAttributes: Record<CarrierSettlementBatchStatus, BadgeAttrProps> = {
     Open: {
       variant: "info",
-      text: "Open",
-      description: "AP run is accepting settlements; generation tops it up as cost accrues.",
+      text: t("Open"),
+      description: t("AP run is accepting settlements; generation tops it up as cost accrues."),
     },
     Completed: {
       variant: "active",
-      text: "Completed",
-      description: "AP run is closed; late accruals settle in the next period.",
+      text: t("Completed"),
+      description: t("AP run is closed; late accruals settle in the next period."),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
-      description: "Batch was canceled and no longer collects settlements.",
+      text: t("Canceled"),
+      description: t("Batch was canceled and no longer collects settlements."),
     },
   };
 
@@ -1199,23 +1240,23 @@ export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEve
   const statusAttributes: Record<CarrierCostEventStatus, BadgeAttrProps> = {
     Pending: {
       variant: "info",
-      text: "Pending",
-      description: "Accrued purchased-transportation cost not yet on a settlement.",
+      text: t("Pending"),
+      description: t("Accrued purchased-transportation cost not yet on a settlement."),
     },
     Attached: {
       variant: "warning",
-      text: "Attached",
-      description: "On a draft settlement — locked until the settlement is processed or voided.",
+      text: t("Attached"),
+      description: t("On a draft settlement — locked until the settlement is processed or voided."),
     },
     Settled: {
       variant: "active",
-      text: "Settled",
-      description: "Included on a posted carrier settlement.",
+      text: t("Settled"),
+      description: t("Included on a posted carrier settlement."),
     },
     Voided: {
       variant: "inactive",
-      text: "Voided",
-      description: "Canceled (assignment or shipment canceled) and excluded from settlement.",
+      text: t("Voided"),
+      description: t("Canceled (assignment or shipment canceled) and excluded from settlement."),
     },
   };
 
@@ -1242,28 +1283,28 @@ export function CarrierInvoiceMatchStatusBadge({
   const statusAttributes: Record<CarrierInvoiceMatchStatus, BadgeAttrProps> = {
     Suggested: {
       variant: "secondary",
-      text: "Suggested",
-      description: "System-proposed pairing of a carrier invoice with an assignment.",
+      text: t("Suggested"),
+      description: t("System-proposed pairing of a carrier invoice with an assignment."),
     },
     Matched: {
       variant: "info",
-      text: "Matched",
-      description: "Invoice total agrees with the negotiated buy rate within tolerance.",
+      text: t("Matched"),
+      description: t("Invoice total agrees with the negotiated buy rate within tolerance."),
     },
     Variance: {
       variant: "warning",
-      text: "Variance",
-      description: "Invoice total differs from the buy rate beyond the configured tolerance.",
+      text: t("Variance"),
+      description: t("Invoice total differs from the buy rate beyond the configured tolerance."),
     },
     Resolved: {
       variant: "active",
-      text: "Resolved",
-      description: "Accepted — the invoice is reconciled against the assignment.",
+      text: t("Resolved"),
+      description: t("Accepted — the invoice is reconciled against the assignment."),
     },
     Rejected: {
       variant: "inactive",
-      text: "Rejected",
-      description: "Dismissed — the invoice does not bill this assignment.",
+      text: t("Rejected"),
+      description: t("Dismissed — the invoice does not bill this assignment."),
     },
   };
 
@@ -1290,23 +1331,23 @@ export function CarrierComplianceStatusBadge({
   const statusAttributes: Record<CarrierComplianceStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
-      text: "Pending",
-      description: "Compliance review has not been completed for this carrier.",
+      text: t("Pending"),
+      description: t("Compliance review has not been completed for this carrier."),
     },
     Qualified: {
       variant: "active",
-      text: "Qualified",
-      description: "The carrier passed the compliance review and can be assigned freight.",
+      text: t("Qualified"),
+      description: t("The carrier passed the compliance review and can be assigned freight."),
     },
     Disqualified: {
       variant: "inactive",
-      text: "Disqualified",
-      description: "The carrier failed compliance and must not be assigned freight.",
+      text: t("Disqualified"),
+      description: t("The carrier failed compliance and must not be assigned freight."),
     },
     Expired: {
       variant: "inactive",
-      text: "Expired",
-      description: "The carrier's qualification lapsed and must be renewed before assignment.",
+      text: t("Expired"),
+      description: t("The carrier's qualification lapsed and must be renewed before assignment."),
     },
   };
 
@@ -1333,23 +1374,23 @@ export function CarrierSafetyRatingBadge({
   const statusAttributes: Record<CarrierSafetyRating, BadgeAttrProps> = {
     Satisfactory: {
       variant: "active",
-      text: "Satisfactory",
-      description: "FMCSA rated the carrier satisfactory.",
+      text: t("Satisfactory"),
+      description: t("FMCSA rated the carrier satisfactory."),
     },
     Conditional: {
       variant: "warning",
-      text: "Conditional",
-      description: "FMCSA found deficiencies — review before assigning freight.",
+      text: t("Conditional"),
+      description: t("FMCSA found deficiencies — review before assigning freight."),
     },
     Unsatisfactory: {
       variant: "inactive",
-      text: "Unsatisfactory",
-      description: "FMCSA rated the carrier unsatisfactory — do not assign freight.",
+      text: t("Unsatisfactory"),
+      description: t("FMCSA rated the carrier unsatisfactory — do not assign freight."),
     },
     NotRated: {
       variant: "secondary",
-      text: "Not Rated",
-      description: "FMCSA has not issued a safety rating for this carrier.",
+      text: t("Not Rated"),
+      description: t("FMCSA has not issued a safety rating for this carrier."),
     },
   };
 
@@ -1376,18 +1417,18 @@ export function CarrierAssignmentStatusBadge({
   const statusAttributes: Record<CarrierAssignmentStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
-      text: "Pending",
-      description: "The carrier has been assigned but has not confirmed the rate yet.",
+      text: t("Pending"),
+      description: t("The carrier has been assigned but has not confirmed the rate yet."),
     },
     Confirmed: {
       variant: "active",
-      text: "Confirmed",
-      description: "The carrier confirmed the negotiated rate for this move.",
+      text: t("Confirmed"),
+      description: t("The carrier confirmed the negotiated rate for this move."),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
-      description: "The carrier assignment was canceled or replaced.",
+      text: t("Canceled"),
+      description: t("The carrier assignment was canceled or replaced."),
     },
   };
 
@@ -1416,29 +1457,30 @@ export function TenderStatusBadge({
   const statusAttributes: Record<TenderStatus, BadgeAttrProps> = {
     Active: {
       variant: "info",
-      text: "Active",
-      description: "Offers are out to carriers and a response is pending.",
+      text: t("Active"),
+      description: t("Offers are out to carriers and a response is pending."),
     },
     Accepted: {
       variant: "active",
-      text: "Accepted",
-      description: "A carrier accepted the tender and the move is covered.",
+      text: t("Accepted"),
+      description: t("A carrier accepted the tender and the move is covered."),
     },
     Exhausted: {
       variant: "orange",
-      text: "Exhausted",
-      description: "Every carrier declined or timed out — the move is still uncovered.",
+      text: t("Exhausted"),
+      description: t("Every carrier declined or timed out — the move is still uncovered."),
     },
     Canceled: {
       variant: "inactive",
-      text: "Canceled",
-      description: "The tender was canceled by a dispatcher.",
+      text: t("Canceled"),
+      description: t("The tender was canceled by a dispatcher."),
     },
     NeedsReview: {
       variant: "warning",
-      text: "Needs Review",
-      description:
+      text: t("Needs Review"),
+      description: t(
         "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",
+      ),
     },
   };
 
@@ -1467,48 +1509,48 @@ export function TenderOfferStatusBadge({
   const statusAttributes: Record<TenderOfferStatus, BadgeAttrProps> = {
     Pending: {
       variant: "secondary",
-      text: "Pending",
-      description: "Queued behind a higher-ranked carrier; nothing has been sent yet.",
+      text: t("Pending"),
+      description: t("Queued behind a higher-ranked carrier; nothing has been sent yet."),
     },
     Sent: {
       variant: "info",
-      text: "Sent",
-      description: "Delivered to the carrier and awaiting their response.",
+      text: t("Sent"),
+      description: t("Delivered to the carrier and awaiting their response."),
     },
     Accepted: {
       variant: "active",
-      text: "Accepted",
-      description: "The carrier accepted this offer.",
+      text: t("Accepted"),
+      description: t("The carrier accepted this offer."),
     },
     Declined: {
       variant: "inactive",
-      text: "Declined",
-      description: "The carrier declined this offer.",
+      text: t("Declined"),
+      description: t("The carrier declined this offer."),
     },
     Expired: {
       variant: "orange",
-      text: "Expired",
-      description: "The offer window elapsed without a response.",
+      text: t("Expired"),
+      description: t("The offer window elapsed without a response."),
     },
     Withdrawn: {
       variant: "outline",
-      text: "Withdrawn",
-      description: "The offer was withdrawn when the tender was canceled.",
+      text: t("Withdrawn"),
+      description: t("The offer was withdrawn when the tender was canceled."),
     },
     Superseded: {
       variant: "outline",
-      text: "Superseded",
-      description: "Another carrier accepted first; this offer no longer stands.",
+      text: t("Superseded"),
+      description: t("Another carrier accepted first; this offer no longer stands."),
     },
     Skipped: {
       variant: "outline",
-      text: "Skipped",
-      description: "The waterfall skipped this carrier.",
+      text: t("Skipped"),
+      description: t("The waterfall skipped this carrier."),
     },
     DeliveryFailed: {
       variant: "inactive",
-      text: "Delivery Failed",
-      description: "The offer could not be delivered on its channel.",
+      text: t("Delivery Failed"),
+      description: t("The offer could not be delivered on its channel."),
     },
   };
 
@@ -1535,23 +1577,23 @@ export function RateConfirmationStatusBadge({
   const statusAttributes: Record<RateConfirmationStatus, BadgeAttrProps> = {
     Generated: {
       variant: "secondary",
-      text: "Generated",
-      description: "Rate confirmation PDF is filed but has not been sent to the carrier.",
+      text: t("Generated"),
+      description: t("Rate confirmation PDF is filed but has not been sent to the carrier."),
     },
     Sent: {
       variant: "info",
-      text: "Sent",
-      description: "Emailed to the carrier's rate confirmation contacts.",
+      text: t("Sent"),
+      description: t("Emailed to the carrier's rate confirmation contacts."),
     },
     Confirmed: {
       variant: "active",
-      text: "Confirmed",
-      description: "The carrier confirmed the negotiated rate.",
+      text: t("Confirmed"),
+      description: t("The carrier confirmed the negotiated rate."),
     },
     Voided: {
       variant: "inactive",
-      text: "Voided",
-      description: "Superseded by a newer revision or voided manually.",
+      text: t("Voided"),
+      description: t("Superseded by a newer revision or voided manually."),
     },
   };
 
@@ -1578,20 +1620,20 @@ export function IftaReturnStatusBadge({
   const statusAttributes: Record<IftaReturnStatus, BadgeAttrProps> = {
     Draft: {
       variant: "secondary",
-      text: "Draft",
-      description: "Worksheet can still change",
+      text: t("Draft"),
+      description: t("Worksheet can still change"),
       icon: <ClockIcon />,
     },
     Finalized: {
       variant: "info",
-      text: "Finalized",
-      description: "Locked; reopen with a reason to change",
+      text: t("Finalized"),
+      description: t("Locked; reopen with a reason to change"),
       icon: <LockIcon />,
     },
     Filed: {
       variant: "active",
-      text: "Filed",
-      description: "Submitted to the base jurisdiction",
+      text: t("Filed"),
+      description: t("Submitted to the base jurisdiction"),
       icon: <CheckCheckIcon />,
     },
   };
@@ -1620,28 +1662,28 @@ export function FuelPurchaseImportStatusBadge({
   const statusAttributes: Record<FuelPurchaseImportStatus, BadgeAttrProps> = {
     Pending: {
       variant: "warning",
-      text: "Pending",
-      description: "Statement received; waiting to be parsed.",
+      text: t("Pending"),
+      description: t("Statement received; waiting to be parsed."),
     },
     Parsed: {
       variant: "info",
-      text: "Parsed",
-      description: "Rows are ready for review; nothing is imported until you commit.",
+      text: t("Parsed"),
+      description: t("Rows are ready for review; nothing is imported until you commit."),
     },
     Committed: {
       variant: "active",
-      text: "Committed",
-      description: "New rows became fuel purchases.",
+      text: t("Committed"),
+      description: t("New rows became fuel purchases."),
     },
     Discarded: {
       variant: "outline",
-      text: "Discarded",
-      description: "Thrown away without importing anything.",
+      text: t("Discarded"),
+      description: t("Thrown away without importing anything."),
     },
     Failed: {
       variant: "inactive",
-      text: "Failed",
-      description: "The statement could not be parsed; fix the file and stage it again.",
+      text: t("Failed"),
+      description: t("The statement could not be parsed; fix the file and stage it again."),
     },
   };
 
@@ -1668,18 +1710,20 @@ export function FuelCardStatusBadge({
   const statusAttributes: Record<FuelCardStatus, BadgeAttrProps> = {
     Active: {
       variant: "active",
-      text: "Active",
-      description: "Purchases on this card import and record normally.",
+      text: t("Active"),
+      description: t("Purchases on this card import and record normally."),
     },
     Suspended: {
       variant: "warning",
-      text: "Suspended",
-      description: "Temporarily on hold; imported purchases are flagged until it is reactivated.",
+      text: t("Suspended"),
+      description: t(
+        "Temporarily on hold; imported purchases are flagged until it is reactivated.",
+      ),
     },
     Cancelled: {
       variant: "inactive",
-      text: "Cancelled",
-      description: "Closed with the provider; it cannot be reactivated.",
+      text: t("Cancelled"),
+      description: t("Closed with the provider; it cannot be reactivated."),
     },
   };
 

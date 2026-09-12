@@ -38,9 +38,7 @@ describe("resolveInitialLocale", () => {
 
 describe("translate", () => {
   it("falls back to the English source when a translation is missing", () => {
-    expect(translate("A string nobody has translated")).toBe(
-      "A string nobody has translated",
-    );
+    expect(translate("A string nobody has translated")).toBe("A string nobody has translated");
   });
 
   it("returns an empty string unchanged", () => {

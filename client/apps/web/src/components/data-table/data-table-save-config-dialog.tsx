@@ -38,17 +38,19 @@ type DataTableSaveConfigDialogProps = {
 };
 
 export function useVisibilityOptions() {
+  const t = useT();
+
   return [
     {
       value: "Private",
-      label: "Private",
-      description: "Only you can see this view",
+      label: t("Private"),
+      description: t("Only you can see this view"),
       icon: <LockIcon />,
     },
     {
       value: "Public",
-      label: "Public",
-      description: "Anyone in your organization can use this view",
+      label: t("Public"),
+      description: t("Anyone in your organization can use this view"),
       icon: <GlobeIcon />,
     },
   ];

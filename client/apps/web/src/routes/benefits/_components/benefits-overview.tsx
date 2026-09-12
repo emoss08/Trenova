@@ -62,14 +62,18 @@ export function BenefitsOverview({
           label={t("People covered")}
           info={
             <InfoPopover title={t("People covered")}>
-              {
-                t("Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice.")
-              }
+              {t(
+                "Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice.",
+              )}
             </InfoPopover>
           }
         />
         {costs ? (
-          <NumberFlow value={totals.enrolled} className={VALUE_CLASS} aria-label={t("People covered")} />
+          <NumberFlow
+            value={totals.enrolled}
+            className={VALUE_CLASS}
+            aria-label={t("People covered")}
+          />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -82,14 +86,18 @@ export function BenefitsOverview({
           label={t("Plans on offer")}
           info={
             <InfoPopover title={t("Plans on offer")}>
-              {
-                t("Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.")
-              }
+              {t(
+                "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.",
+              )}
             </InfoPopover>
           }
         />
         {plans ? (
-          <NumberFlow value={activePlans} className={VALUE_CLASS} aria-label={t("Plans on offer")} />
+          <NumberFlow
+            value={activePlans}
+            className={VALUE_CLASS}
+            aria-label={t("Plans on offer")}
+          />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -108,9 +116,9 @@ export function BenefitsOverview({
           label={t("Employer puts in")}
           info={
             <InfoPopover title={t("Employer puts in")}>
-              {
-                t("The employer share across every active enrolment in the year, at each plan's stated rates.")
-              }
+              {t(
+                "The employer share across every active enrolment in the year, at each plan's stated rates.",
+              )}
             </InfoPopover>
           }
         />
@@ -127,8 +135,8 @@ export function BenefitsOverview({
           aria-label={t("Who pays, per settlement period")}
           formatValue={(value) => formatMinor(value)}
           segments={[
-            { key: "employer", label: "Employer", value: totals.employerMinor },
-            { key: "employee", label: "Employees", value: totals.employeeMinor },
+            { key: "employer", label: t("Employer"), value: totals.employerMinor },
+            { key: "employee", label: t("Employees"), value: totals.employeeMinor },
           ]}
         />
       </KpiCard>
@@ -139,7 +147,9 @@ export function BenefitsOverview({
           label={t("Off settlements")}
           info={
             <InfoPopover title={t("Off settlements")}>
-              {t("The employee share across the same enrolments, deducted from driver settlements.")}
+              {t(
+                "The employee share across the same enrolments, deducted from driver settlements.",
+              )}
             </InfoPopover>
           }
         />

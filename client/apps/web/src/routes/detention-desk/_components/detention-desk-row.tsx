@@ -89,7 +89,12 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       <div className="hidden w-44 shrink-0 md:block">
         <DeskClockTrack entry={entry} nowSeconds={nowSeconds} />
         <p className="text-2xs text-muted-foreground mt-1.5 truncate leading-none tabular-nums">
-          {t("{0} on site · free {1} {2}", formatDetentionMinutes(onSiteMinutes), entry.minutesUntilFreeEnds > 0 ? "ends" : "ended", formatUnixTime(occurrence.freeTimeExpiresAt))}
+          {t(
+            "{0} on site · free {1} {2}",
+            formatDetentionMinutes(onSiteMinutes),
+            entry.minutesUntilFreeEnds > 0 ? "ends" : "ended",
+            formatUnixTime(occurrence.freeTimeExpiresAt),
+          )}
         </p>
       </div>
 
@@ -100,7 +105,9 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
           <>
             <span
               className={cn("flex-1 truncate text-xs tabular-nums", styles.text)}
-              title={t("Send the customer notice before this deadline or the charge stops being collectable")}
+              title={t(
+                "Send the customer notice before this deadline or the charge stops being collectable",
+              )}
             >
               {t("Notice {0}", formatCountdown(entry.minutesUntilNoticeDue))}
             </span>

@@ -41,7 +41,7 @@ export function DocumentSourceControls({
               key={input.field}
               label={t(input.label)}
               value={value}
-              placeholder={t("{\"transactionSet\":\"204\"}")}
+              placeholder={t('{"transactionSet":"204"}')}
               onChange={(nextValue) => onChange(input.field, nextValue)}
               className="w-64"
             />

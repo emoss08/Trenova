@@ -1,15 +1,15 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { PermissionScopeBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ApiKeyRow } from "@/lib/graphql/api-key-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<ApiKeyRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<ApiKeyRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{row.original.name}</span>
@@ -19,7 +19,7 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
         </div>
       ),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -30,14 +30,14 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 text-sm">
-          {row.original.description || translate("No description")}
+          {row.original.description || t("No description")}
         </span>
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -48,14 +48,14 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <Badge variant={row.original.status === "active" ? "active" : "inactive"}>
           {row.original.status}
         </Badge>
       ),
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -66,13 +66,13 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "permissionScope",
-      header: "Permissions",
+      header: t("Permissions"),
       cell: ({ row }) => {
         console.info("scope", row.original);
         return <PermissionScopeBadge scope={row.original.permissionScope} />;
       },
       meta: {
-        label: "Permissions",
+        label: t("Permissions"),
         apiField: "permissionScope",
         filterable: false,
         sortable: false,
@@ -81,15 +81,15 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "lastUsedAt",
-      header: "Last Used",
+      header: t("Last Used"),
       cell: ({ row }) =>
         row.original.lastUsedAt ? (
           <HoverCardTimestamp timestamp={row.original.lastUsedAt} />
         ) : (
-          <span className="text-muted-foreground">{translate("Never")}</span>
+          <span className="text-muted-foreground">{t("Never")}</span>
         ),
       meta: {
-        label: "Last Used",
+        label: t("Last Used"),
         apiField: "lastUsedAt",
         filterable: false,
         sortable: true,
@@ -100,15 +100,15 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "expiresAt",
-      header: "Expires",
+      header: t("Expires"),
       cell: ({ row }) =>
         row.original.expiresAt ? (
           <HoverCardTimestamp timestamp={row.original.expiresAt} />
         ) : (
-          <span className="text-muted-foreground">{translate("Does not expire")}</span>
+          <span className="text-muted-foreground">{t("Does not expire")}</span>
         ),
       meta: {
-        label: "Expires",
+        label: t("Expires"),
         apiField: "expiresAt",
         filterable: false,
         sortable: true,
@@ -119,10 +119,10 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

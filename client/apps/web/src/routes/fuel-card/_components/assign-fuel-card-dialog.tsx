@@ -98,9 +98,13 @@ export function AssignFuelCardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("Assign card {0}", card ? maskedCardNumber(card.lastFour) : "")}</DialogTitle>
+          <DialogTitle>
+            {t("Assign card {0}", card ? maskedCardNumber(card.lastFour) : "")}
+          </DialogTitle>
           <DialogDescription>
-            {t("Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving both empty puts it back in the unassigned list.")}
+            {t(
+              "Tie this card to the tractor it lives in, the driver who carries it, or both. Leaving both empty puts it back in the unassigned list.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

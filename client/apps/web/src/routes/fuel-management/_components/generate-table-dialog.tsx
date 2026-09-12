@@ -187,7 +187,9 @@ export function GenerateTableDialog({
             {t("Generate Price Bands")}
           </DialogTitle>
           <DialogDescription>
-            {t("Answer a few questions and the whole table is built for you — the preview updates as you type. Every band stays editable afterward.")}
+            {t(
+              "Answer a few questions and the whole table is built for you — the preview updates as you type. Every band stays editable afterward.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -249,7 +251,9 @@ export function GenerateTableDialog({
                   {t("Cover prices outside the range")}
                 </Label>
                 <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
-                  {t("Adds open-ended bottom and top bands so every possible fuel price matches a band. Recommended.")}
+                  {t(
+                    "Adds open-ended bottom and top bands so every possible fuel price matches a band. Recommended.",
+                  )}
                 </p>
               </div>
             </div>
@@ -273,7 +277,11 @@ export function GenerateTableDialog({
               <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs">
                 <TriangleAlert className="size-5 text-amber-500" />
                 <p>
-                  {t("That would create {0} bands (limit {1}). Widen the band width or narrow the price range.", estimate, MAX_BANDS)}
+                  {t(
+                    "That would create {0} bands (limit {1}). Widen the band width or narrow the price range.",
+                    estimate,
+                    MAX_BANDS,
+                  )}
                 </p>
               </div>
             ) : (
@@ -310,7 +318,11 @@ export function GenerateTableDialog({
         <DialogFooter className="items-center gap-3 sm:justify-between">
           <span className="text-muted-foreground text-xs">
             {replaceCount > 0
-              ? t("Applying replaces your {0} existing {1}.", replaceCount, replaceCount === 1 ? "band" : "bands")
+              ? t(
+                  "Applying replaces your {0} existing {1}.",
+                  replaceCount,
+                  replaceCount === 1 ? "band" : "bands",
+                )
               : ""}
           </span>
           <div className="flex gap-2">

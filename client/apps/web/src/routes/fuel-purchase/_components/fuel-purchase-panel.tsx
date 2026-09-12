@@ -143,7 +143,9 @@ function FuelPurchaseCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Fuel Purchase")}
-      description={t("Record fuel bought for a tractor. The purchase is a tax record: its gallons and the jurisdiction they were bought in feed the quarterly IFTA return.")}
+      description={t(
+        "Record fuel bought for a tractor. The purchase is a tax record: its gallons and the jurisdiction they were bought in feed the quarterly IFTA return.",
+      )}
       queryKey={FUEL_PURCHASE_LIST_KEY}
       form={form}
       size="lg"
@@ -181,7 +183,7 @@ function FuelPurchaseEditPanel({
     () => [
       {
         value: "documents",
-        label: "Documents",
+        label: t("Documents"),
         icon: FileTextIcon,
         content: DocumentsTab,
         contentProps: {
@@ -190,7 +192,7 @@ function FuelPurchaseEditPanel({
         },
       },
     ],
-    [row.id],
+    [row.id, t],
   );
 
   return (
@@ -201,7 +203,12 @@ function FuelPurchaseEditPanel({
       title={t("Fuel Purchase")}
       titleComponent={(record) => (
         <span>
-          {t("{0}{1} · {2} gal", record.tractor?.code ? `${record.tractor.code} · ` : "", record.jurisdiction.code, record.gallons)}
+          {t(
+            "{0}{1} · {2} gal",
+            record.tractor?.code ? `${record.tractor.code} · ` : "",
+            record.jurisdiction.code,
+            record.gallons,
+          )}
         </span>
       )}
       queryKey={FUEL_PURCHASE_LIST_KEY}

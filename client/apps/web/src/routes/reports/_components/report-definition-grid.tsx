@@ -286,7 +286,7 @@ export function ReportDefinitionGrid({
         onSuccess: (created) => {
           toast.success(`Duplicated as "${created.name}"`, {
             action: {
-              label: "Open",
+              label: t("Open"),
               onClick: () => void navigate(`/reports/builder/${created.id}`),
             },
           });

@@ -126,8 +126,8 @@ export function AROpenItemsPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Open Items",
-        description: "Outstanding invoices and their payment status across all customers.",
+        title: t("Open Items"),
+        description: t("Outstanding invoices and their payment status across all customers."),
         actions: canRecordPayment ? (
           <Button
             size="sm"
@@ -231,7 +231,11 @@ export function AROpenItemsPage() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium tabular-nums">
-                    {t("{0} selected · {1}", selection.items.length, formatCurrency(selection.totalOpen / 100))}
+                    {t(
+                      "{0} selected · {1}",
+                      selection.items.length,
+                      formatCurrency(selection.totalOpen / 100),
+                    )}
                   </span>
                   {!selection.singleCustomerId ? (
                     <span className="text-muted-foreground text-xs">

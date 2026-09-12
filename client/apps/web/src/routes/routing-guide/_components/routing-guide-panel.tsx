@@ -68,7 +68,10 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Delete this routing guide?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("\"{0}\" will no longer match this lane. Tenders already running against it are unaffected, but new waterfalls cannot use it.", row.name)}
+            {t(
+              '"{0}" will no longer match this lane. Tenders already running against it are unaffected, but new waterfalls cannot use it.',
+              row.name,
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -133,7 +136,9 @@ export function RoutingGuidePanel({
       queryKey={QUERY_KEY}
       title={t("Routing Guide")}
       size="lg"
-      description={t("Rank the carriers a lane should waterfall through, with the rate and offer window for each.")}
+      description={t(
+        "Rank the carriers a lane should waterfall through, with the rate and offer window for each.",
+      )}
       formComponent={<RoutingGuideForm />}
       mutationFn={(values) => apiService.routingGuideService.create(values)}
     />

@@ -19,7 +19,7 @@ export default function PayCodesTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: PayCodeRow[], status: string) => {
@@ -43,28 +43,28 @@ export default function PayCodesTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: [
           {
             value: "Active",
-            label: "Activate",
+            label: t("Activate"),
             color: "#15803d",
-            description: "Codes appear in dropdowns and can be used on new records.",
+            description: t("Codes appear in dropdowns and can be used on new records."),
           },
           {
             value: "Inactive",
-            label: "Deactivate",
+            label: t("Deactivate"),
             color: "#dc2626",
-            description: "Codes stay on historical records but leave new-entry dropdowns.",
+            description: t("Codes stay on historical records but leave new-entry dropdowns."),
           },
         ],
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

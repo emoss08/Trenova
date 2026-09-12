@@ -124,7 +124,9 @@ function ChecklistTemplateCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Checklist Template")}
-      description={t("Lay out the steps a worker goes through when they join or leave, and who owns each one.")}
+      description={t(
+        "Lay out the steps a worker goes through when they join or leave, and who owns each one.",
+      )}
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       form={form}
       size="lg"

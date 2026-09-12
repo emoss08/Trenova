@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import {
@@ -46,11 +46,11 @@ function CarrierStatusCell({ row }: { row: CarrierRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<CarrierRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <CarrierStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -66,7 +66,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       size: 120,
       minSize: 80,
@@ -81,14 +81,14 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => {
         const { name, dbaName } = row.original;
         return (
           <div className="flex flex-col">
             <span>{name}</span>
             {dbaName ? (
-              <span className="text-2xs text-muted-foreground">{translate("DBA: {0}", dbaName)}</span>
+              <span className="text-2xs text-muted-foreground">{t("DBA: {0}", dbaName)}</span>
             ) : null}
           </div>
         );
@@ -103,7 +103,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "carrierType",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => (
         <span>
           {findChoice(carrierTypeChoices, row.original.carrierType)?.label ??
@@ -124,7 +124,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "dotNumber",
-      header: "DOT #",
+      header: t("DOT #"),
       cell: ({ row }) => <span>{row.original.dotNumber || "-"}</span>,
       size: 120,
       minSize: 90,
@@ -139,7 +139,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "mcNumber",
-      header: "MC #",
+      header: t("MC #"),
       cell: ({ row }) => <span>{row.original.mcNumber || "-"}</span>,
       size: 120,
       minSize: 90,
@@ -169,7 +169,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "complianceStatus",
-      header: "Compliance",
+      header: t("Compliance"),
       cell: ({ row }) => <CarrierComplianceStatusBadge status={row.original.complianceStatus} />,
       size: 140,
       minSize: 110,
@@ -185,7 +185,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "safetyRating",
-      header: "Safety Rating",
+      header: t("Safety Rating"),
       cell: ({ row }) => <CarrierSafetyRatingBadge status={row.original.safetyRating} />,
       size: 140,
       minSize: 110,
@@ -201,7 +201,7 @@ export function getColumns(): ColumnDef<CarrierRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

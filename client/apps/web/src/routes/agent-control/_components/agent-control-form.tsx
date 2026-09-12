@@ -84,7 +84,9 @@ function BillingAgentCard() {
       <CardHeader>
         <CardTitle>{t("Billing Exception Agent")}</CardTitle>
         <CardDescription>
-          {t("The billing exception agent inspects blocked billing queue items, diagnoses why they are held, and proposes resolutions for a human to approve. It never approves or transitions an item itself.")}
+          {t(
+            "The billing exception agent inspects blocked billing queue items, diagnoses why they are held, and proposes resolutions for a human to approve. It never approves or transitions an item itself.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -94,7 +96,9 @@ function BillingAgentCard() {
               control={control}
               name="billingAgentEnabled"
               label={t("Enable Billing Exception Agent")}
-              description={t("Allow the agent to run against this organization's blocked billing queue items.")}
+              description={t(
+                "Allow the agent to run against this organization's blocked billing queue items.",
+              )}
               position="left"
             />
           </FormControl>
@@ -103,7 +107,9 @@ function BillingAgentCard() {
               control={control}
               name="shadowMode"
               label={t("Shadow Mode")}
-              description={t("While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions.")}
+              description={t(
+                "While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions.",
+              )}
               position="left"
             />
           </FormControl>
@@ -111,7 +117,9 @@ function BillingAgentCard() {
             <Alert variant="warning">
               <AlertTitle>{t("Proposals are hidden")}</AlertTitle>
               <AlertDescription>
-                {t("Shadow mode is on, so runs complete and persist proposals but nothing appears for review and no decisions are awaited. Turn shadow mode off to surface proposals and enable human decisions.")}
+                {t(
+                  "Shadow mode is on, so runs complete and persist proposals but nothing appears for review and no decisions are awaited. Turn shadow mode off to surface proposals and enable human decisions.",
+                )}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -120,7 +128,9 @@ function BillingAgentCard() {
               control={control}
               name="decisionTimeoutSeconds"
               label={t("Decision Timeout (seconds)")}
-              description={t("How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours).")}
+              description={t(
+                "How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours).",
+              )}
               rules={{ required: true }}
             />
           </FormControl>

@@ -168,7 +168,9 @@ function MappingItemRow({
   return (
     <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-xs font-medium">{t("Field {0}", index + 1)}</span>
+        <span className="text-muted-foreground text-xs font-medium">
+          {t("Field {0}", index + 1)}
+        </span>
         <Button
           type="button"
           variant="ghost"
@@ -280,7 +282,9 @@ function MappingEditor({
               label={t("Template ID")}
               placeholder={t("Samsara form template id")}
               rules={{ required: true }}
-              description={t("Find this in Samsara under the driver form's settings, or from a form submission.")}
+              description={t(
+                "Find this in Samsara under the driver form's settings, or from a form submission.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -534,7 +538,10 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
             <AlertDialogTitle>{t("Delete form mapping?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete
-                ? t("\"{0}\" will no longer apply to incoming form submissions. This cannot be undone.", pendingDelete.name)
+                ? t(
+                    '"{0}" will no longer apply to incoming form submissions. This cannot be undone.',
+                    pendingDelete.name,
+                  )
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

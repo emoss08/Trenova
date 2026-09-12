@@ -1,8 +1,4 @@
-import {
-  DEFAULT_LOCALE,
-  isLocale,
-  type Locale,
-} from "@trenova/shared/i18n/generated/locales";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@trenova/shared/i18n/generated/locales";
 import { getLocale, loadCatalog, setLocale, subscribe } from "@trenova/shared/i18n/runtime";
 import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 

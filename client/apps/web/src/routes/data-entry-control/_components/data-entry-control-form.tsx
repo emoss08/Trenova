@@ -72,7 +72,9 @@ function CaseFormattingForm() {
       <CardHeader>
         <CardTitle>{t("Case Formatting Rules")}</CardTitle>
         <CardDescription>
-          {t("Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.")}
+          {t(
+            "Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -82,7 +84,9 @@ function CaseFormattingForm() {
               control={control}
               name="codeCase"
               label={t("Code Case")}
-              description={t("Formatting applied to code fields (e.g., equipment codes, fleet codes).")}
+              description={t(
+                "Formatting applied to code fields (e.g., equipment codes, fleet codes).",
+              )}
               options={caseFormatChoices}
             />
           </FormControl>
@@ -91,7 +95,9 @@ function CaseFormattingForm() {
               control={control}
               name="nameCase"
               label={t("Name Case")}
-              description={t("Formatting applied to name fields (e.g., commodity names, hazmat names).")}
+              description={t(
+                "Formatting applied to name fields (e.g., commodity names, hazmat names).",
+              )}
               options={caseFormatChoices}
             />
           </FormControl>

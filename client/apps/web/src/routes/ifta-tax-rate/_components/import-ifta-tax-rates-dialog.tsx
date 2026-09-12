@@ -138,7 +138,9 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
         <DialogHeader>
           <DialogTitle>{t("Import IFTA Tax Rates")}</DialogTitle>
           <DialogDescription>
-            {t("Read a CSV of the quarter's matrix in the browser, check every row, then publish the good ones. Rows with problems are shown but never sent.")}
+            {t(
+              "Read a CSV of the quarter's matrix in the browser, check every row, then publish the good ones. Rows with problems are shown but never sent.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -203,7 +205,9 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                 ))}
               </ul>
               <p className="mt-1.5 text-xs">
-                {t("The columns are jurisdiction code, fuel type, rate per gallon and surcharge per gallon, matched by name. Start from the template if in doubt.")}
+                {t(
+                  "The columns are jurisdiction code, fuel type, rate per gallon and surcharge per gallon, matched by name. Start from the template if in doubt.",
+                )}
               </p>
             </AlertDescription>
           </Alert>
@@ -223,7 +227,13 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
               </div>
               <p className="text-sm">
                 {validCount > 0
-                  ? t("Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.", validCount, pluralize("rate", validCount), quarter, year)
+                  ? t(
+                      "Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.",
+                      validCount,
+                      pluralize("rate", validCount),
+                      quarter,
+                      year,
+                    )
                   : t("No row in this file can be published as it stands.")}
                 {errorCount > 0
                   ? ` ${t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))}`

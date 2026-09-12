@@ -169,7 +169,9 @@ export function BlackoutDatesField() {
   return (
     <FieldWrapper
       label={t("Blackout Dates")}
-      description={t("Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.")}
+      description={t(
+        "Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.",
+      )}
       error={fieldState.error?.message}
     >
       <div className="border-input bg-muted/30 overflow-hidden rounded-lg border">
@@ -235,7 +237,9 @@ export function BlackoutDatesField() {
           </DropdownMenu>
 
           <span className="text-2xs text-muted-foreground ml-auto pr-1 tabular-nums">
-            {atCapacity ? t("Limit {0} reached", MAX_BLACKOUT_DATES) : t("{0} blocked", dates.length)}
+            {atCapacity
+              ? t("Limit {0} reached", MAX_BLACKOUT_DATES)
+              : t("{0} blocked", dates.length)}
           </span>
           {dates.length > 0 && (
             <Button
@@ -262,7 +266,11 @@ export function BlackoutDatesField() {
             {pastDates.length > 0 && (
               <div className="border-border flex items-center gap-2 border-b px-2.5 py-1.5">
                 <span className="text-2xs text-muted-foreground">
-                  {t("{0} {1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? t("day has") : t("days have"))}
+                  {t(
+                    "{0} {1} already passed and no longer affect the schedule.",
+                    pastDates.length,
+                    pastDates.length === 1 ? t("day has") : t("days have"),
+                  )}
                 </span>
                 <Button
                   type="button"

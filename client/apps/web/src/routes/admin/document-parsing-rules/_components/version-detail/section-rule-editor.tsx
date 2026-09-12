@@ -27,7 +27,9 @@ export function SectionRuleEditor() {
     <FormSection
       title={t("Sections")}
       titleCount={fields.length}
-      description={t("Sections divide the document into named regions. Fields and stops can optionally target specific sections.")}
+      description={t(
+        "Sections divide the document into named regions. Fields and stops can optionally target specific sections.",
+      )}
       action={
         <Button
           type="button"
@@ -54,9 +56,13 @@ export function SectionRuleEditor() {
           <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
             <LayoutListIcon className="text-muted-foreground/50 size-8" />
             <div>
-              <p className="text-muted-foreground text-sm font-medium">{t("No sections defined")}</p>
+              <p className="text-muted-foreground text-sm font-medium">
+                {t("No sections defined")}
+              </p>
               <p className="text-muted-foreground/70 mt-0.5 text-xs">
-                {t("Sections are optional. Add them to scope field and stop extraction to specific document regions.")}
+                {t(
+                  "Sections are optional. Add them to scope field and stop extraction to specific document regions.",
+                )}
               </p>
             </div>
           </div>

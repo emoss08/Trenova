@@ -20,7 +20,7 @@ export default function DeductionsTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: RecurringDeductionRow[], status: string) => {
@@ -45,28 +45,28 @@ export default function DeductionsTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: [
           {
             value: "Active",
-            label: "Resume",
+            label: t("Resume"),
             color: "#15803d",
-            description: "Future settlements withhold the deduction again.",
+            description: t("Future settlements withhold the deduction again."),
           },
           {
             value: "Paused",
-            label: "Pause",
+            label: t("Pause"),
             color: "#d97706",
-            description: "Future settlements skip the deduction; history is kept.",
+            description: t("Future settlements skip the deduction; history is kept."),
           },
         ],
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

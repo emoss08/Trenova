@@ -19,11 +19,16 @@ export function JurisdictionRuleOverrideForm() {
       <Alert>
         <ShieldIcon className="size-4" />
         <AlertDescription>
-          {t("An override can only make a state limit stricter, never looser. Leave a field blank to use whatever the state requires. This applies to your organization alone.")}
+          {t(
+            "An override can only make a state limit stricter, never looser. Leave a field blank to use whatever the state requires. This applies to your organization alone.",
+          )}
         </AlertDescription>
       </Alert>
 
-      <FormSection title={t("Jurisdiction")} description={t("Which state this override applies to")}>
+      <FormSection
+        title={t("Jurisdiction")}
+        description={t("Which state this override applies to")}
+      >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <UsStateAutocompleteField
@@ -39,7 +44,9 @@ export function JurisdictionRuleOverrideForm() {
 
       <FormSection
         title={t("Tighter Limits")}
-        description={t("Leave blank to defer to the state. A value above the state limit is rejected.")}
+        description={t(
+          "Leave blank to defer to the state. A value above the state limit is rejected.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -84,7 +91,9 @@ export function JurisdictionRuleOverrideForm() {
 
       <FormSection
         title={t("Lead Time")}
-        description={t("This one runs the other way: an override may require more notice than the state, never less.")}
+        description={t(
+          "This one runs the other way: an override may require more notice than the state, never less.",
+        )}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
@@ -101,7 +110,9 @@ export function JurisdictionRuleOverrideForm() {
 
       <FormSection
         title={t("Added Restrictions")}
-        description={t("Restrictions the state does not impose. A restriction the state does impose cannot be lifted here.")}
+        description={t(
+          "Restrictions the state does not impose. A restriction the state does impose cannot be lifted here.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -123,15 +134,22 @@ export function JurisdictionRuleOverrideForm() {
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Reason")} description={t("Why this organization runs tighter than the statute")}>
+      <FormSection
+        title={t("Reason")}
+        description={t("Why this organization runs tighter than the statute")}
+      >
         <FormGroup cols={1}>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="reason"
               label={t("Reason")}
-              description={t("At least 10 characters. This is what explains the override to whoever reads it next.")}
-              placeholder={t("Our trailer fleet and insurance terms are narrower than this state allows")}
+              description={t(
+                "At least 10 characters. This is what explains the override to whoever reads it next.",
+              )}
+              placeholder={t(
+                "Our trailer fleet and insurance terms are narrower than this state allows",
+              )}
               rules={{ required: true }}
             />
           </FormControl>

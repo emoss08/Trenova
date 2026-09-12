@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { OrderStatusBadge } from "@trenova/shared/components/status-badge";
 import { orderStatusChoices } from "@/lib/choices";
@@ -6,11 +6,11 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { OrderRow } from "@/lib/graphql/order-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<OrderRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<OrderRow>[] {
   return [
     {
       accessorKey: "orderNumber",
-      header: "Order Number",
+      header: t("Order Number"),
       cell: ({ row }) => <span className="font-medium">{row.original.orderNumber}</span>,
       meta: {
         apiField: "orderNumber",
@@ -22,7 +22,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
       size: 120,
       minSize: 100,
@@ -39,7 +39,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     {
       id: "customer",
       accessorKey: "customer",
-      header: "Customer",
+      header: t("Customer"),
       cell: ({ row }) => {
         const customer = row.original.customer;
         if (!customer) return "-";
@@ -58,7 +58,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "poNumber",
-      header: "PO Number",
+      header: t("PO Number"),
       cell: ({ row }) => row.original.poNumber || "-",
       meta: {
         apiField: "poNumber",
@@ -70,7 +70,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "bol",
-      header: "BOL",
+      header: t("BOL"),
       cell: ({ row }) => row.original.bol || "-",
       meta: {
         apiField: "bol",
@@ -82,7 +82,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "totalAmount",
-      header: () => <div className="text-right">{translate("Total")}</div>,
+      header: () => <div className="text-right">{t("Total")}</div>,
       cell: ({ row }) => {
         const { totalAmount, currencyCode } = row.original;
         if (totalAmount == null) return <div className="text-right">-</div>;
@@ -102,7 +102,7 @@ export function getColumns(): ColumnDef<OrderRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { FuelPurchaseImportBatch } from "@/lib/graphql/fuel-purchase-import";
 import type { FuelPurchaseImportRowStatus } from "@trenova/graphql/generated/graphql";
 import { formatCurrency, pluralize } from "@trenova/shared/lib/utils";
@@ -121,7 +122,7 @@ export function discardImportNotice(batch: FuelPurchaseImportBatch): {
 } {
   const source = batch.fileName ? ` from ${batch.fileName}` : "";
   return {
-    title: "Discard this import?",
+    title: translate("Discard this import?"),
     description: `The ${count(batch.rowCount, "row")} read${source} will be thrown away. Nothing has been recorded, and the statement can be uploaded again.`,
   };
 }

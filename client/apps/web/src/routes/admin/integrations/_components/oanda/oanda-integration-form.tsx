@@ -221,7 +221,9 @@ function OANDAExchangeRatesFormHeader() {
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">{t("Connect with OANDA Exchange Rates")}</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">{t("Midpoint is used by default for quotes.")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("Midpoint is used by default for quotes.")}
+          </p>
           <ExternalLink
             href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/"
             className="text-xs"

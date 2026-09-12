@@ -160,7 +160,9 @@ export function AiGeneratePanel({
             {t("Generate Formula")}
           </SheetTitle>
           <SheetDescription>
-            {t("Describe how this template should price a shipment. The generated formula lands in the editor for you to review and test — nothing is saved automatically.")}
+            {t(
+              "Describe how this template should price a shipment. The generated formula lands in the editor for you to review and test — nothing is saved automatically.",
+            )}
           </SheetDescription>
         </SheetHeader>
 
@@ -170,7 +172,9 @@ export function AiGeneratePanel({
               <Textarea
                 value={instruction}
                 onChange={(event) => setInstruction(event.target.value)}
-                placeholder={t("e.g. Charge $2.85 per mile, add a 20% fuel surcharge, and never bill under $350")}
+                placeholder={t(
+                  "e.g. Charge $2.85 per mile, add a 20% fuel surcharge, and never bill under $350",
+                )}
                 rows={4}
               />
               <div className="flex items-center justify-between gap-2">
@@ -280,9 +284,12 @@ export function AiGeneratePanel({
                       <AlertTriangleIcon className="size-3.5 shrink-0" />
                     )}
                     {validation.valid
-                      ? t("Validated against sample data{0}", typeof validation.result === "number"
+                      ? t(
+                          "Validated against sample data{0}",
+                          typeof validation.result === "number"
                             ? ` ${t("— result {0}", formatCurrency(validation.result))}`
-                            : "")
+                            : "",
+                        )
                       : t("Validation warning: {0}", validation.error || validation.message)}
                   </div>
                 )}
@@ -359,8 +366,12 @@ export function AiGeneratePanel({
                     </div>
                     <p className="text-2xs text-muted-foreground">
                       {templateId
-                        ? t("Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it.")
-                        : t("Save the template first, then generate again to add these as scenarios.")}
+                        ? t(
+                            "Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it.",
+                          )
+                        : t(
+                            "Save the template first, then generate again to add these as scenarios.",
+                          )}
                     </p>
                   </div>
                 )}

@@ -154,7 +154,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
     options: SAVE_OPTIONS,
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
-    loadingText: "Saving...",
+    loadingText: t("Saving..."),
   };
 
   useEffect(() => {

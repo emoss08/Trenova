@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { ptoTypeSchema } from "./worker";
 
@@ -59,14 +60,14 @@ export const ptoAccrualTierFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["accrualAmountDays"],
-        message: "A tier must accrue more than zero",
+        message: translate("A tier must accrue more than zero"),
       });
     }
     if (tier.maxBalanceDays !== null && !(Number(tier.maxBalanceDays) > 0)) {
       ctx.addIssue({
         code: "custom",
         path: ["maxBalanceDays"],
-        message: "Maximum balance must be above zero",
+        message: translate("Maximum balance must be above zero"),
       });
     }
   });
@@ -89,7 +90,7 @@ export const ptoPolicyRuleFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["tiers"],
-        message: "Tenure tiers only apply when the rule accrues",
+        message: translate("Tenure tiers only apply when the rule accrues"),
       });
     }
     rule.tiers.forEach((tier, index) => {
@@ -98,7 +99,7 @@ export const ptoPolicyRuleFormSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["tiers", index, "minMonths"],
-          message: "Tiers must climb by tenure",
+          message: translate("Tiers must climb by tenure"),
         });
       }
     });
@@ -107,28 +108,28 @@ export const ptoPolicyRuleFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["accrualAmountDays"],
-        message: "Accrual amount is required when a rule accrues",
+        message: translate("Accrual amount is required when a rule accrues"),
       });
     }
     if (rule.accrualMethod === "None" && amount !== 0) {
       ctx.addIssue({
         code: "custom",
         path: ["accrualAmountDays"],
-        message: "Set the amount to 0 when the rule does not accrue",
+        message: translate("Set the amount to 0 when the rule does not accrue"),
       });
     }
     if (rule.maxBalanceDays !== null && !(Number(rule.maxBalanceDays) > 0)) {
       ctx.addIssue({
         code: "custom",
         path: ["maxBalanceDays"],
-        message: "Maximum balance must be above zero",
+        message: translate("Maximum balance must be above zero"),
       });
     }
     if (rule.carryoverExpiryDays > 0 && rule.carryoverCapDays === null) {
       ctx.addIssue({
         code: "custom",
         path: ["carryoverExpiryDays"],
-        message: "Carryover expiry needs a carryover cap",
+        message: translate("Carryover expiry needs a carryover cap"),
       });
     }
   });
@@ -157,21 +158,21 @@ export const ptoPolicyFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["negativeFloorDays"],
-        message: "Set how far below zero a balance may go",
+        message: translate("Set how far below zero a balance may go"),
       });
     }
     if (!policy.allowNegative && floor !== 0) {
       ctx.addIssue({
         code: "custom",
         path: ["negativeFloorDays"],
-        message: "Only applies when negative balances are allowed",
+        message: translate("Only applies when negative balances are allowed"),
       });
     }
     if (policy.isDefault && policy.status !== "Active") {
       ctx.addIssue({
         code: "custom",
         path: ["isDefault"],
-        message: "Only an active policy can be the default",
+        message: translate("Only an active policy can be the default"),
       });
     }
     const seen = new Set<string>();
@@ -180,7 +181,7 @@ export const ptoPolicyFormSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["rules", index, "ptoType"],
-          message: "Each PTO type may only have one rule",
+          message: translate("Each PTO type may only have one rule"),
         });
       }
       seen.add(rule.ptoType);

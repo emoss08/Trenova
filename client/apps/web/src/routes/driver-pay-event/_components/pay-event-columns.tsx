@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DriverPayEventStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -105,7 +105,9 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
           <DialogHeader>
             <DialogTitle>{t("Hold pay event")}</DialogTitle>
             <DialogDescription>
-              {t("Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.")}
+              {t(
+                "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -131,11 +133,11 @@ function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
 }
 
-export function getColumns(): ColumnDef<DriverPayEventRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<DriverPayEventRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <span className="group/row flex items-center gap-1">
           <DriverPayEventStatusBadge status={row.original.status as DriverPayEventStatus} />
@@ -147,7 +149,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       id: "worker",
-      header: "Driver",
+      header: t("Driver"),
       cell: ({ row }) => (
         <span className="text-xs font-medium">
           {row.original.worker
@@ -159,21 +161,21 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       accessorKey: "proNumber",
-      header: "Pro #",
+      header: t("Pro #"),
       cell: ({ row }) => <span className="font-mono text-xs">{row.original.proNumber || "—"}</span>,
       size: 140,
       meta: { apiField: "proNumber" },
     },
     {
       accessorKey: "eventDate",
-      header: "Earned",
+      header: t("Earned"),
       cell: ({ row }) => <span className="text-xs">{formatDate(row.original.eventDate)}</span>,
       size: 110,
       meta: { apiField: "eventDate" },
     },
     {
       accessorKey: "totalMiles",
-      header: () => <div className="text-right">{translate("Miles")}</div>,
+      header: () => <div className="text-right">{t("Miles")}</div>,
       cell: ({ row }) => (
         <div className="text-right text-xs tabular-nums">
           {Number(row.original.totalMiles).toLocaleString()}
@@ -184,7 +186,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       id: "components",
-      header: "Breakdown",
+      header: t("Breakdown"),
       cell: ({ row }) => (
         <span className="text-muted-foreground text-xs">
           {(row.original.components ?? [])
@@ -197,7 +199,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
     },
     {
       accessorKey: "grossAmountMinor",
-      header: () => <div className="text-right">{translate("Gross Pay")}</div>,
+      header: () => <div className="text-right">{t("Gross Pay")}</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">
           <AmountDisplay

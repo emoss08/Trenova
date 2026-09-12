@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -39,11 +39,11 @@ function ShipmentTypeStatusCell({ row }: { row: ShipmentTypeRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<ShipmentTypeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <ShipmentTypeStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -52,7 +52,7 @@ export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
         apiField: "status",
         filterable: true,
         sortable: true,
-        label: "Status",
+        label: t("Status"),
         filterType: "select",
         filterOptions: statusChoices,
         defaultFilterOperator: "eq",
@@ -60,7 +60,7 @@ export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => {
         const { code, color } = row.original;
         return <DataTableColorColumn text={code} color={color ?? undefined} />;
@@ -70,16 +70,16 @@ export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
         apiField: "code",
         filterable: true,
         sortable: true,
-        label: "Code",
+        label: t("Code"),
         filterType: "text",
         defaultFilterOperator: "contains",
       },
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
@@ -89,14 +89,14 @@ export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
         apiField: "description",
         filterable: true,
         sortable: true,
-        label: "Description",
+        label: t("Description"),
         filterType: "text",
         defaultFilterOperator: "contains",
       },
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },
@@ -104,7 +104,7 @@ export function getColumns(): ColumnDef<ShipmentTypeRow>[] {
         apiField: "createdAt",
         filterable: false,
         sortable: true,
-        label: "Created At",
+        label: t("Created At"),
         filterType: "date",
         defaultFilterOperator: "daterange",
       },

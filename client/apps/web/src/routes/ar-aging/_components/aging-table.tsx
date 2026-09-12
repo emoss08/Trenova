@@ -61,7 +61,7 @@ export function AgingTable({
     () => [
       {
         id: "customerName",
-        header: "Customer",
+        header: t("Customer"),
         accessorFn: (row) => row.customerName,
         cell: ({ row }) => (
           <Link
@@ -74,7 +74,7 @@ export function AgingTable({
       },
       {
         id: "currentMinor",
-        header: "Current",
+        header: t("Current"),
         accessorFn: (row) => row.buckets.currentMinor,
         cell: ({ row }) => (
           <AmountDisplay
@@ -95,7 +95,7 @@ export function AgingTable({
       bucketColumn("daysOver90Minor", "90+"),
       {
         id: "totalOpenMinor",
-        header: "Total Open",
+        header: t("Total Open"),
         accessorFn: (row) => row.buckets.totalOpenMinor,
         cell: ({ row }) => (
           <AmountDisplay
@@ -106,7 +106,7 @@ export function AgingTable({
         meta: { align: "right" },
       },
     ],
-    [],
+    [t],
   );
 
   const table = useTable({

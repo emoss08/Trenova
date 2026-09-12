@@ -7,15 +7,11 @@ function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
 }
 
 function HoverCardTrigger({ ...props }: PreviewCardPrimitive.Trigger.Props) {
-  return (
-    <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
-  );
+  return <PreviewCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />;
 }
 
 function HoverCardPortal({ ...props }: PreviewCardPrimitive.Portal.Props) {
-  return (
-    <PreviewCardPrimitive.Portal data-slot="hover-card-portal" {...props} />
-  );
+  return <PreviewCardPrimitive.Portal data-slot="hover-card-portal" {...props} />;
 }
 
 function HoverCardContent({
@@ -26,10 +22,7 @@ function HoverCardContent({
   alignOffset = 4,
   ...props
 }: PreviewCardPrimitive.Popup.Props &
-  Pick<
-    PreviewCardPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  Pick<PreviewCardPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
   return (
     <PreviewCardPrimitive.Portal data-slot="hover-card-portal">
       <PreviewCardPrimitive.Positioner

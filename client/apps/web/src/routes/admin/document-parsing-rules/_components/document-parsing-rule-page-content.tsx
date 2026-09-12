@@ -24,7 +24,9 @@ export default function DocumentParsingRulePageContent() {
           <div className="flex h-full items-center justify-center">
             <EmptyState
               title={t("Select a Rule Set")}
-              description={t("Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.")}
+              description={t(
+                "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.",
+              )}
               icons={[ListFilterIcon, FileTextIcon, ScanTextIcon]}
             />
           </div>

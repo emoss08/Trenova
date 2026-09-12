@@ -1,3 +1,4 @@
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -6,11 +7,11 @@ import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
-export function getColumns(): ColumnDef<JournalReversalRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<JournalReversalRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <AccountingStatusBadge status={row.original.status} />,
       size: 140,
       minSize: 100,
@@ -26,7 +27,7 @@ export function getColumns(): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "originalJournalEntryId",
-      header: "Original Journal Entry",
+      header: t("Original Journal Entry"),
       cell: ({ row }) => (
         <Link
           to={`/accounting/journal-entries/${row.original.originalJournalEntryId}`}
@@ -48,7 +49,7 @@ export function getColumns(): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "reasonCode",
-      header: "Reason Code",
+      header: t("Reason Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.reasonCode}</span>,
       size: 150,
       minSize: 120,
@@ -63,7 +64,7 @@ export function getColumns(): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "reasonText",
-      header: "Reason",
+      header: t("Reason"),
       cell: ({ row }) => (
         <DataTableDescription description={row.original.reasonText} truncateLength={80} />
       ),
@@ -80,7 +81,7 @@ export function getColumns(): ColumnDef<JournalReversalRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 200,
       minSize: 200,

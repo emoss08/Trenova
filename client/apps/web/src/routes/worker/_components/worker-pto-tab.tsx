@@ -90,7 +90,9 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
         <div>
           <h3 className="text-sm font-semibold">{t("Paid Time Off")}</h3>
           <p className="text-muted-foreground text-xs">
-            {t("Requests made here or from Dash wait in the approval queue until a dispatcher decides on them.")}
+            {t(
+              "Requests made here or from Dash wait in the approval queue until a dispatcher decides on them.",
+            )}
           </p>
         </div>
         {canCreate ? (
@@ -114,7 +116,9 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
           <CalendarRangeIcon className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">{t("No time off on record")}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
-            {t("Requests this worker makes in Dash, and any you enter here, will show up in this history.")}
+            {t(
+              "Requests this worker makes in Dash, and any you enter here, will show up in this history.",
+            )}
           </p>
         </div>
       ) : (

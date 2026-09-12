@@ -63,7 +63,9 @@ export default function VersionAndSegmentRail() {
         </div>
         <ScrollArea className="min-h-0" viewportClassName="min-h-0">
           {segments.length === 0 ? (
-            <div className="text-muted-foreground p-3 text-sm">{t("No segments in this version.")}</div>
+            <div className="text-muted-foreground p-3 text-sm">
+              {t("No segments in this version.")}
+            </div>
           ) : (
             segments.map((segment) => {
               const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);

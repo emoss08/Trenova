@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { usePermission } from "@/hooks/use-permission";
@@ -82,9 +83,9 @@ function hourSegments(sheet: {
   paidLeaveMinutes: number;
 }) {
   return [
-    { key: "regular", label: "Regular", value: sheet.regularMinutes },
-    { key: "overtime", label: "Overtime", value: sheet.overtimeMinutes },
-    { key: "leave", label: "Paid leave", value: sheet.paidLeaveMinutes },
+    { key: "regular", label: translate("Regular"), value: sheet.regularMinutes },
+    { key: "overtime", label: translate("Overtime"), value: sheet.overtimeMinutes },
+    { key: "leave", label: translate("Paid leave"), value: sheet.paidLeaveMinutes },
   ];
 }
 
@@ -446,9 +447,11 @@ function TimesheetSheet({
           </SheetTitle>
           <SheetDescription>
             {sheet
-              ? t("Week of {0}, overtime past {1}", formatShiftDate(sheet.periodStart), formatHours(
-                  sheet.overtimeThresholdMinutes,
-                ))
+              ? t(
+                  "Week of {0}, overtime past {1}",
+                  formatShiftDate(sheet.periodStart),
+                  formatHours(sheet.overtimeThresholdMinutes),
+                )
               : t("Loading")}
           </SheetDescription>
         </SheetHeader>

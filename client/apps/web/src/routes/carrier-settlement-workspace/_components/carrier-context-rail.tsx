@@ -56,7 +56,9 @@ export function CarrierContextRail({
           <div>
             <h3 className="text-sm font-semibold">{carrierName ?? t("Carrier")}</h3>
             <p className="text-muted-foreground text-[11px]">
-              {t("Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.")}
+              {t(
+                "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.",
+              )}
             </p>
           </div>
           <UnsettledCostSection carrierId={carrierId} />

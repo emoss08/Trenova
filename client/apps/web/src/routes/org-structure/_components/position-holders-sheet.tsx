@@ -92,7 +92,8 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
       form.reset({ holderId: "" });
       invalidate();
     },
-    onError: (error: Error) => toast.error(t("Could not change that"), { description: error.message }),
+    onError: (error: Error) =>
+      toast.error(t("Could not change that"), { description: error.message }),
   });
 
   const rows = holders.data ?? [];
@@ -144,7 +145,9 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                             name="holderId"
                             label={t("Put a worker on it")}
                             placeholder={t("Find a worker")}
-                            description={t("A worker holds one position, so this replaces any title they hold now.")}
+                            description={t(
+                              "A worker holds one position, so this replaces any title they hold now.",
+                            )}
                             clearable
                           />
                         ) : (
@@ -153,7 +156,9 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                             name="holderId"
                             label={t("Put somebody on it")}
                             placeholder={t("Find a user")}
-                            description={t("A person holds one position, so this replaces any title they hold now.")}
+                            description={t(
+                              "A person holds one position, so this replaces any title they hold now.",
+                            )}
                             clearable
                           />
                         )}

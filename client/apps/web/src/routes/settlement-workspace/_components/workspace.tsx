@@ -180,7 +180,9 @@ export default function Workspace() {
               size="sm"
               variant="outline"
               onClick={() => setShowInstantPay(true)}
-              title={t("Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass")}
+              title={t(
+                "Pay a driver immediately — builds, approves, posts, and pays an off-cycle settlement in one pass",
+              )}
             >
               <Zap className="size-3.5" />
               {t("Pay Now")}
@@ -227,7 +229,9 @@ export default function Workspace() {
               <BillingDetailUnselected
                 layout="tabs"
                 title={t("Nothing open")}
-                description={t("Pick a settlement from the queue to review its earnings and deductions, approve it and post it here.")}
+                description={t(
+                  "Pick a settlement from the queue to review its earnings and deductions, approve it and post it here.",
+                )}
               />
             )}
           </div>

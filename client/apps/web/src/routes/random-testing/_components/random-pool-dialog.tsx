@@ -142,7 +142,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit pool") : t("New random testing pool")}</DialogTitle>
           <DialogDescription>
-            {t("The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.")}
+            {t(
+              "The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -160,7 +162,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   name="code"
                   label={t("Code")}
                   placeholder={t("DOT")}
-                  description={t("A short identifier that must be unique across your pools; it is saved in upper case.")}
+                  description={t(
+                    "A short identifier that must be unique across your pools; it is saved in upper case.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -191,7 +195,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   label={t("Status")}
                   options={statusChoices}
                   placeholder={t("Pick a status")}
-                  description={t("Whether the pool is in use; an inactive pool stays on record with its past rounds.")}
+                  description={t(
+                    "Whether the pool is in use; an inactive pool stays on record with its past rounds.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -202,7 +208,9 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   label={t("Draw every")}
                   options={PERIOD_OPTIONS}
                   placeholder={t("Pick a period")}
-                  description={t("How often a round is drawn; each round takes its share of the annual rate.")}
+                  description={t(
+                    "How often a round is drawn; each round takes its share of the annual rate.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -240,15 +248,26 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   control={control}
                   name="isDefault"
                   label={t("Default pool")}
-                  description={t("The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it.")}
+                  description={t(
+                    "The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
                 <Alert variant={belowMinimum ? "destructive" : "default"}>
                   <AlertDescription>
                     {belowMinimum
-                      ? t("Below the FMCSA minimums of {0}% drug and {1}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.", DOT_MINIMUM_DRUG_RATE, DOT_MINIMUM_ALCOHOL_RATE)
-                      : t("Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.", EXAMPLE_POOL_SIZE, exampleDrug, exampleAlcohol)}
+                      ? t(
+                          "Below the FMCSA minimums of {0}% drug and {1}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.",
+                          DOT_MINIMUM_DRUG_RATE,
+                          DOT_MINIMUM_ALCOHOL_RATE,
+                        )
+                      : t(
+                          "Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.",
+                          EXAMPLE_POOL_SIZE,
+                          exampleDrug,
+                          exampleAlcohol,
+                        )}
                   </AlertDescription>
                 </Alert>
               </FormControl>

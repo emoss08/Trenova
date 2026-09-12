@@ -17,7 +17,9 @@ export function ApprovedChartBoundary({ children }: { children: React.ReactNode 
           )}
           onReset={reset}
         >
-          <Suspense fallback={<LoadingSkeletonState description={t("Loading chart component...")} />}>
+          <Suspense
+            fallback={<LoadingSkeletonState description={t("Loading chart component...")} />}
+          >
             {children}
           </Suspense>
         </ErrorBoundary>

@@ -148,7 +148,9 @@ export function OrderSummarySection() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Cancel order {0}?", order.orderNumber)}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Every remaining active leg will be canceled and the order will derive to Canceled. This cannot be undone. A reason is required.")}
+              {t(
+                "Every remaining active leg will be canceled and the order will derive to Canceled. This cannot be undone. A reason is required.",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea

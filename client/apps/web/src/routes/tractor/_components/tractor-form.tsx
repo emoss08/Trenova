@@ -187,7 +187,9 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
             name="externalId"
             label={t("Samsara Vehicle ID")}
             placeholder={t("Samsara Vehicle ID")}
-            description={t("Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN.")}
+            description={t(
+              "Links this tractor to its Samsara vehicle for live telematics. Leave blank to auto-match by VIN.",
+            )}
             maxLength={100}
           />
         </FormControl>
@@ -209,7 +211,9 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
             label={t("Fuel Type")}
             rules={{ required: true }}
             placeholder={t("Select a fuel type")}
-            description={t("The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return.")}
+            description={t(
+              "The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -218,7 +222,9 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
             name="iftaQualified"
             label={t("IFTA qualified")}
             description={t("Count this unit's miles and fuel on the quarterly return.")}
-            tooltip={t("Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.")}
+            tooltip={t(
+              "Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.",
+            )}
             position="left"
             outlined
           />

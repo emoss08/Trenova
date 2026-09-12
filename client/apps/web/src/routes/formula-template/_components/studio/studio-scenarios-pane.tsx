@@ -89,7 +89,10 @@ function ScenarioRow({
         <div className="text-muted-foreground text-xs">
           {t("Expects")} {formatCurrency(scenario.expectedAmount)}
           {result && !result.passed && !result.error && (
-            <span className="text-destructive"> {t("— got {0}", formatCurrency(result.actualAmount))}</span>
+            <span className="text-destructive">
+              {" "}
+              {t("— got {0}", formatCurrency(result.actualAmount))}
+            </span>
           )}
           {result?.error && <span className="text-destructive"> — {result.error}</span>}
         </div>
@@ -295,7 +298,9 @@ export function StudioScenariosPane({
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
               <FlaskConicalIcon className="size-8 opacity-40" />
               <span>
-                {t("No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.")}
+                {t(
+                  "No scenarios yet. Add one to pin what this formula must produce — approval requires every scenario to pass. A green preview can be pinned in one click.",
+                )}
               </span>
             </div>
           )}
@@ -343,7 +348,7 @@ export function StudioScenariosPane({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              {t("Delete scenario \"{0}\"?", pendingDelete?.name)}
+              {t('Delete scenario "{0}"?', pendingDelete?.name)}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t("This scenario will no longer gate approval of the template.")}

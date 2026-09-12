@@ -139,16 +139,15 @@ function UsagesTab({ usages }: { usages: string[] }) {
         <FileCodeIcon className="text-muted-foreground size-6" />
         <p className="mt-2 text-sm font-medium">{t("No references found")}</p>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("This document is not referenced by any TypeScript source in")} <code>{t("src/")}</code>.
+          {t("This document is not referenced by any TypeScript source in")}{" "}
+          <code>{t("src/")}</code>.
         </p>
       </div>
     );
   }
   return (
     <div className="flex flex-col gap-1 py-1">
-      <SectionLabel>
-        {t("{0, plural, one {# file} other {# files}}", usages.length)}
-      </SectionLabel>
+      <SectionLabel>{t("{0, plural, one {# file} other {# files}}", usages.length)}</SectionLabel>
       <ul className="mt-1 flex flex-col gap-1">
         {usages.map((usage) => (
           <li

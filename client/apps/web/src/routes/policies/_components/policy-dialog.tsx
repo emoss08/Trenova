@@ -228,7 +228,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Revise the policy") : t("Publish a policy")}</DialogTitle>
           <DialogDescription>
-            {t("Either a short text or an attached document — a signature has to be on something. Everybody it applies to is asked to sign the version in force.")}
+            {t(
+              "Either a short text or an attached document — a signature has to be on something. Everybody it applies to is asked to sign the version in force.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -257,7 +259,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="title"
                   label={t("Title")}
                   placeholder={t("e.g. Driver handbook")}
-                  description={t("The name drivers see in their list of policies to read and sign.")}
+                  description={t(
+                    "The name drivers see in their list of policies to read and sign.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -287,8 +291,12 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                     control={control}
                     name="body"
                     label={t("Policy text")}
-                    placeholder={t("e.g. Drivers must complete a pre-trip inspection before every dispatch...")}
-                    description={t("The wording drivers read and sign; short policies fit here, longer ones are better attached as a document.")}
+                    placeholder={t(
+                      "e.g. Drivers must complete a pre-trip inspection before every dispatch...",
+                    )}
+                    description={t(
+                      "The wording drivers read and sign; short policies fit here, longer ones are better attached as a document.",
+                    )}
                     rows={6}
                   />
                 </FormControl>
@@ -358,7 +366,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           )}
                         />
                         <span className="text-foreground font-medium">
-                          {attach.isPending ? t("Uploading…") : t("Drop a PDF here, or click to choose")}
+                          {attach.isPending
+                            ? t("Uploading…")
+                            : t("Drop a PDF here, or click to choose")}
                         </span>
                         <span>{t("Drivers open it from Dash. PDFs and images are accepted.")}</span>
                       </div>
@@ -386,7 +396,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 >
                   <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
                   <span>
-                    {t("The words changed. Give this a new version, or the server will refuse it if anybody has signed the current one.")}
+                    {t(
+                      "The words changed. Give this a new version, or the server will refuse it if anybody has signed the current one.",
+                    )}
                   </span>
                 </div>
               ) : null}
@@ -399,7 +411,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   label={t("Version")}
                   placeholder={t("e.g. 2026.1")}
                   rules={{ required: true }}
-                  description={t("What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures.")}
+                  description={t(
+                    "What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -410,7 +424,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   options={AUDIENCE_OPTIONS}
                   placeholder={t("Choose who it binds")}
                   rules={{ required: true }}
-                  description={t("Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator.")}
+                  description={t(
+                    "Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -431,7 +447,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   options={STATUS_OPTIONS}
                   placeholder={t("Choose a status")}
                   rules={{ required: true }}
-                  description={t("Only a policy in force can be signed; a retired one is kept so old signatures still point at something.")}
+                  description={t(
+                    "Only a policy in force can be signed; a retired one is kept so old signatures still point at something.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -439,7 +457,9 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   control={control}
                   name="requiresSignature"
                   label={t("Needs a signature")}
-                  description={t("On, drivers type their name to sign it; off means they only confirm they have read it.")}
+                  description={t(
+                    "On, drivers type their name to sign it; off means they only confirm they have read it.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

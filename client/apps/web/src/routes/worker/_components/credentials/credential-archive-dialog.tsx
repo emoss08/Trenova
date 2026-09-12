@@ -77,7 +77,9 @@ export function CredentialArchiveDialog({
         <DialogHeader>
           <DialogTitle>{t("Archive {0}", name)}</DialogTitle>
           <DialogDescription>
-            {t("Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.")}
+            {t(
+              "Archiving removes this credential from the active file. Use Renew instead when the worker has a newer card.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -95,7 +97,9 @@ export function CredentialArchiveDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. Endorsement surrendered")}
-                  description={t("Optional; stored with the archived credential and shown in the worker's history.")}
+                  description={t(
+                    "Optional; stored with the archived credential and shown in the worker's history.",
+                  )}
                   maxLength={255}
                 />
               </FormControl>

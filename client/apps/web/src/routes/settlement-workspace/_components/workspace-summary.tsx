@@ -38,7 +38,8 @@ export function WorkspaceSummaryStrip({
           <span className="text-foreground font-medium">
             {formatDate(summary.periodStart)} – {formatDate(summary.periodEnd - 86400)}
           </span>{" "}
-          {t("· pays")} <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
+          {t("· pays")}{" "}
+          <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
         </p>
         {actions}
       </div>
@@ -49,7 +50,12 @@ export function WorkspaceSummaryStrip({
           value={<span className="tabular-nums">{pipelineTotal}</span>}
           sub={
             <span>
-              {t("{0} draft · {1} pending · {2} approved", summary.draftCount, summary.pendingApprovalCount, summary.approvedCount)}
+              {t(
+                "{0} draft · {1} pending · {2} approved",
+                summary.draftCount,
+                summary.pendingApprovalCount,
+                summary.approvedCount,
+              )}
             </span>
           }
         />
@@ -95,11 +101,17 @@ export function WorkspaceSummaryStrip({
               ? onShowUnsettled
               : undefined
           }
-          hint={t("Accrued pay not yet on a settlement — click to review by driver and settle individuals off-cycle.")}
+          hint={t(
+            "Accrued pay not yet on a settlement — click to review by driver and settle individuals off-cycle.",
+          )}
           value={<AmountDisplay value={summary.unsettledGrossMinor} currency="USD" />}
           sub={
             <span>
-              {t("{0} events · {1} drivers", summary.unsettledEventCount, summary.unsettledWorkerCount)}
+              {t(
+                "{0} events · {1} drivers",
+                summary.unsettledEventCount,
+                summary.unsettledWorkerCount,
+              )}
             </span>
           }
         />

@@ -155,7 +155,10 @@ export function NotificationItem({
         ) : (
           <>
             {isUnread ? (
-              <ItemAction label={t("Mark as read")} onClick={() => actions.markRead([notification.id])}>
+              <ItemAction
+                label={t("Mark as read")}
+                onClick={() => actions.markRead([notification.id])}
+              >
                 <CheckIcon className="size-3" />
               </ItemAction>
             ) : (

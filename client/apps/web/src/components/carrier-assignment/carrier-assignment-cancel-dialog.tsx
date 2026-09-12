@@ -62,8 +62,13 @@ export function CarrierAssignmentCancelDialog({
           <DialogTitle>{t("Cancel Carrier Assignment")}</DialogTitle>
           <DialogDescription>
             {carrierName
-              ? t("Pull this move back from {0}. The move returns to uncovered and the cancellation reason is recorded.", carrierName)
-              : t("Pull this move back from the carrier. The move returns to uncovered and the cancellation reason is recorded.")}
+              ? t(
+                  "Pull this move back from {0}. The move returns to uncovered and the cancellation reason is recorded.",
+                  carrierName,
+                )
+              : t(
+                  "Pull this move back from the carrier. The move returns to uncovered and the cancellation reason is recorded.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <Form

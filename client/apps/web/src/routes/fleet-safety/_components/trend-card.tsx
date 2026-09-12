@@ -46,7 +46,9 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
           <h3 id="trend-heading" className="text-sm font-medium">
             {t("Events by month")}
           </h3>
-          <span className="text-muted-foreground text-xs">{t("last {0} months", windowMonths)}</span>
+          <span className="text-muted-foreground text-xs">
+            {t("last {0} months", windowMonths)}
+          </span>
         </div>
         <span className="text-muted-foreground flex items-center gap-1 text-xs" aria-live="polite">
           {direction === "up" ? (
@@ -56,7 +58,11 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
           ) : (
             <MinusIcon className="size-3.5" aria-hidden />
           )}
-          {direction === "up" ? t("Rising") : direction === "down" ? t("Falling") : t("Holding steady")}
+          {direction === "up"
+            ? t("Rising")
+            : direction === "down"
+              ? t("Falling")
+              : t("Holding steady")}
           {peak && rows.length > 1
             ? ` ${t("· busiest {0}", formatUnixInUserTimezone(peak.periodStart, { month: "short", year: "numeric", timezone: "UTC" }))}`
             : ""}
@@ -107,7 +113,13 @@ export function TrendCard({ trend, kinds, windowMonths }: TrendCardProps) {
                         <div className="flex flex-col gap-0.5 text-xs">
                           <span className="font-medium tabular-nums">{t("{0} events", value)}</span>
                           <span className="text-muted-foreground tabular-nums">
-                            {t("{0} accidents · {1} preventable · {2} out of service · {3} points", row.accidents, row.preventable, row.outOfService, row.points)}
+                            {t(
+                              "{0} accidents · {1} preventable · {2} out of service · {3} points",
+                              row.accidents,
+                              row.preventable,
+                              row.outOfService,
+                              row.points,
+                            )}
                           </span>
                         </div>
                       );

@@ -65,11 +65,17 @@ export function FinalizeReturnDialog({
           <AlertDialogTitle>{t("Finalize the {0} return?", quarterLabel(period))}</AlertDialogTitle>
           <AlertDialogDescription>
             <span className="block">
-              {t("The return is recomputed one last time and then locked: its figures stop moving with the miles, fuel and rates on file, so it is the record you file from. Reopening it afterwards takes a reason, which is kept with the return.")}
+              {t(
+                "The return is recomputed one last time and then locked: its figures stop moving with the miles, fuel and rates on file, so it is the record you file from. Reopening it afterwards takes a reason, which is kept with the return.",
+              )}
             </span>
             {missing.length > 0 ? (
               <span className="mt-2 block">
-                {t("{0} member {1} has no published rate, so finalizing is refused. Publish the missing rates, recompute, then finalize.", missing.length, pluralize("line", missing.length))}
+                {t(
+                  "{0} member {1} has no published rate, so finalizing is refused. Publish the missing rates, recompute, then finalize.",
+                  missing.length,
+                  pluralize("line", missing.length),
+                )}
               </span>
             ) : null}
           </AlertDialogDescription>

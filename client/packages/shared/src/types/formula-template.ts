@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { decimalStringSchema } from "./helpers";
 import { userSchema } from "./user";
@@ -135,7 +136,7 @@ export const formulaTemplateSchema = z
     if (value.minCharge != null && value.minCharge < 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Minimum charge cannot be negative",
+        message: translate("Minimum charge cannot be negative"),
         path: ["minCharge"],
       });
     }
@@ -143,7 +144,7 @@ export const formulaTemplateSchema = z
     if (value.maxCharge != null && value.maxCharge < 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Maximum charge cannot be negative",
+        message: translate("Maximum charge cannot be negative"),
         path: ["maxCharge"],
       });
     }
@@ -151,7 +152,7 @@ export const formulaTemplateSchema = z
     if (value.minCharge != null && value.maxCharge != null && value.minCharge > value.maxCharge) {
       ctx.addIssue({
         code: "custom",
-        message: "Minimum charge cannot exceed maximum charge",
+        message: translate("Minimum charge cannot exceed maximum charge"),
         path: ["minCharge"],
       });
     }
@@ -388,7 +389,7 @@ export const backtestRequestSchema = z
     if (hasExpression === hasVersion) {
       ctx.addIssue({
         code: "custom",
-        message: "Provide exactly one of expression or version number",
+        message: translate("Provide exactly one of expression or version number"),
         path: ["expression"],
       });
     }

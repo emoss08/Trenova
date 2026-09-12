@@ -96,11 +96,13 @@ describe("LoginForm", () => {
   });
 
   it("hands the authenticated session to the flow instead of routing itself", async () => {
-    renderLoginForm(<LoginForm
+    renderLoginForm(
+      <LoginForm
         stepLabel="01 / 03"
         onAuthenticated={mocks.onAuthenticated}
         onForgotPassword={mocks.onForgotPassword}
-      />);
+      />,
+    );
     await submitCredentials();
 
     await waitFor(() =>
@@ -112,11 +114,13 @@ describe("LoginForm", () => {
   });
 
   it("renders the step label supplied by the flow", () => {
-    renderLoginForm(<LoginForm
+    renderLoginForm(
+      <LoginForm
         stepLabel="01 / 02"
         onAuthenticated={mocks.onAuthenticated}
         onForgotPassword={mocks.onForgotPassword}
-      />);
+      />,
+    );
 
     expect(screen.getByText("01 / 02")).toBeInTheDocument();
     expect(screen.getByText("Secure sign-in")).toBeInTheDocument();
@@ -124,11 +128,13 @@ describe("LoginForm", () => {
 
   it("swaps the credential form for the Dash hand-off on the driver tab", async () => {
     const user = userEvent.setup();
-    renderLoginForm(<LoginForm
+    renderLoginForm(
+      <LoginForm
         stepLabel="01 / 03"
         onAuthenticated={mocks.onAuthenticated}
         onForgotPassword={mocks.onForgotPassword}
-      />);
+      />,
+    );
 
     await user.click(screen.getByRole("tab", { name: "Driver" }));
 

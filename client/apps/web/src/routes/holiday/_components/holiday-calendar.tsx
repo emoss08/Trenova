@@ -173,7 +173,9 @@ export function HolidayCalendar() {
             {blackoutCount === 1 ? "blackout" : "blackouts"}
           </p>
           <InfoPopover title={t("How the calendar is used")}>
-            {t("A time-off request that crosses a blackout is refused outright. A holiday inside a request is not charged against the balance, but only under a policy that does not count weekends; a policy that charges every calendar day charges holidays too.")}
+            {t(
+              "A time-off request that crosses a blackout is refused outright. A holiday inside a request is not charged against the balance, but only under a policy that does not count weekends; a policy that charges every calendar day charges holidays too.",
+            )}
           </InfoPopover>
         </div>
         <div className="flex items-center gap-3">

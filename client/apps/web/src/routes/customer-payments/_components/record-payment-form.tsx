@@ -116,7 +116,12 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           />
         </FormControl>
         <FormControl>
-          <TextareaField control={control} name="memo" label={t("Memo")} placeholder={t("Optional note")} />
+          <TextareaField
+            control={control}
+            name="memo"
+            label={t("Memo")}
+            placeholder={t("Optional note")}
+          />
         </FormControl>
       </FormGroup>
 
@@ -126,7 +131,9 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
           budgetLabel="Payment"
           onAutoApply={handleAutoApply}
           isLoadingItems={itemsLoading}
-          emptyMessage={t("This customer has no open invoices — the full amount will post as unapplied cash.")}
+          emptyMessage={t(
+            "This customer has no open invoices — the full amount will post as unapplied cash.",
+          )}
         />
       ) : (
         <div className="text-muted-foreground flex h-24 items-center justify-center rounded-md border border-dashed text-sm">

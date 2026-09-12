@@ -91,7 +91,9 @@ export function AccessPolicyForm({
               name="priority"
               label={t("Priority")}
               placeholder="100"
-              description={t("Lower numbers evaluate first. Use gaps to leave room for future rules.")}
+              description={t(
+                "Lower numbers evaluate first. Use gaps to leave room for future rules.",
+              )}
               min={0}
             />
           </FormControl>

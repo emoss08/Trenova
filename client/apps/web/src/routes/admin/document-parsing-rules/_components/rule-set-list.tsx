@@ -70,7 +70,11 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
         />
         <div className="flex items-center justify-between">
           <span className="text-2xs text-muted-foreground">
-            {t("{0} rule set {1}", isFiltered ? t("{0} of {1}", filteredCount, totalCount) : `${totalCount}`, totalCount !== 1 ? "s" : "")}
+            {t(
+              "{0} rule set {1}",
+              isFiltered ? t("{0} of {1}", filteredCount, totalCount) : `${totalCount}`,
+              totalCount !== 1 ? "s" : "",
+            )}
           </span>
           {canCreate && (
             <Button
@@ -214,7 +218,7 @@ function RuleSetNoResults({ search, onClear }: { search: string; onClear: () => 
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
-      <p className="text-muted-foreground text-sm">{t("No results for \"{0}\"", search)}</p>
+      <p className="text-muted-foreground text-sm">{t('No results for "{0}"', search)}</p>
       <Button variant="ghost" size="xs" onClick={onClear}>
         {t("Clear search")}
       </Button>
@@ -280,7 +284,9 @@ function CreateRuleSetDialog({
           <DialogHeader>
             <DialogTitle>{t("Create Rule Set")}</DialogTitle>
             <DialogDescription>
-              {t("A rule set defines how a specific type of document is parsed. Each rule set contains versions with match criteria, section definitions, and field extraction rules.")}
+              {t(
+                "A rule set defines how a specific type of document is parsed. Each rule set contains versions with match criteria, section definitions, and field extraction rules.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

@@ -15,7 +15,9 @@ export function DocumentParsingRulesPage() {
     <AdminPageLayout className="flex h-[calc(100vh-3rem)] flex-col">
       <PageHeader
         title={t("Document Parsing Rules")}
-        description={t("Define provider-specific parsing rules, test with fixtures, and simulate extraction results")}
+        description={t(
+          "Define provider-specific parsing rules, test with fixtures, and simulate extraction results",
+        )}
       />
       <SuspenseLoader>
         <DocumentParsingRulePageContent />

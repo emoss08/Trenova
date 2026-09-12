@@ -48,7 +48,9 @@ export function RoutingGuideEntryEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No carriers yet. Add carriers in the order they should be offered the freight — rank 1 goes first.")}
+          {t(
+            "No carriers yet. Add carriers in the order they should be offered the freight — rank 1 goes first.",
+          )}
         </p>
       )}
 
@@ -151,7 +153,9 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.useContractRate`}
                 label={t("Price from the contract")}
                 outlined
-                description={t("Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.")}
+                description={t(
+                  "Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.",
+                )}
               />
             </FormControl>
           </div>

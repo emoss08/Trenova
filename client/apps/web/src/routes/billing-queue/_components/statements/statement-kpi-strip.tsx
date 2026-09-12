@@ -60,20 +60,20 @@ export function StatementKPIStrip({
   const metrics = summarizeStatements(statements, nowSeconds);
 
   const tiles: { key: string; label: string; value: string; muted?: boolean }[] = [
-    { key: "open", label: "Accruing", value: String(metrics.open) },
-    { key: "shipments", label: "Shipments", value: String(metrics.shipments) },
+    { key: "open", label: t("Accruing"), value: String(metrics.open) },
+    { key: "shipments", label: t("Shipments"), value: String(metrics.shipments) },
     {
       key: "value",
-      label: "Value",
+      label: t("Value"),
       value: formatCurrency(metrics.value, metrics.currency),
     },
-    { key: "week", label: "Bills this week", value: String(metrics.billingThisWeek) },
+    { key: "week", label: t("Bills this week"), value: String(metrics.billingThisWeek) },
   ];
 
   if (metrics.held > 0) {
     tiles.push({
       key: "held",
-      label: "Under minimum",
+      label: t("Under minimum"),
       value: String(metrics.held),
       muted: true,
     });

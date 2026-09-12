@@ -159,7 +159,9 @@ export function InvoiceOverviewTab({
                 </PropertyCell>
                 <PropertyCell label={t("Posted")}>
                   <span className="text-xs font-medium">
-                    {invoice.status === "Posted" ? formatUnixDateTime(invoice.postedAt) : t("Not yet")}
+                    {invoice.status === "Posted"
+                      ? formatUnixDateTime(invoice.postedAt)
+                      : t("Not yet")}
                   </span>
                 </PropertyCell>
                 <PropertyCell label={t("Lineage")}>

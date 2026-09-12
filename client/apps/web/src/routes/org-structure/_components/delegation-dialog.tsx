@@ -85,8 +85,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
       }),
     onSuccess: () => {
       toast.success(t("Cover arranged"), {
-        description:
-          t("They can now approve what you can approve, for the people you manage — and nothing beyond that."),
+        description: t(
+          "They can now approve what you can approve, for the people you manage — and nothing beyond that.",
+        ),
       });
       void queryClient.invalidateQueries({ queryKey: [APPROVAL_DELEGATIONS_KEY] });
       onOpenChange(false);
@@ -99,7 +100,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
         <DialogHeader>
           <DialogTitle>{t("Arrange cover")}</DialogTitle>
           <DialogDescription>
-            {t("Hand your approvals to somebody else while you are away. Cover widens what they can act on; it never widens what you could approve yourself.")}
+            {t(
+              "Hand your approvals to somebody else while you are away. Cover widens what they can act on; it never widens what you could approve yourself.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -128,7 +131,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   label={t("What they can approve")}
                   options={SCOPE_OPTIONS}
                   placeholder={t("Pick what is covered")}
-                  description={t("Limits the cover to one kind of approval, or hands over all of them.")}
+                  description={t(
+                    "Limits the cover to one kind of approval, or hands over all of them.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -155,7 +160,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                 <FormControl cols="full">
                   <Alert variant="warning">
                     <AlertDescription>
-                      {t("With no end date this runs until you call it back. Set one if you are covering a specific absence.")}
+                      {t(
+                        "With no end date this runs until you call it back. Set one if you are covering a specific absence.",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -166,7 +173,9 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   name="reason"
                   label={t("Why")}
                   placeholder={t("e.g. Annual leave")}
-                  description={t("Kept with the delegation so an approval made under it can be explained.")}
+                  description={t(
+                    "Kept with the delegation so an approval made under it can be explained.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

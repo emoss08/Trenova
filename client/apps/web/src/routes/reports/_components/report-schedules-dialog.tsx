@@ -273,7 +273,7 @@ function AlertConditionFields({
     ALERT_OPERATOR_CHOICES.find((choice) => choice.value === operator)?.label ?? "more than";
 
   const targetsMeasure = columnId !== ALERT_ROW_COUNT;
-  const targetChoices = [{ value: ALERT_ROW_COUNT, label: "Row count" }, ...measures];
+  const targetChoices = [{ value: ALERT_ROW_COUNT, label: t("Row count") }, ...measures];
   const measureLabel = measures.find((choice) => choice.value === columnId)?.label ?? "the total";
 
   return (
@@ -324,7 +324,7 @@ function AlertConditionFields({
                     name="alertThreshold"
                     type="number"
                     min={0}
-                    rules={{ min: { value: 0, message: "Cannot be negative" } }}
+                    rules={{ min: { value: 0, message: t("Cannot be negative") } }}
                   />
                 )}
               </div>

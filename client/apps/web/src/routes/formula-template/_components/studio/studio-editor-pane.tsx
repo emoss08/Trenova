@@ -206,7 +206,9 @@ export function StudioEditorPane({
         <SectionHeader
           icon={ShieldCheckIcon}
           title={t("Charge Policy")}
-          description={t("Clamp the calculated charge to a range, then round it to what gets billed")}
+          description={t(
+            "Clamp the calculated charge to a range, then round it to what gets billed",
+          )}
         />
         <FormGroup cols={2}>
           <FormControl>
@@ -237,7 +239,9 @@ export function StudioEditorPane({
               name="roundingMode"
               control={control}
               options={rateRoundingModeChoices}
-              description={t("Applied after guardrails; production, preview, and scenarios all round the same way")}
+              description={t(
+                "Applied after guardrails; production, preview, and scenarios all round the same way",
+              )}
             />
           </FormControl>
           <FormControl>

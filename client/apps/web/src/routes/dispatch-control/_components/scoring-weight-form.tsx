@@ -32,7 +32,10 @@ export function ScoringWeightForm() {
       <CardHeader>
         <CardTitle>{t("Candidate Scoring Weights")}</CardTitle>
         <CardDescription>
-          {t("Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave a field empty to inherit the {0} strategy's preset, shown as the placeholder.", strategy)}
+          {t(
+            "Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave a field empty to inherit the {0} strategy's preset, shown as the placeholder.",
+            strategy,
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">

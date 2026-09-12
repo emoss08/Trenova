@@ -125,7 +125,10 @@ function TrendSkeleton() {
   const t = useT();
 
   return (
-    <section aria-label={t("Events by month")} className="bg-card overflow-hidden rounded-lg border">
+    <section
+      aria-label={t("Events by month")}
+      className="bg-card overflow-hidden rounded-lg border"
+    >
       <CardHeaderSkeleton titleWidth="w-28" right="w-36" />
       <div className="p-3">
         <div className="flex h-44 w-full gap-2 pl-7">

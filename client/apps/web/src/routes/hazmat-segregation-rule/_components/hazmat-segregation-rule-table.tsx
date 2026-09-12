@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { hazmatSegregationRuleTableGraphQLConfig } from "@/lib/graphql/hazmat-segregation-rule-table";
 import { Resource } from "@trenova/shared/types/permission";
@@ -7,7 +8,9 @@ import { getColumns } from "./hazmat-segregation-rule-columns";
 import { HazmatSegregationRulePanel } from "./hazmat-segregation-rule-panel";
 
 export default function HazmatSegregationRuleTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<HazmatSegregationRule>

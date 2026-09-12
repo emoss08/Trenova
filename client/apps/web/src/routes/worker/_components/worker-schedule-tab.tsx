@@ -142,9 +142,13 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
               </p>
               {current ? (
                 <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-                  {t("Since {0}{1}", formatShiftDate(current.effectiveFrom), current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
-                    ? ` ${t("· week {0} of the rotation", current.cycleOffsetWeeks + 1)}`
-                    : "")}
+                  {t(
+                    "Since {0}{1}",
+                    formatShiftDate(current.effectiveFrom),
+                    current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
+                      ? ` ${t("· week {0} of the rotation", current.cycleOffsetWeeks + 1)}`
+                      : "",
+                  )}
                 </p>
               ) : null}
             </div>
@@ -200,7 +204,9 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
       <section className="rounded-lg border p-4">
         <h3 className="text-sm font-semibold">{t("Stated availability")}</h3>
         <p className="text-muted-foreground text-xs">
-          {t("A statement, never a constraint. Dispatch can override it, and the rota shows where it did rather than hiding the override.")}
+          {t(
+            "A statement, never a constraint. Dispatch can override it, and the rota shows where it did rather than hiding the override.",
+          )}
         </p>
 
         {preferencesQuery.isLoading ? (

@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import type { WorkerPTORow } from "@/lib/graphql/worker-table";
@@ -83,11 +83,11 @@ function DecisionCell({ pto }: { pto: WorkerPTORow }) {
   );
 }
 
-export function getColumns(): ColumnDef<WorkerPTORow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const { status } = row.original;
         return <PTOStatusBadge status={status} />;
@@ -103,7 +103,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "worker.firstName",
-      header: "First Name",
+      header: t("First Name"),
       cell: (info) => {
         return <p>{info.getValue() as string}</p>;
       },
@@ -117,7 +117,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "worker.lastName",
-      header: "Last Name",
+      header: t("Last Name"),
       cell: (info) => {
         return <p>{info.getValue() as string}</p>;
       },
@@ -131,7 +131,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "type",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => {
         const type = row.original.type;
         return <PTOTypeBadge type={type} />;
@@ -147,7 +147,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "startDate",
-      header: "Start",
+      header: t("Start"),
       cell: ({ row }) => (
         <span className="font-table tracking-tight tabular-nums">
           {formatUnixDate(row.original.startDate)}
@@ -163,7 +163,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "endDate",
-      header: "End",
+      header: t("End"),
       cell: ({ row }) => (
         <span className="font-table tracking-tight tabular-nums">
           {formatUnixDate(row.original.endDate)}
@@ -179,13 +179,13 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "days",
-      header: "Days",
+      header: t("Days"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">
           {ptoDaysOf(row.original)}
           {row.original.autoApproved ? (
             <Badge variant="outline" className="ml-1.5 px-1 py-0 text-[10px]">
-              {translate("Auto")}
+              {t("Auto")}
             </Badge>
           ) : null}
         </span>
@@ -199,7 +199,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "balanceAfterDays",
-      header: "Balance After",
+      header: t("Balance After"),
       cell: ({ row }) =>
         row.original.balanceAfterDays != null ? (
           <span className="font-table tabular-nums">
@@ -216,7 +216,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "reason",
-      header: "Reason",
+      header: t("Reason"),
       cell: ({ row }) => (
         <span className="block max-w-[240px] truncate" title={row.original.reason}>
           {row.original.reason}
@@ -232,7 +232,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       id: "decision",
-      header: "Decision",
+      header: t("Decision"),
       cell: ({ row }) => <DecisionCell pto={row.original} />,
       enableSorting: false,
       meta: {
@@ -250,7 +250,7 @@ export function getColumns(): ColumnDef<WorkerPTORow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       meta: {
         apiField: "createdAt",
         filterable: false,

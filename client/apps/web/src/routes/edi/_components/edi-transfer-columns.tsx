@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge";
@@ -9,15 +9,18 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { LinkIcon } from "lucide-react";
 import { Link } from "react-router";
 
-export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef<EDITransferRow>[] {
+export function getTransferColumns(
+  direction: "inbound" | "outbound",
+  t: TranslateFn,
+): ColumnDef<EDITransferRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <EDITransferStatusBadge status={row.original.status} />,
       size: 160,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -28,7 +31,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
     },
     {
       id: "partner",
-      header: "Partner",
+      header: t("Partner"),
       cell: ({ row }) => {
         const partner =
           direction === "inbound" ? row.original.sourcePartner : row.original.targetPartner;
@@ -40,7 +43,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
       },
       size: 240,
       meta: {
-        label: "Partner",
+        label: t("Partner"),
         apiField: direction === "inbound" ? "sourcePartnerId" : "targetPartnerId",
         filterable: false,
         sortable: false,
@@ -48,21 +51,21 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
     },
     {
       id: "reference",
-      header: "Reference",
+      header: t("Reference"),
       cell: ({ row }) => {
         const payload = row.original.tenderPayload;
         return (
           <div className="min-w-0">
-            <div className="truncate font-medium">{payload.bol || translate("Load tender")}</div>
+            <div className="truncate font-medium">{payload.bol || t("Load tender")}</div>
             <div className="text-muted-foreground truncate text-xs">
-              {payload.customerLabel || payload.serviceTypeLabel || translate("No tender summary")}
+              {payload.customerLabel || payload.serviceTypeLabel || t("No tender summary")}
             </div>
           </div>
         );
       },
       size: 280,
       meta: {
-        label: "Reference",
+        label: t("Reference"),
         apiField: "tenderPayload.bol",
         filterable: true,
         sortable: false,
@@ -72,11 +75,11 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
     },
     {
       accessorKey: "submittedAt",
-      header: "Submitted",
+      header: t("Submitted"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.submittedAt} />,
       size: 180,
       meta: {
-        label: "Submitted",
+        label: t("Submitted"),
         apiField: "submittedAt",
         filterable: false,
         sortable: true,
@@ -85,7 +88,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
     },
     {
       accessorKey: "targetShipmentId",
-      header: "Target Shipment",
+      header: t("Target Shipment"),
       cell: ({ row }) =>
         row.original.targetShipmentId ? (
           <Link
@@ -93,14 +96,14 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
             to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
           >
             <LinkIcon className="size-3.5" />
-            {translate("Open shipment")}
+            {t("Open shipment")}
           </Link>
         ) : (
-          <DataTablePlaceholder text={translate("Pending")} />
+          <DataTablePlaceholder text={t("Pending")} />
         ),
       size: 180,
       meta: {
-        label: "Target Shipment",
+        label: t("Target Shipment"),
         apiField: "targetShipmentId",
         filterable: false,
         sortable: false,
@@ -108,7 +111,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
     },
     {
       id: "mappingSummary",
-      header: "Mappings",
+      header: t("Mappings"),
       cell: ({ row }) => {
         const unresolvedCount = row.original.mappingSnapshot.filter(
           (mapping) => !mapping.resolved,
@@ -116,21 +119,21 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         const totalCount = row.original.mappingSnapshot.length;
 
         if (totalCount === 0) {
-          return <DataTablePlaceholder text={translate("No requirements")} />;
+          return <DataTablePlaceholder text={t("No requirements")} />;
         }
 
         return (
           <div className="flex flex-wrap gap-1">
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0 ? translate("{0} unresolved", unresolvedCount) : translate("Resolved")}
+              {unresolvedCount > 0 ? t("{0} unresolved", unresolvedCount) : t("Resolved")}
             </Badge>
-            <Badge variant="secondary">{translate("{0} total", totalCount)}</Badge>
+            <Badge variant="secondary">{t("{0} total", totalCount)}</Badge>
           </div>
         );
       },
       size: 220,
       meta: {
-        label: "Mappings",
+        label: t("Mappings"),
         apiField: "mappingSnapshot",
         filterable: false,
         sortable: false,

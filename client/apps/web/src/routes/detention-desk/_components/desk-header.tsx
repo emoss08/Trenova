@@ -103,10 +103,17 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              {t("Send {0} detention {1}?", noticeQueue.length, pluralize("notice", noticeQueue.length))}
+              {t(
+                "Send {0} detention {1}?",
+                noticeQueue.length,
+                pluralize("notice", noticeQueue.length),
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Each customer is notified that detention has started and the notice is recorded as evidence, which is what keeps {0} defensible in a dispute.", formatCurrency(queueTotal, noticeQueue[0]?.occurrence.currency))}
+              {t(
+                "Each customer is notified that detention has started and the notice is recorded as evidence, which is what keeps {0} defensible in a dispute.",
+                formatCurrency(queueTotal, noticeQueue[0]?.occurrence.currency),
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -125,7 +132,9 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
                 </span>
               </li>
             ))}
-            {overflow > 0 && <li className="text-muted-foreground">{t("and {0} more", overflow)}</li>}
+            {overflow > 0 && (
+              <li className="text-muted-foreground">{t("and {0} more", overflow)}</li>
+            )}
           </ul>
 
           <AlertDialogFooter>

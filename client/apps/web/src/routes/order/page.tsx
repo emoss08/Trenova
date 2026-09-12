@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
@@ -5,11 +6,13 @@ import { lazy } from "react";
 const Table = lazy(() => import("./_components/order-table"));
 
 export function OrdersPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Orders",
-        description: "Manage and track orders for your organization",
+        title: t("Orders"),
+        description: t("Manage and track orders for your organization"),
       }}
     >
       <DataTableLazyComponent>

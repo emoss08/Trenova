@@ -19,7 +19,7 @@ export default function PayProfilesTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: PayProfileRow[], status: string) => {
@@ -43,28 +43,28 @@ export default function PayProfilesTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: [
           {
             value: "Active",
-            label: "Activate",
+            label: t("Activate"),
             color: "#15803d",
-            description: "Profiles become assignable to drivers again.",
+            description: t("Profiles become assignable to drivers again."),
           },
           {
             value: "Inactive",
-            label: "Deactivate",
+            label: t("Deactivate"),
             color: "#dc2626",
-            description: "Profiles can no longer be assigned; existing assignments keep paying.",
+            description: t("Profiles can no longer be assigned; existing assignments keep paying."),
           },
         ],
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

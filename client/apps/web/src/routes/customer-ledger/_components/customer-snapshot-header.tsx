@@ -94,7 +94,11 @@ export function CustomerSnapshotHeader({
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
           <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
-            {t("{0} overdue · {1} open", formatCurrency(snapshot.overdueMinor / 100), snapshot.openInvoiceCount)}
+            {t(
+              "{0} overdue · {1} open",
+              formatCurrency(snapshot.overdueMinor / 100),
+              snapshot.openInvoiceCount,
+            )}
           </p>
         </SnapshotTile>
         <SnapshotTile index={1} label={t("Credit Utilization")}>
@@ -126,7 +130,8 @@ export function CustomerSnapshotHeader({
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {t("{0}d", profile.dsoDays.toFixed(0))}
             <span className="text-muted-foreground ml-2 text-sm font-medium tabular-nums">
-              / {snapshot.avgDaysToPay.toFixed(0)}{t("d avg")}
+              / {snapshot.avgDaysToPay.toFixed(0)}
+              {t("d avg")}
             </span>
           </p>
           <p className="text-muted-foreground mt-0.5 text-[11px]">trailing 91d / 12mo</p>
@@ -135,14 +140,18 @@ export function CustomerSnapshotHeader({
           <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
             {score.toFixed(0)}
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px]">{t("0 low risk · 100 high risk")}</p>
+          <p className="text-muted-foreground mt-0.5 text-[11px]">
+            {t("0 low risk · 100 high risk")}
+          </p>
         </SnapshotTile>
       </div>
 
       <div className="grid gap-3 xl:grid-cols-2">
         <Card className="gap-0 p-0">
           <CardHeader className="border-b px-4 py-2.5">
-            <CardTitle className="text-xs font-medium">{t("Payments — trailing 12 months")}</CardTitle>
+            <CardTitle className="text-xs font-medium">
+              {t("Payments — trailing 12 months")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-3">
             {chartData.length === 0 ? (

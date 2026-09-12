@@ -98,7 +98,13 @@ function FacilityRow({
             {row.locationName || row.locationId}
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-            {t("{0} {1} · {2} past free time {3}", row.stopCount, row.stopCount === 1 ? "stop" : "stops", row.breachCount, row.disputeCount > 0 ? ` ${t("· {0} disputed", row.disputeCount)}` : "")}
+            {t(
+              "{0} {1} · {2} past free time {3}",
+              row.stopCount,
+              row.stopCount === 1 ? "stop" : "stops",
+              row.breachCount,
+              row.disputeCount > 0 ? ` ${t("· {0} disputed", row.disputeCount)}` : "",
+            )}
           </p>
         </div>
 
@@ -110,7 +116,11 @@ function FacilityRow({
             delay={Math.min(index, 10) * 0.03}
           />
           <p className="text-2xs text-muted-foreground mt-1.5 truncate tabular-nums">
-            {t("{0} med · {1} p90", formatDetentionMinutes(Math.round(row.medianDwellMinutes)), formatDetentionMinutes(Math.round(row.p90DwellMinutes)))}
+            {t(
+              "{0} med · {1} p90",
+              formatDetentionMinutes(Math.round(row.medianDwellMinutes)),
+              formatDetentionMinutes(Math.round(row.p90DwellMinutes)),
+            )}
           </p>
         </div>
 
@@ -227,7 +237,9 @@ export function FacilityProfiles({
       index={index}
       icon={WarehouseIcon}
       title={t("Facility profiles")}
-      description={t("Where detention actually accrues — the docks worth renegotiating or replanning around. Open a row for the full ledger behind it.")}
+      description={t(
+        "Where detention actually accrues — the docks worth renegotiating or replanning around. Open a row for the full ledger behind it.",
+      )}
       action={
         rows.length > 1 ? (
           <SegmentedControl
@@ -272,7 +284,9 @@ export function FacilityProfiles({
       ) : sorted.length === 0 ? (
         <PanelEmpty
           icon={WarehouseIcon}
-          message={t("No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization.")}
+          message={t(
+            "No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization.",
+          )}
         />
       ) : (
         <div key={sort} className="divide-border divide-y">

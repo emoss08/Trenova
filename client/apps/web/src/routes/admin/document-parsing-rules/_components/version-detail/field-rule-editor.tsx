@@ -57,9 +57,13 @@ export function FieldRuleEditor() {
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
           <TextCursorInputIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-muted-foreground text-sm font-medium">{t("No field rules defined")}</p>
+            <p className="text-muted-foreground text-sm font-medium">
+              {t("No field rules defined")}
+            </p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              {t("Add fields to extract specific values like PRO numbers, reference IDs, or dates from documents.")}
+              {t(
+                "Add fields to extract specific values like PRO numbers, reference IDs, or dates from documents.",
+              )}
             </p>
           </div>
         </div>
@@ -106,7 +110,9 @@ function FieldItem({
       <div className="rounded-md border">
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span>{defaultKey ? `${defaultKey} — ${defaultLabel}` : t("Field {0}", index + 1)}</span>
+            <span>
+              {defaultKey ? `${defaultKey} — ${defaultLabel}` : t("Field {0}", index + 1)}
+            </span>
             {isRequired && <Badge variant="active">{t("Required")}</Badge>}
             {typeof confidence === "number" && confidence > 0 && (
               <Badge variant="outline">{Math.round(confidence * 100)}%</Badge>
@@ -170,7 +176,9 @@ function FieldItem({
                   control={control}
                   name={`ruleDocument.fields.${index}.patterns`}
                   label={t("Patterns")}
-                  description={t("Regex patterns for extraction. The first capture group is used as the value.")}
+                  description={t(
+                    "Regex patterns for extraction. The first capture group is used as the value.",
+                  )}
                   placeholder={t("Add regex pattern...")}
                 />
               </FormControl>

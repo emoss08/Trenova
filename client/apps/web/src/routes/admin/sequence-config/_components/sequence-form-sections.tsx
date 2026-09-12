@@ -164,7 +164,9 @@ export function DateComponentsSection({ index }: SectionProps) {
             name={`configs.${index}.yearDigits`}
             render={({ field, fieldState }) => (
               <div className="space-y-1.5">
-                <Label className={fieldState.error ? "text-destructive" : ""}>{t("Year Digits")}</Label>
+                <Label className={fieldState.error ? "text-destructive" : ""}>
+                  {t("Year Digits")}
+                </Label>
                 <div className="grid grid-cols-2 gap-2">
                   {yearDigitsOptions.map((option) => {
                     const isActive = field.value === option.value;
@@ -345,7 +347,9 @@ export function AdvancedSection({ index }: SectionProps) {
                     name={`configs.${index}.customFormat`}
                     label={t("Custom Format Template")}
                     placeholder={t("{P}-{Y}{M}-{S}")}
-                    description={t("Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.")}
+                    description={t(
+                      "Use tokens like {P}, {Y}, {M}, {S}. See Tokens reference above.",
+                    )}
                   />
                 </FormControl>
               ) : null}

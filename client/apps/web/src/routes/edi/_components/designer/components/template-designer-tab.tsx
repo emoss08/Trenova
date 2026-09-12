@@ -146,11 +146,19 @@ function TemplateDesignerHeader() {
           </span>
           {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
           {hasUnsavedChanges && <Badge variant="warning">{t("Unsaved")}</Badge>}
-          {!isEditable && selectedVersion ? <Badge variant="outline">{t("Read-only")}</Badge> : null}
+          {!isEditable && selectedVersion ? (
+            <Badge variant="outline">{t("Read-only")}</Badge>
+          ) : null}
         </div>
         <div className="text-muted-foreground text-xs">
           {selectedVersion
-            ? t("Version {0} / {1} / {2} / {3} segments", selectedVersion.versionNumber, metadataDraft.x12Version, metadataDraft.functionalGroupId, segmentsCount)
+            ? t(
+                "Version {0} / {1} / {2} / {3} segments",
+                selectedVersion.versionNumber,
+                metadataDraft.x12Version,
+                metadataDraft.functionalGroupId,
+                segmentsCount,
+              )
             : t("Create or select an outbound X12 204 template.")}
         </div>
       </div>
@@ -364,7 +372,9 @@ function TemplateDesignerFooter() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2">
       <div className="text-muted-foreground text-xs">
-        {t("Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft is clicked.")}
+        {t(
+          "Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft is clicked.",
+        )}
       </div>
       <Button
         type="button"

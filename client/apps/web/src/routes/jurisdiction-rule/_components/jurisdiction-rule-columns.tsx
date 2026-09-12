@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatFeetInches, formatPounds } from "@trenova/shared/lib/permit";
@@ -15,11 +15,11 @@ const VERIFICATION_VARIANT: Record<
   Disputed: "warning",
 };
 
-export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleRow>[] {
   return [
     {
       accessorKey: "state",
-      header: "State",
+      header: t("State"),
       cell: ({ row }) => (
         <span className="text-sm font-medium">
           {row.original.state?.abbreviation ?? "—"}
@@ -27,11 +27,11 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
         </span>
       ),
       size: 200,
-      meta: { label: "State", apiField: "stateId", sortable: true },
+      meta: { label: t("State"), apiField: "stateId", sortable: true },
     },
     {
       accessorKey: "verificationState",
-      header: "Verification",
+      header: t("Verification"),
       // The first column an operator should read. A limit nobody has confirmed
       // is a research baseline, and requirements derived from it say so.
       cell: ({ row }) => (
@@ -41,7 +41,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
       ),
       size: 130,
       meta: {
-        label: "Verification",
+        label: t("Verification"),
         apiField: "verificationState",
         filterable: true,
         sortable: true,
@@ -51,7 +51,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <Badge variant={row.original.status === "Active" ? "active" : "inactive"}>
           {row.original.status}
@@ -59,7 +59,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
       ),
       size: 110,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -69,53 +69,53 @@ export function getColumns(): ColumnDef<JurisdictionRuleRow>[] {
     },
     {
       accessorKey: "maxWidthFeet",
-      header: "Max Width",
+      header: t("Max Width"),
       cell: ({ row }) => formatFeetInches(row.original.maxWidthFeet),
       size: 120,
-      meta: { label: "Max Width", apiField: "maxWidthFeet", sortable: true },
+      meta: { label: t("Max Width"), apiField: "maxWidthFeet", sortable: true },
     },
     {
       accessorKey: "maxHeightFeet",
-      header: "Max Height",
+      header: t("Max Height"),
       cell: ({ row }) => formatFeetInches(row.original.maxHeightFeet),
       size: 120,
-      meta: { label: "Max Height", apiField: "maxHeightFeet", sortable: true },
+      meta: { label: t("Max Height"), apiField: "maxHeightFeet", sortable: true },
     },
     {
       accessorKey: "maxLengthFeet",
-      header: "Max Length",
+      header: t("Max Length"),
       cell: ({ row }) => formatFeetInches(row.original.maxLengthFeet),
       size: 120,
-      meta: { label: "Max Length", apiField: "maxLengthFeet", sortable: true },
+      meta: { label: t("Max Length"), apiField: "maxLengthFeet", sortable: true },
     },
     {
       accessorKey: "maxWeightPounds",
-      header: "Max Weight",
+      header: t("Max Weight"),
       cell: ({ row }) => formatPounds(row.original.maxWeightPounds),
       size: 140,
-      meta: { label: "Max Weight", apiField: "maxWeightPounds", sortable: true },
+      meta: { label: t("Max Weight"), apiField: "maxWeightPounds", sortable: true },
     },
     {
       accessorKey: "permitLeadTimeDays",
-      header: "Lead Time",
+      header: t("Lead Time"),
       cell: ({ row }) => {
         const days = row.original.permitLeadTimeDays;
         return `${days} day${days === 1 ? "" : "s"}`;
       },
       size: 110,
-      meta: { label: "Lead Time", apiField: "permitLeadTimeDays", sortable: true },
+      meta: { label: t("Lead Time"), apiField: "permitLeadTimeDays", sortable: true },
     },
     {
       accessorKey: "verifiedAt",
-      header: "Verified",
+      header: t("Verified"),
       cell: ({ row }) =>
         row.original.verifiedAt ? (
           <HoverCardTimestamp timestamp={row.original.verifiedAt} />
         ) : (
-          <span className="text-muted-foreground">{translate("Never")}</span>
+          <span className="text-muted-foreground">{t("Never")}</span>
         ),
       size: 150,
-      meta: { label: "Verified", apiField: "verifiedAt", sortable: true },
+      meta: { label: t("Verified"), apiField: "verifiedAt", sortable: true },
     },
   ];
 }

@@ -115,7 +115,9 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
         <DialogHeader>
           <DialogTitle>{t("Add New {0}", title)}</DialogTitle>
           <DialogDescription>
-            {description ? description : t("Please fill out the form below to create a new {0}.", title)}
+            {description
+              ? description
+              : t("Please fill out the form below to create a new {0}.", title)}
           </DialogDescription>
         </DialogHeader>
         {notice ? notice : null}

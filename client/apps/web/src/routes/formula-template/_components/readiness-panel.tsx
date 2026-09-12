@@ -86,7 +86,9 @@ export function ReadinessPanel({
   if (isError || !data) {
     return (
       <div className="text-muted-foreground rounded-md border px-3 py-2 text-xs">
-        {t("The readiness check could not run. The server will still enforce every rule when you confirm.")}
+        {t(
+          "The readiness check could not run. The server will still enforce every rule when you confirm.",
+        )}
       </div>
     );
   }

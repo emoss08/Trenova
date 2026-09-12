@@ -93,7 +93,9 @@ export default function PoliciesConsole() {
             aria-label={t("Which policies to show")}
           />
           <InfoPopover title={t("Signatures")}>
-            {t("A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.")}
+            {t(
+              "A signature is pinned to the version label it was given for. Correcting the text under the same label keeps every signature; publishing a new label asks everybody it applies to to read and sign again from Dash.",
+            )}
           </InfoPopover>
         </div>
         {canCreate ? (
@@ -109,7 +111,9 @@ export default function PoliciesConsole() {
       ) : shown.length === 0 ? (
         <PoliciesEmpty
           title={scope === "active" ? "Nothing in force" : "No policies yet"}
-          description={t("Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash.")}
+          description={t(
+            "Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash.",
+          )}
           onPublish={canCreate ? () => setDialog({ policy: null }) : undefined}
         />
       ) : (
@@ -169,7 +173,8 @@ function PolicyCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{t(policy.title)}</p>
           <p className="text-muted-foreground truncate text-xs">
-            {policy.summary || t("{0} · from {1}", policy.code, formatShiftDate(policy.effectiveFrom))}
+            {policy.summary ||
+              t("{0} · from {1}", policy.code, formatShiftDate(policy.effectiveFrom))}
           </p>
         </div>
       </div>

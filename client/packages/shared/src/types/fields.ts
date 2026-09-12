@@ -34,6 +34,6 @@ export type GenericSelectOption<T extends string | boolean | number> = {
 };
 
 export type WarningProps = {
-  show: boolean
-  message: string
-}
+  show: boolean;
+  message: string;
+};

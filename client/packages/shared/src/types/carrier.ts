@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   decimalStringSchema,
@@ -62,7 +63,7 @@ export const carrierContactSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["email"],
-        message: "A rate confirmation recipient must have an email address",
+        message: translate("A rate confirmation recipient must have an email address"),
       });
     }
   });
@@ -96,14 +97,14 @@ export const carrierInsurancePolicySchema = z
       ctx.addIssue({
         code: "custom",
         path: ["coverageAmount"],
-        message: "Coverage amount cannot be negative",
+        message: translate("Coverage amount cannot be negative"),
       });
     }
     if (data.expirationDate <= data.effectiveDate) {
       ctx.addIssue({
         code: "custom",
         path: ["expirationDate"],
-        message: "Expiration date must be after the effective date",
+        message: translate("Expiration date must be after the effective date"),
       });
     }
   });
@@ -175,14 +176,14 @@ export const carrierSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["disqualifiedReason"],
-        message: "A disqualified carrier must record the disqualification reason",
+        message: translate("A disqualified carrier must record the disqualification reason"),
       });
     }
     if (data.taxId && !data.taxIdType) {
       ctx.addIssue({
         code: "custom",
         path: ["taxIdType"],
-        message: "Tax ID type is required when a tax ID is provided",
+        message: translate("Tax ID type is required when a tax ID is provided"),
       });
     }
   });

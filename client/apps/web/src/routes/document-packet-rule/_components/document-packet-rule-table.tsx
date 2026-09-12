@@ -74,19 +74,19 @@ export default function DocumentPacketRuleTable() {
     setDeleteDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(documentTypeMap), [documentTypeMap]);
+  const columns = useMemo(() => getColumns(documentTypeMap, t), [documentTypeMap, t]);
 
   const contextMenuActions = useMemo<RowAction<DocumentPacketRuleRow>[]>(
     () => [
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: TrashIcon,
         variant: "destructive",
         onClick: handleDelete,
       },
     ],
-    [handleDelete],
+    [handleDelete, t],
   );
 
   return (

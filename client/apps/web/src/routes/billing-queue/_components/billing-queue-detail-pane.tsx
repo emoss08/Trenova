@@ -54,7 +54,9 @@ export default function BillingQueueDetailPane({
       <BillingDetailUnselected
         layout="tabs"
         title={t("Nothing open")}
-        description={t("Pick an item from the queue to review it here, or press J to start at the top.")}
+        description={t(
+          "Pick an item from the queue to review it here, or press J to start at the top.",
+        )}
       />
     );
   }

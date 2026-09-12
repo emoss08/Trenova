@@ -30,7 +30,9 @@ export function JurisdictionRuleForm() {
       <Alert>
         <GlobeIcon className="size-4" />
         <AlertDescription>
-          {t("These limits are shared by every organization on the platform, not just yours. To hold your fleet to something stricter, record a carrier override instead. Changing any limit below clears the verification on this rule.")}
+          {t(
+            "These limits are shared by every organization on the platform, not just yours. To hold your fleet to something stricter, record a carrier override instead. Changing any limit below clears the verification on this rule.",
+          )}
         </AlertDescription>
       </Alert>
 
@@ -109,7 +111,9 @@ export function JurisdictionRuleForm() {
 
       <FormSection
         title={t("Superload Thresholds")}
-        description={t("Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.")}
+        description={t(
+          "Above these a load needs superload review rather than an ordinary permit. Leave blank if unknown.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -213,7 +217,9 @@ export function JurisdictionRuleForm() {
 
       <FormSection
         title={t("Source")}
-        description={t("What these numbers were taken from. Editing only this keeps the rule's verification.")}
+        description={t(
+          "What these numbers were taken from. Editing only this keeps the rule's verification.",
+        )}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">

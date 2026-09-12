@@ -56,7 +56,9 @@ function EntryList({
         ))}
       </ul>
       {hidden > 0 ? (
-        <p className="text-muted-foreground text-2xs border-t px-3 py-1.5">{t("and {0} more", hidden)}</p>
+        <p className="text-muted-foreground text-2xs border-t px-3 py-1.5">
+          {t("and {0} more", hidden)}
+        </p>
       ) : null}
     </>
   );

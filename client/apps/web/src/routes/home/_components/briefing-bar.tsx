@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ATTENTION_ROWS, type AttentionSummary } from "@/config/attention-rows";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -86,7 +87,7 @@ function buildChips(
         tone: "warning",
       },
       {
-        label: "at risk",
+        label: translate("at risk"),
         count: analytics.atRisk.count,
         href: "/shipment-management/shipments",
         tone: "danger",
@@ -180,7 +181,11 @@ export function BriefingBar({
                   <CheckIcon className="text-success size-2.5" />
                 </span>
                 {analyticsReady
-                  ? t("You're clear — {0} {1} moving, nothing flagged.", analytics.activeShipments.count, analytics.activeShipments.count === 1 ? "load" : "loads")
+                  ? t(
+                      "You're clear — {0} {1} moving, nothing flagged.",
+                      analytics.activeShipments.count,
+                      analytics.activeShipments.count === 1 ? "load" : "loads",
+                    )
                   : t("You're clear — nothing flagged.")}
               </m.span>
             ) : (

@@ -253,7 +253,11 @@ export function APIKeyPermissionsEditor() {
               size="sm"
               onClick={() => applyBulkPreset(allResources, mode)}
             >
-              {mode === "read" ? t("All Read") : mode === "write" ? t("All Write") : t("Full Access")}
+              {mode === "read"
+                ? t("All Read")
+                : mode === "write"
+                  ? t("All Write")
+                  : t("Full Access")}
             </Button>
           ))}
           <Button

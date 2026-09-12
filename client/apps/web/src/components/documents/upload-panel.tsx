@@ -486,9 +486,9 @@ export function UploadPanel({
   );
 
   const tabs: { value: UploadFilter; label: string; count: number }[] = [
-    { value: "all", label: "All", count: counts.all },
-    { value: "completed", label: "Completed", count: counts.completed },
-    { value: "failed", label: "Failed", count: counts.failed },
+    { value: "all", label: t("All"), count: counts.all },
+    { value: "completed", label: t("Completed"), count: counts.completed },
+    { value: "failed", label: t("Failed"), count: counts.failed },
   ];
 
   return (

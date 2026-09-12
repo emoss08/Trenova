@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { RateAgreementRule, RateScopeType } from "../types/rate";
 
 /**
@@ -317,8 +318,9 @@ export function findCoverageIssues(rules: RateAgreementRule[]): LaneCoverageIssu
       issues.push({
         index,
         kind: "duplicate",
-        message:
+        message: translate(
           "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.",
+        ),
       });
       return;
     }
@@ -326,8 +328,9 @@ export function findCoverageIssues(rules: RateAgreementRule[]): LaneCoverageIssu
     issues.push({
       index,
       kind: "shadowed",
-      message:
+      message: translate(
         "Another lane covers the same geography with a higher priority, so this one can never apply.",
+      ),
     });
   });
 

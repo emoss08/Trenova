@@ -116,7 +116,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
         <DialogHeader>
           <DialogTitle>{t("Log a Clearinghouse query")}</DialogTitle>
           <DialogDescription>
-            {t("A full query before the driver's first dispatch, and a limited query every twelve months after (49 CFR 382 Subpart G).")}
+            {t(
+              "A full query before the driver's first dispatch, and a limited query every twelve months after (49 CFR 382 Subpart G).",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -135,7 +137,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   label={t("Query")}
                   options={TYPE_OPTIONS}
                   placeholder={t("Pick a query type")}
-                  description={t("A full query needs the driver's specific consent; a limited query runs on the general consent on file.")}
+                  description={t(
+                    "A full query needs the driver's specific consent; a limited query runs on the general consent on file.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -169,7 +173,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   name="consentExpiresAt"
                   label={t("Consent expires")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("When the consent on file lapses; a new one is needed before the next query.")}
+                  description={t(
+                    "When the consent on file lapses; a new one is needed before the next query.",
+                  )}
                 />
               </FormControl>
               <FormControl>
@@ -178,7 +184,9 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   name="reference"
                   label={t("Reference")}
                   placeholder={t("Clearinghouse query reference")}
-                  description={t("The query ID the Clearinghouse assigned, for matching the answer when it comes back.")}
+                  description={t(
+                    "The query ID the Clearinghouse assigned, for matching the answer when it comes back.",
+                  )}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -298,7 +306,9 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   label={t("Answer")}
                   options={RESULT_OPTIONS}
                   placeholder={t("Pick an answer")}
-                  description={t("Violations found or consent denied prohibits the driver from safety-sensitive duty at once.")}
+                  description={t(
+                    "Violations found or consent denied prohibits the driver from safety-sensitive duty at once.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -308,7 +318,9 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   name="completedAt"
                   label={t("Answered on")}
                   placeholder={t("MM/DD/YYYY")}
-                  description={t("When the Clearinghouse returned the answer; the next annual query is due twelve months on.")}
+                  description={t(
+                    "When the Clearinghouse returned the answer; the next annual query is due twelve months on.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

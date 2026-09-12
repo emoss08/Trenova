@@ -179,9 +179,9 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
   const t = useT();
 
   const targets = [
-    { label: "Shipment board views", href: "/shipment-management/shipments" },
-    { label: "Report views", href: "/reports" },
-    { label: "Dashboards", href: "/reports/dashboards" },
+    { label: t("Shipment board views"), href: "/shipment-management/shipments" },
+    { label: t("Report views"), href: "/reports" },
+    { label: t("Dashboards"), href: "/reports/dashboards" },
   ];
 
   return (

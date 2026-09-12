@@ -46,7 +46,9 @@ export function GeneralTab() {
               label={t("Status")}
               placeholder={t("Set from the timeline")}
               isReadOnly
-              description={t("Employment status moves through the Timeline tab — record a Terminated, Rehired or similar event.")}
+              description={t(
+                "Employment status moves through the Timeline tab — record a Terminated, Rehired or similar event.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -122,7 +124,9 @@ export function GeneralTab() {
               clearable
               label={t("Position")}
               placeholder={t("Driving position")}
-              description={t("The title the roster is counted by. Front-office titles are held by users, not workers.")}
+              description={t(
+                "The title the roster is counted by. Front-office titles are held by users, not workers.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -190,7 +194,10 @@ export function GeneralTab() {
         </FormGroup>
       </FormSection>
 
-      <FormSection title={t("Contact Information")} description={t("Contact information for the worker.")}>
+      <FormSection
+        title={t("Contact Information")}
+        description={t("Contact information for the worker.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <InputField

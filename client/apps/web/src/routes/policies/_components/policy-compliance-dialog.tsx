@@ -80,7 +80,10 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
             {policy?.title ?? t("Policy")}
           </SheetTitle>
           <SheetDescription>
-            {t("Version {0}. A signature on an earlier version does not count — those people are outstanding again.", view?.policy.versionLabel ?? policy?.versionLabel)}
+            {t(
+              "Version {0}. A signature on an earlier version does not count — those people are outstanding again.",
+              view?.policy.versionLabel ?? policy?.versionLabel,
+            )}
           </SheetDescription>
         </SheetHeader>
 

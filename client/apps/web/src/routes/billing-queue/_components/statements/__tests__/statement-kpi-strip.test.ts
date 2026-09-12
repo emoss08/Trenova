@@ -37,7 +37,10 @@ function statement(overrides: Partial<OpenStatement> = {}): OpenStatement {
 describe("summarizeStatements", () => {
   it("adds up the statements with freight on them", () => {
     const metrics = summarizeStatements(
-      [statement({ shipmentCount: 4, totalAmount: 4200 }), statement({ shipmentCount: 2, totalAmount: 800 })],
+      [
+        statement({ shipmentCount: 4, totalAmount: 4200 }),
+        statement({ shipmentCount: 2, totalAmount: 800 }),
+      ],
       NOW,
     );
 
@@ -50,7 +53,10 @@ describe("summarizeStatements", () => {
   // put every statement customer in the "accruing" tile forever.
   it("ignores statements with nothing accrued", () => {
     const metrics = summarizeStatements(
-      [statement({ shipmentCount: 0, totalAmount: 0 }), statement({ shipmentCount: 3, totalAmount: 900 })],
+      [
+        statement({ shipmentCount: 0, totalAmount: 0 }),
+        statement({ shipmentCount: 3, totalAmount: 900 }),
+      ],
       NOW,
     );
 

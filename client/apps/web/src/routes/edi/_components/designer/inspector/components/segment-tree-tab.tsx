@@ -56,7 +56,9 @@ export default function SegmentTreeTab({
                     {segment.index}
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
-                  {isControlSegment(segment) ? <Badge variant="outline">{t("Control")}</Badge> : null}
+                  {isControlSegment(segment) ? (
+                    <Badge variant="outline">{t("Control")}</Badge>
+                  ) : null}
                 </span>
                 <span className="text-muted-foreground block truncate pl-10 text-xs">
                   {segment.name}
@@ -80,7 +82,9 @@ export default function SegmentTreeTab({
       {selectedSegment ? (
         <SegmentDetail segment={selectedSegment} diagnostics={diagnostics} />
       ) : (
-        <div className="text-muted-foreground rounded-md border p-4 text-sm">{t("Select a segment.")}</div>
+        <div className="text-muted-foreground rounded-md border p-4 text-sm">
+          {t("Select a segment.")}
+        </div>
       )}
     </div>
   );

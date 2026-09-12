@@ -156,8 +156,8 @@ export function ReportsPage() {
     <PageLayout
       className="gap-y-0 p-0"
       pageHeaderProps={{
-        title: "Reports",
-        description: "Build, run, and share reports over your organization's data",
+        title: t("Reports"),
+        description: t("Build, run, and share reports over your organization's data"),
         actions: (
           <div className="flex items-center gap-2">
             <Button variant="outline" render={<Link to="/reports/runs" />}>

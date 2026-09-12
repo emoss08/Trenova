@@ -81,24 +81,24 @@ export function DetentionPolicyPanel({
     () => [
       {
         value: "terms",
-        label: "Terms",
+        label: t("Terms"),
         icon: ScaleIcon,
         content: <DetentionPolicyForm />,
       },
       {
         value: "preview",
-        label: "Live Preview",
+        label: t("Live Preview"),
         icon: FlaskConicalIcon,
         content: <DetentionPolicyPreview />,
       },
       {
         value: "backtest",
-        label: "Backtest",
+        label: t("Backtest"),
         icon: HistoryIcon,
         content: <DetentionBacktest />,
       },
     ],
-    [],
+    [t],
   );
 
   if (mode === "edit") {
@@ -126,7 +126,9 @@ export function DetentionPolicyPanel({
       form={form}
       queryKey="detention-policy-list"
       title={t("Detention Policy")}
-      description={t("Encode the contract's detention terms and see what they would charge before they touch a shipment.")}
+      description={t(
+        "Encode the contract's detention terms and see what they would charge before they touch a shipment.",
+      )}
       formTabs={formTabs}
       mutationFn={(values) => apiService.detentionPolicyService.create(values)}
     />

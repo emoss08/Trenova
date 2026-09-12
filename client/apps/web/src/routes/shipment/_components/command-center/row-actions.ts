@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   ShipmentBillingAction,
   ShipmentBillingActions,
@@ -41,26 +42,26 @@ export function buildShipmentRowActions(
   return [
     {
       id: "edit",
-      label: "Edit",
+      label: translate("Edit"),
       icon: PencilIcon,
       onClick: handlers.onEdit,
     },
     {
       id: "duplicate",
-      label: "Duplicate",
+      label: translate("Duplicate"),
       icon: CopyIcon,
       onClick: handlers.onDuplicate,
     },
     {
       id: "transfer-ownership",
-      label: "Transfer Ownership",
+      label: translate("Transfer Ownership"),
       icon: ArrowRightLeftIcon,
       onClick: handlers.onTransferOwnership,
       hidden: (row) => row.original.status === "Canceled",
     },
     {
       id: "send-edi-load-tender",
-      label: "Send EDI Load Tender",
+      label: translate("Send EDI Load Tender"),
       icon: SendIcon,
       onClick: handlers.onSendEDI,
       hidden: (row) => {
@@ -81,7 +82,7 @@ export function buildShipmentRowActions(
     toRowAction(handlers.billingActions.transferToBilling),
     {
       id: "cancel",
-      label: "Cancel",
+      label: translate("Cancel"),
       icon: BanIcon,
       variant: "destructive",
       onClick: handlers.onCancel,
@@ -89,7 +90,7 @@ export function buildShipmentRowActions(
     },
     {
       id: "uncancel",
-      label: "Uncancel",
+      label: translate("Uncancel"),
       icon: UndoIcon,
       onClick: handlers.onUncancel,
       hidden: (row) => row.original.status !== "Canceled",

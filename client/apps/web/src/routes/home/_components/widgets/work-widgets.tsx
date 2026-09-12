@@ -349,11 +349,11 @@ export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
 
   const targets = [
     {
-      label: "Driver licenses & medical cards",
+      label: t("Driver licenses & medical cards"),
       href: "/reports?canned=expiring-worker-credentials",
     },
-    { label: "Tractor registrations", href: "/reports?canned=expiring-tractor-registrations" },
-    { label: "Trailer registrations", href: "/reports?canned=expiring-trailer-registrations" },
+    { label: t("Tractor registrations"), href: "/reports?canned=expiring-tractor-registrations" },
+    { label: t("Trailer registrations"), href: "/reports?canned=expiring-trailer-registrations" },
   ];
 
   return (

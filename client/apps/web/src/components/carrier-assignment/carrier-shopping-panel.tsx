@@ -125,7 +125,9 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
         <Alert variant="destructive">
           <CircleAlertIcon className="size-4" />
           <AlertDescription>
-            {t("No carrier on this lane has a contract that prices it. Write one, or enter the rate by hand.")}
+            {t(
+              "No carrier on this lane has a contract that prices it. Write one, or enter the rate by hand.",
+            )}
           </AlertDescription>
         </Alert>
       )}

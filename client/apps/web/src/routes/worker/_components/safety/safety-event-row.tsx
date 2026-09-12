@@ -104,7 +104,7 @@ export function SafetyEventRow({
   if (!isClosed && permissions.canClose) {
     actions.push({
       id: "close",
-      label: "Close event",
+      label: t("Close event"),
       icon: CheckCircle2Icon,
       disabled: busy,
       onSelect: () => onClose(event),
@@ -113,7 +113,7 @@ export function SafetyEventRow({
   if (status === "Open" && permissions.canClose) {
     actions.push({
       id: "review",
-      label: "Mark under review",
+      label: t("Mark under review"),
       icon: SearchIcon,
       disabled: busy,
       onSelect: () => onReview(event),
@@ -122,7 +122,7 @@ export function SafetyEventRow({
   if (isClosed && permissions.canClose) {
     actions.push({
       id: "reopen",
-      label: "Reopen",
+      label: t("Reopen"),
       icon: RotateCcwIcon,
       disabled: busy,
       onSelect: () => onReopen(event),

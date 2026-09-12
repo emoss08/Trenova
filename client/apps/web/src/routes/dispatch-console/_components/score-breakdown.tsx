@@ -57,7 +57,9 @@ export function ScoreBreakdown({
       </div>
 
       {factors.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("Not enough data to score this pairing.")}</p>
+        <p className="text-muted-foreground text-[11px]">
+          {t("Not enough data to score this pairing.")}
+        </p>
       ) : (
         <>
           <ul className="flex flex-col gap-2">
@@ -84,7 +86,10 @@ export function ScoreBreakdown({
                   className={cn("size-3 transition-transform", showFlat && "rotate-180")}
                   aria-hidden
                 />
-                {t("{0, plural, one {# factor} other {# factors}} contributed nothing", flat.length)}
+                {t(
+                  "{0, plural, one {# factor} other {# factors}} contributed nothing",
+                  flat.length,
+                )}
               </button>
               {showFlat ? (
                 <ul className="border-border flex flex-col gap-1.5 border-l pl-3">

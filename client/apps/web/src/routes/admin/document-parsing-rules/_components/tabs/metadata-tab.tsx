@@ -47,7 +47,11 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
           <div>
             <p className="text-muted-foreground">{t("Version")}</p>
             <p className="font-medium">
-              {t("v{0}{1}", publishedVersion.versionNumber, publishedVersion.label ? ` — ${publishedVersion.label}` : "")}
+              {t(
+                "v{0}{1}",
+                publishedVersion.versionNumber,
+                publishedVersion.label ? ` — ${publishedVersion.label}` : "",
+              )}
             </p>
           </div>
           <div>
@@ -73,7 +77,9 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
         <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
           <PackageIcon className="text-muted-foreground size-5 shrink-0" />
           <p className="text-muted-foreground text-sm">
-            {t("No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.")}
+            {t(
+              "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.",
+            )}
           </p>
         </div>
       )}
@@ -154,8 +160,9 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                   rules={{ required: true }}
                   warning={{
                     show: showDocumentKindWarning,
-                    message:
+                    message: t(
                       "Changing this value can invalidate existing versions and fixtures. Re-run simulations before publishing.",
+                    ),
                   }}
                 />
               </FormControl>
@@ -164,7 +171,9 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                   control={control}
                   name="priority"
                   label={t("Priority")}
-                  description={t("Higher priority rules take precedence when multiple rules match the same document.")}
+                  description={t(
+                    "Higher priority rules take precedence when multiple rules match the same document.",
+                  )}
                 />
               </FormControl>
             </FormGroup>
@@ -175,7 +184,9 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
                   control={control}
                   name="description"
                   label={t("Description")}
-                  placeholder={t("Describe when this rule set should be used, what provider or format it targets, and any special considerations...")}
+                  placeholder={t(
+                    "Describe when this rule set should be used, what provider or format it targets, and any special considerations...",
+                  )}
                   description={t("Helps your team understand the purpose of this rule set.")}
                   minRows={5}
                 />

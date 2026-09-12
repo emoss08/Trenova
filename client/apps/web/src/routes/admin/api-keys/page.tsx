@@ -15,7 +15,9 @@ export function APIKeysPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("API Keys")}
-        description={t("Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.")}
+        description={t(
+          "Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.",
+        )}
       />
       <div className="p-4">
         <Suspense

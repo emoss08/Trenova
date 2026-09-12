@@ -5,9 +5,7 @@ import * as React from "react";
 import { useState } from "react";
 import TextareaAutosizeComponent from "react-textarea-autosize";
 
-export type TextareaProps = React.ComponentProps<
-  typeof TextareaAutosizeComponent
-> & {
+export type TextareaProps = React.ComponentProps<typeof TextareaAutosizeComponent> & {
   isInvalid?: boolean;
 };
 
@@ -60,16 +58,9 @@ const ITEMS = [
   },
 ];
 
-function AITextarea({
-  className,
-  isInvalid,
-  onChange,
-  ...props
-}: TextareaProps) {
+function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps) {
   const [inputValue, setInputValue] = useState("");
-  const [selectedItem, setSelectedItem] = useState<string | null>(
-    "Make shorter",
-  );
+  const [selectedItem, setSelectedItem] = useState<string | null>("Make shorter");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 70,
     maxHeight: 200,
@@ -81,9 +72,7 @@ function AITextarea({
     setSelectedItem((prev) => (prev === itemText ? null : itemText));
   };
 
-  const currentItem = selectedItem
-    ? ITEMS.find((item) => item.text === selectedItem)
-    : null;
+  const currentItem = selectedItem ? ITEMS.find((item) => item.text === selectedItem) : null;
 
   const handleSubmit = () => {
     setInputValue("");
@@ -145,9 +134,7 @@ function AITextarea({
                     )}
                   >
                     {currentItem.icon}
-                    <span className={currentItem.colors.icon}>
-                      {selectedItem}
-                    </span>
+                    <span className={currentItem.colors.icon}>{selectedItem}</span>
                   </button>
                 </div>
               )}
@@ -156,27 +143,23 @@ function AITextarea({
         </div>
       </div>
       <div className="mx-auto mt-2 flex max-w-xl flex-wrap justify-start gap-1.5 px-1">
-        {ITEMS.filter((item) => item.text !== selectedItem).map(
-          ({ text, icon }) => (
-            <button
-              type="button"
-              key={text}
-              className={cn(
-                "rounded-md p-1 text-2xs font-medium",
-                "cursor-pointer border transition-all duration-200",
-                "shrink-0",
-              )}
-              onClick={() => toggleItem(text)}
-            >
-              <div className="flex items-center gap-1.5">
-                {icon}
-                <span className="whitespace-nowrap text-black/70 dark:text-white/70">
-                  {text}
-                </span>
-              </div>
-            </button>
-          ),
-        )}
+        {ITEMS.filter((item) => item.text !== selectedItem).map(({ text, icon }) => (
+          <button
+            type="button"
+            key={text}
+            className={cn(
+              "rounded-md p-1 text-2xs font-medium",
+              "cursor-pointer border transition-all duration-200",
+              "shrink-0",
+            )}
+            onClick={() => toggleItem(text)}
+          >
+            <div className="flex items-center gap-1.5">
+              {icon}
+              <span className="whitespace-nowrap text-black/70 dark:text-white/70">{text}</span>
+            </div>
+          </button>
+        ))}
       </div>
     </>
   );

@@ -136,8 +136,8 @@ export function CustomerStatementPage() {
     return (
       <PageLayout
         pageHeaderProps={{
-          title: "Customer Statement",
-          description: "No customer specified.",
+          title: t("Customer Statement"),
+          description: t("No customer specified."),
         }}
       >
         <div className="mx-4 mt-3">
@@ -156,7 +156,9 @@ export function CustomerStatementPage() {
 
   if (isLoading) {
     return (
-      <PageLayout pageHeaderProps={{ title: "Customer Statement", description: "Loading..." }}>
+      <PageLayout
+        pageHeaderProps={{ title: t("Customer Statement"), description: t("Loading...") }}
+      >
         <div className="mx-4 mt-3 space-y-4">
           <Skeleton className="h-8 w-48" />
           <div className="grid gap-2.5 md:grid-cols-4">
@@ -173,10 +175,14 @@ export function CustomerStatementPage() {
 
   if (isError || !statement) {
     return (
-      <PageLayout pageHeaderProps={{ title: "Customer Statement", description: "Failed to load." }}>
+      <PageLayout
+        pageHeaderProps={{ title: t("Customer Statement"), description: t("Failed to load.") }}
+      >
         <div className="mx-4 mt-3 space-y-3">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            {t("Could not load the statement. The customer may not exist or you may not have permission.")}
+            {t(
+              "Could not load the statement. The customer may not exist or you may not have permission.",
+            )}
           </div>
           <Button
             variant="ghost"
@@ -245,7 +251,11 @@ export function CustomerStatementPage() {
             value={statement.openingBalanceMinor}
             icon={CalendarIcon}
           />
-          <MetricCard label={t("Charges")} value={statement.totalChargesMinor} icon={FileTextIcon} />
+          <MetricCard
+            label={t("Charges")}
+            value={statement.totalChargesMinor}
+            icon={FileTextIcon}
+          />
           <MetricCard
             label={t("Payments")}
             value={statement.totalPaymentsMinor}

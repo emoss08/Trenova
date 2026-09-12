@@ -99,7 +99,9 @@ export default function InvoiceDetailPane({
       <BillingDetailUnselected
         layout="tabs"
         title={t("Nothing open")}
-        description={t("Pick an invoice from the list to review its charges, documents and what has been sent or paid.")}
+        description={t(
+          "Pick an invoice from the list to review its charges, documents and what has been sent or paid.",
+        )}
       />
     );
   }
@@ -221,7 +223,9 @@ export default function InvoiceDetailPane({
                 <div className="flex h-full items-center justify-center p-6">
                   <EmptyState
                     title={t("No shipment documents available")}
-                    description={t("This invoice does not currently have shipment context loaded for document review.")}
+                    description={t(
+                      "This invoice does not currently have shipment context loaded for document review.",
+                    )}
                     icons={[FileTextIcon, ReceiptTextIcon, PackageCheckIcon]}
                     className="max-w-xl border-none p-8 shadow-none"
                   />
@@ -311,7 +315,9 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  {invoice.sentAt ? t("Last sent {0}", formatUnixDate(invoice.sentAt)) : t("Not sent yet")}
+                  {invoice.sentAt
+                    ? t("Last sent {0}", formatUnixDate(invoice.sentAt))
+                    : t("Not sent yet")}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

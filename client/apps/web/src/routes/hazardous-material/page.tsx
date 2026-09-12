@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
@@ -5,11 +6,13 @@ import { lazy } from "react";
 const Table = lazy(() => import("./_components/hazardous-material-table"));
 
 export function HazardousMaterialsPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Hazardous Materials",
-        description: "Manage and configure hazardous materials for your organization",
+        title: t("Hazardous Materials"),
+        description: t("Manage and configure hazardous materials for your organization"),
       }}
     >
       <DataTableLazyComponent>

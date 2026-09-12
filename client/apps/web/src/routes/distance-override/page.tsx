@@ -13,7 +13,9 @@ export function DistanceOverridesPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Distance Overrides")}
-        description={t("Override calculated distances between location pairs for routing and billing adjustments")}
+        description={t(
+          "Override calculated distances between location pairs for routing and billing adjustments",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

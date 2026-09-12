@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { ReportRun } from "@/lib/graphql/reports";
@@ -52,17 +52,17 @@ function StatusCell({ run }: { run: ReportRun }) {
   );
 }
 
-export function getReportRunColumns(): ColumnDef<ReportRun>[] {
+export function getReportRunColumns(t: TranslateFn): ColumnDef<ReportRun>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell run={row.original} />,
       size: 160,
       minSize: 130,
       maxSize: 200,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -73,13 +73,13 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "format",
-      header: "Format",
+      header: t("Format"),
       cell: ({ row }) => <ReportFormatBadge format={row.original.format} />,
       size: 90,
       minSize: 80,
       maxSize: 120,
       meta: {
-        label: "Format",
+        label: t("Format"),
         apiField: "format",
         filterable: false,
         sortable: false,
@@ -87,7 +87,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "trigger",
-      header: "Trigger",
+      header: t("Trigger"),
       cell: ({ row }) => (
         <p className="text-muted-foreground">
           {REPORT_RUN_TRIGGER_LABELS[row.original.trigger] ?? row.original.trigger}
@@ -97,7 +97,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
       minSize: 90,
       maxSize: 130,
       meta: {
-        label: "Trigger",
+        label: t("Trigger"),
         apiField: "trigger",
         filterable: false,
         sortable: false,
@@ -105,7 +105,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "rowCount",
-      header: "Rows",
+      header: t("Rows"),
       cell: ({ row }) => {
         const run = row.original;
         if (run.status !== "succeeded" && run.status !== "expired") {
@@ -114,7 +114,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
         return (
           <p>
             {run.rowCount.toLocaleString()}
-            {run.truncated && <span className="text-warning"> {translate("(truncated)")}</span>}
+            {run.truncated && <span className="text-warning"> {t("(truncated)")}</span>}
           </p>
         );
       },
@@ -122,7 +122,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
       minSize: 90,
       maxSize: 150,
       meta: {
-        label: "Rows",
+        label: t("Rows"),
         apiField: "row_count",
         filterable: false,
         sortable: false,
@@ -130,7 +130,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "byteSize",
-      header: "Size",
+      header: t("Size"),
       cell: ({ row }) =>
         row.original.byteSize > 0 ? (
           <p>{formatFileSize(row.original.byteSize)}</p>
@@ -141,7 +141,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
       minSize: 80,
       maxSize: 130,
       meta: {
-        label: "Size",
+        label: t("Size"),
         apiField: "byte_size",
         filterable: false,
         sortable: false,
@@ -149,13 +149,13 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "durationMs",
-      header: "Duration",
+      header: t("Duration"),
       cell: ({ row }) => <p>{formatDuration(row.original.durationMs)}</p>,
       size: 100,
       minSize: 90,
       maxSize: 130,
       meta: {
-        label: "Duration",
+        label: t("Duration"),
         apiField: "duration_ms",
         filterable: false,
         sortable: false,
@@ -163,7 +163,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Requested At",
+      header: t("Requested At"),
       cell: ({ row }) => (
         <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />
       ),
@@ -171,7 +171,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
       minSize: 150,
       maxSize: 220,
       meta: {
-        label: "Requested At",
+        label: t("Requested At"),
         apiField: "createdAt",
         filterable: false,
         sortable: true,
@@ -179,7 +179,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
     },
     {
       accessorKey: "artifactExpiresAt",
-      header: "Expires",
+      header: t("Expires"),
       cell: ({ row }) =>
         row.original.artifactExpiresAt ? (
           <HoverCardTimestamp className="shrink-0" timestamp={row.original.artifactExpiresAt} />
@@ -190,7 +190,7 @@ export function getReportRunColumns(): ColumnDef<ReportRun>[] {
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "Expires",
+        label: t("Expires"),
         apiField: "artifact_expires_at",
         filterable: false,
         sortable: false,

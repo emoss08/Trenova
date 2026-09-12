@@ -55,8 +55,8 @@ export function AccountingDashboardPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Accounting",
-        description: "Receivables health, collections, and cash-flow at a glance.",
+        title: t("Accounting"),
+        description: t("Receivables health, collections, and cash-flow at a glance."),
         actions: canRecordPayment ? (
           <Link to="/accounting/ar/payments?panelType=create">
             <Button size="sm">

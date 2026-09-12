@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
 import { iftaFuelTypeChoices, iftaQuarterChoices } from "@/lib/choices";
@@ -20,11 +20,12 @@ function rate(value: string | null | undefined): string {
 
 export function getColumns(
   jurisdictionOptions: readonly GenericSelectOption<string>[],
+  t: TranslateFn,
 ): ColumnDef<IftaTaxRateRow>[] {
   return [
     {
       accessorKey: "year",
-      header: "Year",
+      header: t("Year"),
       cell: ({ row }) => <span className="font-table tabular-nums">{row.original.year}</span>,
       size: 90,
       meta: {
@@ -37,8 +38,10 @@ export function getColumns(
     },
     {
       accessorKey: "quarter",
-      header: "Quarter",
-      cell: ({ row }) => <span className="font-table tabular-nums">{translate("Q{0}", row.original.quarter)}</span>,
+      header: t("Quarter"),
+      cell: ({ row }) => (
+        <span className="font-table tabular-nums">{t("Q{0}", row.original.quarter)}</span>
+      ),
       size: 100,
       meta: {
         apiField: "quarter",
@@ -52,18 +55,18 @@ export function getColumns(
     },
     {
       accessorKey: "jurisdictionId",
-      header: "Jurisdiction",
+      header: t("Jurisdiction"),
       cell: ({ row }) => (
         <span className="flex items-center gap-2 font-medium">
           {jurisdictionLabel(row.original.jurisdiction)}
           {row.original.jurisdiction.hasSurcharge ? (
             <Badge variant="orange" className="px-1.5 py-0 text-[10px]">
-              {translate("Surcharge")}
+              {t("Surcharge")}
             </Badge>
           ) : null}
           {row.original.jurisdiction.isIftaMember ? null : (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              {translate("Non-member")}
+              {t("Non-member")}
             </Badge>
           )}
         </span>
@@ -81,7 +84,7 @@ export function getColumns(
     },
     {
       accessorKey: "fuelType",
-      header: "Fuel",
+      header: t("Fuel"),
       cell: ({ row }) => IFTA_FUEL_TYPE_LABELS[row.original.fuelType],
       size: 140,
       meta: {
@@ -95,7 +98,7 @@ export function getColumns(
     },
     {
       accessorKey: "ratePerGallon",
-      header: "Rate / gal",
+      header: t("Rate / gal"),
       cell: ({ row }) => (
         <span className="font-table block text-right tabular-nums">
           {rate(row.original.ratePerGallon)}
@@ -110,7 +113,7 @@ export function getColumns(
     },
     {
       accessorKey: "surchargeRatePerGallon",
-      header: "Surcharge / gal",
+      header: t("Surcharge / gal"),
       cell: ({ row }) => (
         <span className="font-table block text-right tabular-nums">
           {rate(row.original.surchargeRatePerGallon)}
@@ -125,7 +128,7 @@ export function getColumns(
     },
     {
       accessorKey: "sourceNote",
-      header: "Source",
+      header: t("Source"),
       cell: ({ row }) =>
         row.original.sourceUrl ? (
           <a
@@ -150,7 +153,7 @@ export function getColumns(
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"

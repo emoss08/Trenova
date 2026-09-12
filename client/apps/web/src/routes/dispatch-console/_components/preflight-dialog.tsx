@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DispatchAssignmentPreview } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
@@ -90,16 +91,19 @@ function verdictLead(preview: DispatchAssignmentPreview): {
 
   switch (preview.score.verdict) {
     case "feasible":
-      return { message: "No blockers found for this pairing.", promotedFinding: null };
+      return { message: translate("No blockers found for this pairing."), promotedFinding: null };
     case "tight":
-      return { message: "Margins are tight — review before assigning.", promotedFinding: null };
+      return {
+        message: translate("Margins are tight — review before assigning."),
+        promotedFinding: null,
+      };
     case "unknown":
       return {
-        message: "No hours-of-service feed for this driver; judged on schedule alone.",
+        message: translate("No hours-of-service feed for this driver; judged on schedule alone."),
         promotedFinding: null,
       };
     default:
-      return { message: "This pairing cannot run as planned.", promotedFinding: null };
+      return { message: translate("This pairing cannot run as planned."), promotedFinding: null };
   }
 }
 

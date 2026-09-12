@@ -26,7 +26,7 @@ export default function SettlementsTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [payRows, setPayRows] = useState<DriverSettlementRow[]>([]);
   const [payPending, setPayPending] = useState(false);
 
@@ -50,7 +50,9 @@ export default function SettlementsTable() {
     ) => {
       const eligible = eligibleSettlements(rows, action);
       if (eligible.length === 0) {
-        toast.info(t("None of the selected settlements are in an eligible status for that action."));
+        toast.info(
+          t("None of the selected settlements are in an eligible status for that action."),
+        );
         return;
       }
       const result = await bulkDriverSettlementAction({
@@ -75,22 +77,25 @@ export default function SettlementsTable() {
     [invalidate, t],
   );
 
-  const openMarkPaidDialog = useCallback((rows: DriverSettlementRow[]) => {
-    const eligible = eligibleSettlements(rows, "MarkPaid");
-    if (eligible.length === 0) {
-      toast.info(t("Only posted settlements can be marked paid."));
-      return;
-    }
-    setPayRows(eligible);
-  }, [t]);
+  const openMarkPaidDialog = useCallback(
+    (rows: DriverSettlementRow[]) => {
+      const eligible = eligibleSettlements(rows, "MarkPaid");
+      if (eligible.length === 0) {
+        toast.info(t("Only posted settlements can be marked paid."));
+        return;
+      }
+      setPayRows(eligible);
+    },
+    [t],
+  );
 
   const dockActions = useMemo<DockAction<DriverSettlementRow>[]>(
     () => [
       {
         id: "lifecycle",
         type: "select",
-        label: "Lifecycle Action",
-        loadingLabel: "Running...",
+        label: t("Lifecycle Action"),
+        loadingLabel: t("Running..."),
         icon: CircleCheckIcon,
         options: settlementLifecycleChoices,
         onSelect: (rows, value) => runLifecycleAction(rows, value as BulkSettlementActionType),
@@ -98,12 +103,12 @@ export default function SettlementsTable() {
       },
       {
         id: "mark-paid",
-        label: "Mark Paid",
+        label: t("Mark Paid"),
         icon: CircleDollarSignIcon,
         onClick: openMarkPaidDialog,
       },
     ],
-    [runLifecycleAction, openMarkPaidDialog],
+    [runLifecycleAction, openMarkPaidDialog, t],
   );
 
   return (

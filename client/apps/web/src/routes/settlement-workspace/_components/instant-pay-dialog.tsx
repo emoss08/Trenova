@@ -118,7 +118,12 @@ export function InstantPayDialog({
       toast.success(`${settlement.settlementNumber} paid`, {
         description: (
           <span>
-            {t("Net")} <AmountDisplay value={settlement.netPayMinor} currency={settlement.currencyCode} />{t("via {0} · posted to the GL and visible to the driver in Dash.", settlement.paymentMethod)}
+            {t("Net")}{" "}
+            <AmountDisplay value={settlement.netPayMinor} currency={settlement.currencyCode} />
+            {t(
+              "via {0} · posted to the GL and visible to the driver in Dash.",
+              settlement.paymentMethod,
+            )}
           </span>
         ),
       });
@@ -136,7 +141,9 @@ export function InstantPayDialog({
         <DialogHeader>
           <DialogTitle>{t("Pay driver now")}</DialogTitle>
           <DialogDescription>
-            {t("Builds an off-cycle settlement from the selected loads and approves, posts, and marks it paid in one pass — the driver sees it in Dash immediately.")}
+            {t(
+              "Builds an off-cycle settlement from the selected loads and approves, posts, and marks it paid in one pass — the driver sees it in Dash immediately.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -162,7 +169,9 @@ export function InstantPayDialog({
             </div>
           ) : (events.data?.length ?? 0) === 0 ? (
             <p className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs">
-              {t("This driver has no payable accrued events. Pay accrues once a load reaches the pay trigger milestone; held events must be released first.")}
+              {t(
+                "This driver has no payable accrued events. Pay accrues once a load reaches the pay trigger milestone; held events must be released first.",
+              )}
             </p>
           ) : (
             <>
@@ -214,7 +223,9 @@ export function InstantPayDialog({
                 <Label htmlFor="instant-pay-recurring" className="text-xs font-normal">
                   {t("Apply recurring deductions, escrow, and advance recovery")}
                   <span className="text-muted-foreground mt-0.5 block text-[11px]">
-                    {t("Off by default so this payout doesn't double-dip items the regular period settlement will take.")}
+                    {t(
+                      "Off by default so this payout doesn't double-dip items the regular period settlement will take.",
+                    )}
                   </span>
                 </Label>
               </div>
@@ -286,7 +297,9 @@ function EventRow({
         <p className="truncate font-mono text-xs font-medium">{event.proNumber || t("No pro #")}</p>
         <p className="text-muted-foreground text-[11px]">
           {formatUnixDate(event.eventDate)}
-          {Number(event.totalMiles) > 0 ? ` ${t("· {0} mi", Number(event.totalMiles).toFixed(0))}` : ""}
+          {Number(event.totalMiles) > 0
+            ? ` ${t("· {0} mi", Number(event.totalMiles).toFixed(0))}`
+            : ""}
         </p>
       </div>
       <span className="shrink-0 text-xs font-semibold tabular-nums">

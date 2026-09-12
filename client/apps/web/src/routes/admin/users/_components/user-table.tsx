@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useOnlineUsers } from "@/hooks/use-online-users";
@@ -16,8 +17,10 @@ import { getColumns } from "./user-columns";
 import { UserPanel } from "./user-panel";
 
 export default function UserTable() {
+  const t = useT();
+
   const { onlineUserIDs } = useOnlineUsers();
-  const columns = useMemo(() => getColumns(onlineUserIDs), [onlineUserIDs]);
+  const columns = useMemo(() => getColumns(onlineUserIDs, t), [onlineUserIDs, t]);
   const queryClient = useQueryClient();
   const [, setPanelSearchParams] = useQueryStates(panelSearchParamsParser);
 
@@ -51,15 +54,15 @@ export default function UserTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   const handleManageMemberships = useCallback(
@@ -79,13 +82,13 @@ export default function UserTable() {
     () => [
       {
         id: "manage-memberships",
-        label: "Manage Memberships",
+        label: t("Manage Memberships"),
         icon: LayersPlus,
         onClick: handleManageMemberships,
         hidden: (row) => row.original.status === "Inactive",
       },
     ],
-    [handleManageMemberships],
+    [handleManageMemberships, t],
   );
 
   return (

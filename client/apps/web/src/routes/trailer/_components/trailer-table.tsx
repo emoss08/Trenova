@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
@@ -14,8 +15,10 @@ import { getColumns } from "./trailer-columns";
 import { TrailerPanel } from "./trailer-panel";
 
 export default function Table() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [locateTrailerId, setLocateTrailerId] = useState<string | null>(null);
 
   const handleBulkStatusUpdate = useCallback(
@@ -47,27 +50,27 @@ export default function Table() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: equipmentStatusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   const contextMenuActions = useMemo<RowAction<TrailerRow>[]>(
     () => [
       {
         id: "locate",
-        label: "Locate Trailer",
+        label: t("Locate Trailer"),
         icon: MapPinIcon,
         onClick: (row) => setLocateTrailerId(row.original.id ?? null),
       },
     ],
-    [],
+    [t],
   );
 
   return (

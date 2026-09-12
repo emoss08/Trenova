@@ -48,9 +48,12 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
           <AlertTitle>{t("The return could not be read")}</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-2">
             <span>
-              {t("{0} Nothing was changed.", returnQuery.error instanceof Error
-                ? returnQuery.error.message
-                : t("Something went wrong reading the quarter."))}
+              {t(
+                "{0} Nothing was changed.",
+                returnQuery.error instanceof Error
+                  ? returnQuery.error.message
+                  : t("Something went wrong reading the quarter."),
+              )}
             </span>
             <Button
               variant="outline"

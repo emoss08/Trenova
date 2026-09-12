@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   decimalStringSchema,
@@ -137,7 +138,7 @@ export const fuelSurchargeProgramSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["pegPrice"],
-          message: "Peg price is required and must not be negative",
+          message: translate("Peg price is required and must not be negative"),
         });
       }
       requirePositive("increment", "Increment");
@@ -149,7 +150,7 @@ export const fuelSurchargeProgramSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["pegPrice"],
-          message: "Peg price is required and must not be negative",
+          message: translate("Peg price is required and must not be negative"),
         });
       }
       requirePositive("milesPerGallon", "Miles per gallon");
@@ -160,7 +161,7 @@ export const fuelSurchargeProgramSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["tableRows"],
-          message: "At least one price band is required for table-based methods",
+          message: translate("At least one price band is required for table-based methods"),
         });
       }
 
@@ -180,7 +181,7 @@ export const fuelSurchargeProgramSchema = z
           ctx.addIssue({
             code: "custom",
             path: ["tableRows", index, "priceMax"],
-            message: "Price max must be greater than price min",
+            message: translate("Price max must be greater than price min"),
           });
         }
       });
@@ -196,7 +197,7 @@ export const fuelSurchargeProgramSchema = z
           ctx.addIssue({
             code: "custom",
             path: ["tableRows", sorted[i].index, "priceMin"],
-            message: "Price bands must not overlap",
+            message: translate("Price bands must not overlap"),
           });
         }
       }
@@ -212,7 +213,7 @@ export const fuelSurchargeProgramSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["minAmount"],
-        message: "Minimum amount must not exceed maximum amount",
+        message: translate("Minimum amount must not exceed maximum amount"),
       });
     }
   })

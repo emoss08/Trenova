@@ -17,15 +17,11 @@ export function BorderBeam({
 }: BorderBeamProps) {
   return (
     <div
-      className={cn(
-        "pointer-events-none absolute inset-0 rounded-[inherit]",
-        className,
-      )}
+      className={cn("pointer-events-none absolute inset-0 rounded-[inherit]", className)}
       style={{
         padding: borderWidth,
         background: `conic-gradient(from var(--border-beam-angle, 0deg), transparent 60%, ${colorFrom} 78%, ${colorTo} 92%, transparent 100%)`,
-        WebkitMask:
-          "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+        WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
         WebkitMaskComposite: "xor",
         maskComposite: "exclude",
         animationName: "border-beam-spin",

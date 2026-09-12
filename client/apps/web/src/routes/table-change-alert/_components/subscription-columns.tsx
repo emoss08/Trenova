@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { TCASubscriptionRow } from "@/lib/graphql/table-change-alert-table";
 import type { NotificationPriority } from "@/types/table-change-alert";
@@ -11,20 +11,20 @@ const PRIORITY_BADGE_VARIANT: Record<NotificationPriority, BadgeVariant> = {
   low: "teal",
 };
 
-export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<TCASubscriptionRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
     {
       accessorKey: "tableName",
-      header: "Table",
+      header: t("Table"),
     },
     {
       accessorKey: "eventTypes",
-      header: "Events",
+      header: t("Events"),
       cell: ({ row }) => (
         <div className="flex gap-1">
           {row.original.eventTypes.map((et) => (
@@ -37,7 +37,7 @@ export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => (
         <Badge variant={row.original.status === "Active" ? "active" : "secondary"}>
           {row.original.status}
@@ -46,7 +46,7 @@ export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
     },
     {
       accessorKey: "priority",
-      header: "Priority",
+      header: t("Priority"),
       cell: ({ row }) => {
         const p = row.original.priority ?? "medium";
         return <Badge variant={PRIORITY_BADGE_VARIANT[p as NotificationPriority]}>{p}</Badge>;
@@ -54,13 +54,13 @@ export function getColumns(): ColumnDef<TCASubscriptionRow>[] {
     },
     {
       accessorKey: "conditions",
-      header: "Conditions",
+      header: t("Conditions"),
       cell: ({ row }) => {
         const count = row.original.conditions?.length ?? 0;
-        if (count === 0) return <span className="text-muted-foreground">{translate("None")}</span>;
+        if (count === 0) return <span className="text-muted-foreground">{t("None")}</span>;
         return (
           <Badge variant="info">
-            {translate("{0, plural, one {# condition} other {# conditions}}", count)}
+            {t("{0, plural, one {# condition} other {# conditions}}", count)}
           </Badge>
         );
       },

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type {
   EDIDocumentPreview,
@@ -114,7 +115,7 @@ export function buildPreviewInspectorContext(preview: EDIDocumentPreview): Inspe
     title: `Preview ${preview.transactionControlNumber}`,
     subtitle: `${transactionSet || "X12"} ${direction} provisional preview`,
     status: {
-      label: "Provisional",
+      label: translate("Provisional"),
       variant: "info",
     },
     rawX12: preview.rawX12,

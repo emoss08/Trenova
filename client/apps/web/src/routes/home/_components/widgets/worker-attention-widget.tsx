@@ -50,20 +50,20 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
   const lines: Line[] = [
     {
       view: "non-compliant",
-      label: "Non-compliant",
+      label: t("Non-compliant"),
       count: data?.nonCompliant ?? 0,
       tone: "critical",
     },
     {
       view: "training-overdue",
-      label: "Training overdue",
+      label: t("Training overdue"),
       count: data?.trainingOverdue ?? 0,
       tone: "critical",
     },
-    { view: "at-risk", label: "Safety at risk", count: data?.atRisk ?? 0, tone: "critical" },
+    { view: "at-risk", label: t("Safety at risk"), count: data?.atRisk ?? 0, tone: "critical" },
     {
       view: "expiring-soon",
-      label: "Expiring in 30 days",
+      label: t("Expiring in 30 days"),
       count: data?.expiringSoon ?? 0,
       tone: "warning",
     },
@@ -85,7 +85,9 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
               to={rosterViewHref(line.view)}
               className="hover:bg-muted/60 flex items-center justify-between rounded px-1.5 py-1 text-xs transition-colors"
             >
-              <span className={cn(line.count === 0 && "text-muted-foreground")}>{t(line.label)}</span>
+              <span className={cn(line.count === 0 && "text-muted-foreground")}>
+                {t(line.label)}
+              </span>
               <span
                 className={cn(
                   "font-semibold tabular-nums",
@@ -120,7 +122,11 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
             />
           </dl>
           <p className="text-muted-foreground mt-1.5 px-1.5 text-[11px]">
-            {t("{0} active {1}", data.activeWorkers, data.activeWorkers === 1 ? "worker" : "workers")}
+            {t(
+              "{0} active {1}",
+              data.activeWorkers,
+              data.activeWorkers === 1 ? "worker" : "workers",
+            )}
           </p>
         </>
       ) : null}

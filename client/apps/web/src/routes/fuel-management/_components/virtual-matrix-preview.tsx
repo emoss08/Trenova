@@ -238,8 +238,11 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
           <div>
             <CardTitle className="text-sm font-medium">{t("Live Matrix Preview")}</CardTitle>
             <p className="text-muted-foreground text-xs">
-              {t("Rendered from the formula parameters — no rows to maintain. {0}", currentPrice !== null &&
-                ` ${t("The highlighted band contains this week's price (${0}).", currentPrice.toFixed(3))}`)}
+              {t(
+                "Rendered from the formula parameters — no rows to maintain. {0}",
+                currentPrice !== null &&
+                  ` ${t("The highlighted band contains this week's price (${0}).", currentPrice.toFixed(3))}`,
+              )}
             </p>
           </div>
         </div>
@@ -319,9 +322,13 @@ function ConvertToTableDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">{t("Make These Bands Editable")}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {t("Make These Bands Editable")}
+          </DialogTitle>
           <DialogDescription>
-            {t("Use this when the formula almost fits but some bands need a different range or rate — like a customer's own fuel table with uneven brackets.")}
+            {t(
+              "Use this when the formula almost fits but some bands need a different range or rate — like a customer's own fuel table with uneven brackets.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -333,7 +340,9 @@ function ConvertToTableDialog({
               </span>
               <span className="text-muted-foreground">
                 {t("Your formula's full schedule is copied into the table on the right —")}{" "}
-                <span className="text-foreground font-medium">{t("{0} bands", conversionRows.length)}</span>{" "}
+                <span className="text-foreground font-medium">
+                  {t("{0} bands", conversionRows.length)}
+                </span>{" "}
                 {t("covering every fuel price.")}
               </span>
             </li>
@@ -342,7 +351,9 @@ function ConvertToTableDialog({
                 2
               </span>
               <span className="text-muted-foreground">
-                {t("Every band becomes editable — change any price range or rate, add bands, or delete them. They don't have to be evenly spaced.")}
+                {t(
+                  "Every band becomes editable — change any price range or rate, add bands, or delete them. They don't have to be evenly spaced.",
+                )}
               </span>
             </li>
             <li className="flex gap-2.5">
@@ -350,7 +361,9 @@ function ConvertToTableDialog({
                 3
               </span>
               <span className="text-muted-foreground">
-                {t("The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.")}
+                {t(
+                  "The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.",
+                )}
               </span>
             </li>
           </ol>

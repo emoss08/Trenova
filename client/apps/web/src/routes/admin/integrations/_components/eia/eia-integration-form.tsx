@@ -104,7 +104,9 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
               <div>
                 <Label htmlFor="eia-enabled">{t("Enable EIA Fuel Prices")}</Label>
                 <p className="text-muted-foreground text-xs">
-                  {t("Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.")}
+                  {t(
+                    "Ingests weekly DOE diesel prices every Tuesday and auto-provisions all 11 DOE regional indices.",
+                  )}
                 </p>
               </div>
               <Controller

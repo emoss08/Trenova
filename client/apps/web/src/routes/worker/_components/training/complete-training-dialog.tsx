@@ -147,8 +147,13 @@ export function CompleteTrainingDialog({
           <DialogTitle>{t("Record a result")}</DialogTitle>
           <DialogDescription>
             {scored
-              ? t("Scored course — {0}% or better passes. A fail closes the assignment; assign it again for a retake.", Number(selected?.passingScore).toFixed(0))
-              : t("Marks the course complete on the date given. Recurring courses get their expiry from the course's validity.")}
+              ? t(
+                  "Scored course — {0}% or better passes. A fail closes the assignment; assign it again for a retake.",
+                  Number(selected?.passingScore).toFixed(0),
+                )
+              : t(
+                  "Marks the course complete on the date given. Recurring courses get their expiry from the course's validity.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

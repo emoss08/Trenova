@@ -83,7 +83,9 @@ export function BillingQueueAssignDialog({
       <DialogContent className="sm:max-w-100">
         <DialogHeader>
           <DialogTitle>{t("Assign Biller")}</DialogTitle>
-          <DialogDescription>{t("Assign a biller to review this billing queue item.")}</DialogDescription>
+          <DialogDescription>
+            {t("Assign a biller to review this billing queue item.")}
+          </DialogDescription>
         </DialogHeader>
         <Form
           onSubmit={(e) => {

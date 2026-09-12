@@ -75,14 +75,16 @@ export function TimeAttendanceOverview({
           label={t("Awaiting approval")}
           info={
             <InfoPopover title={t("Awaiting approval")}>
-              {
-                t("Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted.")
-              }
+              {t(
+                "Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted.",
+              )}
             </InfoPopover>
           }
           right={
             oldestWait > 0 ? (
-              <Corner tone={oldestWait >= 3 ? "warning" : "muted"}>{t("oldest {0}d", oldestWait)}</Corner>
+              <Corner tone={oldestWait >= 3 ? "warning" : "muted"}>
+                {t("oldest {0}d", oldestWait)}
+              </Corner>
             ) : null
           }
         />
@@ -98,7 +100,12 @@ export function TimeAttendanceOverview({
         <KpiSub>
           {awaitingSummary.count === 0
             ? t("Nothing waiting on you")
-            : t("{0} across {1} {2}", formatHours(awaitingSummary.totalMinutes), awaitingSummary.workers, awaitingSummary.workers === 1 ? "person" : "people")}
+            : t(
+                "{0} across {1} {2}",
+                formatHours(awaitingSummary.totalMinutes),
+                awaitingSummary.workers,
+                awaitingSummary.workers === 1 ? "person" : "people",
+              )}
         </KpiSub>
       </KpiCard>
 
@@ -108,12 +115,14 @@ export function TimeAttendanceOverview({
           label={t("On the clock now")}
           info={
             <InfoPopover title={t("On the clock now")}>
-              {
-                t("Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked.")
-              }
+              {t(
+                "Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked.",
+              )}
             </InfoPopover>
           }
-          right={overlong > 0 ? <Corner tone="warning">{t("{0} past 12h", overlong)}</Corner> : null}
+          right={
+            overlong > 0 ? <Corner tone="warning">{t("{0} past 12h", overlong)}</Corner> : null
+          }
         />
         {openEntries ? (
           <NumberFlow
@@ -126,7 +135,11 @@ export function TimeAttendanceOverview({
         )}
         <KpiSub>
           {longest
-            ? t("Longest running: {0}, {1}", workerName(longest.entry), formatHours(longest.runningMinutes))
+            ? t(
+                "Longest running: {0}, {1}",
+                workerName(longest.entry),
+                formatHours(longest.runningMinutes),
+              )
             : t("Nobody is punched in")}
         </KpiSub>
       </KpiCard>
@@ -137,9 +150,9 @@ export function TimeAttendanceOverview({
           label={t("This week so far")}
           info={
             <InfoPopover title={t("This week so far")}>
-              {
-                t("Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in.")
-              }
+              {t(
+                "Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in.",
+              )}
             </InfoPopover>
           }
           right={
@@ -161,9 +174,9 @@ export function TimeAttendanceOverview({
           aria-label={t("This week's hours")}
           formatValue={formatHours}
           segments={[
-            { key: "regular", label: "Regular", value: weekSummary.regularMinutes },
-            { key: "overtime", label: "Overtime", value: weekSummary.overtimeMinutes },
-            { key: "leave", label: "Leave", value: weekSummary.paidLeaveMinutes },
+            { key: "regular", label: t("Regular"), value: weekSummary.regularMinutes },
+            { key: "overtime", label: t("Overtime"), value: weekSummary.overtimeMinutes },
+            { key: "leave", label: t("Leave"), value: weekSummary.paidLeaveMinutes },
           ]}
         />
       </KpiCard>

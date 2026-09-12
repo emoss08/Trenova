@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { rateMatrixTableGraphQLConfig, type RateMatrixRow } from "@/lib/graphql/rate-tables";
 import { Resource } from "@trenova/shared/types/permission";
@@ -6,7 +7,9 @@ import { getColumns } from "./rate-matrix-columns";
 import { RateMatrixPanel } from "./rate-matrix-panel";
 
 export default function RateMatrixTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<RateMatrixRow>

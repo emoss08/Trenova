@@ -52,8 +52,7 @@ const EMPTY_STATEMENTS: OpenStatement[] = [];
 // with nothing but the URL to go on, so the loader can reproduce their keys exactly.
 // The sidebar's search box is deferred, which on first render is the URL value too.
 export const prefetch: RoutePrefetch = ({ request }) => {
-  const { view, item, status, query, billType, billers, includePosted } =
-    loadQueueSearch(request);
+  const { view, item, status, query, billType, billers, includePosted } = loadQueueSearch(request);
 
   // The switch shows the statement count in both views, so the list is warmed
   // either way; only the statements view pays for the rest.
@@ -179,9 +178,10 @@ export function BillingQueuePage() {
     return (
       <BillingWorkspaceLayout
         pageHeaderProps={{
-          title: "Billing Queue",
-          description:
+          title: t("Billing Queue"),
+          description: t(
             "What each statement customer has accrued this period, and the invoices it becomes",
+          ),
           actions: viewSwitch,
         }}
         className="gap-y-2 p-0"
@@ -212,8 +212,8 @@ export function BillingQueuePage() {
     <>
       <BillingWorkspaceLayout
         pageHeaderProps={{
-          title: "Billing Queue",
-          description: "Review and approve shipments before invoicing",
+          title: t("Billing Queue"),
+          description: t("Review and approve shipments before invoicing"),
           actions: viewSwitch,
         }}
         className="gap-y-2 p-0"

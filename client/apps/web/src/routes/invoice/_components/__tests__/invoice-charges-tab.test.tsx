@@ -151,7 +151,13 @@ describe("InvoiceChargesTab", () => {
 
   it("collapses to one row per shipment when the customer is on Summary", () => {
     const lines = [
-      line({ id: "l1", lineNumber: 1, shipmentId: "shp_1", shipmentProNumber: "PRO-1", amount: 100 }),
+      line({
+        id: "l1",
+        lineNumber: 1,
+        shipmentId: "shp_1",
+        shipmentProNumber: "PRO-1",
+        amount: 100,
+      }),
       line({
         id: "l2",
         lineNumber: 2,
@@ -161,7 +167,13 @@ describe("InvoiceChargesTab", () => {
         description: "Detention",
         amount: 50,
       }),
-      line({ id: "l3", lineNumber: 3, shipmentId: "shp_2", shipmentProNumber: "PRO-2", amount: 250 }),
+      line({
+        id: "l3",
+        lineNumber: 3,
+        shipmentId: "shp_2",
+        shipmentProNumber: "PRO-2",
+        amount: 250,
+      }),
     ];
     const invoice = { ...invoiceWith(lines), detail: "Summary" } as Invoice;
 

@@ -34,7 +34,6 @@ export function Stepper({
   className,
   "aria-label": ariaLabel,
 }: StepperProps) {
-
   const reduceMotion = useReducedMotion();
   const animated = animate && !reduceMotion;
 

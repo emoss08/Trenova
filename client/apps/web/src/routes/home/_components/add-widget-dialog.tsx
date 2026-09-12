@@ -156,8 +156,8 @@ function WidgetGallery({
     return [
       {
         key: ALL_CATEGORIES,
-        label: "All widgets",
-        description: "Everything you can put on this home screen",
+        label: t("All widgets"),
+        description: t("Everything you can put on this home screen"),
         count: searched.length,
       },
       ...categories.map((entry) => ({
@@ -167,7 +167,7 @@ function WidgetGallery({
         count: searched.filter((widget) => widget.category === entry.key).length,
       })),
     ];
-  }, [catalog?.categories, widgets, term]);
+  }, [catalog?.categories, widgets, term, t]);
 
   // A search that empties the open category would otherwise read as "no widgets
   // exist". Widening to All is derived rather than stored, so clearing the
@@ -299,7 +299,9 @@ function WidgetGallery({
                 <section key={entry.key} className="flex flex-col gap-2">
                   <header className="flex items-baseline gap-2">
                     <h3 className="cc-label text-foreground">{t(entry.label)}</h3>
-                    <p className="text-2xs text-muted-foreground truncate">{t(entry.description)}</p>
+                    <p className="text-2xs text-muted-foreground truncate">
+                      {t(entry.description)}
+                    </p>
                   </header>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {options.map((option) => (
@@ -334,7 +336,9 @@ function GalleryHeader({ used, max, onClose }: { used: number; max: number; onCl
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <DialogTitle>{t("Add a widget")}</DialogTitle>
         <DialogDescription className="text-xs">
-          {t("Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.")}
+          {t(
+            "Pick what this home screen opens on. Everything here is already scoped to what you are allowed to see.",
+          )}
         </DialogDescription>
       </div>
       <SlotMeter used={used} max={max} />
@@ -363,7 +367,8 @@ function SlotMeter({ used, max }: { used: number; max: number }) {
           className={cn("font-medium", nearlyFull ? "text-warning-foreground" : "text-foreground")}
         >
           {used}
-        </span>{t("of {0} widgets", max)}
+        </span>
+        {t("of {0} widgets", max)}
       </span>
       <span className="bg-muted h-1 w-28 overflow-hidden rounded-full">
         <span
@@ -506,10 +511,16 @@ function WidgetCard({
       <TooltipContent side="top" className="max-w-56">
         <span className="flex flex-col gap-0.5">
           <span>
-            {t("Lands {0} columns wide and {1} rows tall. Resize it on the canvas.", option.defaultW, option.defaultH)}
+            {t(
+              "Lands {0} columns wide and {1} rows tall. Resize it on the canvas.",
+              option.defaultW,
+              option.defaultH,
+            )}
           </span>
           {needsSetup && (
-            <span className="text-background/70">{t("You choose what it shows before it lands.")}</span>
+            <span className="text-background/70">
+              {t("You choose what it shows before it lands.")}
+            </span>
           )}
         </span>
       </TooltipContent>
@@ -562,8 +573,9 @@ function GalleryFooter({
           <>
             {t("Room for {0} more.", remaining)}
             <span className="hidden sm:inline">
-              {t("Use")} <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd> {t("to reach the cards and")}{" "}
-              <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd> {t("to add one.")}
+              {t("Use")} <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd>{" "}
+              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd>{" "}
+              {t("to add one.")}
             </span>
           </>
         )}

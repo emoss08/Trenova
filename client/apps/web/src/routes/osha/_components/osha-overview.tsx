@@ -45,9 +45,9 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           label={t("Recordable cases")}
           info={
             <InfoPopover title={t("Recordable cases")}>
-              {
-                t("Cases that met the OSHA recording criteria this year, by the log column they landed in. A case kept on file but judged not recordable is counted below, not here.")
-              }
+              {t(
+                "Cases that met the OSHA recording criteria this year, by the log column they landed in. A case kept on file but judged not recordable is counted below, not here.",
+              )}
             </InfoPopover>
           }
         />
@@ -72,9 +72,9 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           label={t("Incident rate")}
           info={
             <InfoPopover title={t("Incident rate")}>
-              {
-                t("Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.")
-              }
+              {t(
+                "Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.",
+              )}
             </InfoPopover>
           }
         />
@@ -84,7 +84,10 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         <KpiSub>
           {log.totalRecordableIncidentRate === null
             ? t("Needs the hours worked from the 300A figures")
-            : t("Recordable cases per 100 full-time workers, over {0} hours", hours.toLocaleString("en-US"))}
+            : t(
+                "Recordable cases per 100 full-time workers, over {0} hours",
+                hours.toLocaleString("en-US"),
+              )}
         </KpiSub>
       </KpiCard>
 
@@ -94,9 +97,9 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           label={t("DART rate")}
           info={
             <InfoPopover title={t("DART rate")}>
-              {
-                t("Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.")
-              }
+              {t(
+                "Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.",
+              )}
             </InfoPopover>
           }
         />
@@ -116,9 +119,9 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           label={t("Days lost")}
           info={
             <InfoPopover title={t("Days lost")}>
-              {
-                t("Calendar days away from work plus days on restricted duty or transfer, summed across the year's cases, each capped at 180 as the form requires.")
-              }
+              {t(
+                "Calendar days away from work plus days on restricted duty or transfer, summed across the year's cases, each capped at 180 as the form requires.",
+              )}
             </InfoPopover>
           }
         />
@@ -129,14 +132,18 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           className="mt-auto"
           aria-label={t("Days lost by kind")}
           segments={[
-            { key: "away", label: "Away from work", value: lost.away },
-            { key: "restricted", label: "Restricted or transferred", value: lost.restricted },
+            { key: "away", label: t("Away from work"), value: lost.away },
+            { key: "restricted", label: t("Restricted or transferred"), value: lost.restricted },
           ]}
         />
         <KpiSub>
           {lost.total === 0
             ? t("No case kept anybody off their job")
-            : t("{0} away from work, {1} restricted or transferred", lost.away.toLocaleString("en-US"), lost.restricted.toLocaleString("en-US"))}
+            : t(
+                "{0} away from work, {1} restricted or transferred",
+                lost.away.toLocaleString("en-US"),
+                lost.restricted.toLocaleString("en-US"),
+              )}
         </KpiSub>
       </KpiCard>
     </div>

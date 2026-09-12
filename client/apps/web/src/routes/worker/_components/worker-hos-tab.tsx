@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
@@ -94,7 +95,7 @@ const dutyStatusMeta: Record<string, { label: string; variant: BadgeVariant }> =
 
 function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant: BadgeVariant } {
   if (!dutyStatus) {
-    return { label: "Unknown", variant: "secondary" };
+    return { label: translate("Unknown"), variant: "secondary" };
   }
   return dutyStatusMeta[dutyStatus] ?? { label: toTitleCase(dutyStatus), variant: "secondary" };
 }
@@ -618,11 +619,11 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
   const t = useT();
 
   const chips: { label: string; value: string }[] = [
-    { label: "Drive", value: formatDurationMs(dailyLog.driveDurationMs) },
-    { label: "On duty", value: formatDurationMs(dailyLog.onDutyDurationMs) },
-    { label: "Off duty", value: formatDurationMs(dailyLog.offDutyDurationMs) },
-    { label: "Sleeper", value: formatDurationMs(dailyLog.sleeperBerthDurationMs) },
-    { label: "Distance", value: `${metersToMiles(dailyLog.driveDistanceMeters).toFixed(1)} mi` },
+    { label: t("Drive"), value: formatDurationMs(dailyLog.driveDurationMs) },
+    { label: t("On duty"), value: formatDurationMs(dailyLog.onDutyDurationMs) },
+    { label: t("Off duty"), value: formatDurationMs(dailyLog.offDutyDurationMs) },
+    { label: t("Sleeper"), value: formatDurationMs(dailyLog.sleeperBerthDurationMs) },
+    { label: t("Distance"), value: `${metersToMiles(dailyLog.driveDistanceMeters).toFixed(1)} mi` },
   ];
   if (dailyLog.vehicleNames && dailyLog.vehicleNames.length > 0) {
     chips.push({
@@ -631,7 +632,7 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
     });
   }
   if (dailyLog.shippingDocs) {
-    chips.push({ label: "Shipping docs", value: dailyLog.shippingDocs });
+    chips.push({ label: t("Shipping docs"), value: dailyLog.shippingDocs });
   }
 
   const certifiedBadge = dailyLog.isCertified ? (
@@ -654,7 +655,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
       {dailyLog.isCertified && dailyLog.certifiedAt ? (
         <Tooltip>
           <TooltipTrigger render={certifiedBadge} />
-          <TooltipContent>{t("Certified {0}", formatUnixDateTime(dailyLog.certifiedAt))}</TooltipContent>
+          <TooltipContent>
+            {t("Certified {0}", formatUnixDateTime(dailyLog.certifiedAt))}
+          </TooltipContent>
         </Tooltip>
       ) : (
         certifiedBadge
@@ -927,7 +930,9 @@ function FormsSection({ workerId }: { workerId: string }) {
         <HosEmptyState
           icon={<ClipboardListIcon className="text-muted-foreground mx-auto size-5" />}
           title={t("No form submissions in the last 30 days.")}
-          description={t("Driver form submissions appear here once Samsara reports them for this worker.")}
+          description={t(
+            "Driver form submissions appear here once Samsara reports them for this worker.",
+          )}
         />
       ) : (
         <div className="border-border overflow-hidden rounded-lg border">
@@ -970,9 +975,12 @@ function HosLiveState({
           </Badge>
         ) : null}
         <span className="text-muted-foreground text-xs">
-          {t("as of {0}", formatDistanceToNowStrict(new Date(state.recordedAt * 1000), {
-            addSuffix: true,
-          }))}
+          {t(
+            "as of {0}",
+            formatDistanceToNowStrict(new Date(state.recordedAt * 1000), {
+              addSuffix: true,
+            }),
+          )}
         </span>
       </div>
 
@@ -1050,7 +1058,9 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
       <HosEmptyState
         icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("Samsara telematics is not connected")}
-        description={t("Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver.")}
+        description={t(
+          "Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver.",
+        )}
         action={
           <Button
             variant="outline"
@@ -1083,7 +1093,9 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
       <HosEmptyState
         icon={<UserRoundXIcon className="text-muted-foreground mx-auto size-6" />}
         title={t("Not linked to a Samsara driver")}
-        description={t("Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them.")}
+        description={t(
+          "Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them.",
+        )}
         action={
           <Button
             variant="outline"

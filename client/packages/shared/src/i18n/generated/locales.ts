@@ -10,15 +10,15 @@ export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
 export const LOCALE_NAMES: Record<Locale, string> = {
-  "en": "English",
-  "es": "Español",
+  en: "English",
+  es: "Español",
   "zh-TW": "繁體中文",
   "zh-CN": "简体中文",
 };
 
 export const CATALOG_LOADERS: Record<Locale, () => Promise<Record<string, string>>> = {
-  "en": () => import("../catalogs/en.json").then((m) => m.default),
-  "es": () => import("../catalogs/es.json").then((m) => m.default),
+  en: () => import("../catalogs/en.json").then((m) => m.default),
+  es: () => import("../catalogs/es.json").then((m) => m.default),
   "zh-TW": () => import("../catalogs/zh-TW.json").then((m) => m.default),
   "zh-CN": () => import("../catalogs/zh-CN.json").then((m) => m.default),
 };

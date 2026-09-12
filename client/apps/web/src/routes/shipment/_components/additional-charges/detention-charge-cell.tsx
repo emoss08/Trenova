@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -24,26 +25,30 @@ type DetentionRisk = {
 function detentionRisk(occurrence: DetentionOccurrence): DetentionRisk | null {
   if (occurrence.suppressedByGate) {
     return {
-      label: "Notice missed",
-      detail:
+      label: translate("Notice missed"),
+      detail: translate(
         "No qualifying notice reached the customer inside the policy window — they have grounds to refuse this charge.",
+      ),
       className: "bg-red-500/10 text-red-700 dark:text-red-400",
     };
   }
 
   if (occurrence.requiresApproval) {
     return {
-      label: "Needs approval",
-      detail:
+      label: translate("Needs approval"),
+      detail: translate(
         "This charge is over the policy approval threshold and cannot be billed until cleared.",
+      ),
       className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
     };
   }
 
   if (occurrence.status === "Disputed") {
     return {
-      label: "Disputed",
-      detail: "The customer has rejected this charge. Work the claim before it is invoiced.",
+      label: translate("Disputed"),
+      detail: translate(
+        "The customer has rejected this charge. Work the claim before it is invoiced.",
+      ),
       className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
     };
   }

@@ -70,9 +70,7 @@ export function SplitButton<T extends string = string>({
               description={t(option.description)}
               onClick={() => onOptionSelect(option.id)}
               endContent={
-                option.id === selectedOption ? (
-                  <CheckIcon className="size-4" />
-                ) : undefined
+                option.id === selectedOption ? <CheckIcon className="size-4" /> : undefined
               }
             />
           ))}

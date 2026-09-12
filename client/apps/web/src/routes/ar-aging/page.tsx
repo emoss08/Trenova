@@ -119,8 +119,8 @@ export function ARAgingPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "AR Aging",
-        description: "Receivables aging by customer with drill-down to the ledger.",
+        title: t("AR Aging"),
+        description: t("Receivables aging by customer with drill-down to the ledger."),
         actions: (
           <Button
             variant="outline"

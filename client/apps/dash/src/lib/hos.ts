@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { toTitleCase } from "@trenova/shared/lib/utils";
@@ -40,6 +41,6 @@ const dutyStatuses: Record<string, DutyStatusInfo> = {
 };
 
 export function dutyStatusInfo(status: string | null | undefined): DutyStatusInfo {
-  if (!status) return { label: "Unknown", variant: "secondary" };
+  if (!status) return { label: translate("Unknown"), variant: "secondary" };
   return dutyStatuses[status] ?? { label: toTitleCase(status), variant: "secondary" };
 }

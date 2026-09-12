@@ -472,9 +472,9 @@ function ReportConfig({
             value={shows}
             onValueChange={setShows}
             items={[
-              { value: "table", label: "Table" },
-              { value: "chart", label: "Chart", disabled: charts.length === 0 },
-              { value: "kpi", label: "Single number", disabled: measures.length === 0 },
+              { value: "table", label: t("Table") },
+              { value: "chart", label: t("Chart"), disabled: charts.length === 0 },
+              { value: "kpi", label: t("Single number"), disabled: measures.length === 0 },
             ]}
           />
         </Field>

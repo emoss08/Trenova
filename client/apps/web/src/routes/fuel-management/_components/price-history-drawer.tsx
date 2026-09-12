@@ -95,7 +95,9 @@ export function PriceHistoryDrawer({
           <SheetTitle>{entry?.index.name}</SheetTitle>
           <SheetDescription>
             {isCustom
-              ? t("Manually entered weekly prices — enter the Monday date each price is effective for")
+              ? t(
+                  "Manually entered weekly prices — enter the Monday date each price is effective for",
+                )
               : t("Weekly DOE prices ingested automatically from the EIA API")}
           </SheetDescription>
         </SheetHeader>

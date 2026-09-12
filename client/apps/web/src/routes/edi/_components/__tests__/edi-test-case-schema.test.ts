@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import { ediTestCaseFormSchema, getTestCaseFormDefaults, toTestCaseRequest } from "../edi-schemas";
 import { getTestCaseColumns } from "../edi-test-case-columns";
@@ -117,7 +118,7 @@ describe("EDI test case form helpers", () => {
 
 describe("EDI test case columns", () => {
   it("defines the certification table columns", () => {
-    const columns = getTestCaseColumns();
+    const columns = getTestCaseColumns(translate);
     const labels = columns.map((column) => column.meta?.label);
 
     expect(labels).toEqual([

@@ -60,19 +60,24 @@ export function SwapQueue() {
   const open = swaps.filter((swap) => isSwapOpen(swap.status)).length;
   const scopeItems = useMemo<SegmentedControlItem<Scope>[]>(
     () => [
-      { value: "open", label: "Waiting", caption: swapsQuery.data ? String(open) : undefined },
-      { value: "all", label: "Everything" },
+      { value: "open", label: t("Waiting"), caption: swapsQuery.data ? String(open) : undefined },
+      { value: "all", label: t("Everything") },
     ],
-    [open, swapsQuery.data],
+    [open, swapsQuery.data, t],
   );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground max-w-2xl text-xs">
-          {t("A swap needs two acceptances: the colleague's and the office's. Only a swap the colleague has accepted is yours to decide.")}
+          {t(
+            "A swap needs two acceptances: the colleague's and the office's. Only a swap the colleague has accepted is yours to decide.",
+          )}
           {decidable > 0 ? (
-            <span className="text-foreground font-medium"> {t("{0} waiting on you.", decidable)}</span>
+            <span className="text-foreground font-medium">
+              {" "}
+              {t("{0} waiting on you.", decidable)}
+            </span>
           ) : null}
         </p>
         <SegmentedControl<Scope>
@@ -147,9 +152,13 @@ function SwapRow({
             <Badge variant={tone.variant}>{t(tone.label)}</Badge>
           </span>
           <span className="text-muted-foreground tabular-nums">
-            {t("Giving up {0}{1}", formatShiftDate(swap.shiftDate), swap.counterpartyShiftDate
-              ? ` ${t("· taking {0}", formatShiftDate(swap.counterpartyShiftDate))}`
-              : "")}
+            {t(
+              "Giving up {0}{1}",
+              formatShiftDate(swap.shiftDate),
+              swap.counterpartyShiftDate
+                ? ` ${t("· taking {0}", formatShiftDate(swap.counterpartyShiftDate))}`
+                : "",
+            )}
           </span>
           {swap.reason ? <span className="text-muted-foreground">“{swap.reason}”</span> : null}
           {swap.responseNote ? (

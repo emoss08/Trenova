@@ -94,9 +94,14 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <DriverExpenseStatusBadge status={expense.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Incurred {0} · Submitted {1}{2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
-            ? ` ${t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())}`
-            : "")}
+          {t(
+            "Incurred {0} · Submitted {1}{2}",
+            formatUnixDate(expense.incurredDate),
+            formatUnixDate(expense.createdAt),
+            expense.worker
+              ? ` ${t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())}`
+              : "",
+          )}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(expense.description)}</p>
         {expense.payCode ? (
@@ -207,7 +212,9 @@ function ReviewForm({
         />
         <p className="text-muted-foreground text-[11px]">
           {approve
-            ? t("Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).")
+            ? t(
+                "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).",
+              )
             : t("Required — shown to the driver verbatim.")}
         </p>
       </div>

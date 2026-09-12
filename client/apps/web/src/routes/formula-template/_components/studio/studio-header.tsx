@@ -146,7 +146,10 @@ function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
             ? t("Scenario results are from before your latest edit")
             : allPassing
               ? t("Every scenario passes against the current content")
-              : t("{0} scenario(s) fail; approval is blocked until they pass", summary.total - summary.passed)}
+              : t(
+                  "{0} scenario(s) fail; approval is blocked until they pass",
+                  summary.total - summary.passed,
+                )}
       </TooltipContent>
     </Tooltip>
   );
@@ -211,7 +214,9 @@ export function StudioHeader({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-sm font-semibold">
-              {mode === "create" ? t("New Formula Template") : templateName || t("Formula Template")}
+              {mode === "create"
+                ? t("New Formula Template")
+                : templateName || t("Formula Template")}
             </h1>
             {statusChoice && (
               <ColorOptionValue color={statusChoice.color} value={statusChoice.label} />

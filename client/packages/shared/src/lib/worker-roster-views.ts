@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { FieldFilter } from "../types/data-table";
 
 /**
@@ -36,20 +37,20 @@ export function rosterViews(now: number): RosterView[] {
   return [
     {
       id: "all",
-      label: "Everyone",
-      description: "Every worker on the books.",
+      label: translate("Everyone"),
+      description: translate("Every worker on the books."),
       filters: [],
     },
     {
       id: "non-compliant",
-      label: "Non-compliant",
-      description: "A required credential has expired or was never recorded.",
+      label: translate("Non-compliant"),
+      description: translate("A required credential has expired or was never recorded."),
       filters: [{ field: "profile.complianceStatus", operator: "eq", value: "NonCompliant" }],
     },
     {
       id: "training-overdue",
-      label: "Training overdue",
-      description: "A required course is past due, expired, failed or never assigned.",
+      label: translate("Training overdue"),
+      description: translate("A required course is past due, expired, failed or never assigned."),
       filters: [
         {
           field: "profile.trainingHealth",
@@ -60,21 +61,22 @@ export function rosterViews(now: number): RosterView[] {
     },
     {
       id: "prohibited",
-      label: "Prohibited",
-      description:
+      label: translate("Prohibited"),
+      description: translate(
         "A drug or alcohol violation stands unresolved. These drivers must not be dispatched.",
+      ),
       filters: [{ field: "profile.drugAlcoholStatus", operator: "eq", value: "Prohibited" }],
     },
     {
       id: "at-risk",
-      label: "At risk",
-      description: "Safety score has fallen far enough to need attention.",
+      label: translate("At risk"),
+      description: translate("Safety score has fallen far enough to need attention."),
       filters: [{ field: "profile.safetyRating", operator: "eq", value: "AtRisk" }],
     },
     {
       id: "expiring-soon",
       label: `Expiring in ${EXPIRING_SOON_DAYS} days`,
-      description: "A required credential lapses inside the renewal window.",
+      description: translate("A required credential lapses inside the renewal window."),
       filters: [
         {
           field: "profile.nextCredentialExpiry",

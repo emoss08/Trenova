@@ -43,7 +43,9 @@ function ExternalLinkDialog({
       <AlertDialogContent>
         <AlertDialogTitle>{t("External Link")}</AlertDialogTitle>
         <AlertDialogDescription>
-          {t("You are about to leave Trenova and visit an external website. Are you sure you want to continue?")}
+          {t(
+            "You are about to leave Trenova and visit an external website. Are you sure you want to continue?",
+          )}
         </AlertDialogDescription>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onClose}>{t("Cancel")}</AlertDialogCancel>

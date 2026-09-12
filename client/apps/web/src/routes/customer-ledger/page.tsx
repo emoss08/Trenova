@@ -100,8 +100,8 @@ export function CustomerLedgerPage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Customer Ledger",
-        description: "Statement-style transaction history with the customer's AR profile.",
+        title: t("Customer Ledger"),
+        description: t("Statement-style transaction history with the customer's AR profile."),
         actions: customerId ? (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleExport} disabled={!entries?.length}>
@@ -134,7 +134,9 @@ export function CustomerLedgerPage() {
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="w-75">
-          <label className="text-2xs text-muted-foreground mb-1 block font-medium">{t("Customer")}</label>
+          <label className="text-2xs text-muted-foreground mb-1 block font-medium">
+            {t("Customer")}
+          </label>
           <CustomerAutocompleteField
             control={filterForm.control}
             name="customerId"
@@ -146,7 +148,9 @@ export function CustomerLedgerPage() {
         {!customerId ? (
           <EmptyTable
             title={t("Pick a customer")}
-            description={t("Choose a customer above and their receivables profile, running ledger and payment history are laid out here.")}
+            description={t(
+              "Choose a customer above and their receivables profile, running ledger and payment history are laid out here.",
+            )}
             columns={LEDGER_COLUMNS}
           />
         ) : (
@@ -162,7 +166,9 @@ export function CustomerLedgerPage() {
             ) : !entries || entries.length === 0 ? (
               <EmptyTable
                 title={t("No activity yet")}
-                description={t("Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.")}
+                description={t(
+                  "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.",
+                )}
                 columns={LEDGER_COLUMNS}
               />
             ) : (

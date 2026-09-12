@@ -34,7 +34,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             label={t("Hold Type")}
             placeholder={t("Select Type")}
             rules={{ required: true }}
-            description={t("Choose the hold category to drive default behavior, gating, and reporting.")}
+            description={t(
+              "Choose the hold category to drive default behavior, gating, and reporting.",
+            )}
             options={holdTypeChoices}
             isReadOnly={disabled}
           />
@@ -47,7 +49,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             placeholder="ELD_OOS"
             rules={{ required: true }}
             maxLength={64}
-            description={t("Stable identifier used by rules, APIs, and search; prefer UPPER_SNAKE_CASE.")}
+            description={t(
+              "Stable identifier used by rules, APIs, and search; prefer UPPER_SNAKE_CASE.",
+            )}
             disabled={disabled}
           />
         </FormControl>
@@ -69,7 +73,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             name="description"
             label={t("Details")}
             placeholder={t("Briefly explain when to use this reason")}
-            description={t("Short context explaining when to apply this reason; use customer-safe wording.")}
+            description={t(
+              "Short context explaining when to apply this reason; use customer-safe wording.",
+            )}
             disabled={disabled}
           />
         </FormControl>
@@ -79,7 +85,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             name="defaultSeverity"
             label={t("Default Severity")}
             placeholder={t("Select Severity")}
-            description={t("Starting impact level applied when users select this reason; adjustable per hold.")}
+            description={t(
+              "Starting impact level applied when users select this reason; adjustable per hold.",
+            )}
             options={holdSeverityChoices}
             rules={{ required: true }}
             isReadOnly={disabled}
@@ -88,7 +96,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
       </FormGroup>
       <FormSection
         title={t("Gating Rules")}
-        description={t("Select which actions this reason blocks by default; multiple can apply and stack.")}
+        description={t(
+          "Select which actions this reason blocks by default; multiple can apply and stack.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -96,7 +106,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
               control={control}
               name="defaultBlocksDispatch"
               label={t("Block Dispatch")}
-              description={t("Prevents assigning or dispatching power/trailer until this hold is cleared.")}
+              description={t(
+                "Prevents assigning or dispatching power/trailer until this hold is cleared.",
+              )}
               position="left"
               disabled={disabled}
             />
@@ -106,7 +118,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
               control={control}
               name="defaultBlocksDelivery"
               label={t("Block Delivery")}
-              description={t("Prevents marking stops delivered or closing freight until this hold clears.")}
+              description={t(
+                "Prevents marking stops delivered or closing freight until this hold clears.",
+              )}
               position="left"
               disabled={disabled}
             />
@@ -116,7 +130,9 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
               control={control}
               name="defaultBlocksBilling"
               label={t("Block Billing")}
-              description={t("Prevents invoicing or moving to billable states while the hold is active.")}
+              description={t(
+                "Prevents invoicing or moving to billable states while the hold is active.",
+              )}
               position="left"
               disabled={disabled}
             />

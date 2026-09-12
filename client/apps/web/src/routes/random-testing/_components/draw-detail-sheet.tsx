@@ -71,7 +71,12 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
           <SheetTitle>{draw ? t("Round {0}", draw.periodKey) : t("Round")}</SheetTitle>
           <SheetDescription>
             {draw
-              ? t("{0} · {1} drivers in the pool · drawn {2}", draw.pool?.name ?? t("Pool"), draw.poolSize, formatUnixDate(draw.drawnAt))
+              ? t(
+                  "{0} · {1} drivers in the pool · drawn {2}",
+                  draw.pool?.name ?? t("Pool"),
+                  draw.poolSize,
+                  formatUnixDate(draw.drawnAt),
+                )
               : null}
           </SheetDescription>
         </SheetHeader>
@@ -103,7 +108,9 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                 </div>
               </dl>
               <p className="text-muted-foreground mt-2 text-[11px]">
-                {t("The same seed over the same roster reproduces exactly these names, in this order.")}
+                {t(
+                  "The same seed over the same roster reproduces exactly these names, in this order.",
+                )}
               </p>
             </section>
 
@@ -134,7 +141,9 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
             </section>
 
             <section>
-              <h3 className="cc-label text-foreground mb-2">{t("Selected ({0})", draw.entries.length)}</h3>
+              <h3 className="cc-label text-foreground mb-2">
+                {t("Selected ({0})", draw.entries.length)}
+              </h3>
               <ul className="flex flex-col gap-1.5">
                 {draw.entries.map((entry) => (
                   <li
@@ -204,7 +213,9 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                 ))}
               </ul>
               <p className="text-muted-foreground mt-2 text-[11px]">
-                {t("A selection is marked collected by recording its test on the driver's Testing tab, not from here — that keeps the entry and the test from ever disagreeing.")}
+                {t(
+                  "A selection is marked collected by recording its test on the driver's Testing tab, not from here — that keeps the entry and the test from ever disagreeing.",
+                )}
               </p>
             </section>
           </div>

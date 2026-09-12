@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -16,18 +16,18 @@ function SensitivityBadge({ sensitivity }: { sensitivity: RoleRow["maxSensitivit
   );
 }
 
-export function getColumns(): ColumnDef<RoleRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<RoleRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex flex-col gap-1">
           <span className="font-medium">{row.original.name}</span>
         </div>
       ),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -40,12 +40,12 @@ export function getColumns(): ColumnDef<RoleRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={60} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={60} />
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -58,10 +58,10 @@ export function getColumns(): ColumnDef<RoleRow>[] {
     },
     {
       accessorKey: "maxSensitivity",
-      header: "Max Sensitivity",
+      header: t("Max Sensitivity"),
       cell: ({ row }) => <SensitivityBadge sensitivity={row.original.maxSensitivity} />,
       meta: {
-        label: "Max Sensitivity",
+        label: t("Max Sensitivity"),
         apiField: "maxSensitivity",
         filterable: true,
         sortable: true,
@@ -75,7 +75,7 @@ export function getColumns(): ColumnDef<RoleRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",

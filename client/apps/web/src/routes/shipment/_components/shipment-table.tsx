@@ -234,7 +234,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
 
   const rowActions = useGuardedRowActions(unguardedRowActions);
 
-  const columns = useMemo(() => getColumns(rowActions), [rowActions]);
+  const columns = useMemo(() => getColumns(rowActions, t), [rowActions, t]);
 
   const mandatoryFieldFilters = useMemo(
     () => getMandatoryFieldFilters(selectedView, chips),

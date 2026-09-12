@@ -214,7 +214,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
     disabled: saveBlocked,
-    loadingText: "Saving...",
+    loadingText: t("Saving..."),
   };
 
   const hasTabs = tabs.length > 0;
@@ -325,7 +325,10 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
           ) : recordFailed ? (
             <div className="flex-1 p-4">
               <p className="text-destructive text-sm">
-                {t("This {0} could not be loaded, so it cannot be edited safely. Close the panel and try again.", title.toLowerCase())}
+                {t(
+                  "This {0} could not be loaded, so it cannot be edited safely. Close the panel and try again.",
+                  title.toLowerCase(),
+                )}
               </p>
             </div>
           ) : hasFormTabs ? (
@@ -375,7 +378,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               <div className="border-border border-b px-4">
                 <OverflowTabsList
                   items={[
-                    { value: "details", label: "Details" },
+                    { value: "details", label: t("Details") },
                     ...tabs.map((tab) => ({
                       value: tab.value,
                       label: tab.label,

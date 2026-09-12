@@ -19,7 +19,7 @@ export default function DisputesTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleStartReview = useCallback(
     async (rows: SettlementDisputeRow[]) => {
@@ -41,14 +41,14 @@ export default function DisputesTable() {
     () => [
       {
         id: "start-review",
-        label: "Start Review",
-        loadingLabel: "Updating...",
+        label: t("Start Review"),
+        loadingLabel: t("Updating..."),
         icon: EyeIcon,
         onClick: handleStartReview,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleStartReview],
+    [handleStartReview, t],
   );
 
   return (

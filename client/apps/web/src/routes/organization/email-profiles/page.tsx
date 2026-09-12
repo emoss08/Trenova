@@ -14,7 +14,9 @@ export function EmailProfilesPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Email Profiles")}
-        description={t("Manage verified sender identities and route email purposes to the right provider profile.")}
+        description={t(
+          "Manage verified sender identities and route email purposes to the right provider profile.",
+        )}
       />
       <div className="flex flex-col gap-4 p-4">
         <PurposeAssignmentsPanel />

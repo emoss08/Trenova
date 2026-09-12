@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
@@ -11,25 +11,25 @@ const TYPE_BADGE_VARIANT: Record<string, "info" | "purple"> = {
   AccessorialCharge: "purple",
 };
 
-export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="min-w-0">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.description && (
               <p className="text-2xs text-muted-foreground line-clamp-1">
-                {translate(row.original.description)}
+                {t(row.original.description)}
               </p>
             )}
           </div>
         </div>
       ),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -42,7 +42,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = formulaTemplateStatusChoices.find(
           (option) => option.value === row.original.status,
@@ -55,7 +55,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
         );
       },
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -69,7 +69,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "type",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => {
         const typeLabel = formulaTemplateTypeChoices.find(
           (c) => c.value === row.original.type,
@@ -78,7 +78,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
         return <Badge variant={variant}>{typeLabel || row.original.type}</Badge>;
       },
       meta: {
-        label: "Type",
+        label: t("Type"),
         apiField: "type",
         filterable: true,
         sortable: true,
@@ -92,14 +92,14 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "currentVersionNumber",
-      header: "Version",
+      header: t("Version"),
       cell: ({ row }) => (
         <Badge variant="outline" className="font-mono text-xs">
-          {row.original.currentVersionNumber ? translate("v{0}", row.original.currentVersionNumber) : "—"}
+          {row.original.currentVersionNumber ? t("v{0}", row.original.currentVersionNumber) : "—"}
         </Badge>
       ),
       meta: {
-        label: "Version",
+        label: t("Version"),
         apiField: "currentVersionNumber",
         filterable: false,
         sortable: true,
@@ -111,7 +111,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "usageCount",
-      header: "In Use",
+      header: t("In Use"),
       cell: ({ row }) => {
         const count = row.original.usageCount ?? 0;
         return count > 0 ? (
@@ -119,11 +119,11 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
             {count}
           </Badge>
         ) : (
-          <span className="text-muted-foreground text-xs">{translate("Not in use")}</span>
+          <span className="text-muted-foreground text-xs">{t("Not in use")}</span>
         );
       },
       meta: {
-        label: "In Use",
+        label: t("In Use"),
         apiField: "usageCount",
         filterable: false,
         sortable: false,
@@ -135,7 +135,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "scenarioCount",
-      header: "Scenarios",
+      header: t("Scenarios"),
       cell: ({ row }) => {
         const count = row.original.scenarioCount ?? 0;
         return count > 0 ? (
@@ -143,11 +143,11 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
             {count}
           </Badge>
         ) : (
-          <span className="text-muted-foreground text-xs">{translate("None")}</span>
+          <span className="text-muted-foreground text-xs">{t("None")}</span>
         );
       },
       meta: {
-        label: "Scenarios",
+        label: t("Scenarios"),
         apiField: "scenarioCount",
         filterable: false,
         sortable: false,
@@ -159,15 +159,15 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "approvedAt",
-      header: "Approved",
+      header: t("Approved"),
       cell: ({ row }) =>
         row.original.approvedAt ? (
           <HoverCardTimestamp timestamp={row.original.approvedAt} />
         ) : (
-          <span className="text-muted-foreground text-xs">{translate("Never")}</span>
+          <span className="text-muted-foreground text-xs">{t("Never")}</span>
         ),
       meta: {
-        label: "Approved",
+        label: t("Approved"),
         apiField: "approvedAt",
         filterable: true,
         sortable: true,
@@ -180,10 +180,10 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: true,
         sortable: true,
@@ -196,10 +196,10 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
-        label: "Created At",
+        label: t("Created At"),
         apiField: "createdAt",
         filterable: true,
         sortable: true,

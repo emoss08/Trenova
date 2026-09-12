@@ -28,7 +28,9 @@ export function YtdCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-2xs font-medium text-muted-foreground uppercase">{t("{0} year to date", year)}</p>
+      <p className="text-2xs font-medium text-muted-foreground uppercase">
+        {t("{0} year to date", year)}
+      </p>
       <p className="mt-1 text-2xl font-semibold tracking-tight">
         <AmountDisplay value={ytd.data.netPayMinor} />
       </p>

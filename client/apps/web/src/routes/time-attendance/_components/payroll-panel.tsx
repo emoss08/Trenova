@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStat } from "@/components/kpi/kpi-stat";
 import { usePermission } from "@/hooks/use-permission";
@@ -52,9 +53,9 @@ function hourSegments(totals: {
   paidLeaveMinutes: number;
 }) {
   return [
-    { key: "regular", label: "Regular", value: totals.regularMinutes },
-    { key: "overtime", label: "Overtime", value: totals.overtimeMinutes },
-    { key: "leave", label: "Paid leave", value: totals.paidLeaveMinutes },
+    { key: "regular", label: translate("Regular"), value: totals.regularMinutes },
+    { key: "overtime", label: translate("Overtime"), value: totals.overtimeMinutes },
+    { key: "leave", label: translate("Paid leave"), value: totals.paidLeaveMinutes },
   ];
 }
 
@@ -161,7 +162,9 @@ export function PayrollPanel() {
               {t("Run payroll")}
             </h3>
             <p className="text-muted-foreground text-xs">
-              {t("Every approved week in the period that has not gone out yet. The weeks lock to the run, so the same period cannot be sent twice.")}
+              {t(
+                "Every approved week in the period that has not gone out yet. The weeks lock to the run, so the same period cannot be sent twice.",
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +216,9 @@ export function PayrollPanel() {
           </div>
         ) : readySheets.length === 0 ? (
           <p className="text-muted-foreground px-4 py-3 text-xs">
-            {t("No approved week in this period is waiting to be sent. Move the period, or approve some weeks first.")}
+            {t(
+              "No approved week in this period is waiting to be sent. Move the period, or approve some weeks first.",
+            )}
           </p>
         ) : (
           <>
@@ -282,7 +287,9 @@ export function PayrollPanel() {
         ) : runs.length === 0 ? (
           <PayrollRunsEmpty
             title={t("No payroll runs yet")}
-            description={t("Approve some weeks, pick the period, and run it. Each run is kept with the file it produced.")}
+            description={t(
+              "Approve some weeks, pick the period, and run it. Each run is kept with the file it produced.",
+            )}
           />
         ) : (
           <ul className="bg-card divide-y overflow-hidden rounded-lg border">
@@ -342,7 +349,12 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <Badge variant={voided ? "inactive" : "active"}>{voided ? t("Voided") : t("Sent")}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
-          {t("{0, plural, one {# timesheet} other {# timesheets}} {1} {2}", run.timesheetCount, run.generatedAt ? t(", sent {0}", formatShiftDate(run.generatedAt)) : "", run.voidReason ? t(". Voided: {0}", run.voidReason) : "")}
+          {t(
+            "{0, plural, one {# timesheet} other {# timesheets}} {1} {2}",
+            run.timesheetCount,
+            run.generatedAt ? t(", sent {0}", formatShiftDate(run.generatedAt)) : "",
+            run.voidReason ? t(". Voided: {0}", run.voidReason) : "",
+          )}
         </span>
       </div>
       <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">

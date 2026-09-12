@@ -65,7 +65,9 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
 
       {rules.length === 0 ? (
         <p className="text-2xs text-muted-foreground">
-          {t("Colour a value when it crosses a threshold, so an exception is visible without reading every number. The first matching rule wins.")}
+          {t(
+            "Colour a value when it crosses a threshold, so an exception is visible without reading every number. The first matching rule wins.",
+          )}
         </p>
       ) : (
         rules.map((rule, index) => (

@@ -13,7 +13,9 @@ export function RateMatrixPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Rate Matrices")}
-        description={t("Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell")}
+        description={t(
+          "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell",
+        )}
       />
       <div className="p-4">
         <DataTableLazyComponent>

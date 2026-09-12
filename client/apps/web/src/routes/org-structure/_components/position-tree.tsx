@@ -188,7 +188,11 @@ export function PositionTree({
           </Button>
           {tree.unplaced > 0 ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0} {1} with no position", tree.unplaced, tree.unplaced === 1 ? "person" : "people")}
+              {t(
+                "{0} {1} with no position",
+                tree.unplaced,
+                tree.unplaced === 1 ? "person" : "people",
+              )}
             </span>
           ) : null}
         </div>
@@ -240,7 +244,9 @@ export function PositionTree({
       )}
       {canUpdate ? (
         <p className="text-muted-foreground text-xs">
-          {t("Drag a position onto the one it should report to, or use its menu. Drop it on the bar at the bottom to make it top level.")}
+          {t(
+            "Drag a position onto the one it should report to, or use its menu. Drop it on the bar at the bottom to make it top level.",
+          )}
         </p>
       ) : null}
     </section>
@@ -382,7 +388,10 @@ function TreeRow({
           <span className="text-muted-foreground text-xs">
             {jobDepartmentLabel(position.department)}
             {hasChildren
-              ? t("· {0, plural, one {# reporting position} other {# reporting positions}}", node.children.length)
+              ? t(
+                  "· {0, plural, one {# reporting position} other {# reporting positions}}",
+                  node.children.length,
+                )
               : ""}
             {node.terminated > 0 ? ` ${t("· {0} left", node.terminated)}` : ""}
           </span>
@@ -403,7 +412,10 @@ function TreeRow({
             {node.people}
           </span>
           {hasChildren ? (
-            <span className="text-muted-foreground"> {t("· {0} below", node.rolledUp - node.people)}</span>
+            <span className="text-muted-foreground">
+              {" "}
+              {t("· {0} below", node.rolledUp - node.people)}
+            </span>
           ) : null}
         </button>
         {canCreate ? (

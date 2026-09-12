@@ -38,7 +38,7 @@ export default function EmailProfileTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<EmailProfile | null>(null);
@@ -108,20 +108,20 @@ export default function EmailProfileTable() {
     () => [
       {
         id: "send-test",
-        label: "Send Test",
+        label: t("Send Test"),
         icon: SendIcon,
         onClick: openTestDialog,
         disabled: (row) => row.original.status !== "Active",
       },
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: TrashIcon,
         variant: "destructive",
         onClick: openDeleteDialog,
       },
     ],
-    [openDeleteDialog, openTestDialog],
+    [openDeleteDialog, openTestDialog, t],
   );
 
   return (
@@ -141,7 +141,10 @@ export default function EmailProfileTable() {
           <DialogHeader>
             <DialogTitle>{t("Send Test Email")}</DialogTitle>
             <DialogDescription>
-              {t("Queue a test message from {0}.", selectedProfile?.name ?? t("this email profile"))}
+              {t(
+                "Queue a test message from {0}.",
+                selectedProfile?.name ?? t("this email profile"),
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -186,7 +189,10 @@ export default function EmailProfileTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete Email Profile")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Delete {0} and remove it from any purpose assignment. This action cannot be undone.", selectedProfile?.name ?? t("this email profile"))}
+              {t(
+                "Delete {0} and remove it from any purpose assignment. This action cannot be undone.",
+                selectedProfile?.name ?? t("this email profile"),
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -210,42 +210,42 @@ export function RateAgreementPanel({
     () => [
       {
         value: "overview",
-        label: "Overview",
+        label: t("Overview"),
         icon: FileTextIcon,
         content: <RateAgreementForm />,
       },
       {
         value: "lanes",
-        label: "Lanes",
+        label: t("Lanes"),
         icon: MapIcon,
         content: <LaneEditor />,
       },
       {
         value: "accessorials",
-        label: "Accessorials",
+        label: t("Accessorials"),
         icon: ReceiptTextIcon,
         content: <AccessorialScheduleEditor />,
       },
       {
         value: "fuel",
-        label: "Fuel",
+        label: t("Fuel"),
         icon: FuelIcon,
         content: <FuelBindingForm />,
       },
       {
         value: "simulation",
-        label: "Simulation",
+        label: t("Simulation"),
         icon: FlaskConicalIcon,
         content: <SimulationPanel rateAgreementId={row?.id} />,
       },
       {
         value: "versions",
-        label: "Versions",
+        label: t("Versions"),
         icon: ClockIcon,
         content: <VersionsTab rateAgreementId={row?.id} />,
       },
     ],
-    [row?.id],
+    [row?.id, t],
   );
 
   if (mode === "edit") {
@@ -297,7 +297,9 @@ export function RateAgreementPanel({
       size="xl"
       queryKey="rate-agreement-list"
       title={t("Rate Agreement")}
-      description={t("Write the contract once, and every shipment on its lanes prices itself against it.")}
+      description={t(
+        "Write the contract once, and every shipment on its lanes prices itself against it.",
+      )}
       formTabs={formTabs}
       mutationFn={(values) => apiService.rateAgreementService.create(values)}
     />

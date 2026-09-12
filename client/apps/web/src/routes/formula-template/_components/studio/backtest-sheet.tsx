@@ -50,7 +50,9 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
             {t("Backtest")}
           </SheetTitle>
           <SheetDescription>
-            {t("Re-rate recent shipments with a candidate expression and compare against what they charge today.")}
+            {t(
+              "Re-rate recent shipments with a candidate expression and compare against what they charge today.",
+            )}
           </SheetDescription>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">

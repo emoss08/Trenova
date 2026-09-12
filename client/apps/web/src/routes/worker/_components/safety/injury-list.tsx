@@ -119,7 +119,9 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     </Badge>
                     {injury.recordable ? <Badge variant="info">{t("On the 300 log")}</Badge> : null}
                     {injury.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
-                    {injury.privacyCase ? <Badge variant="secondary">{t("Privacy case")}</Badge> : null}
+                    {injury.privacyCase ? (
+                      <Badge variant="secondary">{t("Privacy case")}</Badge>
+                    ) : null}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground tabular-nums">
@@ -136,7 +138,9 @@ export function InjuryList({ workerId }: { workerId: string }) {
                   {illnessTypeLabel(injury.illnessType)}
                   {injury.bodyPart ? ` · ${injury.bodyPart}` : ""}
                   {injury.daysAway > 0 ? ` ${t("· {0} days away", injury.daysAway)}` : ""}
-                  {injury.daysRestricted > 0 ? ` ${t("· {0} restricted", injury.daysRestricted)}` : ""}
+                  {injury.daysRestricted > 0
+                    ? ` ${t("· {0} restricted", injury.daysRestricted)}`
+                    : ""}
                 </p>
                 {injury.claimStatus !== "NotFiled" ? (
                   <p className="mt-1 flex items-center gap-2">

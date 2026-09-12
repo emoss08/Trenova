@@ -144,7 +144,9 @@ export function ForkLineageDialog({
             {t("Fork Lineage")}
           </DialogTitle>
           <DialogDescription>
-            {t("View the fork history and ancestry of this template. Click on a template to navigate to it.")}
+            {t(
+              "View the fork history and ancestry of this template. Click on a template to navigate to it.",
+            )}
           </DialogDescription>
         </DialogHeader>
 

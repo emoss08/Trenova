@@ -75,7 +75,9 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
         {pto.balanceAfterDays != null ? (
           <Fact icon={WalletIcon} label={t("Balance after")}>
             <span>{t("Balance after")}</span>
-            <span className="ml-auto tabular-nums">{t("{0} days", formatPtoDays(pto.balanceAfterDays))}</span>
+            <span className="ml-auto tabular-nums">
+              {t("{0} days", formatPtoDays(pto.balanceAfterDays))}
+            </span>
           </Fact>
         ) : null}
       </dl>
@@ -92,7 +94,9 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
           {decision.note ? <> · {decision.note}</> : null}
         </p>
       ) : pto.autoApproved ? (
-        <p className="text-muted-foreground text-[11px] leading-tight">{t("Auto-approved by policy")}</p>
+        <p className="text-muted-foreground text-[11px] leading-tight">
+          {t("Auto-approved by policy")}
+        </p>
       ) : null}
     </div>
   );
@@ -131,7 +135,9 @@ export function PTODayList({ items, dayUnix }: PTODayListProps) {
     <div className="flex flex-col gap-1.5" data-testid="pto-day-list">
       <div className="flex items-baseline justify-between gap-2 px-0.5">
         <p className="text-sm font-medium">{formatUnixDateMedium(dayUnix)}</p>
-        <span className="text-muted-foreground text-xs tabular-nums">{t("{0} out", out.length)}</span>
+        <span className="text-muted-foreground text-xs tabular-nums">
+          {t("{0} out", out.length)}
+        </span>
       </div>
       <ScrollArea className="-mx-1 px-1" viewportClassName="max-h-64" maskHeight={16}>
         <ul className="divide-border/60 divide-y">

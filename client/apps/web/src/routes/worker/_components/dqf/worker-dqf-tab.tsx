@@ -202,7 +202,9 @@ export default function WorkerDQFTab({ workerId, onOpenTab }: WorkerDQFTabProps)
         </div>
         {file.verifications.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-            {t("No previous employer has been recorded. Until one is, the three-year investigation has not been made.")}
+            {t(
+              "No previous employer has been recorded. Until one is, the three-year investigation has not been made.",
+            )}
           </p>
         ) : (
           <ul className="divide-border divide-y rounded-lg border">

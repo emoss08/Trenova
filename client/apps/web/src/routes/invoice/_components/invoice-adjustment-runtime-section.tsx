@@ -257,7 +257,11 @@ function InvoiceAdjustmentLatestCard({
       </div>
 
       <p className="text-2xs text-muted-foreground mt-1.5">
-        {t("Credit {0} · Rebill {1}", formatCurrency(Number(latestAdjustment.creditTotalAmount)), formatCurrency(Number(latestAdjustment.rebillTotalAmount)))}
+        {t(
+          "Credit {0} · Rebill {1}",
+          formatCurrency(Number(latestAdjustment.creditTotalAmount)),
+          formatCurrency(Number(latestAdjustment.rebillTotalAmount)),
+        )}
       </p>
 
       {reason ? (

@@ -361,3 +361,37 @@ test("keeps the space where the interpolations sat on one line", () => {
   ).output;
   assert.match(out, /t\("Driver \{0\} \{1\} is here"/);
 });
+
+test("wraps a column header inside a function", () => {
+  const out = run(
+    `export function getColumns() {\n  return [{ accessorKey: "status", header: "Status", size: 120 }];\n}\n`,
+  ).output;
+  assert.match(out, /header: translate\("Status"\)/);
+  assert.match(out, /accessorKey: "status"/, "a non-caption key is left alone");
+  assert.match(out, /size: 120/);
+});
+
+test("wraps page header props passed as a JSX object attribute", () => {
+  const out = run(
+    `export function Page() {\n  return <PageLayout pageHeaderProps={{ title: "Customers", description: "Manage customers" }} />;\n}\n`,
+  ).output;
+  assert.match(out, /title: t\("Customers"\)/);
+  assert.match(out, /description: t\("Manage customers"\)/);
+});
+
+test("wraps a toast options object exactly once", () => {
+  const out = run(
+    `export function Save() {\n  toast.success("Saved", { description: "The shipment was saved." });\n}\n`,
+  ).output;
+  assert.match(out, /toast\.success\(t\("Saved"\), \{ description: t\("The shipment was saved\."\) \}\)/);
+  assert.equal(out.match(/t\(t\(/g), null, "no double wrapping");
+});
+
+test("leaves a value or name key alone even beside a caption", () => {
+  const out = run(
+    `export function opts() {\n  return [{ label: "Active", value: "Active", name: "status" }];\n}\n`,
+  ).output;
+  assert.match(out, /label: translate\("Active"\)/);
+  assert.match(out, /value: "Active"/);
+  assert.match(out, /name: "status"/);
+});

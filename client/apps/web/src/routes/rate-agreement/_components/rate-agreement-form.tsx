@@ -49,7 +49,9 @@ export function RateAgreementForm() {
               name="partyType"
               label={t("Party Type")}
               placeholder={t("Select party type")}
-              description={t("Whether this contract sets what a customer pays or what a carrier is paid")}
+              description={t(
+                "Whether this contract sets what a customer pays or what a carrier is paid",
+              )}
               options={ratePartyTypeChoices}
             />
           </FormControl>
@@ -85,7 +87,9 @@ export function RateAgreementForm() {
               name="code"
               label={t("Code")}
               placeholder={t("e.g., ACME-2026")}
-              description={t("Short identifier used to reference this contract internally. Must be unique across your organization.")}
+              description={t(
+                "Short identifier used to reference this contract internally. Must be unique across your organization.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -95,7 +99,9 @@ export function RateAgreementForm() {
               name="name"
               label={t("Name")}
               placeholder={t("e.g., Acme Freight Agreement")}
-              description={t("The contract's name as somebody reading an invoice would recognize it")}
+              description={t(
+                "The contract's name as somebody reading an invoice would recognize it",
+              )}
             />
           </FormControl>
 
@@ -116,7 +122,9 @@ export function RateAgreementForm() {
               name="agreementType"
               label={t("Agreement Type")}
               placeholder={t("Select type")}
-              description={t("Contract, published tariff, spot deal, project, or dedicated capacity")}
+              description={t(
+                "Contract, published tariff, spot deal, project, or dedicated capacity",
+              )}
               options={rateAgreementTypeChoices}
             />
           </FormControl>
@@ -126,7 +134,9 @@ export function RateAgreementForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
-              description={t("Moved by the review actions (submit, approve, suspend), never by a save")}
+              description={t(
+                "Moved by the review actions (submit, approve, suspend), never by a save",
+              )}
               options={rateAgreementStatusChoices}
               isReadOnly
             />
@@ -147,7 +157,9 @@ export function RateAgreementForm() {
               name="priority"
               label={t("Priority")}
               placeholder="0"
-              description={t("Breaks a tie when two agreements cover the same lane equally narrowly. Higher wins.")}
+              description={t(
+                "Breaks a tie when two agreements cover the same lane equally narrowly. Higher wins.",
+              )}
             />
           </FormControl>
         </FormGroup>
@@ -202,7 +214,9 @@ export function RateAgreementForm() {
 
       <FormSection
         title={t("Pricing Defaults")}
-        description={t("The currency, guardrails, and rounding every lane inherits unless it sets its own.")}
+        description={t(
+          "The currency, guardrails, and rounding every lane inherits unless it sets its own.",
+        )}
         className={partyType ? "border-b pb-4" : undefined}
       >
         <FormGroup cols={2}>
@@ -213,7 +227,9 @@ export function RateAgreementForm() {
               name="currency"
               label={t("Currency")}
               placeholder={t("Select currency")}
-              description={t("What this contract is written in, converted at the rating date when it differs from yours")}
+              description={t(
+                "What this contract is written in, converted at the rating date when it differs from yours",
+              )}
               options={currencyChoices}
             />
           </FormControl>
@@ -266,7 +282,9 @@ export function RateAgreementForm() {
       {partyType === "Carrier" && (
         <FormSection
           title={t("Margin Guardrails")}
-          description={t("Limits on what this carrier may be paid relative to what the load sells for.")}
+          description={t(
+            "Limits on what this carrier may be paid relative to what the load sells for.",
+          )}
         >
           <FormGroup cols={2}>
             <FormControl>
@@ -307,7 +325,9 @@ export function RateAgreementForm() {
                 name="billToCustomerId"
                 label={t("Bill To")}
                 placeholder={t("Select bill-to customer")}
-                description={t("Redirects invoicing, for a customer whose parent settles the freight")}
+                description={t(
+                  "Redirects invoicing, for a customer whose parent settles the freight",
+                )}
               />
             </FormControl>
           </FormGroup>

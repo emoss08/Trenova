@@ -48,20 +48,20 @@ export default function APIKeyTable() {
     setRevokeDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const contextMenuActions = useMemo<RowAction<ApiKeyRow>[]>(
     () => [
       {
         id: "revoke",
-        label: "Revoke",
+        label: t("Revoke"),
         icon: ShieldOffIcon,
         variant: "destructive",
         onClick: handleRevoke,
         hidden: (row) => row.original.status === "revoked",
       },
     ],
-    [handleRevoke],
+    [handleRevoke, t],
   );
 
   return (
@@ -84,7 +84,10 @@ export default function APIKeyTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.", selectedKey?.name ?? t("this key"))}
+              {t(
+                "Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.",
+                selectedKey?.name ?? t("this key"),
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -112,9 +112,13 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <SettlementDisputeStatusBadge status={dispute.status} />
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
-          {t("Submitted {0}{1}", formatDate(dispute.createdAt), dispute.worker
-            ? ` ${t("by {0}", `${dispute.worker.firstName} ${dispute.worker.lastName}`.trim())}`
-            : "")}
+          {t(
+            "Submitted {0}{1}",
+            formatDate(dispute.createdAt),
+            dispute.worker
+              ? ` ${t("by {0}", `${dispute.worker.firstName} ${dispute.worker.lastName}`.trim())}`
+              : "",
+          )}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(dispute.description)}</p>
       </div>
@@ -139,7 +143,9 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           {dispute.settlementLine ? (
             <>
               <Separator className="my-2" />
-              <p className="text-muted-foreground text-xs font-medium uppercase">{t("Disputed line")}</p>
+              <p className="text-muted-foreground text-xs font-medium uppercase">
+                {t("Disputed line")}
+              </p>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span>{t(dispute.settlementLine.description)}</span>
                 <AmountDisplay value={dispute.settlementLine.amountMinor} />
@@ -268,7 +274,9 @@ function ResolveForm({
           <div>
             <Label htmlFor="dispute-with-adjustment">{t("Apply a correcting adjustment")}</Label>
             <p className="text-muted-foreground text-[11px]">
-              {t("Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).")}
+              {t(
+                "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).",
+              )}
             </p>
           </div>
           <Switch
@@ -306,7 +314,7 @@ function ResolveForm({
             <Select
               value={payCodeId}
               items={[
-                { label: "No pay code", value: "none" },
+                { label: t("No pay code"), value: "none" },
                 ...(payCodes ?? []).map((code) => ({
                   label: `${code.code} — ${code.name} (${code.direction})`,
                   value: code.id,

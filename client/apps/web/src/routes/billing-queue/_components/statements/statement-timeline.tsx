@@ -35,7 +35,7 @@ export function StatementTimeline({
   }[] = [
     {
       key: "accrue",
-      label: "Accruing",
+      label: t("Accruing"),
       detail: hasFreight
         ? `${statement.shipmentCount} shipment${statement.shipmentCount === 1 ? "" : "s"} · ${periodRange(statement.periodStart, statement.periodEnd)}`
         : `Nothing yet · ${periodRange(statement.periodStart, statement.periodEnd)}`,

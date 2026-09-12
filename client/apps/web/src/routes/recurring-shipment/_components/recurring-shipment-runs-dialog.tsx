@@ -37,7 +37,8 @@ function RunRow({ run }: { run: RecurringShipmentRun }) {
       </div>
       {run.generatedShipment?.proNumber && (
         <p className="text-sm">
-          {t("Generated shipment")} <span className="font-medium">{run.generatedShipment.proNumber}</span>
+          {t("Generated shipment")}{" "}
+          <span className="font-medium">{run.generatedShipment.proNumber}</span>
         </p>
       )}
       {run.originalOccurrenceAt && run.originalOccurrenceAt !== run.occurrenceAt && (
@@ -72,7 +73,10 @@ export function RecurringShipmentRunsDialog({
         <DialogHeader>
           <DialogTitle>{t("Generation History")}</DialogTitle>
           <DialogDescription>
-            {t("{0} — every generated, skipped, and failed occurrence.", series ? t("Runs for \"{0}\"", series.name) : t("Runs"))}
+            {t(
+              "{0} — every generated, skipped, and failed occurrence.",
+              series ? t('Runs for "{0}"', series.name) : t("Runs"),
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">

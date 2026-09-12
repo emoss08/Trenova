@@ -279,7 +279,7 @@ export default function AdditionalChargesSection() {
             icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
             className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{
-              label: "Add First Charge",
+              label: t("Add First Charge"),
               onClick: handleAdd,
               icon: PlusIcon,
             }}

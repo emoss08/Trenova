@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { statusChoices } from "@/lib/choices";
@@ -43,18 +43,18 @@ function StatusCell({ row }: { row: PayCodeRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<PayCodeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusCell row={row.original} />,
       size: 120,
       meta: { apiField: "status" },
     },
     {
       accessorKey: "direction",
-      header: "Direction",
+      header: t("Direction"),
       cell: ({ row }) => (
         <span
           className={cn(
@@ -72,20 +72,20 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-mono text-xs font-medium">{row.original.code}</span>,
       size: 110,
       meta: { apiField: "code" },
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <span className="text-xs">
           {row.original.name}
           {row.original.isSystem && (
             <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-[10px]">
-              {translate("System")}
+              {t("System")}
             </span>
           )}
         </span>
@@ -95,13 +95,13 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
     },
     {
       id: "behavior",
-      header: "Behavior",
+      header: t("Behavior"),
       cell: ({ row }) => {
         if (row.original.direction !== "Earning") return null;
         return (
           <span className="text-muted-foreground text-[11px]">
-            {row.original.taxable ? translate("Taxable") : translate("Reimbursement")}
-            {!row.original.countsTowardGuarantee && ` ${translate("· excl. guarantee")}`}
+            {row.original.taxable ? t("Taxable") : t("Reimbursement")}
+            {!row.original.countsTowardGuarantee && ` ${t("· excl. guarantee")}`}
           </span>
         );
       },
@@ -109,7 +109,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
     },
     {
       id: "glAccount",
-      header: "GL Account",
+      header: t("GL Account"),
       cell: ({ row }) =>
         row.original.glAccount ? (
           <span className="text-xs">
@@ -117,13 +117,13 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
             <span className="text-muted-foreground">{row.original.glAccount.name}</span>
           </span>
         ) : (
-          <span className="text-muted-foreground text-[11px]">{translate("Default")}</span>
+          <span className="text-muted-foreground text-[11px]">{t("Default")}</span>
         ),
       size: 200,
     },
     {
       accessorKey: "defaultAmountMinor",
-      header: () => <div className="text-right">{translate("Default Amount")}</div>,
+      header: () => <div className="text-right">{t("Default Amount")}</div>,
       cell: ({ row }) =>
         row.original.defaultAmountMinor != null ? (
           <div className="text-right">

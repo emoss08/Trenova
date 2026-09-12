@@ -126,7 +126,9 @@ function FixtureList({
           <div className="space-y-1">
             <p className="text-sm font-medium">{t("No fixtures yet")}</p>
             <p className="text-muted-foreground max-w-xs text-xs">
-              {t("Fixtures are sample documents with expected extraction results. They let you validate that rules produce the correct fields and stops before publishing.")}
+              {t(
+                "Fixtures are sample documents with expected extraction results. They let you validate that rules produce the correct fields and stops before publishing.",
+              )}
             </p>
           </div>
         </div>

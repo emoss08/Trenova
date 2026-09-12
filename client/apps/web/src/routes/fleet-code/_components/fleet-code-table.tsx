@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { fleetCodeTableGraphQLConfig, type FleetCodeRow } from "@/lib/graphql/fleet-code-table";
 import { statusChoices } from "@/lib/choices";
@@ -13,8 +14,10 @@ import { getColumns } from "./fleet-code-columns";
 import { FleetCodePanel } from "./fleet-code-panel";
 
 export default function FleetCodeTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: FleetCodeRow[], status: string) => {
@@ -45,15 +48,15 @@ export default function FleetCodeTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: statusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

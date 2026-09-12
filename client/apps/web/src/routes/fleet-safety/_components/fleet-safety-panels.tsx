@@ -44,7 +44,9 @@ export function TerminalsPanel({
       title={t("By terminal")}
       icon={<Building2Icon />}
       hint={`${totalWorkers} drivers`}
-      help={t("Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it.")}
+      help={t(
+        "Drivers by terminal, the yard with the most at-risk drivers first. Choose one to narrow every section on the page to it.",
+      )}
     >
       {standings.length === 0 ? (
         <SectionPanelQuiet>{t("No active drivers.")}</SectionPanelQuiet>
@@ -76,7 +78,9 @@ export function TerminalsPanel({
                         )}
                         style={terminal.color ? { backgroundColor: terminal.color } : undefined}
                       />
-                      <span className="truncate font-medium">{terminal.code || t("No terminal")}</span>
+                      <span className="truncate font-medium">
+                        {terminal.code || t("No terminal")}
+                      </span>
                       {terminal.description ? (
                         <span className="text-muted-foreground truncate">
                           {t(terminal.description)}
@@ -181,7 +185,13 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                       ) : null}
                     </span>
                     <span className="text-muted-foreground text-xs tabular-nums">
-                      {t("{0, plural, one {# event} other {# events}} {1}", row.events, row.lastEventAt ? ` ${t("· last {0}", formatUnixDate(row.lastEventAt))}` : "")}
+                      {t(
+                        "{0, plural, one {# event} other {# events}} {1}",
+                        row.events,
+                        row.lastEventAt
+                          ? ` ${t("· last {0}", formatUnixDate(row.lastEventAt))}`
+                          : "",
+                      )}
                     </span>
                   </span>
                 </span>
@@ -189,7 +199,10 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                   <span className="text-right text-xs tabular-nums">
                     <span className="font-mono font-medium">{row.score}</span>
                     {row.activePoints > 0 ? (
-                      <span className="text-muted-foreground"> {t("· {0} pts", row.activePoints)}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        {t("· {0} pts", row.activePoints)}
+                      </span>
                     ) : null}
                   </span>
                   <Badge variant={safetyRatingTone(row.rating)}>

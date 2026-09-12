@@ -185,19 +185,19 @@ export function ListPanel({
   const items = useMemo<ListItem[]>(() => {
     const list: ListItem[] = [];
     if (results.operations.length > 0) {
-      list.push({ type: "header", label: "Operations", count: results.operations.length });
+      list.push({ type: "header", label: t("Operations"), count: results.operations.length });
       for (const operation of results.operations) {
         list.push({ type: "operation", operation });
       }
     }
     if (results.fragments.length > 0) {
-      list.push({ type: "header", label: "Fragments", count: results.fragments.length });
+      list.push({ type: "header", label: t("Fragments"), count: results.fragments.length });
       for (const fragment of results.fragments) {
         list.push({ type: "fragment", fragment });
       }
     }
     return list;
-  }, [results]);
+  }, [results, t]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const getScrollElement = useCallback(() => {

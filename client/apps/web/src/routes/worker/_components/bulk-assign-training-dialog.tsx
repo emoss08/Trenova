@@ -117,7 +117,11 @@ export function BulkAssignTrainingDialog({
         <DialogHeader>
           <DialogTitle>{t("Assign training")}</DialogTitle>
           <DialogDescription>
-            {t("Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.", workers.length, workers.length === 1 ? "worker" : "workers")}
+            {t(
+              "Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.",
+              workers.length,
+              workers.length === 1 ? "worker" : "workers",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -190,7 +194,10 @@ export function BulkAssignTrainingDialog({
                   <Alert className="py-2">
                     <InfoIcon className="size-4" />
                     <AlertDescription>
-                      {t("This opens up to {0} assignments and notifies every driver affected.", workers.length * Math.max(selectedCourseIds.length, 1))}
+                      {t(
+                        "This opens up to {0} assignments and notifies every driver affected.",
+                        workers.length * Math.max(selectedCourseIds.length, 1),
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>

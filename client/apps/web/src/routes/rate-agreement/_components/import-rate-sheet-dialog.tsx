@@ -184,7 +184,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
         <DialogHeader>
           <DialogTitle>{t("Import Rate Sheet")}</DialogTitle>
           <DialogDescription>
-            {t("Upload a CSV or XLSX rate sheet into an agreement. Nothing is applied until you have read exactly what it would change.")}
+            {t(
+              "Upload a CSV or XLSX rate sheet into an agreement. Nothing is applied until you have read exactly what it would change.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -209,7 +211,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                       name="effectiveFrom"
                       label={t("Rates Take Effect")}
                       rules={{ required: true }}
-                      description={t("The day the imported rates start pricing — the negotiated date, not the upload date.")}
+                      description={t(
+                        "The day the imported rates start pricing — the negotiated date, not the upload date.",
+                      )}
                     />
                   </FormControl>
                 </FormGroup>
@@ -233,7 +237,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
             >
               <FileUpIcon className="text-muted-foreground mb-2 size-6" />
               <p className="text-sm font-medium">
-                {isUploading ? t("Reading the sheet…") : t("Drop a rate sheet here, or click to browse")}
+                {isUploading
+                  ? t("Reading the sheet…")
+                  : t("Drop a rate sheet here, or click to browse")}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 {t("CSV or XLSX. Columns are matched by name.")}
@@ -258,7 +264,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                     ))}
                   </ul>
                   <p className="mt-1.5 text-xs">
-                    {t("The template below has every column the importer recognises, with two example rows.")}
+                    {t(
+                      "The template below has every column the importer recognises, with two example rows.",
+                    )}
                   </p>
                 </AlertDescription>
               </Alert>
@@ -291,7 +299,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                   {batch.status}
                 </Badge>
                 <span className="font-mono text-xs">{batch.fileName}</span>
-                <span className="text-muted-foreground text-xs">{t("{0} rows", batch.rowCount)}</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("{0} rows", batch.rowCount)}
+                </span>
               </div>
               <p className="text-sm">{importHeadline(batch)}</p>
             </div>

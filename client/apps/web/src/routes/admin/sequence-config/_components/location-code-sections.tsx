@@ -52,7 +52,9 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
       <CardHeader className="border-b pb-3">
         <CardTitle>{t("Code Strategy")}</CardTitle>
         <CardDescription>
-          {t("Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.")}
+          {t(
+            "Derive readable components from location attributes, then append a sequence. The combined length cannot exceed 32 characters.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 pb-4">
@@ -65,7 +67,9 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                 const selected = field.value ?? [];
                 return (
                   <div className="space-y-2">
-                    <Label className={fieldState.error ? "text-destructive" : ""}>{t("Components")}</Label>
+                    <Label className={fieldState.error ? "text-destructive" : ""}>
+                      {t("Components")}
+                    </Label>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {locationCodeComponents.map((component) => {
                         const Icon = componentIcons[component];

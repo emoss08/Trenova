@@ -117,7 +117,11 @@ export function ElementDesigner() {
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
                 <div className="text-muted-foreground text-xs">
-                  {t("Sequence {0}{1}", segment.sequence, segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "")}
+                  {t(
+                    "Sequence {0}{1}",
+                    segment.sequence,
+                    segment.repeatPath ? ` / repeats ${segment.repeatPath}` : "",
+                  )}
                 </div>
               </div>
             </div>
@@ -221,7 +225,9 @@ function ElementInspector({
             {segment.segmentId}
             {element.position.toString().padStart(2, "0")} {element.name}
           </div>
-          <div className="text-muted-foreground text-xs">{t("Element source and validation rules")}</div>
+          <div className="text-muted-foreground text-xs">
+            {t("Element source and validation rules")}
+          </div>
         </div>
         <ControlledSelectField
           label={t("Source")}

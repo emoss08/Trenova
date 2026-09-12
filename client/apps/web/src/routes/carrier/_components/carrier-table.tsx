@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { carrierStatusChoices } from "@/lib/choices";
 import { carrierTableGraphQLConfig, type CarrierRow } from "@/lib/graphql/carrier-table";
@@ -13,8 +14,10 @@ import { getColumns } from "./carrier-columns";
 import { CarrierPanel } from "./carrier-panel";
 
 export default function CarrierTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: CarrierRow[], status: string) => {
@@ -45,15 +48,15 @@ export default function CarrierTable() {
       {
         id: "status-update",
         type: "select",
-        label: "Update Status",
-        loadingLabel: "Updating...",
+        label: t("Update Status"),
+        loadingLabel: t("Updating..."),
         icon: CircleCheckIcon,
         options: carrierStatusChoices,
         onSelect: handleBulkStatusUpdate,
         clearSelectionOnSuccess: true,
       },
     ],
-    [handleBulkStatusUpdate],
+    [handleBulkStatusUpdate, t],
   );
 
   return (

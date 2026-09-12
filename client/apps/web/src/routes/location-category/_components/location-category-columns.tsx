@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -6,16 +6,16 @@ import { locationCategoryTypeChoices } from "@/lib/choices";
 import type { LocationCategory } from "@/types/location-category";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<LocationCategory>[] {
+export function getColumns(t: TranslateFn): ColumnDef<LocationCategory>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <ColorOptionValue color={row.original.color ?? ""} value={row.original.name} />
       ),
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -25,7 +25,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
     },
     {
       accessorKey: "type",
-      header: "Type",
+      header: t("Type"),
       cell: ({ row }) => {
         const choice = locationCategoryTypeChoices.find((c) => c.value === row.original.type);
         return choice ? (
@@ -38,7 +38,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
       minSize: 140,
       maxSize: 220,
       meta: {
-        label: "Type",
+        label: t("Type"),
         apiField: "type",
         filterable: true,
         sortable: true,
@@ -49,12 +49,12 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={50} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={50} />
       ),
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -67,7 +67,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  nullableStringSchema,
-  optionalStringSchema,
-  tenantInfoSchema,
-} from "./helpers";
+import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
 
 export const documentClassificationSchema = z.enum([
   "Public",
@@ -12,9 +8,7 @@ export const documentClassificationSchema = z.enum([
   "Regulatory",
 ]);
 
-export type DocumentClassification = z.infer<
-  typeof documentClassificationSchema
->;
+export type DocumentClassification = z.infer<typeof documentClassificationSchema>;
 
 export const documentCategorySchema = z.enum([
   "Shipment",

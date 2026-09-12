@@ -78,7 +78,9 @@ export function ViolationList({
 
       {violations.length === 0 ? (
         <p className="text-muted-foreground mt-1 text-[11px]">
-          {t("None keyed in. The fleet scorecard falls back to the kind of event, which is an estimate rather than what the inspection actually said.")}
+          {t(
+            "None keyed in. The fleet scorecard falls back to the kind of event, which is an estimate rather than what the inspection actually said.",
+          )}
         </p>
       ) : (
         <ul className="mt-1 flex flex-col gap-1">

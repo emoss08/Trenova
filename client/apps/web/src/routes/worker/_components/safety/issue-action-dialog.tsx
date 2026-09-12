@@ -132,7 +132,9 @@ export function IssueActionDialog({
         <DialogHeader>
           <DialogTitle>{t("Issue a disciplinary action")}</DialogTitle>
           <DialogDescription>
-            {t("The ladder suggests the next rung from what is still active. Actions roll off after a year unless you set another date; terminations never do.")}
+            {t(
+              "The ladder suggests the next rung from what is still active. Actions roll off after a year unless you set another date; terminations never do.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -151,7 +153,9 @@ export function IssueActionDialog({
                   label={t("Level")}
                   options={LEVEL_OPTIONS}
                   placeholder={t("Pick a level")}
-                  description={t("Preset to the next rung from what is still active; choose another if the conduct warrants it.")}
+                  description={t(
+                    "Preset to the next rung from what is still active; choose another if the conduct warrants it.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>
@@ -161,7 +165,9 @@ export function IssueActionDialog({
                     <TriangleAlertIcon className="size-4" />
                     <AlertTitle>{t("This ends employment")}</AlertTitle>
                     <AlertDescription>
-                      {t("A termination closes PTO and pay assignments, cancels upcoming time off, and takes the worker off the dispatch board.")}
+                      {t(
+                        "A termination closes PTO and pay assignments, cancels upcoming time off, and takes the worker off the dispatch board.",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </FormControl>
@@ -172,7 +178,9 @@ export function IssueActionDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("What the worker is being disciplined for")}
-                  description={t("Sent to the driver in the notification and copied onto the timeline event for a suspension or termination.")}
+                  description={t(
+                    "Sent to the driver in the notification and copied onto the timeline event for a suspension or termination.",
+                  )}
                   rules={{ required: true }}
                   maxLength={4000}
                 />
@@ -183,7 +191,9 @@ export function IssueActionDialog({
                   name="details"
                   label={t("Details")}
                   placeholder={t("Context, prior conversations, what happens next")}
-                  description={t("Internal context kept on the action; it is not sent to the driver.")}
+                  description={t(
+                    "Internal context kept on the action; it is not sent to the driver.",
+                  )}
                   maxLength={4000}
                 />
               </FormControl>

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { WorkerRow } from "@/lib/graphql/worker-table";
 import { describe, expect, it } from "vitest";
@@ -13,12 +14,12 @@ type Meta = {
 };
 
 function columnByApiField(field: string): ColumnDef<WorkerRow> {
-  const match = getColumns().find(
+  const match = getColumns(translate).find(
     (column) => (column.meta as Meta | undefined)?.apiField === field,
   );
   if (!match) {
     throw new Error(
-      `no column for ${field}; have ${getColumns()
+      `no column for ${field}; have ${getColumns(translate)
         .map((column) => (column.meta as Meta | undefined)?.apiField)
         .join(", ")}`,
     );

@@ -77,9 +77,10 @@ export function InvoiceReconciliationPage() {
   return (
     <BillingWorkspaceLayout
       pageHeaderProps={{
-        title: "Reconciliation Exceptions",
-        description:
+        title: t("Reconciliation Exceptions"),
+        description: t(
           "Investigate adjustment-created finance exceptions and trace them back to source artifacts.",
+        ),
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-3 md:grid-cols-4">
@@ -91,7 +92,10 @@ export function InvoiceReconciliationPage() {
             label={t("Pending Approvals")}
             value={String(summaryQuery.data?.approvalsPending ?? 0)}
           />
-          <SummaryCard label={t("Write-Offs")} value={String(summaryQuery.data?.writeOffPending ?? 0)} />
+          <SummaryCard
+            label={t("Write-Offs")}
+            value={String(summaryQuery.data?.writeOffPending ?? 0)}
+          />
           <SummaryCard
             label={t("Batches In Flight")}
             value={String(summaryQuery.data?.batchesInFlight ?? 0)}
@@ -187,7 +191,9 @@ export function InvoiceReconciliationPage() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick an exception from the list to trace it back to the adjustment and invoices it came from.")}
+              description={t(
+                "Pick an exception from the list to trace it back to the adjustment and invoices it came from.",
+              )}
             />
           ) : detailQuery.isLoading || !detailQuery.data ? (
             <div className="space-y-4 p-4">
@@ -210,7 +216,10 @@ export function InvoiceReconciliationPage() {
                     label={t("Requested By")}
                     value={selectedRow.submittedByName || selectedRow.submittedById || "Unknown"}
                   />
-                  <Metric label={t("Submitted At")} value={formatTimestamp(selectedRow.submittedAt)} />
+                  <Metric
+                    label={t("Submitted At")}
+                    value={formatTimestamp(selectedRow.submittedAt)}
+                  />
                   <Metric
                     label={t("Policy Source")}
                     value={selectedRow.policySource || "Policy-controlled"}

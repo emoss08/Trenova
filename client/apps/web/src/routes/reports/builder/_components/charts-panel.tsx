@@ -65,7 +65,7 @@ function CoordinateField({
 }) {
   const t = useT();
 
-  const items = optional ? [{ id: NONE, label: "None" }, ...choices] : choices;
+  const items = optional ? [{ id: NONE, label: t("None") }, ...choices] : choices;
 
   return (
     <div className="flex flex-col gap-1">
@@ -267,7 +267,7 @@ function ChartEditor({
                 });
               }}
               items={[
-                { value: NONE, label: "No comparison" },
+                { value: NONE, label: t("No comparison") },
                 ...measures.map((choice) => ({ value: choice.id, label: choice.label })),
               ]}
             >
@@ -406,7 +406,7 @@ function ChartEditor({
               });
             }}
             items={[
-              { value: NONE, label: "None" },
+              { value: NONE, label: t("None") },
               ...measures.map((choice) => ({ value: choice.id, label: choice.label })),
             ]}
           >

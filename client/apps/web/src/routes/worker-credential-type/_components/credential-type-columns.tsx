@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { driverTypeChoices, statusChoices } from "@/lib/choices";
 import type { WorkerCredentialTypeRow } from "@/lib/graphql/worker-credential";
@@ -23,11 +23,11 @@ function requiredSummary(row: WorkerCredentialTypeRow): string {
     .join(", ");
 }
 
-export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 110,
       meta: {
@@ -41,7 +41,7 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => (
         <span className="flex items-center gap-2 font-medium">{row.original.code}</span>
       ),
@@ -55,13 +55,13 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span>{row.original.name}</span>
           {row.original.description ? (
             <span className="text-muted-foreground max-w-md truncate text-xs">
-              {translate(row.original.description)}
+              {t(row.original.description)}
             </span>
           ) : null}
         </div>
@@ -76,7 +76,7 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) => CREDENTIAL_CATEGORY_LABELS[row.original.category] ?? row.original.category,
       size: 130,
       meta: {
@@ -90,7 +90,7 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       id: "required",
-      header: "Required for",
+      header: t("Required for"),
       cell: ({ row }) => (
         <span className={row.original.isRequired ? "font-medium" : "text-muted-foreground"}>
           {requiredSummary(row.original)}
@@ -100,14 +100,14 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       accessorKey: "renewalWindowDays",
-      header: "Alert window",
+      header: t("Alert window"),
       cell: ({ row }) => `${row.original.renewalWindowDays} days`,
       size: 110,
       meta: { apiField: "renewalWindowDays", sortable: true },
     },
     {
       accessorKey: "validityMonths",
-      header: "Validity",
+      header: t("Validity"),
       cell: ({ row }) =>
         row.original.validityMonths ? (
           `${row.original.validityMonths} mo`
@@ -118,17 +118,17 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       id: "requirements",
-      header: "Needs",
+      header: t("Needs"),
       cell: ({ row }) => (
         <span className="flex gap-1">
           {row.original.requiresNumber ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              {translate("Number")}
+              {t("Number")}
             </Badge>
           ) : null}
           {row.original.requiresDocument ? (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              {translate("Document")}
+              {t("Document")}
             </Badge>
           ) : null}
         </span>
@@ -137,13 +137,13 @@ export function getColumns(): ColumnDef<WorkerCredentialTypeRow>[] {
     },
     {
       accessorKey: "activeCredentialCount",
-      header: "Held by",
+      header: t("Held by"),
       cell: ({ row }) => <span className="tabular-nums">{row.original.activeCredentialCount}</span>,
       size: 90,
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: { apiField: "createdAt", sortable: true, filterable: true, filterType: "date" },
     },

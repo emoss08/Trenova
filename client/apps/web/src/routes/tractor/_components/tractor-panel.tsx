@@ -58,7 +58,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
     () => [
       {
         value: "documents",
-        label: "Documents",
+        label: t("Documents"),
         icon: FileTextIcon,
         content: DocumentsTab,
         contentProps: {
@@ -68,7 +68,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
       },
       {
         value: "inspections",
-        label: "Inspections",
+        label: t("Inspections"),
         icon: ClipboardCheckIcon,
         content: InspectionsTab,
         contentProps: {
@@ -76,7 +76,7 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         },
       },
     ],
-    [row?.id],
+    [row?.id, t],
   );
 
   if (mode === "edit") {

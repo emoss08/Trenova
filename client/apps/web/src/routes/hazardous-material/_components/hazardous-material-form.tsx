@@ -136,11 +136,13 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
                         handleSelect(option);
                       }}
                     >
-                      <span>
-                        {t("UN{0} — {1}", option.unNumber, option.properShippingName)}
-                      </span>
+                      <span>{t("UN{0} — {1}", option.unNumber, option.properShippingName)}</span>
                       <span className="text-2xs text-muted-foreground">
-                        {t("Class {0}{1}", option.hazardClass, option.packingGroup ? ` ${t("| PG {0}", option.packingGroup)}` : "")}
+                        {t(
+                          "Class {0}{1}",
+                          option.hazardClass,
+                          option.packingGroup ? ` ${t("| PG {0}", option.packingGroup)}` : "",
+                        )}
                       </span>
                     </button>
                   ))}
@@ -272,7 +274,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
       </FormSection>
       <FormSection
         title={t("DOT Classification")}
-        description={t("Hazard class, packing group, and regulatory identifiers per 49 CFR 172.101.")}
+        description={t(
+          "Hazard class, packing group, and regulatory identifiers per 49 CFR 172.101.",
+        )}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -343,7 +347,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
               name="properShippingName"
               label={t("Proper Shipping Name")}
               placeholder={t("Proper Shipping Name")}
-              description={t("The proper shipping name as designated by transportation regulations.")}
+              description={t(
+                "The proper shipping name as designated by transportation regulations.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
@@ -359,7 +365,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
       </FormSection>
       <FormSection
         title={t("Compliance Flags")}
-        description={t("Regulatory indicators that affect placarding, reporting, and special handling.")}
+        description={t(
+          "Regulatory indicators that affect placarding, reporting, and special handling.",
+        )}
         className="border-b pb-4"
       >
         <FormGroup cols={2}>
@@ -412,7 +420,9 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
       </FormSection>
       <FormSection
         title={t("Handling & Emergency")}
-        description={t("Instructions and contact information for safe handling and emergency response.")}
+        description={t(
+          "Instructions and contact information for safe handling and emergency response.",
+        )}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">

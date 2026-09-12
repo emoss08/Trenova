@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema, workerLeaveTypeSchema, workerTypeSchema } from "./worker";
 
@@ -91,7 +92,7 @@ export const employmentEventFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["leaveType"],
-        message: "Choose the kind of leave",
+        message: translate("Choose the kind of leave"),
       });
     }
     if (EMPLOYMENT_EVENT_REQUIRES_REASON.has(values.kind) && !values.reason) {
@@ -105,21 +106,21 @@ export const employmentEventFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["fleetCodeId"],
-        message: "Choose the fleet the worker is moving to",
+        message: translate("Choose the fleet the worker is moving to"),
       });
     }
     if (values.kind === "Promoted" && !values.driverType && !values.workerType) {
       ctx.addIssue({
         code: "custom",
         path: ["driverType"],
-        message: "Choose the new driver type or worker type",
+        message: translate("Choose the new driver type or worker type"),
       });
     }
     if (values.kind === "RateChanged" && !values.rate) {
       ctx.addIssue({
         code: "custom",
         path: ["rate"],
-        message: "Enter the new rate",
+        message: translate("Enter the new rate"),
       });
     }
   });

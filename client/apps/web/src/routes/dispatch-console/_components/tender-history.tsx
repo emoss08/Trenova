@@ -89,7 +89,9 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                   {formatOfferRate(offer.rate, offer.rateMethod)}
                 </span>
                 <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
-                {offer.sentAt != null && <span>{t("· sent {0}", formatUnixDateTime(offer.sentAt))}</span>}
+                {offer.sentAt != null && (
+                  <span>{t("· sent {0}", formatUnixDateTime(offer.sentAt))}</span>
+                )}
                 {offer.respondedAt != null && (
                   <span>{t("· responded {0}", formatUnixDateTime(offer.respondedAt))}</span>
                 )}
@@ -140,7 +142,9 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">{t("Tenders")}</span>
+      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+        {t("Tenders")}
+      </span>
       {isLoading ? (
         <Skeleton className="h-12 rounded-md" />
       ) : (

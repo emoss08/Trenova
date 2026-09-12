@@ -342,7 +342,9 @@ export function ColumnFormatEditor({
           )}
 
           <p className="text-2xs text-muted-foreground col-span-2">
-            {t("Transforms change the number this report returns — sorting and exported cells use the transformed value. Your records are never modified.")}
+            {t(
+              "Transforms change the number this report returns — sorting and exported cells use the transformed value. Your records are never modified.",
+            )}
           </p>
         </div>
       )}

@@ -16,7 +16,9 @@ export function InvoiceAdjustmentControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Invoice Adjustment Controls")}
-        description={t("Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.")}
+        description={t(
+          "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.",
+        )}
       />
       <div className="p-4">
         <QueryLazyComponent queryKey={queries.invoiceAdjustmentControl.get._def}>

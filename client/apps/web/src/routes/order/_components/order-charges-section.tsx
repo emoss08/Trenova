@@ -79,7 +79,9 @@ export function OrderChargesSection() {
     <FormSection
       title={t("Order Charges")}
       titleCount={charges.length}
-      description={t("Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice.")}
+      description={t(
+        "Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice.",
+      )}
       className="border-border border-t pt-4"
       action={
         charges.length > 0 &&
@@ -166,7 +168,7 @@ export function OrderChargesSection() {
             chargesLocked
               ? undefined
               : {
-                  label: "Add First Charge",
+                  label: t("Add First Charge"),
                   onClick: openAddCharge,
                   icon: PlusIcon,
                 }
@@ -191,10 +193,11 @@ export function OrderChargesSection() {
             <AlertDialogTitle>{t("Remove this charge?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {chargePendingRemoval
-                ? t("\"{0}\" ({1}) will be removed and the order total recalculated.", chargePendingRemoval.description, formatCurrency(
-                    Number(chargePendingRemoval.amount),
-                    currency,
-                  ))
+                ? t(
+                    '"{0}" ({1}) will be removed and the order total recalculated.',
+                    chargePendingRemoval.description,
+                    formatCurrency(Number(chargePendingRemoval.amount), currency),
+                  )
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

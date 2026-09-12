@@ -67,7 +67,10 @@ export function LinkCarrierDialog({
         <DialogHeader>
           <DialogTitle>{t("Link invoice to carrier")}</DialogTitle>
           <DialogDescription>
-            {t("Ties invoice {0} to a carrier in the master so it can be matched against that carrier's assignments.", invoiceNumber || invoiceId)}
+            {t(
+              "Ties invoice {0} to a carrier in the master so it can be matched against that carrier's assignments.",
+              invoiceNumber || invoiceId,
+            )}
           </DialogDescription>
         </DialogHeader>
         <CarrierAutocompleteField<LinkCarrierFormValues>

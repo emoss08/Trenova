@@ -134,7 +134,11 @@ export function EnvelopeTab() {
   return (
     <div className="space-y-3">
       {method === "Internal" ? (
-        <EDIEmptyState message={t("Internal profiles use organization routing and do not require X12 interchange identifiers.")} />
+        <EDIEmptyState
+          message={t(
+            "Internal profiles use organization routing and do not require X12 interchange identifiers.",
+          )}
+        />
       ) : (
         <X12EnvelopeFields control={control} />
       )}

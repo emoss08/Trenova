@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -10,21 +10,21 @@ function StatusBadge({ status }: { status: EmailProfile["status"] }) {
   return <Badge variant={status === "Active" ? "active" : "inactive"}>{status}</Badge>;
 }
 
-export function getColumns(): ColumnDef<EmailProfile>[] {
+export function getColumns(t: TranslateFn): ColumnDef<EmailProfile>[] {
   return [
     {
       accessorKey: "name",
-      header: "Profile",
+      header: t("Profile"),
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{row.original.name}</span>
-          <DataTableDescription description={translate(row.original.description)} truncateLength={70} />
+          <DataTableDescription description={t(row.original.description)} truncateLength={70} />
         </div>
       ),
       size: 260,
       minSize: 220,
       meta: {
-        label: "Profile",
+        label: t("Profile"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -34,7 +34,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
     },
     {
       accessorKey: "senderEmail",
-      header: "Sender",
+      header: t("Sender"),
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate">{row.original.senderName}</span>
@@ -44,7 +44,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       size: 280,
       minSize: 240,
       meta: {
-        label: "Sender",
+        label: t("Sender"),
         apiField: "senderEmail",
         filterable: true,
         sortable: true,
@@ -54,10 +54,10 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
     },
     {
       accessorKey: "provider",
-      header: "Provider",
+      header: t("Provider"),
       size: 140,
       meta: {
-        label: "Provider",
+        label: t("Provider"),
         apiField: "provider",
         filterable: true,
         sortable: true,
@@ -68,11 +68,11 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 120,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -83,15 +83,15 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
     },
     {
       accessorKey: "replyToEmail",
-      header: "Reply-To",
+      header: t("Reply-To"),
       cell: ({ row }) => (
         <span className="text-muted-foreground truncate">
-          {row.original.replyToEmail || translate("Default sender")}
+          {row.original.replyToEmail || t("Default sender")}
         </span>
       ),
       size: 240,
       meta: {
-        label: "Reply-To",
+        label: t("Reply-To"),
         apiField: "replyToEmail",
         filterable: true,
         sortable: true,
@@ -101,11 +101,11 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
       size: 180,
       meta: {
-        label: "Updated",
+        label: t("Updated"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

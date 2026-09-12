@@ -93,7 +93,9 @@ export function LaneEditor() {
     <div className="flex flex-col gap-4">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("No lanes yet. An active agreement needs at least one, otherwise nothing can price against it.")}
+          {t(
+            "No lanes yet. An active agreement needs at least one, otherwise nothing can price against it.",
+          )}
         </p>
       )}
 
@@ -106,7 +108,9 @@ export function LaneEditor() {
               : t("{0} lanes can never apply", issues.length)}
           </AlertTitle>
           <AlertDescription>
-            {t("A lane written exactly as narrowly as another one leaves the winner to a tie-break. Narrow it, widen the other, or give one a higher priority.")}
+            {t(
+              "A lane written exactly as narrowly as another one leaves the winner to a tie-break. Narrow it, widen the other, or give one a higher priority.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -253,7 +257,9 @@ function LaneRow({
               name={`rules.${index}.formulaTemplateId` as never}
               label={t("Rating Method")}
               placeholder={t("Select rating method")}
-              description={t("The formula template this lane prices through — the lane's rate binds in as the template's base rate")}
+              description={t(
+                "The formula template this lane prices through — the lane's rate binds in as the template's base rate",
+              )}
             />
           </FormControl>
         )}
@@ -267,7 +273,9 @@ function LaneRow({
               sideText="$"
               decimalScale={4}
               thousandSeparator
-              description={t("Feeds the rating method as its base rate — leave empty when the lane is banded by weight")}
+              description={t(
+                "Feeds the rating method as its base rate — leave empty when the lane is banded by weight",
+              )}
             />
           </FormControl>
         )}
@@ -279,7 +287,9 @@ function LaneRow({
               name={`rules.${index}.rateMatrixId` as never}
               label={t("Rate Matrix")}
               placeholder={t("Matrix")}
-              description={t("Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean")}
+              description={t(
+                "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean",
+              )}
             />
           </FormControl>
         )}

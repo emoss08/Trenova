@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -14,12 +15,15 @@ export const prefetch: RoutePrefetch = () => [
 ];
 
 export function FleetSafetyPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Fleet Safety",
-        description:
+        title: t("Fleet Safety"),
+        description: t(
           "The fleet read the way a safety director thinks: the seven CSA BASICs, the trend behind them, and which terminals and drivers are carrying the weight.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

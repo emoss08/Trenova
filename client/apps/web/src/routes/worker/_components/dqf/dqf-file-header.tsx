@@ -45,15 +45,21 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
             </Badge>
             <InfoPopover title={t("Driver qualification file")}>
               <p>
-                {t("Complete means every required item is on file and in date. Expired, missing and outstanding items block; expiring soon only warns, because the document on file is still valid today.")}
+                {t(
+                  "Complete means every required item is on file and in date. Expired, missing and outstanding items block; expiring soon only warns, because the document on file is still valid today.",
+                )}
               </p>
               <p>
-                {t("A previous employer who never answers still settles once the chases are on record: the rule asks for a good-faith effort and a record of it, not an answer nobody can compel.")}
+                {t(
+                  "A previous employer who never answers still settles once the chases are on record: the rule asks for a good-faith effort and a record of it, not an answer nobody can compel.",
+                )}
               </p>
             </InfoPopover>
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.")}
+            {t(
+              "Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.",
+            )}
           </p>
         </div>
         {canCreate ? (
@@ -109,7 +115,8 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
         <div className="ml-auto flex min-w-0 flex-col gap-0.5 text-right">
           {file.safetyHistoryDueAt > 0 ? (
             <span className="text-muted-foreground flex items-center justify-end gap-1.5">
-              {t("Previous-employer investigation was due")} {formatUnixDate(file.safetyHistoryDueAt)}
+              {t("Previous-employer investigation was due")}{" "}
+              {formatUnixDate(file.safetyHistoryDueAt)}
               {file.safetyHistoryLate ? (
                 <Badge variant="inactive" title={t("49 CFR 391.23(c)(1)")}>
                   {t("Late")}

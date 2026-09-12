@@ -68,8 +68,9 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
     mutationFn: (values) => amendIftaReturn({ id: ret.id, reason: values.reason.trim() }),
     onSuccess: async (created) => {
       toast.success(`Amendment ${created.amendmentNumber} opened`, {
-        description:
-          t("It is a fresh draft for the same quarter. The filed return is left exactly as it was."),
+        description: t(
+          "It is a fresh draft for the same quarter. The filed return is left exactly as it was.",
+        ),
       });
       await invalidateIftaReturn(queryClient, period);
       onOpenChange(false);
@@ -91,7 +92,10 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
             <DialogHeader>
               <DialogTitle>{t("Amend the {0} return", quarterLabel(period))}</DialogTitle>
               <DialogDescription>
-                {t("A filed return is never edited. This opens amendment {0} as a new draft for the same quarter, computed from the miles, fuel and rates on file now; the filed return stays exactly as it was submitted.", ret.amendmentNumber + 1)}
+                {t(
+                  "A filed return is never edited. This opens amendment {0} as a new draft for the same quarter, computed from the miles, fuel and rates on file now; the filed return stays exactly as it was submitted.",
+                  ret.amendmentNumber + 1,
+                )}
               </DialogDescription>
             </DialogHeader>
             <FormGroup cols={1} className="mt-4">
@@ -103,7 +107,9 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
                   placeholder={t("e.g. Two Oklahoma fuel receipts arrived after the filing")}
                   rules={{ required: true }}
                   maxLength={AMEND_REASON_MAX}
-                  description={t("Between 10 and 500 characters, kept with the amendment as the record of why it exists.")}
+                  description={t(
+                    "Between 10 and 500 characters, kept with the amendment as the record of why it exists.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

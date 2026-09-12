@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   jurisdictionFilterOptions,
@@ -49,11 +50,13 @@ function IftaJurisdictionMileageEmpty({
 }
 
 export default function IftaJurisdictionMileageTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { jurisdictions } = useIftaJurisdictionOptions();
   const columns = useMemo(
-    () => getColumns(jurisdictionFilterOptions(jurisdictions)),
-    [jurisdictions],
+    () => getColumns(jurisdictionFilterOptions(jurisdictions), t),
+    [jurisdictions, t],
   );
   const { allowed: canDelete } = usePermission(Resource.IFTAJurisdictionMileage, Operation.Delete);
   const [deleting, setDeleting] = useState<IftaMileageEntryRow | null>(null);
@@ -70,13 +73,13 @@ export default function IftaJurisdictionMileageTable() {
     return [
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: Trash2Icon,
         variant: "destructive",
         onClick: (row) => setDeleting(row.original),
       },
     ];
-  }, [canDelete]);
+  }, [canDelete, t]);
 
   return (
     <>

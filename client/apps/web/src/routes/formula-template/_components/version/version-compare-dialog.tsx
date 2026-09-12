@@ -58,7 +58,9 @@ export function VersionCompareDialog({
             <ComparisonSkeleton />
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground">{t("Failed to load comparison. Please try again.")}</p>
+              <p className="text-muted-foreground">
+                {t("Failed to load comparison. Please try again.")}
+              </p>
             </div>
           ) : data?.changeCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -147,13 +149,17 @@ function ChangeItem({ path, change }: ChangeItemProps) {
         ) : change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Before")}</span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">
+                {t("Before")}
+              </span>
               <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
                 {formatValue(change.from)}
               </pre>
             </div>
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("After")}</span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">
+                {t("After")}
+              </span>
               <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
                 {formatValue(change.to)}
               </pre>
@@ -161,14 +167,18 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         ) : change.type === "created" ? (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Added")}</span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">
+              {t("Added")}
+            </span>
             <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
               {formatValue(change.to)}
             </pre>
           </div>
         ) : (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">{t("Removed")}</span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">
+              {t("Removed")}
+            </span>
             <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
               {formatValue(change.from)}
             </pre>

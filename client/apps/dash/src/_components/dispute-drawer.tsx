@@ -9,7 +9,10 @@ import {
   DrawerTitle,
 } from "@trenova/shared/components/ui/drawer";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { createSettlementDispute, type PortalSettlementLine } from "@trenova/shared/lib/graphql/driver-portal";
+import {
+  createSettlementDispute,
+  type PortalSettlementLine,
+} from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementDisputeCategory } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,7 +83,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
           <DrawerTitle>{t("Question about your pay?")}</DrawerTitle>
           <DrawerDescription>
             {line
-              ? t("About \"{0}\" — your carrier will review it and follow up.", line.description)
+              ? t('About "{0}" — your carrier will review it and follow up.', line.description)
               : t("Your carrier will review it and follow up on this statement.")}
           </DrawerDescription>
         </DrawerHeader>
@@ -104,7 +107,9 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
           <Textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder={t("Describe what looks wrong — loads, dates, amounts, anything that helps.")}
+            placeholder={t(
+              "Describe what looks wrong — loads, dates, amounts, anything that helps.",
+            )}
             rows={4}
             maxLength={4000}
           />

@@ -61,7 +61,9 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
             control={control}
             name="isDefault"
             label={t("Default profile")}
-            description={t("Use this profile when no distance override applies to a shipment move.")}
+            description={t(
+              "Use this profile when no distance override applies to a shipment move.",
+            )}
             outlined
           />
         </FormControl>
@@ -154,7 +156,9 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             name="profileName"
             label={t("PC*Miler Profile Name")}
             placeholder={t("Optional Trimble vehicle profile")}
-            description={t("Optional PC*Miler vehicle profile name for account-specific routing settings.")}
+            description={t(
+              "Optional PC*Miler vehicle profile name for account-specific routing settings.",
+            )}
             maxLength={100}
           />
         </FormControl>
@@ -169,7 +173,9 @@ function RouteBehaviorSection({ control }: { control: Control<DistanceProfile> }
   return (
     <FormSection
       title={t("Route Behavior")}
-      description={t("Road restrictions and supplemental reporting options sent with mileage requests.")}
+      description={t(
+        "Road restrictions and supplemental reporting options sent with mileage requests.",
+      )}
       className="border-t py-2"
     >
       <FormGroup cols={2}>

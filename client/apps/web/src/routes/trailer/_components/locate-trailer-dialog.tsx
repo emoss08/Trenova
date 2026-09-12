@@ -90,7 +90,9 @@ export function LocateTrailerDialog({
         <DialogHeader>
           <DialogTitle>{t("Locate Trailer")}</DialogTitle>
           <DialogDescription>
-            {t("Set the trailer's new location. The system will create and complete an empty reposition move automatically.")}
+            {t(
+              "Set the trailer's new location. The system will create and complete an empty reposition move automatically.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form

@@ -100,7 +100,7 @@ function FilterRow({
       )
     : [];
   const paramBindingChoices = [
-    { value: "__value__", label: "Fixed value" },
+    { value: "__value__", label: t("Fixed value") },
     ...compatibleParams.map((param) => ({
       value: param.name,
       label: `Param: ${param.label || param.name}`,

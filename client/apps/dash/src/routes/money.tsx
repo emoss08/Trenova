@@ -130,7 +130,10 @@ export function DashMoneyPage() {
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {t("Issued {0} ·", formatRange(advance.issuedDate, advance.issuedDate))}
-                  <AmountDisplay value={advance.recoveredMinor} currency={advance.currencyCode} />{" "}
+                  <AmountDisplay
+                    value={advance.recoveredMinor}
+                    currency={advance.currencyCode}
+                  />{" "}
                   of <AmountDisplay value={advance.amountMinor} currency={advance.currencyCode} />{" "}
                   repaid
                 </p>
@@ -156,7 +159,9 @@ export function DashMoneyPage() {
           </ul>
         ) : (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            {t("If something on a settlement looks wrong, flag it from the statement and it will show up here.")}
+            {t(
+              "If something on a settlement looks wrong, flag it from the statement and it will show up here.",
+            )}
           </div>
         )}
       </section>
@@ -205,7 +210,8 @@ function DisputeItem({ dispute }: DisputeItemProps) {
       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{t(dispute.description)}</p>
       {dispute.resolutionNote ? (
         <p className="mt-2 rounded-md border-l-0 border-border text-xs text-foreground">
-          <span className="text-muted-foreground">{t("Carrier response:")}</span> {dispute.resolutionNote}
+          <span className="text-muted-foreground">{t("Carrier response:")}</span>{" "}
+          {dispute.resolutionNote}
         </p>
       ) : null}
       {canWithdraw ? (

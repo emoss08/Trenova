@@ -96,7 +96,11 @@ function CaseDetail({
           {entry.recordable ? null : <Badge variant="secondary">{t("Off the log")}</Badge>}
         </div>
         <SheetDescription>
-          {t("Occurred {0}{1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? t(", reported {0}", formatUnixDateMedium(entry.reportedAt)) : "")}
+          {t(
+            "Occurred {0}{1}",
+            formatUnixDateMedium(entry.occurredAt),
+            entry.reportedAt ? t(", reported {0}", formatUnixDateMedium(entry.reportedAt)) : "",
+          )}
         </SheetDescription>
       </SheetHeader>
 
@@ -125,7 +129,10 @@ function CaseDetail({
           <p className="bg-muted/60 text-muted-foreground flex items-start gap-2 rounded-md px-3 py-2 text-xs">
             <LockIcon className="mt-0.5 size-3.5 shrink-0" />
             <span>
-              {t("Privacy case. The posted log reads “{0}”; the name stays on the confidential list.", entry.logName)}
+              {t(
+                "Privacy case. The posted log reads “{0}”; the name stays on the confidential list.",
+                entry.logName,
+              )}
             </span>
           </p>
         ) : null}

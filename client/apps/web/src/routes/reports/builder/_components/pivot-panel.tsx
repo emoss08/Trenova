@@ -166,7 +166,9 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             <div className="flex flex-col gap-1.5">
               <Label className="text-muted-foreground text-xs">{t("Column names")}</Label>
               <p className="text-2xs text-muted-foreground">
-                {t("Each pivot value becomes its own column — name them however the report should read.")}
+                {t(
+                  "Each pivot value becomes its own column — name them however the report should read.",
+                )}
               </p>
               <div className="flex flex-col gap-1">
                 {pivot.values.map((value, valueIndex) => (
@@ -214,7 +216,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="pivot-include-other" className="text-muted-foreground text-xs">
-              {t("Include \"Other\" bucket")}
+              {t('Include "Other" bucket')}
             </Label>
             <Switch
               id="pivot-include-other"

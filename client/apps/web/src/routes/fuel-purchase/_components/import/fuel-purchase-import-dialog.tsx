@@ -155,14 +155,14 @@ function SummaryChips({ batch }: { batch: FuelPurchaseImportBatch }) {
   const summary = batch.summary;
   if (!summary) return null;
   const chips: Array<{ label: string; value: string }> = [
-    { label: "Rows", value: String(summary.rowCount) },
-    { label: "New", value: String(summary.newCount) },
-    { label: "Duplicates in file", value: String(summary.duplicateInFileCount) },
-    { label: "Already on file", value: String(summary.alreadyImportedCount) },
-    { label: "Errors", value: String(summary.errorCount) },
-    { label: "Gallons", value: summary.totalGallons },
+    { label: t("Rows"), value: String(summary.rowCount) },
+    { label: t("New"), value: String(summary.newCount) },
+    { label: t("Duplicates in file"), value: String(summary.duplicateInFileCount) },
+    { label: t("Already on file"), value: String(summary.alreadyImportedCount) },
+    { label: t("Errors"), value: String(summary.errorCount) },
+    { label: t("Gallons"), value: summary.totalGallons },
     {
-      label: "Amount",
+      label: t("Amount"),
       value: formatCurrency(Number(summary.totalAmount), batch.defaultCurrency),
     },
   ];
@@ -341,7 +341,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
           <DialogHeader>
             <DialogTitle>{t("Import Fuel Card Statement")}</DialogTitle>
             <DialogDescription>
-              {t("Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.")}
+              {t(
+                "Upload a provider statement, read what it would record, then confirm. Nothing becomes a purchase until you do.",
+              )}
             </DialogDescription>
             <StepIndicator current={step} />
           </DialogHeader>
@@ -371,7 +373,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                         placeholder={t("Select a card")}
                         clearable
                         disabled={busy}
-                        description={t("Used for rows the statement cannot match to a card of their own.")}
+                        description={t(
+                          "Used for rows the statement cannot match to a card of their own.",
+                        )}
                       />
                     </FormControl>
                     <FormControl>
@@ -395,7 +399,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                         maxLength={3}
                         rules={{ required: true }}
                         readOnly={busy}
-                        description={t("Three-letter code for amounts the statement does not label.")}
+                        description={t(
+                          "Three-letter code for amounts the statement does not label.",
+                        )}
                       />
                     </FormControl>
                   </FormGroup>
@@ -469,7 +475,10 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                   <CircleAlertIcon className="size-4" />
                   <AlertTitle>{t("The statement could not be read")}</AlertTitle>
                   <AlertDescription>
-                    {t("{0} Every row that failed is listed below; fix the file and upload it again.", batch.error ?? t("No reason was reported."))}
+                    {t(
+                      "{0} Every row that failed is listed below; fix the file and upload it again.",
+                      batch.error ?? t("No reason was reported."),
+                    )}
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -508,7 +517,9 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
               <p className="text-sm font-medium">{importHeadline(batch)}</p>
               {batch.status === "Committed" ? (
                 <p className="text-muted-foreground text-xs">
-                  {t("They are in the purchases table now and will be counted the next time the quarter's return is computed.")}
+                  {t(
+                    "They are in the purchases table now and will be counted the next time the quarter's return is computed.",
+                  )}
                 </p>
               ) : null}
             </div>

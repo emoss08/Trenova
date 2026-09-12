@@ -197,7 +197,9 @@ export function TenderOfferPublicPage() {
       <StatusCard
         icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Temporarily unavailable")}
-        body={t("Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.")}
+        body={t(
+          "Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment.",
+        )}
         action={
           <Button
             type="button"
@@ -222,7 +224,9 @@ export function TenderOfferPublicPage() {
       <StatusCard
         icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("This offer link is no longer valid")}
-        body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
+        body={t(
+          "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",
+        )}
       />
     );
   } else if (previewQuery.isLoading) {
@@ -248,7 +252,9 @@ export function TenderOfferPublicPage() {
         <StatusCard
           icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
           title={t("Temporarily unavailable")}
-          body={t("The offer could not be loaded because of a temporary problem. Please try again in a moment.")}
+          body={t(
+            "The offer could not be loaded because of a temporary problem. Please try again in a moment.",
+          )}
           action={
             <Button
               type="button"
@@ -267,7 +273,9 @@ export function TenderOfferPublicPage() {
         <StatusCard
           icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
           title={t("This offer link is no longer valid")}
-          body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
+          body={t(
+            "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",
+          )}
         />
       );
   } else if (previewQuery.data?.responded) {
@@ -275,7 +283,9 @@ export function TenderOfferPublicPage() {
       <StatusCard
         icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
         title={t("Already answered")}
-        body={t("A response has already been recorded for this offer. Contact the broker if anything changed.")}
+        body={t(
+          "A response has already been recorded for this offer. Contact the broker if anything changed.",
+        )}
       />
     );
   } else if (previewQuery.data) {
@@ -293,7 +303,9 @@ export function TenderOfferPublicPage() {
       <StatusCard
         icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
         title={t("This offer link is no longer valid")}
-        body={t("The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.")}
+        body={t(
+          "The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error.",
+        )}
       />
     );
   }
@@ -301,7 +313,9 @@ export function TenderOfferPublicPage() {
   return (
     <>
       <Metadata title={t("Load Offer")} description={t("Review and respond to a load offer")} />
-      <PublicPageShell footer={t("Powered by Trenova. Questions about this load? Reply to the offer email.")}>
+      <PublicPageShell
+        footer={t("Powered by Trenova. Questions about this load? Reply to the offer email.")}
+      >
         {content}
       </PublicPageShell>
     </>

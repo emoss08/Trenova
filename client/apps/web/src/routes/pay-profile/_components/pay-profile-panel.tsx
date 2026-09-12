@@ -156,7 +156,9 @@ function PayProfileCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Pay Profile")}
-      description={t("A reusable pay package; assign it to drivers and add per-driver rate overrides where rates differ.")}
+      description={t(
+        "A reusable pay package; assign it to drivers and add per-driver rate overrides where rates differ.",
+      )}
       queryKey="pay-profile-list"
       form={form}
       size="xl"
@@ -200,13 +202,13 @@ function PayProfileEditPanel({
       formTabs={[
         {
           value: "profile",
-          label: "Profile",
+          label: t("Profile"),
           icon: WalletIcon,
           content: <PayProfileForm />,
         },
         {
           value: "assigned-drivers",
-          label: "Assigned Drivers",
+          label: t("Assigned Drivers"),
           icon: UsersIcon,
           content: <AssignedDriversSection profileId={row.id} />,
         },
@@ -238,7 +240,9 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
         <div>
           <h3 className="text-sm font-semibold">{t("Assigned Drivers")}</h3>
           <p className="text-muted-foreground text-xs">
-            {t("Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.")}
+            {t(
+              "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.",
+            )}
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" onClick={() => setAssignOpen(true)}>

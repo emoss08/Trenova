@@ -50,14 +50,18 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           label={t("On the board")}
           info={
             <InfoPopover title={t("On the board")}>
-              {
-                t("Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show.")
-              }
+              {t(
+                "Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show.",
+              )}
             </InfoPopover>
           }
         />
         {rota ? (
-          <NumberFlow value={rota.rows.length} className={VALUE_CLASS} aria-label={t("On the board")} />
+          <NumberFlow
+            value={rota.rows.length}
+            className={VALUE_CLASS}
+            aria-label={t("On the board")}
+          />
         ) : (
           <Skeleton className="h-6.5 w-10" />
         )}
@@ -66,9 +70,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           className="mt-auto"
           aria-label={t("Person-days on the board")}
           segments={[
-            { key: "working", label: "Working", value: composition.working },
-            { key: "off", label: "Off", value: composition.off },
-            { key: "away", label: "Away", value: composition.away },
+            { key: "working", label: t("Working"), value: composition.working },
+            { key: "off", label: t("Off"), value: composition.off },
+            { key: "away", label: t("Away"), value: composition.away },
           ]}
         />
       </KpiCard>
@@ -79,9 +83,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           label={t("Cover today")}
           info={
             <InfoPopover title={t("Cover today")}>
-              {
-                t("How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number.")
-              }
+              {t(
+                "How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number.",
+              )}
             </InfoPopover>
           }
         />
@@ -125,9 +129,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           label={t("Conflicts")}
           info={
             <InfoPopover title={t("Conflicts")}>
-              {
-                t("Rostered days the person cannot work: time off, leave or a stated unavailability won over the pattern.")
-              }
+              {t(
+                "Rostered days the person cannot work: time off, leave or a stated unavailability won over the pattern.",
+              )}
             </InfoPopover>
           }
         />
@@ -156,9 +160,9 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
             label={t("Swaps waiting on you")}
             info={
               <InfoPopover title={t("Swaps waiting on you")}>
-                {
-                  t("Shift swaps the colleague has accepted that still need an office decision. Ones the colleague has not answered are not counted.")
-                }
+                {t(
+                  "Shift swaps the colleague has accepted that still need an office decision. Ones the colleague has not answered are not counted.",
+                )}
               </InfoPopover>
             }
           />

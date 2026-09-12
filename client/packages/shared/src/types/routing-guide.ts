@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   decimalNumberSchema,
@@ -120,21 +121,21 @@ export const routingGuidePayloadSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["originLocationId"],
-        message: "Origin requires a location, a city and state, or a state",
+        message: translate("Origin requires a location, a city and state, or a state"),
       });
     }
     if (destination === 0) {
       ctx.addIssue({
         code: "custom",
         path: ["destinationLocationId"],
-        message: "Destination requires a location, a city and state, or a state",
+        message: translate("Destination requires a location, a city and state, or a state"),
       });
     }
     if (origin !== 0 && destination !== 0 && origin !== destination) {
       ctx.addIssue({
         code: "custom",
         path: ["originLocationId"],
-        message: "Origin and destination must be defined at the same level of detail",
+        message: translate("Origin and destination must be defined at the same level of detail"),
       });
     }
 
@@ -142,14 +143,14 @@ export const routingGuidePayloadSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["originCity"],
-        message: "An origin location cannot be combined with city or state criteria",
+        message: translate("An origin location cannot be combined with city or state criteria"),
       });
     }
     if (payload.destinationLocationId && (payload.destinationCity || payload.destinationState)) {
       ctx.addIssue({
         code: "custom",
         path: ["destinationCity"],
-        message: "A destination location cannot be combined with city or state criteria",
+        message: translate("A destination location cannot be combined with city or state criteria"),
       });
     }
 
@@ -159,7 +160,7 @@ export const routingGuidePayloadSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["entries", index, "rank"],
-          message: "Rank must be unique within the guide",
+          message: translate("Rank must be unique within the guide"),
         });
       }
       ranks.add(entry.rank);

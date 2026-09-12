@@ -125,7 +125,9 @@ export function HolidayDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? t("Edit date") : t("Add a date")}</DialogTitle>
           <DialogDescription>
-            {t("Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.")}
+            {t(
+              "Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -180,7 +182,9 @@ export function HolidayDialog({
                   control={control}
                   name="recursAnnually"
                   label={t("Repeats every year")}
-                  description={t("On, the date is observed on the same day every year; off for one-off dates such as a single-year freeze.")}
+                  description={t(
+                    "On, the date is observed on the same day every year; off for one-off dates such as a single-year freeze.",
+                  )}
                   position="left"
                   outlined
                 />

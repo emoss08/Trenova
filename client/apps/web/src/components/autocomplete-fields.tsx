@@ -2160,7 +2160,11 @@ export function WorkerPolicyAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{t(option.label)}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
-            {t("{0} · v {1}", selectOptionMetaString(option, "code"), selectOptionMetaString(option, "versionLabel"))}
+            {t(
+              "{0} · v {1}",
+              selectOptionMetaString(option, "code"),
+              selectOptionMetaString(option, "versionLabel"),
+            )}
           </span>
         </div>
       )}

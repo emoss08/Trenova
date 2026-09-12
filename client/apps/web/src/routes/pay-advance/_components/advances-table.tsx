@@ -29,22 +29,25 @@ export default function AdvancesTable() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const columns = useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(t), [t]);
   const [writeOffRows, setWriteOffRows] = useState<PayAdvanceRow[]>([]);
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
 
-  const openWriteOffDialog = useCallback((rows: PayAdvanceRow[]) => {
-    const eligible = rows.filter(
-      (row) => row.status === "Outstanding" || row.status === "PartiallyRecovered",
-    );
-    if (eligible.length === 0) {
-      toast.info(t("Only outstanding or partially recovered advances can be written off."));
-      return;
-    }
-    setWriteOffRows(eligible);
-    setReason("");
-  }, [t]);
+  const openWriteOffDialog = useCallback(
+    (rows: PayAdvanceRow[]) => {
+      const eligible = rows.filter(
+        (row) => row.status === "Outstanding" || row.status === "PartiallyRecovered",
+      );
+      if (eligible.length === 0) {
+        toast.info(t("Only outstanding or partially recovered advances can be written off."));
+        return;
+      }
+      setWriteOffRows(eligible);
+      setReason("");
+    },
+    [t],
+  );
 
   const confirmWriteOff = useCallback(async () => {
     setPending(true);
@@ -66,13 +69,13 @@ export default function AdvancesTable() {
     () => [
       {
         id: "write-off",
-        label: "Write Off",
+        label: t("Write Off"),
         icon: BanIcon,
         variant: "destructive",
         onClick: openWriteOffDialog,
       },
     ],
-    [openWriteOffDialog],
+    [openWriteOffDialog, t],
   );
 
   return (
@@ -94,7 +97,9 @@ export default function AdvancesTable() {
               {t("Write off {0, plural, one {# advance} other {# advances}}", writeOffRows.length)}
             </DialogTitle>
             <DialogDescription>
-              {t("Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.")}
+              {t(
+                "Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <Textarea

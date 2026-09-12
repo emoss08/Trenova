@@ -82,7 +82,9 @@ function UnreachableInvitation({ onRetry, retrying }: { onRetry: () => void; ret
         {t("We couldn't load your invitation")}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {t("Your invitation link looks fine, but we couldn't reach Dash just now. Check your connection and try again.")}
+        {t(
+          "Your invitation link looks fine, but we couldn't reach Dash just now. Check your connection and try again.",
+        )}
       </p>
       <Button className="mt-6 h-11 w-full" onClick={onRetry} disabled={retrying}>
         {retrying ? t("Retrying...") : t("Try again")}
@@ -98,7 +100,9 @@ function InvalidInvitation() {
     <div className="text-center">
       <h1 className="text-2xl font-semibold tracking-tight">{t("This invitation isn't valid")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {t("The link may have expired or been revoked. Ask your carrier to send a new invitation to get set up on Dash.")}
+        {t(
+          "The link may have expired or been revoked. Ask your carrier to send a new invitation to get set up on Dash.",
+        )}
       </p>
     </div>
   );

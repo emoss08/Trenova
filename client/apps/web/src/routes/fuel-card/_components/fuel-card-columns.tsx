@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fuelCardProviderChoices, fuelCardStatusChoices } from "@/lib/choices";
@@ -14,11 +14,11 @@ export function maskedCardNumber(lastFour: string): string {
   return `•••• ${lastFour}`;
 }
 
-export function getColumns(): ColumnDef<FuelCardRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<FuelCardRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <FuelCardStatusBadge status={row.original.status} />,
       size: 120,
       meta: {
@@ -32,8 +32,8 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       accessorKey: "label",
-      header: "Label",
-      cell: ({ row }) => <span className="font-medium">{translate(row.original.label)}</span>,
+      header: t("Label"),
+      cell: ({ row }) => <span className="font-medium">{t(row.original.label)}</span>,
       meta: {
         apiField: "label",
         filterable: true,
@@ -44,7 +44,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       accessorKey: "provider",
-      header: "Provider",
+      header: t("Provider"),
       cell: ({ row }) => FUEL_CARD_PROVIDER_LABELS[row.original.provider],
       size: 110,
       meta: {
@@ -58,7 +58,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       accessorKey: "lastFour",
-      header: "Card",
+      header: t("Card"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">{maskedCardNumber(row.original.lastFour)}</span>
       ),
@@ -74,7 +74,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       id: "assignedWorker",
-      header: "Worker",
+      header: t("Worker"),
       cell: ({ row }) => {
         const { assignedWorker } = row.original;
 
@@ -104,7 +104,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       id: "assignedTractor",
-      header: "Tractor",
+      header: t("Tractor"),
       cell: ({ row }) => {
         const { assignedTractor } = row.original;
 
@@ -135,7 +135,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       accessorKey: "expiresAt",
-      header: "Expires",
+      header: t("Expires"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">
           {formatUnixDateOrDash(row.original.expiresAt)}
@@ -152,7 +152,7 @@ export function getColumns(): ColumnDef<FuelCardRow>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated",
+      header: t("Updated"),
       cell: ({ row }) => (
         <HoverCardTimestamp
           className="font-table tracking-tight"

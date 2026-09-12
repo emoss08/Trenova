@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { optionalStringSchema } from "./helpers";
 
@@ -152,21 +153,21 @@ export const payProfileComponentFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["revenueBasis"],
-        message: "Revenue basis is required for percentage components",
+        message: translate("Revenue basis is required for percentage components"),
       });
     }
     if (component.kind === "Custom" && !component.description) {
       ctx.addIssue({
         code: "custom",
         path: ["description"],
-        message: "Description is required for custom components",
+        message: translate("Description is required for custom components"),
       });
     }
     if (component.kind === "Detention" && component.method !== "PerHour") {
       ctx.addIssue({
         code: "custom",
         path: ["method"],
-        message: "Detention components must use the Per Hour method",
+        message: translate("Detention components must use the Per Hour method"),
       });
     }
   });
@@ -219,7 +220,7 @@ export const recurringDeductionFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["endDate"],
-        message: "End date must be after the start date",
+        message: translate("End date must be after the start date"),
       });
     }
   });
@@ -242,7 +243,7 @@ export const recurringEarningFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["endDate"],
-        message: "End date must be after the start date",
+        message: translate("End date must be after the start date"),
       });
     }
   });
@@ -338,21 +339,21 @@ export const dashControlFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["allowLoadRefusals"],
-        message: "Load refusals require load acknowledgment to be enabled",
+        message: translate("Load refusals require load acknowledgment to be enabled"),
       });
     }
     if (values.showPayEstimates && !values.showLoadPay) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["showPayEstimates"],
-        message: "Pay estimates require per-load pay visibility to be enabled",
+        message: translate("Pay estimates require per-load pay visibility to be enabled"),
       });
     }
     if (values.requireExpenseReceipt && !values.allowExpenseSubmission) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["requireExpenseReceipt"],
-        message: "Receipt requirement only applies when expense submission is enabled",
+        message: translate("Receipt requirement only applies when expense submission is enabled"),
       });
     }
     // A digest with reminders switched off would collect obligations and send
@@ -361,7 +362,9 @@ export const dashControlFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["driverDigestCadence"],
-        message: "A digest needs driver reminders switched on — there would be nothing to bundle",
+        message: translate(
+          "A digest needs driver reminders switched on — there would be nothing to bundle",
+        ),
       });
     }
   });

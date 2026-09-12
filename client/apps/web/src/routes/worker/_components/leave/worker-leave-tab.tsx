@@ -158,10 +158,14 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
               <h3 className="text-sm font-medium">{t("FMLA entitlement")}</h3>
               <InfoPopover title={t("FMLA entitlement")}>
                 <p>
-                  {t("Measured on read from the days recorded against this worker's cases, inside the window the measurement method sets. Only days on a case designated as FMLA draw it down: approving a case and designating it FMLA are separate decisions, so approved leave that was not designated is recorded but counts for nothing.")}
+                  {t(
+                    "Measured on read from the days recorded against this worker's cases, inside the window the measurement method sets. Only days on a case designated as FMLA draw it down: approving a case and designating it FMLA are separate decisions, so approved leave that was not designated is recorded but counts for nothing.",
+                  )}
                 </p>
                 <p>
-                  {t("Exhausted means nothing is left. Days designated after the fact can push use past the entitlement; the remainder then reads zero rather than negative.")}
+                  {t(
+                    "Exhausted means nothing is left. Days designated after the fact can push use past the entitlement; the remainder then reads zero rather than negative.",
+                  )}
                 </p>
               </InfoPopover>
               {entitlement.exhausted ? <Badge variant="inactive">{t("Exhausted")}</Badge> : null}
@@ -173,7 +177,12 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
               )}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
-              {t("{0} · {1} to {2}", measurementMethodLabel(entitlement.method), formatUnixDate(entitlement.window.from), formatUnixDate(entitlement.window.through))}
+              {t(
+                "{0} · {1} to {2}",
+                measurementMethodLabel(entitlement.method),
+                formatUnixDate(entitlement.window.from),
+                formatUnixDate(entitlement.window.through),
+              )}
             </p>
           </div>
           {canRecord ? (
@@ -205,7 +214,9 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
         </dl>
 
         <p className="text-muted-foreground mt-3 text-[11px]">
-          {t("The 1,250-hour half of the eligibility test is recorded on each case: there is no timeclock here to answer it from.")}
+          {t(
+            "The 1,250-hour half of the eligibility test is recorded on each case: there is no timeclock here to answer it from.",
+          )}
         </p>
       </section>
 
@@ -231,7 +242,10 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                     <Badge variant="secondary">{leaveFrequencyLabel(leaveCase.frequency)}</Badge>
                     {leaveCase.certificationStatus === "NotRequired" ? null : (
                       <Badge variant={certificationTone(leaveCase.certificationStatus)}>
-                        {t("Certification {0}", certificationStatusLabel(leaveCase.certificationStatus).toLowerCase())}
+                        {t(
+                          "Certification {0}",
+                          certificationStatusLabel(leaveCase.certificationStatus).toLowerCase(),
+                        )}
                       </Badge>
                     )}
                     {leaveCase.certificationLate ? (
@@ -352,7 +366,9 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
                       >
                         <span className="flex items-center gap-2">
                           <span className="tabular-nums">{formatUnixDate(entry.usedOn)}</span>
-                          <span className="tabular-nums">{t("{0} h", formatLeaveHours(entry.hours))}</span>
+                          <span className="tabular-nums">
+                            {t("{0} h", formatLeaveHours(entry.hours))}
+                          </span>
                           {entry.countsAgainstEntitlement ? null : (
                             <Badge variant="secondary">{t("Not counted")}</Badge>
                           )}

@@ -119,7 +119,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       toast.success(
         checklist.status === "Completed" ? "Checklist complete" : "Item completed",
         checklist.status === "Completed"
-          ? { description: "Every required item is settled." }
+          ? { description: t("Every required item is settled.") }
           : undefined,
       );
       void invalidate();
@@ -133,7 +133,8 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       toast.success(t("Item reopened"));
       void invalidate();
     },
-    onError: (error: Error) => toast.error(t("Could not reopen item"), { description: error.message }),
+    onError: (error: Error) =>
+      toast.error(t("Could not reopen item"), { description: error.message }),
   });
   const cancel = useMutation({
     mutationFn: (checklist: WorkerChecklistRow) =>
@@ -193,10 +194,14 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
           help={
             <>
               <p>
-                {t("Onboarding starts when a hire is recorded and offboarding when a termination is; only a custom checklist is started by hand.")}
+                {t(
+                  "Onboarding starts when a hire is recorded and offboarding when a termination is; only a custom checklist is started by hand.",
+                )}
               </p>
               <p>
-                {t("Credential, document and portal-access items settle themselves whenever the checklist is read and the evidence exists: an active, unexpired credential of that type, a document of that type on file, or Dash access granted (removed, for offboarding). Once every required item is settled the checklist closes on its own.")}
+                {t(
+                  "Credential, document and portal-access items settle themselves whenever the checklist is read and the evidence exists: an active, unexpired credential of that type, a document of that type on file, or Dash access granted (removed, for offboarding). Once every required item is settled the checklist closes on its own.",
+                )}
               </p>
             </>
           }
@@ -210,7 +215,9 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
               {checklists.length === 0 ? t("No checklists yet") : t("Nothing in progress")}
             </p>
             <p>
-              {t("Onboarding starts when a hire is recorded and offboarding when a termination is. Anything else is started below.")}
+              {t(
+                "Onboarding starts when a hire is recorded and offboarding when a termination is. Anything else is started below.",
+              )}
             </p>
           </div>
         ) : (
@@ -397,7 +404,16 @@ function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRo
       </ol>
       <p className="text-muted-foreground text-xs tabular-nums">
         {running
-          ? t("{0} is {1}% through · {2}/{3} required settled{4}", running.name, running.progress.percent, running.progress.requiredDone, running.progress.requiredTotal, running.progress.overdue > 0 ? ` ${t("· {0} overdue", running.progress.overdue)}` : "")
+          ? t(
+              "{0} is {1}% through · {2}/{3} required settled{4}",
+              running.name,
+              running.progress.percent,
+              running.progress.requiredDone,
+              running.progress.requiredTotal,
+              running.progress.overdue > 0
+                ? ` ${t("· {0} overdue", running.progress.overdue)}`
+                : "",
+            )
           : stage === "left"
             ? t("Everything for this employment is settled.")
             : t("Nothing is running for this employment.")}

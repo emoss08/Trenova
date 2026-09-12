@@ -246,7 +246,11 @@ function OperationSummary({ operation, changeCount }: { operation: string; chang
     );
   }
 
-  return <p className="text-muted-foreground text-xs">{t("{0} this resource", operationLabel(operation))}</p>;
+  return (
+    <p className="text-muted-foreground text-xs">
+      {t("{0} this resource", operationLabel(operation))}
+    </p>
+  );
 }
 
 function ChangeItem({ change }: { change: NormalizedAuditChange }) {

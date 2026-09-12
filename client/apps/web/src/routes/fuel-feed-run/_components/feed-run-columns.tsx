@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fuelCardProviderChoices } from "@/lib/choices";
 import type { FuelPurchaseImportBatch } from "@/lib/graphql/fuel-purchase-import";
@@ -11,11 +11,11 @@ import { FUEL_CARD_PROVIDER_LABELS } from "@trenova/shared/types/fuel-ifta-enums
  * the rows. The held count is the one that needs acting on, so it is the column
  * that stands out.
  */
-export function getColumns(): ColumnDef<FuelPurchaseImportBatch>[] {
+export function getColumns(t: TranslateFn): ColumnDef<FuelPurchaseImportBatch>[] {
   return [
     {
       accessorKey: "provider",
-      header: "Provider",
+      header: t("Provider"),
       cell: ({ row }) => (
         <span className="font-medium">
           {FUEL_CARD_PROVIDER_LABELS[row.original.provider] ?? row.original.provider}
@@ -33,7 +33,7 @@ export function getColumns(): ColumnDef<FuelPurchaseImportBatch>[] {
     },
     {
       accessorKey: "feedReference",
-      header: "Read",
+      header: t("Read"),
       cell: ({ row }) => {
         const reference = row.original.feedReference;
         if (!reference) {
@@ -56,14 +56,14 @@ export function getColumns(): ColumnDef<FuelPurchaseImportBatch>[] {
     },
     {
       accessorKey: "rowCount",
-      header: "Rows",
+      header: t("Rows"),
       cell: ({ row }) => <span className="font-table tabular-nums">{row.original.rowCount}</span>,
       size: 90,
       meta: { apiField: "rowCount", sortable: true },
     },
     {
       accessorKey: "committedCount",
-      header: "Posted",
+      header: t("Posted"),
       cell: ({ row }) => (
         <span className="font-table tabular-nums">{row.original.committedCount}</span>
       ),
@@ -72,21 +72,21 @@ export function getColumns(): ColumnDef<FuelPurchaseImportBatch>[] {
     },
     {
       accessorKey: "errorCount",
-      header: "Held",
+      header: t("Held"),
       cell: ({ row }) => {
         const held = row.original.errorCount;
         if (held === 0) {
           return <span className="text-muted-foreground font-table tabular-nums">0</span>;
         }
 
-        return <Badge variant="inactive">{translate("{0} waiting", held)}</Badge>;
+        return <Badge variant="inactive">{t("{0} waiting", held)}</Badge>;
       },
       size: 120,
       meta: { apiField: "errorCount", sortable: true },
     },
     {
       accessorKey: "createdAt",
-      header: "Ran",
+      header: t("Ran"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 160,
       meta: { apiField: "createdAt", sortable: true },

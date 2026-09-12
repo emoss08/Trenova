@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import {
   type ApiErrorResponse,
   type NormalizedApiError,
@@ -231,7 +232,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
-      title: "Request failed",
+      title: translate("Request failed"),
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -266,7 +267,7 @@ async function uploadRequest<T>(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({
       type: "internal-error",
-      title: "Upload failed",
+      title: translate("Upload failed"),
       detail: `HTTP ${response.status}`,
       status: response.status,
     }));
@@ -327,7 +328,7 @@ async function uploadWithProgress<T>(
         } catch {
           errorData = {
             type: "internal-error",
-            title: "Upload failed",
+            title: translate("Upload failed"),
             detail: `HTTP ${xhr.status}`,
             status: xhr.status,
           };
@@ -342,8 +343,8 @@ async function uploadWithProgress<T>(
       reject(
         new ApiRequestError(0, {
           type: "internal-error",
-          title: "Network error",
-          detail: "Failed to connect to server",
+          title: translate("Network error"),
+          detail: translate("Failed to connect to server"),
           status: 0,
         }),
       );
@@ -399,7 +400,7 @@ async function putFileWithProgress(
       reject(
         new ApiRequestError(xhr.status, {
           type: "internal-error",
-          title: "Upload failed",
+          title: translate("Upload failed"),
           detail: `HTTP ${xhr.status}`,
           status: xhr.status,
         }),
@@ -410,8 +411,8 @@ async function putFileWithProgress(
       reject(
         new ApiRequestError(0, {
           type: "internal-error",
-          title: "Network error",
-          detail: "Failed to connect to upload target",
+          title: translate("Network error"),
+          detail: translate("Failed to connect to upload target"),
           status: 0,
         }),
       );

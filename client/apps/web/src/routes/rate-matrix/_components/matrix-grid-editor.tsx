@@ -158,7 +158,9 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   if (!rateMatrixId) {
     return (
       <p className="text-muted-foreground text-sm">
-        {t("Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.")}
+        {t(
+          "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.",
+        )}
       </p>
     );
   }
@@ -166,7 +168,9 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   if (ordered.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        {t("Add at least one axis before entering rates. Without one there is no coordinate to put a number at.")}
+        {t(
+          "Add at least one axis before entering rates. Without one there is no coordinate to put a number at.",
+        )}
       </p>
     );
   }
@@ -265,7 +269,9 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
                       ) : (
                         <span
                           className="text-muted-foreground block w-28 px-2 text-right text-xs"
-                          title={t("Nothing prices this coordinate — a lane landing here rates at nothing")}
+                          title={t(
+                            "Nothing prices this coordinate — a lane landing here rates at nothing",
+                          )}
                         >
                           —
                         </span>
@@ -281,7 +287,9 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
 
       {grid.rows.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          {t("This matrix has no rates yet. Every lane pointing at it prices nothing until it does.")}
+          {t(
+            "This matrix has no rates yet. Every lane pointing at it prices nothing until it does.",
+          )}
         </p>
       )}
 

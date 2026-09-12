@@ -87,13 +87,19 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
           <DialogTitle>{t("Remove this entry")}</DialogTitle>
           <DialogDescription>
             {entry
-              ? t("{0} from {1} comes off the week. The reason is kept.", formatHours(entry.paidMinutes), when)
+              ? t(
+                  "{0} from {1} comes off the week. The reason is kept.",
+                  formatHours(entry.paidMinutes),
+                  when,
+                )
               : ""}
           </DialogDescription>
         </DialogHeader>
         <Alert variant="warning">
           <AlertDescription>
-            {t("The entry is deleted outright and cannot be restored; the week's totals are worked out again from the punches that are left.")}
+            {t(
+              "The entry is deleted outright and cannot be restored; the week's totals are worked out again from the punches that are left.",
+            )}
           </AlertDescription>
         </Alert>
         <FormProvider {...form}>
@@ -111,7 +117,9 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
                   name="reason"
                   label={t("Why")}
                   placeholder={t("e.g. Duplicate punch")}
-                  description={t("Kept in the audit trail so the missing hours can be explained later.")}
+                  description={t(
+                    "Kept in the audit trail so the missing hours can be explained later.",
+                  )}
                   rules={{ required: true }}
                 />
               </FormControl>

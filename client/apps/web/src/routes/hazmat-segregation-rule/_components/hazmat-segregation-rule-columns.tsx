@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -12,11 +12,11 @@ import {
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
+export function getColumns(t: TranslateFn): ColumnDef<HazmatSegregationRule>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const choice = statusChoices.find((c) => c.value === row.original.status);
         return choice ? (
@@ -29,7 +29,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       minSize: 120,
       maxSize: 160,
       meta: {
-        label: "Status",
+        label: t("Status"),
         apiField: "status",
         filterable: true,
         sortable: true,
@@ -40,12 +40,12 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       size: 260,
       minSize: 220,
       maxSize: 320,
       meta: {
-        label: "Name",
+        label: t("Name"),
         apiField: "name",
         filterable: true,
         sortable: true,
@@ -55,15 +55,15 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 320,
       minSize: 280,
       maxSize: 420,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -73,7 +73,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "classA",
-      header: "Class A",
+      header: t("Class A"),
       cell: ({ row }) => {
         const choice = hazardousClassChoices.find((c) => c.value === row.original.classA);
         return choice ? choice.label : row.original.classA;
@@ -82,7 +82,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       minSize: 220,
       maxSize: 280,
       meta: {
-        label: "Class A",
+        label: t("Class A"),
         apiField: "classA",
         filterable: true,
         sortable: true,
@@ -93,7 +93,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "classB",
-      header: "Class B",
+      header: t("Class B"),
       cell: ({ row }) => {
         const choice = hazardousClassChoices.find((c) => c.value === row.original.classB);
         return choice ? choice.label : row.original.classB;
@@ -102,7 +102,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       minSize: 220,
       maxSize: 280,
       meta: {
-        label: "Class B",
+        label: t("Class B"),
         apiField: "classB",
         filterable: true,
         sortable: true,
@@ -113,7 +113,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "segregationType",
-      header: "Segregation Type",
+      header: t("Segregation Type"),
       cell: ({ row }) => {
         const choice = segregationTypeChoices.find((c) => c.value === row.original.segregationType);
         return choice ? (
@@ -126,7 +126,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       minSize: 160,
       maxSize: 220,
       meta: {
-        label: "Segregation Type",
+        label: t("Segregation Type"),
         apiField: "segregationType",
         filterable: true,
         sortable: true,
@@ -137,7 +137,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "minimumDistance",
-      header: "Min Distance",
+      header: t("Min Distance"),
       cell: ({ row }) => {
         if (typeof row.original.minimumDistance !== "number") {
           return "-";
@@ -153,7 +153,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: "Minimum Distance",
+        label: t("Minimum Distance"),
         apiField: "minimumDistance",
         filterable: true,
         sortable: true,
@@ -163,13 +163,13 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "hasExceptions",
-      header: "Has Exceptions",
+      header: t("Has Exceptions"),
       cell: ({ row }) => <BooleanBadge value={row.original.hasExceptions} />,
       size: 140,
       minSize: 130,
       maxSize: 180,
       meta: {
-        label: "Has Exceptions",
+        label: t("Has Exceptions"),
         apiField: "hasExceptions",
         filterable: true,
         sortable: true,
@@ -179,13 +179,13 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     },
     {
       accessorKey: "updatedAt",
-      header: "Updated At",
+      header: t("Updated At"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
       size: 180,
       minSize: 160,
       maxSize: 220,
       meta: {
-        label: "Updated At",
+        label: t("Updated At"),
         apiField: "updatedAt",
         filterable: false,
         sortable: true,

@@ -162,8 +162,8 @@ export function ReportSourcePicker({
           value={tab}
           onValueChange={setTab}
           items={[
-            { value: "saved", label: "Saved reports" },
-            { value: "gallery", label: "Report gallery", icon: SparklesIcon },
+            { value: "saved", label: t("Saved reports") },
+            { value: "gallery", label: t("Report gallery"), icon: SparklesIcon },
           ]}
         />
         <Input
@@ -220,7 +220,9 @@ export function ReportSourcePicker({
             <p className="text-muted-foreground text-center text-xs">
               {search.trim() === ""
                 ? savedTab
-                  ? t("You have no saved reports yet. Build one in Reports, or pick from the gallery.")
+                  ? t(
+                      "You have no saved reports yet. Build one in Reports, or pick from the gallery.",
+                    )
                   : t("The report gallery is empty on this deployment.")
                 : t("No report matches “{0}”.", search.trim())}
             </p>

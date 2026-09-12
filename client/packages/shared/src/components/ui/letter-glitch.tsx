@@ -103,9 +103,7 @@ const LetterGlitch = ({
   ];
 
   const getRandomChar = () => {
-    return lettersAndSymbols[
-      Math.floor(Math.random() * lettersAndSymbols.length)
-    ];
+    return lettersAndSymbols[Math.floor(Math.random() * lettersAndSymbols.length)];
   };
 
   const getRandomColor = () => {
@@ -183,8 +181,7 @@ const LetterGlitch = ({
   };
 
   const drawLetters = () => {
-    if (!context.current || !canvasRef.current || letters.current.length === 0)
-      return;
+    if (!context.current || !canvasRef.current || letters.current.length === 0) return;
     const ctx = context.current;
     const canvas = canvasRef.current;
 
@@ -233,11 +230,7 @@ const LetterGlitch = ({
         const startRgb = hexToRgb(letter.color);
         const endRgb = hexToRgb(letter.targetColor);
         if (startRgb && endRgb) {
-          letter.color = interpolateColor(
-            startRgb,
-            endRgb,
-            letter.colorProgress,
-          );
+          letter.color = interpolateColor(startRgb, endRgb, letter.colorProgress);
           needsRedraw = true;
         }
       }

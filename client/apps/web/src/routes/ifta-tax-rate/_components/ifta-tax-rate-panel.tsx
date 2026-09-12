@@ -99,7 +99,9 @@ function IftaTaxRateCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("IFTA Tax Rate")}
-      description={t("Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.")}
+      description={t(
+        "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.",
+      )}
       queryKey={IFTA_TAX_RATE_LIST_KEY}
       form={form}
       size="md"
@@ -141,7 +143,13 @@ function IftaTaxRateEditPanel({
       title={t("IFTA Tax Rate")}
       titleComponent={(record) => (
         <span>
-          {t("{0} · {1} · Q{2} {3}", record.jurisdiction.code, record.fuelType, record.quarter, record.year)}
+          {t(
+            "{0} · {1} · Q{2} {3}",
+            record.jurisdiction.code,
+            record.fuelType,
+            record.quarter,
+            record.year,
+          )}
         </span>
       )}
       queryKey={IFTA_TAX_RATE_LIST_KEY}

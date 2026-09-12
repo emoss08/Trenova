@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { timezoneChoices } from "@/lib/choices";
 import {
   ediConnectionMethodSchema,
@@ -295,14 +296,14 @@ export const ediTestCaseFormSchema = z.object({
       try {
         parsed = JSON.parse(value);
       } catch {
-        ctx.addIssue({ code: "custom", message: "Payload must be valid JSON" });
+        ctx.addIssue({ code: "custom", message: translate("Payload must be valid JSON") });
         return;
       }
       const result = ediDocumentPayloadSchema.safeParse(parsed);
       if (!result.success) {
         ctx.addIssue({
           code: "custom",
-          message: "Payload must be a valid EDI document payload",
+          message: translate("Payload must be a valid EDI document payload"),
         });
         return;
       }
@@ -319,7 +320,7 @@ export const ediTestCaseFormSchema = z.object({
       if (!hasBranch) {
         ctx.addIssue({
           code: "custom",
-          message: "Payload must contain at least one transaction branch",
+          message: translate("Payload must contain at least one transaction branch"),
         });
       }
     }),

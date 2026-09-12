@@ -43,7 +43,10 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
 
   return (
     <>
-      <Metadata title={t("Select roles")} description={t("Choose the roles to activate for this session")} />
+      <Metadata
+        title={t("Select roles")}
+        description={t("Choose the roles to activate for this session")}
+      />
       <AuthShell step="role" receipt={receipt}>
         <AuthCard stepKey="role">
           <RoleSelection

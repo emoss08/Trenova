@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -39,18 +39,18 @@ function ServiceTypeStatusCell({ row }: { row: ServiceTypeRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<ServiceTypeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<ServiceTypeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <ServiceTypeStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
       maxSize: 150,
       meta: {
         apiField: "status",
-        label: "Status",
+        label: t("Status"),
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -60,7 +60,7 @@ export function getColumns(): ColumnDef<ServiceTypeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       enableCellEditing: true,
       cell: ({ row }) => {
         const { code, color } = row.original;
@@ -68,7 +68,7 @@ export function getColumns(): ColumnDef<ServiceTypeRow>[] {
       },
       meta: {
         apiField: "code",
-        label: "Code",
+        label: t("Code"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -77,17 +77,17 @@ export function getColumns(): ColumnDef<ServiceTypeRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       enableCellEditing: true,
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
       maxSize: 500,
       meta: {
         apiField: "description",
-        label: "Description",
+        label: t("Description"),
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -96,13 +96,13 @@ export function getColumns(): ColumnDef<ServiceTypeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },
       meta: {
         apiField: "createdAt",
-        label: "Created At",
+        label: t("Created At"),
         filterable: false,
         sortable: true,
         filterType: "date",

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { yearOf } from "@/lib/osha-log";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
@@ -19,12 +20,15 @@ export const prefetch: RoutePrefetch = () => {
 };
 
 export function OshaLogPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "OSHA 300 Log",
-        description:
+        title: t("OSHA 300 Log"),
+        description: t(
           "Recordable injuries and illnesses for the year, and the 300A summary posted over them. The totals are counted from the log every time it is read, so a case corrected years later cannot leave a stale summary behind.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

@@ -347,9 +347,12 @@ export function FormEditModal<T extends FieldValues>({
               </DialogTitle>
               {!isLoadingRecord && effectiveRecord && (
                 <DialogDescription>
-                  {t("Last updated on {0}", formatToUserTimezone(effectiveRecord.updatedAt, {
-                    timeFormat: TimeFormat.enum["24-hour"],
-                  }))}
+                  {t(
+                    "Last updated on {0}",
+                    formatToUserTimezone(effectiveRecord.updatedAt, {
+                      timeFormat: TimeFormat.enum["24-hour"],
+                    }),
+                  )}
                 </DialogDescription>
               )}
             </div>

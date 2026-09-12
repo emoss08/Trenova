@@ -386,7 +386,11 @@ function UnassignedLaneRow({
         <div className="flex min-w-0 flex-col">
           <span className="text-warning truncate text-[11.5px] font-medium">{t("Uncovered")}</span>
           <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
-            {t("{0} {1} · drag onto a driver", row.spans.length, row.spans.length === 1 ? "move" : "moves")}
+            {t(
+              "{0} {1} · drag onto a driver",
+              row.spans.length,
+              row.spans.length === 1 ? "move" : "moves",
+            )}
           </span>
         </div>
       </div>

@@ -123,7 +123,9 @@ export function CredentialSlotRow({
               <span className="flex shrink-0 items-center gap-1">
                 <ShieldCheckIcon className="size-3" />
                 <span>{t("Verified")}</span>
-                {credential.verifiedBy?.name ? <span>{t("by {0}", credential.verifiedBy.name)}</span> : null}
+                {credential.verifiedBy?.name ? (
+                  <span>{t("by {0}", credential.verifiedBy.name)}</span>
+                ) : null}
               </span>
             ) : (
               <span className="shrink-0">{t("Unverified")}</span>

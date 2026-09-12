@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   WorkerTrainingRecordRow,
   WorkerTrainingSummaryItem,
@@ -54,6 +55,8 @@ export function TrainingSlotRow({
   onWaive,
   onCancel,
 }: TrainingSlotRowProps) {
+  const t = useT();
+
   const { course, health } = item;
   const record = item.record as WorkerTrainingRecordRow | null | undefined;
   const isOpen = record?.status === "Assigned" || record?.status === "InProgress";
@@ -76,7 +79,7 @@ export function TrainingSlotRow({
     if (permissions.canRecord) {
       actions.push({
         id: "record",
-        label: "Record result",
+        label: t("Record result"),
         icon: ClipboardCheckIcon,
         disabled: busy,
         onSelect: () => onRecord(item),
@@ -85,7 +88,7 @@ export function TrainingSlotRow({
     if (permissions.canWaive) {
       actions.push({
         id: "waive",
-        label: "Waive",
+        label: t("Waive"),
         icon: CheckCheckIcon,
         disabled: busy,
         onSelect: () => onWaive(record),
@@ -112,7 +115,7 @@ export function TrainingSlotRow({
     if (permissions.canRecord && health !== "Current") {
       actions.push({
         id: "record-completion",
-        label: "Record completion",
+        label: t("Record completion"),
         icon: ClipboardCheckIcon,
         disabled: busy,
         onSelect: () => onRecord(item),

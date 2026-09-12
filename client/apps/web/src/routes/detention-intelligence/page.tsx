@@ -43,9 +43,10 @@ export function DetentionIntelligencePage() {
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Detention Intelligence",
-        description:
+        title: t("Detention Intelligence"),
+        description: t(
           "Which facilities cost the most, which customers are unprofitable once driver pay is netted off, and where discretionary revenue is going",
+        ),
         actions: (
           <>
             <SegmentedControl

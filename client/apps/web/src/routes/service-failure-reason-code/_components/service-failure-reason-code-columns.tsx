@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -11,17 +11,17 @@ import {
 import type { ServiceFailureReasonCodeRow } from "@/lib/graphql/service-failure-reason-code-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
-export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureReasonCodeRow>[] {
   return [
     {
       accessorKey: "active",
-      header: "Active",
+      header: t("Active"),
       cell: ({ row }) => <BooleanBadge value={row.original.active} />,
       size: 100,
       minSize: 100,
       maxSize: 100,
       meta: {
-        label: "Active",
+        label: t("Active"),
         apiField: "active",
         filterable: true,
         sortable: true,
@@ -31,13 +31,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       size: 180,
       minSize: 160,
       maxSize: 220,
       meta: {
-        label: "Code",
+        label: t("Code"),
         apiField: "code",
         filterable: true,
         sortable: true,
@@ -47,13 +47,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "label",
-      header: "Label",
+      header: t("Label"),
       cell: ({ row }) => row.original.label,
       size: 240,
       minSize: 200,
       maxSize: 320,
       meta: {
-        label: "Label",
+        label: t("Label"),
         apiField: "label",
         filterable: true,
         sortable: true,
@@ -63,7 +63,7 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) => {
         const choice = findChoice(serviceFailureReasonCategoryChoices, row.original.category);
         return choice ? (
@@ -76,7 +76,7 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
       minSize: 140,
       maxSize: 200,
       meta: {
-        label: "Category",
+        label: t("Category"),
         apiField: "category",
         filterable: true,
         sortable: true,
@@ -87,7 +87,7 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "appliesTo",
-      header: "Applies To",
+      header: t("Applies To"),
       cell: ({ row }) =>
         findChoice(serviceFailureReasonCodeAppliesToChoices, row.original.appliesTo)?.label ??
         row.original.appliesTo,
@@ -95,7 +95,7 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
       minSize: 120,
       maxSize: 180,
       meta: {
-        label: "Applies To",
+        label: t("Applies To"),
         apiField: "appliesTo",
         filterable: true,
         sortable: true,
@@ -106,15 +106,15 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={90} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={90} />
       ),
       size: 320,
       minSize: 260,
       maxSize: 420,
       meta: {
-        label: "Description",
+        label: t("Description"),
         apiField: "description",
         filterable: true,
         sortable: false,
@@ -124,13 +124,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "defaultStatusCode",
-      header: "X12 Status",
+      header: t("X12 Status"),
       cell: ({ row }) => row.original.defaultStatusCode || "-",
       size: 120,
       minSize: 100,
       maxSize: 140,
       meta: {
-        label: "X12 Status",
+        label: t("X12 Status"),
         apiField: "defaultStatusCode",
         filterable: true,
         sortable: true,
@@ -140,13 +140,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "defaultReasonCode",
-      header: "X12 Reason",
+      header: t("X12 Reason"),
       cell: ({ row }) => row.original.defaultReasonCode || "-",
       size: 120,
       minSize: 100,
       maxSize: 140,
       meta: {
-        label: "X12 Reason",
+        label: t("X12 Reason"),
         apiField: "defaultReasonCode",
         filterable: true,
         sortable: true,
@@ -156,13 +156,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "sortOrder",
-      header: "Sort",
+      header: t("Sort"),
       cell: ({ row }) => row.original.sortOrder,
       size: 90,
       minSize: 80,
       maxSize: 110,
       meta: {
-        label: "Sort",
+        label: t("Sort"),
         apiField: "sortOrder",
         filterable: true,
         sortable: true,
@@ -172,13 +172,13 @@ export function getColumns(): ColumnDef<ServiceFailureReasonCodeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("Created"),
       cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       size: 180,
       minSize: 160,
       maxSize: 220,
       meta: {
-        label: "Created",
+        label: t("Created"),
         apiField: "createdAt",
         filterable: false,
         sortable: true,

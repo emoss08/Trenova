@@ -116,7 +116,9 @@ function InvalidLink({ onRequestNewLink }: { onRequestNewLink: () => void }) {
     <AuthCardBody>
       <StepCrumbs left="Account recovery" right="Link problem" />
       <StepHeading title={t("This link is incomplete")}>
-        {t("The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.")}
+        {t(
+          "The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.",
+        )}
       </StepHeading>
 
       <div className="mt-4">

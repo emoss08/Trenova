@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { type CompletionContext, type Completion } from "@codemirror/autocomplete";
 import {
   HighlightStyle,
@@ -215,9 +216,9 @@ function createCompletions(known: KnownIdentifiers): Completion[] {
   }
 
   options.push(
-    { label: "true", type: "keyword", detail: "Boolean true" },
-    { label: "false", type: "keyword", detail: "Boolean false" },
-    { label: "nil", type: "keyword", detail: "Null value" },
+    { label: "true", type: "keyword", detail: translate("Boolean true") },
+    { label: "false", type: "keyword", detail: translate("Boolean false") },
+    { label: "nil", type: "keyword", detail: translate("Null value") },
   );
 
   return options;

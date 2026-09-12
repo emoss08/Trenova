@@ -373,6 +373,37 @@ export function transformSource(source, filePath, { labels = false } = {}) {
         return;
       }
 
+      case "ObjectProperty": {
+        // Config objects are where most of this app's captions actually live: table column
+        // definitions, choice lists, page header props, menu entries. The codemod used to
+        // reach them only as arguments to toast.*(), so a `header: "Status"` sitting in a
+        // ColumnDef array was never seen. Gate on the same TEXT_PROPS allowlist the JSX
+        // attribute case uses, so a key like `value` or `name` stays untouched.
+        // Only inside a function. A module-level `const NAV = [{ label: "Shipments" }]`
+        // evaluates once at import, so wrapping there would freeze the caption in whatever
+        // language was active then; those maps stay literal and their consumers translate
+        // at render (the --labels pass).
+        if (
+          stack.length === 0 ||
+          node.computed ||
+          node.key.type !== "Identifier" ||
+          !TEXT_PROPS.has(node.key.name)
+        ) {
+          return;
+        }
+        if (node.value.type !== "StringLiteral" || consumed.has(node.value)) return;
+        if (reject(node.value.value, { prop: node.key.name }) !== null) return;
+
+        consumed.add(node.value);
+        const call = callFor(stack, deps);
+        edits.push({
+          start: node.value.start,
+          end: node.value.end,
+          text: `${call}(${quote(node.value.value.trim().replace(/\s+/g, " "))})`,
+        });
+        return;
+      }
+
       case "JSXText": {
         if (isVerbatimHost(parent)) return;
         if (node.value.trim() === "" || consumed.has(node)) return;
@@ -462,24 +493,8 @@ export function transformSource(source, filePath, { labels = false } = {}) {
             });
             continue;
           }
-          if (arg.type !== "ObjectExpression") continue;
-          for (const prop of arg.properties) {
-            if (
-              prop.type !== "ObjectProperty" ||
-              prop.key.type !== "Identifier" ||
-              prop.value.type !== "StringLiteral" ||
-              !TEXT_PROPS.has(prop.key.name)
-            ) {
-              continue;
-            }
-            if (reject(prop.value.value, { prop: prop.key.name }) !== null) continue;
-            const call = callFor(stack, deps);
-            edits.push({
-              start: prop.value.start,
-              end: prop.value.end,
-              text: `${call}(${quote(prop.value.value.trim().replace(/\s+/g, " "))})`,
-            });
-          }
+          // An options object (`toast.success(msg, { description })`) is left to the
+          // ObjectProperty case, which reaches every config object rather than only these.
         }
         return;
       }

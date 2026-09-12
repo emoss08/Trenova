@@ -13,7 +13,9 @@ export function LeaveControlPage() {
     <AdminPageLayout>
       <PageHeader
         title={t("Leave Settings")}
-        description={t("How family and medical leave is measured, and what an employee must do to qualify")}
+        description={t(
+          "How family and medical leave is measured, and what an employee must do to qualify",
+        )}
       />
       <SuspenseLoader>
         <div className="p-4">

@@ -400,7 +400,9 @@ export function ImportWorkspace() {
       )}
 
       {currentPhase === "reconciliation" && uploadedDocumentId && (
-        <SuspenseLoader componentLoaderProps={{ message: "Loading reconciliation workspace..." }}>
+        <SuspenseLoader
+          componentLoaderProps={{ message: t("Loading reconciliation workspace...") }}
+        >
           <ReconciliationWorkspace
             documentId={uploadedDocumentId}
             fileName={importedDocument?.originalName}

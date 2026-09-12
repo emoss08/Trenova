@@ -90,7 +90,9 @@ export function RateConfirmationActions({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-2xs text-muted-foreground font-medium uppercase">{t("Rate Con")}</span>
+        <span className="text-2xs text-muted-foreground font-medium uppercase">
+          {t("Rate Con")}
+        </span>
         {latest ? (
           <>
             <RateConfirmationStatusBadge status={latest.status} />
@@ -117,7 +119,11 @@ export function RateConfirmationActions({
             )}
             {latest.status === "Confirmed" && latest.confirmedByName && (
               <span className="text-2xs text-muted-foreground">
-                {t("by {0}{1}", latest.confirmedByName, latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "")}
+                {t(
+                  "by {0}{1}",
+                  latest.confirmedByName,
+                  latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "",
+                )}
               </span>
             )}
             {latest.status === "Voided" && latest.voidReason && (
@@ -250,7 +256,10 @@ function MarkConfirmedDialog({
         <DialogHeader>
           <DialogTitle>{t("Mark rate confirmation confirmed")}</DialogTitle>
           <DialogDescription>
-            {t("Records who at the carrier confirmed revision {0} — from a signed copy, email reply, or phone confirmation.", rateConfirmation.revision)}
+            {t(
+              "Records who at the carrier confirmed revision {0} — from a signed copy, email reply, or phone confirmation.",
+              rateConfirmation.revision,
+            )}
           </DialogDescription>
         </DialogHeader>
         <Input
@@ -306,7 +315,10 @@ function VoidRateConfirmationDialog({
         <DialogHeader>
           <DialogTitle>{t("Void rate confirmation")}</DialogTitle>
           <DialogDescription>
-            {t("Voids revision {0}. Generate again to file a fresh revision with the current buy rate.", rateConfirmation.revision)}
+            {t(
+              "Voids revision {0}. Generate again to file a fresh revision with the current buy rate.",
+              rateConfirmation.revision,
+            )}
           </DialogDescription>
         </DialogHeader>
         <Textarea

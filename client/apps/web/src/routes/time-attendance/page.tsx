@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -31,12 +32,15 @@ export const prefetch: RoutePrefetch = () => {
 };
 
 export function TimeAttendancePage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Time & Attendance",
-        description:
+        title: t("Time & Attendance"),
+        description: t(
           "Hours worked by staff paid by the clock. A week's totals are frozen when it is handed over, so what a manager approves is what payroll is run from.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

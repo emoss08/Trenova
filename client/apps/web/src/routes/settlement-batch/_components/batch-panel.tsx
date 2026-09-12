@@ -82,7 +82,9 @@ function GenerateBatchPanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Settlement Batch")}
-      description={t("Creates a draft settlement for every driver with accrued pay in the current period.")}
+      description={t(
+        "Creates a draft settlement for every driver with accrued pay in the current period.",
+      )}
       queryKey="settlement-batch-list"
       form={form}
       notice={
@@ -94,7 +96,9 @@ function GenerateBatchPanel({
             <p className="mt-1 font-medium">
               {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
             </p>
-            <p className="text-muted-foreground text-xs">{t("Pays on {0}", formatDate(period.payDate))}</p>
+            <p className="text-muted-foreground text-xs">
+              {t("Pays on {0}", formatDate(period.payDate))}
+            </p>
           </div>
         ) : undefined
       }
@@ -106,7 +110,9 @@ function GenerateBatchPanel({
               name="name"
               label={t("Batch Name")}
               placeholder={t("Defaults to the pay period end date")}
-              description={t("A label for this payroll run; if left blank it is named after the period end date.")}
+              description={t(
+                "A label for this payroll run; if left blank it is named after the period end date.",
+              )}
             />
           </FormControl>
           <FormControl>
@@ -114,11 +120,15 @@ function GenerateBatchPanel({
               control={control}
               name="notes"
               label={t("Notes")}
-              description={t("Anything reviewers should know about this run, e.g. an off-cycle correction.")}
+              description={t(
+                "Anything reviewers should know about this run, e.g. an off-cycle correction.",
+              )}
             />
           </FormControl>
           <p className="text-muted-foreground text-xs">
-            {t("Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.")}
+            {t(
+              "Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.",
+            )}
           </p>
         </FormGroup>
       }
@@ -184,7 +194,12 @@ function BatchDetail({ batchId }: { batchId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <SettlementBatchStatusBadge status={data.status as SettlementBatchStatus} />
         <span className="text-muted-foreground text-xs">
-          {t("{0} – {1} · pays {2}", formatDate(data.periodStart), formatDate(data.periodEnd), formatDate(data.payDate))}
+          {t(
+            "{0} – {1} · pays {2}",
+            formatDate(data.periodStart),
+            formatDate(data.periodEnd),
+            formatDate(data.payDate),
+          )}
         </span>
         <Button
           size="sm"
@@ -200,24 +215,32 @@ function BatchDetail({ batchId }: { batchId: string }) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Settlements")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Settlements")}
+          </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Exceptions")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Exceptions")}
+          </p>
           <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
             {data.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
             {data.exceptionCount}
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Gross")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Total Gross")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Total Net")}</p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            {t("Total Net")}
+          </p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

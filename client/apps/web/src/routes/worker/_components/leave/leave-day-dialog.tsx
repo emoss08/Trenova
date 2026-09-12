@@ -85,7 +85,9 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
         <DialogHeader>
           <DialogTitle>{t("Record a day of leave")}</DialogTitle>
           <DialogDescription>
-            {t("Hours rather than days, so intermittent leave can be taken in the increment the organisation actually uses.")}
+            {t(
+              "Hours rather than days, so intermittent leave can be taken in the increment the organisation actually uses.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -122,7 +124,9 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   <AlertDescription>
                     {designated
                       ? t("This case is designated as FMLA, so the day draws the entitlement down.")
-                      : t("This case is not designated as FMLA. The day is recorded but draws nothing down.")}
+                      : t(
+                          "This case is not designated as FMLA. The day is recorded but draws nothing down.",
+                        )}
                   </AlertDescription>
                 </Alert>
               </FormControl>

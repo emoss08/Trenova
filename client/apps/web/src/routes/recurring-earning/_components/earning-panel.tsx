@@ -95,7 +95,9 @@ function EarningCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Recurring Earning")}
-      description={t("Added automatically to each qualifying settlement until its end date or cap.")}
+      description={t(
+        "Added automatically to each qualifying settlement until its end date or cap.",
+      )}
       queryKey="recurring-earning-list"
       form={form}
       formComponent={<EarningForm isEdit={false} />}
@@ -189,7 +191,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="payCodeId"
             direction="Earning"
-            description={t("Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.")}
+            description={t(
+              "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -199,7 +203,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             label={t("Frequency")}
             options={recurringEarningFrequencyChoices}
             rules={{ required: true }}
-            description={t("Every settlement pays each cycle; monthly pays only on the first settlement of each month.")}
+            description={t(
+              "Every settlement pays each cycle; monthly pays only on the first settlement of each month.",
+            )}
           />
         </FormControl>
         {isEdit && (
@@ -210,7 +216,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
               label={t("Status")}
               options={recurringEarningStatusChoices}
               rules={{ required: true }}
-              description={t("Pause to skip upcoming settlements without losing history; completed earnings stop permanently.")}
+              description={t(
+                "Pause to skip upcoming settlements without losing history; completed earnings stop permanently.",
+              )}
             />
           </FormControl>
         )}
@@ -221,7 +229,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             label={t("Description")}
             placeholder={t("e.g. OTR per diem — IRS substantiated M&IE")}
             rules={{ required: true }}
-            description={t("Shown verbatim on the driver's settlement statement, so make it recognizable.")}
+            description={t(
+              "Shown verbatim on the driver's settlement statement, so make it recognizable.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -253,7 +263,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             name="startDate"
             label={t("Start Date")}
             rules={{ required: true }}
-            description={t("The earning begins applying to settlements whose period ends after this date.")}
+            description={t(
+              "The earning begins applying to settlements whose period ends after this date.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -267,7 +279,9 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
       </FormGroup>
       {selectedCode != null && !selectedCode.taxable && (
         <p className="text-muted-foreground text-xs">
-          {t("This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.")}
+          {t(
+            "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.",
+          )}
         </p>
       )}
     </div>

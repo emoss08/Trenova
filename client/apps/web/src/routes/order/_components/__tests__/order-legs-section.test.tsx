@@ -133,7 +133,9 @@ describe("OrderLegsSection leg selection", () => {
     // A lone leg is confirmed first because it produces a standalone invoice.
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
 
-    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined));
+    await waitFor(() =>
+      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
+    );
   });
 
   it("confirms before billing a single leg on its own invoice", async () => {
@@ -154,7 +156,9 @@ describe("OrderLegsSection leg selection", () => {
     expect(mocks.createInvoiceFromShipments).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
-    await waitFor(() => expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined));
+    await waitFor(() =>
+      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
+    );
   });
 
   it("keeps the invoice button disabled until something is selected", async () => {

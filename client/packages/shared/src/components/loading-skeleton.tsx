@@ -15,11 +15,17 @@ export default function LoadingSkeleton() {
             <Spinner className="size-10" />
           </div>
           <p className="mb-2 text-xl font-semibold">
-            {t("Hang tight!")} <u className="font-bold underline decoration-blue-600">{t("Trenova")}</u> {t("is gearing up for you.")}
+            {t("Hang tight!")}{" "}
+            <u className="font-bold underline decoration-blue-600">{t("Trenova")}</u>{" "}
+            {t("is gearing up for you.")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.")} <br />
-            <u className="text-foreground decoration-blue-600">{t("Still stuck?")}</u> {t("Your friendly system administrator is just a call away for a swift rescue!")}
+            {t(
+              "We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.",
+            )}{" "}
+            <br />
+            <u className="text-foreground decoration-blue-600">{t("Still stuck?")}</u>{" "}
+            {t("Your friendly system administrator is just a call away for a swift rescue!")}
           </p>
         </div>
       </div>

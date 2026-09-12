@@ -174,35 +174,39 @@ export default function MatchingWorkspace() {
   const searchTerm = search.trim();
   const invoiceEmpty = searchTerm
     ? {
-        title: "Nothing matches",
-        description: "No carrier invoice fits that search. Clear it to see the list again.",
+        title: t("Nothing matches"),
+        description: t("No carrier invoice fits that search. Clear it to see the list again."),
         clear: true,
       }
     : invoiceFilter === "attention"
       ? {
-          title: "Nothing needs attention",
-          description:
+          title: t("Nothing needs attention"),
+          description: t(
             "Every carrier invoice is linked to a carrier and matched. Clear the filter to see them anyway.",
+          ),
           clear: true,
         }
       : {
-          title: "No invoices yet",
-          description:
+          title: t("No invoices yet"),
+          description: t(
             "A carrier freight invoice arrives here from EDI 210 or a parsed document. Until one does, there is nothing to match.",
+          ),
           clear: false,
         };
   const matchesFiltered = Boolean(searchTerm) || matchFilter !== "open" || matchViaFilter !== "all";
   const matchEmpty = matchesFiltered
     ? {
-        title: "Nothing matches",
-        description:
+        title: t("Nothing matches"),
+        description: t(
           "No match fits the search and chips. Widen them, or clear them to see everything open.",
+        ),
         clear: true,
       }
     : {
-        title: "No matches yet",
-        description:
+        title: t("No matches yet"),
+        description: t(
           "A match is made when a carrier invoice is paired with its assignment, by the auto-match sweep or by hand from an invoice. Until one is, there is nothing to compare.",
+        ),
         clear: false,
       };
   const clearInvoiceFilters = () => {
@@ -222,10 +226,15 @@ export default function MatchingWorkspace() {
           data-testid="carrier-match-automation-status"
           className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-[11px]"
         >
-          <span>{t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? t("On") : t("Off"))}</span>
+          <span>
+            {t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? t("On") : t("Off"))}
+          </span>
           <span aria-hidden>·</span>
           <span>
-            {t("Auto-accept within tolerance: {0}", settlementControl.autoAcceptWithinTolerance ? t("On") : t("Off"))}
+            {t(
+              "Auto-accept within tolerance: {0}",
+              settlementControl.autoAcceptWithinTolerance ? t("On") : t("Off"),
+            )}
           </span>
           <Link
             to="/admin/carrier-settlement-control"
@@ -236,7 +245,10 @@ export default function MatchingWorkspace() {
         </p>
       )}
       <div className="grid gap-3 md:grid-cols-4">
-        <SummaryCard label={t("Invoices Needing Attention")} value={String(attentionInvoiceCount)} />
+        <SummaryCard
+          label={t("Invoices Needing Attention")}
+          value={String(attentionInvoiceCount)}
+        />
         <SummaryCard label={t("Variance Matches")} value={String(varianceCount)} />
         <SummaryCard label={t("Suggested Matches")} value={String(suggestedCount)} />
         <SummaryCard label={t("Resolved")} value={String(resolvedCount)} />
@@ -266,8 +278,8 @@ export default function MatchingWorkspace() {
               <div className="flex flex-wrap gap-1">
                 {(
                   [
-                    { value: "attention", label: "Needs Attention" },
-                    { value: "all", label: "All" },
+                    { value: "attention", label: t("Needs Attention") },
+                    { value: "all", label: t("All") },
                   ] as Array<{ value: InvoiceFilter; label: string }>
                 ).map((chip) => (
                   <FilterChip
@@ -340,7 +352,9 @@ export default function MatchingWorkspace() {
               <BillingDetailUnselected
                 layout="cards"
                 title={t("Nothing open")}
-                description={t("Pick a carrier invoice from the list to link it to a carrier and create a match.")}
+                description={t(
+                  "Pick a carrier invoice from the list to link it to a carrier and create a match.",
+                )}
               />
             )
           ) : selectedMatch ? (
@@ -353,7 +367,9 @@ export default function MatchingWorkspace() {
             <BillingDetailUnselected
               layout="cards"
               title={t("Nothing open")}
-              description={t("Pick a match from the list to compare the invoice against the negotiated buy rate.")}
+              description={t(
+                "Pick a match from the list to compare the invoice against the negotiated buy rate.",
+              )}
             />
           )}
         </ScrollArea>
@@ -648,9 +664,14 @@ function InvoiceDetail({
     <div className="flex flex-col gap-4 p-4">
       <div className="rounded-lg border">
         <div className="border-b px-4 py-3">
-          <h3 className="text-sm font-semibold">{t("Invoice {0}", invoice.invoiceNumber || invoice.id)}</h3>
+          <h3 className="text-sm font-semibold">
+            {t("Invoice {0}", invoice.invoiceNumber || invoice.id)}
+          </h3>
           <p className="text-muted-foreground text-xs">
-            {t("EDI 210 carrier freight invoice · received {0}", formatSettlementDate(invoice.createdAt))}
+            {t(
+              "EDI 210 carrier freight invoice · received {0}",
+              formatSettlementDate(invoice.createdAt),
+            )}
           </p>
         </div>
         <div className="grid gap-3 p-4 md:grid-cols-2">
@@ -690,8 +711,12 @@ function InvoiceDetail({
         </h4>
         <p className="text-muted-foreground mb-2 text-[11px]">
           {invoice.carrierId
-            ? t("This invoice is linked to a carrier in the master and can be matched against its assignments.")
-            : t("Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number.")}
+            ? t(
+                "This invoice is linked to a carrier in the master and can be matched against its assignments.",
+              )
+            : t(
+                "Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number.",
+              )}
         </p>
         <div className="flex flex-wrap gap-2">
           {!invoice.carrierId && (
@@ -841,7 +866,10 @@ function MatchDetail({
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {t("Base ({0})", assignment.rateMethod === "PerMile" ? t("per mile") : t("flat"))}
+                    {t(
+                      "Base ({0})",
+                      assignment.rateMethod === "PerMile" ? t("per mile") : t("flat"),
+                    )}
                   </span>
                   <span className="font-medium tabular-nums">
                     {formatCurrency(Number(assignment.baseAmount ?? 0), currency)}
@@ -924,7 +952,9 @@ function MatchDetail({
               size="sm"
               disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
               onClick={() => acceptMutation.mutate()}
-              title={t("Reconciles the invoice against the buy rate without changing the accrued cost")}
+              title={t(
+                "Reconciles the invoice against the buy rate without changing the accrued cost",
+              )}
             >
               <CheckCheckIcon className="size-3.5" />
               {t("Accept")}
@@ -935,7 +965,9 @@ function MatchDetail({
               size="sm"
               disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
               onClick={() => acceptWithVarianceMutation.mutate()}
-              title={t("Accrues an adjustment cost event for the variance so the carrier is paid the billed amount")}
+              title={t(
+                "Accrues an adjustment cost event for the variance so the carrier is paid the billed amount",
+              )}
             >
               <ScaleIcon className="size-3.5" />
               {t("Accept with Variance (")}
@@ -956,7 +988,11 @@ function MatchDetail({
       ) : (
         <p className="text-muted-foreground text-xs">
           {match.status === "Resolved"
-            ? t("Resolved{0}{1}", match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : "", match.resolutionNote ? ` — ${match.resolutionNote}` : "")
+            ? t(
+                "Resolved{0}{1}",
+                match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : "",
+                match.resolutionNote ? ` — ${match.resolutionNote}` : "",
+              )
             : t("Rejected{0}", match.resolutionNote ? ` — ${match.resolutionNote}` : "")}
         </p>
       )}
@@ -1003,7 +1039,9 @@ function RejectMatchDialog({
         <DialogHeader>
           <DialogTitle>{t("Reject match")}</DialogTitle>
           <DialogDescription>
-            {t("Dismisses the pairing — the invoice stays open for a different assignment or a dispute with the carrier.")}
+            {t(
+              "Dismisses the pairing — the invoice stays open for a different assignment or a dispute with the carrier.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <Textarea

@@ -61,7 +61,9 @@ export function DeskError({ onRetry }: { onRetry: () => void }) {
     <DeskNotice
       icon={TriangleAlertIcon}
       title={t("The detention desk could not be loaded")}
-      body={t("The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.")}
+      body={t(
+        "The clocks are still running on the server and nothing has been lost — this screen just cannot read them right now.",
+      )}
       action={
         <Button variant="outline" size="sm" onClick={onRetry}>
           {t("Try again")}
@@ -134,7 +136,9 @@ export function DeskEmpty() {
       className="py-10"
       sketchClassName="max-w-2xl"
       title={t("No drivers are sitting on a dock")}
-      description={t("Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.")}
+      description={t(
+        "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.",
+      )}
       sketch={
         <div className="border-border/70 bg-card flex flex-col gap-2 rounded-lg border pt-4 text-left">
           <DeskRailSketch />
@@ -157,7 +161,9 @@ export function DeskNoMatches({ onReset, className }: { onReset: () => void; cla
       className={cn("py-8", className)}
       sketchClassName="max-w-2xl"
       title={t("No stops match this view")}
-      description={t("Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.")}
+      description={t(
+        "Nothing on the floor matches the lane and search you are in. Clearing them brings the whole desk back.",
+      )}
       action={
         <Button variant="outline" size="sm" onClick={onReset}>
           <XIcon className="size-3.5" />

@@ -189,7 +189,9 @@ export function ScheduleCard() {
       <div className="border-border mt-4 border-t pt-3">
         <p className="text-sm font-semibold">{t("What you would rather work")}</p>
         <p className="text-muted-foreground text-xs">
-          {t("Your carrier sees this when they build the rota. It is not a promise — dispatch can still put you on a day you marked, and they will see that they did.")}
+          {t(
+            "Your carrier sees this when they build the rota. It is not a promise — dispatch can still put you on a day you marked, and they will see that they did.",
+          )}
         </p>
         <ul className="mt-2 flex flex-col gap-1.5">
           {DAY_LABELS_LONG.map((label, dayOfWeek) => {

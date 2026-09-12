@@ -140,7 +140,9 @@ export default function TemplateDesignerAside() {
         open={isCreateDialogOpen}
         onOpenChange={handleCreateDialogOpenChange}
         title={t("EDI Template")}
-        description={t("Choose a document type and name the EDI template before editing its version details.")}
+        description={t(
+          "Choose a document type and name the EDI template before editing its version details.",
+        )}
         url="/edi/templates/"
         queryKey="templates"
         form={createTemplateForm}

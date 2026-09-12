@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
   jurisdictionRuleTableGraphQLConfig,
@@ -9,7 +10,9 @@ import { getColumns } from "./jurisdiction-rule-columns";
 import { JurisdictionRulePanel } from "./jurisdiction-rule-panel";
 
 export default function JurisdictionRuleTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<JurisdictionRuleRow>

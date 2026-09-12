@@ -120,7 +120,10 @@ function PaymentDetailView({
       {isReversed ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900 dark:bg-red-950">
           <p className="text-xs font-medium text-red-700 dark:text-red-300">
-            {t("Reversed {0} — cash was backed out and the applied invoices were reopened.", formatAccountingDate(payment.reversedAt))}
+            {t(
+              "Reversed {0} — cash was backed out and the applied invoices were reopened.",
+              formatAccountingDate(payment.reversedAt),
+            )}
           </p>
           {payment.reversalReason ? (
             <p className="mt-0.5 text-xs text-red-600/90 dark:text-red-400/90">
@@ -139,7 +142,10 @@ function PaymentDetailView({
 
       <div className="bg-muted/30 grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border p-3 text-xs md:grid-cols-3">
         <DetailItem label={t("Payment date")} value={formatAccountingDate(payment.paymentDate)} />
-        <DetailItem label={t("Accounting date")} value={formatAccountingDate(payment.accountingDate)} />
+        <DetailItem
+          label={t("Accounting date")}
+          value={formatAccountingDate(payment.accountingDate)}
+        />
         <DetailItem label={t("Method")} value={payment.paymentMethod} />
         <DetailItem label={t("Reference")} value={payment.referenceNumber || "—"} />
         <DetailItem label={t("Currency")} value={payment.currencyCode} />
@@ -487,7 +493,10 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
           <DialogHeader>
             <DialogTitle>{t("Reverse payment")}</DialogTitle>
             <DialogDescription>
-              {t("This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.", formatCurrency(payment.amountMinor / 100))}
+              {t(
+                "This backs out {0} of cash, reopens the applied invoices, and posts a reversing GL entry. This cannot be undone.",
+                formatCurrency(payment.amountMinor / 100),
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

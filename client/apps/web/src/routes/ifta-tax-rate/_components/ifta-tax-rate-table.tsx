@@ -67,11 +67,13 @@ function IftaTaxRatesEmpty({
 }
 
 export default function IftaTaxRateTable() {
+  const t = useT();
+
   const queryClient = useQueryClient();
   const { jurisdictions } = useIftaJurisdictionOptions();
   const columns = useMemo(
-    () => getColumns(jurisdictionFilterOptions(jurisdictions)),
-    [jurisdictions],
+    () => getColumns(jurisdictionFilterOptions(jurisdictions), t),
+    [jurisdictions, t],
   );
   const { allowed: canImport } = usePermission(Resource.IFTATaxRate, Operation.Create);
   const { allowed: canDelete } = usePermission(Resource.IFTATaxRate, Operation.Delete);
@@ -89,26 +91,26 @@ export default function IftaTaxRateTable() {
     return [
       {
         id: "import-rates",
-        label: "Import rates",
-        description: "Read a CSV of the quarter's matrix and publish every row that checks out.",
+        label: t("Import rates"),
+        description: t("Read a CSV of the quarter's matrix and publish every row that checks out."),
         icon: FileSpreadsheetIcon,
         onClick: openImport,
       },
     ];
-  }, [canImport, openImport]);
+  }, [canImport, openImport, t]);
 
   const contextMenuActions = useMemo<RowAction<IftaTaxRateRow>[]>(() => {
     if (!canDelete) return [];
     return [
       {
         id: "delete",
-        label: "Delete",
+        label: t("Delete"),
         icon: Trash2Icon,
         variant: "destructive",
         onClick: (row) => setDeleting(row.original),
       },
     ];
-  }, [canDelete]);
+  }, [canDelete, t]);
 
   return (
     <>

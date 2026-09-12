@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
@@ -23,12 +24,15 @@ export const prefetch: RoutePrefetch = () => {
 };
 
 export function BenefitsPage() {
+  const t = useT();
+
   return (
     <PageLayout
       pageHeaderProps={{
-        title: "Benefits",
-        description:
+        title: t("Benefits"),
+        description: t(
           "What the carrier offers and who is on it. An employee contribution is taken through an ordinary settlement deduction, so it caps, pauses and reverses exactly like every other one.",
+        ),
       }}
     >
       <div className="flex flex-col gap-4">

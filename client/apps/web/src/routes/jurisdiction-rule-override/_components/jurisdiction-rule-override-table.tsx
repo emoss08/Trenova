@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { jurisdictionRuleOverrideTableGraphQLConfig } from "@/lib/graphql/jurisdiction-rule-override-table";
 import type { JurisdictionRuleOverride } from "@/types/jurisdiction-rule-override";
@@ -7,7 +8,9 @@ import { getColumns } from "./jurisdiction-rule-override-columns";
 import { JurisdictionRuleOverridePanel } from "./jurisdiction-rule-override-panel";
 
 export default function JurisdictionRuleOverrideTable() {
-  const columns = useMemo(() => getColumns(), []);
+  const t = useT();
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   return (
     <DataTable<JurisdictionRuleOverride>

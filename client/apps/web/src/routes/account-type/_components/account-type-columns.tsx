@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableColorColumn,
   DataTableDescription,
@@ -39,11 +39,11 @@ function AccountTypeStatusCell({ row }: { row: AccountTypeRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<AccountTypeRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<AccountTypeRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <AccountTypeStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -59,7 +59,7 @@ export function getColumns(): ColumnDef<AccountTypeRow>[] {
     },
     {
       accessorKey: "code",
-      header: "Code",
+      header: t("Code"),
       cell: ({ row }) => {
         const { code, color } = row.original;
         return <DataTableColorColumn text={code} color={color ?? undefined} />;
@@ -74,7 +74,7 @@ export function getColumns(): ColumnDef<AccountTypeRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => row.original.name,
       meta: {
         apiField: "name",
@@ -86,11 +86,11 @@ export function getColumns(): ColumnDef<AccountTypeRow>[] {
     },
     {
       accessorKey: "category",
-      header: "Category",
+      header: t("Category"),
       cell: ({ row }) => {
         const choice = accountCategoryChoices.find((c) => c.value === row.original.category);
         if (!choice) return row.original.category;
-        return <DataTableColorColumn text={translate(choice.label)} color={choice.color} />;
+        return <DataTableColorColumn text={t(choice.label)} color={choice.color} />;
       },
       meta: {
         apiField: "category",
@@ -103,9 +103,9 @@ export function getColumns(): ColumnDef<AccountTypeRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
@@ -120,7 +120,7 @@ export function getColumns(): ColumnDef<AccountTypeRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

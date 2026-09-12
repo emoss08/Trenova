@@ -68,11 +68,20 @@ export function ChecklistCard({
               ) : null}
             </div>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("Started {0}{1}{2}{3}{4}", formatUnixDateMedium(checklist.startedAt), checklist.startedBy?.name ? ` ${t("by {0}", checklist.startedBy.name)}` : "", checklist.dueAt && open ? ` ${t("· due {0}", formatUnixDateMedium(checklist.dueAt))}` : "", checklist.completedAt
-                ? ` ${t("· completed {0}", formatUnixDateMedium(checklist.completedAt))}`
-                : "", checklist.cancelledAt
-                ? ` ${t("· cancelled {0}{1}", formatUnixDateMedium(checklist.cancelledAt), checklist.cancelReason ? ` — ${checklist.cancelReason}` : "")}`
-                : "")}
+              {t(
+                "Started {0}{1}{2}{3}{4}",
+                formatUnixDateMedium(checklist.startedAt),
+                checklist.startedBy?.name ? ` ${t("by {0}", checklist.startedBy.name)}` : "",
+                checklist.dueAt && open
+                  ? ` ${t("· due {0}", formatUnixDateMedium(checklist.dueAt))}`
+                  : "",
+                checklist.completedAt
+                  ? ` ${t("· completed {0}", formatUnixDateMedium(checklist.completedAt))}`
+                  : "",
+                checklist.cancelledAt
+                  ? ` ${t("· cancelled {0}{1}", formatUnixDateMedium(checklist.cancelledAt), checklist.cancelReason ? ` — ${checklist.cancelReason}` : "")}`
+                  : "",
+              )}
             </p>
           </div>
           {open && permissions.canCancel ? (
@@ -99,10 +108,10 @@ export function ChecklistCard({
               <span className="text-foreground font-medium">
                 {t("{0}/{1} required", progress.requiredDone, progress.requiredTotal)}
               </span>
-              <span>
-                {t("{0} of {1} settled", progress.settled, progress.total)}
-              </span>
-              {progress.overdue > 0 && open ? <span>{t("{0} overdue", progress.overdue)}</span> : null}
+              <span>{t("{0} of {1} settled", progress.settled, progress.total)}</span>
+              {progress.overdue > 0 && open ? (
+                <span>{t("{0} overdue", progress.overdue)}</span>
+              ) : null}
             </p>
           </div>
         </div>
@@ -110,7 +119,9 @@ export function ChecklistCard({
         {open && checklist.kind === "Onboarding" ? (
           <Alert>
             <AlertDescription>
-              {t("When the last required item is settled this checklist closes on its own and the worker is marked qualified.")}
+              {t(
+                "When the last required item is settled this checklist closes on its own and the worker is marked qualified.",
+              )}
             </AlertDescription>
           </Alert>
         ) : null}

@@ -151,7 +151,9 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
       <p className="text-muted-foreground text-[11px]">
         {isTerminal
           ? t("This settlement is finalized and shown here for record-keeping.")
-          : t("This is a read-only view — process, adjust, or pay this settlement from the workspace.")}
+          : t(
+              "This is a read-only view — process, adjust, or pay this settlement from the workspace.",
+            )}
       </p>
       {!isTerminal && (
         <Link
@@ -182,7 +184,12 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           </span>
         )}
         <span className="text-muted-foreground ml-auto text-xs">
-          {t("{0} – {1} · pays {2}", formatDate(settlement.periodStart), formatDate(settlement.periodEnd), formatDate(settlement.payDate))}
+          {t(
+            "{0} – {1} · pays {2}",
+            formatDate(settlement.periodStart),
+            formatDate(settlement.periodEnd),
+            formatDate(settlement.payDate),
+          )}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -198,7 +205,11 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         </SummaryTile>
         <SummaryTile label={t("Miles / Loads")}>
           <span className="tabular-nums">
-            {t("{0} mi · {1}", Number(settlement.totalMiles).toLocaleString(), settlement.shipmentCount)}
+            {t(
+              "{0} mi · {1}",
+              Number(settlement.totalMiles).toLocaleString(),
+              settlement.shipmentCount,
+            )}
           </span>
         </SummaryTile>
         <SummaryTile label={t("Net Pay")} highlight>
@@ -418,7 +429,9 @@ function SettlementActions({
         onChanged={onChanged}
       />
       {status === "Voided" && settlement.voidReason && (
-        <span className="text-muted-foreground text-xs">{t("Voided: {0}", settlement.voidReason)}</span>
+        <span className="text-muted-foreground text-xs">
+          {t("Voided: {0}", settlement.voidReason)}
+        </span>
       )}
       <span className="sr-only">
         <Button variant="ghost" onClick={onClose}>
@@ -462,11 +475,15 @@ function ReasonDialog({
     <Dialog open={action != null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{action === "reject" ? t("Reject settlement") : t("Void settlement")}</DialogTitle>
+          <DialogTitle>
+            {action === "reject" ? t("Reject settlement") : t("Void settlement")}
+          </DialogTitle>
           <DialogDescription>
             {action === "reject"
               ? t("The settlement will return to draft for corrections.")
-              : t("Voiding releases pay events back to the accrual pool and reverses any GL postings.")}
+              : t(
+                  "Voiding releases pay events back to the accrual pool and reverses any GL postings.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -523,13 +540,17 @@ function MarkPaidDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("Mark settlement paid")}</DialogTitle>
-          <DialogDescription>{t("Record how the net pay was disbursed to the driver.")}</DialogDescription>
+          <DialogDescription>
+            {t("Record how the net pay was disbursed to the driver.")}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
             <p className="text-muted-foreground mb-1 text-[11px]">
-              {t("How the net pay was sent to the driver — recorded on the statement and audit trail.")}
+              {t(
+                "How the net pay was sent to the driver — recorded on the statement and audit trail.",
+              )}
             </p>
             <div className="flex gap-2">
               {["ACH", "Check", "InstantPay", "Other"].map((method) => (
@@ -662,7 +683,9 @@ function AddAdjustmentDialog({
               </SelectContent>
             </Select>
             <p className="text-muted-foreground mt-1 text-[11px]">
-              {t("Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.")}
+              {t(
+                "Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.",
+              )}
             </p>
           </div>
         </div>
@@ -727,7 +750,9 @@ function SettlementLines({
   const canDetach = !readOnly && settlement.status === "Draft";
 
   if (grouped.length === 0) {
-    return <p className="text-muted-foreground text-sm">{t("This settlement has no line items.")}</p>;
+    return (
+      <p className="text-muted-foreground text-sm">{t("This settlement has no line items.")}</p>
+    );
   }
 
   return (
@@ -792,7 +817,9 @@ function SettlementLines({
                               disabled={detachMutation.isPending}
                               onClick={() => detachMutation.mutate(line.payEventId as string)}
                               aria-label={t("Remove pay event from settlement")}
-                              title={t("Remove this pay event — it returns to the unsettled pool for a later settlement")}
+                              title={t(
+                                "Remove this pay event — it returns to the unsettled pool for a later settlement",
+                              )}
                             >
                               <X className="size-3" />
                             </Button>
@@ -815,10 +842,10 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
   const t = useT();
 
   const events = [
-    { label: "Created", at: settlement.createdAt },
-    { label: "Submitted", at: settlement.submittedAt },
-    { label: "Approved", at: settlement.approvedAt },
-    { label: "Posted", at: settlement.postedAt },
+    { label: t("Created"), at: settlement.createdAt },
+    { label: t("Submitted"), at: settlement.submittedAt },
+    { label: t("Approved"), at: settlement.approvedAt },
+    { label: t("Posted"), at: settlement.postedAt },
     {
       label: settlement.paymentMethod
         ? `Paid via ${settlement.paymentMethod}${
@@ -827,7 +854,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
         : "Paid",
       at: settlement.paidAt,
     },
-    { label: "Voided", at: settlement.voidedAt },
+    { label: t("Voided"), at: settlement.voidedAt },
   ].filter((event) => event.at);
 
   if (events.length <= 1) return null;

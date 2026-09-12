@@ -1,4 +1,4 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -37,11 +37,11 @@ function CommodityStatusCell({ row }: { row: CommodityRow }) {
   );
 }
 
-export function getColumns(): ColumnDef<CommodityRow>[] {
+export function getColumns(t: TranslateFn): ColumnDef<CommodityRow>[] {
   return [
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => <CommodityStatusCell row={row.original} />,
       size: 120,
       minSize: 100,
@@ -57,7 +57,7 @@ export function getColumns(): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("Name"),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       meta: {
         apiField: "name",
@@ -69,7 +69,7 @@ export function getColumns(): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "freightClass",
-      header: "Freight Class",
+      header: t("Freight Class"),
       cell: ({ row }) => {
         const classLabel = freightClassChoices.find(
           (c) => c.value === row.original.freightClass,
@@ -90,7 +90,7 @@ export function getColumns(): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "hazardousMaterialId",
-      header: "Hazmat",
+      header: t("Hazmat"),
       cell: ({ row }) => <BooleanBadge value={!!row.original.hazardousMaterialId} />,
       size: 100,
       minSize: 80,
@@ -98,9 +98,9 @@ export function getColumns(): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: t("Description"),
       cell: ({ row }) => (
-        <DataTableDescription description={translate(row.original.description)} truncateLength={100} />
+        <DataTableDescription description={t(row.original.description)} truncateLength={100} />
       ),
       size: 250,
       minSize: 200,
@@ -115,7 +115,7 @@ export function getColumns(): ColumnDef<CommodityRow>[] {
     },
     {
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("Created At"),
       cell: ({ row }) => {
         return <HoverCardTimestamp timestamp={row.original.createdAt} />;
       },

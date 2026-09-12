@@ -82,7 +82,9 @@ function FuelCardCreatePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={t("Fuel Card")}
-      description={t("Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it.")}
+      description={t(
+        "Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it.",
+      )}
       queryKey={FUEL_CARD_LIST_KEY}
       form={form}
       size="md"
