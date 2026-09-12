@@ -68,6 +68,7 @@ describe("CustomerBillingProfileFields fragment", () => {
       "invoiceDetail",
       "consolidationLookbackDays",
       "maxShipmentsPerInvoice",
+      "autoApprove",
     ]) {
       expect(selected, `fragment must select ${field}`).toContain(field);
     }

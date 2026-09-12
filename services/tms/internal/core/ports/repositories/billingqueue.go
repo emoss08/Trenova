@@ -95,6 +95,23 @@ type ConsolidationCandidate struct {
 	AutoBill               bool                       `bun:"auto_bill"`
 }
 
+// CountHeldForPeriodRequest asks what freight belongs to a period but is still
+// waiting on a biller. The window matches ListConsolidationCandidatesRequest, so
+// held and accrued freight are measured over exactly the same span.
+type CountHeldForPeriodRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	CustomerIDs []pulid.ID            `json:"-"`
+	PeriodStart int64                 `json:"-"`
+	PeriodEnd   int64                 `json:"-"`
+}
+
+// HeldForPeriod is one customer's unreviewed freight for a period.
+type HeldForPeriod struct {
+	CustomerID    pulid.ID        `bun:"customer_id"`
+	ShipmentCount int             `bun:"shipment_count"`
+	TotalAmount   decimal.Decimal `bun:"total_amount"`
+}
+
 type BillingQueueRepository interface {
 	List(
 		ctx context.Context,
@@ -130,6 +147,10 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		req *ListConsolidationCandidatesRequest,
 	) ([]*ConsolidationCandidate, error)
+	CountHeldForPeriod(
+		ctx context.Context,
+		req *CountHeldForPeriodRequest,
+	) ([]*HeldForPeriod, error)
 	GetStatusCounts(
 		ctx context.Context,
 		req *GetBillingQueueStatsRequest,

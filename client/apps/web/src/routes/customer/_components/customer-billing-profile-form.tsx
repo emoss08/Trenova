@@ -526,6 +526,15 @@ export function CustomerBillingProfileForm() {
         <FormControl className="min-h-[3em]">
           <SwitchField
             control={control}
+            name="billingProfile.autoApprove"
+            label="Auto-Approve Clean Shipments"
+            description="Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer."
+            position="left"
+          />
+        </FormControl>
+        <FormControl className="min-h-[3em]">
+          <SwitchField
+            control={control}
             name="billingProfile.autoBill"
             label="Auto-Generate Invoices"
             description="Automatically create invoices for shipments marked as ready to bill, removing the need for a billing clerk to manually trigger invoice generation."

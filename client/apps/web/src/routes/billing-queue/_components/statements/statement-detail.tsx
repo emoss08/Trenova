@@ -10,7 +10,8 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { StatementGroup, StatementShipment } from "@trenova/shared/types/statement";
-import { BotIcon, RotateCcwIcon } from "lucide-react";
+import { BotIcon, ClockIcon, RotateCcwIcon } from "lucide-react";
+import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { invalidateStatements, statementDetailQuery } from "../../statement-queries";
@@ -187,6 +188,22 @@ export function StatementDetail({
           />
         ) : (
           <div className="flex flex-col gap-2 p-2">
+            {statement.heldCount > 0 && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-2.5 dark:border-amber-900 dark:bg-amber-950/30">
+                <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  {statement.heldCount} shipment{statement.heldCount === 1 ? "" : "s"} worth{" "}
+                  {formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode)} are
+                  still in review and will not be on this invoice.{" "}
+                  <Link
+                    to={`/billing/queue?view=shipments&query=${encodeURIComponent(statement.customerName)}`}
+                    className="font-medium underline underline-offset-2"
+                  >
+                    Review them
+                  </Link>
+                </p>
+              </div>
+            )}
             <p className="text-muted-foreground px-1 text-[11px]">
               {describeBillingSchedule({
                 invoiceDelivery: "Consolidated",

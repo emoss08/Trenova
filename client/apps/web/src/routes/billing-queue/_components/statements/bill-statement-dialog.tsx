@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { OpenStatement, StatementGroup } from "@trenova/shared/types/statement";
-import { CalendarClockIcon, TriangleAlertIcon } from "lucide-react";
+import { CalendarClockIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 
 export type BillStatementDecision = { reason: string };
@@ -89,6 +89,19 @@ export function BillStatementDialog({
               {heldCount} shipment{heldCount === 1 ? "" : "s"} you held back stay approved and
               uninvoiced, and land on next period&apos;s statement.
             </p>
+          )}
+
+          {statement.heldCount > 0 && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+              <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                {statement.heldCount} more shipment{statement.heldCount === 1 ? "" : "s"} for this
+                period {statement.heldCount === 1 ? "is" : "are"} still in review and will not be
+                on this invoice. Billing now leaves{" "}
+                {formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode)}{" "}
+                unbilled.
+              </p>
+            </div>
           )}
 
           {held > 0 && (

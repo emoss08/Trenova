@@ -71,6 +71,10 @@ type ShipmentBillingReadiness struct {
 	CanMarkReadyToInvoice        bool                                 `json:"canMarkReadyToInvoice"`
 	ShouldAutoMarkReadyToInvoice bool                                 `json:"shouldAutoMarkReadyToInvoice"`
 	ShouldAutoTransferToBilling  bool                                 `json:"shouldAutoTransferToBilling"`
+	// ShouldAutoApproveBilling means this shipment may clear the billing queue
+	// without a biller looking at it, because it has no requirement or rate issue
+	// and its customer asked for clean freight to pass straight through.
+	ShouldAutoApproveBilling bool `json:"shouldAutoApproveBilling"`
 }
 
 type JurisdictionMileResult struct {

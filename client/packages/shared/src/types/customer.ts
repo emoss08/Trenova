@@ -120,6 +120,7 @@ export const customerBillingProfileSchema = z
     validateCustomerRates: z.boolean().default(true),
     autoTransfer: z.boolean().default(true),
     autoMarkReadyToBill: z.boolean().default(true),
+    autoApprove: z.boolean().default(false),
     autoBill: z.boolean().default(true),
     countLateOnlyOnAppointmentStops: z.boolean().default(false),
     autoApplyAccessorials: z.boolean().default(true),

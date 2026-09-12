@@ -406,6 +406,7 @@ func buildShipmentBillingReadiness(
 			canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 		readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
 			readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+		// A customer with no billing profile has not opted into auto-approval.
 		return readiness
 	}
 
@@ -444,8 +445,43 @@ func buildShipmentBillingReadiness(
 		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
 	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
 		readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+	readiness.ShouldAutoApproveBilling = shouldAutoApproveBilling(
+		readiness.Policy,
+		billingProfile,
+		requirementIssues,
+		rateIssues,
+	)
 
 	return readiness
+}
+
+// shouldAutoApproveBilling reports whether this shipment may clear the billing
+// queue without a biller looking at it.
+//
+// Deliberately stricter than auto-transfer. canAutoProgress lets a shipment move
+// while an enforcement level is Ignore, issues and all — which is defensible for
+// getting freight into a work queue, and is not defensible for approving it,
+// because approval is the step that puts the freight in front of the customer.
+// So any requirement or rate issue at all stops auto-approval, whatever the
+// organization's enforcement level says.
+//
+// The organization's queue-transfer mode is the organization-level gate, so a
+// shop that has not enabled automatic transfer cannot be auto-approving
+// anything; AutoApprove on the profile is the customer's opt-in within it. It
+// reads the mode rather than ShouldAutoTransferToBilling because that flag also
+// requires the shipment to still be Completed, and by the time anything asks
+// this question the shipment is already ReadyToInvoice.
+func shouldAutoApproveBilling(
+	policy services.ShipmentBillingReadinessPolicy,
+	billingProfile *customer.CustomerBillingProfile,
+	requirementIssues bool,
+	rateIssues bool,
+) bool {
+	return policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady &&
+		billingProfile != nil &&
+		billingProfile.AutoApprove &&
+		!requirementIssues &&
+		!rateIssues
 }
 
 func isBillingReadyStatus(status shipment.Status) bool {
@@ -885,8 +921,9 @@ func (s *service) TransferToBilling(
 	}
 
 	item, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
-		ShipmentID: req.ShipmentID,
-		BillType:   billType,
+		ShipmentID:  req.ShipmentID,
+		BillType:    billType,
+		AutoApprove: readiness.ShouldAutoApproveBilling,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: actor.OrganizationID,
 			BuID:  actor.BusinessUnitID,

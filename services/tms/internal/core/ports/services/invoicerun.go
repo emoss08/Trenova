@@ -153,6 +153,15 @@ type OpenStatement struct {
 	// today would produce nothing and the freight would roll into next period.
 	BelowMinimum bool `json:"belowMinimum"`
 
+	// HeldCount and HeldAmount are the freight that belongs to this period but is
+	// still waiting on a biller, and so will not be on the invoice.
+	//
+	// Without them the statement understates the period: a biller sees 197
+	// shipments and has no way to know 12 more are sitting in review. Chasing
+	// those down is the work that has to happen before the cycle closes.
+	HeldCount  int             `json:"heldCount"`
+	HeldAmount decimal.Decimal `json:"heldAmount"`
+
 	Groups []*StatementGroup `json:"groups,omitempty"`
 }
 

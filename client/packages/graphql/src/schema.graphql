@@ -2151,6 +2151,13 @@ type CustomerBillingProfile {
   applyLateCharges: Boolean!
   arAccountId: ID
   autoApplyAccessorials: Boolean!
+  """
+  Lets freight that passes every billing requirement clear the billing queue
+  without a biller approving it, leaving the queue holding only what needs a
+  human. Reachable only when the organization has enabled automatic queue
+  transfer, and never for a shipment with a requirement or rate issue.
+  """
+  autoApprove: Boolean!
   autoBill: Boolean!
   autoCreditHold: Boolean!
   autoMarkReadyToBill: Boolean!

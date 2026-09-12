@@ -27,6 +27,8 @@ function statement(overrides: Partial<OpenStatement> = {}): OpenStatement {
     minimumAmount: null,
     autoBill: false,
     belowMinimum: false,
+    heldCount: 0,
+    heldAmount: 0,
     groups: [],
     ...overrides,
   };

@@ -63,6 +63,7 @@ const DEFAULT_VALUES: Customer = {
     validateCustomerRates: true,
     autoTransfer: true,
     autoMarkReadyToBill: true,
+    autoApprove: false,
     autoBill: true,
     countLateOnlyOnAppointmentStops: false,
     autoApplyAccessorials: true,

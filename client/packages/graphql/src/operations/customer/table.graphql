@@ -37,6 +37,7 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   validateCustomerRates
   autoTransfer
   autoMarkReadyToBill
+  autoApprove
   autoBill
   countLateOnlyOnAppointmentStops
   autoApplyAccessorials

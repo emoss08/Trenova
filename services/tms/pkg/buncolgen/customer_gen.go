@@ -384,6 +384,7 @@ var CustomerBillingProfileColumns = struct {
 	AutoTransfer                              Column // "auto_transfer" → qualified: "cbp.auto_transfer"
 	AutoMarkReadyToBill                       Column // "auto_mark_ready_to_bill" → qualified: "cbp.auto_mark_ready_to_bill"
 	AutoBill                                  Column // "auto_bill" → qualified: "cbp.auto_bill"
+	AutoApprove                               Column // "auto_approve" → qualified: "cbp.auto_approve"
 	CountLateOnlyOnAppointmentStops           Column // "count_late_only_on_appointment_stops" → qualified: "cbp.count_late_only_on_appointment_stops"
 	AutoApplyAccessorials                     Column // "auto_apply_accessorials" → qualified: "cbp.auto_apply_accessorials"
 	BillingCurrency                           Column // "billing_currency" → qualified: "cbp.billing_currency"
@@ -439,6 +440,7 @@ var CustomerBillingProfileColumns = struct {
 	AutoTransfer:                    NewColumn("auto_transfer", "cbp"),
 	AutoMarkReadyToBill:             NewColumn("auto_mark_ready_to_bill", "cbp"),
 	AutoBill:                        NewColumn("auto_bill", "cbp"),
+	AutoApprove:                     NewColumn("auto_approve", "cbp"),
 	CountLateOnlyOnAppointmentStops: NewColumn("count_late_only_on_appointment_stops", "cbp"),
 	AutoApplyAccessorials:           NewColumn("auto_apply_accessorials", "cbp"),
 	BillingCurrency:                 NewColumn("billing_currency", "cbp"),
@@ -460,60 +462,61 @@ var CustomerBillingProfileColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by CustomerBillingProfile.GetStaticFieldMap().
 var CustomerBillingProfileFieldMap = map[string]string{
-	"id":                                        "id",
-	"businessUnitId":                            "business_unit_id",
-	"organizationId":                            "organization_id",
-	"customerId":                                "customer_id",
-	"invoiceDelivery":                           "invoice_delivery",
-	"billingCycle":                              "billing_cycle",
-	"billingCycleAnchorDay":                     "billing_cycle_anchor_day",
-	"billingCycleTimezone":                      "billing_cycle_timezone",
-	"lastBilledPeriodEnd":                       "last_billed_period_end",
-	"paymentTerm":                               "payment_term",
-	"hasBillingControlOverrides":                "has_billing_control_overrides",
-	"creditLimit":                               "credit_limit",
-	"creditBalance":                             "credit_balance",
-	"creditStatus":                              "credit_status",
-	"enforceCreditLimit":                        "enforce_credit_limit",
-	"autoCreditHold":                            "auto_credit_hold",
-	"creditHoldReason":                          "credit_hold_reason",
-	"autoSendInvoiceOnGeneration":               "auto_send_invoice_on_generation",
-	"splitBy":                                   "split_by",
-	"sectionBy":                                 "section_by",
-	"invoiceDetail":                             "invoice_detail",
-	"consolidationLookbackDays":                 "consolidation_lookback_days",
-	"minConsolidatedAmount":                     "min_consolidated_amount",
-	"minConsolidatedAmountMinor":                "min_consolidated_amount_minor",
-	"maxShipmentsPerInvoice":                    "max_shipments_per_invoice",
-	"invoiceNumberFormat":                       "invoice_number_format",
-	"customerInvoicePrefix":                     "customer_invoice_prefix",
-	"invoiceCopies":                             "invoice_copies",
-	"revenueAccountId":                          "revenue_account_id",
-	"arAccountId":                               "ar_account_id",
-	"applyLateCharges":                          "apply_late_charges",
-	"lateChargeRate":                            "late_charge_rate",
-	"gracePeriodDays":                           "grace_period_days",
-	"taxExempt":                                 "tax_exempt",
-	"taxExemptNumber":                           "tax_exempt_number",
-	"enforceCustomerBillingReq":                 "enforce_customer_billing_req",
-	"validateCustomerRates":                     "validate_customer_rates",
-	"autoTransfer":                              "auto_transfer",
-	"autoMarkReadyToBill":                       "auto_mark_ready_to_bill",
-	"autoBill":                                  "auto_bill",
-	"countLateOnlyOnAppointmentStops":           "count_late_only_on_appointment_stops",
-	"autoApplyAccessorials":                     "auto_apply_accessorials",
-	"billingCurrency":                           "billing_currency",
-	"requirePONumber":                           "require_po_number",
-	"requireBOLNumber":                          "require_bol_number",
-	"requireDeliveryNumber":                     "require_delivery_number",
+	"id":                              "id",
+	"businessUnitId":                  "business_unit_id",
+	"organizationId":                  "organization_id",
+	"customerId":                      "customer_id",
+	"invoiceDelivery":                 "invoice_delivery",
+	"billingCycle":                    "billing_cycle",
+	"billingCycleAnchorDay":           "billing_cycle_anchor_day",
+	"billingCycleTimezone":            "billing_cycle_timezone",
+	"lastBilledPeriodEnd":             "last_billed_period_end",
+	"paymentTerm":                     "payment_term",
+	"hasBillingControlOverrides":      "has_billing_control_overrides",
+	"creditLimit":                     "credit_limit",
+	"creditBalance":                   "credit_balance",
+	"creditStatus":                    "credit_status",
+	"enforceCreditLimit":              "enforce_credit_limit",
+	"autoCreditHold":                  "auto_credit_hold",
+	"creditHoldReason":                "credit_hold_reason",
+	"autoSendInvoiceOnGeneration":     "auto_send_invoice_on_generation",
+	"splitBy":                         "split_by",
+	"sectionBy":                       "section_by",
+	"invoiceDetail":                   "invoice_detail",
+	"consolidationLookbackDays":       "consolidation_lookback_days",
+	"minConsolidatedAmount":           "min_consolidated_amount",
+	"minConsolidatedAmountMinor":      "min_consolidated_amount_minor",
+	"maxShipmentsPerInvoice":          "max_shipments_per_invoice",
+	"invoiceNumberFormat":             "invoice_number_format",
+	"customerInvoicePrefix":           "customer_invoice_prefix",
+	"invoiceCopies":                   "invoice_copies",
+	"revenueAccountId":                "revenue_account_id",
+	"arAccountId":                     "ar_account_id",
+	"applyLateCharges":                "apply_late_charges",
+	"lateChargeRate":                  "late_charge_rate",
+	"gracePeriodDays":                 "grace_period_days",
+	"taxExempt":                       "tax_exempt",
+	"taxExemptNumber":                 "tax_exempt_number",
+	"enforceCustomerBillingReq":       "enforce_customer_billing_req",
+	"validateCustomerRates":           "validate_customer_rates",
+	"autoTransfer":                    "auto_transfer",
+	"autoMarkReadyToBill":             "auto_mark_ready_to_bill",
+	"autoBill":                        "auto_bill",
+	"autoApprove":                     "auto_approve",
+	"countLateOnlyOnAppointmentStops": "count_late_only_on_appointment_stops",
+	"autoApplyAccessorials":           "auto_apply_accessorials",
+	"billingCurrency":                 "billing_currency",
+	"requirePONumber":                 "require_po_number",
+	"requireBOLNumber":                "require_bol_number",
+	"requireDeliveryNumber":           "require_delivery_number",
 	"invoiceAdjustmentSupportingDocumentPolicy": "invoice_adjustment_supporting_document_policy",
-	"defaultBillerId":                           "default_biller_id",
-	"billingNotes":                              "billing_notes",
-	"fuelSurchargeMode":                         "fuel_surcharge_mode",
-	"fuelSurchargeProgramId":                    "fuel_surcharge_program_id",
-	"version":                                   "version",
-	"createdAt":                                 "created_at",
-	"updatedAt":                                 "updated_at",
+	"defaultBillerId":        "default_biller_id",
+	"billingNotes":           "billing_notes",
+	"fuelSurchargeMode":      "fuel_surcharge_mode",
+	"fuelSurchargeProgramId": "fuel_surcharge_program_id",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // CustomerBillingProfileInsertableColumns lists column names suitable for INSERT statements on the "customer_billing_profiles" table.
@@ -559,6 +562,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"auto_transfer",
 	"auto_mark_ready_to_bill",
 	"auto_bill",
+	"auto_approve",
 	"count_late_only_on_appointment_stops",
 	"auto_apply_accessorials",
 	"billing_currency",
@@ -686,6 +690,7 @@ var CustomerBillingProfileFilter = struct {
 	AutoTransfer                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoTransfer" → DB: "auto_transfer"
 	AutoMarkReadyToBill                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMarkReadyToBill" → DB: "auto_mark_ready_to_bill"
 	AutoBill                                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoBill" → DB: "auto_bill"
+	AutoApprove                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApprove" → DB: "auto_approve"
 	CountLateOnlyOnAppointmentStops           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countLateOnlyOnAppointmentStops" → DB: "count_late_only_on_appointment_stops"
 	AutoApplyAccessorials                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApplyAccessorials" → DB: "auto_apply_accessorials"
 	BillingCurrency                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
@@ -820,6 +825,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	AutoBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoBill", op, value)
+	},
+	AutoApprove: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoApprove", op, value)
 	},
 	CountLateOnlyOnAppointmentStops: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("countLateOnlyOnAppointmentStops", op, value)

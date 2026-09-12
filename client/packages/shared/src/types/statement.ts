@@ -56,6 +56,14 @@ export const openStatementSchema = z.object({
   autoBill: z.boolean().default(false),
   belowMinimum: z.boolean().default(false),
 
+  /**
+   * Freight that belongs to this period but is still waiting on a biller, and so
+   * will not be on the invoice. Chasing these down is the work that has to happen
+   * before the cycle closes.
+   */
+  heldCount: z.number().int().default(0),
+  heldAmount: decimalStringSchema,
+
   groups: z.array(statementGroupSchema).nullish(),
 });
 export type OpenStatement = z.infer<typeof openStatementSchema>;

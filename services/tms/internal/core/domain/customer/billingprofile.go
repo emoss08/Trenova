@@ -70,6 +70,13 @@ type CustomerBillingProfile struct {
 	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull"`
 	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull"`
 	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull"`
+	// AutoApprove lets a shipment that passes every billing requirement clear the
+	// billing queue without a biller clicking Approve, leaving the queue holding
+	// only the freight that actually needs a human.
+	//
+	// It is reachable only on the automatic transfer path, so an organization that
+	// has not enabled automatic queue transfer cannot be auto-approving anything.
+	AutoApprove bool `json:"autoApprove" bun:"auto_approve,type:BOOLEAN,notnull"`
 	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
 	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
 	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`

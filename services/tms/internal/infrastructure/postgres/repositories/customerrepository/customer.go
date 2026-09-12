@@ -458,6 +458,7 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.ValidateCustomerRates.SetExcluded()).
 		Set(cbp.AutoTransfer.SetExcluded()).
 		Set(cbp.AutoMarkReadyToBill.SetExcluded()).
+		Set(cbp.AutoApprove.SetExcluded()).
 		Set(cbp.AutoBill.SetExcluded()).
 		Set(cbp.CountLateOnlyOnAppointmentStops.SetExcluded()).
 		Set(cbp.AutoApplyAccessorials.SetExcluded()).
