@@ -32,8 +32,8 @@ export function DataTableColumnResizeHandle<TData extends RowData>({
         data-slot="column-resize-grip"
         aria-hidden="true"
         className={cn(
-          "bg-border h-4 w-px rounded-full transition-[height,width,background-color] duration-150",
-          "group-hover/head:bg-muted-foreground/40 group-hover/head:h-full",
+          "bg-muted-foreground/40 h-4 w-px rounded-full transition-[height,width,background-color] duration-150",
+          "group-hover/head:bg-muted-foreground/70 group-hover/head:h-full",
           "group-hover/resize:bg-primary group-hover/resize:h-full group-hover/resize:w-0.5",
           isResizing && "bg-primary h-full w-0.5",
         )}

@@ -260,7 +260,8 @@ describe("command center table horizontal scroll", () => {
         expect(handle).toHaveClass("cursor-col-resize");
         const grip = gripOf(handle);
         expect(grip).not.toBeNull();
-        expect(grip).toHaveClass("bg-border", "h-4", "w-px");
+        expect(grip).toHaveClass("bg-muted-foreground/40", "h-4", "w-px");
+        expect(grip).not.toHaveClass("bg-border");
         expect(grip.className).not.toMatch(/(^|\s)(opacity-0|invisible|hidden)(\s|$)/);
       }
     });
