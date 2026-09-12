@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/i18n"
 	val "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -27,12 +28,13 @@ type Errorable interface {
 type BaseError struct {
 	Code     ErrorCode     `json:"code"`
 	Message  string        `json:"message"`
+	Args     []any         `json:"-"`
 	Context  *ErrorContext `json:"context,omitempty"`
 	Internal error         `json:"-"`
 }
 
 func (e *BaseError) Error() string {
-	return e.Message
+	return i18n.Format(e.Message, e.Args...)
 }
 
 func (e *BaseError) Unwrap() error {
@@ -50,7 +52,7 @@ func (e *BaseError) WithContext(ctx *ErrorContext) {
 func (e *BaseError) LogFields() LogFields {
 	fields := LogFields{
 		"error_code":    e.Code,
-		"error_message": e.Message,
+		"error_message": e.Error(),
 	}
 	if e.Context != nil {
 		maps.Copy(fields, e.Context.LogFields())
@@ -65,15 +67,17 @@ type Error struct {
 	Field    string             `json:"field"`
 	Code     ErrorCode          `json:"code"`
 	Message  string             `json:"message"`
+	Args     []any              `json:"-"`
 	Priority ValidationPriority `json:"priority,omitempty"`
 	Internal error              `json:"-"`
 }
 
-func NewValidationError(field string, code ErrorCode, message string) *Error {
+func NewValidationError(field string, code ErrorCode, message string, args ...any) *Error {
 	return &Error{
 		Field:   field,
 		Code:    code,
 		Message: message,
+		Args:    args,
 	}
 }
 
@@ -82,17 +86,19 @@ func NewValidationErrorWithPriority(
 	code ErrorCode,
 	message string,
 	priority ValidationPriority,
+	args ...any,
 ) *Error {
 	return &Error{
 		Field:    field,
 		Code:     code,
 		Message:  message,
+		Args:     args,
 		Priority: priority,
 	}
 }
 
 func (e *Error) Error() string {
-	return e.Message
+	return i18n.Format(e.Message, e.Args...)
 }
 
 func (e *Error) Unwrap() error {
@@ -212,6 +218,7 @@ func (m *MultiError) AddError(err *Error) {
 		Field:    err.Field,
 		Code:     err.Code,
 		Message:  err.Message,
+		Args:     err.Args,
 		Priority: err.Priority,
 		Internal: err.Internal,
 	}
@@ -234,8 +241,8 @@ func (m *MultiError) SetPriority(priority ValidationPriority) {
 	}
 }
 
-func (m *MultiError) Add(field string, code ErrorCode, message string) {
-	m.AddWithPriority(field, code, message, "")
+func (m *MultiError) Add(field string, code ErrorCode, message string, args ...any) {
+	m.AddWithPriority(field, code, message, "", args...)
 }
 
 func (m *MultiError) AddWithPriority(
@@ -243,6 +250,7 @@ func (m *MultiError) AddWithPriority(
 	code ErrorCode,
 	message string,
 	priority ValidationPriority,
+	args ...any,
 ) {
 	root := m.root()
 	if root.maxErrors > 0 && len(root.Errors) >= root.maxErrors {
@@ -268,6 +276,7 @@ func (m *MultiError) AddWithPriority(
 		Field:    fieldPath,
 		Code:     code,
 		Message:  message,
+		Args:     args,
 		Priority: priority,
 	}
 
@@ -324,21 +333,22 @@ type BusinessError struct {
 	Params  map[string]string `json:"params,omitempty"`
 }
 
-func NewBusinessError(message string) *BusinessError {
+func NewBusinessError(message string, args ...any) *BusinessError {
 	return &BusinessError{
 		BaseError: BaseError{
 			Code:    ErrBusinessLogic,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
 
 func (e *BusinessError) Error() string {
 	if e.Details != "" {
-		return fmt.Sprintf("%s: %s", e.Message, e.Details)
+		return fmt.Sprintf("%s: %s", e.BaseError.Error(), e.Details)
 	}
 
-	return e.Message
+	return e.BaseError.Error()
 }
 
 func (e *BusinessError) WithParam(key, value string) *BusinessError {
@@ -381,11 +391,12 @@ type DatabaseError struct {
 	BaseError
 }
 
-func NewDatabaseError(message string) *DatabaseError {
+func NewDatabaseError(message string, args ...any) *DatabaseError {
 	return &DatabaseError{
 		BaseError: BaseError{
 			Code:    ErrSystemError,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -409,11 +420,12 @@ type AuthenticationError struct {
 	BaseError
 }
 
-func NewAuthenticationError(message string) *AuthenticationError {
+func NewAuthenticationError(message string, args ...any) *AuthenticationError {
 	return &AuthenticationError{
 		BaseError: BaseError{
 			Code:    ErrUnauthorized,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -437,11 +449,12 @@ type AuthorizationError struct {
 	BaseError
 }
 
-func NewAuthorizationError(message string) *AuthorizationError {
+func NewAuthorizationError(message string, args ...any) *AuthorizationError {
 	return &AuthorizationError{
 		BaseError: BaseError{
 			Code:    ErrForbidden,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -465,11 +478,12 @@ type NotFoundError struct {
 	BaseError
 }
 
-func NewNotFoundError(message string) *NotFoundError {
+func NewNotFoundError(message string, args ...any) *NotFoundError {
 	return &NotFoundError{
 		BaseError: BaseError{
 			Code:    ErrNotFound,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -495,11 +509,12 @@ type NotImplementedError struct {
 	Capability string `json:"capability,omitempty"`
 }
 
-func NewNotImplementedError(message string) *NotImplementedError {
+func NewNotImplementedError(message string, args ...any) *NotImplementedError {
 	return &NotImplementedError{
 		BaseError: BaseError{
 			Code:    ErrNotImplemented,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -534,11 +549,12 @@ type RateLimitError struct {
 	Field string `json:"field,omitempty"`
 }
 
-func NewRateLimitError(field, message string) *RateLimitError {
+func NewRateLimitError(field, message string, args ...any) *RateLimitError {
 	return &RateLimitError{
 		BaseError: BaseError{
 			Code:    ErrTooManyRequests,
 			Message: message,
+			Args:    args,
 		},
 		Field: field,
 	}
@@ -627,11 +643,12 @@ type ConflictError struct {
 	UsageStats any `json:"usageStats,omitempty"`
 }
 
-func NewConflictError(message string) *ConflictError {
+func NewConflictError(message string, args ...any) *ConflictError {
 	return &ConflictError{
 		BaseError: BaseError{
 			Code:    ErrResourceInUse,
 			Message: message,
+			Args:    args,
 		},
 	}
 }
@@ -679,4 +696,16 @@ func MergeMultiErrors(multiErrs ...*MultiError) *MultiError {
 	}
 
 	return merged
+}
+
+type Localizable interface {
+	LocalizedMessage() (string, []any)
+}
+
+func (e *BaseError) LocalizedMessage() (string, []any) {
+	return e.Message, e.Args
+}
+
+func (e *Error) LocalizedMessage() (string, []any) {
+	return e.Message, e.Args
 }

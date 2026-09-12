@@ -26,12 +26,44 @@ type ValidationError struct {
 	Message  string `json:"message"`
 	Code     string `json:"code,omitempty"`
 	Location string `json:"location,omitempty"`
+	Args     []any  `json:"-"`
+	Details  string `json:"-"`
+}
+
+type Message struct {
+	Text    string
+	Args    []any
+	Details string
+}
+
+func (m Message) Localize(locale i18n.Locale) string {
+	text := i18n.Translate(locale, m.Text, m.Args...)
+	if m.Details == "" {
+		return text
+	}
+	return fmt.Sprintf("%s: %s", text, m.Details)
+}
+
+func LocalizeErrors(locale i18n.Locale, errs []ValidationError) []ValidationError {
+	if len(errs) == 0 {
+		return errs
+	}
+
+	localized := make([]ValidationError, len(errs))
+	for i, e := range errs {
+		localized[i] = e
+		localized[i].Message = Message{Text: e.Message, Args: e.Args, Details: e.Details}.
+			Localize(locale)
+		localized[i].Args = nil
+	}
+
+	return localized
 }
 
 type ProblemBuilder struct {
 	baseURI     string
 	problemType ProblemType
-	detail      string
+	detail      Message
 	instance    string
 	traceID     string
 	errors      []ValidationError
@@ -52,7 +84,7 @@ func (b *ProblemBuilder) WithType(t ProblemType) *ProblemBuilder {
 	return b
 }
 
-func (b *ProblemBuilder) WithDetail(d string) *ProblemBuilder {
+func (b *ProblemBuilder) WithDetail(d Message) *ProblemBuilder {
 	b.detail = d
 	return b
 }
@@ -92,17 +124,7 @@ func (b *ProblemBuilder) WithLocale(locale i18n.Locale) *ProblemBuilder {
 }
 
 func (b *ProblemBuilder) translatedErrors() []ValidationError {
-	if len(b.errors) == 0 {
-		return b.errors
-	}
-
-	translated := make([]ValidationError, len(b.errors))
-	for i, e := range b.errors {
-		translated[i] = e
-		translated[i].Message = i18n.Translate(b.locale, e.Message)
-	}
-
-	return translated
+	return LocalizeErrors(b.locale, b.errors)
 }
 
 func (b *ProblemBuilder) Build() *ProblemDetail {
@@ -117,7 +139,7 @@ func (b *ProblemBuilder) Build() *ProblemDetail {
 		Type:       typeURI,
 		Title:      i18n.Translate(b.locale, info.Title),
 		Status:     info.StatusCode,
-		Detail:     i18n.Translate(b.locale, b.detail),
+		Detail:     b.detail.Localize(b.locale),
 		Instance:   b.instance,
 		TraceID:    b.traceID,
 		Errors:     b.translatedErrors(),

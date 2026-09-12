@@ -23,6 +23,10 @@ func Translate(locale Locale, message string, args ...any) string {
 	return format(locale, translated, args)
 }
 
+func Format(message string, args ...any) string {
+	return format(Default, message, args)
+}
+
 func T(ctx context.Context, message string, args ...any) string {
 	return Translate(FromContext(ctx), message, args...)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("validation failed")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeValidation)
-		assert.Equal(t, "validation failed", result)
+		assert.Equal(t, "validation failed", result.Text)
 	})
 
 	t.Run("hides internal error in production", func(t *testing.T) {
@@ -45,7 +46,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("database connection failed: password incorrect")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeInternal)
-		assert.Equal(t, "An unexpected error occurred. Please try again later.", result)
+		assert.Equal(t, "An unexpected error occurred. Please try again later.", result.Text)
 	})
 
 	t.Run("hides database error in production", func(t *testing.T) {
@@ -54,7 +55,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("SQLSTATE 42P01: relation does not exist")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeDatabase)
-		assert.Equal(t, "An unexpected error occurred. Please try again later.", result)
+		assert.Equal(t, "An unexpected error occurred. Please try again later.", result.Text)
 	})
 
 	t.Run("shows internal error in debug mode", func(t *testing.T) {
@@ -63,7 +64,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("database connection failed: password incorrect")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeInternal)
-		assert.Equal(t, "database connection failed: password incorrect", result)
+		assert.Equal(t, "database connection failed: password incorrect", result.Text)
 	})
 
 	t.Run("shows database error in debug mode", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("SQLSTATE 42P01: relation does not exist")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeDatabase)
-		assert.Equal(t, "SQLSTATE 42P01: relation does not exist", result)
+		assert.Equal(t, "SQLSTATE 42P01: relation does not exist", result.Text)
 	})
 
 	t.Run("shows business error regardless of debug mode", func(t *testing.T) {
@@ -81,7 +82,7 @@ func TestSanitizer_SanitizeMessage(t *testing.T) {
 		err := errors.New("insufficient funds")
 
 		result := s.SanitizeMessage(err, helpers.ProblemTypeBusiness)
-		assert.Equal(t, "insufficient funds", result)
+		assert.Equal(t, "insufficient funds", result.Text)
 	})
 }
 
@@ -262,7 +263,7 @@ func TestSanitizer_ExtractErrors_BusinessError(t *testing.T) {
 		assert.Equal(t, "business", result[0].Location)
 	})
 
-	t.Run("extracts business error with details", func(t *testing.T) {
+	t.Run("keeps the details beside the message so only the message translates", func(t *testing.T) {
 		t.Parallel()
 		err := errortypes.NewBusinessError("Payment failed")
 		err.Details = "Card declined"
@@ -270,7 +271,11 @@ func TestSanitizer_ExtractErrors_BusinessError(t *testing.T) {
 		result := s.ExtractErrors(err)
 
 		require.Len(t, result, 1)
-		assert.Equal(t, "Payment failed: Card declined", result[0].Message)
+		assert.Equal(t, "Payment failed", result[0].Message)
+		assert.Equal(t, "Card declined", result[0].Details)
+
+		localized := helpers.LocalizeErrors(i18n.EN, result)
+		assert.Equal(t, "Payment failed: Card declined", localized[0].Message)
 	})
 }
 
