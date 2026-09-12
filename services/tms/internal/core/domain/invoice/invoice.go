@@ -157,7 +157,7 @@ type Attachment struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
 	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
-	Selected       bool     `json:"selected"       bun:"selected,type:BOOLEAN,notnull,default:true"`
+	Selected       bool     `json:"selected"       bun:"selected,type:BOOLEAN,notnull"`
 	SortOrder      int      `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

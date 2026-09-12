@@ -36,7 +36,7 @@ type FuelIndex struct {
 	Region         string      `json:"region"         bun:"region,type:VARCHAR(100),nullzero"`
 	EIASeriesID    string      `json:"eiaSeriesId"    bun:"eia_series_id,type:VARCHAR(64),nullzero"`
 	Currency       string      `json:"currency"       bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
-	IsActive       bool        `json:"isActive"       bun:"is_active,type:BOOLEAN,notnull,default:true"`
+	IsActive       bool        `json:"isActive"       bun:"is_active,type:BOOLEAN,notnull"`
 	Version        int64       `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64       `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64       `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

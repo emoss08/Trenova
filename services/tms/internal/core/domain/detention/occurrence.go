@@ -53,7 +53,7 @@ type DetentionOccurrence struct {
 	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  bun:"free_time_expires_at,type:BIGINT,notnull"`
 	NoticeDueAt        *int64                    `json:"noticeDueAt"        bun:"notice_due_at,type:BIGINT,nullzero"`
 	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   bun:"notice_deadline_at,type:BIGINT,nullzero"`
-	IsOpen             bool                      `json:"isOpen"             bun:"is_open,type:BOOLEAN,notnull,default:true"`
+	IsOpen             bool                      `json:"isOpen"             bun:"is_open,type:BOOLEAN,notnull"`
 	ArrivedLate        bool                      `json:"arrivedLate"        bun:"arrived_late,type:BOOLEAN,notnull"`
 	LateByMinutes      int32                     `json:"lateByMinutes"      bun:"late_by_minutes,type:INTEGER,notnull"`
 	FreeMinutesGranted int32                     `json:"freeMinutesGranted" bun:"free_minutes_granted,type:INTEGER,notnull"`

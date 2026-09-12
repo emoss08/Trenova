@@ -64,7 +64,7 @@ type RoleConstraint struct {
 	Description    string             `json:"description"    bun:"description,type:TEXT"`
 	Type           RoleConstraintType `json:"type"           bun:"type,type:VARCHAR(20),notnull"`
 	MaxRoles       int                `json:"maxRoles"       bun:"max_roles,notnull"`
-	Enabled        bool               `json:"enabled"        bun:"enabled,notnull,default:true"`
+	Enabled        bool               `json:"enabled"        bun:"enabled,notnull"`
 	CreatedBy      pulid.ID           `json:"createdBy"      bun:"created_by,type:VARCHAR(100)"`
 	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull"`
 	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull"`

@@ -36,7 +36,7 @@ type CustomFieldDefinition struct {
 	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero"`
 	FieldType       FieldType        `json:"fieldType"       bun:"field_type,type:custom_field_type_enum,notnull"`
 	IsRequired      bool             `json:"isRequired"      bun:"is_required"`
-	IsActive        bool             `json:"isActive"        bun:"is_active,default:true"`
+	IsActive        bool             `json:"isActive"        bun:"is_active"`
 	DisplayOrder    int              `json:"displayOrder"    bun:"display_order"`
 	Color           string           `json:"color"           bun:"color,type:VARCHAR(20),nullzero"`
 	Options         []SelectOption   `json:"options"         bun:"options,type:JSONB"`

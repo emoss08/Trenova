@@ -23,6 +23,11 @@ import { toast } from "sonner";
 import type { ImportRowFilter } from "@/lib/fuel-purchase-import";
 import { ImportReviewTable } from "../../fuel-purchase/_components/import/import-review-table";
 
+type ResolveVariables = {
+  batchId: string;
+  version: number;
+};
+
 /**
  * What one run read, and the rows it could not place.
  *
@@ -51,15 +56,15 @@ export function FeedRunDetailDialog({
     }
   }, [open, batch]);
 
-  const { mutateAsync, isPending } = useApiMutation<FuelPurchaseImportResolveResult, void>({
+  // The run being worked out is passed in rather than read from the closure:
+  // it is what the mutation acts on, and the version it carries is what the
+  // server checks, so it has to be the one the button was pressed on.
+  const { mutate, isPending } = useApiMutation<
+    FuelPurchaseImportResolveResult,
+    ResolveVariables
+  >({
     resourceName: "Import",
-    mutationFn: async () => {
-      if (!batch) {
-        throw new Error("No run selected");
-      }
-
-      return resolveFuelPurchaseImportRows(batch.id, batch.version);
-    },
+    mutationFn: ({ batchId, version }) => resolveFuelPurchaseImportRows(batchId, version),
     onSuccess: async (result) => {
       toast.success(describeResolve(result), {
         description:
@@ -110,10 +115,14 @@ export function FeedRunDetailDialog({
           </Button>
           <Button
             type="button"
-            onClick={() => mutateAsync()}
+            onClick={() => {
+              if (batch) {
+                mutate({ batchId: batch.id, version: batch.version });
+              }
+            }}
             isLoading={isPending}
             loadingText="Working them out..."
-            disabled={held === 0}
+            disabled={!batch || held === 0}
             title={held === 0 ? "This run has nothing waiting" : undefined}
           >
             <RefreshCwIcon className="size-4" />

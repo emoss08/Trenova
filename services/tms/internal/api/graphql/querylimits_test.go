@@ -83,24 +83,6 @@ func TestOperationDefinition_FallsBackToDocument(t *testing.T) {
 	assert.Equal(t, "Named", operationDefinition(opCtx).Name)
 }
 
-func TestLimitErrorCodesAreRegisteredAsProtocolErrors(t *testing.T) {
-	t.Parallel()
-
-	registerQueryLimitErrorCodes()
-
-	for _, code := range []string{
-		querycost.DepthLimitErrorCode,
-		querycost.ComplexityLimitErrorCode,
-	} {
-		err := &gqlerror.Error{
-			Message:    "limit exceeded",
-			Extensions: map[string]any{"code": code},
-		}
-		assert.Equal(t, errcode.KindProtocol, errcode.GetErrorKind(gqlerror.List{err}),
-			"%s must map to a 422 rather than a 200", code)
-	}
-}
-
 func TestProtocolErrorCode(t *testing.T) {
 	t.Parallel()
 

@@ -129,7 +129,7 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 		Code string   `bun:"account_code"`
 	}
 
-	rows := make([]accountRow, 0, 2)
+	rows := make([]accountRow, 0, 3)
 	if err := tx.NewSelect().
 		Model((*glaccount.GLAccount)(nil)).
 		Column("id", "account_code").

@@ -162,7 +162,7 @@ func (r *repository) UpsertTaxRates(
 		Set(cols.SurchargeRatePerGallon.SetExcluded()).
 		Set(cols.SourceNote.SetExcluded()).
 		Set(cols.SourceURL.SetExcluded()).
-		Set(cols.Version.Inc(1)).
+		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.SetExcluded()).
 		Returning("*").
 		Exec(ctx)

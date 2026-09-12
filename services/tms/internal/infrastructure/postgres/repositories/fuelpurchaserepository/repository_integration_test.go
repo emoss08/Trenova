@@ -4,6 +4,7 @@ package fuelpurchaserepository_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -70,39 +71,23 @@ func setup(t *testing.T) *fixture {
 	})
 	require.NoError(t, err)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	// Both tenants are created here rather than reusing the demo organization
+	// the development seeds populate. Those seeds ship fuel cards, purchases
+	// and IFTA mileage of their own, and every assertion below counts the rows
+	// a tenant holds — an organization carrying seeded fuel data cannot answer
+	// "one active card" or "three accumulation groups" however the repository
+	// behaves.
+	primary := seedtest.SeedAdditionalTenant(t, ctx, db, "FA")
+	tenantA := pagination.TenantInfo{
+		OrgID: primary.Organization.ID,
+		BuID:  primary.BusinessUnit.ID,
 	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx, &org))
-	tenantA := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-
-	var userID pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("users").
-		Column("id").
-		Where("current_organization_id = ?", org.ID).
-		Limit(1).
-		Scan(ctx, &userID))
-
-	var tractorA pulid.ID
-	require.NoError(t, db.NewSelect().
-		TableExpr("tractors").
-		Column("id").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("code ASC").
-		Limit(1).
-		Scan(ctx, &tractorA))
+	userID := primary.User.ID
+	tractorA := seedTractor(t, ctx, db, tenantA, primary.State.ID, "FA")
 
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "FB")
 	tenantB := pagination.TenantInfo{OrgID: other.Organization.ID, BuID: other.BusinessUnit.ID}
-	tractorB := seedTractor(t, ctx, db, tenantB, other.State.ID)
+	tractorB := seedTractor(t, ctx, db, tenantB, other.State.ID, "FB")
 
 	f := &fixture{
 		ctx: ctx,
@@ -149,8 +134,11 @@ func seedTractor(
 	db *bun.DB,
 	tenant pagination.TenantInfo,
 	stateID pulid.ID,
+	suffix string,
 ) pulid.ID {
 	t.Helper()
+
+	lower := strings.ToLower(suffix)
 
 	equipType := &equipmenttype.EquipmentType{
 		ID:             pulid.MustNew("et_"),
@@ -188,7 +176,7 @@ func seedTractor(
 		AddressLine1:         "1 Depot Road",
 		City:                 "Springfield",
 		PostalCode:           "62701",
-		Email:                "fuel-driver-fb@example.com",
+		Email:                "fuel-driver-" + lower + "@example.com",
 		PhoneNumber:          "555-0100",
 		Gender:               worker.GenderMale,
 		CanBeAssigned:        true,
@@ -206,10 +194,10 @@ func seedTractor(
 		PrimaryWorkerID:         driver.ID,
 		StateID:                 stateID,
 		Status:                  domaintypes.EquipmentStatusAvailable,
-		Code:                    "FB-TRC-001",
+		Code:                    suffix + "-TRC-001",
 		Make:                    "Freightliner",
 		Model:                   "Cascadia",
-		LicensePlateNumber:      "FB-1001",
+		LicensePlateNumber:      suffix + "-1001",
 		FuelType:                domaintypes.IFTAFuelTypeDiesel,
 		IFTAQualified:           true,
 	}
@@ -458,6 +446,7 @@ func (f *fixture) newBatch(tenant pagination.TenantInfo) *fuelpurchase.ImportBat
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		Provider:        fuelpurchase.CardProviderEFS,
+		Origin:          fuelpurchase.ImportOriginUpload,
 		Status:          fuelpurchase.ImportStatusPending,
 		DefaultCurrency: "USD",
 		UploadedByID:    f.userA,

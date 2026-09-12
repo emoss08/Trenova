@@ -44289,6 +44289,7 @@ const docTemplate = `{
                     }
                 },
                 "loaded": {
+                    "description": "Loaded is false for a deadhead move. Deadhead miles are not recorded as\nloaded.",
                     "type": "boolean"
                 },
                 "organizationId": {

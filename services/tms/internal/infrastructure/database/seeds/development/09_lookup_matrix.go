@@ -204,14 +204,15 @@ func (s *LookupMatrixSeed) createMatrix(
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(def.cells))
 	for _, cellDef := range def.cells {
 		cells = append(cells, &ratematrix.RateMatrixCell{
-			ID:             pulid.MustNew("rmc_"),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			RateMatrixID:   matrix.ID,
-			D0Key:          cellDef.matchKey,
-			D0Min:          nullDecimalFromString(cellDef.rangeMin),
-			D0Max:          nullDecimalFromString(cellDef.rangeMax),
-			Value:          decimal.RequireFromString(cellDef.value),
+			ID:              pulid.MustNew("rmc_"),
+			OrganizationID:  orgID,
+			BusinessUnitID:  buID,
+			RateMatrixID:    matrix.ID,
+			D0Key:           cellDef.matchKey,
+			D0Min:           nullDecimalFromString(cellDef.rangeMin),
+			D0Max:           nullDecimalFromString(cellDef.rangeMax),
+			DeficitEligible: true,
+			Value:           decimal.RequireFromString(cellDef.value),
 		})
 	}
 

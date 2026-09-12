@@ -33,7 +33,11 @@ services:
             retries: 5
 
     redis:
-        image: redis:latest
+        # Matches shared/testutil/redis.go. The major is pinned rather than
+        # tracking latest because config/redis.conf below is mounted into the
+        # container, and a directive it sets is only valid for the major that
+        # the tests also run against.
+        image: redis:8
         container_name: redis
         ports:
             - "6379:6379"
@@ -56,7 +60,7 @@ services:
             retries: 5
         
     redis-insight:
-        image: redis/redisinsight:latest
+        image: redis/redisinsight:3.8
         container_name: redis-insight
         ports:
             - "5540:5540"
@@ -79,7 +83,9 @@ services:
                 condition: service_healthy
 
     minio:
-        image: quay.io/minio/minio
+        # Kept in step with shared/testutil/minio.go, so local object storage is
+        # the release the tests ran against.
+        image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
         command: server /data --console-address ":9001"
         container_name: minio
         environment:

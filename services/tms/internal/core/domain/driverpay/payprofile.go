@@ -70,7 +70,7 @@ type PayProfileComponent struct {
 	MinAmountMinor  *int64          `json:"minAmountMinor"  bun:"min_amount_minor,type:BIGINT,nullzero"`
 	MaxAmountMinor  *int64          `json:"maxAmountMinor"  bun:"max_amount_minor,type:BIGINT,nullzero"`
 	Sequence        int             `json:"sequence"        bun:"sequence,type:INTEGER,notnull"`
-	IsActive        bool            `json:"isActive"        bun:"is_active,type:BOOLEAN,notnull,default:true"`
+	IsActive        bool            `json:"isActive"        bun:"is_active,type:BOOLEAN,notnull"`
 	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

@@ -57,6 +57,7 @@ func (r *repository) GetOrCreate(
 		PayDelayDays:                  5,
 		PayTrigger:                    tenant.PayTriggerShipmentDelivered,
 		AllowNegativeNet:              true,
+		AutoAttachAccruals:            true,
 		VarianceThresholdPct:          decimal.NewFromInt(25),
 		VarianceLookbackWeeks:         8,
 		EscrowInterestFrequencyMonths: 3,

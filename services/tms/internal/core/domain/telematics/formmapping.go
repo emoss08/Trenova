@@ -53,7 +53,7 @@ type FormMapping struct {
 	TemplateName   string   `json:"templateName"   bun:"template_name,type:TEXT,nullzero"`
 	Name           string   `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
 	Description    string   `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled        bool     `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
 	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -49,7 +49,7 @@ type HoldReason struct {
 	Code                     string         `json:"code"                     bun:"code,type:VARCHAR(64),notnull"`
 	Label                    string         `json:"label"                    bun:"label,type:VARCHAR(100),notnull"`
 	Description              string         `json:"description"              bun:"description,type:TEXT,nullzero"`
-	Active                   bool           `json:"active"                   bun:"active,type:BOOLEAN,notnull,default:true"`
+	Active                   bool           `json:"active"                   bun:"active,type:BOOLEAN,notnull"`
 	DefaultSeverity          HoldSeverity   `json:"defaultSeverity"          bun:"default_severity,type:hold_severity_enum,notnull"`
 	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch"    bun:"default_blocks_dispatch,type:BOOLEAN,notnull"`
 	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery"    bun:"default_blocks_delivery,type:BOOLEAN,notnull"`

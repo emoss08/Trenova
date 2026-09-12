@@ -319,6 +319,18 @@ func (c Column) Inc(n int) string {
 	return c.Name + " = " + c.Name + " + " + strconv.Itoa(n)
 }
 
+// IncConflict returns a "column = alias.column + n" fragment for the SET clause
+// of an ON CONFLICT DO UPDATE. Postgres rejects the bare column Inc produces
+// there, because an unqualified name on the right-hand side could mean either
+// the conflicting row or EXCLUDED, so the increment has to say which table it
+// reads. Use Inc for a plain UPDATE, where there is no EXCLUDED to collide with.
+//
+//	q.On(conflict).Set(TaxRateColumns.Version.IncConflict(1))
+//	// SET version = iftr.version + 1
+func (c Column) IncConflict(n int) string {
+	return c.Name + " = " + c.qualified + " + " + strconv.Itoa(n)
+}
+
 // Dec returns a "column = column - n" fragment for UPDATE SET clauses that decrement a value.
 //
 //	q.Set(WorkerColumns.RemainingPTO.Dec(8))

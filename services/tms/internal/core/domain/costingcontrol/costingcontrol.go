@@ -27,9 +27,9 @@ type CostingControl struct {
 	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	FuelIndexID          *pulid.ID           `json:"fuelIndexId"          bun:"fuel_index_id,type:VARCHAR(100),nullzero"`
-	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     bun:"use_live_fuel_price,type:BOOLEAN,notnull,default:true"`
+	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     bun:"use_live_fuel_price,type:BOOLEAN,notnull"`
 	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon"       bun:"miles_per_gallon,type:NUMERIC(6,2),notnull,default:6.5"`
-	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" bun:"include_deadhead_miles,type:BOOLEAN,notnull,default:true"`
+	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" bun:"include_deadhead_miles,type:BOOLEAN,notnull"`
 	GLActualsEnabled     bool                `json:"glActualsEnabled"     bun:"gl_actuals_enabled,type:BOOLEAN,notnull"`
 	GLRollingMonths      int16               `json:"glRollingMonths"      bun:"gl_rolling_months,type:SMALLINT,notnull,default:3"`
 	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles"  bun:"planned_monthly_miles,type:BIGINT,nullzero"`

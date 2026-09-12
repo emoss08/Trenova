@@ -11,7 +11,10 @@ ALTER TABLE "billing_queue_items"
 
 --bun:split
 ALTER TABLE "billing_queue_items"
-    ADD CONSTRAINT "fk_billing_queue_items_invoice" FOREIGN KEY ("invoice_id", "organization_id", "business_unit_id") REFERENCES "invoices"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+    -- Only invoice_id is cleared. An unqualified SET NULL clears every column of
+    -- the key, and the two tenant columns are NOT NULL, so deleting a referenced
+    -- invoice would fail on them rather than unlinking the queue item.
+    ADD CONSTRAINT "fk_billing_queue_items_invoice" FOREIGN KEY ("invoice_id", "organization_id", "business_unit_id") REFERENCES "invoices"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL ("invoice_id");
 
 --bun:split
 -- Backfill 1 — the anchor. Every invoice names its own queue item directly.
@@ -48,7 +51,10 @@ WHERE
     AND bqi."shipment_id" = invl."shipment_id"
     AND bqi."organization_id" = inv."organization_id"
     AND bqi."business_unit_id" = inv."business_unit_id"
-    AND bqi."bill_type" = inv."bill_type"
+    -- billing_queue_items.bill_type is the billing_type enum and
+    -- invoices.bill_type is varchar(50), which have no equality operator
+    -- between them. Compare as text, which is how the enum renders anyway.
+    AND bqi."bill_type"::text = inv."bill_type"
     AND bqi."is_adjustment_origin" = FALSE;
 
 --bun:split

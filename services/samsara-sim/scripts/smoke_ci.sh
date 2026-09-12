@@ -216,6 +216,8 @@ if [[ -z "${driver_id}" ]]; then
 fi
 drive_before="$(echo "${hos_before}" | jq -r --arg id "${driver_id}" '[.data[] | select(.driver.id == $id)][0].clocks.drive.driveRemainingDurationMs // empty')"
 duty_before="$(echo "${hos_before}" | jq -r --arg id "${driver_id}" '[.data[] | select(.driver.id == $id)][0].currentDutyStatus.hosStatusType // empty')"
+shift_before="$(echo "${hos_before}" | jq -r --arg id "${driver_id}" '[.data[] | select(.driver.id == $id)][0].clocks.shift.shiftRemainingDurationMs // 0')"
+cycle_before="$(echo "${hos_before}" | jq -r --arg id "${driver_id}" '[.data[] | select(.driver.id == $id)][0].clocks.cycle.cycleRemainingDurationMs // 0')"
 if [[ -z "${drive_before}" || -z "${duty_before}" ]]; then
   echo "driver ${driver_id} missing baseline HOS data" >&2
   exit 1
@@ -266,12 +268,25 @@ hos_after="$(get_json "/fleet/hos/clocks?driverIds=${driver_id}")"
 echo "${hos_after}" | jq -e '.data | length >= 1' >/dev/null
 drive_after="$(echo "${hos_after}" | jq -r '.data[0].clocks.drive.driveRemainingDurationMs // empty')"
 duty_after="$(echo "${hos_after}" | jq -r '.data[0].currentDutyStatus.hosStatusType // empty')"
+shift_after="$(echo "${hos_after}" | jq -r '.data[0].clocks.shift.shiftRemainingDurationMs // 0')"
+cycle_after="$(echo "${hos_after}" | jq -r '.data[0].clocks.cycle.cycleRemainingDurationMs // 0')"
+# Any clock moving is HOS advancing. The drive clock alone is not enough: a
+# driver on duty but not driving holds a frozen drive clock while the shift
+# clock counts down, and which of the two is running depends on where the
+# selected driver sits in their ELD timeline at the pinned simulation time.
 if ! jq -n \
   --argjson before "${drive_before}" \
   --argjson after "${drive_after}" \
+  --argjson shift_before "${shift_before}" \
+  --argjson shift_after "${shift_after}" \
+  --argjson cycle_before "${cycle_before}" \
+  --argjson cycle_after "${cycle_after}" \
   --arg duty_before "${duty_before}" \
   --arg duty_after "${duty_after}" \
-  '($after != $before) or ($duty_after != $duty_before)' \
+  '($after != $before)
+     or ($shift_after != $shift_before)
+     or ($cycle_after != $cycle_before)
+     or ($duty_after != $duty_before)' \
   | grep -q true; then
   echo "driver ${driver_id} HOS state did not change after time step" >&2
   exit 1

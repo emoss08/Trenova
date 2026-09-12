@@ -68,8 +68,6 @@ func newCostBudgetExtension(
 	graphQLMetrics *metrics.GraphQL,
 	logger *zap.Logger,
 ) *CostBudgetExtension {
-	errcode.RegisterErrorType(CostBudgetErrorCode, errcode.KindProtocol)
-
 	return &CostBudgetExtension{
 		cfg:     cfg,
 		metrics: graphQLMetrics,

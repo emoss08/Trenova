@@ -162,6 +162,10 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	entity := new(servicefailure.ReasonCode)
+	// A reason code is active unless the caller says otherwise. Seeded before
+	// binding so a body that omits the field still creates a usable code, while
+	// one that sends false is honoured.
+	entity.Active = true
 	authctx.AddContextToRequest(authCtx, entity)
 	if err := c.ShouldBindJSON(entity); err != nil {
 		h.eh.HandleError(c, err)

@@ -46,9 +46,17 @@ type MinioOptions struct {
 	Bucket    string
 }
 
+// minioImage is the server the object-storage tests run against. It names
+// quay.io, which is where MinIO publishes and where docker-compose-local.yml
+// already pulls from: the Docker Hub mirror this used to track was withdrawn,
+// and an unqualified name resolves there, so every test needing a bucket failed
+// to start its container. The release is pinned so a new upstream build cannot
+// change what the suite is testing against without a commit saying so.
+const minioImage = "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+
 func DefaultMinioOptions() MinioOptions {
 	return MinioOptions{
-		Image:     "minio/minio:latest",
+		Image:     minioImage,
 		AccessKey: "minioadmin",
 		SecretKey: "minioadmin",
 		Bucket:    "test-bucket",

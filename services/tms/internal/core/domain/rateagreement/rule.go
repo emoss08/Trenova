@@ -116,7 +116,7 @@ type RateAgreementRule struct {
 	DensityScaleID     *pulid.ID              `json:"densityScaleId"     bun:"density_scale_id,type:VARCHAR(100),nullzero"`
 	DiscountPercent    decimal.NullDecimal    `json:"discountPercent"    bun:"discount_percent,type:NUMERIC(9,4),nullzero"`
 	AbsoluteMinCharge  decimal.NullDecimal    `json:"absoluteMinCharge"  bun:"absolute_min_charge,type:NUMERIC(19,4),nullzero"`
-	AllowDeficitRating bool                   `json:"allowDeficitRating" bun:"allow_deficit_rating,type:BOOLEAN,notnull,default:true"`
+	AllowDeficitRating bool                   `json:"allowDeficitRating" bun:"allow_deficit_rating,type:BOOLEAN,notnull"`
 
 	MinCharge           decimal.NullDecimal    `json:"minCharge"           bun:"min_charge,type:NUMERIC(19,4),nullzero"`
 	MaxCharge           decimal.NullDecimal    `json:"maxCharge"           bun:"max_charge,type:NUMERIC(19,4),nullzero"`

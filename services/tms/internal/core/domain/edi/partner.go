@@ -42,8 +42,8 @@ type EDIPartner struct {
 	ContactName             string             `json:"contactName"             bun:"contact_name,type:VARCHAR(150),nullzero"`
 	ContactEmail            string             `json:"contactEmail"            bun:"contact_email,type:VARCHAR(255),nullzero"`
 	ContactPhone            string             `json:"contactPhone"            bun:"contact_phone,type:VARCHAR(30),nullzero"`
-	EnabledForInbound       bool               `json:"enabledForInbound"       bun:"enabled_for_inbound,type:BOOLEAN,notnull,default:true"`
-	EnabledForOutbound      bool               `json:"enabledForOutbound"      bun:"enabled_for_outbound,type:BOOLEAN,notnull,default:true"`
+	EnabledForInbound       bool               `json:"enabledForInbound"       bun:"enabled_for_inbound,type:BOOLEAN,notnull"`
+	EnabledForOutbound      bool               `json:"enabledForOutbound"      bun:"enabled_for_outbound,type:BOOLEAN,notnull"`
 	Settings                map[string]any     `json:"settings"                bun:"settings,type:JSONB,notnull,default:'{}'"`
 	SearchVector            string             `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                    string             `json:"-"                       bun:"rank,type:VARCHAR(100),scanonly"`

@@ -211,6 +211,14 @@ virtuals:
     - glAccounts
   CustomerBillingProfile:
     - documentTypes
+    # Statement billing replaced these, and each is now derived by a resolver
+    # from the fields that superseded it, so none projects a column of its own.
+    - billingCycleType
+    - billingCycleDayOfWeek
+    - invoiceMethod
+    - allowInvoiceConsolidation
+    - consolidationPeriodDays
+    - consolidationGroupBy
   CustomerPayment:
     - customer
   CustomerPaymentApplication:

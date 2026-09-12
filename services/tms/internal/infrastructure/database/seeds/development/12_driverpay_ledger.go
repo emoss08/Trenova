@@ -188,6 +188,7 @@ func (s *DriverPayLedgerSeed) ensureLedgerAccounts(
 			OrganizationID: orgID,
 			Status:         domaintypes.StatusActive,
 			AccountTypeID:  typeID,
+			AllowManualJE:  true,
 			AccountCode:    def.code,
 			Name:           def.name,
 			Description:    def.description,

@@ -12,11 +12,6 @@ import (
 
 const depthLimitExtensionName = "OperationDepthLimit"
 
-func registerQueryLimitErrorCodes() {
-	errcode.RegisterErrorType(querycost.DepthLimitErrorCode, errcode.KindProtocol)
-	errcode.RegisterErrorType(querycost.ComplexityLimitErrorCode, errcode.KindProtocol)
-}
-
 type costLimitedSchema struct {
 	graphql.ExecutableSchema
 	index *querycost.Index
