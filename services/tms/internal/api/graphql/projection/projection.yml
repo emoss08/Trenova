@@ -218,6 +218,7 @@ virtuals:
     - invoiceMethod
     - allowInvoiceConsolidation
     - consolidationPeriodDays
+    - consolidationLookbackDays
     - consolidationGroupBy
   CustomerPayment:
     - customer
