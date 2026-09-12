@@ -46,7 +46,7 @@ export function PinnedStrip({
       >
         <PinIcon className="size-3.5 shrink-0 text-amber-500" />
         <span className="shrink-0 text-xs font-medium">
-          {pinnedComments.length === 1 ? "1 pinned" : `${pinnedComments.length} pinned`}
+          {pinnedComments.length === 1 ? t("1 pinned") : t("{0} pinned", pinnedComments.length)}
         </span>
         {!isExpanded && (
           <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
@@ -81,7 +81,7 @@ export function PinnedStrip({
                     onClick={() => onJumpToComment(comment.id)}
                   >
                     <span className="block truncate text-xs">
-                      <span className="font-medium">{comment.user?.name ?? "Unknown"}</span>
+                      <span className="font-medium">{comment.user?.name ?? t("Unknown")}</span>
                       <span className="text-muted-foreground"> — {comment.comment}</span>
                     </span>
                   </button>

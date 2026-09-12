@@ -160,8 +160,8 @@ export function DashboardTileBody({
     return (
       <TileMessage>
         {tile.kind === "kpi"
-          ? "Choose the measure this KPI shows."
-          : "This report has no chart configured."}
+          ? t("Choose the measure this KPI shows.")
+          : t("This report has no chart configured.")}
       </TileMessage>
     );
   }

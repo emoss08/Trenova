@@ -51,6 +51,8 @@ function messageTime(unix: number): string {
 }
 
 function ChatMessage({ comment }: { comment: PortalLoadComment }) {
+  const t = useT();
+
   const isMine = comment.type === "DriverUpdate";
   const urgent = comment.priority === "High" || comment.priority === "Urgent";
 
@@ -58,7 +60,7 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
     <Message align={isMine ? "end" : "start"}>
       <MessageContent className="max-w-[85%]">
         <MessageHeader className="gap-1.5">
-          {isMine ? "You" : comment.authorName}
+          {isMine ? t("You") : comment.authorName}
           {!isMine && commentTypeLabels[comment.type] && comment.type !== "Dispatch" ? (
             <span className="text-2xs text-muted-foreground/70">
               · {commentTypeLabels[comment.type]}

@@ -167,7 +167,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
             onClick={() => acknowledge.mutate()}
           >
             <PenLineIcon className="size-3.5" />
-            {acknowledge.isPending ? "Signing…" : "Sign off"}
+            {acknowledge.isPending ? t("Signing…") : t("Sign off")}
           </Button>
         </div>
       ) : null}

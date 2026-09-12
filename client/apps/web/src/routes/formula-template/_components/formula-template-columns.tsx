@@ -95,7 +95,7 @@ export function getColumns(): ColumnDef<FormulaTemplateRow>[] {
       header: "Version",
       cell: ({ row }) => (
         <Badge variant="outline" className="font-mono text-xs">
-          {row.original.currentVersionNumber ? `v${row.original.currentVersionNumber}` : "—"}
+          {row.original.currentVersionNumber ? translate("v{0}", row.original.currentVersionNumber) : "—"}
         </Badge>
       ),
       meta: {

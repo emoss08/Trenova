@@ -43,13 +43,13 @@ export function ConfirmRoundDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>
             {finalise
-              ? `Finalise round ${action.draw.periodKey}?`
-              : `Void round ${action?.draw.periodKey}?`}
+              ? t("Finalise round {0}?", action.draw.periodKey)
+              : t("Void round {0}?", action?.draw.periodKey)}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {finalise
-              ? `${action.draw.drugSelected} drivers for drug testing and ${action.draw.alcoholSelected} for alcohol become the record for this period. Correcting a name afterwards means voiding the whole round.`
-              : "The selections are discarded and the period can be drawn again. The voided round stays on file with its seed, so the audit trail shows it happened."}
+              ? t("{0} drivers for drug testing and {1} for alcohol become the record for this period. Correcting a name afterwards means voiding the whole round.", action.draw.drugSelected, action.draw.alcoholSelected)
+              : t("The selections are discarded and the period can be drawn again. The voided round stays on file with its seed, so the audit trail shows it happened.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -59,7 +59,7 @@ export function ConfirmRoundDialog({
             disabled={pending || action === null}
             onClick={() => action && onConfirm(action)}
           >
-            {finalise ? "Finalise" : "Void the round"}
+            {finalise ? t("Finalise") : t("Void the round")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

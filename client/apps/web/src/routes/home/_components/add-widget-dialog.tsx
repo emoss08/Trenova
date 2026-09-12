@@ -493,7 +493,7 @@ function WidgetCard({
                   variant="outline"
                   className="border-border/70 h-4 shrink-0 border px-1 text-[9px]"
                 >
-                  {onCanvas > 1 ? `${onCanvas}× on canvas` : "On canvas"}
+                  {onCanvas > 1 ? t("{0}× on canvas", onCanvas) : t("On canvas")}
                 </Badge>
               )}
             </span>
@@ -584,8 +584,8 @@ function GalleryEmpty({ search, onClear }: { search: string; onClear: () => void
       <p className="text-sm font-medium">{t("Nothing matches")}</p>
       <p className="text-muted-foreground max-w-xs text-xs">
         {search.trim() === ""
-          ? "No widgets are available to you in this category."
-          : `No widget matches “${search.trim()}”.`}
+          ? t("No widgets are available to you in this category.")
+          : t("No widget matches “{0}”.", search.trim())}
       </p>
       <Button variant="outline" size="sm" className="mt-1" onClick={onClear}>
         {t("Clear filters")}

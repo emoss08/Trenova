@@ -542,7 +542,7 @@ export function ShipmentRateConfirmationImportPanel({
                       {t("Uploaded File")}
                     </div>
                     <div className="mt-1 text-sm">
-                      {importedDocument?.originalName ?? currentUpload?.file.name ?? "Waiting"}
+                      {importedDocument?.originalName ?? currentUpload?.file.name ?? t("Waiting")}
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
@@ -550,7 +550,7 @@ export function ShipmentRateConfirmationImportPanel({
                       {t("Content Status")}
                     </div>
                     <div className="mt-1 text-sm">
-                      {importedDocument?.contentStatus ?? "Uploading"}
+                      {importedDocument?.contentStatus ?? t("Uploading")}
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
@@ -558,7 +558,7 @@ export function ShipmentRateConfirmationImportPanel({
                       {t("Draft Status")}
                     </div>
                     <div className="mt-1 text-sm">
-                      {importedDocument?.shipmentDraftStatus ?? "Waiting"}
+                      {importedDocument?.shipmentDraftStatus ?? t("Waiting")}
                     </div>
                   </div>
                 </div>

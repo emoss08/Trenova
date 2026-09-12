@@ -233,8 +233,8 @@ export function RollbackConfirmDialog({
                       ))}
                       .{" "}
                       {templateStatus === "Active" || templateStatus === "InReview"
-                        ? "Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again."
-                        : "Rolling back changes the content the next approval will review."}
+                        ? t("Rolling back to different content returns the template to Draft, and nothing rates with it until it is approved again.")
+                        : t("Rolling back changes the content the next approval will review.")}
                     </span>
                   </div>
                 )}

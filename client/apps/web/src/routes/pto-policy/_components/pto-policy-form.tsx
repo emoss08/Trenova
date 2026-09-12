@@ -382,8 +382,8 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             <p className="text-xs font-medium">{t("Tenure tiers")}</p>
             <p className="text-muted-foreground text-[11px]">
               {accrues
-                ? "Raise the accrual once a worker has served long enough. The highest tier they qualify for wins."
-                : "Tiers need an accruing rule."}
+                ? t("Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.")
+                : t("Tiers need an accruing rule.")}
             </p>
           </div>
           <Button

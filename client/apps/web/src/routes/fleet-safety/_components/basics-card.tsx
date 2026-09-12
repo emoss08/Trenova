@@ -116,9 +116,9 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
               <span className="font-mono font-medium">{basic.weightedScore}</span>
               <span className="text-muted-foreground">
                 {basic.violations > 0
-                  ? ` · ${basic.violations} violation${basic.violations === 1 ? "" : "s"}`
+                  ? t("· {0} violation{1}", basic.violations, basic.violations === 1 ? "" : "s")
                   : basic.events > 0
-                    ? ` · ${basic.events} event${basic.events === 1 ? "" : "s"}`
+                    ? t("· {0} event{1}", basic.events, basic.events === 1 ? "" : "s")
                     : ""}
               </span>
             </span>

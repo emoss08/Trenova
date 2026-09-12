@@ -170,7 +170,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
           <p className="text-[11px] text-muted-foreground">
             {formatUnixDate(action.issuedAt)}
             {action.issuedBy?.name ? ` · ${action.issuedBy.name}` : ""}
-            {action.suspensionDays ? ` · ${action.suspensionDays} days` : ""}
+            {action.suspensionDays ? t("· {0} days", action.suspensionDays) : ""}
           </p>
         </div>
         {acknowledged ? (
@@ -203,7 +203,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
             onClick={() => acknowledge.mutate()}
           >
             <CheckIcon className="size-3.5" />
-            {acknowledge.isPending ? "Sending…" : "I've read this"}
+            {acknowledge.isPending ? t("Sending…") : t("I've read this")}
           </Button>
         </div>
       )}

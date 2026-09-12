@@ -33,7 +33,7 @@ export function getColumns(): ColumnDef<ApiKeyRow>[] {
       header: "Description",
       cell: ({ row }) => (
         <span className="text-muted-foreground line-clamp-2 text-sm">
-          {row.original.description || "No description"}
+          {row.original.description || translate("No description")}
         </span>
       ),
       meta: {

@@ -146,7 +146,7 @@ export function BillingUsageTab() {
                       {formatCatalogKey(feature.featureKey)}
                     </span>
                     <Badge variant={feature.allowed ? "active" : "inactive"}>
-                      {feature.allowed ? "Enabled" : "Denied"}
+                      {feature.allowed ? t("Enabled") : t("Denied")}
                     </Badge>
                   </div>
                 ))}
@@ -178,6 +178,8 @@ function SummaryCard({
   detail: string;
   tone: "active" | "inactive" | "info" | "teal" | "orange";
 }) {
+  const t = useT();
+
   return (
     <Card className="rounded-md">
       <CardContent className="flex min-h-24 items-center gap-3 p-3">
@@ -187,7 +189,7 @@ function SummaryCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-muted-foreground text-xs font-medium">{label}</p>
-            <Badge variant={tone}>{tone === "inactive" ? "Needs action" : "Current"}</Badge>
+            <Badge variant={tone}>{tone === "inactive" ? t("Needs action") : t("Current")}</Badge>
           </div>
           <p className="mt-1 truncate text-lg font-semibold">{value}</p>
           <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
@@ -212,7 +214,7 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
             {formatPeriod(usage.windowStart, usage.windowEnd)}
           </p>
         </div>
-        <Badge variant={limited ? "info" : "active"}>{limited ? `${percent}%` : "Unlimited"}</Badge>
+        <Badge variant={limited ? "info" : "active"}>{limited ? `${percent}%` : t("Unlimited")}</Badge>
       </div>
 
       <div className="mt-4">

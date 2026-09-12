@@ -108,12 +108,12 @@ export function ErrorBoundaryUi({
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-red-700 dark:text-red-300">
-            {isDev ? error.name || "Error" : "Something went wrong"}
+            {isDev ? error.name || t("Error") : t("Something went wrong")}
           </h3>
           <p className="mt-1 text-sm break-words text-red-600 dark:text-red-400">
             {isDev
               ? error.message
-              : "An unexpected error occurred. Please try again."}
+              : t("An unexpected error occurred. Please try again.")}
           </p>
         </div>
       </div>
@@ -137,7 +137,7 @@ export function ErrorBoundaryUi({
           className="flex items-center gap-1.5 rounded bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900"
         >
           <Copy className="h-3.5 w-3.5" />
-          {copied ? "Copied!" : "Copy error"}
+          {copied ? t("Copied!") : t("Copy error")}
         </button>
       </div>
 

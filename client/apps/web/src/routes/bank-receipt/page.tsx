@@ -355,7 +355,7 @@ function ReceiptDetail({
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
                 <PropertyCell label={t("Payment ID")}>
                   <span className="font-mono text-xs font-medium">
-                    {receipt.matchedCustomerPaymentId ?? "N/A"}
+                    {receipt.matchedCustomerPaymentId ?? t("N/A")}
                   </span>
                 </PropertyCell>
                 <PropertyCell label={t("Matched At")}>

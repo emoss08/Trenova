@@ -96,7 +96,7 @@ function CaseDetail({
           {entry.recordable ? null : <Badge variant="secondary">{t("Off the log")}</Badge>}
         </div>
         <SheetDescription>
-          {t("Occurred {0} {1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? `, reported ${formatUnixDateMedium(entry.reportedAt)}` : "")}
+          {t("Occurred {0} {1}", formatUnixDateMedium(entry.occurredAt), entry.reportedAt ? t(", reported {0}", formatUnixDateMedium(entry.reportedAt)) : "")}
         </SheetDescription>
       </SheetHeader>
 
@@ -174,7 +174,7 @@ function CaseDetail({
               {entry.returnedToWorkAt ? formatUnixDateMedium(entry.returnedToWorkAt) : null}
             </Row>
             <Row label={t("Status")}>
-              {entry.status === "Open" ? "Open, days may still accrue" : "Closed"}
+              {entry.status === "Open" ? t("Open, days may still accrue") : t("Closed")}
             </Row>
           </dl>
           {capped ? (

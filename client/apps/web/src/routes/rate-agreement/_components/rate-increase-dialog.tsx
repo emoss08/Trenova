@@ -342,7 +342,7 @@ export function RateIncreaseDialog({
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-36">
               <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                {kind === "percent" ? "Change (%)" : "Change ($)"}
+                {kind === "percent" ? t("Change (%)") : t("Change ($)")}
               </label>
               <NumberFieldRoot
                 value={amount}
@@ -385,10 +385,10 @@ export function RateIncreaseDialog({
           <div className="flex flex-col gap-3">
             <p className="text-sm">
               {lines.length > 0
-                ? `${lines.length} lanes across ${plan.agreementCount} agreements move.`
-                : "No lane in scope carries a rate this change could move."}
+                ? t("{0} lanes across {1} agreements move.", lines.length, plan.agreementCount)
+                : t("No lane in scope carries a rate this change could move.")}
               {plan.skippedNoRate > 0 &&
-                ` ${plan.skippedNoRate} matrix-priced lanes are untouched — their rates live in the matrix cells.`}
+                t("{0} matrix-priced lanes are untouched — their rates live in the matrix cells.", plan.skippedNoRate)}
             </p>
 
             {plan.negativeCount > 0 && (

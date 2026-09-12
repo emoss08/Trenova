@@ -142,7 +142,7 @@ function TemplateDesignerHeader() {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold">
-            {selectedTemplate?.name ?? "No template selected"}
+            {selectedTemplate?.name ?? t("No template selected")}
           </span>
           {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
           {hasUnsavedChanges && <Badge variant="warning">{t("Unsaved")}</Badge>}
@@ -150,8 +150,8 @@ function TemplateDesignerHeader() {
         </div>
         <div className="text-muted-foreground text-xs">
           {selectedVersion
-            ? `Version ${selectedVersion.versionNumber} / ${metadataDraft.x12Version} / ${metadataDraft.functionalGroupId} / ${segmentsCount} segments`
-            : "Create or select an outbound X12 204 template."}
+            ? t("Version {0} / {1} / {2} / {3} segments", selectedVersion.versionNumber, metadataDraft.x12Version, metadataDraft.functionalGroupId, segmentsCount)
+            : t("Create or select an outbound X12 204 template.")}
         </div>
       </div>
       <div className="flex max-w-full flex-wrap items-center gap-2">

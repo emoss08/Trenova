@@ -808,7 +808,7 @@ function MessageArchive({
                   <TableCell>{message.direction}</TableCell>
                   <TableCell>
                     <Badge variant={message.status === "Generated" ? "active" : "inactive"}>
-                      {message.status === "Generated" ? "Archived" : message.status}
+                      {message.status === "Generated" ? t("Archived") : message.status}
                     </Badge>
                     {message.deliveryStatus && (
                       <div className="text-2xs text-muted-foreground mt-1">

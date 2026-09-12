@@ -99,7 +99,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
         {filteredRoles.length === 0 ? (
           <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-            {searchQuery ? "No roles found" : "No roles available"}
+            {searchQuery ? t("No roles found") : t("No roles available")}
           </div>
         ) : (
           <div className="divide-y">

@@ -118,7 +118,7 @@ export function DashMoneyPage() {
               <li key={advance.id} className="px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">
-                    {advance.reference || `${advance.source} advance`}
+                    {advance.reference || t("{0} advance", advance.source)}
                   </p>
                   <Badge variant="warning">
                     <AmountDisplay
@@ -216,7 +216,7 @@ function DisputeItem({ dispute }: DisputeItemProps) {
           disabled={pending}
           onClick={handleWithdraw}
         >
-          {pending ? "Withdrawing..." : "Withdraw"}
+          {pending ? t("Withdrawing...") : t("Withdraw")}
         </Button>
       ) : null}
     </li>

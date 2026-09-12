@@ -109,7 +109,7 @@ function OfferSummary({
                 onDecline(reason);
               }}
             >
-              {declineOpen ? "Confirm decline" : "Decline"}
+              {declineOpen ? t("Confirm decline") : t("Decline")}
             </Button>
           </div>
 

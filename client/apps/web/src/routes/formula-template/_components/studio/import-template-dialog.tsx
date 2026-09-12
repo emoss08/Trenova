@@ -169,7 +169,7 @@ export function ImportTemplateDialog({
             className="w-full gap-2"
           >
             <UploadIcon className="size-4" />
-            {parsed ? parsed.filename : "Choose export file..."}
+            {parsed ? parsed.filename : t("Choose export file...")}
           </Button>
 
           {parseError && <p className="text-destructive text-xs">{parseError}</p>}

@@ -120,7 +120,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {token.lastUsedAt ? formatUnixDateTimeOrDash(token.lastUsedAt) : "Never"}
+                      {token.lastUsedAt ? formatUnixDateTimeOrDash(token.lastUsedAt) : t("Never")}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -168,7 +168,7 @@ function CopyableSecretBlock({ value }: { value: string }) {
         </div>
         <Button size="sm" variant="outline" onClick={() => void copy(value, { withToast: true })}>
           {isCopied ? <CheckIcon /> : <ClipboardIcon />}
-          {isCopied ? "Copied" : "Copy"}
+          {isCopied ? t("Copied") : t("Copy")}
         </Button>
       </div>
       <code className="bg-background/80 block rounded-md border p-2 font-mono text-xs break-all">

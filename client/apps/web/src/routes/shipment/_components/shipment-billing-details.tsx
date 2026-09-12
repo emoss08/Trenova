@@ -131,10 +131,10 @@ function CreditHoldAlert({ customerId }: { customerId: string }) {
       <AlertDescription>
         {billingProfile.creditHoldReason ||
           (billingProfile.creditStatus === "Warning"
-            ? "This customer is approaching their credit limit. Review before dispatching."
+            ? t("This customer is approaching their credit limit. Review before dispatching.")
             : billingProfile.creditStatus === "Review"
-              ? "This customer's credit is under review. Shipments may be delayed pending approval."
-              : "This customer's account is restricted. New shipments may not be invoiced until the hold is resolved.")}
+              ? t("This customer's credit is under review. Shipments may be delayed pending approval.")
+              : t("This customer's account is restricted. New shipments may not be invoiced until the hold is resolved."))}
       </AlertDescription>
     </Alert>
   );
@@ -229,14 +229,12 @@ function ContractRateAppliedAlert({
     <Alert variant="info" className="mb-3">
       <SparklesIcon className="size-4" />
       <AlertTitle>
-        {t("Rated from {0} {1}", rate.agreementName || "a rate agreement", rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+        {t("Rated from {0} {1}", rate.agreementName || t("a rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
       </AlertTitle>
       <AlertDescription>
         <span>
           {t("The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.", rate.accessorials.length > 0
-            ? `, along with ${rate.accessorials.length} automatic ${
-                rate.accessorials.length === 1 ? "charge" : "charges"
-              }`
+            ? t(", along with {0} automatic {1}", rate.accessorials.length, rate.accessorials.length === 1 ? "charge" : "charges")
             : "")}
         </span>
         <Button
@@ -320,7 +318,7 @@ function RatingBreakdownCard() {
           <p className="text-2xs text-muted-foreground mt-0.5">
             {ratingDetail.ruleLabel
               ? `${source} — ${ratingDetail.ruleLabel}`
-              : `Itemized amounts from ${source || "the rating formula"}`}
+              : t("Itemized amounts from {0}", source || t("the rating formula"))}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -361,7 +359,7 @@ function RatingBreakdownCard() {
         >
           <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
           <p className="text-2xs text-muted-foreground">
-            {t("{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .", guardrail.bound === "min" ? "Minimum" : "Maximum", formatCurrency(guardrail.rawResult), formatCurrency(
+            {t("{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .", guardrail.bound === "min" ? t("Minimum") : t("Maximum"), formatCurrency(guardrail.rawResult), formatCurrency(
               (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
             ))}
           </p>
@@ -390,7 +388,7 @@ function RatingBreakdownCard() {
                 to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
                 className="text-2xs text-primary hover:underline"
               >
-                {t("Open template {0}", ratingDetail.versionNumber ? ` v${ratingDetail.versionNumber}` : "")}
+                {t("Open template {0}", ratingDetail.versionNumber ? t("v{0}", ratingDetail.versionNumber) : "")}
               </Link>
             )}
           </div>

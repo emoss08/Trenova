@@ -111,7 +111,7 @@ export function CarrierAssignDialog({
       <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>
-            {replace ? "Replace Carrier Assignment" : "Assign Move to Carrier"}
+            {replace ? t("Replace Carrier Assignment") : t("Assign Move to Carrier")}
           </DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}
@@ -144,7 +144,7 @@ export function CarrierAssignDialog({
               isLoading={isAssigning}
               loadingText={t("Assigning...")}
             >
-              {replace ? "Replace carrier" : "Assign to carrier"}
+              {replace ? t("Replace carrier") : t("Assign to carrier")}
             </Button>
           </DialogFooter>
         </Form>

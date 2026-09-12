@@ -32,7 +32,7 @@ export function UserSummaryBar({
             variant={status === "Active" ? "default" : "secondary"}
             className={status === "Active" ? "bg-green-600 hover:bg-green-700" : ""}
           >
-            {status || "Active"}
+            {status || t("Active")}
           </Badge>
         </div>
 

@@ -143,7 +143,7 @@ export function RateConfirmationActions({
           }
         >
           <RefreshCcwIcon className="size-3" aria-hidden />
-          {latest && latest.status !== "Voided" ? "Regenerate" : "Generate"}
+          {latest && latest.status !== "Voided" ? t("Regenerate") : t("Generate")}
         </Button>
         {latest && (latest.status === "Generated" || latest.status === "Sent") && (
           <>
@@ -157,7 +157,7 @@ export function RateConfirmationActions({
               title={t("Email the rate confirmation to the carrier's rate confirmation contacts")}
             >
               <MailIcon className="size-3" aria-hidden />
-              {latest.status === "Sent" ? "Resend" : "Send"}
+              {latest.status === "Sent" ? t("Resend") : t("Send")}
             </Button>
             <Button
               type="button"

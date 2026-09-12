@@ -80,7 +80,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
       {/* Toolbar */}
       <div className="bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-1.5">
         <span className="text-muted-foreground truncate text-xs">
-          {fileName || "Document"}
+          {fileName || t("Document")}
           {numPages > 0 && (
             <span className="text-muted-foreground/50 ml-1.5">{t("{0} pages", numPages)}</span>
           )}

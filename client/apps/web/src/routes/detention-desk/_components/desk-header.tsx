@@ -114,10 +114,10 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
             {preview.map((entry) => (
               <li key={entry.occurrence.id} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate">
-                  {entry.occurrence.locationName || "Unknown facility"}
+                  {entry.occurrence.locationName || t("Unknown facility")}
                   <span className="text-muted-foreground">
                     {" · "}
-                    {entry.occurrence.customerName || "Unknown customer"}
+                    {entry.occurrence.customerName || t("Unknown customer")}
                   </span>
                 </span>
                 <span className="text-muted-foreground shrink-0 tabular-nums">

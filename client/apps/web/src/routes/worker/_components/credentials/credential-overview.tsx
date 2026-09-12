@@ -71,8 +71,8 @@ export function CredentialOverview({ summary, canCreate, onAdd }: CredentialOver
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             {summary.requiredCount === 0
-              ? "No credential types are required for this worker."
-              : `${healthy} of ${summary.requiredCount} required credentials are in good standing.`}
+              ? t("No credential types are required for this worker.")
+              : t("{0} of {1} required credentials are in good standing.", healthy, summary.requiredCount)}
           </p>
         </div>
         <dl className="grid grid-cols-3 gap-x-6 text-xs">

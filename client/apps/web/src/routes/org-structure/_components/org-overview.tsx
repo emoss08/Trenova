@@ -67,7 +67,7 @@ export function OrgOverview({
           label={t("People")}
           info={
             <InfoPopover title={t("People")}>
-              {"Active workers plus users holding a position. Terminated workers are left out."}
+              {t("Active workers plus users holding a position. Terminated workers are left out.")}
             </InfoPopover>
           }
         />
@@ -95,7 +95,7 @@ export function OrgOverview({
           info={
             <InfoPopover title={t("Positions")}>
               {
-                "Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted."
+                t("Positions still open, driving and non-driving, whether or not somebody holds them. Retired titles are not counted.")
               }
             </InfoPopover>
           }
@@ -116,7 +116,7 @@ export function OrgOverview({
           label={t("Terminals")}
           info={
             <InfoPopover title={t("Terminals")}>
-              {"Terminals with at least one active worker assigned."}
+              {t("Terminals with at least one active worker assigned.")}
             </InfoPopover>
           }
         />
@@ -131,10 +131,10 @@ export function OrgOverview({
         )}
         <KpiSub>
           {largestTerminal
-            ? `Largest: ${largestTerminal.label}, ${largestTerminal.workers} people`
+            ? t("Largest: {0}, {1} people", largestTerminal.label, largestTerminal.workers)
             : headcount && people.terminated > 0
-              ? `${people.terminated} off the roster`
-              : "Nobody on the roster yet"}
+              ? t("{0} off the roster", people.terminated)
+              : t("Nobody on the roster yet")}
         </KpiSub>
       </KpiCard>
 
@@ -146,7 +146,7 @@ export function OrgOverview({
             info={
               <InfoPopover title={t("Cover in force")}>
                 {
-                  "Delegations running today. Ones scheduled to start later and ones that have ended do not count."
+                  t("Delegations running today. Ones scheduled to start later and ones that have ended do not count.")
                 }
               </InfoPopover>
             }

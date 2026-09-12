@@ -69,7 +69,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
       <div className="border-b p-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium">
-            {winner?.agreementName || "No contract covered this lane"}
+            {winner?.agreementName || t("No contract covered this lane")}
           </span>
           <Badge variant="outline" className="text-[10px]">
             {outcome?.label ?? quote.outcome}
@@ -118,8 +118,8 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
             <p key={guardrail.kind} className="text-2xs text-muted-foreground">
               {t(guardrail.label)}
               {guardrail.applied
-                ? ` applied — ${formatCurrency(Number(guardrail.rawAmount ?? 0))} became ${formatCurrency(Number(guardrail.amount ?? 0))}.`
-                : " did not apply."}
+                ? t("applied — {0} became {1}.", formatCurrency(Number(guardrail.rawAmount ?? 0)), formatCurrency(Number(guardrail.amount ?? 0)))
+                : t("did not apply.")}
             </p>
           ))}
         </div>
@@ -128,7 +128,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
       {quote.foregoneAmount != null && (
         <div className="border-b p-3">
           <p className="text-2xs text-muted-foreground">
-            {t("This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}", formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)), formatCurrency(Number(quote.foregoneAmount)), quote.overrideReason ? ` Reason given: ${quote.overrideReason}` : "")}
+            {t("This rate was set by hand. The contract would have charged {0}, a difference of {1}. {2}", formatCurrency(Number(quote.linehaulAmount ?? 0) + Number(quote.foregoneAmount)), formatCurrency(Number(quote.foregoneAmount)), quote.overrideReason ? t("Reason given: {0}", quote.overrideReason) : "")}
           </p>
         </div>
       )}

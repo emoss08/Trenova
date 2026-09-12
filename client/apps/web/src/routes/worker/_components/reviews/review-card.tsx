@@ -114,7 +114,7 @@ export function ReviewCard({
               </span>
               <span className="text-muted-foreground tabular-nums">
                 {rating.score == null
-                  ? "Not rated"
+                  ? t("Not rated")
                   : `${rating.score} — ${REVIEW_SCORE_LABELS[rating.score] ?? ""}`}
               </span>
               {rating.comment ? (

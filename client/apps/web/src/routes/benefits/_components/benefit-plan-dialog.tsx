@@ -141,7 +141,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit the plan" : "Add a plan"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit the plan") : t("Add a plan")}</DialogTitle>
           <DialogDescription>
             {t("Each plan year is its own row. The pay code is what a contribution shows up as on a settlement, which is why it is required.")}
           </DialogDescription>
@@ -283,7 +283,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add"}
+                {isEdit ? t("Save") : t("Add")}
               </Button>
             </DialogFooter>
           </Form>

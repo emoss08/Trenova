@@ -73,7 +73,7 @@ export function WaiveTrainingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Waive {0}", record?.course?.name ?? "this course")}</DialogTitle>
+          <DialogTitle>{t("Waive {0}", record?.course?.name ?? t("this course"))}</DialogTitle>
           <DialogDescription>
             {t("Use this when the worker already meets the requirement another way — prior experience, an equivalent certificate, a grandfathered rule. The waiver satisfies the matrix and is kept in the audit log with your reason.")}
           </DialogDescription>

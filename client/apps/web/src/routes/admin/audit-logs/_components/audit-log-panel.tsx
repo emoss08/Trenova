@@ -91,7 +91,7 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
           className="h-6 px-2"
           onClick={() => setExpanded((current) => !current)}
         >
-          {expanded ? "Hide JSON" : "View JSON"}
+          {expanded ? t("Hide JSON") : t("View JSON")}
         </Button>
       </div>
       {expanded && <ShikiJsonBlock value={value} />}

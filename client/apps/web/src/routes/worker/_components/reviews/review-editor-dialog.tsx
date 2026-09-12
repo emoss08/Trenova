@@ -443,7 +443,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
         </div>
       </div>
       <p className="text-muted-foreground mt-1 text-[11px]">
-        {score == null ? "Not rated yet" : REVIEW_SCORE_LABELS[score]}
+        {score == null ? t("Not rated yet") : REVIEW_SCORE_LABELS[score]}
       </p>
       <TextareaField<ReviewDraftFormValues>
         control={control}

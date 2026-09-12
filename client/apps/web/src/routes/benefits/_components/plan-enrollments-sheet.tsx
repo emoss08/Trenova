@@ -70,11 +70,11 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
     <Sheet open={Boolean(plan)} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>{plan?.name ?? "Plan"}</SheetTitle>
+          <SheetTitle>{plan?.name ?? t("Plan")}</SheetTitle>
           <SheetDescription>
             {plan
-              ? `${plan.code} · ${plan.planYear} · ${formatMinor(plan.employeeCostMinor, plan.currencyCode)} employee, ${formatMinor(plan.employerCostMinor, plan.currencyCode)} employer per period`
-              : "Loading"}
+              ? t("{0} · {1} · {2} employee, {3} employer per period", plan.code, plan.planYear, formatMinor(plan.employeeCostMinor, plan.currencyCode), formatMinor(plan.employerCostMinor, plan.currencyCode))
+              : t("Loading")}
           </SheetDescription>
         </SheetHeader>
 
@@ -105,8 +105,8 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
           ) : rows.length === 0 ? (
             <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
               {query
-                ? "Nobody on this plan matches that."
-                : "Nobody has been put on this plan yet."}
+                ? t("Nobody on this plan matches that.")
+                : t("Nobody has been put on this plan yet.")}
             </p>
           ) : (
             <ul

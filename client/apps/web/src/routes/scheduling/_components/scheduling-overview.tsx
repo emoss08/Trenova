@@ -51,7 +51,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           info={
             <InfoPopover title={t("On the board")}>
               {
-                "Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show."
+                t("Rows on the rota for these weeks: everyone on a pattern or with a shift, plus people with nothing rostered, so the gaps show.")
               }
             </InfoPopover>
           }
@@ -80,7 +80,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           info={
             <InfoPopover title={t("Cover today")}>
               {
-                "How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number."
+                t("How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number.")
               }
             </InfoPopover>
           }
@@ -115,7 +115,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
         <KpiSub>
           {todayCover
             ? describeToday(todayCover.timeOff, todayCover.leave, todayCover.conflicts)
-            : "Today is outside the weeks shown"}
+            : t("Today is outside the weeks shown")}
         </KpiSub>
       </KpiCard>
 
@@ -126,7 +126,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           info={
             <InfoPopover title={t("Conflicts")}>
               {
-                "Rostered days the person cannot work: time off, leave or a stated unavailability won over the pattern."
+                t("Rostered days the person cannot work: time off, leave or a stated unavailability won over the pattern.")
               }
             </InfoPopover>
           }
@@ -142,10 +142,10 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
         )}
         <KpiSub>
           {conflicts > 0
-            ? "Rostered on a day they cannot work"
+            ? t("Rostered on a day they cannot work")
             : unrostered > 0
-              ? `Nothing rostered wrong. ${unrostered} on no shift.`
-              : "Nothing rostered wrong"}
+              ? t("Nothing rostered wrong. {0} on no shift.", unrostered)
+              : t("Nothing rostered wrong")}
         </KpiSub>
       </KpiCard>
 
@@ -157,7 +157,7 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
             info={
               <InfoPopover title={t("Swaps waiting on you")}>
                 {
-                  "Shift swaps the colleague has accepted that still need an office decision. Ones the colleague has not answered are not counted."
+                  t("Shift swaps the colleague has accepted that still need an office decision. Ones the colleague has not answered are not counted.")
                 }
               </InfoPopover>
             }
@@ -173,8 +173,8 @@ export function SchedulingOverview({ rota, swaps, today, showSwaps }: Scheduling
           )}
           <KpiSub>
             {swapSummary.awaitingColleague > 0
-              ? `${swapSummary.awaitingColleague} more still waiting on a colleague`
-              : "Accepted by the colleague, needing the office's say"}
+              ? t("{0} more still waiting on a colleague", swapSummary.awaitingColleague)
+              : t("Accepted by the colleague, needing the office's say")}
           </KpiSub>
         </KpiCard>
       ) : null}

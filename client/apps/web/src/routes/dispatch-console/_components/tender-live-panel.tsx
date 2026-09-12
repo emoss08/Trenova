@@ -145,7 +145,7 @@ function RecordResponseDialog({
         <DialogHeader>
           <DialogTitle>{t("Record Carrier Response")}</DialogTitle>
           <DialogDescription>
-            {t("{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.", offer.carrier?.name ?? "The carrier")}
+            {t("{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.", offer.carrier?.name ?? t("The carrier"))}
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -226,7 +226,7 @@ function OfferRow({
             #{offer.rank}
           </Badge>
           <span className="truncate text-xs font-medium">
-            {offer.carrier?.name ?? "Unknown carrier"}
+            {offer.carrier?.name ?? t("Unknown carrier")}
           </span>
         </div>
         <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />

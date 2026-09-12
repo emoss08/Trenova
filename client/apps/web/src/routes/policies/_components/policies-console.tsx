@@ -169,7 +169,7 @@ function PolicyCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{t(policy.title)}</p>
           <p className="text-muted-foreground truncate text-xs">
-            {policy.summary || `${policy.code} · from ${formatShiftDate(policy.effectiveFrom)}`}
+            {policy.summary || t("{0} · from {1}", policy.code, formatShiftDate(policy.effectiveFrom))}
           </p>
         </div>
       </div>
@@ -178,7 +178,7 @@ function PolicyCard({
         <Badge variant="outline">{t("v{0}", policy.versionLabel)}</Badge>
         <Badge variant="secondary">{policyAudienceLabel(policy.appliesTo)}</Badge>
         <Badge variant={policy.requiresSignature ? "warning" : "secondary"}>
-          {policy.requiresSignature ? "Signature" : "Read only"}
+          {policy.requiresSignature ? t("Signature") : t("Read only")}
         </Badge>
         {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
       </div>

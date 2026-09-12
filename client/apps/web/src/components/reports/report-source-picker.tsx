@@ -215,14 +215,14 @@ export function ReportSourcePicker({
         ) : rows.length === 0 ? (
           <PickerMessage>
             <p className="text-xs font-medium">
-              {search.trim() === "" ? "Nothing here yet" : "Nothing matches"}
+              {search.trim() === "" ? t("Nothing here yet") : t("Nothing matches")}
             </p>
             <p className="text-muted-foreground text-center text-xs">
               {search.trim() === ""
                 ? savedTab
-                  ? "You have no saved reports yet. Build one in Reports, or pick from the gallery."
-                  : "The report gallery is empty on this deployment."
-                : `No report matches “${search.trim()}”.`}
+                  ? t("You have no saved reports yet. Build one in Reports, or pick from the gallery.")
+                  : t("The report gallery is empty on this deployment.")
+                : t("No report matches “{0}”.", search.trim())}
             </p>
             {search.trim() !== "" && (
               <Button size="sm" variant="outline" onClick={() => setSearch("")}>
@@ -250,7 +250,7 @@ export function ReportSourcePicker({
                     {t("Loading more")}
                   </>
                 ) : (
-                  "Load more"
+                  t("Load more")
                 )}
               </Button>
             )}

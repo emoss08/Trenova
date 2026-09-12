@@ -195,7 +195,7 @@ export function CommentItem({
             <Tooltip>
               <TooltipTrigger render={<PinIcon className="size-3 shrink-0 text-amber-500" />} />
               <TooltipContent side="top">
-                {t("Pinned{0}", comment.pinnedBy?.name ? ` by ${comment.pinnedBy.name}` : "")}
+                {t("Pinned{0}", comment.pinnedBy?.name ? t("by {0}", comment.pinnedBy.name) : "")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -261,7 +261,7 @@ export function CommentItem({
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
             <CheckCircle2Icon className="size-3 text-emerald-500" />
-            {t("Resolved {0} {1}", comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : "", comment.resolvedAt != null &&
+            {t("Resolved {0} {1}", comment.resolvedBy?.name ? t("by {0}", comment.resolvedBy.name) : "", comment.resolvedAt != null &&
               ` · ${formatDistanceToNow(fromUnixTime(comment.resolvedAt), { addSuffix: true })}`)}
           </div>
         )}
@@ -417,8 +417,8 @@ function CommentActions({
           <AlertDialogTitle>{t("Delete comment?")}</AlertDialogTitle>
           <AlertDialogDescription>
             {hasReplies
-              ? "This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently."
-              : "This action cannot be undone. This will permanently delete this comment and its attachments."}
+              ? t("This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently.")
+              : t("This action cannot be undone. This will permanently delete this comment and its attachments.")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

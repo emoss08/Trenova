@@ -188,9 +188,9 @@ export function EmployerRow({
         {verification.hadAccidents || verification.hadDrugAlcoholViolations ? (
           <p className="text-xs">
             {verification.hadAccidents
-              ? `${verification.accidentCount} accident${verification.accidentCount === 1 ? "" : "s"} reported. `
+              ? t("{0} accident{1} reported.", verification.accidentCount, verification.accidentCount === 1 ? "" : "s")
               : ""}
-            {verification.hadDrugAlcoholViolations ? "Drug or alcohol violations reported." : ""}
+            {verification.hadDrugAlcoholViolations ? t("Drug or alcohol violations reported.") : ""}
           </p>
         ) : null}
         {verification.findings ? (

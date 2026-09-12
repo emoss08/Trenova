@@ -149,11 +149,11 @@ export function AssignPolicyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{currentPolicyId ? "Change PTO Policy" : "Assign PTO Policy"}</DialogTitle>
+          <DialogTitle>{currentPolicyId ? t("Change PTO Policy") : t("Assign PTO Policy")}</DialogTitle>
           <DialogDescription>
             {currentPolicyId
-              ? "The current assignment ends the day before the new one starts. Balances carry across unchanged."
-              : "Enrol this worker in a policy so their time off accrues and is tracked."}
+              ? t("The current assignment ends the day before the new one starts. Balances carry across unchanged.")
+              : t("Enrol this worker in a policy so their time off accrues and is tracked.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

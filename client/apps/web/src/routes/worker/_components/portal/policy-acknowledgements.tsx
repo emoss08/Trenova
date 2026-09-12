@@ -65,7 +65,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                 </span>
                 <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 pb-3">
                   <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <span className="truncate font-medium">{ack.policy?.title ?? "Policy"}</span>
+                    <span className="truncate font-medium">{ack.policy?.title ?? t("Policy")}</span>
                     <Badge variant="outline">{t("v{0}", ack.versionLabel)}</Badge>
                     {superseded ? (
                       <Badge variant="secondary">{t("Superseded by v{0}", ack.policy?.versionLabel)}</Badge>
@@ -79,7 +79,7 @@ export function PolicyAcknowledgements({ workerId }: { workerId: string }) {
                         <span>{ack.signatureName}</span>
                       </>
                     ) : (
-                      " · read"
+                      t("· read")
                     )}
                   </span>
                 </div>

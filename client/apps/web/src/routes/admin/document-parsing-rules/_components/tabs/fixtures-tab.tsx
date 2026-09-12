@@ -113,7 +113,7 @@ function FixtureList({
             disabled={createMutation.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {createMutation.isPending ? "Creating..." : "New Fixture"}
+            {createMutation.isPending ? t("Creating...") : t("New Fixture")}
           </Button>
         )}
       </div>

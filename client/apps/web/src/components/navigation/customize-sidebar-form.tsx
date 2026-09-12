@@ -454,7 +454,7 @@ export default function CustomizeSidebarForm({
         </Button>
         <DialogClose render={<Button variant="outline">{t("Cancel")}</Button>} />
         <Button onClick={handleSave} disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? "Saving…" : "Save changes"}
+          {updateMutation.isPending ? t("Saving…") : t("Save changes")}
         </Button>
       </DialogFooter>
     </>

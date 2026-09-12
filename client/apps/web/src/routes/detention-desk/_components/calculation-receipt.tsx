@@ -79,7 +79,7 @@ export function CalculationReceipt({
             className="text-2xs text-muted-foreground hover:text-foreground"
             onClick={() => void copy(receiptText(trace, currency))}
           >
-            {isCopied ? "Copied" : "Copy"}
+            {isCopied ? t("Copied") : t("Copy")}
           </Button>
         </div>
       </div>

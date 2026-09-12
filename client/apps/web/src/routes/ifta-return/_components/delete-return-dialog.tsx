@@ -68,7 +68,7 @@ export function DeleteReturnDialog({ open, onOpenChange, ret, period }: DeleteRe
             onClick={() => mutate()}
             disabled={isPending || !isDraft}
           >
-            {isPending ? "Deleting..." : "Delete draft"}
+            {isPending ? t("Deleting...") : t("Delete draft")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

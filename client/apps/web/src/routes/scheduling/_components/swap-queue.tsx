@@ -140,15 +140,15 @@ function SwapRow({
         </div>
         <div className="flex min-w-0 flex-col">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="font-medium">{nameOf(swap.requestingWorker) ?? "A driver"}</span>
+            <span className="font-medium">{nameOf(swap.requestingWorker) ?? t("A driver")}</span>
             <span className="text-muted-foreground">
-              → {nameOf(swap.counterpartyWorker) ?? "whoever the office finds"}
+              → {nameOf(swap.counterpartyWorker) ?? t("whoever the office finds")}
             </span>
             <Badge variant={tone.variant}>{t(tone.label)}</Badge>
           </span>
           <span className="text-muted-foreground tabular-nums">
             {t("Giving up {0} {1}", formatShiftDate(swap.shiftDate), swap.counterpartyShiftDate
-              ? ` · taking ${formatShiftDate(swap.counterpartyShiftDate)}`
+              ? t("· taking {0}", formatShiftDate(swap.counterpartyShiftDate))
               : "")}
           </span>
           {swap.reason ? <span className="text-muted-foreground">“{swap.reason}”</span> : null}

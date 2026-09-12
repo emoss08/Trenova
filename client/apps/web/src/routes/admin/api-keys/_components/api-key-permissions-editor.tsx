@@ -253,7 +253,7 @@ export function APIKeyPermissionsEditor() {
               size="sm"
               onClick={() => applyBulkPreset(allResources, mode)}
             >
-              {mode === "read" ? "All Read" : mode === "write" ? "All Write" : "Full Access"}
+              {mode === "read" ? t("All Read") : mode === "write" ? t("All Write") : t("Full Access")}
             </Button>
           ))}
           <Button
@@ -454,9 +454,9 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
                   {isFullAccess
-                    ? "Full Access"
+                    ? t("Full Access")
                     : isViewOnly
-                      ? "View Only"
+                      ? t("View Only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}

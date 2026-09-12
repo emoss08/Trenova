@@ -791,13 +791,13 @@ export function SamsaraWorkerSyncCard({
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>{t("Workflow ID")}</p>
               <p className="text-foreground mt-1 truncate font-mono">
-                {trackedWorkflowId ?? "N/A"}
+                {trackedWorkflowId ?? t("N/A")}
               </p>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>{t("Run ID")}</p>
               <p className="text-foreground mt-1 truncate font-mono">
-                {statusResponse?.runId || trackedRunId || "N/A"}
+                {statusResponse?.runId || trackedRunId || t("N/A")}
               </p>
             </div>
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">

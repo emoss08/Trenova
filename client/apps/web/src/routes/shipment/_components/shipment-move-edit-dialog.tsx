@@ -61,11 +61,11 @@ export function MoveEditDialog({
     >
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="gap-0 p-4">
-          <DialogTitle>{isNew ? "Add Move" : `Edit Move ${moveIndex + 1}`}</DialogTitle>
+          <DialogTitle>{isNew ? t("Add Move") : t("Edit Move {0}", moveIndex + 1)}</DialogTitle>
           <DialogDescription>
             {isNew
-              ? "Define the move legs and stop sequence for this shipment."
-              : "Update move details, timing, and stop sequence."}
+              ? t("Define the move legs and stop sequence for this shipment.")
+              : t("Update move details, timing, and stop sequence.")}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[65vh] px-4 pb-4">
@@ -109,7 +109,7 @@ export function MoveEditDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={onClose}>
-            {isNew ? "Add Move" : "Save Changes"}
+            {isNew ? t("Add Move") : t("Save Changes")}
           </Button>
         </DialogFooter>
       </DialogContent>

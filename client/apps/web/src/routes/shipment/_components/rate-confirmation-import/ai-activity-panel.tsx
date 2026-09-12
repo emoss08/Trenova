@@ -135,7 +135,7 @@ function SuggestionButton({
               }}
               disabled={!selectedDate}
             >
-              {suggestion.submitLabel || "Confirm"}
+              {suggestion.submitLabel || t("Confirm")}
             </Button>
             <Button
               variant="ghost"
@@ -212,7 +212,7 @@ function SuggestionButton({
             }}
             disabled={!inputVal.trim()}
           >
-            {suggestion.submitLabel || "Confirm"}
+            {suggestion.submitLabel || t("Confirm")}
           </Button>
         </div>
       );
@@ -821,7 +821,7 @@ export default function AIActivityPanel({
         </div>
         <div className="mt-2">
           <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
-            <span>{isReady ? "Ready to create" : `${4 - filledRequired} fields remaining`}</span>
+            <span>{isReady ? t("Ready to create") : t("{0} fields remaining", 4 - filledRequired)}</span>
           </div>
           <div className="bg-muted h-0.5 overflow-hidden rounded-full">
             <m.div
@@ -841,10 +841,10 @@ export default function AIActivityPanel({
               <InfoIcon className="text-muted-foreground size-3" />
               <span className="text-2xs text-muted-foreground">
                 {conversationStatus === "Completed" && statusReason === "shipment_created"
-                  ? "This import has been completed."
+                  ? t("This import has been completed.")
                   : conversationStatus === "Superseded"
-                    ? "This conversation was superseded by a re-extraction."
-                    : "This conversation is no longer active."}
+                    ? t("This conversation was superseded by a re-extraction.")
+                    : t("This conversation is no longer active.")}
               </span>
             </div>
           )}

@@ -176,7 +176,7 @@ function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflic
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium">
-                {conflict.label || conflict.key || "Conflict"}
+                {conflict.label || conflict.key || t("Conflict")}
               </span>
               {conflict.pageNumbers.length > 0 ? (
                 <Badge variant="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
@@ -227,7 +227,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 {t("{0} stop #{1}", stop.role, stop.sequence)}
               </div>
               <div className="mt-1 text-sm font-medium">
-                {stop.name || `${stop.role === "pickup" ? "Pickup" : "Delivery"} location`}
+                {stop.name || t("{0} location", stop.role === "pickup" ? t("Pickup") : t("Delivery"))}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -252,7 +252,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 {t("Timing")}
               </div>
               <div className="mt-1 text-sm">
-                {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") || "Not extracted"}
+                {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") || t("Not extracted")}
               </div>
             </div>
           </div>
@@ -284,7 +284,7 @@ function IntelligenceSummary({
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {t("Classification")}
         </div>
-        <div className="mt-1 text-sm">{intelligence?.kind || fallbackKind || "Other"}</div>
+        <div className="mt-1 text-sm">{intelligence?.kind || fallbackKind || t("Other")}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -298,7 +298,7 @@ function IntelligenceSummary({
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {t("Review Status")}
         </div>
-        <div className="mt-1 text-sm">{intelligence?.reviewStatus || "NeedsReview"}</div>
+        <div className="mt-1 text-sm">{intelligence?.reviewStatus || t("NeedsReview")}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -310,7 +310,7 @@ function IntelligenceSummary({
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {t("Provider Fingerprint")}
         </div>
-        <div className="mt-1 text-sm">{intelligence?.providerFingerprint || "None"}</div>
+        <div className="mt-1 text-sm">{intelligence?.providerFingerprint || t("None")}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -318,8 +318,8 @@ function IntelligenceSummary({
         </div>
         <div className="mt-1 text-sm">
           {intelligence?.missingFields?.length === 0
-            ? "None"
-            : (intelligence?.missingFields?.length ?? "Not scored")}
+            ? t("None")
+            : (intelligence?.missingFields?.length ?? t("Not scored"))}
         </div>
       </div>
       {intelligence?.classificationReason ? (
@@ -360,7 +360,7 @@ function AnalysisSnapshotCard({
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {title}
           </div>
-          <div className="mt-1 text-sm font-medium">{analysis.kind || "Other"}</div>
+          <div className="mt-1 text-sm font-medium">{analysis.kind || t("Other")}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={confidenceVariant(analysis.overallConfidence)}>
@@ -390,7 +390,7 @@ function AnalysisSnapshotCard({
           <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             {t("Source")}
           </div>
-          <div className="mt-1 text-sm">{analysis.classifierSource || "Unknown"}</div>
+          <div className="mt-1 text-sm">{analysis.classifierSource || t("Unknown")}</div>
         </div>
       </div>
       {analysis.missingFields?.length ? (
@@ -486,7 +486,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
         <div className="text-foreground font-medium">{t("Shipment draft extraction failed.")}</div>
         <div className="mt-1">
           {[draft.failureCode, draft.failureMessage].filter(Boolean).join(" · ") ||
-            "No failure details were recorded."}
+            t("No failure details were recorded.")}
         </div>
       </div>
     );
@@ -521,14 +521,14 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Review Status")}
           </div>
-          <div className="mt-1 text-sm">{draft.draftData?.reviewStatus || "NeedsReview"}</div>
+          <div className="mt-1 text-sm">{draft.draftData?.reviewStatus || t("NeedsReview")}</div>
         </div>
         <div className="rounded-lg border p-3">
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Missing Critical Fields")}
           </div>
           <div className="mt-1 text-sm">
-            {missingFields.length === 0 ? "None" : missingFields.length}
+            {missingFields.length === 0 ? t("None") : missingFields.length}
           </div>
         </div>
       </div>
@@ -698,7 +698,7 @@ function ContentSection({
                   <div className="mb-1">{t("OCR confidence: {0}", formatConfidence(page.ocrConfidence))}</div>
                 ) : null}
                 <div className="line-clamp-4 font-mono text-[11px] whitespace-pre-wrap">
-                  {page.extractedText?.trim() || "No extracted text"}
+                  {page.extractedText?.trim() || t("No extracted text")}
                 </div>
               </div>
             ))}
@@ -720,7 +720,7 @@ function ContentSection({
     <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
       {fallbackError ||
         content?.failureMessage ||
-        "No extracted text is available for this document."}
+        t("No extracted text is available for this document.")}
     </div>
   );
 }
@@ -858,7 +858,7 @@ export function DocumentIntelligenceDialog({
                             {t("Extraction Source")}
                           </div>
                           <div className="mt-1 text-sm">
-                            {content?.sourceKind || "Not available"}
+                            {content?.sourceKind || t("Not available")}
                           </div>
                         </div>
                         <div className="rounded-lg border p-3">
@@ -866,7 +866,7 @@ export function DocumentIntelligenceDialog({
                             {t("Pages")}
                           </div>
                           <div className="mt-1 text-sm">
-                            {content?.pageCount ?? "Not available"}
+                            {content?.pageCount ?? t("Not available")}
                           </div>
                         </div>
                       </div>

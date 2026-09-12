@@ -142,7 +142,7 @@ export function DashLoadDetailPage() {
 
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-mono text-sm font-semibold">{load.proNumber || "Pending pro #"}</p>
+          <p className="font-mono text-sm font-semibold">{load.proNumber || t("Pending pro #")}</p>
           <LoadStatusBadge status={load.status} />
         </div>
         <h1 className="mt-2 text-xl font-semibold tracking-tight">
@@ -183,10 +183,10 @@ export function DashLoadDetailPage() {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {load.payOnHold
-              ? "This pay is on hold — check with your fleet manager."
+              ? t("This pay is on hold — check with your fleet manager.")
               : load.payStatus === "Settled"
-                ? "Paid out on a settlement — see the Pay tab."
-                : "Earned — lands on your next settlement."}
+                ? t("Paid out on a settlement — see the Pay tab.")
+                : t("Earned — lands on your next settlement.")}
           </p>
         </div>
       ) : isActive && features.showPayEstimates ? (

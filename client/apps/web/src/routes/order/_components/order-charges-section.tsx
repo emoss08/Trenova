@@ -191,10 +191,10 @@ export function OrderChargesSection() {
             <AlertDialogTitle>{t("Remove this charge?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {chargePendingRemoval
-                ? `"${chargePendingRemoval.description}" (${formatCurrency(
+                ? t("\"{0}\" ({1}) will be removed and the order total recalculated.", chargePendingRemoval.description, formatCurrency(
                     Number(chargePendingRemoval.amount),
                     currency,
-                  )}) will be removed and the order total recalculated.`
+                  ))
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -66,11 +66,11 @@ export function LeaveCard() {
       {owing.length > 0 ? (
         <p className="border-warning/40 bg-warning/10 text-warning-foreground mt-3 rounded-lg border px-3 py-2 text-xs">
           {owing.length === 1
-            ? "Your carrier is waiting on a medical certification."
-            : `Your carrier is waiting on ${owing.length} medical certifications.`}{" "}
+            ? t("Your carrier is waiting on a medical certification.")
+            : t("Your carrier is waiting on {0} medical certifications.", owing.length)}{" "}
           {owing.some((row) => row.certificationLate)
-            ? "One is past its deadline — leave can be denied once it is."
-            : "Send it in before the deadline on the request."}
+            ? t("One is past its deadline — leave can be denied once it is.")
+            : t("Send it in before the deadline on the request.")}
         </p>
       ) : null}
 
@@ -86,14 +86,14 @@ export function LeaveCard() {
               <Badge variant="secondary">{leaveFrequencyLabel(row.frequency)}</Badge>
             </div>
             <p className="text-muted-foreground mt-0.5">
-              {t("{0} {1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : " – ongoing", formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
-                ? ` (${formatLeaveHours(row.hoursCharged)} h counted)`
+              {t("{0} {1} · {2} h taken {3}", formatUnixDateMedium(row.startsAt), row.endsAt ? ` – ${formatUnixDateMedium(row.endsAt)}` : t("– ongoing"), formatLeaveHours(row.hoursUsed), row.hoursCharged !== row.hoursUsed
+                ? t("({0} h counted)", formatLeaveHours(row.hoursCharged))
                 : "")}
             </p>
             {row.certificationStatus === "NotRequired" ? null : (
               <p className="text-muted-foreground mt-0.5">
                 {t("Certification {0} {1}", certificationStatusLabel(row.certificationStatus).toLowerCase(), row.certificationDueAt
-                  ? ` · due ${formatUnixDateMedium(row.certificationDueAt)}`
+                  ? t("· due {0}", formatUnixDateMedium(row.certificationDueAt))
                   : "")}
               </p>
             )}

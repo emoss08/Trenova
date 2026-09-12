@@ -72,7 +72,7 @@ export function AcknowledgeRow({
                       }
                     />
                     <TooltipContent side="top">
-                      {t("Acknowledged by {0}", ack.user?.name ?? "a teammate")}
+                      {t("Acknowledged by {0}", ack.user?.name ?? t("a teammate"))}
                     </TooltipContent>
                   </Tooltip>
                 </m.div>
@@ -82,8 +82,8 @@ export function AcknowledgeRow({
           {overflow > 0 && <span className="text-2xs text-muted-foreground">+{overflow}</span>}
           <span className="text-2xs text-muted-foreground">
             {acknowledgments.length === 1
-              ? "1 acknowledgment"
-              : `${acknowledgments.length} acknowledgments`}
+              ? t("1 acknowledgment")
+              : t("{0} acknowledgments", acknowledgments.length)}
           </span>
         </div>
       )}

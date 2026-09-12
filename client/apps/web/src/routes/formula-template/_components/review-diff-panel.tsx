@@ -48,12 +48,12 @@ export function ReviewDiffPanel({ templateId }: { templateId: string }) {
         <span className="flex items-center gap-1.5 text-xs font-semibold">
           <GitCompareIcon className="size-3.5" />
           {data.hasApprovedBase
-            ? `Changes since approved v${data.baseVersion}`
-            : "First approval; everything below is new"}
+            ? t("Changes since approved v{0}", data.baseVersion)
+            : t("First approval; everything below is new")}
         </span>
         <span className="text-2xs text-muted-foreground">
           {data.changeCount === 0
-            ? "identical to production"
+            ? t("identical to production")
             : `${data.changeCount} ${data.changeCount === 1 ? "change" : "changes"}`}
         </span>
       </div>

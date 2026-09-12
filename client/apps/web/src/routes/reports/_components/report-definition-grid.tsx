@@ -124,7 +124,7 @@ function DefinitionCard({
             <h3 className="truncate text-sm font-medium">{definition.name}</h3>
           </div>
           <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
-            {definition.description || "No description"}
+            {definition.description || t("No description")}
           </p>
         </div>
         <div onClick={(event) => event.stopPropagation()}>
@@ -205,8 +205,8 @@ function DefinitionCard({
           <span className="text-border">•</span>
           <span className="tabular-nums">
             {definition.lastRunAt
-              ? `Ran ${formatDistanceToNowStrict(new Date(definition.lastRunAt * 1000), { addSuffix: true })}`
-              : "Never run"}
+              ? t("Ran {0}", formatDistanceToNowStrict(new Date(definition.lastRunAt * 1000), { addSuffix: true }))
+              : t("Never run")}
           </span>
         </div>
         {canExport && (
@@ -443,7 +443,7 @@ function LoadMoreReports({ pending, onLoadMore }: { pending: boolean; onLoadMore
           {t("Loading")}
         </>
       ) : (
-        "Load more reports"
+        t("Load more reports")
       )}
     </Button>
   );

@@ -242,23 +242,23 @@ export function AssignmentDialog({
         <DialogHeader>
           <DialogTitle>
             {driverAssignmentBlocked
-              ? "Move Coverage"
+              ? t("Move Coverage")
               : mode === "carrier"
                 ? hasCarrierCoverage
-                  ? "Replace Carrier Assignment"
-                  : "Assign Move to Carrier"
+                  ? t("Replace Carrier Assignment")
+                  : t("Assign Move to Carrier")
                 : isEditing
-                  ? "Reassign Move"
-                  : "Assign Move"}
+                  ? t("Reassign Move")
+                  : t("Assign Move")}
           </DialogTitle>
           <DialogDescription>
             {driverAssignmentBlocked
-              ? "This move is covered by a driver, which this organization cannot reassign."
+              ? t("This move is covered by a driver, which this organization cannot reassign.")
               : mode === "carrier"
-                ? "Broker this move to an external carrier with its rate and reference details."
+                ? t("Broker this move to an external carrier with its rate and reference details.")
                 : isEditing
-                  ? "Update the tractor, trailer, and worker assignments for this move."
-                  : "Assign a tractor, trailer, and workers to this move."}
+                  ? t("Update the tractor, trailer, and worker assignments for this move.")
+                  : t("Assign a tractor, trailer, and workers to this move.")}
           </DialogDescription>
         </DialogHeader>
         {canAssignDrivers && (
@@ -327,7 +327,7 @@ export function AssignmentDialog({
               <AlertDescription>
                 {t("This move is brokered to {0} . Cancel the carrier assignment before assigning a driver.", existingCarrierAssignment?.carrier?.name
                   ? ` ${existingCarrierAssignment.carrier.name}`
-                  : " an external carrier")}
+                  : t("an external carrier"))}
               </AlertDescription>
             </Alert>
             <DialogFooter>
@@ -427,7 +427,7 @@ export function AssignmentDialog({
                   {t("Cancel")}
                 </Button>
                 <Button type="submit" isLoading={isSubmitting} loadingText={t("Saving...")}>
-                  {isEditing ? "Reassign" : "Assign"}
+                  {isEditing ? t("Reassign") : t("Assign")}
                 </Button>
               </DialogFooter>
             </Form>
@@ -587,7 +587,7 @@ function CarrierAssignmentTab({
           isLoading={isSubmitting}
           loadingText={t("Saving...")}
         >
-          {isReplacing ? "Replace carrier" : "Assign to carrier"}
+          {isReplacing ? t("Replace carrier") : t("Assign to carrier")}
         </Button>
       </DialogFooter>
     </Form>

@@ -57,9 +57,9 @@ function RoundHeader({ round }: { round: ReviewRound }) {
       <span className="font-medium">{t("Round {0}", round.round)}</span>
       <span className="text-muted-foreground">
         {round.baseVersionNumber > 0
-          ? `against approved v${round.baseVersionNumber}`
-          : "first approval"}
-        {round.outcome === null && " · open"}
+          ? t("against approved v{0}", round.baseVersionNumber)
+          : t("first approval")}
+        {round.outcome === null && t("· open")}
       </span>
     </div>
   );

@@ -113,7 +113,7 @@ export function ElementDesigner() {
           <div className="p-3">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <Badge variant={segment.required ? "active" : "outline"}>{segment.segmentId}</Badge>
-              <Badge variant="outline">{segment.required ? "Required" : "Optional"}</Badge>
+              <Badge variant="outline">{segment.required ? t("Required") : t("Optional")}</Badge>
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
                 <div className="text-muted-foreground text-xs">

@@ -286,7 +286,7 @@ function SortableSortRow({
       className={cn("flex items-center gap-2 rounded-md py-1", isDragging && "opacity-50")}
     >
       <span className="text-muted-foreground w-10 shrink-0 text-sm">
-        {index === 0 ? "By" : "Then"}
+        {index === 0 ? t("By") : t("Then")}
       </span>
 
       <Select
@@ -384,7 +384,7 @@ function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProp
   return (
     <div className="bg-popover flex items-center gap-2 rounded-md border px-2 py-1 shadow-lg">
       <span className="text-muted-foreground w-10 shrink-0 text-sm">
-        {index === 0 ? "By" : "Then"}
+        {index === 0 ? t("By") : t("Then")}
       </span>
 
       <div className="bg-muted flex h-7 w-36 items-center rounded-md border px-2 text-sm">

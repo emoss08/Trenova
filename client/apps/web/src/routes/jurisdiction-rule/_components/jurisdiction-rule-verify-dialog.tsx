@@ -91,7 +91,7 @@ export function JurisdictionRuleVerifyDialog({
           <DialogDescription>
             {rule?.state
               ? `${rule.state.name} (${rule.state.abbreviation})`
-              : "Confirm this rule against the issuing state"}
+              : t("Confirm this rule against the issuing state")}
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +145,7 @@ export function JurisdictionRuleVerifyDialog({
             onClick={handleSubmit((values) => mutation.mutate(values))}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "Recording..." : "Record Verification"}
+            {mutation.isPending ? t("Recording...") : t("Record Verification")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -262,7 +262,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                 <ServiceFailureStopContext summary={stopSummary} />
                 <div>
                   <span className="text-muted-foreground">{t("Reason")}</span>
-                  <p>{failure.reasonCode?.label ?? "Unassigned"}</p>
+                  <p>{failure.reasonCode?.label ?? t("Unassigned")}</p>
                 </div>
               </div>
               {failure.notes && (

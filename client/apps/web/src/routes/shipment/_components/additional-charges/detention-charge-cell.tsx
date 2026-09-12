@@ -121,6 +121,8 @@ export function DetentionChargeAction({
   occurrence: DetentionOccurrence | undefined;
   onOpenClaimFile: () => void;
 }) {
+  const t = useT();
+
   return (
     <Tooltip>
       <TooltipTrigger
@@ -139,8 +141,8 @@ export function DetentionChargeAction({
       <TooltipContent side="top" sideOffset={6}>
         <p className="max-w-56 text-xs">
           {occurrence
-            ? `${OCCURRENCE_STATUS_LABEL[occurrence.status]} — open the claim file for the derivation, evidence and notices`
-            : "Open the detention claim file"}
+            ? t("{0} — open the claim file for the derivation, evidence and notices", OCCURRENCE_STATUS_LABEL[occurrence.status])
+            : t("Open the detention claim file")}
         </p>
       </TooltipContent>
     </Tooltip>

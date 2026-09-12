@@ -70,7 +70,7 @@ export function OshaSummaryCard({
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             {canUpdate && !certified ? (
               <Button size="sm" variant="outline" onClick={onEditFigures}>
-                {summary ? "Edit figures" : "Start the summary"}
+                {summary ? t("Edit figures") : t("Start the summary")}
               </Button>
             ) : null}
             {canCertify && summary && !certified ? (
@@ -167,7 +167,7 @@ export function OshaSummaryCard({
             <div className="flex flex-col gap-1 text-xs">
               <p>
                 <span className="font-medium">
-                  {summary?.executiveName?.trim() || "An executive"}
+                  {summary?.executiveName?.trim() || t("An executive")}
                 </span>
                 {summary?.executiveTitle?.trim() ? (
                   <span className="text-muted-foreground">, {summary.executiveTitle.trim()}</span>
@@ -178,12 +178,10 @@ export function OshaSummaryCard({
               </p>
               <p className="text-muted-foreground">
                 {summary?.submittedAt
-                  ? `Submitted electronically ${formatUnixDateMedium(summary.submittedAt)}${
-                      summary.submissionReference?.trim()
-                        ? `, reference ${summary.submissionReference.trim()}`
-                        : ""
-                    }`
-                  : "Not yet submitted electronically"}
+                  ? t("Submitted electronically {0}{1}", formatUnixDateMedium(summary.submittedAt), summary.submissionReference?.trim()
+                        ? t(", reference {0}", summary.submissionReference.trim())
+                        : "")
+                  : t("Not yet submitted electronically")}
               </p>
             </div>
           ) : (

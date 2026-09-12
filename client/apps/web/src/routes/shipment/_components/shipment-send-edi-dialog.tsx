@@ -48,11 +48,11 @@ export function ShipmentSendEDIDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Send EDI Load Tender")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("{0} will be tendered to", shipment.proNumber ?? "This shipment")}
+            {t("{0} will be tendered to", shipment.proNumber ?? t("This shipment"))}
             <span className="text-foreground font-medium">
               {ediPartner
                 ? `${ediPartner.name} (${ediPartner.code})`
-                : "the customer's EDI partner"}
+                : t("the customer's EDI partner")}
             </span>{" "}
             {t("for approval by the receiving organization.")}
           </AlertDialogDescription>

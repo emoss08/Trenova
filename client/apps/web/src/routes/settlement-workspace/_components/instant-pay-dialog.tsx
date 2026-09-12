@@ -182,7 +182,7 @@ export function InstantPayDialog({
                     )
                   }
                 >
-                  {allSelected ? "Clear all" : "Select all"}
+                  {allSelected ? t("Clear all") : t("Select all")}
                 </Button>
               </div>
               <ScrollArea className="max-h-56 min-h-0" viewportClassName="min-h-0" maskHeight={18}>
@@ -229,7 +229,7 @@ export function InstantPayDialog({
                       variant={paymentMethod === method ? "default" : "outline"}
                       onClick={() => setPaymentMethod(method)}
                     >
-                      {method === "InstantPay" ? "Instant Pay" : method}
+                      {method === "InstantPay" ? t("Instant Pay") : method}
                     </Button>
                   ))}
                 </div>
@@ -256,7 +256,7 @@ export function InstantPayDialog({
             title={t("Generates, approves, posts, and marks the settlement paid in one pass")}
           >
             <Zap className="size-3.5" />
-            {payMutation.isPending ? "Paying..." : "Pay now"}
+            {payMutation.isPending ? t("Paying...") : t("Pay now")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -273,6 +273,8 @@ function EventRow({
   checked: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   return (
     <li className="flex items-center gap-2.5 rounded-md border p-2">
       <Checkbox
@@ -281,10 +283,10 @@ function EventRow({
         aria-label={`Pay ${event.proNumber}`}
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-mono text-xs font-medium">{event.proNumber || "No pro #"}</p>
+        <p className="truncate font-mono text-xs font-medium">{event.proNumber || t("No pro #")}</p>
         <p className="text-muted-foreground text-[11px]">
           {formatUnixDate(event.eventDate)}
-          {Number(event.totalMiles) > 0 ? ` · ${Number(event.totalMiles).toFixed(0)} mi` : ""}
+          {Number(event.totalMiles) > 0 ? t("· {0} mi", Number(event.totalMiles).toFixed(0)) : ""}
         </p>
       </div>
       <span className="shrink-0 text-xs font-semibold tabular-nums">

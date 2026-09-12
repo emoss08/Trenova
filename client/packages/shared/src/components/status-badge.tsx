@@ -120,9 +120,11 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 }
 
 export function BooleanBadge({ value }: { value: boolean }) {
+  const t = useT();
+
   return (
     <Badge variant={value ? "active" : "inactive"} className="max-h-5">
-      {value ? "Yes" : "No"}
+      {value ? t("Yes") : t("No")}
     </Badge>
   );
 }
@@ -664,6 +666,8 @@ export function EDIPartnerReadinessBadge({
 }
 
 export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
+  const t = useT();
+
   return (
     <Badge
       variant={passed ? "active" : "inactive"}
@@ -674,7 +678,7 @@ export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
           : "The preview diagnostics do not match the expected warning and error counts."
       }
     >
-      {passed ? "Pass" : "Fail"}
+      {passed ? t("Pass") : t("Fail")}
     </Badge>
   );
 }

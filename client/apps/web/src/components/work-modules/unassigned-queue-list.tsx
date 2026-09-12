@@ -171,7 +171,7 @@ export function UnassignedQueueList({
               </span>
             </div>
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-[10px]">
-              <span className="truncate">{s.customer?.name ?? "No Customer Found"}</span>
+              <span className="truncate">{s.customer?.name ?? t("No Customer Found")}</span>
             </div>
             <div className="font-table flex items-baseline justify-between gap-2 tabular-nums">
               <span className="text-muted-foreground truncate text-[9.5px]">

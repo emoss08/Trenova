@@ -149,7 +149,7 @@ function SegmentDetail({
                   </TableCell>
                   <TableCell>{t(element.label)}</TableCell>
                   <TableCell className="font-mono text-xs wrap-break-word">
-                    <div>{element.empty ? "[empty]" : element.value}</div>
+                    <div>{element.empty ? t("[empty]") : element.value}</div>
                     {element.components.length > 1 ? (
                       <div className="text-muted-foreground mt-1">
                         {element.components
@@ -162,7 +162,7 @@ function SegmentDetail({
                   </TableCell>
                   <TableCell>
                     <Badge variant={element.required ? "warning" : "outline"}>
-                      {element.required ? "Required" : "Optional"}
+                      {element.required ? t("Required") : t("Optional")}
                     </Badge>
                   </TableCell>
                   <TableCell>

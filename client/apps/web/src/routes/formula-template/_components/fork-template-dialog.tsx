@@ -137,7 +137,7 @@ export function ForkTemplateDialog({
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fork-form" disabled={isSubmitting}>
-            {isSubmitting ? "Forking..." : "Fork Template"}
+            {isSubmitting ? t("Forking...") : t("Fork Template")}
           </Button>
         </DialogFooter>
       </DialogContent>

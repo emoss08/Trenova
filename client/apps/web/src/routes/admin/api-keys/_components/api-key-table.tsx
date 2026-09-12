@@ -84,7 +84,7 @@ export default function APIKeyTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Revoke API Key")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.", selectedKey?.name ?? "this key")}
+              {t("Revoke {0} now. Any integration using this bearer token will begin failing authentication immediately.", selectedKey?.name ?? t("this key"))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

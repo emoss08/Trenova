@@ -231,7 +231,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {waive ? "Record" : "Enroll"}
+                {waive ? t("Record") : t("Enroll")}
               </Button>
             </DialogFooter>
           </Form>

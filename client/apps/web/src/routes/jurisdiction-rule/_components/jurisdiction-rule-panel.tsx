@@ -166,7 +166,7 @@ function JurisdictionRuleEditPanel({
               {t("Cancel")}
             </Button>
             <Button type="submit" form="panel-edit-form" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? t("Saving...") : t("Save")}
             </Button>
           </>
         }
@@ -192,7 +192,7 @@ function JurisdictionRuleEditPanel({
                   </Badge>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {row.sourceNote || "No source recorded for these limits."}
+                  {row.sourceNote || t("No source recorded for these limits.")}
                 </p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={() => setVerifyOpen(true)}>

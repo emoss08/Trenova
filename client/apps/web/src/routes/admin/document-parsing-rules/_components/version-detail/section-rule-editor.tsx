@@ -105,7 +105,7 @@ function SectionItem({
       <div className="rounded-md border">
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span>{defaultName || `Section ${index + 1}`}</span>
+            <span>{defaultName || t("Section {0}", index + 1)}</span>
             {anchorCount > 0 && (
               <Badge variant="secondary">
                 {t("{0} anchor{1}", anchorCount, anchorCount !== 1 ? "s" : "")}

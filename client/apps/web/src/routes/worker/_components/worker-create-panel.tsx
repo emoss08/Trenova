@@ -223,7 +223,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
               {t("Cancel")}
             </Button>
             <Button type="submit" form="worker-create-form" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Worker"}
+              {isSubmitting ? t("Creating...") : t("Create Worker")}
             </Button>
           </div>
         </Dialog.Popup>

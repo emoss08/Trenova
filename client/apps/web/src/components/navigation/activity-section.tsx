@@ -216,6 +216,8 @@ export function ActivityFeed({
   emptyState?: "message" | "hidden";
   heading?: React.ReactNode;
 }) {
+  const t = useT();
+
   const { data: preferences } = useSidebarPreferences();
   const feed = useActivityFeed(preferences?.activity.pageSize, true);
 
@@ -225,7 +227,7 @@ export function ActivityFeed({
     }
     return (
       <p className="text-muted-foreground px-2 py-6 text-center text-xs">
-        {feed.isUnavailable ? "Activity is not available right now." : "Nothing has happened yet."}
+        {feed.isUnavailable ? t("Activity is not available right now.") : t("Nothing has happened yet.")}
       </p>
     );
   }

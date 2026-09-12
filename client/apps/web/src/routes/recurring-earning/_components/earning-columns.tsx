@@ -95,7 +95,7 @@ export function getColumns(): ColumnDef<RecurringEarningRow>[] {
       header: "Frequency",
       cell: ({ row }) => (
         <span className="text-xs">
-          {row.original.frequency === "EverySettlement" ? "Every settlement" : "Monthly"}
+          {row.original.frequency === "EverySettlement" ? translate("Every settlement") : translate("Monthly")}
         </span>
       ),
       size: 110,

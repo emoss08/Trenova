@@ -261,14 +261,14 @@ export function TimeClockPanel({
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className="cc-label">{entry ? "On the clock" : "Off the clock"}</p>
+                    <p className="cc-label">{entry ? t("On the clock") : t("Off the clock")}</p>
                     <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
                       {entry ? formatHours(running) : formatHours(weekMinutes)}
                     </p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {entry
-                        ? `Since ${formatPunchInstant(entry.clockedInAt)}`
-                        : `${formatHours(weekMinutes)} paid this week so far`}
+                        ? t("Since {0}", formatPunchInstant(entry.clockedInAt))
+                        : t("{0} paid this week so far", formatHours(weekMinutes))}
                     </p>
                   </div>
                 </div>
@@ -285,7 +285,7 @@ export function TimeClockPanel({
                     </span>
                     <span className="text-muted-foreground tabular-nums">
                       {headroom
-                        ? `${formatHours(weekMinutes)} of ${formatHours(weekSheet!.overtimeThresholdMinutes)}`
+                        ? t("{0} of {1}", formatHours(weekMinutes), formatHours(weekSheet!.overtimeThresholdMinutes))
                         : formatHours(weekMinutes)}
                     </span>
                   </div>
@@ -309,8 +309,8 @@ export function TimeClockPanel({
                       </span>
                       <p className="text-muted-foreground text-xs tabular-nums">
                         {headroom.over > 0
-                          ? `${formatHours(headroom.over)} into overtime`
-                          : `${formatHours(headroom.remaining)} before overtime`}
+                          ? t("{0} into overtime", formatHours(headroom.over))
+                          : t("{0} before overtime", formatHours(headroom.remaining))}
                       </p>
                     </>
                   ) : (
@@ -453,7 +453,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
         <span className="text-xs tabular-nums" aria-label={t("Day total")}>
           <span className="font-mono font-medium">
             {day.running
-              ? `${formatHours(day.paidMinutes)} + running`
+              ? t("{0} + running", formatHours(day.paidMinutes))
               : formatHours(day.paidMinutes)}
           </span>
           {day.breakMinutes > 0 ? (
@@ -510,7 +510,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
               />
               <span className="font-medium tabular-nums">
                 {formatPunchTime(row.clockedInAt)}
-                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : " – now"}
+                {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : t("– now")}
               </span>
               {row.source !== "Clock" ? <Badge variant="secondary">{row.source}</Badge> : null}
               {row.editReason ? (
@@ -519,7 +519,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
             </span>
             <span className="flex items-center gap-1">
               <span className="font-mono tabular-nums">
-                {row.clockedOutAt ? formatHours(row.paidMinutes) : "Running"}
+                {row.clockedOutAt ? formatHours(row.paidMinutes) : t("Running")}
                 {row.breakMinutes > 0 ? (
                   <span className="text-muted-foreground"> {t("· {0}m break", row.breakMinutes)}</span>
                 ) : null}

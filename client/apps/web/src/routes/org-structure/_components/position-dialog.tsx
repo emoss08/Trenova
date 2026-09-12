@@ -147,7 +147,7 @@ export function PositionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit the position" : "Add a position"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit the position") : t("Add a position")}</DialogTitle>
           <DialogDescription>
             {t("A terminal is where somebody works; a position is what they do. Headcount is read both ways.")}
           </DialogDescription>
@@ -245,7 +245,7 @@ export function PositionDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add"}
+                {isEdit ? t("Save") : t("Add")}
               </Button>
             </DialogFooter>
           </Form>

@@ -147,7 +147,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
                 void approvePTO();
               }}
             >
-              {approving ? "Approving..." : "Approve"}
+              {approving ? t("Approving...") : t("Approve")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

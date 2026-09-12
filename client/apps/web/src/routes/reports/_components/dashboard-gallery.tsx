@@ -109,7 +109,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-medium">{dashboard.name}</h3>
                     <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
-                      {dashboard.description || "No description"}
+                      {dashboard.description || t("No description")}
                     </p>
                   </div>
                 </div>

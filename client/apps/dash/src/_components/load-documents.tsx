@@ -127,7 +127,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
             onClick={() => upload.mutate(pendingFile)}
           >
             <PaperclipIcon className="size-3.5" />
-            {upload.isPending ? "Uploading..." : "Upload"}
+            {upload.isPending ? t("Uploading...") : t("Upload")}
           </Button>
         </div>
       ) : null}

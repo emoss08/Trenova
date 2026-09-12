@@ -104,7 +104,7 @@ function CloseDialog({
       <AlertDialogFooter>
         <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
         <AlertDialogAction variant="destructive" onClick={handleClose} disabled={isPending}>
-          {isPending ? "Closing..." : "Close Period"}
+          {isPending ? t("Closing...") : t("Close Period")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -164,7 +164,7 @@ function ReopenDialog({
       <AlertDialogFooter>
         <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
         <AlertDialogAction onClick={handleReopen} disabled={isPending}>
-          {isPending ? "Reopening..." : "Reopen Period"}
+          {isPending ? t("Reopening...") : t("Reopen Period")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -223,7 +223,7 @@ function LockDialog({
       <AlertDialogFooter>
         <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
         <AlertDialogAction onClick={handleLock} disabled={isPending}>
-          {isPending ? "Locking..." : "Lock Period"}
+          {isPending ? t("Locking...") : t("Lock Period")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
@@ -284,7 +284,7 @@ function UnlockDialog({
       <AlertDialogFooter>
         <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
         <AlertDialogAction onClick={handleUnlock} disabled={isPending}>
-          {isPending ? "Unlocking..." : "Unlock Period"}
+          {isPending ? t("Unlocking...") : t("Unlock Period")}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

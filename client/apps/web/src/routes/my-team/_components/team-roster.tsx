@@ -136,10 +136,10 @@ export function TeamRoster({
         <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
           <p>
             {rows.length === 0
-              ? "Nobody is on your team."
+              ? t("Nobody is on your team.")
               : attentionOnly && !query
-                ? "Nobody in this view needs attention."
-                : "Nobody matches that."}
+                ? t("Nobody in this view needs attention.")
+                : t("Nobody matches that.")}
           </p>
           {filtered ? (
             <Button
@@ -202,6 +202,8 @@ function RosterGroup({
   now: number;
   showHeading: boolean;
 }) {
+  const t = useT();
+
   const heading =
     group.path === "covering"
       ? `${TEAM_PATH_LABELS.covering} ${group.cover?.name ?? "a manager"}`
@@ -219,8 +221,8 @@ function RosterGroup({
             <span className="text-muted-foreground text-xs">
               {approvalScopeLabel(group.cover.scope)} ·{" "}
               {group.cover.endsAt
-                ? `until ${formatUnixDate(group.cover.endsAt)}`
-                : "until called back"}
+                ? t("until {0}", formatUnixDate(group.cover.endsAt))
+                : t("until called back")}
             </span>
           ) : null}
         </header>

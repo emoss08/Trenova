@@ -76,7 +76,7 @@ export function TerminalsPanel({
                         )}
                         style={terminal.color ? { backgroundColor: terminal.color } : undefined}
                       />
-                      <span className="truncate font-medium">{terminal.code || "No terminal"}</span>
+                      <span className="truncate font-medium">{terminal.code || t("No terminal")}</span>
                       {terminal.description ? (
                         <span className="text-muted-foreground truncate">
                           {t(terminal.description)}
@@ -181,7 +181,7 @@ export function RankList({ title, kind, empty, rows }: RankListProps) {
                       ) : null}
                     </span>
                     <span className="text-muted-foreground text-xs tabular-nums">
-                      {t("{0} event{1} {2}", row.events, row.events === 1 ? "" : "s", row.lastEventAt ? ` · last ${formatUnixDate(row.lastEventAt)}` : "")}
+                      {t("{0} event{1} {2}", row.events, row.events === 1 ? "" : "s", row.lastEventAt ? t("· last {0}", formatUnixDate(row.lastEventAt)) : "")}
                     </span>
                   </span>
                 </span>

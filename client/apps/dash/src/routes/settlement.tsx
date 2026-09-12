@@ -101,8 +101,8 @@ export function DashSettlementPage() {
         </p>
         <p className="text-sm text-muted-foreground">
           {data.paidAt
-            ? `Paid ${formatRange(data.paidAt, data.paidAt)}${data.paymentMethod ? ` via ${data.paymentMethod}` : ""}${data.paymentReference ? ` (${data.paymentReference})` : ""}`
-            : `Pay date ${formatRange(data.payDate, data.payDate)}`}
+            ? t("Paid {0}{1}{2}", formatRange(data.paidAt, data.paidAt), data.paymentMethod ? t("via {0}", data.paymentMethod) : "", data.paymentReference ? ` (${data.paymentReference})` : "")
+            : t("Pay date {0}", formatRange(data.payDate, data.payDate))}
         </p>
 
         <dl className="mt-4 flex flex-col gap-1.5 border-t border-border pt-3 text-sm">
@@ -145,7 +145,7 @@ export function DashSettlementPage() {
             {settlementDisputes.map((dispute) => (
               <li key={dispute.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="truncate text-muted-foreground">
-                  {dispute.settlementLine?.description ?? "Whole statement"}
+                  {dispute.settlementLine?.description ?? t("Whole statement")}
                 </span>
                 <DisputeStatusBadge status={dispute.status} />
               </li>

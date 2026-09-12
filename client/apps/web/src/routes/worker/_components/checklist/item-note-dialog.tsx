@@ -138,7 +138,7 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending || !item}>
-                {isPending ? "Saving..." : copy.submit}
+                {isPending ? t("Saving...") : copy.submit}
               </Button>
             </DialogFooter>
           </Form>

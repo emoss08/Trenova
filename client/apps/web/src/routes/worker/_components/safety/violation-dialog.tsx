@@ -121,7 +121,7 @@ export function ViolationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Correct the violation" : "Cite a violation"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Correct the violation") : t("Cite a violation")}</DialogTitle>
           <DialogDescription>
             {t("One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.")}
           </DialogDescription>
@@ -189,7 +189,7 @@ export function ViolationDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Cite"}
+                {isEdit ? t("Save") : t("Cite")}
               </Button>
             </DialogFooter>
           </Form>

@@ -74,7 +74,7 @@ export function PoliciesCard() {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold">{t("Policies")}</h2>
             <p className="text-muted-foreground text-xs">
-              {outstanding === 0 ? "You are up to date." : `${outstanding} to read and sign.`}
+              {outstanding === 0 ? t("You are up to date.") : t("{0} to read and sign.", outstanding)}
             </p>
           </div>
         </div>
@@ -182,7 +182,7 @@ function PolicyDrawer({
           <DrawerTitle>{policy?.title}</DrawerTitle>
           <DrawerDescription>
             {t("Version {0} {1}", policy?.versionLabel, policy?.effectiveFrom
-              ? ` · in force from ${formatShiftDate(policy.effectiveFrom)}`
+              ? t("· in force from {0}", formatShiftDate(policy.effectiveFrom))
               : "")}
           </DrawerDescription>
         </DrawerHeader>
@@ -203,7 +203,7 @@ function PolicyDrawer({
             >
               <span className="flex items-center gap-2">
                 <FileTextIcon className="size-4" />
-                {openDocument.isPending ? "Opening…" : "Open the document"}
+                {openDocument.isPending ? t("Opening…") : t("Open the document")}
               </span>
               <ExternalLinkIcon className="text-muted-foreground size-4" />
             </Button>
@@ -213,8 +213,8 @@ function PolicyDrawer({
             <div className="border-success/40 bg-success/10 text-success-foreground flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
               <CheckIcon className="size-4 shrink-0" />
               {policy?.signatureName
-                ? `Signed “${policy.signatureName}” on ${formatShiftDate(policy.acknowledgedAt ?? 0)}.`
-                : `Read on ${formatShiftDate(policy?.acknowledgedAt ?? 0)}.`}
+                ? t("Signed “{0}” on {1}.", policy.signatureName, formatShiftDate(policy.acknowledgedAt ?? 0))
+                : t("Read on {0}.", formatShiftDate(policy?.acknowledgedAt ?? 0))}
             </div>
           ) : (
             <div className="border-border flex flex-col gap-3 border-t pt-3">
@@ -225,7 +225,7 @@ function PolicyDrawer({
                   className="mt-0.5"
                 />
                 <span>
-                  {t("I have read {0} {1}", policy?.title ?? "this policy", needsSignature ? " and agree to it." : ".")}
+                  {t("I have read {0} {1}", policy?.title ?? t("this policy"), needsSignature ? t("and agree to it.") : ".")}
                 </span>
               </label>
               {needsSignature ? (
@@ -276,7 +276,7 @@ function PolicyDrawer({
               disabled={!agreed || !nameOk || sign.isPending}
               onClick={() => sign.mutate()}
             >
-              {sign.isPending ? "Sending…" : needsSignature ? "Sign" : "Mark as read"}
+              {sign.isPending ? t("Sending…") : needsSignature ? t("Sign") : t("Mark as read")}
             </Button>
           )}
         </DrawerFooter>

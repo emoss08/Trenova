@@ -364,7 +364,7 @@ function InvoiceAdjustmentLineEditorRow({
             <BanIcon className="text-destructive mt-0.5 size-3 shrink-0" />
             <p className="text-2xs text-destructive">
               {previewLine?.eligibilityMessage ||
-                `Exceeds eligibility by ${formatCurrency(overageAmount)}`}
+                t("Exceeds eligibility by {0}", formatCurrency(overageAmount))}
             </p>
           </div>
         ) : requestedCreditAmount > 0 ? (

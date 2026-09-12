@@ -231,7 +231,7 @@ function ChartEditor({
         {chart.type !== "kpi" && !chartNeedsCoordinates(chart.type) && (
           <div className="flex flex-col gap-1">
             <Label className="text-muted-foreground text-xs">
-              {needsDimension ? "Group by" : "Horizontal axis"}
+              {needsDimension ? t("Group by") : t("Horizontal axis")}
             </Label>
             <Select
               value={chart.xColumnId ?? ""}
@@ -289,7 +289,7 @@ function ChartEditor({
 
       <div className="flex flex-col gap-1">
         <Label className="text-muted-foreground text-xs">
-          {singleSeries ? "Measure" : "Measures"}
+          {singleSeries ? t("Measure") : t("Measures")}
         </Label>
         {measures.length === 0 ? (
           <p className="text-2xs text-muted-foreground">

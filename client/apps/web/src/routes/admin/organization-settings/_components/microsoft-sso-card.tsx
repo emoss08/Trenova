@@ -179,7 +179,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           <div className="min-w-0 flex-1">
             <span className="text-sm font-semibold tracking-tight">{t("Microsoft Entra ID")}</span>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              {t("{0} · OpenID Connect", enabled ? "Active" : "Not configured")}
+              {t("{0} · OpenID Connect", enabled ? t("Active") : t("Not configured"))}
             </p>
           </div>
           <ChevronRightIcon
@@ -356,7 +356,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <p className="text-muted-foreground text-xs">
                           {t("Replace")}{" "}
                           <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
-                            {"{loginSlug}"}
+                            {t("{loginSlug}")}
                           </code>{" "}
                           {t("with your organization's login slug from General settings.")}
                         </p>

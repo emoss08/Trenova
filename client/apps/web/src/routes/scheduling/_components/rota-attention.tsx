@@ -89,6 +89,8 @@ function AttentionList({
   conflicts: RotaConflict[];
   unrostered: UnrosteredWorker[];
 }) {
+  const t = useT();
+
   const reduceMotion = useReducedMotion();
   const [settled, setSettled] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -158,7 +160,7 @@ function AttentionList({
             className="text-muted-foreground -ml-2"
             onClick={() => setExpanded((value) => !value)}
           >
-            {expanded ? "Show fewer" : `Show ${hidden} more`}
+            {expanded ? t("Show fewer") : t("Show {0} more", hidden)}
           </Button>
         </div>
       ) : null}

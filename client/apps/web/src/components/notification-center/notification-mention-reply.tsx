@@ -126,7 +126,7 @@ export function MentionReply({
           />
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground/60 text-[10px]">
-              {mentionToken ? `${authorDisplayName} will be notified` : "Enter to send"}
+              {mentionToken ? t("{0} will be notified", authorDisplayName) : t("Enter to send")}
             </span>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="xs" className="text-2xs" onClick={closeComposer}>

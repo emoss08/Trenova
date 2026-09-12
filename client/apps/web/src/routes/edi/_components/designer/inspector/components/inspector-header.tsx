@@ -23,7 +23,7 @@ export default function InspectorHeader({
           ) : null}
         </div>
         <div className="text-muted-foreground mt-1 text-sm">
-          {context?.subtitle ?? "Loading message details."}
+          {context?.subtitle ?? t("Loading message details.")}
         </div>
       </div>
       {context ? (

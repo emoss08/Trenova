@@ -178,11 +178,11 @@ function CommodityDialog({
     >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Commodity" : "Add Commodity"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit Commodity") : t("Add Commodity")}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the commodity details"
-              : "Select a commodity and specify quantity and weight"}
+              ? t("Update the commodity details")
+              : t("Select a commodity and specify quantity and weight")}
           </DialogDescription>
         </DialogHeader>
         <FormGroup cols={1}>
@@ -219,7 +219,7 @@ function CommodityDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={handleSave} disabled={saving}>
-            {saving ? "Checking..." : "Save"}
+            {saving ? t("Checking...") : t("Save")}
           </Button>
         </DialogFooter>
       </DialogContent>

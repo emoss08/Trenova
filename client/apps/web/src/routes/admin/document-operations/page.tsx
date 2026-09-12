@@ -460,7 +460,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         <div>
           <div className="text-sm font-medium">{t("Extracted Content")}</div>
           <div className="text-muted-foreground text-[11px]">
-            {hasContent ? "Content available" : "Not extracted yet"}
+            {hasContent ? t("Content available") : t("Not extracted yet")}
           </div>
         </div>
       </div>
@@ -475,7 +475,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         <div>
           <div className="text-sm font-medium">{t("Shipment Draft")}</div>
           <div className="text-muted-foreground text-[11px]">
-            {hasDraft ? "Draft available" : "No draft generated"}
+            {hasDraft ? t("Draft available") : t("No draft generated")}
           </div>
         </div>
       </div>
@@ -755,7 +755,7 @@ export function DocumentOperationsPage() {
             <p className="text-muted-foreground mt-1 max-w-[300px] text-center text-xs">
               {diagnosticsQuery.error instanceof Error
                 ? diagnosticsQuery.error.message
-                : "Document not found or an unexpected error occurred"}
+                : t("Document not found or an unexpected error occurred")}
             </p>
             <Button
               variant="outline"

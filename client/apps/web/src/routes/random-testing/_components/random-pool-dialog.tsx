@@ -140,7 +140,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit pool" : "New random testing pool"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit pool") : t("New random testing pool")}</DialogTitle>
           <DialogDescription>
             {t("The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.")}
           </DialogDescription>
@@ -247,8 +247,8 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 <Alert variant={belowMinimum ? "destructive" : "default"}>
                   <AlertDescription>
                     {belowMinimum
-                      ? `Below the FMCSA minimums of ${DOT_MINIMUM_DRUG_RATE}% drug and ${DOT_MINIMUM_ALCOHOL_RATE}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.`
-                      : `Over ${EXAMPLE_POOL_SIZE} drivers, each round would draw about ${exampleDrug} for drug testing and ${exampleAlcohol} for alcohol.`}
+                      ? t("Below the FMCSA minimums of {0}% drug and {1}% alcohol (49 CFR 382.305). This pool is usable but is not evidence of DOT compliance.", DOT_MINIMUM_DRUG_RATE, DOT_MINIMUM_ALCOHOL_RATE)
+                      : t("Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.", EXAMPLE_POOL_SIZE, exampleDrug, exampleAlcohol)}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -258,7 +258,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Create"}
+                {isEdit ? t("Save") : t("Create")}
               </Button>
             </DialogFooter>
           </Form>

@@ -338,7 +338,7 @@ function MappingEditor({
             isLoading={saveMutation.isPending}
             loadingText={t("Saving...")}
           >
-            {initial.id ? "Save changes" : "Create mapping"}
+            {initial.id ? t("Save changes") : t("Create mapping")}
           </Button>
         </div>
       </Form>
@@ -534,7 +534,7 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
             <AlertDialogTitle>{t("Delete form mapping?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete
-                ? `"${pendingDelete.name}" will no longer apply to incoming form submissions. This cannot be undone.`
+                ? t("\"{0}\" will no longer apply to incoming form submissions. This cannot be undone.", pendingDelete.name)
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

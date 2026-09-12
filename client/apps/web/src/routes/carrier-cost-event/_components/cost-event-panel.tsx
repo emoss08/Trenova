@@ -60,7 +60,7 @@ export function CostEventPanel({
               <tr className="border-b">
                 <td className="px-3 py-2 font-medium">{t("Settlement")}</td>
                 <td className="px-3 py-2 text-right font-mono">
-                  {row.settlementId || "Unsettled"}
+                  {row.settlementId || t("Unsettled")}
                 </td>
               </tr>
               <tr className="bg-muted/30">

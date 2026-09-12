@@ -113,7 +113,7 @@ export function JournalEntryDetailPage() {
                 <dt className="text-muted-foreground">{t("Is Reversal")}</dt>
                 <dd className="mt-0.5">
                   <Badge variant={entry.isReversal ? "orange" : "secondary"}>
-                    {entry.isReversal ? "Yes" : "No"}
+                    {entry.isReversal ? t("Yes") : t("No")}
                   </Badge>
                 </dd>
               </div>

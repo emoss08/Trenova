@@ -128,7 +128,7 @@ function RuleValueInput({
     return (
       <Select value={stringValue} onValueChange={(val) => onChange(val)}>
         <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue>{selectedLabel ?? "Select..."}</SelectValue>
+          <SelectValue>{selectedLabel ?? t("Select...")}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
@@ -150,7 +150,7 @@ function RuleValueInput({
         onValueChange={(val) => onChange(val === "true")}
       >
         <SelectTrigger className="min-w-0 flex-1">
-          <SelectValue>{value === true ? "Yes" : value === false ? "No" : "Select..."}</SelectValue>
+          <SelectValue>{value === true ? t("Yes") : value === false ? t("No") : t("Select...")}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
@@ -259,7 +259,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground w-11 shrink-0 text-xs font-medium">
-                      {index === 0 ? "When" : "Else if"}
+                      {index === 0 ? t("When") : t("Else if")}
                     </span>
                     <Select
                       value={rule.field}

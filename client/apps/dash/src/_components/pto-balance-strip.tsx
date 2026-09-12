@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import {
@@ -29,6 +30,8 @@ export function PtoBalanceStrip({
   balances: PortalPtoBalance[] | undefined;
   isPending: boolean;
 }) {
+  const t = useT();
+
   if (isPending) {
     return <Skeleton className="mb-3 h-14 w-full rounded-xl" />;
   }
@@ -63,7 +66,7 @@ export function PtoBalanceStrip({
             </p>
             <p className="text-2xs text-muted-foreground">
               {Number(balance.pendingDays) > 0
-                ? `${days(balance.pendingDays)} pending`
+                ? t("{0} pending", days(balance.pendingDays))
                 : "available"}
               {balance.nextAccrual
                 ? ` · +${days(balance.nextAccrual.nominalDays)} ${formatUnixDateMedium(balance.nextAccrual.effectiveAt)}`

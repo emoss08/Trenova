@@ -54,7 +54,7 @@ export function CarrierContextRail({
       >
         <div className="flex flex-col gap-3 p-3">
           <div>
-            <h3 className="text-sm font-semibold">{carrierName ?? "Carrier"}</h3>
+            <h3 className="text-sm font-semibold">{carrierName ?? t("Carrier")}</h3>
             <p className="text-muted-foreground text-[11px]">
               {t("Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.")}
             </p>
@@ -131,7 +131,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
             <li key={event.id} className="rounded-md border p-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground font-mono text-[10px]">
-                  {event.proNumber || "No PRO"}
+                  {event.proNumber || t("No PRO")}
                 </span>
                 <span className="text-muted-foreground text-[10px]">
                   {formatSettlementMonthDay(event.eventDate)}
@@ -241,7 +241,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
       <p className="text-sm font-semibold">
         <AmountDisplay value={balance} currency="USD" />
         <span className="text-muted-foreground ml-1 text-[10px] font-normal">
-          {t("open balance{0}", list.length >= 100 ? " (latest 100 entries)" : "")}
+          {t("open balance{0}", list.length >= 100 ? t("(latest 100 entries)") : "")}
         </span>
       </p>
       {list.length > 0 && (

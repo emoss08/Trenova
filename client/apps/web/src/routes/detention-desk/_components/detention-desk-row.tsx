@@ -135,8 +135,8 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
         />
         <p className="text-2xs text-muted-foreground leading-tight tabular-nums">
           {occurrence.roundedMinutes > 0
-            ? `${formatDetentionMinutes(occurrence.roundedMinutes)} billable`
-            : "free time"}
+            ? t("{0} billable", formatDetentionMinutes(occurrence.roundedMinutes))
+            : t("free time")}
         </p>
       </div>
 

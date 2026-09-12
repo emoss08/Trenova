@@ -94,8 +94,8 @@ function SessionSide({
       <Badge variant="outline" className="w-fit px-0 font-mono">
         {t("PID {0}", pid)}
       </Badge>
-      <span className="text-sm font-medium">{appName || "Unknown app"}</span>
-      <span className="text-muted-foreground text-xs">{user || "Unknown user"}</span>
+      <span className="text-sm font-medium">{appName || t("Unknown app")}</span>
+      <span className="text-muted-foreground text-xs">{user || t("Unknown user")}</span>
       <span className="text-muted-foreground text-xs">{state}</span>
       <div
         className={`mt-1 flex flex-col gap-0.5 ${align === "end" ? "items-end" : "items-start"}`}
@@ -183,7 +183,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
             {t("PID {0} blocked by PID {1}", row.blockedPid, row.blockingPid)}
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
-            <Badge variant="secondary">{row.blockedWaitEventType || "Unknown"}</Badge>
+            <Badge variant="secondary">{row.blockedWaitEventType || t("Unknown")}</Badge>
             <span>{row.databaseName}</span>
           </CardDescription>
           <CardAction>

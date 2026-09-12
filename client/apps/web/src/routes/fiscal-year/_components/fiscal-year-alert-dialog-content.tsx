@@ -238,8 +238,8 @@ function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
         <AlertTriangleIcon />
         <AlertTitle>
           {plan.blockers.length === 1
-            ? "1 issue blocks this close"
-            : `${plan.blockers.length} issues block this close`}
+            ? t("1 issue blocks this close")
+            : t("{0} issues block this close", plan.blockers.length)}
         </AlertTitle>
         <AlertDescription>
           <ul className="list-inside list-disc">
@@ -265,12 +265,12 @@ function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
         />
       </div>
       <p className="text-muted-foreground text-sm">
-        {plan.netIncomeMinor < 0 ? "Debited to " : "Credited to "}
+        {plan.netIncomeMinor < 0 ? t("Debited to") : t("Credited to")}
         <span className="font-medium">
           {plan.retainedEarningsAccountCode} {plan.retainedEarningsAccountName}
         </span>
         {plan.nextFiscalYearName
-          ? `, with closing balances carried forward into ${plan.nextFiscalYearName}.`
+          ? t(", with closing balances carried forward into {0}.", plan.nextFiscalYearName)
           : "."}
       </p>
       <div className="flex flex-col gap-2">
@@ -306,7 +306,7 @@ function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
             <span className="font-mono">{t("reconciled · {0}", formatMinor(check.glBalanceMinor))}</span>
           ) : (
             <span className="text-destructive font-mono">
-              {t("off by {0} {1}", formatMinor(check.differenceMinor), check.enforced ? "" : " (not enforced)")}
+              {t("off by {0} {1}", formatMinor(check.differenceMinor), check.enforced ? "" : t("(not enforced)"))}
             </span>
           )}
         </div>
@@ -341,12 +341,12 @@ function EntrySummary({
     <div className="border-border rounded-md border p-3 text-sm">
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-medium">
-          {entry.kind === "Closing" ? "Closing entry" : "Opening entry"}
+          {entry.kind === "Closing" ? t("Closing entry") : t("Opening entry")}
         </span>
         <span className="font-mono text-xs">{formatMinor(entry.totalDebitMinor)}</span>
       </div>
       <p className="text-muted-foreground text-xs">
-        {t("{0} {1} into {2} {3} dated {4}", entry.lines.length, entry.lines.length === 1 ? "line" : "lines", entry.fiscalPeriodName, entry.createsPeriod ? " (created by this close)" : "", formatUnixDate(entry.accountingDate))}
+        {t("{0} {1} into {2} {3} dated {4}", entry.lines.length, entry.lines.length === 1 ? "line" : "lines", entry.fiscalPeriodName, entry.createsPeriod ? t("(created by this close)") : "", formatUnixDate(entry.accountingDate))}
       </p>
     </div>
   );

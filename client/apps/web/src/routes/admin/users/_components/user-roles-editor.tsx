@@ -155,7 +155,7 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
     <div className="rounded-md border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <p className="text-sm font-medium">{role?.name ?? "Unknown Role"}</p>
+          <p className="text-sm font-medium">{role?.name ?? t("Unknown Role")}</p>
           {role?.description && (
             <p className="text-muted-foreground mt-1 text-xs">{t(role.description)}</p>
           )}

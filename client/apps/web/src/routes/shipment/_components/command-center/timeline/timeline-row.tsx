@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
@@ -77,6 +78,8 @@ export function TimelineRowItem({
   onHoverChange,
   onSelectBar,
 }: TimelineRowItemProps) {
+  const t = useT();
+
   const isUnassigned = row.key === UNASSIGNED_ROW_KEY;
   const { active } = useDndContext();
   const activeBar = active?.data.current?.bar as TimelineBar | undefined;
@@ -146,7 +149,7 @@ export function TimelineRowItem({
             <span
               className={cn("truncate text-[11.5px] font-medium", isUnassigned && "text-warning")}
             >
-              {isUnassigned ? "Unassigned" : row.workerName}
+              {isUnassigned ? t("Unassigned") : row.workerName}
             </span>
             {row.alert && (
               <span
@@ -166,12 +169,12 @@ export function TimelineRowItem({
           {!collapsed && (
             <span className="font-table text-muted-foreground truncate text-[9.5px] tabular-nums">
               {isUnassigned
-                ? "Drop here to unassign"
+                ? t("Drop here to unassign")
                 : row.isCarrier
-                  ? "Carrier"
+                  ? t("Carrier")
                   : row.equipmentCodes.length > 0
                     ? row.equipmentCodes.join(" · ")
-                    : "No tractor"}
+                    : t("No tractor")}
               {" · "}
               {row.bars.length} {row.bars.length === 1 ? "load" : "loads"}
             </span>

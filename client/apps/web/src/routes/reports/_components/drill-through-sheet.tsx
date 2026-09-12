@@ -70,8 +70,8 @@ export function DrillThroughSheet({
           <SheetTitle>{t("Records behind this number")}</SheetTitle>
           <SheetDescription id="drill-description">
             {target?.rowLabel && target?.columnLabel
-              ? `${target.columnLabel} for ${target.rowLabel}`
-              : "The individual records this aggregate was built from."}
+              ? t("{0} for {1}", target.columnLabel, target.rowLabel)
+              : t("The individual records this aggregate was built from.")}
           </SheetDescription>
         </SheetHeader>
 

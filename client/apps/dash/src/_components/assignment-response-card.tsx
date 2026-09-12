@@ -114,7 +114,7 @@ export function AssignmentResponseCard({ load }: { load: PortalLoad }) {
               disabled={reason.trim().length === 0 || respond.isPending}
               onClick={() => respond.mutate(false)}
             >
-              {respond.isPending ? "Sending..." : "Decline load"}
+              {respond.isPending ? t("Sending...") : t("Decline load")}
             </Button>
           </DrawerFooter>
         </DrawerContent>

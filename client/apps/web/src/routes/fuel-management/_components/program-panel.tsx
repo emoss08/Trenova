@@ -185,7 +185,7 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-program-form" isLoading={isSubmitting}>
-            {isEdit ? "Save Changes" : "Create Program"}
+            {isEdit ? t("Save Changes") : t("Create Program")}
           </Button>
         </>
       }

@@ -196,7 +196,7 @@ export function TimelineBarItem({
               {originCode} → {destCode}
             </span>
           </p>
-          <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? "No customer"}</p>
+          <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? t("No customer")}</p>
           {bar.dwell && (
             <p
               className={cn(

@@ -103,6 +103,8 @@ export function FavoritesWidget({ widget }: WidgetProps) {
  * is the difference between "what happened" and "where was I".
  */
 function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean }) {
+  const t = useT();
+
   // Ask for more than we show when filtering to this user: the stream is
   // organization-wide, so a page of it may hold only a few of their entries.
   const { data: entries, isLoading } = useRecentActivityInfinite(mineOnly ? limit * 3 : limit);
@@ -118,7 +120,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
   if (rows.length === 0) {
     return (
       <WidgetEmpty>
-        {mineOnly ? "Nothing to jump back into yet." : "No recent activity."}
+        {mineOnly ? t("Nothing to jump back into yet.") : t("No recent activity.")}
       </WidgetEmpty>
     );
   }
@@ -129,7 +131,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
         <div key={entry.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-xs">
-              <span className="font-medium">{entry.user?.name ?? "Someone"}</span>{" "}
+              <span className="font-medium">{entry.user?.name ?? t("Someone")}</span>{" "}
               <span className="text-muted-foreground">{entry.operation}</span>{" "}
               <span className="text-muted-foreground">{entry.resource}</span>
             </span>

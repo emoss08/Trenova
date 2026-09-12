@@ -57,6 +57,8 @@ function RequirementRow({
   onUpload: () => void;
   disabled?: boolean;
 }) {
+  const t = useT();
+
   const done = requirement.satisfied;
 
   return (
@@ -93,7 +95,7 @@ function RequirementRow({
         disabled={disabled}
         className="shrink-0"
       >
-        {done ? "Replace" : "Upload"}
+        {done ? t("Replace") : t("Upload")}
       </Button>
     </div>
   );
@@ -139,8 +141,8 @@ export function ShipmentBillingReadinessPanel({
           <Progress value={progressValue} max={progressMax} variant={progressVariant} />
           <p className="text-muted-foreground text-xs tabular-nums">
             {totalRequirements > 0
-              ? `${completedRequirements} of ${totalRequirements} documents uploaded`
-              : "No documents required"}
+              ? t("{0} of {1} documents uploaded", completedRequirements, totalRequirements)
+              : t("No documents required")}
           </p>
         </div>
       </div>

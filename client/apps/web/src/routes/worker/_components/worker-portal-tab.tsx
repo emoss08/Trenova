@@ -155,7 +155,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               disabled={revoke.isPending}
               onClick={() => revoke.mutate()}
             >
-              {revoke.isPending ? "Revoking..." : "Cancel invitation"}
+              {revoke.isPending ? t("Revoking...") : t("Cancel invitation")}
             </Button>
           </div>
         ) : (
@@ -179,7 +179,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               disabled={invite.isPending}
               onClick={() => invite.mutate()}
             >
-              {invite.isPending ? "Sending..." : "Send invitation"}
+              {invite.isPending ? t("Sending...") : t("Send invitation")}
             </Button>
           </div>
         )}
@@ -208,8 +208,8 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm">{invitation.email}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Sent {0} {1} {2}", formatDate(invitation.createdAt), invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : "", invitation.acceptedAt
-                      ? ` · accepted ${formatDate(invitation.acceptedAt)}`
+                    {t("Sent {0} {1} {2}", formatDate(invitation.createdAt), invitation.invitedBy ? t("by {0}", invitation.invitedBy.name) : "", invitation.acceptedAt
+                      ? t("· accepted {0}", formatDate(invitation.acceptedAt))
                       : "")}
                   </p>
                 </div>
@@ -244,7 +244,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 revoke.mutate();
               }}
             >
-              {revoke.isPending ? "Revoking..." : "Revoke access"}
+              {revoke.isPending ? t("Revoking...") : t("Revoke access")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -285,7 +285,7 @@ export function TileEditorDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={UNLINKED}>
-                          {autoMatch ? "Same name" : "Not linked"}
+                          {autoMatch ? t("Same name") : t("Not linked")}
                         </SelectItem>
                         {dashboardParams.map((entry) => (
                           <SelectItem key={entry.name} value={entry.name}>

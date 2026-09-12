@@ -43,10 +43,10 @@ export function IftaJurisdictionMileageForm({
         <Alert>
           <RouteIcon className="size-4" />
           <AlertTitle>
-            {t("Written by {0}", source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : "the system")}
+            {t("Written by {0}", source ? IFTA_MILEAGE_SOURCE_LABELS[source].toLowerCase() : t("the system"))}
           </AlertTitle>
           <AlertDescription>
-            {t("These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}", shipmentMoveId ? ` Move ${shipmentMoveId}.` : "")}
+            {t("These miles came from the distance provider or telematics, not from a person, so they are read-only here. To correct a move's miles, add a manual entry for the same move and it replaces these rows on the return. {0}", shipmentMoveId ? t("Move {0}.", shipmentMoveId) : "")}
           </AlertDescription>
         </Alert>
       ) : null}

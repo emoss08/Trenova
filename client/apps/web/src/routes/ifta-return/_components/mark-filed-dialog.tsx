@@ -157,7 +157,7 @@ export function MarkFiledDialog({ open, onOpenChange, ret, period }: MarkFiledDi
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Recording..." : "Mark filed"}
+                {isPending ? t("Recording...") : t("Mark filed")}
               </Button>
             </DialogFooter>
           </Form>

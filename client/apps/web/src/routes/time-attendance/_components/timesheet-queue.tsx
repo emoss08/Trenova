@@ -352,8 +352,8 @@ function QueueRow({
             {waited !== null ? (
               <span className={cn("tabular-nums", waited >= 3 && "text-warning-foreground")}>
                 {waited === 0
-                  ? "Handed over today"
-                  : `Waiting ${waited} day${waited === 1 ? "" : "s"}`}
+                  ? t("Handed over today")
+                  : t("Waiting {0} day{1}", waited, waited === 1 ? "" : "s")}
               </span>
             ) : null}
             {meta.length > 0 ? <span className="truncate">{meta.join(" · ")}</span> : null}
@@ -441,15 +441,15 @@ function TimesheetSheet({
       <SheetContent className="sm:max-w-lg">
         <SheetHeader className="pr-10">
           <SheetTitle className="flex items-center gap-2">
-            {sheet ? sheetWorkerName(sheet) : "Timesheet"}
+            {sheet ? sheetWorkerName(sheet) : t("Timesheet")}
             {tone ? <Badge variant={tone.variant}>{t(tone.label)}</Badge> : null}
           </SheetTitle>
           <SheetDescription>
             {sheet
-              ? `Week of ${formatShiftDate(sheet.periodStart)}, overtime past ${formatHours(
+              ? t("Week of {0}, overtime past {1}", formatShiftDate(sheet.periodStart), formatHours(
                   sheet.overtimeThresholdMinutes,
-                )}`
-              : "Loading"}
+                ))
+              : t("Loading")}
           </SheetDescription>
         </SheetHeader>
 

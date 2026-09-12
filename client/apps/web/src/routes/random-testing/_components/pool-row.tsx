@@ -106,9 +106,9 @@ export function PoolRow({
               <TooltipContent className="text-xs">
                 {slot.key} · {SLOT_STATE_LABELS[slot.state]}
                 {slot.draw
-                  ? ` · ${slot.draw.drugSelected}/${slot.draw.drugTarget} drug, ${slot.draw.alcoholSelected}/${slot.draw.alcoholTarget} alcohol`
+                  ? t("· {0}/{1} drug, {2}/{3} alcohol", slot.draw.drugSelected, slot.draw.drugTarget, slot.draw.alcoholSelected, slot.draw.alcoholTarget)
                   : ""}
-                {slot.voided > 0 ? ` · ${slot.voided} voided` : ""}
+                {slot.voided > 0 ? t("· {0} voided", slot.voided) : ""}
               </TooltipContent>
             </Tooltip>
           </li>
@@ -117,10 +117,10 @@ export function PoolRow({
 
       <p className="text-muted-foreground min-w-0 text-xs tabular-nums">
         {progress.rounds === 0 ? (
-          "Nothing drawn this year"
+          t("Nothing drawn this year")
         ) : (
           <>
-            {t("Drug {0} of {1} · Alcohol {2} of {3} {4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : " · a round fell short")}
+            {t("Drug {0} of {1} · Alcohol {2} of {3} {4}", progress.drugSelected, progress.drugTarget, progress.alcoholSelected, progress.alcoholTarget, progress.onPace ? "" : t("· a round fell short"))}
           </>
         )}
       </p>
@@ -155,7 +155,7 @@ export function PoolRow({
             onClick={() => onDraw(pool.id)}
           >
             <DicesIcon className="size-3" />
-            {owed ? `Draw ${owed.label}` : "Run draw"}
+            {owed ? t("Draw {0}", owed.label) : t("Run draw")}
           </Button>
         ) : null}
       </div>

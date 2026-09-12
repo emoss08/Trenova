@@ -140,7 +140,7 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
                         {t("UN{0} — {1}", option.unNumber, option.properShippingName)}
                       </span>
                       <span className="text-2xs text-muted-foreground">
-                        {t("Class {0} {1}", option.hazardClass, option.packingGroup ? ` | PG ${option.packingGroup}` : "")}
+                        {t("Class {0} {1}", option.hazardClass, option.packingGroup ? t("| PG {0}", option.packingGroup) : "")}
                       </span>
                     </button>
                   ))}

@@ -261,8 +261,8 @@ const PolicyRow = memo(function PolicyRow({
             <span aria-hidden="true">/</span>
             <span className="text-muted-foreground text-xs">
               {conditionCount === 0
-                ? "No conditions"
-                : `${conditionCount} condition${conditionCount === 1 ? "" : "s"}`}
+                ? t("No conditions")
+                : t("{0} condition{1}", conditionCount, conditionCount === 1 ? "" : "s")}
             </span>
           </div>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">

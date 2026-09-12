@@ -111,7 +111,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
             {t("Cancel")}
           </Button>
           <Button type="submit" form="fuel-index-form" isLoading={isSubmitting}>
-            {isEdit ? "Save Changes" : "Create Index"}
+            {isEdit ? t("Save Changes") : t("Create Index")}
           </Button>
         </>
       }

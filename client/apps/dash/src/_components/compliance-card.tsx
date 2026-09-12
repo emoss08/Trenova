@@ -56,7 +56,7 @@ export function ComplianceCard() {
           <h2 className="text-sm font-semibold">{t("Qualification file")}</h2>
         </div>
         <Badge variant={data.isQualified ? "active" : "inactive"}>
-          {data.isQualified ? "Qualified" : "Action needed"}
+          {data.isQualified ? t("Qualified") : t("Action needed")}
         </Badge>
       </div>
 
@@ -66,7 +66,7 @@ export function ComplianceCard() {
           <dd className="font-medium">
             {data.licenseNumber}
             {data.licenseState ? ` · ${data.licenseState}` : ""}
-            {data.cdlClass ? ` · Class ${data.cdlClass}` : ""}
+            {data.cdlClass ? t("· Class {0}", data.cdlClass) : ""}
           </dd>
         </div>
         {data.endorsement ? (
@@ -251,8 +251,8 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
           <DrawerTitle>{t("Update contact details")}</DrawerTitle>
           <DrawerDescription>
             {requiresApproval
-              ? "Your carrier checks contact changes before they land on your record. Only the fields you change are sent."
-              : "Keep your phone and address current so dispatch and payroll can reach you."}
+              ? t("Your carrier checks contact changes before they land on your record. Only the fields you change are sent.")
+              : t("Keep your phone and address current so dispatch and payroll can reach you.")}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -302,7 +302,7 @@ function ContactEditDrawer({ profile, open, onOpenChange }: ContactEditDrawerPro
             disabled={!canSave || save.isPending}
             onClick={() => save.mutate()}
           >
-            {save.isPending ? "Sending..." : requiresApproval ? "Send for approval" : "Save"}
+            {save.isPending ? t("Sending...") : requiresApproval ? t("Send for approval") : t("Save")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

@@ -80,7 +80,7 @@ function CatalogLoadError({
         <p className="text-muted-foreground mt-0.5 max-w-80 text-xs">{message}</p>
       </div>
       <Button type="button" variant="outline" size="xs" onClick={onRetry} disabled={isRetrying}>
-        {isRetrying ? "Retrying…" : "Try again"}
+        {isRetrying ? t("Retrying…") : t("Try again")}
       </Button>
     </div>
   );

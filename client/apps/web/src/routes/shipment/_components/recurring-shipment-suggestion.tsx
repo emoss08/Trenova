@@ -99,8 +99,8 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("A recurring shipment already covers this lane")}</p>
         <p className="text-muted-foreground text-xs">
-          {t("{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.", `"${series.name}" runs ${(describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()}`, series.nextOccurrenceAt
-            ? ` — next pickup ${formatToUserTimezone(series.nextOccurrenceAt)}`
+          {t("{0} {1} . You can generate the next occurrence from it instead of entering this shipment manually.", t("\"{0}\" runs {1}", series.name, (describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()), series.nextOccurrenceAt
+            ? t("— next pickup {0}", formatToUserTimezone(series.nextOccurrenceAt))
             : "")}
         </p>
         <div className="mt-1 flex items-center gap-2">
@@ -110,7 +110,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
             onClick={handleGenerate}
             disabled={generating || series.status !== "Active"}
           >
-            {generating ? "Generating..." : "Generate from series"}
+            {generating ? t("Generating...") : t("Generate from series")}
           </Button>
           <Button type="button" size="sm" variant="ghost" onClick={onDismiss}>
             {t("Continue manual entry")}
@@ -144,7 +144,7 @@ function PatternHint({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("This looks like a repeating lane")}</p>
         <p className="text-muted-foreground text-xs">
-          {`This customer has shipped this lane ${shipmentCount} times in the last 90 days. Set it up as a recurring shipment and it will generate itself on schedule.`}
+          {t("This customer has shipped this lane {0} times in the last 90 days. Set it up as a recurring shipment and it will generate itself on schedule.", shipmentCount)}
         </p>
         <div className="mt-1">
           <Button

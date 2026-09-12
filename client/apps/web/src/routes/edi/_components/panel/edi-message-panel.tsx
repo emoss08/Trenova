@@ -132,7 +132,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
               {detail.deliveryStatus ? (
                 <EDIMessageDeliveryStatusBadge status={detail.deliveryStatus} />
               ) : (
-                "Not queued"
+                t("Not queued")
               )}
             </DetailField>
             <DetailField label={t("Attempts")}>{detail.deliveryAttempts}</DetailField>

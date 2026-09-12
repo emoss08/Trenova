@@ -234,6 +234,8 @@ export function EDIOverview() {
 }
 
 function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
+  const t = useT();
+
   const isMessage = item.kind === "Message";
   const target = isMessage
     ? `/edi/messages?panelType=edit&panelEntityId=${item.id}`
@@ -245,7 +247,7 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">
-            {isMessage ? "Dead-lettered message" : "Quarantined file"}
+            {isMessage ? t("Dead-lettered message") : t("Quarantined file")}
           </Badge>
           {item.reference && <span className="truncate text-sm font-medium">{item.reference}</span>}
           {item.partnerName && (

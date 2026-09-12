@@ -250,12 +250,12 @@ export function CommentComposer({
           {isSubmitting ? (
             <>
               <Spinner variant="ellipsis" className="size-3.5" />
-              {!compact && "Sending..."}
+              {!compact && t("Sending...")}
             </>
           ) : (
             <>
               <SendIcon className="size-3.5" />
-              {!compact && "Send"}
+              {!compact && t("Send")}
             </>
           )}
         </Button>

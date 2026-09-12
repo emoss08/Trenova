@@ -209,7 +209,7 @@ export function SavedViewField({
                 onClick={handleSave}
                 disabled={createView.isPending || name.trim() === ""}
               >
-                {createView.isPending ? "Saving..." : "Save view"}
+                {createView.isPending ? t("Saving...") : t("Save view")}
               </Button>
             </div>
           </m.div>

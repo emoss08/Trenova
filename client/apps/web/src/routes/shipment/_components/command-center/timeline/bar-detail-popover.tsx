@@ -75,10 +75,10 @@ export function BarDetailPopover({
         <div className="border-border flex items-start justify-between gap-2 border-b px-3 py-2">
           <div className="flex min-w-0 flex-col">
             <span className="font-table truncate text-[12px] font-semibold tabular-nums">
-              {shipment.proNumber ?? shipment.bol ?? "Shipment"}
+              {shipment.proNumber ?? shipment.bol ?? t("Shipment")}
             </span>
             <span className="text-muted-foreground truncate text-[10.5px]">
-              {shipment.customer?.name ?? "No customer"}
+              {shipment.customer?.name ?? t("No customer")}
             </span>
           </div>
           <ShipmentStatusBadge status={shipment.status} />
@@ -94,7 +94,7 @@ export function BarDetailPopover({
             )}
           >
             <TimerIcon className="size-3 shrink-0" />
-            {t("Dwelling {0} at {1} {2}", formatDurationFromSeconds(bar.dwell.seconds), bar.dwell.locationName, bar.dwell.severity === "critical" && " · detention risk")}
+            {t("Dwelling {0} at {1} {2}", formatDurationFromSeconds(bar.dwell.seconds), bar.dwell.locationName, bar.dwell.severity === "critical" && t("· detention risk"))}
           </div>
         )}
 
@@ -136,10 +136,10 @@ export function BarDetailPopover({
           </ol>
           <p className="font-table text-muted-foreground text-[10px] tabular-nums">
             {carrierName
-              ? `Carrier: ${carrierName}`
+              ? t("Carrier: {0}", carrierName)
               : workerName
                 ? `${workerName}${tractorCode ? ` · ${tractorCode}` : ""}`
-                : "Unassigned"}
+                : t("Unassigned")}
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export function BarDetailPopover({
               onClick={() => onReassign(bar)}
             >
               <ArrowLeftRightIcon className="size-3" />
-              {bar.assignment || bar.carrierAssignment ? "Reassign" : "Assign"}
+              {bar.assignment || bar.carrierAssignment ? t("Reassign") : t("Assign")}
             </Button>
           )}
         </div>

@@ -118,7 +118,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
               className="flex flex-wrap items-center justify-between gap-2 border-t pt-1.5 text-xs first:border-t-0 first:pt-0"
             >
               <span className="flex min-w-0 flex-wrap items-center gap-2">
-                <span className="font-medium">{enrollment.benefitPlan?.name ?? "Plan"}</span>
+                <span className="font-medium">{enrollment.benefitPlan?.name ?? t("Plan")}</span>
                 {enrollment.benefitPlan ? (
                   <Badge variant="secondary">
                     {benefitPlanTypeLabel(enrollment.benefitPlan.planType)}
@@ -131,7 +131,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                   {coverageTierLabel(enrollment.coverageTier)}
                 </span>
                 <span className="text-muted-foreground">
-                  {t("from {0} {1}", formatUnixDate(enrollment.effectiveFrom), enrollment.effectiveTo ? ` to ${formatUnixDate(enrollment.effectiveTo)}` : "")}
+                  {t("from {0} {1}", formatUnixDate(enrollment.effectiveFrom), enrollment.effectiveTo ? t("to {0}", formatUnixDate(enrollment.effectiveTo)) : "")}
                 </span>
                 {enrollment.waivedReason ? (
                   <span className="text-muted-foreground truncate">{enrollment.waivedReason}</span>

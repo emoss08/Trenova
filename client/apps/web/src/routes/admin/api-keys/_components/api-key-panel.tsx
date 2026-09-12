@@ -474,7 +474,7 @@ function TokenSuccessDialog({
           </Button>
           <Button type="button" onClick={() => copy(token, { withToast: true })}>
             {isCopied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-            {isCopied ? "Copied" : "Copy API Key"}
+            {isCopied ? t("Copied") : t("Copy API Key")}
           </Button>
         </DialogFooter>
       </DialogContent>

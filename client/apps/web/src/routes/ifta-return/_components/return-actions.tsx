@@ -68,7 +68,7 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
       {transitions.has("generate") ? (
         <Button size="sm" onClick={() => generate.mutate()} disabled={generate.isPending}>
           <PlayIcon className="size-3.5" />
-          {generate.isPending ? "Generating..." : "Generate the return"}
+          {generate.isPending ? t("Generating...") : t("Generate the return")}
         </Button>
       ) : null}
 
@@ -81,7 +81,7 @@ export function ReturnActions({ ret, period, perms }: ReturnActionsProps) {
           title={t("Rebuild every line from the miles, fuel and rates on file now.")}
         >
           <RefreshCwIcon className="size-3.5" />
-          {recompute.isPending ? "Recomputing..." : "Recompute"}
+          {recompute.isPending ? t("Recomputing...") : t("Recompute")}
         </Button>
       ) : null}
 

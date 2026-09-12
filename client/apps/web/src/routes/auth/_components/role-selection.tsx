@@ -122,8 +122,8 @@ export function RoleSelection({
       />
       <StepHeading title={t("Select active roles")}>
         {organizationName
-          ? `Scope this session at ${organizationName}. You can switch later without signing out.`
-          : "Scope this session. You can switch later without signing out."}
+          ? t("Scope this session at {0}. You can switch later without signing out.", organizationName)
+          : t("Scope this session. You can switch later without signing out.")}
       </StepHeading>
 
       <div
@@ -155,8 +155,8 @@ export function RoleSelection({
         onClick={() => void activateRoles()}
       >
         {selectedCount === 0
-          ? "Select at least one role"
-          : `Activate ${selectedCount} role${selectedCount === 1 ? "" : "s"}`}
+          ? t("Select at least one role")
+          : t("Activate {0} role{1}", selectedCount, selectedCount === 1 ? "" : "s")}
       </AuthSubmit>
 
       {onBack ? (

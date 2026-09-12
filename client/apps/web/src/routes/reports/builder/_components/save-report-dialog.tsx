@@ -79,7 +79,7 @@ export function SaveReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isNew ? "Save Report" : "Save Changes"}</DialogTitle>
+          <DialogTitle>{isNew ? t("Save Report") : t("Save Changes")}</DialogTitle>
           <DialogDescription>
             {t("Saving creates a new revision — runs always execute against a specific revision.")}
           </DialogDescription>
@@ -212,7 +212,7 @@ export function SaveReportDialog({
             {t("Cancel")}
           </Button>
           <Button onClick={onSave} disabled={saving || meta.name.trim() === ""}>
-            {saving ? "Saving..." : "Save Report"}
+            {saving ? t("Saving...") : t("Save Report")}
           </Button>
         </DialogFooter>
       </DialogContent>

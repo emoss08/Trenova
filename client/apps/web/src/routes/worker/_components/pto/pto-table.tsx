@@ -200,7 +200,7 @@ export default function PTODataTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t("Workers are notified in Dash and by SMS once their time off is approved. {0}", pendingApproval && pendingApproval.skipped > 0
-                ? ` ${pendingApproval.skipped} selected request${pendingApproval.skipped === 1 ? " is" : "s are"} not eligible and will be skipped.`
+                ? t("{0} selected request{1} not eligible and will be skipped.", pendingApproval.skipped, pendingApproval.skipped === 1 ? " is" : t("s are"))
                 : "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -213,7 +213,7 @@ export default function PTODataTable() {
                 void confirmApproval();
               }}
             >
-              {approving ? PTO_ACTION_LABELS.Approve.loadingLabel : "Approve"}
+              {approving ? PTO_ACTION_LABELS.Approve.loadingLabel : t("Approve")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -93,7 +93,7 @@ export default function VersionAndSegmentRail() {
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-sm font-medium">{segment.segmentId}</span>
                       <Badge variant={segment.required ? "active" : "outline"}>
-                        {segment.required ? "Req" : "Opt"}
+                        {segment.required ? t("Req") : t("Opt")}
                       </Badge>
                     </span>
                     <span className="text-muted-foreground block truncate text-xs">

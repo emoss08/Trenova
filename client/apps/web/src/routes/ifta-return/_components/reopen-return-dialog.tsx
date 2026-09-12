@@ -118,7 +118,7 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
                 {t("Keep it finalized")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Reopening..." : "Reopen return"}
+                {isPending ? t("Reopening...") : t("Reopen return")}
               </Button>
             </DialogFooter>
           </Form>

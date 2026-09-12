@@ -106,11 +106,11 @@ export function BillingQueueChargeDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Charge" : "Add Charge"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("Edit Charge") : t("Add Charge")}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the accessorial charge details"
-              : "Select an accessorial charge and configure billing details"}
+              ? t("Update the accessorial charge details")
+              : t("Select an accessorial charge and configure billing details")}
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={handleSubmit(onSubmit)}>

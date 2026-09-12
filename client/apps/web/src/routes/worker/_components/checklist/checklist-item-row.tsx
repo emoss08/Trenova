@@ -177,7 +177,7 @@ export function ChecklistItemRow({
           <span>{CHECKLIST_ITEM_KIND_LABELS[kind]}</span>
           {pending && item.dueAt ? (
             <span>
-              · {item.overdue ? "Due since" : "Due"} {formatUnixDateMedium(item.dueAt)}
+              · {item.overdue ? t("Due since") : t("Due")} {formatUnixDateMedium(item.dueAt)}
             </span>
           ) : null}
           {line ? <span>· {line}</span> : null}

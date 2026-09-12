@@ -200,8 +200,8 @@ export function PayrollPanel() {
             >
               <PlayIcon className="size-3.5" />
               {readySheets.length === 0
-                ? "Nothing to run"
-                : `Run ${readySheets.length} timesheet${readySheets.length === 1 ? "" : "s"}`}
+                ? t("Nothing to run")
+                : t("Run {0} timesheet{1}", readySheets.length, readySheets.length === 1 ? "" : "s")}
             </Button>
           </div>
         </header>
@@ -339,10 +339,10 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <span className="text-sm font-medium tabular-nums">
             {formatShiftDate(run.periodStart)} – {formatShiftDate(run.periodEnd - SECONDS_IN_DAY)}
           </span>
-          <Badge variant={voided ? "inactive" : "active"}>{voided ? "Voided" : "Sent"}</Badge>
+          <Badge variant={voided ? "inactive" : "active"}>{voided ? t("Voided") : t("Sent")}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
-          {t("{0} timesheet{1} {2} {3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? `, sent ${formatShiftDate(run.generatedAt)}` : "", run.voidReason ? `. Voided: ${run.voidReason}` : "")}
+          {t("{0} timesheet{1} {2} {3}", run.timesheetCount, run.timesheetCount === 1 ? "" : "s", run.generatedAt ? t(", sent {0}", formatShiftDate(run.generatedAt)) : "", run.voidReason ? t(". Voided: {0}", run.voidReason) : "")}
         </span>
       </div>
       <div className="col-span-3 flex min-w-0 items-center gap-3 md:col-span-1">

@@ -41,7 +41,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-semibold">{t("Driver qualification file")}</h3>
             <Badge variant={file.complete ? "active" : "inactive"}>
-              {file.complete ? "Complete" : "Incomplete"}
+              {file.complete ? t("Complete") : t("Incomplete")}
             </Badge>
             <InfoPopover title={t("Driver qualification file")}>
               <p>
@@ -120,8 +120,8 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
           {file.retentionExpiresAt ? (
             <span className="text-muted-foreground">
               {file.purgeEligible
-                ? `Held past retention since ${formatUnixDate(file.retentionExpiresAt)}`
-                : `Hold until ${formatUnixDate(file.retentionExpiresAt)} · 49 CFR 391.51(d)`}
+                ? t("Held past retention since {0}", formatUnixDate(file.retentionExpiresAt))
+                : t("Hold until {0} · 49 CFR 391.51(d)", formatUnixDate(file.retentionExpiresAt))}
             </span>
           ) : null}
         </div>

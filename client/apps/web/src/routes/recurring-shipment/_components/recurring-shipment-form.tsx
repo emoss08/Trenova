@@ -66,8 +66,8 @@ function SchedulePreview() {
         </span>
         <span className="text-2xs text-muted-foreground">
           {autoGenerate
-            ? `Shipments are ${lead}.`
-            : `Auto-generation is off — occurrences wait for someone to generate them, and would be ${lead}.`}
+            ? t("Shipments are {0}.", lead)
+            : t("Auto-generation is off — occurrences wait for someone to generate them, and would be {0}.", lead)}
         </span>
       </div>
     </div>

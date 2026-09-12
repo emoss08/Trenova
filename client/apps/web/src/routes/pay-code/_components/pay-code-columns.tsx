@@ -100,8 +100,8 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
         if (row.original.direction !== "Earning") return null;
         return (
           <span className="text-muted-foreground text-[11px]">
-            {row.original.taxable ? "Taxable" : "Reimbursement"}
-            {!row.original.countsTowardGuarantee && " · excl. guarantee"}
+            {row.original.taxable ? translate("Taxable") : translate("Reimbursement")}
+            {!row.original.countsTowardGuarantee && translate("· excl. guarantee")}
           </span>
         );
       },

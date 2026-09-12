@@ -236,6 +236,8 @@ type TrainingSectionProps = {
 };
 
 function TrainingSection({ title, hint, items, empty, ...cardProps }: TrainingSectionProps) {
+  const t = useT();
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
@@ -244,7 +246,7 @@ function TrainingSection({ title, hint, items, empty, ...cardProps }: TrainingSe
       </div>
       {items.length === 0 ? (
         <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-xs">
-          {empty ?? "Nothing on file."}
+          {empty ?? t("Nothing on file.")}
         </p>
       ) : (
         <div className="divide-border divide-y rounded-lg border">

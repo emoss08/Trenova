@@ -235,7 +235,7 @@ export function BlackoutDatesField() {
           </DropdownMenu>
 
           <span className="text-2xs text-muted-foreground ml-auto pr-1 tabular-nums">
-            {atCapacity ? `Limit ${MAX_BLACKOUT_DATES} reached` : `${dates.length} blocked`}
+            {atCapacity ? t("Limit {0} reached", MAX_BLACKOUT_DATES) : t("{0} blocked", dates.length)}
           </span>
           {dates.length > 0 && (
             <Button
@@ -262,7 +262,7 @@ export function BlackoutDatesField() {
             {pastDates.length > 0 && (
               <div className="border-border flex items-center gap-2 border-b px-2.5 py-1.5">
                 <span className="text-2xs text-muted-foreground">
-                  {t("{0} {1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? "day has" : "days have")}
+                  {t("{0} {1} already passed and no longer affect the schedule.", pastDates.length, pastDates.length === 1 ? t("day has") : t("days have"))}
                 </span>
                 <Button
                   type="button"

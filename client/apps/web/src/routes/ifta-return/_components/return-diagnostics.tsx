@@ -290,7 +290,7 @@ function BackfillSession({
           onClick={() => start.mutate()}
           disabled={count.isPending || dryRun === null || nothingToDo || start.isPending}
         >
-          {start.isPending ? "Starting..." : "Start the backfill"}
+          {start.isPending ? t("Starting...") : t("Start the backfill")}
         </Button>
       </DialogFooter>
     </>

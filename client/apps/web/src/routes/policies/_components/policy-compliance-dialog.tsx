@@ -77,7 +77,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <FileSignatureIcon className="text-muted-foreground size-4" />
-            {policy?.title ?? "Policy"}
+            {policy?.title ?? t("Policy")}
           </SheetTitle>
           <SheetDescription>
             {t("Version {0}. A signature on an earlier version does not count — those people are outstanding again.", view?.policy.versionLabel ?? policy?.versionLabel)}
@@ -107,10 +107,10 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                 </p>
                 <p className="text-muted-foreground text-xs">
                   {total === 0
-                    ? "Nobody it applies to is on the roster yet."
+                    ? t("Nobody it applies to is on the roster yet.")
                     : view.outstanding === 0
-                      ? "Everybody it applies to has signed."
-                      : `${view.outstanding} still to sign.`}
+                      ? t("Everybody it applies to has signed.")
+                      : t("{0} still to sign.", view.outstanding)}
                 </p>
               </div>
             </section>

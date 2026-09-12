@@ -123,7 +123,7 @@ export function HolidayDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit date" : "Add a date"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit date") : t("Add a date")}</DialogTitle>
           <DialogDescription>
             {t("Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.")}
           </DialogDescription>
@@ -201,7 +201,7 @@ export function HolidayDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
-                {isEdit ? "Save changes" : "Add date"}
+                {isEdit ? t("Save changes") : t("Add date")}
               </Button>
             </DialogFooter>
           </Form>

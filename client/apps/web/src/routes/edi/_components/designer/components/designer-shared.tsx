@@ -107,7 +107,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
           </div>
           <ScrollArea className="min-h-0" viewportClassName="min-h-0">
             <pre className="text-background p-3 font-mono text-xs">
-              {isLoading ? "Rendering preview..." : previewContent}
+              {isLoading ? t("Rendering preview...") : previewContent}
             </pre>
           </ScrollArea>
         </div>
@@ -216,9 +216,11 @@ function ReadOnlyBanner({ reason }: { reason: string }) {
 }
 
 function VersionStatusBadge({ version }: { version: EDITemplateVersion }) {
+  const t = useT();
+
   const variant =
     version.status === "Active" ? "active" : version.status === "Draft" ? "warning" : "outline";
-  return <Badge variant={variant}>{version.isActive ? "Active" : version.status}</Badge>;
+  return <Badge variant={variant}>{version.isActive ? t("Active") : version.status}</Badge>;
 }
 
 function InputBlock({

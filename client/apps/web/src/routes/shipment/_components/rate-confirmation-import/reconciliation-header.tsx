@@ -59,7 +59,7 @@ export function ReconciliationHeader({
         <div className="flex items-center gap-1.5">
           {issueCount > 0 && (
             <Button variant="ghost" size="sm" onClick={onToggleFilter} className="h-7 text-xs">
-              {showIssuesOnly ? "Show all" : "Issues only"}
+              {showIssuesOnly ? t("Show all") : t("Issues only")}
             </Button>
           )}
           {counts.needsReview > 0 && (

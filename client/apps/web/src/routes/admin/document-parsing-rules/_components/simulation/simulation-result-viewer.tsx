@@ -31,7 +31,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
-          {result.matched ? "Matched" : "Not Matched"}
+          {result.matched ? t("Matched") : t("Not Matched")}
         </Badge>
         <Badge
           variant={result.validationPassed ? "active" : "inactive"}
@@ -42,7 +42,7 @@ export function SimulationResultViewer({ result }: { result: SimulationResult })
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
-          {result.validationPassed ? "Validation Passed" : "Validation Failed"}
+          {result.validationPassed ? t("Validation Passed") : t("Validation Failed")}
         </Badge>
         {result.candidate?.overallConfidence != null && (
           <Badge variant="info" className="gap-1.5 px-3 py-1 text-sm">
@@ -127,7 +127,7 @@ function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentPa
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          {t("Confidence: {0}% {1}", ((analysis.overallConfidence ?? 0) * 100).toFixed(1), analysis.reviewStatus ? ` \u00b7 Status: ${analysis.reviewStatus}` : "")}
+          {t("Confidence: {0}% {1}", ((analysis.overallConfidence ?? 0) * 100).toFixed(1), analysis.reviewStatus ? t("· Status: {0}", analysis.reviewStatus) : "")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

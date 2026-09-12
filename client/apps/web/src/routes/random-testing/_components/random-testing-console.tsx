@@ -181,7 +181,9 @@ export default function RandomTestingConsole() {
       {overview.missed > 0 ? (
         <Alert variant="warning">
           <AlertDescription>
-            {t("{0} this year {1} never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.", overview.missed === 1 ? "A round" : `${overview.missed} rounds`, overview.missed === 1 ? "was" : "were")}
+            {overview.missed === 1
+              ? t("A round this year was never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.")
+              : t("{0} rounds this year were never drawn. A missed period cannot be drawn after it has ended; record why in the pool's description so the gap is explained when the programme is audited.", overview.missed)}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -255,8 +257,8 @@ export default function RandomTestingConsole() {
         {rounds.length === 0 ? (
           <SectionPanelQuiet>
             {draws.length === 0
-              ? "No round has been drawn yet."
-              : "No round matches this pool and status."}
+              ? t("No round has been drawn yet.")
+              : t("No round matches this pool and status.")}
           </SectionPanelQuiet>
         ) : (
           <RoundsTable

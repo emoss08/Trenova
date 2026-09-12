@@ -121,7 +121,7 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
         isSwitching={switchMutation.isPending}
       />
       <span className="min-w-0 flex-1 truncate text-left text-sm font-semibold">
-        {currentOrg?.name ?? "Trenova"}
+        {currentOrg?.name ?? t("Trenova")}
       </span>
     </>
   );

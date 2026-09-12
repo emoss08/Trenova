@@ -355,7 +355,7 @@ function AuthEventsTable({ records, isLoading }: { records: AuthEvent[]; isLoadi
           <TableCell>
             <div className="font-medium">{formatIdentityProviderName(item.provider)}</div>
             <div className="text-muted-foreground text-xs">
-              {item.ipAddress || "No IP captured"}
+              {item.ipAddress || t("No IP captured")}
             </div>
           </TableCell>
           <TableCell>
@@ -434,7 +434,7 @@ function ExternalIdentitiesTable({
           </TableCell>
           <TableCell className="max-w-80 truncate">{item.externalSubject}</TableCell>
           <TableCell className="text-muted-foreground">
-            {item.lastLoginAt ? formatUnixDateTimeOrDash(item.lastLoginAt) : "Never"}
+            {item.lastLoginAt ? formatUnixDateTimeOrDash(item.lastLoginAt) : t("Never")}
           </TableCell>
           <TableCell className="text-muted-foreground">
             {formatUnixDateTimeOrDash(item.createdAt)}
@@ -469,14 +469,14 @@ function MFAAuthenticatorsTable({
           </TableCell>
           <TableCell>
             <Badge variant={item.enabled ? "active" : "inactive"}>
-              {item.enabled ? "Enabled" : "Disabled"}
+              {item.enabled ? t("Enabled") : t("Disabled")}
             </Badge>
           </TableCell>
           <TableCell className="text-muted-foreground">
-            {item.verifiedAt ? formatUnixDateTimeOrDash(item.verifiedAt) : "Not verified"}
+            {item.verifiedAt ? formatUnixDateTimeOrDash(item.verifiedAt) : t("Not verified")}
           </TableCell>
           <TableCell className="text-muted-foreground">
-            {item.lastUsedAt ? formatUnixDateTimeOrDash(item.lastUsedAt) : "Never"}
+            {item.lastUsedAt ? formatUnixDateTimeOrDash(item.lastUsedAt) : t("Never")}
           </TableCell>
         </TableRow>
       ))}

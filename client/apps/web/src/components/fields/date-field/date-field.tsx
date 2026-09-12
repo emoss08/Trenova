@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -58,6 +59,8 @@ function DateFieldControl({
   onClear,
   onBlur,
 }: DateFieldControlProps) {
+  const t = useT();
+
   const [open, setOpen] = useState(false);
 
   return (
@@ -87,7 +90,7 @@ function DateFieldControl({
             )}
           >
             <CalendarIcon className="mr-0.5" />
-            {dateValue ? format(dateValue, "PPP") : <span>{placeholder || "Pick a date"}</span>}
+            {dateValue ? format(dateValue, "PPP") : <span>{placeholder || t("Pick a date")}</span>}
             {clearable && dateValue && !isLocked && (
               <XIcon
                 className="ml-auto h-4 w-4 cursor-pointer"

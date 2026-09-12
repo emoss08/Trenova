@@ -572,7 +572,7 @@ export default function CommandCenterTimeline({
             <AlertDialogTitle>{t("Unassign this move?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingUnassign
-                ? `${pendingUnassign.shipment.proNumber ?? "This shipment"} will lose its driver and equipment and return to the unassigned lane.`
+                ? t("{0} will lose its driver and equipment and return to the unassigned lane.", pendingUnassign.shipment.proNumber ?? t("This shipment"))
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

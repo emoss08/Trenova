@@ -489,9 +489,9 @@ function ResourceRow({
               {isGranted && (
                 <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
                   {isFullAccess
-                    ? "Full Access"
+                    ? t("Full Access")
                     : isViewOnly
-                      ? "View Only"
+                      ? t("View Only")
                       : `${operationCount}/${totalOperations}`}
                 </Badge>
               )}

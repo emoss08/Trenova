@@ -289,7 +289,7 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Source Document")}
               </div>
-              <div className="mt-1 text-sm font-medium">{document?.originalName ?? "Document"}</div>
+              <div className="mt-1 text-sm font-medium">{document?.originalName ?? t("Document")}</div>
               {document?.detectedKind ? (
                 <div className="mt-2">
                   <Badge variant="info">{document.detectedKind}</Badge>
@@ -385,14 +385,14 @@ export function DocumentShipmentDraftReviewDialog({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-medium">
-                          {stop.role === "delivery" ? "Delivery" : "Pickup"} #{stop.sequence}
+                          {stop.role === "delivery" ? t("Delivery") : t("Pickup")} #{stop.sequence}
                         </div>
                         {stop.pageNumber ? (
                           <Badge variant="outline">{t("Page {0}", stop.pageNumber)}</Badge>
                         ) : null}
                       </div>
                       <div className="text-muted-foreground mt-1 text-xs">
-                        {addressLine(stop) || "Address not extracted"}
+                        {addressLine(stop) || t("Address not extracted")}
                       </div>
                       {stop.date || stop.timeWindow ? (
                         <div className="text-muted-foreground mt-1 text-xs">
@@ -439,7 +439,7 @@ export function DocumentShipmentDraftReviewDialog({
           disabled={createShipment.isPending || isAttached}
         >
           {createShipment.isPending ? <LoaderCircleIcon className="size-4 animate-spin" /> : null}
-          {isAttached ? "Shipment Attached" : "Create Shipment"}
+          {isAttached ? t("Shipment Attached") : t("Create Shipment")}
         </Button>
       </div>
     </>

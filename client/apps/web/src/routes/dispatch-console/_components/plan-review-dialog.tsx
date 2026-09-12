@@ -76,8 +76,8 @@ function PlannedAssignmentRow({
         <span className="text-muted-foreground text-[10.5px]">
           {assignment.rationale}
           {assignment.score.deadheadMiles != null &&
-            ` · ${formatMiles(assignment.score.deadheadMiles)} empty`}
-          {` · ${Math.round(assignment.confidence * 100)}% confidence`}
+            t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}
+          {t("· {0}% confidence", Math.round(assignment.confidence * 100))}
         </span>
         {!assignment.tractorId && (
           <span className="text-[10px] text-red-600 dark:text-red-400">
@@ -284,7 +284,7 @@ export function PlanReviewDialog({
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={onClose}>
-            {nothingToApply ? "Close" : "Discard plan"}
+            {nothingToApply ? t("Close") : t("Discard plan")}
           </Button>
           {!nothingToApply && (
             <Button

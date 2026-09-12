@@ -128,8 +128,8 @@ export function DashHomePage() {
               </span>
               <span className="rounded-full bg-teal-500/15 px-2.5 py-1 text-xs font-medium text-teal-300">
                 {Math.max(0, daysUntil(period.data.payDate)) === 0
-                  ? "Settles today"
-                  : `Settles in ${Math.max(0, daysUntil(period.data.payDate))}d`}
+                  ? t("Settles today")
+                  : t("Settles in {0}d", Math.max(0, daysUntil(period.data.payDate)))}
               </span>
             </div>
           </>
@@ -187,11 +187,11 @@ export function DashHomePage() {
               <li key={event.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate font-mono text-sm font-medium">
-                    {event.proNumber || "Pay event"}
+                    {event.proNumber || t("Pay event")}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatRange(event.eventDate, event.eventDate)}
-                    {Number(event.totalMiles) > 0 ? ` · ${event.totalMiles} mi` : ""}
+                    {Number(event.totalMiles) > 0 ? t("· {0} mi", event.totalMiles) : ""}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

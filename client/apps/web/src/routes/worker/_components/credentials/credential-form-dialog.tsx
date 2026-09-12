@@ -420,7 +420,7 @@ export function CredentialFormDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending || Boolean(activeUpload)}>
-                {isPending ? "Saving..." : copy.submit}
+                {isPending ? t("Saving...") : copy.submit}
               </Button>
             </DialogFooter>
           </Form>

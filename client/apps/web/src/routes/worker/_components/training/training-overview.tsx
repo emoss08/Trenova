@@ -39,7 +39,7 @@ export function TrainingOverview({
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold">{t("Training matrix")}</h3>
           <Badge variant={summary.compliant ? "active" : "inactive"}>
-            {summary.compliant ? "Qualified" : "Not qualified"}
+            {summary.compliant ? t("Qualified") : t("Not qualified")}
           </Badge>
           <InfoPopover title={t("Training matrix")}>
             <p>
@@ -82,8 +82,8 @@ export function TrainingOverview({
           </div>
           <p className="text-muted-foreground mt-1 text-xs">
             {summary.requiredCount === 0
-              ? "No courses are required for this worker's driver type."
-              : `${progress.satisfied} of ${summary.requiredCount} required courses are current.`}
+              ? t("No courses are required for this worker's driver type.")
+              : t("{0} of {1} required courses are current.", progress.satisfied, summary.requiredCount)}
           </p>
         </div>
         <dl className="grid grid-cols-5 gap-x-5 text-xs">

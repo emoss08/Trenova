@@ -91,7 +91,7 @@ export function FinalizeReturnDialog({
         <AlertDialogFooter className="mt-4">
           <AlertDialogCancel disabled={isPending}>{t("Keep it a draft")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => mutate()} disabled={isPending || missing.length > 0}>
-            {isPending ? "Finalizing..." : "Finalize return"}
+            {isPending ? t("Finalizing...") : t("Finalize return")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

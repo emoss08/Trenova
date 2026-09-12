@@ -143,7 +143,7 @@ export function ScenarioDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FlaskConicalIcon className="size-4" />
-            {editing ? "Edit Scenario" : "New Scenario"}
+            {editing ? t("Edit Scenario") : t("New Scenario")}
           </DialogTitle>
           <DialogDescription>
             {t("A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.")}
@@ -252,7 +252,7 @@ export function ScenarioDialog({
             isLoading={isSaving}
             loadingText={t("Saving...")}
           >
-            {editing ? "Save Scenario" : "Add Scenario"}
+            {editing ? t("Save Scenario") : t("Add Scenario")}
           </Button>
         </DialogFooter>
       </DialogContent>

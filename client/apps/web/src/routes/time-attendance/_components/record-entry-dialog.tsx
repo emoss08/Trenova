@@ -126,7 +126,7 @@ export function RecordEntryDialog({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {entry ? "Correct the entry" : "Record hours"}
+            {entry ? t("Correct the entry") : t("Record hours")}
             {entry && entry.source !== "Clock" ? (
               <Badge variant="secondary">{entry.source}</Badge>
             ) : null}
@@ -150,7 +150,7 @@ export function RecordEntryDialog({
               {clockedOutAt ? formatPunchTime(clockedOutAt) : "—"}
             </span>
             <span className="text-muted-foreground text-xs">
-              {backwards ? "ends before it begins" : `${formatHours(spanMinutes)} on the clock`}
+              {backwards ? t("ends before it begins") : t("{0} on the clock", formatHours(spanMinutes))}
             </span>
           </div>
           <div className="text-right">
@@ -218,7 +218,7 @@ export function RecordEntryDialog({
                           breakMinutes === minutes && "border-border bg-muted text-foreground",
                         )}
                       >
-                        {minutes === 0 ? "None" : `${minutes}m`}
+                        {minutes === 0 ? t("None") : t("{0}m", minutes)}
                       </button>
                     ))}
                     <CoffeeIcon className="text-muted-foreground/60 ml-1 size-3.5 self-center" />
@@ -251,7 +251,7 @@ export function RecordEntryDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} disabled={!workerId}>
-                {entry ? "Save correction" : "Record"}
+                {entry ? t("Save correction") : t("Record")}
               </Button>
             </DialogFooter>
           </Form>

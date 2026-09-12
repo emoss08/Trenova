@@ -79,7 +79,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                     #{offer.rank}
                   </Badge>
                   <span className="truncate text-[11px]">
-                    {offer.carrier?.name ?? "Unknown carrier"}
+                    {offer.carrier?.name ?? t("Unknown carrier")}
                   </span>
                 </div>
                 <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />

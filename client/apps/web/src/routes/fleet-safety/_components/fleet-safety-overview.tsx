@@ -39,7 +39,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           info={
             <InfoPopover title={t("Drivers")}>
               {
-                "Active drivers in the counting window, with the bar showing how they are rated. Every rating stays on the bar, zero or not."
+                t("Active drivers in the counting window, with the bar showing how they are rated. Every rating stays on the bar, zero or not.")
               }
             </InfoPopover>
           }
@@ -68,7 +68,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           info={
             <InfoPopover title={t("Average score")}>
               {
-                "Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look."
+                t("Mean safety score across those drivers, out of 100. At risk and watch are the two ratings that need a look.")
               }
             </InfoPopover>
           }
@@ -97,9 +97,9 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
         <KpiSub>
           {summary
             ? flagged > 0
-              ? `${summary.atRisk} at risk · ${summary.watch} on watch`
-              : "Nobody at risk or on watch"
-            : "Across every active driver"}
+              ? t("{0} at risk · {1} on watch", summary.atRisk, summary.watch)
+              : t("Nobody at risk or on watch")
+            : t("Across every active driver")}
         </KpiSub>
       </KpiCard>
 
@@ -110,7 +110,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           info={
             <InfoPopover title={t("Events in window")}>
               {
-                "Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately."
+                t("Safety events dated inside the counting window: accidents, inspections, citations and the rest. Open and preventable are counted separately.")
               }
             </InfoPopover>
           }
@@ -133,7 +133,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
           label={t("Out of service")}
           info={
             <InfoPopover title={t("Out of service")}>
-              {"Roadside orders in the window that took a driver or vehicle off the road."}
+              {t("Roadside orders in the window that took a driver or vehicle off the road.")}
             </InfoPopover>
           }
         />
@@ -149,8 +149,8 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
         <KpiSub>
           {summary
             ? summary.outOfServiceOrders > 0
-              ? `${summary.totalPoints} points carried across the fleet`
-              : "No order has taken anybody off the road"
+              ? t("{0} points carried across the fleet", summary.totalPoints)
+              : t("No order has taken anybody off the road")
             : ""}
         </KpiSub>
       </KpiCard>

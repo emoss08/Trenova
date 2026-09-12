@@ -144,13 +144,15 @@ export function PanelExpandToggle({
   noun: string;
   onToggle: () => void;
 }) {
+  const t = useT();
+
   return (
     <button
       type="button"
       onClick={onToggle}
       className="text-2xs text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 ml-auto rounded-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
     >
-      {expanded ? "Show fewer" : `Show ${hiddenCount} more ${noun}`}
+      {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
     </button>
   );
 }

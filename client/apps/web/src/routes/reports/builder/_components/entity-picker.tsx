@@ -37,7 +37,7 @@ function EntityTile({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{t(entity.label)}</p>
         <p className="text-muted-foreground truncate text-xs">
-          {entity.description || `${accessibleFields} fields`}
+          {entity.description || t("{0} fields", accessibleFields)}
         </p>
       </div>
       <ChevronRightIcon className="text-muted-foreground/50 group-hover:text-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />

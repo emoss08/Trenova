@@ -125,7 +125,7 @@ export function WorkerPTOBalances({ workerId }: { workerId: string }) {
           {canAssign ? (
             <Button size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
               <ShieldCheckIcon className="size-3.5" />
-              {current ? "Change Policy" : "Assign Policy"}
+              {current ? t("Change Policy") : t("Assign Policy")}
             </Button>
           ) : null}
           {canManage && current ? (
@@ -203,7 +203,7 @@ function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) 
       <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
         {assignment.ptoPolicy.code}
       </Badge>
-      {t("{0} · since {1} {2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? " · informational" : "")}
+      {t("{0} · since {1} {2}", assignment.ptoPolicy.name, formatUnixDateMedium(assignment.effectiveFrom), !assignment.ptoPolicy.enforceBalance ? t("· informational") : "")}
     </p>
   );
 }
@@ -386,7 +386,7 @@ function LedgerTable({ workerId }: { workerId: string }) {
                     className="text-muted-foreground max-w-[220px] truncate px-3 py-2"
                     title={entry.note ?? undefined}
                   >
-                    {entry.note ?? (entry.actorType === "System" ? "Nightly accrual" : "—")}
+                    {entry.note ?? (entry.actorType === "System" ? t("Nightly accrual") : "—")}
                   </td>
                 </tr>
               ))

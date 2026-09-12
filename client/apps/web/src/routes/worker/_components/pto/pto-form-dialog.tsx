@@ -143,7 +143,7 @@ function DaysPreview({
           data-testid="pto-availability-hint"
         >
           {result.allowed
-            ? `${Number(result.projectedAvailableDays).toFixed(2)} ${ptoType.toLowerCase()} days available on the start date${result.enforced ? "" : " (not enforced)"}`
+            ? t("{0} {1} days available on the start date{2}", Number(result.projectedAvailableDays).toFixed(2), ptoType.toLowerCase(), result.enforced ? "" : t("(not enforced)"))
             : result.message}
         </p>
       ) : null}
@@ -286,9 +286,9 @@ export function PTOFormDialog({
           <DialogDescription>
             {isEdit
               ? editable
-                ? "Adjust the dates, type, or reason. The worker is notified once a decision is made."
-                : "This request has already been decided."
-              : "Request time off on behalf of a worker. It will appear in the approval queue."}
+                ? t("Adjust the dates, type, or reason. The worker is notified once a decision is made.")
+                : t("This request has already been decided.")
+              : t("Request time off on behalf of a worker. It will appear in the approval queue.")}
           </DialogDescription>
         </DialogHeader>
         {isEdit && !editable && pto ? (
@@ -385,7 +385,7 @@ export function PTOFormDialog({
                   isLoading={isSubmitting}
                   loadingText={isEdit ? "Saving..." : "Requesting..."}
                 >
-                  {isEdit ? "Save Changes" : "Request PTO"}
+                  {isEdit ? t("Save Changes") : t("Request PTO")}
                 </Button>
               </DialogFooter>
             </Form>

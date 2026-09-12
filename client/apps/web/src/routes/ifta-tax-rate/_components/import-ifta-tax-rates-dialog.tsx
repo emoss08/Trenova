@@ -195,7 +195,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
         {result && result.fileErrors.length > 0 ? (
           <Alert variant="destructive">
             <CircleAlertIcon className="size-4" />
-            <AlertTitle>{t("{0} could not be read", fileName ?? "This file")}</AlertTitle>
+            <AlertTitle>{t("{0} could not be read", fileName ?? t("This file"))}</AlertTitle>
             <AlertDescription>
               <ul className="mt-1 list-inside list-disc space-y-0.5">
                 {result.fileErrors.map((problem) => (
@@ -214,7 +214,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
             <div className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <Badge variant={errorCount > 0 ? "warning" : "secondary"}>
-                  {errorCount > 0 ? "Needs attention" : "Ready"}
+                  {errorCount > 0 ? t("Needs attention") : t("Ready")}
                 </Badge>
                 {fileName ? <span className="font-mono text-xs">{fileName}</span> : null}
                 <span className="text-muted-foreground text-xs">
@@ -223,10 +223,10 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
               </div>
               <p className="text-sm">
                 {validCount > 0
-                  ? `Publishing would set ${validCount} ${pluralize("rate", validCount)} for Q${quarter} ${year}, replacing any already published for the same jurisdiction and fuel.`
-                  : "No row in this file can be published as it stands."}
+                  ? t("Publishing would set {0} {1} for Q{2} {3}, replacing any already published for the same jurisdiction and fuel.", validCount, pluralize("rate", validCount), quarter, year)
+                  : t("No row in this file can be published as it stands.")}
                 {errorCount > 0
-                  ? ` ${errorCount} ${pluralize("row", errorCount)} will be left out.`
+                  ? t("{0} {1} will be left out.", errorCount, pluralize("row", errorCount))
                   : ""}
               </p>
             </div>
@@ -262,7 +262,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                             row.error ? "text-destructive" : "text-muted-foreground",
                           )}
                         >
-                          {row.error ?? "OK"}
+                          {row.error ?? t("OK")}
                         </TableCell>
                       </TableRow>
                     ))}

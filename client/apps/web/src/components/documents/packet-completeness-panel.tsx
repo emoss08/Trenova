@@ -145,9 +145,9 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
             <span className="text-sm font-medium">{t("Packet Status")}</span>
             <Badge variant={getStatusBadgeVariant(summary.status)}>
               {summary.status === "ExpiringSoon"
-                ? "Expiring Soon"
+                ? t("Expiring Soon")
                 : summary.status === "NeedsReview"
-                  ? "Needs Review"
+                  ? t("Needs Review")
                   : summary.status}
             </Badge>
             <span className="text-muted-foreground text-sm">

@@ -239,7 +239,7 @@ export function VirtualMatrixPreview({ disabled }: { disabled?: boolean }) {
             <CardTitle className="text-sm font-medium">{t("Live Matrix Preview")}</CardTitle>
             <p className="text-muted-foreground text-xs">
               {t("Rendered from the formula parameters — no rows to maintain. {0}", currentPrice !== null &&
-                ` The highlighted band contains this week's price ($${currentPrice.toFixed(3)}).`)}
+                t("The highlighted band contains this week's price (${0}).", currentPrice.toFixed(3)))}
             </p>
           </div>
         </div>

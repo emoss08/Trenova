@@ -75,7 +75,7 @@ export function DocumentBulkActionDock({
                 onClick={onDelete}
               >
                 {isDeleting ? <Spinner /> : <Trash2Icon className="size-4" />}
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isDeleting ? t("Deleting...") : t("Delete")}
               </Button>
             </div>
           </div>

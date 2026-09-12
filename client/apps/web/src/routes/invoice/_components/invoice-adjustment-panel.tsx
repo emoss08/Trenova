@@ -267,7 +267,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
               type="submit"
               disabled={submitMutation.isPending || createDraftMutation.isPending || !draft}
             >
-              {preview?.requiresApproval ? "Submit for Approval" : "Execute"}
+              {preview?.requiresApproval ? t("Submit for Approval") : t("Execute")}
             </Button>
           </DialogFooter>
         </Form>

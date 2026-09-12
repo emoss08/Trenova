@@ -233,7 +233,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
             >
               <FileUpIcon className="text-muted-foreground mb-2 size-6" />
               <p className="text-sm font-medium">
-                {isUploading ? "Reading the sheet…" : "Drop a rate sheet here, or click to browse"}
+                {isUploading ? t("Reading the sheet…") : t("Drop a rate sheet here, or click to browse")}
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 {t("CSV or XLSX. Columns are matched by name.")}
@@ -394,7 +394,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
             </>
           ) : (
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {batch?.status === "Committed" ? "Done" : "Close"}
+              {batch?.status === "Committed" ? t("Done") : t("Close")}
             </Button>
           )}
         </DialogFooter>

@@ -250,12 +250,12 @@ export function FormulaStudioEditPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
-              {inReview ? "Cancel the review and save?" : "Take this template out of production?"}
+              {inReview ? t("Cancel the review and save?") : t("Take this template out of production?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {inReview
-                ? "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again."
-                : "This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this."}
+                ? t("This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.")
+                : t("This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

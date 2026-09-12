@@ -63,7 +63,7 @@ export function BenefitsOverview({
           info={
             <InfoPopover title={t("People covered")}>
               {
-                "Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice."
+                t("Active enrolments in the selected plan year, summed across plans. Somebody on two plans counts twice.")
               }
             </InfoPopover>
           }
@@ -83,7 +83,7 @@ export function BenefitsOverview({
           info={
             <InfoPopover title={t("Plans on offer")}>
               {
-                "Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted."
+                t("Plans in the year still open to enrolment. Archived plans keep their enrolments but are not counted.")
               }
             </InfoPopover>
           }
@@ -95,10 +95,10 @@ export function BenefitsOverview({
         )}
         <KpiSub>
           {planYear === null
-            ? "Nothing on file yet"
+            ? t("Nothing on file yet")
             : archivedPlans > 0
-              ? `For ${planYear} · ${archivedPlans} archived`
-              : `For ${planYear}`}
+              ? t("For {0} · {1} archived", planYear, archivedPlans)
+              : t("For {0}", planYear)}
         </KpiSub>
       </KpiCard>
 
@@ -109,7 +109,7 @@ export function BenefitsOverview({
           info={
             <InfoPopover title={t("Employer puts in")}>
               {
-                "The employer share across every active enrolment in the year, at each plan's stated rates."
+                t("The employer share across every active enrolment in the year, at each plan's stated rates.")
               }
             </InfoPopover>
           }
@@ -139,7 +139,7 @@ export function BenefitsOverview({
           label={t("Off settlements")}
           info={
             <InfoPopover title={t("Off settlements")}>
-              {"The employee share across the same enrolments, deducted from driver settlements."}
+              {t("The employee share across the same enrolments, deducted from driver settlements.")}
             </InfoPopover>
           }
         />

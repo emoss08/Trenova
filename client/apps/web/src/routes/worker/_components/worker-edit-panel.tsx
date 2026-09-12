@@ -371,8 +371,8 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                           <h3 className="text-sm font-semibold">{t("Employment")}</h3>
                           <p className="text-muted-foreground text-xs">
                             {employmentView === "details"
-                              ? "Dates, licence and medical details on the record."
-                              : "Every hire, transfer, leave and termination, with who recorded it."}
+                              ? t("Dates, licence and medical details on the record.")
+                              : t("Every hire, transfer, leave and termination, with who recorded it.")}
                           </p>
                         </div>
                         <SegmentedControl<EmploymentView>

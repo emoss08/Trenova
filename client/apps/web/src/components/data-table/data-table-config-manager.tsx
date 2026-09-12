@@ -92,7 +92,7 @@ export default function DataTableConfigManager({
               )}
             />
             <span className="text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground hidden max-w-32 truncate lg:inline">
-              {activeViewName ?? "Views"}
+              {activeViewName ?? t("Views")}
             </span>
             {activeViewName && isViewDirty && (
               <span

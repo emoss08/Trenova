@@ -81,7 +81,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
           <PopoverTrigger
             render={
               <Button variant="outline" size="sm" className="h-7 justify-start font-normal">
-                {pivot ? refLabel(index, ir.entity, pivot.ref) : "Choose pivot field"}
+                {pivot ? refLabel(index, ir.entity, pivot.ref) : t("Choose pivot field")}
               </Button>
             }
           />
@@ -206,7 +206,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
                       })
                     }
                   />
-                  {column.agg ? `${REPORT_AGGREGATION_LABELS[column.agg]} of ` : ""}
+                  {column.agg ? t("{0} of", REPORT_AGGREGATION_LABELS[column.agg]) : ""}
                   {columnDisplayLabel(index, ir, column)}
                 </label>
               ))}

@@ -172,7 +172,7 @@ function AttachmentLightbox({
             <div className="flex items-center justify-between">
               <span className="text-2xs text-muted-foreground">
                 {formatFileSize(current.fileSize)}
-                {images.length > 1 && index != null && ` · ${index + 1} of ${images.length}`}
+                {images.length > 1 && index != null && t("· {0} of {1}", index + 1, images.length)}
               </span>
               <div className="flex items-center gap-1">
                 <Button

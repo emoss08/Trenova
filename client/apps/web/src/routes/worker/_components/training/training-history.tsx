@@ -42,7 +42,7 @@ export function TrainingHistory({ records }: { records: WorkerTrainingRecordRow[
               className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-4 px-3 py-2.5 text-xs"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{record.course?.name ?? "Course"}</p>
+                <p className="truncate text-sm font-medium">{record.course?.name ?? t("Course")}</p>
                 <p className="text-muted-foreground truncate">
                   {[
                     `${WORKER_TRAINING_STATUS_LABELS[record.status as WorkerTrainingStatus]}${

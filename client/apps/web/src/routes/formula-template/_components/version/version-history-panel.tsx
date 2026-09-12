@@ -794,7 +794,7 @@ function VersionItem({
             </Button>
             <Button size="sm" onClick={handleSaveTags} disabled={updateTagsMutation.isPending}>
               {updateTagsMutation.isPending ? (
-                "Saving..."
+                t("Saving...")
               ) : (
                 <>
                   <CheckIcon className="mr-1 size-3" />

@@ -219,7 +219,7 @@ function EnvelopeBody({
               {escorts.map((escort) => (
                 <li key={escort.role} className="text-muted-foreground text-xs">
                   <span className="text-foreground">{t(escort.label)}</span>
-                  {escort.stateCodes.length > 0 && ` — required by ${escort.stateCodes.join(", ")}`}
+                  {escort.stateCodes.length > 0 && t("— required by {0}", escort.stateCodes.join(", "))}
                 </li>
               ))}
             </ul>
@@ -342,7 +342,7 @@ function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
               overCount > 0 ? "text-destructive" : "text-muted-foreground",
             )}
           >
-            {overCount > 0 ? `${overCount} of ${rows.length} over` : "All within limits"}
+            {overCount > 0 ? t("{0} of {1} over", overCount, rows.length) : t("All within limits")}
           </span>
         )}
       </div>
@@ -396,7 +396,7 @@ function DimensionTile({ row }: { row: DimensionRow }) {
         </span>
         <span className="text-2xs text-muted-foreground tabular-nums">
           {row.limit === null ? (
-            "no limit matched"
+            t("no limit matched")
           ) : (
             <>
               / {formatMeasurement(row.limit, row.unit)}
@@ -443,7 +443,7 @@ function RequirementRow({
         <StateChip code={code} />
         <div className="min-w-0 space-y-1">
           <p className="text-xs font-medium">
-            {stateName ? `${stateName} permit` : code ? `${code} permit` : "Permit required"}
+            {stateName ? t("{0} permit", stateName) : code ? t("{0} permit", code) : t("Permit required")}
           </p>
           {exceedances.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -463,7 +463,7 @@ function RequirementRow({
             </div>
           )}
           <p className="text-2xs text-muted-foreground">
-            {t("{0} day {1} lead time {2}", requirement.leadTimeDays, requirement.leadTimeDays === 1 ? "" : "s", requirement.validityDays > 0 && ` · valid ${requirement.validityDays} days`)}
+            {t("{0} day {1} lead time {2}", requirement.leadTimeDays, requirement.leadTimeDays === 1 ? "" : "s", requirement.validityDays > 0 && t("· valid {0} days", requirement.validityDays))}
           </p>
           {requirement.status === "Waived" && requirement.waiverReason && (
             <p className="text-2xs text-muted-foreground">{t("Waived: {0}", requirement.waiverReason)}</p>
@@ -505,11 +505,11 @@ function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
           <p className="text-xs font-medium tabular-nums">{permit.permitNumber}</p>
           <p className="text-2xs text-muted-foreground">
             {permit.expiresAt
-              ? `Expires ${formatToUserTimezone(permit.expiresAt, {
+              ? t("Expires {0}", formatToUserTimezone(permit.expiresAt, {
                   showTimeZone: false,
                   showTime: false,
-                })}`
-              : "No expiry recorded"}
+                }))
+              : t("No expiry recorded")}
           </p>
         </div>
       </div>

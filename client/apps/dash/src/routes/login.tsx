@@ -78,7 +78,7 @@ export function DashLoginPage() {
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <Button type="submit" className="mt-2 h-11 w-full" disabled={pending}>
-            {pending ? "Signing in..." : "Sign in"}
+            {pending ? t("Signing in...") : t("Sign in")}
           </Button>
         </form>
 

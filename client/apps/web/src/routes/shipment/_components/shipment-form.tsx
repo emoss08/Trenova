@@ -22,6 +22,8 @@ const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-d
 const BILLING_REVIEW_STATUSES = new Set(["ReadyForReview", "InReview", "OnHold", "Exception"]);
 
 export function ShipmentForm() {
+  const t = useT();
+
   const [loadPlannerOpen, setLoadPlannerOpen] = useQueryState(
     "loadPlanner",
     parseAsBoolean.withDefault(false),
@@ -60,12 +62,12 @@ export function ShipmentForm() {
                 </div>
                 <div className="max-w-sm text-center">
                   <p className="text-sm font-medium">
-                    {isCanceled ? "Billing Canceled" : "Under Billing Review"}
+                    {isCanceled ? t("Billing Canceled") : t("Under Billing Review")}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {isCanceled
-                      ? "Billing for this shipment has been canceled. No further modifications can be made."
-                      : "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations."}
+                      ? t("Billing for this shipment has been canceled. No further modifications can be made.")
+                      : t("This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.")}
                   </p>
                 </div>
               </div>

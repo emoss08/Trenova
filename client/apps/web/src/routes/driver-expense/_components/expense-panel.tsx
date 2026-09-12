@@ -95,7 +95,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
           {t("Incurred {0} · Submitted {1} {2}", formatUnixDate(expense.incurredDate), formatUnixDate(expense.createdAt), expense.worker
-            ? ` by ${`${expense.worker.firstName} ${expense.worker.lastName}`.trim()}`
+            ? t("by {0}", `${expense.worker.firstName} ${expense.worker.lastName}`.trim())
             : "")}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(expense.description)}</p>
@@ -127,8 +127,8 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           <p className="mt-1 text-sm whitespace-pre-wrap">{expense.reviewNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatUnixDate(expense.reviewedAt ?? 0) || "—"}
-            {expense.reviewedBy ? ` by ${expense.reviewedBy.name}` : ""}
-            {expense.settlementLineId ? " · reimbursement applied to open settlement" : ""}
+            {expense.reviewedBy ? t("by {0}", expense.reviewedBy.name) : ""}
+            {expense.settlementLineId ? t("· reimbursement applied to open settlement") : ""}
           </p>
         </div>
       ) : (
@@ -192,7 +192,7 @@ function ReviewForm({
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-review-note">
-          {approve ? "Note (optional)" : "Rejection reason"}
+          {approve ? t("Note (optional)") : t("Rejection reason")}
         </Label>
         <Textarea
           id="expense-review-note"
@@ -207,13 +207,13 @@ function ReviewForm({
         />
         <p className="text-muted-foreground text-[11px]">
           {approve
-            ? "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists)."
-            : "Required — shown to the driver verbatim."}
+            ? t("Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).")
+            : t("Required — shown to the driver verbatim.")}
         </p>
       </div>
 
       <Button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}>
-        {mutation.isPending ? "Saving..." : approve ? "Approve expense" : "Reject expense"}
+        {mutation.isPending ? t("Saving...") : approve ? t("Approve expense") : t("Reject expense")}
       </Button>
     </div>
   );

@@ -66,8 +66,8 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           />
           <p className="text-muted-foreground text-sm">
             {data.ready
-              ? "This partner has completed every onboarding step."
-              : `${data.totalCount - data.completedCount} onboarding step(s) remaining before this partner is production-ready.`}
+              ? t("This partner has completed every onboarding step.")
+              : t("{0} onboarding step(s) remaining before this partner is production-ready.", data.totalCount - data.completedCount)}
           </p>
         </div>
       </div>

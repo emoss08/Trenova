@@ -133,17 +133,17 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                     aria-hidden
                   />
                 ) : null}
-                {current?.shiftTemplate?.name ?? "Not on a shift"}
+                {current?.shiftTemplate?.name ?? t("Not on a shift")}
               </h3>
               <p className="text-muted-foreground text-xs">
                 {current?.shiftTemplate
                   ? `${describeShiftPattern(current.shiftTemplate.daysOfWeek, current.shiftTemplate.cycleWeeks)} · ${formatShiftWindow(current.shiftTemplate.startMinute, current.shiftTemplate.durationMinutes)}`
-                  : "They show on the rota with no rostered days until they are."}
+                  : t("They show on the rota with no rostered days until they are.")}
               </p>
               {current ? (
                 <p className="text-muted-foreground mt-1 text-xs tabular-nums">
                   {t("Since {0} {1}", formatShiftDate(current.effectiveFrom), current.shiftTemplate && current.shiftTemplate.cycleWeeks > 1
-                    ? ` · week ${current.cycleOffsetWeeks + 1} of the rotation`
+                    ? t("· week {0} of the rotation", current.cycleOffsetWeeks + 1)
                     : "")}
                 </p>
               ) : null}
@@ -163,7 +163,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
               ) : null}
               <Button size="sm" onClick={() => setAssignOpen(true)}>
                 <PlusIcon className="size-3.5" />
-                {current ? "Move to another shift" : "Put on a shift"}
+                {current ? t("Move to another shift") : t("Put on a shift")}
               </Button>
             </div>
           ) : null}
@@ -263,7 +263,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                   >
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">
-                        {outgoing ? "Offered" : "Offered to them"}
+                        {outgoing ? t("Offered") : t("Offered to them")}
                       </span>
                       <span className="text-muted-foreground tabular-nums">
                         {formatShiftDate(swap.shiftDate)}
@@ -289,6 +289,8 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
 }
 
 function PastAssignment({ assignment }: { assignment: ShiftAssignmentRow }) {
+  const t = useT();
+
   return (
     <li className="text-muted-foreground flex flex-wrap items-center justify-between gap-2">
       <span className="flex items-center gap-2">
@@ -299,7 +301,7 @@ function PastAssignment({ assignment }: { assignment: ShiftAssignmentRow }) {
             aria-hidden
           />
         ) : null}
-        {assignment.shiftTemplate?.name ?? "Shift"}
+        {assignment.shiftTemplate?.name ?? t("Shift")}
       </span>
       <span className="tabular-nums">
         {formatShiftDate(assignment.effectiveFrom)}

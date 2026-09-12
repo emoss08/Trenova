@@ -65,7 +65,7 @@ export function MapControls({
           )}
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          {isFullscreen ? t("Exit fullscreen") : t("Fullscreen")}
         </TooltipContent>
       </Tooltip>
       <Tooltip>

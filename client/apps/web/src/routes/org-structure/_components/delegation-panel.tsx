@@ -144,8 +144,8 @@ export function DelegationPanel() {
       ) : rows.length === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
           {view === "given"
-            ? "You have not handed your approvals to anybody."
-            : "Nobody has handed you their approvals."}
+            ? t("You have not handed your approvals to anybody.")
+            : t("Nobody has handed you their approvals.")}
         </p>
       ) : (
         <ul className="divide-y" aria-label={view === "given" ? "Handed out" : "Covering for"}>
@@ -157,7 +157,7 @@ export function DelegationPanel() {
               <div className="flex min-w-0 flex-col gap-0.5 leading-tight">
                 <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="flex items-center gap-1.5 text-sm font-medium">
-                    <span className="truncate">{delegation.delegator?.name ?? "Someone"}</span>
+                    <span className="truncate">{delegation.delegator?.name ?? t("Someone")}</span>
                     <ArrowRightIcon
                       className="text-muted-foreground size-3.5 shrink-0"
                       aria-hidden
@@ -173,7 +173,7 @@ export function DelegationPanel() {
                   {formatUnixDate(delegation.startsAt)}
                   {delegation.endsAt
                     ? ` – ${formatUnixDate(delegation.endsAt)}`
-                    : " – until called back"}
+                    : t("– until called back")}
                   {delegation.reason ? ` · ${delegation.reason}` : ""}
                 </span>
               </div>

@@ -221,8 +221,8 @@ export function ApprovalActionDialog({
           {commentInvalid && (
             <p className="text-2xs text-destructive">
               {action === "reject"
-                ? "A comment is required to reject"
-                : "Say what needs to change before sending it back"}
+                ? t("A comment is required to reject")
+                : t("Say what needs to change before sending it back")}
             </p>
           )}
         </div>

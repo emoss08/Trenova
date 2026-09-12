@@ -131,7 +131,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit leave case" : "Open a leave case"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit leave case") : t("Open a leave case")}</DialogTitle>
           <DialogDescription>
             {t("A case is one qualifying reason. The entitlement is drawn down by the days recorded against it, so a case open for months has used nothing until days are.")}
           </DialogDescription>
@@ -249,7 +249,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Open case"}
+                {isEdit ? t("Save") : t("Open case")}
               </Button>
             </DialogFooter>
           </Form>

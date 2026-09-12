@@ -176,10 +176,10 @@ function PresetRow({
           {audience.length > 0
             ? audience.join(", ")
             : preset.coreResponsibility
-              ? `Everyone in ${preset.coreResponsibility}`
+              ? t("Everyone in {0}", preset.coreResponsibility)
               : preset.isOrgDefault
-                ? "Everyone without another assignment"
-                : "Not assigned to anyone"}
+                ? t("Everyone without another assignment")
+                : t("Not assigned to anyone")}
           {" · "}
           {preset.assignedUserCount} {preset.assignedUserCount === 1 ? "person" : "people"}
         </p>

@@ -144,16 +144,16 @@ export function InvoiceOverviewTab({
                 </PropertyCell>
                 <PropertyCell label={t("Posted")}>
                   <span className="text-xs font-medium">
-                    {invoice.status === "Posted" ? formatUnixDateTime(invoice.postedAt) : "Not yet"}
+                    {invoice.status === "Posted" ? formatUnixDateTime(invoice.postedAt) : t("Not yet")}
                   </span>
                 </PropertyCell>
                 <PropertyCell label={t("Lineage")}>
                   <span className="text-xs font-medium">
                     {invoice.isAdjustmentArtifact
                       ? isCurrentVersion
-                        ? "Current artifact"
-                        : "Historical artifact"
-                      : "Root invoice"}
+                        ? t("Current artifact")
+                        : t("Historical artifact")
+                      : t("Root invoice")}
                   </span>
                 </PropertyCell>
               </div>
@@ -200,7 +200,7 @@ export function InvoiceOverviewTab({
                           </p>
                         </div>
                         <Badge variant={current ? "active" : "secondary"} className="shrink-0">
-                          {current ? "Current" : "Superseded"}
+                          {current ? t("Current") : t("Superseded")}
                         </Badge>
                       </div>
                     );

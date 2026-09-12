@@ -469,7 +469,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                   <CircleAlertIcon className="size-4" />
                   <AlertTitle>{t("The statement could not be read")}</AlertTitle>
                   <AlertDescription>
-                    {t("{0} Every row that failed is listed below; fix the file and upload it again.", batch.error ?? "No reason was reported.")}
+                    {t("{0} Every row that failed is listed below; fix the file and upload it again.", batch.error ?? t("No reason was reported."))}
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -575,7 +575,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
           <AlertDialogFooter>
             <AlertDialogCancel disabled={discarding}>{t("Keep reviewing")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirmDiscard} disabled={discarding}>
-              {discarding ? "Discarding..." : "Discard import"}
+              {discarding ? t("Discarding...") : t("Discard import")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

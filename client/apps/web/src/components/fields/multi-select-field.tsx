@@ -609,7 +609,7 @@ export function MultiSelectAutocomplete<T>({
                           multiSelectVariants({ variant: "default" }),
                         )}
                       >
-                        {`+${selectedOptions.length - maxCount} more`}
+                        {t("+{0} more", selectedOptions.length - maxCount)}
                       </Badge>
                     )}
                   </div>
@@ -700,7 +700,7 @@ export function MultiSelectAutocomplete<T>({
               {error && <div className="text-destructive p-4 text-center">{error}</div>}
               {!loading && !error && options.length === 0 && (
                 <CommandEmpty>
-                  {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
+                  {noResultsMessage ?? t("No {0} found.", label?.toLowerCase())}
                 </CommandEmpty>
               )}
               <CommandGroup>

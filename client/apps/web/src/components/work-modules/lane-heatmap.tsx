@@ -61,7 +61,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
 
       <footer className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-[10px]">
         <span className="font-mono">
-          {top ? `Top: ${top.origin} → ${top.destination} (${top.count})` : "No lane activity"}
+          {top ? t("Top: {0} → {1} ({2})", top.origin, top.destination, top.count) : t("No lane activity")}
         </span>
         <ScaleLegend max={max} />
       </footer>

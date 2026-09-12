@@ -112,7 +112,7 @@ export function ScriptLibraryEditor() {
               <div className="text-muted-foreground truncate text-xs">
                 {library.functionNames.length > 0
                   ? library.functionNames.join(", ")
-                  : "No functions discovered"}
+                  : t("No functions discovered")}
               </div>
             </button>
           ))}

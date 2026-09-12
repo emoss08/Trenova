@@ -86,7 +86,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       header: "Reply-To",
       cell: ({ row }) => (
         <span className="text-muted-foreground truncate">
-          {row.original.replyToEmail || "Default sender"}
+          {row.original.replyToEmail || translate("Default sender")}
         </span>
       ),
       size: 240,

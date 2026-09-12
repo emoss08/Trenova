@@ -445,12 +445,12 @@ function FieldAssertionRow({
           <div className="space-y-1">
             <label className="text-2xs text-muted-foreground font-medium uppercase">
               {assertion.operator === "matches_regex"
-                ? "Pattern"
+                ? t("Pattern")
                 : assertion.operator === "one_of"
-                  ? "Accepted Values"
+                  ? t("Accepted Values")
                   : assertion.operator === "equals"
-                    ? "Expected Value"
-                    : "Details"}
+                    ? t("Expected Value")
+                    : t("Details")}
             </label>
             {assertion.operator === "equals" && (
               <Input

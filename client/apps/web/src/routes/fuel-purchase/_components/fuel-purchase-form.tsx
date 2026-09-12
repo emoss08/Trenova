@@ -103,7 +103,7 @@ export function FuelPurchaseForm({
           <FileSpreadsheetIcon className="size-4" />
           <AlertTitle>{t("Imported from a fuel card statement")}</AlertTitle>
           <AlertDescription>
-            {t("The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}", importBatchId ? ` Batch ${importBatchId}.` : "")}
+            {t("The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}", importBatchId ? t("Batch {0}.", importBatchId) : "")}
           </AlertDescription>
         </Alert>
       ) : null}

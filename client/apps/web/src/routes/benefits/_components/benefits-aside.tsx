@@ -47,7 +47,7 @@ function EntryList({
               <span className="flex items-center justify-between gap-2">
                 <span className="truncate text-xs font-medium">{enrollmentWorkerName(entry)}</span>
                 <span className="text-muted-foreground text-2xs shrink-0 truncate">
-                  {entry.benefitPlan?.name ?? "A plan"}
+                  {entry.benefitPlan?.name ?? t("A plan")}
                 </span>
               </span>
               <span className="text-muted-foreground text-2xs">{detail(entry)}</span>

@@ -217,14 +217,14 @@ export function MoveCard({
                   render={
                     <div className="text-muted-foreground flex cursor-not-allowed items-center px-1.5 py-1 text-sm">
                       <UserIcon className="mr-2 size-3.5" />
-                      {hasAssignment ? "Reassign" : "Assign"}
+                      {hasAssignment ? t("Reassign") : t("Assign")}
                     </div>
                   }
                 />
                 <TooltipContent side="left" sideOffset={10}>
                   {isTerminal
-                    ? "Cannot assign a completed or canceled move"
-                    : "Save the shipment first to assign workers"}
+                    ? t("Cannot assign a completed or canceled move")
+                    : t("Save the shipment first to assign workers")}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -671,7 +671,7 @@ function StopTimelineItem({
           className="mt-1 shrink-0"
           onClick={onCheckCall}
         >
-          {checkCallAction === "Arrive" ? "Arrive" : "Depart"}
+          {checkCallAction === "Arrive" ? t("Arrive") : t("Depart")}
         </Button>
       )}
     </div>

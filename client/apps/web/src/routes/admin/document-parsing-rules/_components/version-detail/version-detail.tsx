@@ -211,7 +211,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                     <AlertDialogAction onClick={() => publishMutation.mutate()}>
-                      {publishMutation.isPending ? "Publishing..." : "Publish Version"}
+                      {publishMutation.isPending ? t("Publishing...") : t("Publish Version")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -226,8 +226,8 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 <p className="font-medium">{t("Read-only version")}</p>
                 <p className="mt-0.5 text-xs opacity-80">
                   {version.status === "Published"
-                    ? "Published versions cannot be modified. Create a new version to make changes."
-                    : "Archived versions are frozen snapshots of previously published rules."}
+                    ? t("Published versions cannot be modified. Create a new version to make changes.")
+                    : t("Archived versions are frozen snapshots of previously published rules.")}
                 </p>
               </div>
             </div>

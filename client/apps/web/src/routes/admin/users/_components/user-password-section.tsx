@@ -50,7 +50,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
           <Button type="button" onClick={handleResetPassword} disabled={isResetting}>
-            {isResetting ? "Sending..." : "Send Reset Email"}
+            {isResetting ? t("Sending...") : t("Send Reset Email")}
           </Button>
           <p className="text-muted-foreground text-2xs">
             {t("Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.")}
@@ -60,7 +60,7 @@ export function EditModePassword({ userId, isLocked }: { userId: string; isLocke
             variant="outline"
             onClick={() => setShowNewPassword(!showNewPassword)}
           >
-            {showNewPassword ? "Cancel" : "Set New Password"}
+            {showNewPassword ? t("Cancel") : t("Set New Password")}
           </Button>
         </div>
       </div>

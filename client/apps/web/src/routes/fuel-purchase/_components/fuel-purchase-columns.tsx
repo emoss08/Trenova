@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -201,7 +202,7 @@ export function getColumns(
           variant={row.original.taxPaid ? "active" : "warning"}
           className="px-1.5 py-0 text-[10px]"
         >
-          {row.original.taxPaid ? "Paid" : "Untaxed"}
+          {row.original.taxPaid ? translate("Paid") : translate("Untaxed")}
         </Badge>
       ),
       size: 90,

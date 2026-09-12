@@ -251,7 +251,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera className="size-4" />
-              {user?.profilePicUrl ? "Change" : "Upload"}
+              {user?.profilePicUrl ? t("Change") : t("Upload")}
             </Button>
             {user?.profilePicUrl ? (
               <Button

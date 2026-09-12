@@ -157,7 +157,7 @@ function HistoryPopover({
                             : "text-destructive"
                         }
                       >
-                        {entry.status === "success" ? "OK" : (entry.httpStatus ?? "Error")}
+                        {entry.status === "success" ? t("OK") : (entry.httpStatus ?? t("Error"))}
                       </span>
                       <span className="text-muted-foreground">
                         {formatElapsed(entry.elapsedMs)}
@@ -382,7 +382,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={() => void run()} disabled={isRunning} className="gap-1.5">
             {isRunning ? <Spinner className="size-3.5" /> : <PlayIcon className="size-3.5" />}
-            {isRunning ? "Running…" : "Run"}
+            {isRunning ? t("Running…") : t("Run")}
             {!isRunning && (
               <Kbd className="bg-primary-foreground/20 text-primary-foreground">⌘⏎</Kbd>
             )}
@@ -416,7 +416,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
           <div className="flex items-center gap-2 text-xs">
             <span className="text-destructive flex items-center gap-1.5">
               <span className="bg-destructive size-1.5 rounded-full" />
-              {runState.httpStatus ?? "Error"}
+              {runState.httpStatus ?? t("Error")}
             </span>
             {runState.elapsedMs !== undefined && (
               <span className="text-muted-foreground">{formatElapsed(runState.elapsedMs)}</span>

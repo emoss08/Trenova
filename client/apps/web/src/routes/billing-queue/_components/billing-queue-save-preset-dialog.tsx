@@ -109,7 +109,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
               {t("Cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? t("Saving...") : t("Save")}
             </Button>
           </DialogFooter>
         </Form>

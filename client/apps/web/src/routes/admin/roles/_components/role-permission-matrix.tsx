@@ -429,7 +429,7 @@ function ResourceRow({
           }
         />
         <TooltipContent side="left" className="text-xs">
-          {isFullAccess ? "Remove all" : "Grant all"}
+          {isFullAccess ? t("Remove all") : t("Grant all")}
         </TooltipContent>
       </Tooltip>
 

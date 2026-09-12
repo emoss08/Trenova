@@ -76,7 +76,7 @@ export function TimeAttendanceOverview({
           info={
             <InfoPopover title={t("Awaiting approval")}>
               {
-                "Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted."
+                t("Timesheets submitted and waiting on a manager. The hours are the totals frozen when each week was submitted.")
               }
             </InfoPopover>
           }
@@ -97,10 +97,8 @@ export function TimeAttendanceOverview({
         )}
         <KpiSub>
           {awaitingSummary.count === 0
-            ? "Nothing waiting on you"
-            : `${formatHours(awaitingSummary.totalMinutes)} across ${awaitingSummary.workers} ${
-                awaitingSummary.workers === 1 ? "person" : "people"
-              }`}
+            ? t("Nothing waiting on you")
+            : t("{0} across {1} {2}", formatHours(awaitingSummary.totalMinutes), awaitingSummary.workers, awaitingSummary.workers === 1 ? "person" : "people")}
         </KpiSub>
       </KpiCard>
 
@@ -111,7 +109,7 @@ export function TimeAttendanceOverview({
           info={
             <InfoPopover title={t("On the clock now")}>
               {
-                "Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked."
+                t("Punches with no clock-out yet. A punch that has run past a working day is more likely forgotten than worked.")
               }
             </InfoPopover>
           }
@@ -128,8 +126,8 @@ export function TimeAttendanceOverview({
         )}
         <KpiSub>
           {longest
-            ? `Longest running: ${workerName(longest.entry)}, ${formatHours(longest.runningMinutes)}`
-            : "Nobody is punched in"}
+            ? t("Longest running: {0}, {1}", workerName(longest.entry), formatHours(longest.runningMinutes))
+            : t("Nobody is punched in")}
         </KpiSub>
       </KpiCard>
 
@@ -140,7 +138,7 @@ export function TimeAttendanceOverview({
           info={
             <InfoPopover title={t("This week so far")}>
               {
-                "Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in."
+                t("Regular, overtime and paid leave across every timesheet for the current week, whatever state each is in.")
               }
             </InfoPopover>
           }
@@ -177,7 +175,7 @@ export function TimeAttendanceOverview({
             label={t("Approved, not paid")}
             info={
               <InfoPopover title={t("Approved, not paid")}>
-                {"Weeks a manager has approved that payroll has not yet locked into an export."}
+                {t("Weeks a manager has approved that payroll has not yet locked into an export.")}
               </InfoPopover>
             }
             right={
@@ -197,8 +195,8 @@ export function TimeAttendanceOverview({
           )}
           <KpiSub>
             {unpaidSummary.count === 0
-              ? "Every approved week has gone to payroll"
-              : `${formatHours(unpaidSummary.totalMinutes)} waiting for a run`}
+              ? t("Every approved week has gone to payroll")
+              : t("{0} waiting for a run", formatHours(unpaidSummary.totalMinutes))}
           </KpiSub>
         </KpiCard>
       ) : null}

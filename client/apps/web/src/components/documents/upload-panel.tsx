@@ -172,7 +172,7 @@ function UploadItem({
           {status === "quarantined" && <span className="text-xs text-red-400">{t("Quarantined")}</span>}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
-              {retryCount && retryCount > 0 ? `Retrying (${retryCount})...` : "Waiting..."}
+              {retryCount && retryCount > 0 ? t("Retrying ({0})...", retryCount) : t("Waiting...")}
             </span>
           )}
           {status === "success" && (
@@ -627,8 +627,8 @@ export function UploadPanel({
             <div className="border-border bg-muted/50 flex items-center justify-between border-t px-3 py-2">
               <span className="text-muted-foreground text-xs">
                 {activeCount > 0
-                  ? `Uploading ${activeCount} file${activeCount > 1 ? "s" : ""}...`
-                  : `${counts.completed} completed`}
+                  ? t("Uploading {0} file{1}...", activeCount, activeCount > 1 ? "s" : "")
+                  : t("{0} completed", counts.completed)}
               </span>
               <Button
                 variant="outline"

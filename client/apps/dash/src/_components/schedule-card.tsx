@@ -119,7 +119,7 @@ export function ScheduleCard() {
                   aria-hidden
                 />
               ) : null}
-              {week.shiftName ?? "No shift"} · {week.scheduledDays} day
+              {week.shiftName ?? t("No shift")} · {week.scheduledDays} day
               {week.scheduledDays === 1 ? "" : "s"} {t("over two weeks")}
             </p>
           </div>
@@ -176,7 +176,7 @@ export function ScheduleCard() {
                 ? formatShiftWindow(focused.startMinute, focused.durationMinutes)
                 : rotaStateTone(focused.state).label}
               {focused.assignmentCount > 0
-                ? ` · ${focused.assignmentCount} load${focused.assignmentCount === 1 ? "" : "s"} assigned`
+                ? t("· {0} load{1} assigned", focused.assignmentCount, focused.assignmentCount === 1 ? "" : "s")
                 : ""}
             </p>
           </div>

@@ -121,8 +121,8 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                 <Alert variant={designated ? "info" : "warning"}>
                   <AlertDescription>
                     {designated
-                      ? "This case is designated as FMLA, so the day draws the entitlement down."
-                      : "This case is not designated as FMLA. The day is recorded but draws nothing down."}
+                      ? t("This case is designated as FMLA, so the day draws the entitlement down.")
+                      : t("This case is not designated as FMLA. The day is recorded but draws nothing down.")}
                   </AlertDescription>
                 </Alert>
               </FormControl>

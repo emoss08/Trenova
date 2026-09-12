@@ -84,7 +84,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
       <PopoverContent align="end" className="w-80 space-y-3">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium">{detail.programName ?? "Fuel Surcharge"}</p>
+            <p className="text-sm font-medium">{detail.programName ?? t("Fuel Surcharge")}</p>
             <Badge variant="secondary" className="text-2xs">
               {detail.method ?? ""}
             </Badge>
@@ -99,8 +99,8 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
             <span>
               {detail.stale
-                ? "Rated with a price more than 3 weeks old."
-                : "Rated before this week's DOE price published — it will re-rate automatically once the price arrives."}
+                ? t("Rated with a price more than 3 weeks old.")
+                : t("Rated before this week's DOE price published — it will re-rate automatically once the price arrives.")}
             </span>
           </div>
         )}

@@ -84,7 +84,7 @@ export function CancelFuelCardDialog({
                 <BanIcon />
               </AlertDialogMedia>
               <AlertDialogTitle>
-                {t("Cancel {0}?", card ? `${card.label} (${maskedCardNumber(card.lastFour)})` : "this card")}
+                {t("Cancel {0}?", card ? `${card.label} (${maskedCardNumber(card.lastFour)})` : t("this card"))}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {t("Cancelling is permanent. The card stops matching statement rows and cannot be made active again; purchases already recorded against it are kept. To pause a card instead, suspend it.")}
@@ -108,7 +108,7 @@ export function CancelFuelCardDialog({
                 {t("Keep card")}
               </AlertDialogCancel>
               <AlertDialogAction type="submit" variant="destructive" disabled={isPending || !card}>
-                {isPending ? "Cancelling..." : "Cancel card"}
+                {isPending ? t("Cancelling...") : t("Cancel card")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </Form>

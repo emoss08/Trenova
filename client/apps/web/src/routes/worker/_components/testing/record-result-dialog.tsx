@@ -152,8 +152,8 @@ export function RecordResultDialog({
                     <Alert variant={readingIsViolation ? "destructive" : "default"}>
                       <AlertDescription>
                         {readingIsViolation
-                          ? "0.04 and above is a violation (49 CFR 382.201). The result will be filed as positive whatever is chosen below."
-                          : "0.02 to 0.039 takes the driver off duty for 24 hours but is not a violation (49 CFR 382.505)."}
+                          ? t("0.04 and above is a violation (49 CFR 382.201). The result will be filed as positive whatever is chosen below.")
+                          : t("0.02 to 0.039 takes the driver off duty for 24 hours but is not a violation (49 CFR 382.505).")}
                       </AlertDescription>
                     </Alert>
                   </FormControl>

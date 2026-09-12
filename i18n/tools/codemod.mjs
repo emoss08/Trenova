@@ -30,6 +30,80 @@ const REACTNODE_CAPTIONS = new Set([
   "client/packages/shared/src/components/ui/stepper.tsx",
 ]);
 
+
+// A string literal is only safe to wrap where the value is provably *rendered*. Two
+// positions qualify, and the codemod's earlier passes are what create both:
+//
+//   {cond ? "Regenerate" : "Generate"}          a literal in JSX child position
+//   t("Auto-match: {0}", on ? "On" : "Off")     a literal handed in as a placeholder value
+//
+// The second is the fold's own residue: folding `Auto-match: {x ? "On" : "Off"}` moves the
+// ternary out of the sentence and into an argument, where nothing was translating it. Both
+// render English inside otherwise translated text, so both are wrapped here.
+//
+// Anywhere else a prose-looking literal is a comparison value, an API field, a key — never
+// display text — which is why this walks only these two positions rather than the program.
+const RENDERED_BRANCH = new Set(["ConditionalExpression", "LogicalExpression"]);
+
+function isTranslateCall(node) {
+  return (
+    node.type === "CallExpression" &&
+    node.callee.type === "Identifier" &&
+    (node.callee.name === "t" || node.callee.name === "translate")
+  );
+}
+
+// renderedLiterals collects the string literals an expression can evaluate to. It follows
+// the branches of a choice and stops at any call, because a call's arguments are that
+// function's business, not this one's.
+function renderedLiterals(node, out) {
+  if (node === null || typeof node !== "object") return;
+  if (node.type === "StringLiteral") {
+    if (reject(node.value, {}) === null) out.push(node);
+    return;
+  }
+  if (RENDERED_BRANCH.has(node.type)) {
+    if (node.type === "ConditionalExpression") {
+      renderedLiterals(node.consequent, out);
+      renderedLiterals(node.alternate, out);
+    } else {
+      renderedLiterals(node.left, out);
+      renderedLiterals(node.right, out);
+    }
+    return;
+  }
+  if (node.type === "BinaryExpression" && node.operator === "+") {
+    renderedLiterals(node.left, out);
+    renderedLiterals(node.right, out);
+  }
+}
+
+
+// templateMessage turns a template literal in a rendered position into the same numbered
+// message the JSX fold produces, so `Pull this move back from ${name}.` becomes
+// t("Pull this move back from {0}.", name). A quasi cannot be wrapped on its own — half a
+// clause is untranslatable, and Spanish and Chinese order the sentence differently — so the
+// whole literal is replaced by one call. Returns null when there is nothing to translate.
+function templateMessage(node, source) {
+  if (node.type !== "TemplateLiteral") return null;
+
+  let message = "";
+  for (let i = 0; i < node.quasis.length; i += 1) {
+    message += node.quasis[i].value.cooked ?? node.quasis[i].value.raw;
+    if (i < node.expressions.length) message += `{${i}}`;
+  }
+
+  const collapsed = message.trim().replace(/\s+/g, " ");
+  if (reject(collapsed, {}) !== null) return null;
+
+  // A template of nothing but placeholders carries no words; leave it as the concatenation
+  // it already is.
+  if (collapsed.replace(/\{\d+\}/g, "").trim() === "") return null;
+
+  const args = node.expressions.map((expr) => source.slice(expr.start, expr.end));
+  return { message: collapsed, args };
+}
+
 const HOOK_IMPORT = 'import { useT } from "@trenova/shared/i18n/use-t";';
 const TRANSLATE_IMPORT = 'import { translate } from "@trenova/shared/i18n/runtime";';
 
@@ -184,9 +258,60 @@ export function transformSource(source, filePath, { labels = false } = {}) {
     return "translate";
   };
 
+  // wrapRendered rewrites every displayable string an expression can evaluate to. A plain
+  // literal is wrapped where it stands; a template literal is replaced whole, because its
+  // static chunks are only a sentence together.
+  const wrapRendered = (expr, stack, deps) => {
+    if (expr === null || typeof expr !== "object") return;
+
+    if (expr.type === "TemplateLiteral") {
+      const built = templateMessage(expr, source);
+      if (built === null) return;
+      const call = callFor(stack, deps);
+      edits.push({
+        start: expr.start,
+        end: expr.end,
+        text: `${call}(${[quote(built.message), ...built.args].join(", ")})`,
+      });
+      return;
+    }
+
+    if (RENDERED_BRANCH.has(expr.type)) {
+      if (expr.type === "ConditionalExpression") {
+        wrapRendered(expr.consequent, stack, deps);
+        wrapRendered(expr.alternate, stack, deps);
+      } else {
+        wrapRendered(expr.left, stack, deps);
+        wrapRendered(expr.right, stack, deps);
+      }
+      return;
+    }
+
+    if (expr.type === "BinaryExpression" && expr.operator === "+") {
+      wrapRendered(expr.left, stack, deps);
+      wrapRendered(expr.right, stack, deps);
+      return;
+    }
+
+    const literals = [];
+    renderedLiterals(expr, literals);
+    for (const literal of literals) {
+      const call = callFor(stack, deps);
+      edits.push({
+        start: literal.start,
+        end: literal.end,
+        text: `${call}(${quote(literal.value.trim().replace(/\s+/g, " "))})`,
+      });
+    }
+  };
+
   visit(ast.program, null, (node, parent, stack, deps) => {
     switch (node.type) {
       case "JSXExpressionContainer": {
+        if (parent !== null && (parent.type === "JSXElement" || parent.type === "JSXFragment")) {
+          wrapRendered(node.expression, stack, deps);
+        }
+
         // Label maps are module-level consts that evaluate once at import, so the English
         // text stays in the data as the key and the translation happens here, at render.
         // Only children are rewritten, never attributes: `key={group.label}` is an identity
@@ -287,6 +412,15 @@ export function transformSource(source, filePath, { labels = false } = {}) {
       }
 
       case "CallExpression": {
+        // Placeholder values handed into an already-migrated call. Argument 0 is the key
+        // itself and is left alone.
+        if (isTranslateCall(node)) {
+          for (let i = 1; i < node.arguments.length; i += 1) {
+            wrapRendered(node.arguments[i], stack, deps);
+          }
+          return;
+        }
+
         const callee = node.callee;
         if (
           callee.type !== "MemberExpression" ||

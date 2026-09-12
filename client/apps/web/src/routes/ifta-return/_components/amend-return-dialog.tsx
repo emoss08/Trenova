@@ -117,7 +117,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Opening..." : "Open the amendment"}
+                {isPending ? t("Opening...") : t("Open the amendment")}
               </Button>
             </DialogFooter>
           </Form>

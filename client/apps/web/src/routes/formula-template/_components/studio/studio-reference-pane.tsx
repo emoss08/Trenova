@@ -52,6 +52,8 @@ function VariableRow({
   variable: VariableDoc;
   onInsert: StudioReferencePaneProps["onInsert"];
 }) {
+  const t = useT();
+
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -74,7 +76,7 @@ function VariableRow({
       <HoverCardContent side="left" className="w-72 space-y-1.5">
         <div className="font-mono text-sm font-semibold">{variable.name}</div>
         <p className="text-muted-foreground text-xs">
-          {variable.description || "No description available."}
+          {variable.description || t("No description available.")}
         </p>
         <div className="flex items-center gap-1.5">
           <Badge variant="outline" className="text-2xs">
@@ -98,6 +100,8 @@ function FunctionRow({
   fn: FunctionDoc;
   onInsert: StudioReferencePaneProps["onInsert"];
 }) {
+  const t = useT();
+
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -118,7 +122,7 @@ function FunctionRow({
       <HoverCardContent side="left" className="w-72 space-y-1.5">
         <div className="font-mono text-sm font-semibold">{fn.signature}</div>
         <p className="text-muted-foreground text-xs">
-          {fn.description || "No description available."}
+          {fn.description || t("No description available.")}
         </p>
         {fn.example && (
           <code className="bg-muted block rounded px-2 py-1 font-mono text-xs">{fn.example}</code>
@@ -244,7 +248,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
             functionGroups.map(([category, functions]) => (
               <div key={category || "general"}>
                 <div className="text-muted-foreground px-2 pb-1 text-xs font-medium tracking-wide uppercase">
-                  {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || "Functions"}
+                  {categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
                 </div>
                 <div className="space-y-0.5">
                   {functions.map((fn) => (

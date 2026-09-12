@@ -38,7 +38,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
           <BanIcon className="size-4" />
           <AlertTitle>{t("This card is cancelled")}</AlertTitle>
           <AlertDescription>
-            {t("Cancelling is permanent, so nothing here can be changed. {0}", cancelReason ? ` Reason given: ${cancelReason}` : "")}
+            {t("Cancelling is permanent, so nothing here can be changed. {0}", cancelReason ? t("Reason given: {0}", cancelReason) : "")}
           </AlertDescription>
         </Alert>
       ) : null}

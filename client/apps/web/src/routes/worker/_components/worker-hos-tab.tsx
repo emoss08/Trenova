@@ -586,7 +586,7 @@ function EldGraph({
               <p className="font-medium">{t(hoveredMeta.label)}</p>
               <p className="text-background/80 tabular-nums">
                 {formatUnixTime(hovered.startSec)} –{" "}
-                {hovered.ongoing ? "Ongoing" : formatUnixTime(hovered.endSec)} ·{" "}
+                {hovered.ongoing ? t("Ongoing") : formatUnixTime(hovered.endSec)} ·{" "}
                 {formatDurationMs((hovered.endSec - hovered.startSec) * 1000)}
               </p>
               {hovered.entry.vehicleName ? (
@@ -677,7 +677,7 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm tabular-nums">
-          {formatUnixTime(entry.logStartAt)} – {endAt ? formatUnixTime(endAt) : "Ongoing"}
+          {formatUnixTime(entry.logStartAt)} – {endAt ? formatUnixTime(endAt) : t("Ongoing")}
         </p>
         {entry.vehicleName || entry.remark ? (
           <div className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">

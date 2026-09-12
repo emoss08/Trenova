@@ -70,7 +70,7 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
                 : "text-red-700 dark:text-red-400"),
           )}
         >
-          {isBalanced ? "Balanced" : "Difference"}
+          {isBalanced ? t("Balanced") : t("Difference")}
         </span>
         <span className="flex items-center gap-1.5">
           {isBalanced ? (

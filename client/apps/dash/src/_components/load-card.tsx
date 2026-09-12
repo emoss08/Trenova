@@ -88,7 +88,7 @@ export function LoadCard({ load, index = 0 }: { load: PortalLoad; index?: number
         >
           <div className="flex items-center justify-between gap-2">
             <p className="truncate font-mono text-sm font-semibold">
-              {load.proNumber || "Pending pro #"}
+              {load.proNumber || t("Pending pro #")}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               <LoadPayChip load={load} />
@@ -213,7 +213,7 @@ export function StopTimeline({
                       : "bg-green-600 text-white",
                   )}
                 >
-                  {checkIn.isPending ? "Saving..." : action === "Arrive" ? "Arrive" : "Depart"}
+                  {checkIn.isPending ? t("Saving...") : action === "Arrive" ? t("Arrive") : t("Depart")}
                 </button>
               ) : null}
               {showDirections && (stop.addressLine || stop.locationName) && !isDone ? (

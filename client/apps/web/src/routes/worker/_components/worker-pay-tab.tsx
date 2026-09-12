@@ -77,7 +77,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         </div>
         <Button size="sm" onClick={() => setAssignOpen(true)}>
           <Wallet className="size-3.5" />
-          {assignment ? "Change Profile" : "Assign Profile"}
+          {assignment ? t("Change Profile") : t("Assign Profile")}
         </Button>
       </div>
 
@@ -209,7 +209,7 @@ function CurrentAssignmentCard({
   return (
     <div className="rounded-lg border p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold">{profile?.name ?? "Pay profile"}</span>
+        <span className="text-sm font-semibold">{profile?.name ?? t("Pay profile")}</span>
         {profile && (
           <PayeeClassificationBadge
             classification={profile.classification as PayeeClassification}
@@ -217,7 +217,7 @@ function CurrentAssignmentCard({
         )}
         <span className="text-muted-foreground text-xs">
           {t("since {0} {1}", formatDate(assignment.effectiveFrom), Number(assignment.splitPercent) !== 100 &&
-            ` · ${Number(assignment.splitPercent)}% split`)}
+            t("· {0}% split", Number(assignment.splitPercent)))}
         </span>
         <Button
           size="sm"

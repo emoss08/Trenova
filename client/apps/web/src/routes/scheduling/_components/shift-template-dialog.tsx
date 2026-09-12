@@ -161,7 +161,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit the shift" : "Add a shift"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit the shift") : t("Add a shift")}</DialogTitle>
           <DialogDescription>
             {t("A shift is the days somebody works and when. A rotation longer than a week makes an A/B pair one shift with two assignments rather than two near-identical shifts.")}
           </DialogDescription>
@@ -340,7 +340,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add shift"}
+                {isEdit ? t("Save") : t("Add shift")}
               </Button>
             </DialogFooter>
           </Form>
@@ -395,7 +395,7 @@ function ShiftPreview({
                 aria-hidden
               />
             ) : null}
-            {name.trim() || "Unnamed shift"}
+            {name.trim() || t("Unnamed shift")}
           </p>
           <p className="text-muted-foreground truncate text-xs">
             {describeShiftPattern(daysOfWeek, cycleWeeks)}
@@ -424,7 +424,7 @@ function ShiftPreview({
       <dl className="flex flex-col gap-1.5 text-xs">
         <div className="flex items-center gap-2">
           <ClockIcon className="text-muted-foreground size-3.5 shrink-0" />
-          <dd className="tabular-nums">{window ?? "Set a start and a length"}</dd>
+          <dd className="tabular-nums">{window ?? t("Set a start and a length")}</dd>
         </div>
         <div className="flex items-center gap-2">
           <CalendarDaysIcon className="text-muted-foreground size-3.5 shrink-0" />
@@ -434,7 +434,7 @@ function ShiftPreview({
         </div>
         <div className="flex items-center gap-2">
           <RepeatIcon className="text-muted-foreground size-3.5 shrink-0" />
-          <dd>{cycleWeeks > 1 ? `${cycleWeeks}-week rotation` : "Same every week"}</dd>
+          <dd>{cycleWeeks > 1 ? t("{0}-week rotation", cycleWeeks) : t("Same every week")}</dd>
         </div>
       </dl>
 

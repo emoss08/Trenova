@@ -145,7 +145,7 @@ export function CredentialSlotRow({
         {credential ? (
           <>
             <p className="font-medium tabular-nums">
-              {credential.expiresAt ? formatUnixDateMedium(credential.expiresAt) : "No expiry"}
+              {credential.expiresAt ? formatUnixDateMedium(credential.expiresAt) : t("No expiry")}
             </p>
             <p className="text-muted-foreground">{describeDaysUntil(item.daysUntilExpiry)}</p>
           </>

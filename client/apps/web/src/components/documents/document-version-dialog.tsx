@@ -201,7 +201,7 @@ export function DocumentVersionDialog({
               {t("Version History")}
             </DialogTitle>
             <DialogDescription>
-              {document ? document.originalName : "Document versions"}
+              {document ? document.originalName : t("Document versions")}
             </DialogDescription>
           </DialogHeader>
 

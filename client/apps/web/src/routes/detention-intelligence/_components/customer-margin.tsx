@@ -142,8 +142,8 @@ export function CustomerMargin({
           <div className="flex items-center justify-between gap-3">
             <p className="text-2xs text-muted-foreground tabular-nums">
               {losingCount > 0
-                ? `${losingCount} of ${rows.length} lose money on detention`
-                : "Every customer clears a positive detention margin"}
+                ? t("{0} of {1} lose money on detention", losingCount, rows.length)
+                : t("Every customer clears a positive detention margin")}
             </p>
             {hidden > 0 || expanded ? (
               <PanelExpandToggle

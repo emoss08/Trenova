@@ -80,8 +80,8 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
           <DrawerTitle>{t("Question about your pay?")}</DrawerTitle>
           <DrawerDescription>
             {line
-              ? `About "${line.description}" — your carrier will review it and follow up.`
-              : "Your carrier will review it and follow up on this statement."}
+              ? t("About \"{0}\" — your carrier will review it and follow up.", line.description)
+              : t("Your carrier will review it and follow up on this statement.")}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -112,7 +112,7 @@ export function DisputeDrawer({ settlementId, line, open, onOpenChange }: Disput
 
         <DrawerFooter>
           <Button onClick={handleSubmit} disabled={pending} className="h-11">
-            {pending ? "Sending..." : "Send to my carrier"}
+            {pending ? t("Sending...") : t("Send to my carrier")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

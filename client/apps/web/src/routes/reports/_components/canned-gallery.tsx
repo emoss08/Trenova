@@ -82,7 +82,7 @@ function CannedReportCard({
               disabled={customizing}
             >
               <PencilRulerIcon className="size-3" />
-              {customizing ? "Copying..." : "Customize"}
+              {customizing ? t("Copying...") : t("Customize")}
             </Button>
           )}
           {canRun && (

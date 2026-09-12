@@ -54,7 +54,7 @@ function RateConfirmationSummary({
             rateConfirmation.revisionLabel,
           ]
             .filter(Boolean)
-            .join(" · ") || "Review and sign the agreement below"}
+            .join(" · ") || t("Review and sign the agreement below")}
         </p>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">

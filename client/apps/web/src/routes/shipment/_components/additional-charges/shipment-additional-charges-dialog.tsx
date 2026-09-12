@@ -84,12 +84,12 @@ export function AdditionalChargeDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Additional Charge" : "Add Additional Charge"}
+            {isEditing ? t("Edit Additional Charge") : t("Add Additional Charge")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the accessorial charge details"
-              : "Select an accessorial charge and configure its billing details"}
+              ? t("Update the accessorial charge details")
+              : t("Select an accessorial charge and configure its billing details")}
           </DialogDescription>
         </DialogHeader>
         <FormGroup cols={2}>

@@ -103,10 +103,10 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
       <SheetContent className="sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            {position?.title ?? "Position"}
+            {position?.title ?? t("Position")}
             {position ? (
               <Badge variant={position.isDrivingPosition ? "info" : "secondary"}>
-                {position.isDrivingPosition ? "Driving" : "Front office"}
+                {position.isDrivingPosition ? t("Driving") : t("Front office")}
               </Badge>
             ) : null}
           </SheetTitle>
@@ -117,7 +117,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                     ? "held by workers on the roster"
                     : "held by people who log in"
                 }`
-              : "Loading"}
+              : t("Loading")}
           </SheetDescription>
         </SheetHeader>
 
@@ -172,7 +172,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
           <section aria-label={t("People in the position")} className="flex flex-col gap-1.5">
             <header className="flex items-center justify-between px-1">
               <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                {t("{0} in it", driving ? "Workers" : "People")}
+                {t("{0} in it", driving ? t("Workers") : t("People"))}
               </h4>
               {holders.data ? (
                 <span className="text-muted-foreground text-xs tabular-nums">
@@ -208,7 +208,7 @@ export function PositionHoldersSheet({ position, onOpenChange }: PositionHolders
                       <span className="flex min-w-0 flex-col leading-tight">
                         <span className="truncate text-sm font-medium">{holder.name}</span>
                         <span className="text-muted-foreground truncate text-xs">
-                          {holder.detail || (holder.kind === "Worker" ? "No terminal" : "")}
+                          {holder.detail || (holder.kind === "Worker" ? t("No terminal") : "")}
                         </span>
                       </span>
                     </Link>

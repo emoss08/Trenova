@@ -98,7 +98,7 @@ export default function ApprovedPTOChart({
       <div className="flex min-h-40 w-full flex-1 items-center justify-center">
         <div className="text-center">
           <p className="text-destructive text-sm">{t("Failed to load chart data")}</p>
-          <p className="text-muted-foreground text-xs">{errorMessage || "An error occurred"}</p>
+          <p className="text-muted-foreground text-xs">{errorMessage || t("An error occurred")}</p>
         </div>
       </div>
     );

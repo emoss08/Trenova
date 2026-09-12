@@ -177,7 +177,7 @@ export function EmployerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit previous employer" : "Add a previous employer"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit previous employer") : t("Add a previous employer")}</DialogTitle>
           <DialogDescription>
             {t("Every DOT-regulated employer in the three years before the application has to be investigated within thirty days of hire (49 CFR 391.23).")}
           </DialogDescription>
@@ -396,7 +396,7 @@ export function EmployerDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Add"}
+                {isEdit ? t("Save") : t("Add")}
               </Button>
             </DialogFooter>
           </Form>

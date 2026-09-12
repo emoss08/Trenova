@@ -368,11 +368,11 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold">{t("Email Delivery")}</h3>
                   <Badge variant={SEND_STATUS_VARIANTS[invoice.sendStatus ?? "NotSent"]}>
-                    {invoice.sendStatus ?? "NotSent"}
+                    {invoice.sendStatus ?? t("NotSent")}
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  {invoice.sentAt ? `Last sent ${formatUnixDate(invoice.sentAt)}` : "Not sent yet"}
+                  {invoice.sentAt ? t("Last sent {0}", formatUnixDate(invoice.sentAt)) : t("Not sent yet")}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -401,7 +401,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                           disabled={!canSend || sendMutation.isPending}
                         >
                           <MailIcon className="size-3.5" />
-                          {invoice.sendStatus === "Sent" ? "Resend" : "Send"}
+                          {invoice.sendStatus === "Sent" ? t("Resend") : t("Send")}
                         </Button>
                       </span>
                     }
@@ -558,25 +558,25 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
         <span className="min-w-0">
           {t("From")}{" "}
           <span className="text-foreground font-medium">
-            {sendPlan.fromEmail || "Assigned profile"}
+            {sendPlan.fromEmail || t("Assigned profile")}
           </span>
         </span>
         <span className="flex items-center gap-1.5">
           {t("Read receipt")}
           <Badge variant={sendPlan.openTracking ? "active" : "outline"}>
-            {sendPlan.openTracking ? "Enabled" : "Disabled"}
+            {sendPlan.openTracking ? t("Enabled") : t("Disabled")}
           </Badge>
         </span>
       </div>
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
           <p className="text-muted-foreground text-xs font-medium">{t("Subject")}</p>
-          <p className="truncate text-sm font-semibold">{sendPlan.subject || "No subject"}</p>
+          <p className="truncate text-sm font-semibold">{sendPlan.subject || t("No subject")}</p>
         </div>
         <div>
           <p className="text-muted-foreground text-xs font-medium">{t("Body")}</p>
           <p className="text-muted-foreground line-clamp-4 text-sm whitespace-pre-line">
-            {sendPlan.body || "No body content"}
+            {sendPlan.body || t("No body content")}
           </p>
         </div>
       </div>
@@ -814,8 +814,8 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
         {sentAt
           ? formatUnixDate(sentAt)
           : failedAt
-            ? `Failed ${formatUnixDate(failedAt)}`
-            : "Not sent"}
+            ? t("Failed {0}", formatUnixDate(failedAt))
+            : t("Not sent")}
       </p>
       {providerMessageId ? (
         <p className="text-muted-foreground mt-1 truncate text-xs">

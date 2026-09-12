@@ -1,8 +1,11 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ArrowDownIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 
 export function NewCommentsPill({ count, onClick }: { count: number; onClick: () => void }) {
+  const t = useT();
+
   return (
     <AnimatePresence>
       {count > 0 && (
@@ -22,7 +25,7 @@ export function NewCommentsPill({ count, onClick }: { count: number; onClick: ()
               onClick={onClick}
             >
               <ArrowDownIcon className="size-3" />
-              {count === 1 ? "1 new comment" : `${count} new comments`}
+              {count === 1 ? t("1 new comment") : t("{0} new comments", count)}
             </Button>
           </div>
         </m.div>

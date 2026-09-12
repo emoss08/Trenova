@@ -266,9 +266,9 @@ export function HolidayCalendar() {
             <AlertDialogTitle>{t("Remove {0}?", pendingDelete?.name)}</AlertDialogTitle>
             <AlertDialogDescription>
               {pendingDelete?.kind === "Blackout"
-                ? "Workers will be able to request this date off again."
-                : "Policies that skip weekends will start counting this date against requests."}
-              {pendingDelete?.recursAnnually ? " This applies to every year." : ""}
+                ? t("Workers will be able to request this date off again.")
+                : t("Policies that skip weekends will start counting this date against requests.")}
+              {pendingDelete?.recursAnnually ? t("This applies to every year.") : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -84,7 +84,7 @@ export const SequencePreview = memo(function SequencePreview({ index, showTokens
             ) : (
               <CopyIcon className="size-3.5" />
             )}
-            {copied ? "Copied" : "Copy"}
+            {copied ? t("Copied") : t("Copy")}
           </Button>
         </div>
       </div>

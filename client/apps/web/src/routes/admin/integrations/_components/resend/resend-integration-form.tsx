@@ -152,7 +152,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
-                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? " (leave blank to keep existing secret)" : "")}
+                  {t("Webhook Signing Secret {0}", hasWebhookSecret ? t("(leave blank to keep existing secret)") : "")}
                   <ResendWebhookHelpPopover webhookURL={webhookURL} />
                 </span>
               }
@@ -234,7 +234,7 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             {t("In Resend, create a webhook endpoint and use this URL:")}
           </p>
           <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
-            {webhookURL || "Save once to generate the webhook URL."}
+            {webhookURL || t("Save once to generate the webhook URL.")}
           </code>
           <div className="space-y-1">
             <p className="text-muted-foreground">{t("Listen for these Resend events:")}</p>

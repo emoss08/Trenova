@@ -190,7 +190,7 @@ export function PreflightDialog({
             </span>
             <div className="flex min-w-0 flex-col gap-1">
               <DialogTitle className="truncate text-sm leading-none font-semibold">
-                {move.isCovered ? "Reassign" : "Assign"} {driver.firstName} {driver.lastName}
+                {move.isCovered ? t("Reassign") : t("Assign")} {driver.firstName} {driver.lastName}
               </DialogTitle>
               <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] leading-none">
                 {tractorId ? (
@@ -240,7 +240,7 @@ export function PreflightDialog({
                 <span className="text-muted-foreground text-[10.5px] tabular-nums">
                   {move.originWindowStart > 0
                     ? formatUnixDateTimeShort(move.originWindowStart)
-                    : "Unscheduled"}
+                    : t("Unscheduled")}
                 </span>
               </div>
               <div aria-hidden className="text-muted-foreground/50 flex items-center">
@@ -343,10 +343,10 @@ export function PreflightDialog({
             }
           >
             {data?.requiresOverride
-              ? "Blocked by policy"
+              ? t("Blocked by policy")
               : move.isCovered
-                ? "Reassign driver"
-                : "Assign driver"}
+                ? t("Reassign driver")
+                : t("Assign driver")}
           </Button>
         </DialogFooter>
       </DialogContent>

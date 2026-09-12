@@ -288,7 +288,7 @@ export function InvoiceApprovalPage() {
                     <div className="mt-1.5 flex items-center gap-1.5">
                       <Badge variant="secondary">{KIND_LABELS[row.kind] ?? row.kind}</Badge>
                       <span className="text-2xs text-muted-foreground">
-                        {row.submittedByName || "Unknown"}
+                        {row.submittedByName || t("Unknown")}
                       </span>
                     </div>
                     {row.reason ? (
@@ -419,7 +419,7 @@ function ApprovalDetail({
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
               <PropertyCell label={t("Requested By")}>
                 <span className="text-xs font-medium">
-                  {selectedRow.submittedByName || "Unknown"}
+                  {selectedRow.submittedByName || t("Unknown")}
                 </span>
               </PropertyCell>
               <PropertyCell label={t("Submitted")}>
@@ -429,7 +429,7 @@ function ApprovalDetail({
               </PropertyCell>
               <PropertyCell label={t("Policy Source")}>
                 <span className="text-xs font-medium">
-                  {selectedRow.policySource || "Policy-controlled"}
+                  {selectedRow.policySource || t("Policy-controlled")}
                 </span>
               </PropertyCell>
               <PropertyCell label={t("Invoice Status")}>

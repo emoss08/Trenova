@@ -222,10 +222,10 @@ export default function MatchingWorkspace() {
           data-testid="carrier-match-automation-status"
           className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-[11px]"
         >
-          <span>{t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? "On" : "Off")}</span>
+          <span>{t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? t("On") : t("Off"))}</span>
           <span aria-hidden>·</span>
           <span>
-            {t("Auto-accept within tolerance: {0}", settlementControl.autoAcceptWithinTolerance ? "On" : "Off")}
+            {t("Auto-accept within tolerance: {0}", settlementControl.autoAcceptWithinTolerance ? t("On") : t("Off"))}
           </span>
           <Link
             to="/admin/carrier-settlement-control"
@@ -472,15 +472,15 @@ function InvoiceList({
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs font-medium">
-              {invoice.invoiceNumber || "No invoice #"}
+              {invoice.invoiceNumber || t("No invoice #")}
             </span>
             <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">
               {invoice.reconciliationStatus}
             </span>
           </div>
           <p className="text-muted-foreground mt-1 text-[11px]">
-            {invoice.proNumber ? `PRO ${invoice.proNumber} · ` : ""}
-            {invoice.billToName || "Unknown bill-to"}
+            {invoice.proNumber ? t("PRO {0} ·", invoice.proNumber) : ""}
+            {invoice.billToName || t("Unknown bill-to")}
           </p>
           <div className="mt-1 flex items-center justify-between text-[11px]">
             <span
@@ -492,7 +492,7 @@ function InvoiceList({
               )}
             >
               <Building2Icon className="size-3" aria-hidden />
-              {invoice.carrierId ? "Carrier linked" : "No carrier link"}
+              {invoice.carrierId ? t("Carrier linked") : t("No carrier link")}
             </span>
             <span className="font-semibold tabular-nums">
               {invoice.totalAmount != null
@@ -557,7 +557,7 @@ function MatchList({
         >
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs font-medium">
-              {match.invoiceNumber || "No invoice #"}
+              {match.invoiceNumber || t("No invoice #")}
             </span>
             <div className="flex shrink-0 items-center gap-1">
               {match.matchedVia === "Auto" && (
@@ -582,9 +582,9 @@ function MatchList({
             </div>
           </div>
           <p className="text-muted-foreground mt-1 truncate text-[11px]">
-            {match.carrier?.name ?? "Unknown carrier"}
+            {match.carrier?.name ?? t("Unknown carrier")}
             {match.carrierAssignment?.proNumber
-              ? ` · PRO ${match.carrierAssignment.proNumber}`
+              ? t("· PRO {0}", match.carrierAssignment.proNumber)
               : ""}
           </p>
           <div className="mt-1 flex items-center justify-between text-[11px]">
@@ -690,8 +690,8 @@ function InvoiceDetail({
         </h4>
         <p className="text-muted-foreground mb-2 text-[11px]">
           {invoice.carrierId
-            ? "This invoice is linked to a carrier in the master and can be matched against its assignments."
-            : "Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number."}
+            ? t("This invoice is linked to a carrier in the master and can be matched against its assignments.")
+            : t("Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number.")}
         </p>
         <div className="flex flex-wrap gap-2">
           {!invoice.carrierId && (
@@ -795,7 +795,7 @@ function MatchDetail({
       <div className="flex flex-wrap items-center gap-2">
         <CarrierInvoiceMatchStatusBadge status={match.status} />
         <span className="text-xs font-medium">
-          {match.carrier?.name ?? "Unknown carrier"}
+          {match.carrier?.name ?? t("Unknown carrier")}
           {match.carrier?.scac ? ` (${match.carrier.scac})` : ""}
         </span>
         <span className="text-muted-foreground ml-auto text-xs">
@@ -818,7 +818,7 @@ function MatchDetail({
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("Source")}</span>
               <span className="font-medium">
-                {match.ediCarrierInvoiceId ? "EDI 210" : "Document AI"}
+                {match.ediCarrierInvoiceId ? t("EDI 210") : t("Document AI")}
               </span>
             </div>
             <div className="mt-2 flex justify-between border-t pt-2 text-sm">
@@ -841,7 +841,7 @@ function MatchDetail({
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {t("Base ({0})", assignment.rateMethod === "PerMile" ? "per mile" : "flat")}
+                    {t("Base ({0})", assignment.rateMethod === "PerMile" ? t("per mile") : t("flat"))}
                   </span>
                   <span className="font-medium tabular-nums">
                     {formatCurrency(Number(assignment.baseAmount ?? 0), currency)}
@@ -906,11 +906,11 @@ function MatchDetail({
                   {t("Invoice minus expected · tolerance")}{" "}
                   <AmountDisplay value={varianceToleranceMinor} currency={currency} /> —{" "}
                   {withinTolerance
-                    ? "within tolerance"
-                    : "beyond tolerance, accept with variance to accrue the difference"}
+                    ? t("within tolerance")
+                    : t("beyond tolerance, accept with variance to accrue the difference")}
                 </>
               ) : (
-                "Invoice minus expected"
+                t("Invoice minus expected")
               )}
             </p>
           </div>
@@ -956,8 +956,8 @@ function MatchDetail({
       ) : (
         <p className="text-muted-foreground text-xs">
           {match.status === "Resolved"
-            ? `Resolved${match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : ""}${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`
-            : `Rejected${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`}
+            ? t("Resolved{0}{1}", match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : "", match.resolutionNote ? ` — ${match.resolutionNote}` : "")
+            : t("Rejected{0}", match.resolutionNote ? ` — ${match.resolutionNote}` : "")}
         </p>
       )}
 

@@ -44,7 +44,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           info={
             <InfoPopover title={t("On your team")}>
               {
-                "Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today."
+                t("Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today.")
               }
             </InfoPopover>
           }
@@ -65,7 +65,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           info={
             <InfoPopover title={t("In good standing")}>
               {
-                "People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good."
+                t("People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good.")
               }
             </InfoPopover>
           }
@@ -93,7 +93,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           info={
             <InfoPopover title={t("Needing attention")}>
               {
-                "Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here."
+                t("Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here.")
               }
             </InfoPopover>
           }
@@ -113,7 +113,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           info={
             <InfoPopover title={t("Average tenure")}>
               {
-                "Mean time since hire date across the team, for people with a hire date on file. A leaver is measured to their termination date."
+                t("Mean time since hire date across the team, for people with a hire date on file. A leaver is measured to their termination date.")
               }
             </InfoPopover>
           }
@@ -121,12 +121,12 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
         <span className={VALUE_CLASS}>{averageTenure}</span>
         <KpiSub>
           {summary.longestServing
-            ? `Longest serving: ${summary.longestServing.member.name}, ${formatTenure(
+            ? t("Longest serving: {0}, {1}", summary.longestServing.member.name, formatTenure(
                 now - summary.longestServing.days * DAY_SECONDS,
                 null,
                 now,
-              )}`
-            : "No hire dates on record"}
+              ))
+            : t("No hire dates on record")}
         </KpiSub>
       </KpiCard>
     </div>

@@ -192,7 +192,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
                 onClick={() => acknowledge.mutate()}
               >
                 <CheckIcon className="size-3.5" />
-                {acknowledge.isPending ? "Confirming…" : "I've completed this"}
+                {acknowledge.isPending ? t("Confirming…") : t("I've completed this")}
               </Button>
             ) : null}
           </div>

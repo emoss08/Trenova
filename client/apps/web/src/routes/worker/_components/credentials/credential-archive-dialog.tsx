@@ -105,7 +105,7 @@ export function CredentialArchiveDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending || !credential}>
-                {isPending ? "Archiving..." : "Archive"}
+                {isPending ? t("Archiving...") : t("Archive")}
               </Button>
             </DialogFooter>
           </Form>

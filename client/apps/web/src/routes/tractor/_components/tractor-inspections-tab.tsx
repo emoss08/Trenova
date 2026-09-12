@@ -94,11 +94,13 @@ function InspectionsLoadingState() {
 }
 
 function DefectRow({ defect }: { defect: InspectionDefect }) {
+  const t = useT();
+
   return (
     <li className="flex items-start justify-between gap-3 px-4 py-2.5">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">
-          {defect.defectType ? toTitleCase(defect.defectType) : "Defect"}
+          {defect.defectType ? toTitleCase(defect.defectType) : t("Defect")}
         </p>
         {defect.comment ? (
           <p className="text-muted-foreground mt-0.5 text-xs">{defect.comment}</p>
@@ -109,7 +111,7 @@ function DefectRow({ defect }: { defect: InspectionDefect }) {
           <span className="text-muted-foreground text-xs">{formatUnixDate(defect.resolvedAt)}</span>
         ) : null}
         <Badge variant={defect.resolved ? "active" : "inactive"}>
-          {defect.resolved ? "Resolved" : "Open"}
+          {defect.resolved ? t("Resolved") : t("Open")}
         </Badge>
       </div>
     </li>
@@ -165,7 +167,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             className={cn("text-xs", hasUnresolved ? "text-destructive" : "text-muted-foreground")}
           >
             {inspection.defectCount} {pluralize("defect", inspection.defectCount)}
-            {hasUnresolved ? ` · ${inspection.unresolvedDefectCount} unresolved` : ""}
+            {hasUnresolved ? t("· {0} unresolved", inspection.unresolvedDefectCount) : ""}
           </span>
         ) : (
           <span className="text-muted-foreground text-xs">{t("No defects")}</span>

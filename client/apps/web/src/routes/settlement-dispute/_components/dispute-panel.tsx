@@ -113,7 +113,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
         </div>
         <p className="text-muted-foreground mt-1 text-xs">
           {t("Submitted {0} {1}", formatDate(dispute.createdAt), dispute.worker
-            ? ` by ${`${dispute.worker.firstName} ${dispute.worker.lastName}`.trim()}`
+            ? t("by {0}", `${dispute.worker.firstName} ${dispute.worker.lastName}`.trim())
             : "")}
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{t(dispute.description)}</p>
@@ -155,8 +155,8 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <p className="mt-1 text-sm whitespace-pre-wrap">{dispute.resolutionNote || "—"}</p>
           <p className="text-muted-foreground mt-2 text-xs">
             {formatDate(dispute.resolvedAt)}
-            {dispute.resolvedBy ? ` by ${dispute.resolvedBy.name}` : ""}
-            {dispute.resolutionLineId ? " · correcting adjustment applied" : ""}
+            {dispute.resolvedBy ? t("by {0}", dispute.resolvedBy.name) : ""}
+            {dispute.resolutionLineId ? t("· correcting adjustment applied") : ""}
           </p>
         </div>
       ) : (
@@ -167,7 +167,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
               onClick={() => startReview.mutate()}
               disabled={startReview.isPending}
             >
-              {startReview.isPending ? "Updating..." : "Start review"}
+              {startReview.isPending ? t("Updating...") : t("Start review")}
             </Button>
           ) : null}
           <ResolveForm disputeId={disputeId} onDone={invalidate} onClose={onClose} />
@@ -334,7 +334,7 @@ function ResolveForm({
       ) : null}
 
       <Button onClick={() => mutation.mutate()} disabled={!valid || mutation.isPending}>
-        {mutation.isPending ? "Saving..." : approve ? "Resolve dispute" : "Deny dispute"}
+        {mutation.isPending ? t("Saving...") : approve ? t("Resolve dispute") : t("Deny dispute")}
       </Button>
     </div>
   );

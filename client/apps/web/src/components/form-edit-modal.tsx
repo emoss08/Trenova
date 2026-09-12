@@ -338,7 +338,7 @@ export function FormEditModal<T extends FieldValues>({
                 ) : (
                   <div>
                     {isLoadingRecord
-                      ? "Loading record..."
+                      ? t("Loading record...")
                       : fieldKey && effectiveRecord
                         ? effectiveRecord[fieldKey]
                         : title}
@@ -433,8 +433,8 @@ export function FormEditModal<T extends FieldValues>({
                 <div className="flex flex-col items-center justify-center space-y-3 py-8">
                   <p className="text-muted-foreground text-sm">
                     {fetchError instanceof Error && fetchError.message.includes("404")
-                      ? "Record not found. It may have been deleted."
-                      : "Failed to load record. Please try again."}
+                      ? t("Record not found. It may have been deleted.")
+                      : t("Failed to load record. Please try again.")}
                   </p>
                   <Button
                     variant="outline"

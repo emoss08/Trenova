@@ -173,8 +173,8 @@ export function SettlementQueue({
         />
         <span className="text-muted-foreground text-[11px]">
           {checkedIds.size > 0
-            ? `${checkedIds.size} selected`
-            : "Select settlements to act on several at once"}
+            ? t("{0} selected", checkedIds.size)
+            : t("Select settlements to act on several at once")}
         </span>
       </div>
       <ScrollArea

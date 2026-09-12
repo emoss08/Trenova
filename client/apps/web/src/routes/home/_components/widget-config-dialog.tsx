@@ -83,7 +83,7 @@ export function WidgetConfigDialog({
             <Icon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <DialogTitle>{option?.label ?? "Widget"}</DialogTitle>
+            <DialogTitle>{option?.label ?? t("Widget")}</DialogTitle>
             <DialogDescription className="text-xs">{option?.description}</DialogDescription>
           </div>
         </DialogHeader>
@@ -323,7 +323,7 @@ function MetricPicker({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline gap-2">
-        <Label>{max === 1 ? "Metric" : "Metrics"}</Label>
+        <Label>{max === 1 ? t("Metric") : t("Metrics")}</Label>
         {max > 1 && (
           <span className="text-2xs text-muted-foreground ml-auto tabular-nums">
             {t("{0} of {1} chosen", selected.length, max)}
@@ -623,10 +623,10 @@ function DashboardPicker({
           {visible.length === 0 && (
             <p className="text-muted-foreground flex flex-1 items-center justify-center px-4 py-6 text-center text-xs">
               {dashboards.isLoading
-                ? "Loading dashboards…"
+                ? t("Loading dashboards…")
                 : term === ""
-                  ? "You have no saved dashboards yet."
-                  : `No dashboard matches “${search.trim()}”.`}
+                  ? t("You have no saved dashboards yet.")
+                  : t("No dashboard matches “{0}”.", search.trim())}
             </p>
           )}
         </div>

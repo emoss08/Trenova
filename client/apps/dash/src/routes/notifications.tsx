@@ -133,7 +133,7 @@ export function DashNotificationsPage() {
               disabled={feed.isFetchingNextPage}
               onClick={() => void feed.fetchNextPage()}
             >
-              {feed.isFetchingNextPage ? "Loading..." : "Load more"}
+              {feed.isFetchingNextPage ? t("Loading...") : t("Load more")}
             </Button>
           ) : null}
         </>

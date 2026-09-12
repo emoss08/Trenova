@@ -164,8 +164,8 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
         )}
       >
         {collectability.chainValid
-          ? "Evidence chain verified"
-          : "Evidence chain broken — the record no longer hashes clean"}
+          ? t("Evidence chain verified")
+          : t("Evidence chain broken — the record no longer hashes clean")}
       </p>
 
       <ul className="divide-border/60 mt-2 divide-y">
@@ -259,7 +259,7 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
               <span className="truncate">{t("{0} notice", toTitleCase(notice.kind))}</span>
               <span className="text-muted-foreground shrink-0">
                 {toTitleCase(notice.deliveryStatus)}
-                {notice.satisfiesRequirement ? " · in window" : ""}
+                {notice.satisfiesRequirement ? t("· in window") : ""}
               </span>
             </span>
             <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
@@ -612,10 +612,10 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
                 </span>
               </div>
               <SheetTitle className="truncate">
-                {occurrence.locationName || "Unknown facility"}
+                {occurrence.locationName || t("Unknown facility")}
               </SheetTitle>
               <SheetDescription className="truncate text-xs">
-                {occurrence.customerName || "Unknown customer"}
+                {occurrence.customerName || t("Unknown customer")}
                 {occurrence.shipmentProNumber && <> {t("· PRO {0}", occurrence.shipmentProNumber)}</>} ·{" "}
                 {occurrence.stopType}
               </SheetDescription>

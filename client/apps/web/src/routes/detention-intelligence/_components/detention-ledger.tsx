@@ -117,7 +117,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
           </p>
           <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
-            {t("{0} settled {1} across {2} {3} · {4}% ran past free time {5}", stopCount.toLocaleString(), stopCount === 1 ? "stop" : "stops", rollup.facilityCount, rollup.facilityCount === 1 ? "facility" : "facilities", Math.round(breachRate * 100), rollup.truncated ? " · top facilities only" : "")}
+            {t("{0} settled {1} across {2} {3} · {4}% ran past free time {5}", stopCount.toLocaleString(), stopCount === 1 ? "stop" : "stops", rollup.facilityCount, rollup.facilityCount === 1 ? "facility" : "facilities", Math.round(breachRate * 100), rollup.truncated ? t("· top facilities only") : "")}
           </p>
 
           <div className="mt-4 max-w-xl">

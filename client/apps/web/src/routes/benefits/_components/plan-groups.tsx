@@ -92,7 +92,7 @@ function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitC
         </span>
       </h4>
       <span className="text-muted-foreground text-xs tabular-nums">
-        {t("{0} covered {1} {2}", group.enrolled, group.waived > 0 ? ` · ${group.waived} declined` : "", group.employerMinor > 0 ? ` · ${formatMinor(group.employerMinor)} employer` : "")}
+        {t("{0} covered {1} {2}", group.enrolled, group.waived > 0 ? t("· {0} declined", group.waived) : "", group.employerMinor > 0 ? t("· {0} employer", formatMinor(group.employerMinor)) : "")}
       </span>
     </header>
   );
@@ -148,7 +148,7 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
             />
           </span>
           <span className="text-muted-foreground text-2xs tabular-nums">
-            {t("{0} on it{1}", enrolled, waived > 0 ? ` · ${waived} declined` : "")}
+            {t("{0} on it{1}", enrolled, waived > 0 ? t("· {0} declined", waived) : "")}
           </span>
         </div>
       </div>

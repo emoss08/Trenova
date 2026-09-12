@@ -105,8 +105,8 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
       {summary.errorCount > 0 && (
         <p className="text-muted-foreground text-xs">
           {t("{0} {1} {2} . Failed shipments are excluded from the totals below.", summary.currentErrorCount > 0 &&
-            `${summary.currentErrorCount} could not be re-rated with the current template`, summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · ", summary.candidateErrorCount > 0 &&
-            `${summary.candidateErrorCount} failed under the candidate`)}
+            t("{0} could not be re-rated with the current template", summary.currentErrorCount), summary.currentErrorCount > 0 && summary.candidateErrorCount > 0 && " · ", summary.candidateErrorCount > 0 &&
+            t("{0} failed under the candidate", summary.candidateErrorCount))}
         </p>
       )}
 

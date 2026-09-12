@@ -180,7 +180,7 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
           {t("Credential")}
         </span>
         <span className="text-subtle-foreground font-table text-[10.5px] whitespace-nowrap">
-          {receipt.issued ? "Issued" : "Assembling"}
+          {receipt.issued ? t("Issued") : t("Assembling")}
         </span>
       </div>
       {receipt.rows.map((row, index) => (
@@ -238,10 +238,10 @@ function PanelFooter() {
           )}
         />
         {versionQuery.isPending
-          ? "Contacting network"
+          ? t("Contacting network")
           : reachable
-            ? "Network operational"
-            : "Network unreachable"}
+            ? t("Network operational")
+            : t("Network unreachable")}
       </span>
       {versionQuery.data?.environment && <span>{versionQuery.data.environment}</span>}
       {versionQuery.data?.version && <span>{t("v{0}", versionQuery.data.version)}</span>}

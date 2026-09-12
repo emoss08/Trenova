@@ -479,7 +479,7 @@ function FilterRow({
     <div className="flex items-center gap-2">
       {index === 0 ? (
         <span className="text-muted-foreground w-12 shrink-0 text-sm">
-          {isNested ? "" : "Where"}
+          {isNested ? "" : t("Where")}
         </span>
       ) : (
         <Select
@@ -580,8 +580,8 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               {selectedLabels.length > 0
                 ? selectedLabels.length === 1
                   ? selectedLabels[0]
-                  : `${selectedLabels.length} Selected`
-                : "Select Values"}
+                  : t("{0} Selected", selectedLabels.length)
+                : t("Select Values")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent className="w-auto">
@@ -619,7 +619,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
     return (
       <div className="bg-background flex h-7 items-center gap-2 rounded-md border px-2.5">
         <Switch checked={value === true} onCheckedChange={(checked) => onChange(checked)} />
-        <span className="text-sm">{value === true ? "Yes" : "No"}</span>
+        <span className="text-sm">{value === true ? t("Yes") : t("No")}</span>
       </div>
     );
   }
@@ -660,7 +660,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
                       `${formatUnixDate(dateValue.from)} - ${formatUnixDate(dateValue.to)}`,
                       13,
                     )
-                  : "Pick date range"}
+                  : t("Pick date range")}
               </Button>
             }
           />
@@ -701,7 +701,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               )}
             >
               <CalendarIcon className="mr-2 size-4" />
-              {typeof value === "number" ? formatUnixDate(value) : "Pick date"}
+              {typeof value === "number" ? formatUnixDate(value) : t("Pick date")}
             </Button>
           }
         />

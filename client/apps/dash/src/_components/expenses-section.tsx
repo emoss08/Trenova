@@ -73,7 +73,7 @@ export function ExpensesSection() {
               <div className="mt-1 flex items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground">
                   {formatRange(expense.incurredDate, expense.incurredDate)}
-                  {expense.receiptDocumentId ? " · Receipt attached" : ""}
+                  {expense.receiptDocumentId ? t("· Receipt attached") : ""}
                 </p>
                 <ExpenseStatusBadge status={expense.status} />
               </div>
@@ -277,8 +277,8 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
             >
               <CameraIcon className="size-4" />
               {features.requireExpenseReceipt
-                ? "Add receipt photo (required)"
-                : "Add receipt photo"}
+                ? t("Add receipt photo (required)")
+                : t("Add receipt photo")}
             </Button>
           )}
         </div>
@@ -289,7 +289,7 @@ function ExpenseSubmitDrawer({ open, onOpenChange }: ExpenseSubmitDrawerProps) {
             disabled={!canSubmit || submit.isPending}
             onClick={() => submit.mutate()}
           >
-            {submit.isPending ? "Submitting..." : "Submit expense"}
+            {submit.isPending ? t("Submitting...") : t("Submit expense")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

@@ -257,7 +257,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
               >
                 <span className="flex items-center gap-2">
                   <Badge variant="warning">{randomEntryStatusLabel(entry.status)}</Badge>
-                  <span>{entry.substance === "Alcohol" ? "Alcohol" : "Controlled substances"}</span>
+                  <span>{entry.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}</span>
                 </span>
                 {canRecord ? (
                   <Button
@@ -291,7 +291,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{dotTestTypeLabel(test.testType)}</span>
                     <span className="text-muted-foreground">
-                      {test.substance === "Alcohol" ? "Alcohol" : "Controlled substances"}
+                      {test.substance === "Alcohol" ? t("Alcohol") : t("Controlled substances")}
                     </span>
                     <Badge variant={dotResultTone(test.result)}>
                       {test.result === "Pending"
@@ -305,7 +305,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                       {test.collectedAt
                         ? formatUnixDate(test.collectedAt)
                         : test.scheduledAt
-                          ? `scheduled ${formatUnixDate(test.scheduledAt)}`
+                          ? t("scheduled {0}", formatUnixDate(test.scheduledAt))
                           : "—"}
                     </span>
                     {canUpdate && test.status !== "Completed" && test.status !== "Cancelled" ? (

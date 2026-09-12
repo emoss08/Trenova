@@ -181,6 +181,8 @@ export function RotaBoard({
 }
 
 function WorkerCell({ row, compact }: { row: RotaBoardRow; compact: boolean }) {
+  const t = useT();
+
   const shift = (
     <span className="text-muted-foreground flex min-w-0 items-center gap-1 truncate text-[11px]">
       {row.shiftColor ? (
@@ -191,7 +193,7 @@ function WorkerCell({ row, compact }: { row: RotaBoardRow; compact: boolean }) {
         />
       ) : null}
       <span className="truncate">
-        {row.shiftName ?? "No shift"}
+        {row.shiftName ?? t("No shift")}
         {row.fleetCode ? ` · ${row.fleetCode}` : ""}
       </span>
     </span>

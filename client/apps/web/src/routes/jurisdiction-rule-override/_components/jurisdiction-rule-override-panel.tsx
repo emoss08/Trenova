@@ -133,13 +133,13 @@ function OverrideEditPanel({
             onClick={() => removeMutation.mutate(undefined)}
             disabled={removeMutation.isPending}
           >
-            {removeMutation.isPending ? "Removing..." : "Remove Override"}
+            {removeMutation.isPending ? t("Removing...") : t("Remove Override")}
           </Button>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Cancel")}
           </Button>
           <Button type="submit" form="panel-edit-form" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save"}
+            {isSubmitting ? t("Saving...") : t("Save")}
           </Button>
         </>
       }

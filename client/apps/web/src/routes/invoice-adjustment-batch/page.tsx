@@ -169,7 +169,7 @@ export function InvoiceAdjustmentBatchPage() {
                     <div>
                       <p className="text-sm font-medium">{row.batchId}</p>
                       <p className="text-muted-foreground text-xs">
-                        {row.submittedByName || row.submittedById || "System"}
+                        {row.submittedByName || row.submittedById || t("System")}
                       </p>
                     </div>
                     <span className="rounded-full border px-2 py-0.5 text-[10px] tracking-[0.16em] uppercase">
@@ -210,7 +210,7 @@ export function InvoiceAdjustmentBatchPage() {
                 <CardHeader className="border-b">
                   <CardTitle>{selectedRow.batchId}</CardTitle>
                   <CardDescription>
-                    {selectedRow.submittedByName || selectedRow.submittedById || "System batch"}
+                    {selectedRow.submittedByName || selectedRow.submittedById || t("System batch")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 pt-4 md:grid-cols-4">
@@ -249,7 +249,7 @@ export function InvoiceAdjustmentBatchPage() {
                             <td className="px-4 py-3 font-mono text-xs">{item.invoiceId}</td>
                             <td className="px-4 py-3">{item.status}</td>
                             <td className="text-muted-foreground px-4 py-3 text-xs">
-                              {item.errorMessage || "No failure recorded"}
+                              {item.errorMessage || t("No failure recorded")}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-2">

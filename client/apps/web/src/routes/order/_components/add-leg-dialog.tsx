@@ -138,7 +138,7 @@ export function AddLegDialog({ open, onOpenChange, orderId, customerId }: AddLeg
             loadingText={t("Adding...")}
             onClick={() => mutate()}
           >
-            {selected.length > 1 ? `Add ${selected.length} Legs` : "Add Leg"}
+            {selected.length > 1 ? t("Add {0} Legs", selected.length) : t("Add Leg")}
           </Button>
         </DialogFooter>
       </DialogContent>

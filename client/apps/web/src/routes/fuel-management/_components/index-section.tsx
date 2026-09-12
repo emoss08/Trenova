@@ -80,7 +80,7 @@ export default function IndexSection() {
                       variant={entry.index.source === "EIA" ? "secondary" : "outline"}
                       className="text-2xs"
                     >
-                      {entry.index.source === "EIA" ? "DOE / EIA" : "Custom"}
+                      {entry.index.source === "EIA" ? t("DOE / EIA") : t("Custom")}
                     </Badge>
                   </td>
                   <td className="px-4 py-2.5 tabular-nums">
@@ -98,7 +98,7 @@ export default function IndexSection() {
                           : "text-2xs text-muted-foreground"
                       }
                     >
-                      {entry.index.isActive ? "Active" : "Inactive"}
+                      {entry.index.isActive ? t("Active") : t("Inactive")}
                     </Badge>
                   </td>
                   <td className="px-4 py-2.5">

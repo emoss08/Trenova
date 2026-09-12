@@ -141,7 +141,7 @@ export default function EmailProfileTable() {
           <DialogHeader>
             <DialogTitle>{t("Send Test Email")}</DialogTitle>
             <DialogDescription>
-              {t("Queue a test message from {0}.", selectedProfile?.name ?? "this email profile")}
+              {t("Queue a test message from {0}.", selectedProfile?.name ?? t("this email profile"))}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
@@ -186,7 +186,7 @@ export default function EmailProfileTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>{t("Delete Email Profile")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Delete {0} and remove it from any purpose assignment. This action cannot be undone.", selectedProfile?.name ?? "this email profile")}
+              {t("Delete {0} and remove it from any purpose assignment. This action cannot be undone.", selectedProfile?.name ?? t("this email profile"))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

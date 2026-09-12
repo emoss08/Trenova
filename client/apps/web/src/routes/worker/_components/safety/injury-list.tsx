@@ -135,8 +135,8 @@ export function InjuryList({ workerId }: { workerId: string }) {
                 <p className="text-muted-foreground mt-1">
                   {illnessTypeLabel(injury.illnessType)}
                   {injury.bodyPart ? ` · ${injury.bodyPart}` : ""}
-                  {injury.daysAway > 0 ? ` · ${injury.daysAway} days away` : ""}
-                  {injury.daysRestricted > 0 ? ` · ${injury.daysRestricted} restricted` : ""}
+                  {injury.daysAway > 0 ? t("· {0} days away", injury.daysAway) : ""}
+                  {injury.daysRestricted > 0 ? t("· {0} restricted", injury.daysRestricted) : ""}
                 </p>
                 {injury.claimStatus !== "NotFiled" ? (
                   <p className="mt-1 flex items-center gap-2">

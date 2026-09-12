@@ -141,13 +141,13 @@ export function PermitRecordDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Permit" : "Record Permit"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit Permit") : t("Record Permit")}</DialogTitle>
           <DialogDescription>
             {requirement
               ? describeRequirement(requirement)
               : isEdit
                 ? `${permit?.state?.abbreviation ?? ""} ${permit?.permitNumber ?? ""}`.trim()
-                : "Record a permit against this shipment"}
+                : t("Record a permit against this shipment")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -242,11 +242,11 @@ export function PermitRecordDialog({
           >
             {mutation.isPending
               ? isEdit
-                ? "Saving..."
-                : "Recording..."
+                ? t("Saving...")
+                : t("Recording...")
               : isEdit
-                ? "Save Permit"
-                : "Record Permit"}
+                ? t("Save Permit")
+                : t("Record Permit")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -307,7 +307,7 @@ export function PermitWaiveDialog({
         <DialogHeader>
           <DialogTitle>{t("Waive Requirement")}</DialogTitle>
           <DialogDescription>
-            {requirement ? describeRequirement(requirement) : "Waive this permit requirement"}
+            {requirement ? describeRequirement(requirement) : t("Waive this permit requirement")}
           </DialogDescription>
         </DialogHeader>
 
@@ -348,7 +348,7 @@ export function PermitWaiveDialog({
             onClick={handleSubmit((values) => mutation.mutate(values))}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "Waiving..." : "Waive Requirement"}
+            {mutation.isPending ? t("Waiving...") : t("Waive Requirement")}
           </Button>
         </DialogFooter>
       </DialogContent>

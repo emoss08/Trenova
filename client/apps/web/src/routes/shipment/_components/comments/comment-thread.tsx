@@ -72,7 +72,7 @@ export function CommentThread({
             className={`size-3 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`}
           />
           <MessageSquareReplyIcon className="size-3" />
-          {replyCount === 1 ? "1 reply" : `${replyCount} replies`}
+          {replyCount === 1 ? t("1 reply") : t("{0} replies", replyCount)}
         </Button>
       )}
       <AnimatePresence initial={false}>
@@ -98,7 +98,7 @@ export function CommentThread({
                   disabled={isFetchingMoreReplies}
                   onClick={() => void fetchMoreReplies()}
                 >
-                  {isFetchingMoreReplies ? "Loading…" : "Load earlier replies"}
+                  {isFetchingMoreReplies ? t("Loading…") : t("Load earlier replies")}
                 </Button>
               )}
               {isExpanded &&

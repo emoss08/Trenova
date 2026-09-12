@@ -193,7 +193,7 @@ export function RunReportDialog({
             onClick={handleSubmit}
             disabled={runReport.isPending || missingRequired.length > 0}
           >
-            {runReport.isPending ? "Queuing..." : "Run Report"}
+            {runReport.isPending ? t("Queuing...") : t("Run Report")}
           </Button>
         </DialogFooter>
       </DialogContent>

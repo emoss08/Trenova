@@ -82,8 +82,8 @@ export function WorkspaceSummaryStrip({
         <StatTile
           label={t("Open Batch")}
           hint={t("Whether an AP run for this period is already open.")}
-          value={<span>{summary.openBatchId ? "Open" : "None"}</span>}
-          sub={<span>{summary.openBatchId ? "generation tops it up" : "generate to start"}</span>}
+          value={<span>{summary.openBatchId ? t("Open") : t("None")}</span>}
+          sub={<span>{summary.openBatchId ? t("generation tops it up") : t("generate to start")}</span>}
         />
       </div>
     </div>

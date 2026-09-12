@@ -234,7 +234,7 @@ export function InjuryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit case" : "Record an injury or illness"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit case") : t("Record an injury or illness")}</DialogTitle>
           <DialogDescription>
             {t("Every case is kept, recordable or not — the decision not to record one is itself worth a record.")}
           </DialogDescription>
@@ -374,8 +374,8 @@ export function InjuryDialog({
                 <Alert variant={classificationIsRecordable(classification) ? "default" : undefined}>
                   <AlertDescription>
                     {classificationIsRecordable(classification)
-                      ? "This case goes on the OSHA 300 log."
-                      : "This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii))."}
+                      ? t("This case goes on the OSHA 300 log.")
+                      : t("This case is kept on file but is not on the 300 log. First aid alone is not recordable (29 CFR 1904.7(b)(5)(ii)).")}
                   </AlertDescription>
                 </Alert>
               </FormControl>
@@ -470,7 +470,7 @@ export function InjuryDialog({
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Record"}
+                {isEdit ? t("Save") : t("Record")}
               </Button>
             </DialogFooter>
           </Form>

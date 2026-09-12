@@ -131,8 +131,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
     <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
       <p className="text-muted-foreground text-[11px]">
         {isTerminal
-          ? "This settlement is finalized and shown here for record-keeping."
-          : "This is a read-only view — process, adjust, or pay this settlement from the workspace."}
+          ? t("This settlement is finalized and shown here for record-keeping.")
+          : t("This is a read-only view — process, adjust, or pay this settlement from the workspace.")}
       </p>
       {!isTerminal && (
         <Link
@@ -432,11 +432,11 @@ function ReasonDialog({
     <Dialog open={action != null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{action === "reject" ? "Reject settlement" : "Void settlement"}</DialogTitle>
+          <DialogTitle>{action === "reject" ? t("Reject settlement") : t("Void settlement")}</DialogTitle>
           <DialogDescription>
             {action === "reject"
-              ? "The settlement will return to draft for corrections."
-              : "Voiding releases cost events back to the accrual pool and reverses any GL postings."}
+              ? t("The settlement will return to draft for corrections.")
+              : t("Voiding releases cost events back to the accrual pool and reverses any GL postings.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -454,7 +454,7 @@ function ReasonDialog({
             disabled={!reason.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {action === "reject" ? "Reject" : "Void"}
+            {action === "reject" ? t("Reject") : t("Void")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -778,7 +778,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             <p className="text-muted-foreground text-[11px]">{t("Payment method")}</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
-                (carrier.paymentMethod === "ACHManual" ? "ACH (Manual)" : carrier.paymentMethod)}
+                (carrier.paymentMethod === "ACHManual" ? t("ACH (Manual)") : carrier.paymentMethod)}
               {settlement.paymentReference ? ` · ${settlement.paymentReference}` : ""}
             </p>
           </div>
@@ -894,7 +894,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
             className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs"
           >
             <CarrierInvoiceMatchStatusBadge status={match.status} />
-            <span className="font-mono">{match.invoiceNumber || "No invoice #"}</span>
+            <span className="font-mono">{match.invoiceNumber || t("No invoice #")}</span>
             <span className="text-muted-foreground">
               billed <AmountDisplay value={match.invoiceTotalMinor} currency={match.currencyCode} />
             </span>

@@ -99,9 +99,9 @@ export function LoginForm({
         }
       >
         {isDriverAudience ? (
-          "Dash is where drivers see loads and pay."
+          t("Dash is where drivers see loads and pay.")
         ) : tenantMetadata ? (
-          `Sign in to ${tenantMetadata.organizationName}`
+          t("Sign in to {0}", tenantMetadata.organizationName)
         ) : (
           <>
             {t("Don't have an account yet?")}{" "}

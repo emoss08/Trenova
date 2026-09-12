@@ -48,11 +48,11 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
           <div className="flex flex-wrap items-center gap-2">
             <EDITransferStatusBadge status={transfer.status} />
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0 ? `${unresolvedCount} unresolved mappings` : "Ready to accept"}
+              {unresolvedCount > 0 ? t("{0} unresolved mappings", unresolvedCount) : t("Ready to accept")}
             </Badge>
           </div>
           <div>
-            <div className="truncate text-base font-semibold">{payload.bol || "Load tender"}</div>
+            <div className="truncate text-base font-semibold">{payload.bol || t("Load tender")}</div>
             <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
               <span>{t("Submitted {0}", formatUnix(transfer.submittedAt))}</span>
               <span>
@@ -147,7 +147,7 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
                 </div>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="outline">{move.loaded ? "Loaded" : "Empty"}</Badge>
+                <Badge variant="outline">{move.loaded ? t("Loaded") : t("Empty")}</Badge>
                 <Badge variant="outline">{t("{0} stops", move.stops.length)}</Badge>
                 {move.distance && (
                   <Badge variant="outline">{t("{0} mi", move.distance.toLocaleString())}</Badge>

@@ -206,7 +206,7 @@ export function PTOReasonDialog({
           <DialogDescription>
             {copy.description(ptoIds.length)}
             {skipped > 0
-              ? ` ${skipped} selected request${skipped === 1 ? " is" : "s are"} not eligible and will be skipped.`
+              ? t("{0} selected request{1} not eligible and will be skipped.", skipped, skipped === 1 ? " is" : t("s are"))
               : ""}
           </DialogDescription>
         </DialogHeader>

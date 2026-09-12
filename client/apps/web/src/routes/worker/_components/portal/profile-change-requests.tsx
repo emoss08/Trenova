@@ -215,11 +215,11 @@ function DecideDialog({
     <Dialog open={state !== null} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{approve ? "Apply this change" : "Turn this request down"}</DialogTitle>
+          <DialogTitle>{approve ? t("Apply this change") : t("Turn this request down")}</DialogTitle>
           <DialogDescription>
             {approve
-              ? "The listed fields are written onto the record and the driver is told."
-              : "The record stays as it is. The driver is told, with your reason."}
+              ? t("The listed fields are written onto the record and the driver is told.")
+              : t("The record stays as it is. The driver is told, with your reason.")}
           </DialogDescription>
         </DialogHeader>
         {state ? (
@@ -261,7 +261,7 @@ function DecideDialog({
                 variant={approve ? "default" : "destructive"}
                 isLoading={isPending}
               >
-                {approve ? "Apply" : "Turn down"}
+                {approve ? t("Apply") : t("Turn down")}
               </Button>
             </DialogFooter>
           </Form>

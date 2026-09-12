@@ -30,7 +30,7 @@ function RefreshAction() {
       onClick={() => void queryClient.invalidateQueries({ queryKey: queries.detention._def })}
     >
       <RotateCwIcon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
-      {isFetching ? "Recalculating…" : "Refresh"}
+      {isFetching ? t("Recalculating…") : t("Refresh")}
     </Button>
   );
 }

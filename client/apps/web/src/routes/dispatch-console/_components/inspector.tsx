@@ -99,7 +99,7 @@ function CandidateRow({
           className="h-6 px-2 text-[10px]"
           onClick={() => setExpanded((value) => !value)}
         >
-          {expanded ? "Hide detail" : "Why this score"}
+          {expanded ? t("Hide detail") : t("Why this score")}
         </Button>
         <Button
           size="sm"
@@ -112,7 +112,7 @@ function CandidateRow({
           }
           onClick={() => onAssign(candidate)}
         >
-          {candidate.blocked ? "Ineligible" : missingTractor ? "No tractor" : "Assign"}
+          {candidate.blocked ? t("Ineligible") : missingTractor ? t("No tractor") : t("Assign")}
         </Button>
       </div>
     </div>
@@ -332,7 +332,7 @@ function MoveInspector({
               className="h-6 px-2 text-[10px]"
               onClick={() => setIncludeBlocked((value) => !value)}
             >
-              {includeBlocked ? "Hide ineligible" : "Show ineligible"}
+              {includeBlocked ? t("Hide ineligible") : t("Show ineligible")}
             </Button>
           )}
         </div>
@@ -362,7 +362,7 @@ function MoveInspector({
                   ))}
               {!isLoading && candidates.length === 0 && (
                 <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-                  {t("No eligible driver for this move. {0}", !includeBlocked ? " Show ineligible drivers to see why." : "")}
+                  {t("No eligible driver for this move. {0}", !includeBlocked ? t("Show ineligible drivers to see why.") : "")}
                 </p>
               )}
             </>
@@ -532,11 +532,11 @@ export function Inspector({
         <h2 className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
           {selectedMove
             ? canRankDrivers
-              ? "Rank drivers"
-              : "Cover move"
+              ? t("Rank drivers")
+              : t("Cover move")
             : selectedDriver
-              ? "Find work"
-              : "Inspector"}
+              ? t("Find work")
+              : t("Inspector")}
         </h2>
       </header>
 
@@ -555,8 +555,8 @@ export function Inspector({
           <p className="text-xs font-medium">{t("Nothing selected")}</p>
           <p className="text-muted-foreground text-[11px]">
             {canRankDrivers
-              ? "Select a move to rank drivers for it, or a driver to find them work."
-              : "Select a move to see how it can be covered."}
+              ? t("Select a move to rank drivers for it, or a driver to find them work.")
+              : t("Select a move to see how it can be covered.")}
           </p>
         </div>
       )}

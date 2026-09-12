@@ -167,7 +167,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
                   disabled={deleteMutation.isPending}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  {deleteMutation.isPending ? t("Deleting...") : t("Delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

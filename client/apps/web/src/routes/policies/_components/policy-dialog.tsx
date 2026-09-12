@@ -226,7 +226,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
     <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Revise the policy" : "Publish a policy"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Revise the policy") : t("Publish a policy")}</DialogTitle>
           <DialogDescription>
             {t("Either a short text or an attached document — a signature has to be on something. Everybody it applies to is asked to sign the version in force.")}
           </DialogDescription>
@@ -302,7 +302,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">
-                            {attachedName ?? "Attached document"}
+                            {attachedName ?? t("Attached document")}
                           </span>
                           <span className="text-muted-foreground flex items-center gap-1 text-xs">
                             <ShieldCheckIcon className="size-3" />
@@ -358,7 +358,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                           )}
                         />
                         <span className="text-foreground font-medium">
-                          {attach.isPending ? "Uploading…" : "Drop a PDF here, or click to choose"}
+                          {attach.isPending ? t("Uploading…") : t("Drop a PDF here, or click to choose")}
                         </span>
                         <span>{t("Drivers open it from Dash. PDFs and images are accepted.")}</span>
                       </div>
@@ -449,7 +449,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending}>
-                {isEdit ? "Save" : "Publish"}
+                {isEdit ? t("Save") : t("Publish")}
               </Button>
             </DialogFooter>
           </Form>

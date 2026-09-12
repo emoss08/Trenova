@@ -134,6 +134,8 @@ function IndexPriceCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useT();
+
   const delta = entry.delta !== null && entry.delta !== undefined ? Number(entry.delta) : null;
   const isUp = delta !== null && delta > 0;
   const isDown = delta !== null && delta < 0;
@@ -153,7 +155,7 @@ function IndexPriceCard({
         </span>
         {entry.index.source === "Custom" ? (
           <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5">
-            {entry.index.region || "Custom"}
+            {entry.index.region || t("Custom")}
           </span>
         ) : (
           entry.index.region && (
@@ -182,7 +184,7 @@ function IndexPriceCard({
         )}
       </div>
       <p className="text-2xs text-muted-foreground mt-1">
-        {entry.latest ? `Week of ${shortDate(entry.latest.priceDate)}` : "No price data yet"}
+        {entry.latest ? t("Week of {0}", shortDate(entry.latest.priceDate)) : t("No price data yet")}
       </p>
     </button>
   );

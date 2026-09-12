@@ -50,8 +50,8 @@ export function TotalCompCard() {
       </p>
       <p className="text-muted-foreground text-xs">
         {t("{0} paid {1} {2}", formatMinor(data.grossPayMinor), data.employerBenefitMinor > 0
-          ? ` · ${formatMinor(data.employerBenefitMinor)} the company puts in`
-          : "", share > 0 ? ` · ${share}% of it is benefits` : "")}
+          ? t("· {0} the company puts in", formatMinor(data.employerBenefitMinor))
+          : "", share > 0 ? t("· {0}% of it is benefits", share) : "")}
       </p>
 
       {data.employeeBenefitMinor > 0 ? (
@@ -66,7 +66,7 @@ export function TotalCompCard() {
             <li key={enrollment.id} className="flex items-center justify-between gap-2 text-xs">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate font-medium">
-                  {enrollment.benefitPlan?.name ?? "Cover"}
+                  {enrollment.benefitPlan?.name ?? t("Cover")}
                 </span>
                 {enrollment.benefitPlan ? (
                   <Badge variant="secondary">

@@ -101,7 +101,9 @@ export function LaneEditor() {
         <Alert variant="destructive">
           <TriangleAlertIcon className="size-4" />
           <AlertTitle>
-            {t("{0} can never apply", issues.length === 1 ? "One lane" : `${issues.length} lanes`)}
+            {issues.length === 1
+              ? t("One lane can never apply")
+              : t("{0} lanes can never apply", issues.length)}
           </AlertTitle>
           <AlertDescription>
             {t("A lane written exactly as narrowly as another one leaves the winner to a tie-break. Narrow it, widen the other, or give one a higher priority.")}
@@ -168,11 +170,11 @@ function LaneRow({
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">
-            {rule ? laneDisplayLabel(rule, index) : `Lane ${index + 1}`}
+            {rule ? laneDisplayLabel(rule, index) : t("Lane {0}", index + 1)}
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="outline" className="font-mono text-[10px]">
-              {laneKey ?? "matched by radius"}
+              {laneKey ?? t("matched by radius")}
             </Badge>
             {rule && (
               <Badge variant="secondary" className="text-[10px]">

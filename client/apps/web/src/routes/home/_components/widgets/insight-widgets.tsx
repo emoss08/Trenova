@@ -49,7 +49,7 @@ export function DashboardLinkWidget({ widget }: WidgetProps) {
       scroll={false}
     >
       <div className="flex flex-1 flex-col items-start justify-center gap-1">
-        <span className="text-sm font-medium">{widget.title || "Saved dashboard"}</span>
+        <span className="text-sm font-medium">{widget.title || t("Saved dashboard")}</span>
         <span className="text-2xs text-muted-foreground">
           {t("Every tile, filter, and parameter as you left it.")}
         </span>

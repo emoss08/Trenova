@@ -68,7 +68,7 @@ export function DriverContextRail({
       >
         <div className="flex flex-col gap-3 p-3">
           <div>
-            <h3 className="text-sm font-semibold">{workerName ?? "Driver"}</h3>
+            <h3 className="text-sm font-semibold">{workerName ?? t("Driver")}</h3>
             <p className="text-muted-foreground text-[11px]">
               {t("Everything affecting this driver's pay — manage it without leaving the workspace.")}
             </p>
@@ -188,7 +188,7 @@ function UnsettledPaySection({
             >
               <div className="flex items-center gap-1.5">
                 <span className="text-muted-foreground font-mono text-[10px]">
-                  {event.proNumber || "No PRO"}
+                  {event.proNumber || t("No PRO")}
                 </span>
                 <span className="text-muted-foreground text-[10px]">
                   {formatSettlementMonthDay(event.eventDate)}
@@ -376,8 +376,8 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
                 <p className="truncate text-[11px] font-medium">{t(earning.description)}</p>
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={earning.amountMinor} currency="USD" /> ·{" "}
-                  {earning.frequency === "Monthly" ? "monthly" : "every settlement"}
-                  {earning.status === "Paused" && " · paused"}
+                  {earning.frequency === "Monthly" ? "monthly" : t("every settlement")}
+                  {earning.status === "Paused" && t("· paused")}
                 </p>
               </div>
               <Button
@@ -477,8 +477,8 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
                 <p className="truncate text-[11px] font-medium">{t(deduction.description)}</p>
                 <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={deduction.amountMinor} currency="USD" /> ·{" "}
-                  {deduction.frequency === "Monthly" ? "monthly" : "every settlement"}
-                  {deduction.status === "Paused" && " · paused"}
+                  {deduction.frequency === "Monthly" ? "monthly" : t("every settlement")}
+                  {deduction.status === "Paused" && t("· paused")}
                 </p>
               </div>
               <Button

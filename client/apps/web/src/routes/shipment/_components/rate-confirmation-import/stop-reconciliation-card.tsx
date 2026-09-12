@@ -162,7 +162,7 @@ export function StopReconciliationCard({
             <MapPinIcon className="text-muted-foreground size-3.5" />
           )}
           <span className="text-xs font-medium">
-            {isPickup ? "Pickup" : "Delivery"} {stop.sequence + 1}
+            {isPickup ? t("Pickup") : t("Delivery")} {stop.sequence + 1}
           </span>
           {stop.confidence > 0 && (
             <span className="text-2xs text-muted-foreground/50 tabular-nums">

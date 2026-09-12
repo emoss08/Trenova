@@ -310,7 +310,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
       }}
       titleNode={
         <DialogTitle className="flex items-center justify-start gap-x-1">
-          <span className="truncate">{row?.name ?? "Location"}</span>
+          <span className="truncate">{row?.name ?? t("Location")}</span>
           {row?.isGeocoded ? (
             <GeocodedBadge
               longitude={row.longitude as unknown as number}

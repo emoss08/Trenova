@@ -120,8 +120,8 @@ export function BillingQueueActionBar({
             {!canApprove && (
               <TooltipContent side="bottom" sideOffset={8}>
                 {missingCount > 0
-                  ? `${missingCount} required document${missingCount > 1 ? "s" : ""} missing`
-                  : "Billing requirements not met"}
+                  ? t("{0} required document{1} missing", missingCount, missingCount > 1 ? "s" : "")
+                  : t("Billing requirements not met")}
               </TooltipContent>
             )}
           </Tooltip>

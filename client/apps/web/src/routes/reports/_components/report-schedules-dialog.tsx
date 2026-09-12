@@ -210,9 +210,9 @@ function CadenceSentence({
           {timezoneLabel(timezone)}
         </>
       ) : cronExpression.trim() ? (
-        "Custom cron cadence — the expression is validated when you save."
+        t("Custom cron cadence — the expression is validated when you save.")
       ) : (
-        "Enter a cron expression or pick a preset."
+        t("Enter a cron expression or pick a preset.")
       )}
     </p>
   );
@@ -689,7 +689,7 @@ function ScheduleForm({
             {t("Cancel")}
           </Button>
           <Button type="submit" size="sm" disabled={submitting}>
-            {submitting ? "Saving..." : submitLabel}
+            {submitting ? t("Saving...") : submitLabel}
           </Button>
         </div>
       </div>
@@ -723,7 +723,7 @@ function DeliveryFacts({ schedule }: { schedule: ReportSchedule }) {
               />
               <TooltipContent side="bottom">
                 {schedule.emailRecipients.join(", ")}
-                {schedule.emailAttach ? " — file attached" : ""}
+                {schedule.emailAttach ? t("— file attached") : ""}
               </TooltipContent>
             </Tooltip>
           )}

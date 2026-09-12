@@ -55,7 +55,7 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
             <p className="font-medium">
               {publishedVersion.publishedAt
                 ? formatToUserTimezone(publishedVersion.publishedAt)
-                : "N/A"}
+                : t("N/A")}
             </p>
           </div>
           <div>

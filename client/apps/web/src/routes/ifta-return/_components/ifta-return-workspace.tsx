@@ -50,7 +50,7 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
             <span>
               {t("{0} Nothing was changed.", returnQuery.error instanceof Error
                 ? returnQuery.error.message
-                : "Something went wrong reading the quarter.")}
+                : t("Something went wrong reading the quarter."))}
             </span>
             <Button
               variant="outline"
@@ -58,7 +58,7 @@ export function IftaReturnWorkspace({ period, onPeriodChange }: IftaReturnWorksp
               onClick={() => void returnQuery.refetch()}
               disabled={returnQuery.isFetching}
             >
-              {returnQuery.isFetching ? "Retrying..." : "Retry"}
+              {returnQuery.isFetching ? t("Retrying...") : t("Retry")}
             </Button>
           </AlertDescription>
         </Alert>

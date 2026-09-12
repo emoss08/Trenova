@@ -190,7 +190,7 @@ export function ApprovalCoverPanel({ covers, isLoading }: ApprovalCoverProps) {
                 <Badge variant="secondary">{approvalScopeLabel(cover.scope)}</Badge>
               </div>
               <span className="text-muted-foreground text-2xs">
-                {cover.endsAt ? `Until ${formatUnixDate(cover.endsAt)}` : "Until called back"}
+                {cover.endsAt ? t("Until {0}", formatUnixDate(cover.endsAt)) : t("Until called back")}
                 {cover.reason ? ` · ${cover.reason}` : ""}
               </span>
             </li>

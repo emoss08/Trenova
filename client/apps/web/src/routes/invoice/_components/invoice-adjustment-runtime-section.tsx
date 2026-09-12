@@ -115,7 +115,7 @@ export function InvoiceAdjustmentRuntimeSection({
                         </p>
                       </div>
                       <Badge variant={isCurrent ? "active" : "secondary"} className="shrink-0">
-                        {isCurrent ? "Current" : "Historical"}
+                        {isCurrent ? t("Current") : t("Historical")}
                       </Badge>
                     </div>
                   );
@@ -149,7 +149,7 @@ export function InvoiceAdjustmentRuntimeSection({
                           </Badge>
                         </div>
                         <p className="text-2xs text-muted-foreground mt-0.5 truncate">
-                          {adjustment.reason || adjustment.policyReason || "No note"}
+                          {adjustment.reason || adjustment.policyReason || t("No note")}
                         </p>
                       </div>
                       <p className="text-2xs text-muted-foreground shrink-0">

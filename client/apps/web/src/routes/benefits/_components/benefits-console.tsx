@@ -113,7 +113,7 @@ export default function BenefitsConsole() {
           )}
           <p className="text-muted-foreground text-xs">
             {t("Each plan year is its own row, so repricing next year never restates what somebody was charged this year. {0}", empty.length > 0
-              ? ` ${empty.length} active plan${empty.length === 1 ? " has" : "s have"} nobody on ${empty.length === 1 ? "it" : "them"}.`
+              ? t("{0} active plan{1} nobody on {2}.", empty.length, empty.length === 1 ? " has" : t("s have"), empty.length === 1 ? "it" : "them")
               : "")}
           </p>
         </div>

@@ -83,7 +83,7 @@ export function AiResponseActions({
             )}
           </TooltipTrigger>
           <TooltipContent>
-            <p>{copied ? "Copied!" : "Copy"}</p>
+            <p>{copied ? t("Copied!") : t("Copy")}</p>
           </TooltipContent>
         </Tooltip>
       )}

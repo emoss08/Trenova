@@ -214,7 +214,7 @@ export function DocumentUploadSection({
         >
           <UploadCloudIcon className="text-muted-foreground mb-2 size-10" />
           <p className="text-muted-foreground text-sm">
-            {uploadMutation.isPending ? "Uploading..." : "Drop files here or click to upload"}
+            {uploadMutation.isPending ? t("Uploading...") : t("Drop files here or click to upload")}
           </p>
           <p className="text-muted-foreground/70 text-xs">{t("PDF, Images, Documents up to 50MB")}</p>
           <input

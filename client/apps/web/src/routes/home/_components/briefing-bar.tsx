@@ -180,10 +180,8 @@ export function BriefingBar({
                   <CheckIcon className="text-success size-2.5" />
                 </span>
                 {analyticsReady
-                  ? `You're clear — ${analytics.activeShipments.count} ${
-                      analytics.activeShipments.count === 1 ? "load" : "loads"
-                    } moving, nothing flagged.`
-                  : "You're clear — nothing flagged."}
+                  ? t("You're clear — {0} {1} moving, nothing flagged.", analytics.activeShipments.count, analytics.activeShipments.count === 1 ? "load" : "loads")
+                  : t("You're clear — nothing flagged.")}
               </m.span>
             ) : (
               <>
@@ -193,7 +191,7 @@ export function BriefingBar({
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="text-xs font-medium"
                 >
-                  {t("{0} {1} you", total, total === 1 ? "item needs" : "items need")}
+                  {t("{0} {1} you", total, total === 1 ? t("item needs") : t("items need"))}
                 </m.span>
                 {chips.map((chip, index) => (
                   <m.span
@@ -256,7 +254,7 @@ export function BriefingBar({
               disabled={!canCustomize || saving}
             >
               <LayoutGridIcon className="size-3.5" />
-              {editing ? "Done" : "Customize"}
+              {editing ? t("Done") : t("Customize")}
             </Button>
           )}
         </div>

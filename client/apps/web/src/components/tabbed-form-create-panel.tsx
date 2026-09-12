@@ -185,7 +185,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
           <div className="border-border flex flex-col border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <Dialog.Title className="text-2xl leading-none font-semibold">
-                {`Add New ${title}`}
+                {t("Add New {0}", title)}
               </Dialog.Title>
               <div className="flex items-center gap-1">
                 {headerActions}
@@ -204,7 +204,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
               </div>
             </div>
             <Dialog.Description className="text-muted-foreground mt-0.5 text-xs">
-              {description ?? `Fill out the form below to create a new ${title}.`}
+              {description ?? t("Fill out the form below to create a new {0}.", title)}
             </Dialog.Description>
           </div>
 

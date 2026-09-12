@@ -207,7 +207,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
           <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-xs">
             <ClipboardListIcon className="size-5" />
             <p className="text-foreground text-sm font-medium">
-              {checklists.length === 0 ? "No checklists yet" : "Nothing in progress"}
+              {checklists.length === 0 ? t("No checklists yet") : t("Nothing in progress")}
             </p>
             <p>
               {t("Onboarding starts when a hire is recorded and offboarding when a termination is. Anything else is started below.")}
@@ -397,10 +397,10 @@ function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRo
       </ol>
       <p className="text-muted-foreground text-xs tabular-nums">
         {running
-          ? `${running.name} is ${running.progress.percent}% through · ${running.progress.requiredDone}/${running.progress.requiredTotal} required settled${running.progress.overdue > 0 ? ` · ${running.progress.overdue} overdue` : ""}`
+          ? t("{0} is {1}% through · {2}/{3} required settled{4}", running.name, running.progress.percent, running.progress.requiredDone, running.progress.requiredTotal, running.progress.overdue > 0 ? t("· {0} overdue", running.progress.overdue) : "")
           : stage === "left"
-            ? "Everything for this employment is settled."
-            : "Nothing is running for this employment."}
+            ? t("Everything for this employment is settled.")
+            : t("Nothing is running for this employment.")}
       </p>
     </div>
   );

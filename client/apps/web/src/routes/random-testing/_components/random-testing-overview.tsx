@@ -34,7 +34,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           info={
             <InfoPopover title={t("Owed now")}>
               {
-                "Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find."
+                t("Active pools whose current round has not been drawn. Missed means a past round of this year was never drawn, which a DOT audit will find.")
               }
             </InfoPopover>
           }
@@ -43,12 +43,12 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
         <KpiSub>
           {overview.missed > 0
-            ? `${overview.missed} round${overview.missed === 1 ? "" : "s"} missed this year`
+            ? t("{0} round{1} missed this year", overview.missed, overview.missed === 1 ? "" : "s")
             : overview.owedNow > 0
-              ? `${overview.owedNow === 1 ? "A pool is" : "Pools are"} waiting on this period's draw`
+              ? t("{0} waiting on this period's draw", overview.owedNow === 1 ? t("A pool is") : t("Pools are"))
               : overview.activePools === 0
-                ? "No active pool to draw from"
-                : "Every current round is drawn"}
+                ? t("No active pool to draw from")
+                : t("Every current round is drawn")}
         </KpiSub>
       </KpiCard>
 
@@ -59,7 +59,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           info={
             <InfoPopover title={t("Rounds this year")}>
               {
-                "Draws made this year that were not voided. A draft round can still change; a final one is the record."
+                t("Draws made this year that were not voided. A draft round can still change; a final one is the record.")
               }
             </InfoPopover>
           }
@@ -71,8 +71,8 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         />
         <KpiSub>
           {overview.roundsThisYear === 0
-            ? "Nothing drawn yet this year"
-            : `${overview.finalRounds} final · ${overview.draftRounds} draft`}
+            ? t("Nothing drawn yet this year")
+            : t("{0} final · {1} draft", overview.finalRounds, overview.draftRounds)}
         </KpiSub>
       </KpiCard>
 
@@ -83,7 +83,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           info={
             <InfoPopover title={t("Selected this year")}>
               {
-                "Drivers picked across this year's rounds against what those rounds asked for. Short means a pool was smaller than its target."
+                t("Drivers picked across this year's rounds against what those rounds asked for. Short means a pool was smaller than its target.")
               }
             </InfoPopover>
           }
@@ -118,7 +118,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
           info={
             <InfoPopover title={t("In the hat")}>
               {
-                "Drivers eligible at the most recent draw. It changes as people join and leave the pool."
+                t("Drivers eligible at the most recent draw. It changes as people join and leave the pool.")
               }
             </InfoPopover>
           }
@@ -136,11 +136,11 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
         )}
         <KpiSub>
           {overview.lastDrawnAt
-            ? `At the last draw, ${formatUnixDate(overview.lastDrawnAt)}`
-            : "No round has been drawn yet"}
+            ? t("At the last draw, {0}", formatUnixDate(overview.lastDrawnAt))
+            : t("No round has been drawn yet")}
         </KpiSub>
         <KpiSub>
-          {t("{0} active pool{1} {2}", overview.activePools, overview.activePools === 1 ? "" : "s", overview.belowMinimum > 0 ? ` · ${overview.belowMinimum} below the DOT minimum` : "")}
+          {t("{0} active pool{1} {2}", overview.activePools, overview.activePools === 1 ? "" : "s", overview.belowMinimum > 0 ? t("· {0} below the DOT minimum", overview.belowMinimum) : "")}
         </KpiSub>
       </KpiCard>
     </div>

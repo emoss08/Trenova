@@ -91,7 +91,7 @@ export function BalanceSheetPage() {
               )}
             >
               <span className="text-base font-bold">
-                {isBalanced ? "Balance Sheet is Balanced" : "Balance Sheet is NOT Balanced"}
+                {isBalanced ? t("Balance Sheet is Balanced") : t("Balance Sheet is NOT Balanced")}
               </span>
               <div className="flex items-center gap-4">
                 <div className="text-right">

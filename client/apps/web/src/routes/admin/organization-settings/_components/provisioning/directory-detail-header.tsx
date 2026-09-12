@@ -38,11 +38,11 @@ export function DirectoryDetailHeader({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate text-base font-semibold tracking-tight">
-              {directory?.tenantSlug || "Select a directory"}
+              {directory?.tenantSlug || t("Select a directory")}
             </h3>
             {directory && (
               <Badge variant={directory.enabled ? "active" : "inactive"}>
-                {directory.enabled ? "Enabled" : "Disabled"}
+                {directory.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
             )}
           </div>

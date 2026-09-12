@@ -379,7 +379,7 @@ function RecordSheet({
                 disabled={isPending}
                 className={cn(kind === "Terminated" && "min-w-40")}
               >
-                {isPending ? "Saving..." : `Record ${EMPLOYMENT_EVENT_LABELS[kind] ?? "event"}`}
+                {isPending ? t("Saving...") : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
               </Button>
             </DialogFooter>
           </Form>
@@ -514,7 +514,7 @@ function AmendSheet({
                 {t("Cancel")}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving..." : "Save amendment"}
+                {isPending ? t("Saving...") : t("Save amendment")}
               </Button>
             </DialogFooter>
           </Form>

@@ -38,7 +38,7 @@ export function CredentialHistory({ archived }: { archived: readonly WorkerCrede
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {credential.credentialType?.name ?? "Credential"}
+                  {credential.credentialType?.name ?? t("Credential")}
                 </p>
                 <p className="text-muted-foreground truncate">
                   {[

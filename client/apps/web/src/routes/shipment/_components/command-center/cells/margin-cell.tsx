@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { formatCurrency, formatPercent } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -5,6 +6,8 @@ import { toneVar } from "@/components/kpi/tone";
 import { ProfitabilityBreakdownPopover } from "../../profitability/profitability-breakdown-popover";
 
 export function MarginCell({ shipment }: { shipment: Shipment }) {
+  const t = useT();
+
   const estimate = shipment.profitabilityEstimate;
 
   if (!estimate || estimate.totalMiles <= 0) {
@@ -40,7 +43,7 @@ export function MarginCell({ shipment }: { shipment: Shipment }) {
             {marginPct !== null ? formatPercent(marginPct) : "—"}
           </span>
           <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
-            {`CPM ${formatCurrency(parseDecimal(estimate.costPerMile))}`}
+            {t("CPM {0}", formatCurrency(parseDecimal(estimate.costPerMile)))}
           </span>
         </div>
       }

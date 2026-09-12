@@ -401,10 +401,10 @@ export function getColumns(): ColumnDef<WorkerRow>[] {
               )}
             >
               {days < 0
-                ? `Lapsed ${Math.abs(days)}d ago`
+                ? translate("Lapsed {0}d ago", Math.abs(days))
                 : days === 0
-                  ? "Expires today"
-                  : `in ${days}d`}
+                  ? translate("Expires today")
+                  : translate("in {0}d", days)}
             </span>
           </div>
         );

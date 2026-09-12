@@ -90,15 +90,15 @@ export function FeedRunDetailDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>
-            {batch ? `${batch.provider} run` : "Run"}
+            {batch ? t("{0} run", batch.provider) : t("Run")}
             <span className="text-muted-foreground ml-2 text-sm font-normal">
               {formatUnixDateTimeOrDash(batch?.createdAt)}
             </span>
           </DialogTitle>
           <DialogDescription>
             {t("{0} {1} posted, {2} waiting.", batch?.feedReference
-              ? `Read ${batch.feedReference}.`
-              : "Read from the provider's API.", batch?.committedCount ?? 0, held)}
+              ? t("Read {0}.", batch.feedReference)
+              : t("Read from the provider's API."), batch?.committedCount ?? 0, held)}
           </DialogDescription>
         </DialogHeader>
 

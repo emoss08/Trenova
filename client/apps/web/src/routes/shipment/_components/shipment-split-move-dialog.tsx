@@ -62,6 +62,8 @@ function MiniLocationDisplay({
   locationId: string;
   fallbackLabel?: string;
 }) {
+  const t = useT();
+
   const { data: location } = useQuery({
     queryKey: ["location", "selectOption", locationId],
     queryFn: () => apiService.locationService.getOption(locationId),
@@ -70,7 +72,7 @@ function MiniLocationDisplay({
   });
 
   if (!location) {
-    return <span className="text-muted-foreground text-xs">{fallbackLabel ?? "Loading..."}</span>;
+    return <span className="text-muted-foreground text-xs">{fallbackLabel ?? t("Loading...")}</span>;
   }
 
   return (

@@ -89,8 +89,8 @@ export default function WorkerTimelineTab({
         <div className="flex items-center gap-1.5">
           <p className="text-muted-foreground text-xs">
             {events.length === 0
-              ? "Nothing recorded yet."
-              : `${visible.length} of ${events.length} event${events.length === 1 ? "" : "s"} shown.`}
+              ? t("Nothing recorded yet.")
+              : t("{0} of {1} event{2} shown.", visible.length, events.length, events.length === 1 ? "" : "s")}
           </p>
           <InfoPopover title={t("Employment events")}>
             <p>
@@ -132,7 +132,7 @@ export default function WorkerTimelineTab({
       {visible.length === 0 ? (
         <div className="border-border text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center text-sm">
           <HistoryIcon className="size-5" />
-          {events.length === 0 ? "No employment events yet" : "Nothing matches the selected kinds"}
+          {events.length === 0 ? t("No employment events yet") : t("Nothing matches the selected kinds")}
         </div>
       ) : (
         <TimelineList

@@ -330,7 +330,7 @@ export function DetentionBacktest() {
             ) : (
               <HistoryIcon className="mr-1.5 size-3.5" />
             )}
-            {mutation.isPending ? "Running…" : mutation.data ? "Re-run" : "Run backtest"}
+            {mutation.isPending ? t("Running…") : mutation.data ? t("Re-run") : t("Run backtest")}
           </Button>
         </div>
 
@@ -341,8 +341,8 @@ export function DetentionBacktest() {
             </Label>
             <p className="text-2xs text-muted-foreground mt-0.5">
               {assumeCompliance
-                ? "Measures what the terms are worth if the notice process works."
-                : "Replays the notices actually sent, showing what process failures cost."}
+                ? t("Measures what the terms are worth if the notice process works.")
+                : t("Replays the notices actually sent, showing what process failures cost.")}
             </p>
           </div>
           <Switch
@@ -395,7 +395,7 @@ export function DetentionBacktest() {
             <p className="text-muted-foreground mt-0.5 text-xs">
               {mutation.error instanceof Error
                 ? mutation.error.message
-                : "Resolve the validation errors on the Terms tab and try again."}
+                : t("Resolve the validation errors on the Terms tab and try again.")}
             </p>
           </div>
         </div>

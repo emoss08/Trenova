@@ -260,14 +260,14 @@ export function GenerateTableDialog({
               <span className="text-xs font-medium">{t("Preview")}</span>
               <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                 {isFetching && <LoaderCircle className="size-3 animate-spin" />}
-                {valid && !tooMany ? `${preview?.length ?? estimate} bands` : ""}
+                {valid && !tooMany ? t("{0} bands", preview?.length ?? estimate) : ""}
               </span>
             </div>
             {!valid ? (
               <div className="text-muted-foreground flex flex-1 items-center justify-center p-6 text-center text-xs">
                 {rangeInvalid
-                  ? "The highest price must be above the lowest price."
-                  : "Fill in the fields on the left to see the table."}
+                  ? t("The highest price must be above the lowest price.")
+                  : t("Fill in the fields on the left to see the table.")}
               </div>
             ) : tooMany ? (
               <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs">
@@ -290,12 +290,12 @@ export function GenerateTableDialog({
                     {(preview ?? []).map((row, index) => (
                       <tr key={index} className="border-t tabular-nums">
                         <td className="px-3 py-1">
-                          {row.priceMin != null ? `$${Number(row.priceMin).toFixed(2)}` : "Any"}
+                          {row.priceMin != null ? `$${Number(row.priceMin).toFixed(2)}` : t("Any")}
                         </td>
                         <td className="px-3 py-1">
                           {row.priceMax != null
                             ? `$${Number(row.priceMax).toFixed(2)}`
-                            : "No limit"}
+                            : t("No limit")}
                         </td>
                         <td className="px-3 py-1">{formatValue(row.value)}</td>
                       </tr>
@@ -310,7 +310,7 @@ export function GenerateTableDialog({
         <DialogFooter className="items-center gap-3 sm:justify-between">
           <span className="text-muted-foreground text-xs">
             {replaceCount > 0
-              ? `Applying replaces your ${replaceCount} existing ${replaceCount === 1 ? "band" : "bands"}.`
+              ? t("Applying replaces your {0} existing {1}.", replaceCount, replaceCount === 1 ? "band" : "bands")
               : ""}
           </span>
           <div className="flex gap-2">

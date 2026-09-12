@@ -96,7 +96,7 @@ function VersionSelect({
                   </span>
                 </>
               ) : (
-                "Select a version..."
+                t("Select a version...")
               )}
             </span>
             <ChevronDownIcon
@@ -356,7 +356,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
             <div className="space-y-1">
               <p className="text-destructive text-sm font-medium">{t("Simulation failed")}</p>
               <p className="text-muted-foreground text-xs">
-                {error instanceof Error ? error.message : "An unexpected error occurred."}
+                {error instanceof Error ? error.message : t("An unexpected error occurred.")}
               </p>
               <div className="flex items-start gap-1.5 pt-1">
                 <InfoIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />

@@ -212,7 +212,7 @@ export default function NotificationPanel({
               {t("Unread")}
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {unreadOnly ? "Show all notifications" : "Show unread only"}
+              {unreadOnly ? t("Show all notifications") : t("Show unread only")}
             </TooltipContent>
           </Tooltip>
         )}

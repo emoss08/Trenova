@@ -277,7 +277,7 @@ function ScenarioResult({
             {suppressed && <Signal tone="bad">{t("Suppressed — notice missed")}</Signal>}
             {result.netMargin < 0 && (
               <Signal tone="warn">
-                {`Pays out ${formatCurrency(Math.abs(result.netMargin), currency)} more than it bills`}
+                {t("Pays out {0} more than it bills", formatCurrency(Math.abs(result.netMargin), currency))}
               </Signal>
             )}
             {result.arrivedLate && <Signal tone="neutral">{t("Arrived late")}</Signal>}
@@ -331,6 +331,8 @@ function ScenarioResult({
 }
 
 function LiveIndicator({ pricing }: { pricing: boolean }) {
+  const t = useT();
+
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       <m.span
@@ -341,7 +343,7 @@ function LiveIndicator({ pricing }: { pricing: boolean }) {
         animate={pricing ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
         transition={pricing ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" } : undefined}
       />
-      <span className="text-2xs text-muted-foreground">{pricing ? "Pricing" : "Live"}</span>
+      <span className="text-2xs text-muted-foreground">{pricing ? t("Pricing") : t("Live")}</span>
     </div>
   );
 }
@@ -462,7 +464,7 @@ export function DetentionPolicyPreview() {
                   <p className="text-muted-foreground mt-0.5 text-xs">
                     {active.error instanceof Error
                       ? active.error.message
-                      : "Resolve the validation errors on the Terms tab to see this scenario."}
+                      : t("Resolve the validation errors on the Terms tab to see this scenario.")}
                   </p>
                 </div>
               </div>

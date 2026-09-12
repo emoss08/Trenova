@@ -80,7 +80,7 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
 
           {error && (
             <p className="text-destructive pr-6 text-xs">
-              {error.message || "Could not explain this formula. Try again."}
+              {error.message || t("Could not explain this formula. Try again.")}
             </p>
           )}
 

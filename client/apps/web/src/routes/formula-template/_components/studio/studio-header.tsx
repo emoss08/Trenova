@@ -89,7 +89,7 @@ function UsageChip({
         render={
           <Badge variant={data.inUse ? "info" : "outline"} className="gap-1 text-xs">
             <UsersIcon className="size-3" />
-            {data.inUse ? `In use (${total})` : "Not in use"}
+            {data.inUse ? t("In use ({0})", total) : t("Not in use")}
           </Badge>
         }
       />
@@ -123,6 +123,8 @@ export type ScenarioSummary = {
 };
 
 function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
+  const t = useT();
+
   const allPassing = summary.passed === summary.total;
   return (
     <Tooltip>
@@ -139,12 +141,12 @@ function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
       />
       <TooltipContent>
         {summary.isPending
-          ? "Re-running scenarios against the editor"
+          ? t("Re-running scenarios against the editor")
           : summary.isStale
-            ? "Scenario results are from before your latest edit"
+            ? t("Scenario results are from before your latest edit")
             : allPassing
-              ? "Every scenario passes against the current content"
-              : `${summary.total - summary.passed} scenario(s) fail; approval is blocked until they pass`}
+              ? t("Every scenario passes against the current content")
+              : t("{0} scenario(s) fail; approval is blocked until they pass", summary.total - summary.passed)}
       </TooltipContent>
     </Tooltip>
   );
@@ -209,7 +211,7 @@ export function StudioHeader({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-sm font-semibold">
-              {mode === "create" ? "New Formula Template" : templateName || "Formula Template"}
+              {mode === "create" ? t("New Formula Template") : templateName || t("Formula Template")}
             </h1>
             {statusChoice && (
               <ColorOptionValue color={statusChoice.color} value={statusChoice.label} />
@@ -255,16 +257,16 @@ export function StudioHeader({
                     >
                       <SendIcon className="size-3" />
                       {template?.status === "Inactive"
-                        ? "Reactivate via Review"
-                        : "Submit for Review"}
+                        ? t("Reactivate via Review")
+                        : t("Submit for Review")}
                     </Button>
                   </span>
                 }
               />
               <TooltipContent>
                 {isDirty
-                  ? "Save your changes first; review always covers what is saved"
-                  : "Send the saved content to a reviewer"}
+                  ? t("Save your changes first; review always covers what is saved")
+                  : t("Send the saved content to a reviewer")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -374,13 +376,13 @@ export function StudioHeader({
                   loadingText={t("Saving...")}
                   disabled={mode === "edit" && !isDirty}
                 >
-                  {mode === "create" ? "Create Template" : "Save Changes"}
+                  {mode === "create" ? t("Create Template") : t("Save Changes")}
                 </Button>
               </span>
             }
           />
           <TooltipContent>
-            {mode === "edit" && !isDirty ? "No unsaved changes" : shortcutHint("save")}
+            {mode === "edit" && !isDirty ? t("No unsaved changes") : shortcutHint("save")}
           </TooltipContent>
         </Tooltip>
       </div>

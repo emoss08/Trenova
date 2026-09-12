@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { StoredMileageRow } from "@/lib/graphql/stored-mileage-table";
@@ -27,7 +28,7 @@ export function getColumns(): ColumnDef<StoredMileageRow>[] {
             </div>
             <div className="text-muted-foreground truncate text-xs">
               {intermediateStopCount > 0
-                ? `${intermediateStopCount} intermediate stops`
+                ? translate("{0} intermediate stops", intermediateStopCount)
                 : row.original.routeHash}
             </div>
           </div>

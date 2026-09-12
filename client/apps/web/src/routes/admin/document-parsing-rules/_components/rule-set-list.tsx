@@ -70,7 +70,7 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
         />
         <div className="flex items-center justify-between">
           <span className="text-2xs text-muted-foreground">
-            {t("{0} rule set {1}", isFiltered ? `${filteredCount} of ${totalCount}` : `${totalCount}`, totalCount !== 1 ? "s" : "")}
+            {t("{0} rule set {1}", isFiltered ? t("{0} of {1}", filteredCount, totalCount) : `${totalCount}`, totalCount !== 1 ? "s" : "")}
           </span>
           {canCreate && (
             <Button
@@ -303,7 +303,7 @@ function CreateRuleSetDialog({
               {t("Cancel")}
             </Button>
             <Button type="submit" disabled={!name.trim() || isPending}>
-              {isPending ? "Creating..." : "Create"}
+              {isPending ? t("Creating...") : t("Create")}
             </Button>
           </DialogFooter>
         </form>

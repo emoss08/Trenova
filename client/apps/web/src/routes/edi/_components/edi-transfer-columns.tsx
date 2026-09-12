@@ -53,9 +53,9 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         const payload = row.original.tenderPayload;
         return (
           <div className="min-w-0">
-            <div className="truncate font-medium">{payload.bol || "Load tender"}</div>
+            <div className="truncate font-medium">{payload.bol || translate("Load tender")}</div>
             <div className="text-muted-foreground truncate text-xs">
-              {payload.customerLabel || payload.serviceTypeLabel || "No tender summary"}
+              {payload.customerLabel || payload.serviceTypeLabel || translate("No tender summary")}
             </div>
           </div>
         );
@@ -122,7 +122,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         return (
           <div className="flex flex-wrap gap-1">
             <Badge variant={unresolvedCount > 0 ? "outline" : "active"}>
-              {unresolvedCount > 0 ? `${unresolvedCount} unresolved` : "Resolved"}
+              {unresolvedCount > 0 ? translate("{0} unresolved", unresolvedCount) : translate("Resolved")}
             </Badge>
             <Badge variant="secondary">{translate("{0} total", totalCount)}</Badge>
           </div>

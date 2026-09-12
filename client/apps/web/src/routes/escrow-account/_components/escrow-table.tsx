@@ -94,7 +94,7 @@ export default function EscrowTable() {
           </DialogHeader>
           {withBalance > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400">
-              {t("{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.", withBalance, withBalance === 1 ? " still holds" : "s still hold")}
+              {t("{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.", withBalance, withBalance === 1 ? t("still holds") : t("s still hold"))}
             </p>
           )}
           <DialogFooter>

@@ -212,7 +212,7 @@ export function AiGeneratePanel({
 
             {error && (
               <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs">
-                {error.message || "Formula generation failed. Try again."}
+                {error.message || t("Formula generation failed. Try again.")}
               </div>
             )}
 
@@ -280,12 +280,10 @@ export function AiGeneratePanel({
                       <AlertTriangleIcon className="size-3.5 shrink-0" />
                     )}
                     {validation.valid
-                      ? `Validated against sample data${
-                          typeof validation.result === "number"
-                            ? ` — result ${formatCurrency(validation.result)}`
-                            : ""
-                        }`
-                      : `Validation warning: ${validation.error || validation.message}`}
+                      ? t("Validated against sample data{0}", typeof validation.result === "number"
+                            ? t("— result {0}", formatCurrency(validation.result))
+                            : "")
+                      : t("Validation warning: {0}", validation.error || validation.message)}
                   </div>
                 )}
 
@@ -329,7 +327,7 @@ export function AiGeneratePanel({
                               ) : (
                                 <p className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
                                   <AlertTriangleIcon className="size-3 shrink-0" />
-                                  {scenario.error || "Could not be priced"}
+                                  {scenario.error || t("Could not be priced")}
                                 </p>
                               )}
                             </div>
@@ -361,8 +359,8 @@ export function AiGeneratePanel({
                     </div>
                     <p className="text-2xs text-muted-foreground">
                       {templateId
-                        ? "Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it."
-                        : "Save the template first, then generate again to add these as scenarios."}
+                        ? t("Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it.")
+                        : t("Save the template first, then generate again to add these as scenarios.")}
                     </p>
                   </div>
                 )}

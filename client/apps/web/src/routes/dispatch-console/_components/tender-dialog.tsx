@@ -85,7 +85,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-medium">{guide.name}</span>
         <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">
-          {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? "Unranked"}
+          {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? t("Unranked")}
         </Badge>
         <span className="text-muted-foreground text-[10px]">{formatRoutingGuideLane(guide)}</span>
       </div>
@@ -99,7 +99,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
               #{entry.rank}
             </Badge>
             <span className="truncate text-[11px] font-medium">
-              {entry.carrier?.name ?? "Unknown carrier"}
+              {entry.carrier?.name ?? t("Unknown carrier")}
             </span>
           </div>
           <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
@@ -139,7 +139,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
     <Alert variant="warning" className="mb-3">
       <TriangleAlertIcon />
       <AlertTitle>
-        {hasSkipped ? "Some carriers were not offered" : "Some carriers were offered with warnings"}
+        {hasSkipped ? t("Some carriers were not offered") : t("Some carriers were offered with warnings")}
       </AlertTitle>
       <AlertDescription>
         {hasSkipped && (
@@ -515,7 +515,7 @@ export function TenderDialog({
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[680px]">
         <DialogHeader>
-          <DialogTitle>{liveTender ? "Live Tender" : "Tender to Carriers"}</DialogTitle>
+          <DialogTitle>{liveTender ? t("Live Tender") : t("Tender to Carriers")}</DialogTitle>
           <DialogDescription>
             {move.proNumber} · {move.originCity}, {move.originState} → {move.destinationCity},{" "}
             {move.destinationState}

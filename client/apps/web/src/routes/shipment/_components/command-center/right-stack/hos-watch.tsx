@@ -257,7 +257,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
                 live ? "bg-success animate-pulse" : "bg-muted-foreground",
               )}
             />
-            {live ? "Live" : "Offline"}
+            {live ? t("Live") : t("Offline")}
           </span>
           {freshestRecordedAt > 0 && (
             <span className="font-table text-muted-foreground text-[9px] tabular-nums">

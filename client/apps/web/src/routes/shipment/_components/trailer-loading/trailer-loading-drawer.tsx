@@ -186,7 +186,7 @@ export default function LoadPlannerDialog({
           )}
           <Button type="button" onClick={calculate} disabled={isPending || !hasCommodities}>
             {isPending && <LoaderIcon className="size-3.5 animate-spin" />}
-            {data ? "Recalculate" : "Calculate Optimal Loading"}
+            {data ? t("Recalculate") : t("Calculate Optimal Loading")}
           </Button>
         </DialogFooter>
       </DialogContent>

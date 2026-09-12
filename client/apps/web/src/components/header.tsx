@@ -101,6 +101,8 @@ function NavActions() {
 }
 
 export function FavoriteToggle({ className }: { className?: string }) {
+  const t = useT();
+
   const location = useLocation();
   const breadcrumbs = useBreadcrumbs();
   const pageUrl = location.pathname;
@@ -149,7 +151,7 @@ export function FavoriteToggle({ className }: { className?: string }) {
           className={cn("size-3 transition-colors", isFavorited && "fill-amber-400 text-amber-400")}
         />
       </TooltipTrigger>
-      <TooltipContent>{isFavorited ? "Remove from favorites" : "Add to favorites"}</TooltipContent>
+      <TooltipContent>{isFavorited ? t("Remove from favorites") : t("Add to favorites")}</TooltipContent>
     </Tooltip>
   );
 }

@@ -50,12 +50,12 @@ export function AuthHandoff({
       </span>
       <div className="text-center">
         <div className="text-[14px] font-[550] tracking-[-0.01em]">
-          {organizationName ? `Entering ${organizationName}` : "Entering Trenova"}
+          {organizationName ? t("Entering {0}", organizationName) : t("Entering Trenova")}
         </div>
         <div className="text-subtle-foreground font-table mt-1.5 text-[11.5px]">
           {t("{0} role{1}{2}", roleCount, roleCount === 1 ? "" : "s", permissionCount === undefined
             ? null
-            : ` · ${permissionCount.toLocaleString()} permission${permissionCount === 1 ? "" : "s"}`)}
+            : t("· {0} permission{1}", permissionCount.toLocaleString(), permissionCount === 1 ? "" : "s"))}
         </div>
       </div>
       <div className="bg-border-2 h-0.5 w-full overflow-hidden rounded-sm">

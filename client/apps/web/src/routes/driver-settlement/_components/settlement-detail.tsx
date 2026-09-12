@@ -150,8 +150,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
     <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
       <p className="text-muted-foreground text-[11px]">
         {isTerminal
-          ? "This settlement is finalized and shown here for record-keeping."
-          : "This is a read-only view — process, adjust, or pay this settlement from the workspace."}
+          ? t("This settlement is finalized and shown here for record-keeping.")
+          : t("This is a read-only view — process, adjust, or pay this settlement from the workspace.")}
       </p>
       {!isTerminal && (
         <Link
@@ -462,11 +462,11 @@ function ReasonDialog({
     <Dialog open={action != null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{action === "reject" ? "Reject settlement" : "Void settlement"}</DialogTitle>
+          <DialogTitle>{action === "reject" ? t("Reject settlement") : t("Void settlement")}</DialogTitle>
           <DialogDescription>
             {action === "reject"
-              ? "The settlement will return to draft for corrections."
-              : "Voiding releases pay events back to the accrual pool and reverses any GL postings."}
+              ? t("The settlement will return to draft for corrections.")
+              : t("Voiding releases pay events back to the accrual pool and reverses any GL postings.")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -484,7 +484,7 @@ function ReasonDialog({
             disabled={!reason.trim() || mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {action === "reject" ? "Reject" : "Void"}
+            {action === "reject" ? t("Reject") : t("Void")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -539,7 +539,7 @@ function MarkPaidDialog({
                   variant={paymentMethod === method ? "default" : "outline"}
                   onClick={() => setPaymentMethod(method)}
                 >
-                  {method === "InstantPay" ? "Instant Pay" : method}
+                  {method === "InstantPay" ? t("Instant Pay") : method}
                 </Button>
               ))}
             </div>

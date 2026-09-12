@@ -106,7 +106,7 @@ function FieldItem({
       <div className="rounded-md border">
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span>{defaultKey ? `${defaultKey} — ${defaultLabel}` : `Field ${index + 1}`}</span>
+            <span>{defaultKey ? `${defaultKey} — ${defaultLabel}` : t("Field {0}", index + 1)}</span>
             {isRequired && <Badge variant="active">{t("Required")}</Badge>}
             {typeof confidence === "number" && confidence > 0 && (
               <Badge variant="outline">{Math.round(confidence * 100)}%</Badge>

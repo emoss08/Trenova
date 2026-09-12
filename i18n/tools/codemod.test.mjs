@@ -228,3 +228,94 @@ test("labels mode does not wrap an already-wrapped caption", () => {
   );
   assert.equal(out.changed, false);
 });
+
+// Rendered literals. A string that is displayed but sits in an expression rather than in
+// JSX text was the codemod's blind spot: the extractor never saw it, so it was translated
+// nowhere and rendered English inside otherwise translated screens.
+
+test("wraps a literal rendered from a ternary in jsx child position", () => {
+  const out = run(
+    `export function Panel({ filed }: any) {\n  return <span>{filed ? "Regenerate" : "Generate"}</span>;\n}\n`,
+  ).output;
+  assert.match(out, /\{filed \? t\("Regenerate"\) : t\("Generate"\)\}/);
+});
+
+test("wraps a placeholder value handed into an existing t() call", () => {
+  const out = run(
+    `export function Panel({ on }: any) {\n  const t = useT();\n  return <span>{t("Auto-match: {0}", on ? "On" : "Off")}</span>;\n}\n`,
+  ).output;
+  assert.match(out, /t\("Auto-match: \{0\}", on \? t\("On"\) : t\("Off"\)\)/);
+});
+
+test("leaves the key of a t() call alone", () => {
+  const result = run(
+    `export function Panel() {\n  const t = useT();\n  return <span>{t("Create Shipment")}</span>;\n}\n`,
+  );
+  assert.equal(result.changed, false, "argument 0 is the catalog key, not a value to wrap");
+});
+
+test("wraps a nullish fallback used as a placeholder value", () => {
+  const out = run(
+    `export function Panel({ card }: any) {\n  const t = useT();\n  return <h2>{t("Cancel {0}?", card?.label ?? "this card")}</h2>;\n}\n`,
+  ).output;
+  assert.match(out, /card\?\.label \?\? t\("this card"\)/);
+});
+
+test("does not wrap a literal in an attribute expression", () => {
+  const result = run(
+    `export function Panel({ i }: any) {\n  return <Field name={\`lines.\${i}.amount\`} render={() => null} />;\n}\n`,
+  );
+  assert.equal(result.changed, false, "an attribute value is a field path, not display text");
+});
+
+test("does not wrap a literal passed to an unrelated call", () => {
+  const result = run(
+    `export function Panel() {\n  return <span>{format(value, "long form")}</span>;\n}\n`,
+  );
+  assert.equal(result.changed, false, "another function's arguments are its own business");
+});
+
+test("folds a template literal rendered in jsx child position", () => {
+  const out = run(
+    `export function Panel({ name }: any) {\n  return <p>{\`Pull this move back from \${name}. The move returns to uncovered.\`}</p>;\n}\n`,
+  ).output;
+  assert.match(
+    out,
+    /t\("Pull this move back from \{0\}\. The move returns to uncovered\.", name\)/,
+  );
+});
+
+test("folds a template literal handed into an existing t() call", () => {
+  const out = run(
+    `export function Panel({ n }: any) {\n  const t = useT();\n  return <p>{t("Status: {0}", \`\${n} stops remaining\`)}</p>;\n}\n`,
+  ).output;
+  assert.match(out, /t\("Status: \{0\}", t\("\{0\} stops remaining", n\)\)/);
+});
+
+test("numbers every expression of a folded template", () => {
+  const out = run(
+    `export function Panel({ a, b }: any) {\n  return <p>{\`Moved \${a} of \${b} stops.\`}</p>;\n}\n`,
+  ).output;
+  assert.match(out, /t\("Moved \{0\} of \{1\} stops\.", a, b\)/);
+});
+
+test("leaves a template that is only placeholders alone", () => {
+  const result = run(
+    `export function Panel({ a, b }: any) {\n  return <p>{\`\${a} \${b}\`}</p>;\n}\n`,
+  );
+  assert.equal(result.changed, false, "a bare concatenation carries no words to translate");
+});
+
+test("leaves a template literal in an attribute alone", () => {
+  const result = run(
+    `export function Panel({ i }: any) {\n  return <Field name={\`Line \${i} amount\`} />;\n}\n`,
+  );
+  assert.equal(result.changed, false, "an attribute value is not display text");
+});
+
+test("folds a template literal inside a ternary branch", () => {
+  const out = run(
+    `export function Panel({ many, n }: any) {\n  return <p>{many ? \`\${n} shipments selected\` : "One shipment selected"}</p>;\n}\n`,
+  ).output;
+  assert.match(out, /many \? t\("\{0\} shipments selected", n\) : t\("One shipment selected"\)/);
+});

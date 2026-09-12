@@ -115,7 +115,7 @@ export function ClockBoard({
         </div>
       ) : ranked.length === 0 ? (
         <p className="text-muted-foreground px-3 py-3 text-sm">
-          {t("Nobody is punched in{0} right now.", teamOnly ? " on your team" : "")}
+          {t("Nobody is punched in{0} right now.", teamOnly ? t("on your team") : "")}
         </p>
       ) : (
         <BoardList

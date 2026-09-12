@@ -286,7 +286,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
         <div key={field.id} className="bg-background rounded border p-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              {field.fieldKey || `Extractor ${extIdx + 1}`}
+              {field.fieldKey || t("Extractor {0}", extIdx + 1)}
             </span>
             <Button
               type="button"

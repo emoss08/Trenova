@@ -340,16 +340,16 @@ const ProviderRow = memo(function ProviderRow({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium">
-                {formatIdentityProviderName(provider.name) || "OIDC provider"}
+                {formatIdentityProviderName(provider.name) || t("OIDC provider")}
               </span>
               <Badge variant={provider.enabled ? "active" : "inactive"}>
-                {provider.enabled ? "Enabled" : "Disabled"}
+                {provider.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
               {provider.enforceSso && <Badge variant="warning">{t("SSO enforced")}</Badge>}
               {provider.autoProvision && <Badge variant="info">{t("Auto-provision")}</Badge>}
             </div>
             <div className="text-muted-foreground truncate text-xs">
-              {provider.slug || "No slug"}
+              {provider.slug || t("No slug")}
             </div>
           </div>
         </div>

@@ -225,7 +225,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             {t("In Postmark, create a server webhook endpoint over HTTPS and use this URL:")}
           </p>
           <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
-            {webhookURL || "Save once to generate the webhook URL."}
+            {webhookURL || t("Save once to generate the webhook URL.")}
           </code>
           <div className="space-y-1">
             <p className="text-muted-foreground">{t("Enable these Postmark triggers:")}</p>

@@ -283,7 +283,7 @@ export function AddressField<TForm extends FieldValues>({
                           }}
                         >
                           <div className="flex flex-col">
-                            <span>{location.name || "Unknown Location"}</span>
+                            <span>{location.name || t("Unknown Location")}</span>
                             <span className="text-2xs text-muted-foreground">
                               {location.addressLine1}
                               {location.city ? `, ${location.city}` : ""}

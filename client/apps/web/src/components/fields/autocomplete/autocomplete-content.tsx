@@ -277,7 +277,7 @@ export function AutocompleteCommandContent<TOption>({
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
             <CommandEmpty className="p-0 text-center">
               {noResultsMessage ??
-                `No ${pluralize(toTitleCase(label ?? ""), options.length)} found.`}
+                t("No {0} found.", pluralize(toTitleCase(label ?? ""), options.length))}
             </CommandEmpty>
             <span className="text-2xs text-muted-foreground text-center">
               {t("We can't find any {0} in your organization.", label ? label.toLowerCase() : "results")}

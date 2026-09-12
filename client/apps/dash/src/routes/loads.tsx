@@ -8,6 +8,8 @@ import { LoadCard } from "../_components/load-card";
 import { useMyLoads } from "../_components/use-loads";
 
 function LoadList({ scope }: { scope: PortalLoadScope }) {
+  const t = useT();
+
   const loads = useMyLoads(scope);
 
   if (loads.isPending) {
@@ -24,7 +26,7 @@ function LoadList({ scope }: { scope: PortalLoadScope }) {
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-10 text-center">
         <TruckIcon className="size-6 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          {scope === "Active" ? "No active or upcoming loads." : "No completed loads yet."}
+          {scope === "Active" ? t("No active or upcoming loads.") : t("No completed loads yet.")}
         </p>
       </div>
     );

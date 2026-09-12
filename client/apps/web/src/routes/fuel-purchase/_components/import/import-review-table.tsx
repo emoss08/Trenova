@@ -226,8 +226,8 @@ export function ImportReviewTable({
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-xs">
           {total !== null
-            ? `Showing ${rows.length} of ${total} ${total === 1 ? "row" : "rows"}`
-            : `Showing ${rows.length} rows`}
+            ? t("Showing {0} of {1} {2}", rows.length, total, total === 1 ? "row" : "rows")
+            : t("Showing {0} rows", rows.length)}
         </p>
         {query.hasNextPage ? (
           <Button

@@ -476,7 +476,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               onClick={handleSave}
               disabled={updateDashboard.isPending}
             >
-              {updateDashboard.isPending ? "Saving..." : "Save"}
+              {updateDashboard.isPending ? t("Saving...") : t("Save")}
             </Button>
           </>
         ) : (
@@ -489,7 +489,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               onClick={handleExport}
             >
               <DownloadIcon className="size-3.5" />
-              {exporting ? "Exporting..." : "Export"}
+              {exporting ? t("Exporting...") : t("Export")}
             </Button>
             {canEdit && (
               <Button variant="outline" size="sm" className="h-7" onClick={startEditing}>
@@ -579,8 +579,8 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
               <p className="text-sm font-medium">{t("Nothing here yet")}</p>
               <p className="text-muted-foreground max-w-xs text-xs">
                 {editing
-                  ? "Add a tile to point at a report."
-                  : "Edit this dashboard to add your first tile."}
+                  ? t("Add a tile to point at a report.")
+                  : t("Edit this dashboard to add your first tile.")}
               </p>
             </div>
           </div>

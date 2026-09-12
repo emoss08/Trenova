@@ -52,7 +52,7 @@ export default function DiagnosticsTab({
                 </Badge>
                 <Badge variant="outline">{diagnosticFamilyLabel(group.code)}</Badge>
                 <span className="font-mono text-xs">
-                  {group.segmentId || "Payload"}
+                  {group.segmentId || t("Payload")}
                   {group.elementPosition ? `:${group.elementPosition}` : ""}
                 </span>
                 <span className="text-muted-foreground font-mono text-xs">{group.code}</span>

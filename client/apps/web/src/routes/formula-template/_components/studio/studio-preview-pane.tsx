@@ -60,7 +60,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
     <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
       <ShieldIcon className="mt-0.5 size-3 shrink-0" />
       <span>
-        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? ` of ${formatCurrency(limit)}` : "")}
+        {t("The formula produced {0} and was clamped to the {1} charge{2}.", formatCurrency(guardrail.rawAmount), bound, limit != null ? t("of {0}", formatCurrency(limit)) : "")}
       </span>
     </div>
   );
@@ -216,17 +216,17 @@ function BreakdownResultTable({
           >
             <span className="font-medium">
               {reconciliation.balanced
-                ? "Lines explain the total"
+                ? t("Lines explain the total")
                 : reconciliation.residual > 0
-                  ? "Unallocated"
-                  : "Lines exceed the total"}
+                  ? t("Unallocated")
+                  : t("Lines exceed the total")}
               {reconciliation.failedCount > 0 &&
-                ` · ${reconciliation.failedCount} line${reconciliation.failedCount === 1 ? "" : "s"} failed`}
+                t("· {0} line{1} failed", reconciliation.failedCount, reconciliation.failedCount === 1 ? "" : "s")}
             </span>
             <span className="font-mono tabular-nums">
               {reconciliation.balanced
                 ? formatCurrency(reconciliation.sum)
-                : `${formatCurrency(reconciliation.sum)} of ${formatCurrency(total ?? 0)} · ${formatCurrency(Math.abs(reconciliation.residual))}`}
+                : t("{0} of {1} · {2}", formatCurrency(reconciliation.sum), formatCurrency(total ?? 0), formatCurrency(Math.abs(reconciliation.residual)))}
             </span>
           </div>
         )}
@@ -483,7 +483,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                       : "text-red-700 dark:text-red-300",
                   )}
                 >
-                  {isValid ? "Expression Valid" : "Expression Invalid"}
+                  {isValid ? t("Expression Valid") : t("Expression Invalid")}
                 </span>
                 {isValid && numericResult !== null && onPinScenario && (
                   <Tooltip>

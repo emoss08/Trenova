@@ -314,7 +314,7 @@ function DriverLaneRow({
             {driver.firstName} {driver.lastName}
           </span>
           <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
-            {driver.tractorCode || "No tractor"} · {t(availability.label)}
+            {driver.tractorCode || t("No tractor")} · {t(availability.label)}
           </span>
         </div>
       </button>

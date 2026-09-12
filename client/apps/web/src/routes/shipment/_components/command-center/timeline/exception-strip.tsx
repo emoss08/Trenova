@@ -102,7 +102,7 @@ export function ExceptionStrip({
       {focus && (
         <div className="ml-auto flex items-center gap-0.5">
           <span className="font-table text-muted-foreground mr-1 text-[10px] tabular-nums">
-            {matchCount === 0 ? "No matches" : `${matchIndex + 1} / ${matchCount}`}
+            {matchCount === 0 ? t("No matches") : `${matchIndex + 1} / ${matchCount}`}
           </span>
           <button
             type="button"

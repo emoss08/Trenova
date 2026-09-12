@@ -134,7 +134,7 @@ function ConfirmDialog({
             {t("Cancel")}
           </Button>
           <Button type="button" onClick={onConfirm} disabled={pending}>
-            {pending ? "Re-rating…" : "Re-rate"}
+            {pending ? t("Re-rating…") : t("Re-rate")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -163,7 +163,7 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
             {t("Rate applied")}
           </DialogTitle>
           <DialogDescription>
-            {t("{0} {1} priced this shipment.", rate.agreementName || "A rate agreement", rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
+            {t("{0} {1} priced this shipment.", rate.agreementName || t("A rate agreement"), rate.ruleLabel ? ` — ${rate.ruleLabel}` : "")}
           </DialogDescription>
         </DialogHeader>
 

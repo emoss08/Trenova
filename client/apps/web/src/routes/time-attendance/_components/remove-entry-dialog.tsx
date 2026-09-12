@@ -87,7 +87,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
           <DialogTitle>{t("Remove this entry")}</DialogTitle>
           <DialogDescription>
             {entry
-              ? `${formatHours(entry.paidMinutes)} from ${when} comes off the week. The reason is kept.`
+              ? t("{0} from {1} comes off the week. The reason is kept.", formatHours(entry.paidMinutes), when)
               : ""}
           </DialogDescription>
         </DialogHeader>

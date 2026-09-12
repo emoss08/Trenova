@@ -56,12 +56,12 @@ function MapErrorFallback({ error }: { error: Error }) {
           </div>
           <div className="space-y-1">
             <p className="text-foreground text-sm font-medium">
-              {isConfigError ? "Map integration not configured" : "Unable to load map"}
+              {isConfigError ? t("Map integration not configured") : t("Unable to load map")}
             </p>
             <p className="text-muted-foreground text-xs">
               {isConfigError
-                ? "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature."
-                : "An error occurred while loading the map component. Please try refreshing the page."}
+                ? t("A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature.")
+                : t("An error occurred while loading the map component. Please try refreshing the page.")}
             </p>
           </div>
           {isConfigError && (

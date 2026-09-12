@@ -126,7 +126,7 @@ function VersionList({
             disabled={createMutation.isPending}
           >
             <PlusIcon className="size-3.5" />
-            {createMutation.isPending ? "Creating..." : "New Draft"}
+            {createMutation.isPending ? t("Creating...") : t("New Draft")}
           </Button>
         )}
       </div>

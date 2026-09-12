@@ -119,7 +119,7 @@ function MoveCard({
         <span className="text-muted-foreground text-[10px]">
           {move.originWindowStart > 0
             ? formatUnixDateTime(move.originWindowStart)
-            : "No appointment"}
+            : t("No appointment")}
         </span>
         {move.distance != null && (
           <Badge variant="outline" className="h-4 rounded px-1 text-[9px]">

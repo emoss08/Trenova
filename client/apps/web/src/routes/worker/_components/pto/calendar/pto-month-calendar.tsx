@@ -320,8 +320,8 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           ))}
           <span className="text-muted-foreground ml-1 text-[11px] tabular-nums">
             {visibleItems.length === 0
-              ? "Nothing scheduled"
-              : `${visibleItems.length} on the calendar`}
+              ? t("Nothing scheduled")
+              : t("{0} on the calendar", visibleItems.length)}
           </span>
           <Tooltip>
             <TooltipTrigger render={<span className="ml-1 hidden cursor-default sm:inline-flex" />}>
@@ -332,7 +332,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
               </KbdGroup>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t("Arrow keys move a month and T returns to today {0}", canCreate ? ". Drag across days to request time off." : ".")}
+              {t("Arrow keys move a month and T returns to today {0}", canCreate ? t(". Drag across days to request time off.") : ".")}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -402,10 +402,10 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           {visibleItems.length === 0 ? (
             <p className="text-muted-foreground/70 pointer-events-none absolute inset-x-0 bottom-2 z-20 text-center text-[11px]">
               {hiddenTypes.size > 0
-                ? "Every type on this month is hidden by the legend"
+                ? t("Every type on this month is hidden by the legend")
                 : canCreate
-                  ? "No time off this month · drag across days to request some"
-                  : "No time off this month"}
+                  ? t("No time off this month · drag across days to request some")
+                  : t("No time off this month")}
             </p>
           ) : null}
         </div>

@@ -96,7 +96,7 @@ function CreateReversalPanel({
           </Button>
           <Button type="submit" form="journal-reversal-create-form" disabled={isSubmitting}>
             <SendIcon className="mr-1.5 size-3.5" />
-            {isSubmitting ? "Creating..." : "Create Reversal"}
+            {isSubmitting ? t("Creating...") : t("Create Reversal")}
           </Button>
         </>
       }
@@ -231,7 +231,7 @@ function ReversalDetailPanel({
                 <>
                   <Button size="sm" onClick={() => void approve(undefined)} disabled={isApproving}>
                     <CheckIcon className="mr-1.5 size-3.5" />
-                    {isApproving ? "Approving..." : "Approve"}
+                    {isApproving ? t("Approving...") : t("Approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -247,7 +247,7 @@ function ReversalDetailPanel({
               {reversal.status === "Approved" ? (
                 <Button size="sm" onClick={() => void postReversal(undefined)} disabled={isPosting}>
                   <SendIcon className="mr-1.5 size-3.5" />
-                  {isPosting ? "Posting..." : "Post"}
+                  {isPosting ? t("Posting...") : t("Post")}
                 </Button>
               ) : null}
               {canCancel ? (
@@ -278,7 +278,7 @@ function ReversalDetailPanel({
                     onClick={() => void reject(undefined)}
                     disabled={isRejecting || !rejectionReason.trim()}
                   >
-                    {isRejecting ? "Rejecting..." : "Confirm Reject"}
+                    {isRejecting ? t("Rejecting...") : t("Confirm Reject")}
                   </Button>
                   <Button
                     size="sm"
@@ -310,7 +310,7 @@ function ReversalDetailPanel({
                     onClick={() => void cancel(undefined)}
                     disabled={isCancelling || !cancelReason.trim()}
                   >
-                    {isCancelling ? "Cancelling..." : "Confirm Cancel"}
+                    {isCancelling ? t("Cancelling...") : t("Confirm Cancel")}
                   </Button>
                   <Button
                     size="sm"

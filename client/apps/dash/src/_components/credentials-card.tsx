@@ -179,7 +179,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
               onClick={() => fileInputRef.current?.click()}
             >
               <CameraIcon className="size-3.5" />
-              {upload.isPending ? `Uploading ${fileName ?? ""}…` : "Upload renewal"}
+              {upload.isPending ? t("Uploading {0}…", fileName ?? "") : t("Upload renewal")}
             </Button>
           </>
         ) : null}

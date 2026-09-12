@@ -85,7 +85,7 @@ function UnreachableInvitation({ onRetry, retrying }: { onRetry: () => void; ret
         {t("Your invitation link looks fine, but we couldn't reach Dash just now. Check your connection and try again.")}
       </p>
       <Button className="mt-6 h-11 w-full" onClick={onRetry} disabled={retrying}>
-        {retrying ? "Retrying..." : "Try again"}
+        {retrying ? t("Retrying...") : t("Try again")}
       </Button>
     </div>
   );
@@ -152,7 +152,7 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
           {t("Welcome{0} 👋", preview.workerFirstName ? `, ${preview.workerFirstName}` : "")}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {t("{0} invited you to Dash", preview.organizationName || "Your carrier")}
+          {t("{0} invited you to Dash", preview.organizationName || t("Your carrier"))}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {t("Choose a password to finish setting up your account for")}{" "}
@@ -187,7 +187,7 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         <Button type="submit" className="mt-2 h-11 w-full" disabled={pending}>
-          {pending ? "Setting up..." : "Create account & sign in"}
+          {pending ? t("Setting up...") : t("Create account & sign in")}
         </Button>
       </form>
     </div>

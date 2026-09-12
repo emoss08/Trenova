@@ -164,7 +164,7 @@ function DirectoryRailItem({
         </div>
       </div>
       <Badge variant={directory.enabled ? "active" : "inactive"}>
-        {directory.enabled ? "Enabled" : "Disabled"}
+        {directory.enabled ? t("Enabled") : t("Disabled")}
       </Badge>
     </button>
   );

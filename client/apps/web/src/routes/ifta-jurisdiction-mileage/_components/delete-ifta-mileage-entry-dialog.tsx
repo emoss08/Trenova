@@ -67,11 +67,11 @@ export function DeleteIftaMileageEntryDialog({
           <AlertDialogDescription>
             {entry ? (
               <span className="block">
-                {t("{0} miles in {1} on {2} {3} will be removed outright.", formatDecimalString(entry.miles, IFTA_MILES_SCALE), entry.jurisdiction.code, formatUnixDate(entry.traveledAt), entry.tractor?.code ? ` for tractor ${entry.tractor.code}` : "")}
+                {t("{0} miles in {1} on {2} {3} will be removed outright.", formatDecimalString(entry.miles, IFTA_MILES_SCALE), entry.jurisdiction.code, formatUnixDate(entry.traveledAt), entry.tractor?.code ? t("for tractor {0}", entry.tractor.code) : "")}
               </span>
             ) : null}
             <span className="mt-2 block">
-              {t("The quarter's return drops these miles on its next recompute. A return already generated for {0} keeps its figures until it is recomputed, so recompute it after deleting while the quarter is still open.", period ?? "the quarter")}
+              {t("The quarter's return drops these miles on its next recompute. A return already generated for {0} keeps its figures until it is recomputed, so recompute it after deleting while the quarter is still open.", period ?? t("the quarter"))}
             </span>
             {entry && entry.source !== "Manual" ? (
               <span className="mt-2 block">
@@ -87,7 +87,7 @@ export function DeleteIftaMileageEntryDialog({
             onClick={() => mutate()}
             disabled={isPending || !entry}
           >
-            {isPending ? "Deleting..." : "Delete entry"}
+            {isPending ? t("Deleting...") : t("Delete entry")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

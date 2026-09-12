@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -12,6 +13,8 @@ export function CopyIconButton({
   label: string;
   size?: "icon-xs" | "icon-xxs";
 }) {
+  const t = useT();
+
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -25,7 +28,7 @@ export function CopyIconButton({
           <CopyIcon className="size-3.5" />
         )}
       </TooltipTrigger>
-      <TooltipContent>{isCopied ? "Copied" : label}</TooltipContent>
+      <TooltipContent>{isCopied ? t("Copied") : label}</TooltipContent>
     </Tooltip>
   );
 }

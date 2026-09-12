@@ -75,7 +75,7 @@ export function DeleteIftaTaxRateDialog({
             onClick={() => mutate()}
             disabled={isPending || !rate}
           >
-            {isPending ? "Deleting..." : "Delete rate"}
+            {isPending ? t("Deleting...") : t("Delete rate")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

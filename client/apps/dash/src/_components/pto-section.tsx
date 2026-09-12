@@ -241,9 +241,9 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
               data-testid="pto-request-days"
             >
               {t("{0} day{1} {2} {3}", requestedDays, requestedDays === 1 ? "" : "s", available !== null
-                ? ` · ${available.toFixed(available % 1 === 0 ? 0 : 2)} available`
+                ? t("· {0} available", available.toFixed(available % 1 === 0 ? 0 : 2))
                 : "", overdrawn
-                ? " — more than you have banked; your manager may still approve it if days accrue by then."
+                ? t("— more than you have banked; your manager may still approve it if days accrue by then.")
                 : "")}
             </p>
           ) : null}
@@ -262,7 +262,7 @@ function PtoRequestDrawer({ open, onOpenChange, balances }: PtoRequestDrawerProp
             disabled={!canSubmit || submit.isPending}
             onClick={() => submit.mutate()}
           >
-            {submit.isPending ? "Sending..." : "Send request"}
+            {submit.isPending ? t("Sending...") : t("Send request")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

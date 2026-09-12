@@ -217,7 +217,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit safety event" : "Record a safety event"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Edit safety event") : t("Record a safety event")}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -371,7 +371,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} loadingText={t("Saving...")}>
-                {isEdit ? "Save changes" : "Record event"}
+                {isEdit ? t("Save changes") : t("Record event")}
               </Button>
             </DialogFooter>
           </Form>

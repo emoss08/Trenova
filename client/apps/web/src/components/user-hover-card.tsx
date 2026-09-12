@@ -46,7 +46,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
                 className="size-8 rounded-full"
               />
               <div className="flex flex-col text-xs">
-                <h4 className="font-semibold">{hoveredUserData?.name || "Loading..."}</h4>
+                <h4 className="font-semibold">{hoveredUserData?.name || t("Loading...")}</h4>
                 <p className="text-blue-600 dark:text-blue-400">
                   @{hoveredUserData?.username || username}
                 </p>

@@ -68,8 +68,7 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
         <AlertDialogHeader>
           <AlertDialogTitle>{t("Delete this routing guide?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            {`"${row.name}" will no longer match this lane. Tenders already running against it are
-            unaffected, but new waterfalls cannot use it.`}
+            {t("\"{0}\" will no longer match this lane. Tenders already running against it are unaffected, but new waterfalls cannot use it.", row.name)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

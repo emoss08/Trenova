@@ -217,7 +217,7 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
                 <span className="truncate">
                   {item.customer} · {item.origin} → {item.destination}
                 </span>
-                <span className="shrink-0 truncate">{item.driver || "Unassigned"}</span>
+                <span className="shrink-0 truncate">{item.driver || t("Unassigned")}</span>
               </div>
             </Link>
           ))}

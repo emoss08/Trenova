@@ -107,7 +107,9 @@ export function OshaCaseTable({
             {t("Log of work-related injuries and illnesses, {0}", year)}
           </h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("Form 300. {0} recorded; case numbers restart each January. A case is recorded from the worker's safety tab.", cases.length === 1 ? "One case" : `${cases.length} cases`)}
+            {cases.length === 1
+              ? t("Form 300. One case recorded; case numbers restart each January. A case is recorded from the worker's safety tab.")
+              : t("Form 300. {0} cases recorded; case numbers restart each January. A case is recorded from the worker's safety tab.", cases.length)}
           </p>
         </div>
         {cases.length > 0 ? (

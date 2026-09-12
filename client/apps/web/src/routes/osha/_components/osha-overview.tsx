@@ -46,7 +46,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           info={
             <InfoPopover title={t("Recordable cases")}>
               {
-                "Cases that met the OSHA recording criteria this year, by the log column they landed in. A case kept on file but judged not recordable is counted below, not here."
+                t("Cases that met the OSHA recording criteria this year, by the log column they landed in. A case kept on file but judged not recordable is counted below, not here.")
               }
             </InfoPopover>
           }
@@ -73,7 +73,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           info={
             <InfoPopover title={t("Incident rate")}>
               {
-                "Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on."
+                t("Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.")
               }
             </InfoPopover>
           }
@@ -83,8 +83,8 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         </span>
         <KpiSub>
           {log.totalRecordableIncidentRate === null
-            ? "Needs the hours worked from the 300A figures"
-            : `Recordable cases per 100 full-time workers, over ${hours.toLocaleString("en-US")} hours`}
+            ? t("Needs the hours worked from the 300A figures")
+            : t("Recordable cases per 100 full-time workers, over {0} hours", hours.toLocaleString("en-US"))}
         </KpiSub>
       </KpiCard>
 
@@ -95,7 +95,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           info={
             <InfoPopover title={t("DART rate")}>
               {
-                "Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on."
+                t("Cases with days away, restricted duty or job transfer, on the same 200,000-hour basis. It is the rate most workers' compensation carriers price on.")
               }
             </InfoPopover>
           }
@@ -105,8 +105,8 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         </span>
         <KpiSub>
           {log.daysAwayRestrictedRate === null
-            ? "Needs the hours worked from the 300A figures"
-            : "Cases with days away, restriction or transfer, per 100 full-time workers"}
+            ? t("Needs the hours worked from the 300A figures")
+            : t("Cases with days away, restriction or transfer, per 100 full-time workers")}
         </KpiSub>
       </KpiCard>
 
@@ -117,7 +117,7 @@ export function OshaOverview({ log }: OshaOverviewProps) {
           info={
             <InfoPopover title={t("Days lost")}>
               {
-                "Calendar days away from work plus days on restricted duty or transfer, summed across the year's cases, each capped at 180 as the form requires."
+                t("Calendar days away from work plus days on restricted duty or transfer, summed across the year's cases, each capped at 180 as the form requires.")
               }
             </InfoPopover>
           }
@@ -135,8 +135,8 @@ export function OshaOverview({ log }: OshaOverviewProps) {
         />
         <KpiSub>
           {lost.total === 0
-            ? "No case kept anybody off their job"
-            : `${lost.away.toLocaleString("en-US")} away from work, ${lost.restricted.toLocaleString("en-US")} restricted or transferred`}
+            ? t("No case kept anybody off their job")
+            : t("{0} away from work, {1} restricted or transferred", lost.away.toLocaleString("en-US"), lost.restricted.toLocaleString("en-US"))}
         </KpiSub>
       </KpiCard>
     </div>
