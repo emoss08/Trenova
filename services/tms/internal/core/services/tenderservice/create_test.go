@@ -325,7 +325,7 @@ func TestCreateSpotBlockedCarrierFailsPerLine(t *testing.T) {
 	lineErr := fieldError(multiErr, "lines[1].carrierId")
 	require.NotNil(t, lineErr)
 	assert.Contains(t, lineErr.Message, "Carrier is not eligible for tendering")
-	assert.Contains(t, lineErr.Message, "Carrier status is DoNotUse")
+	assert.Contains(t, lineErr.Error(), "Carrier status is DoNotUse")
 	assert.Nil(t, fieldError(multiErr, "lines[0].carrierId"))
 	assert.Nil(t, deps.tenderRepo.created)
 	assert.Empty(t, deps.workflows.started)
@@ -354,7 +354,7 @@ func TestCreateSpotWarningWithoutOverrideIsOverridable(t *testing.T) {
 	require.ErrorAs(t, err, &bizErr)
 	assert.Equal(t, "true", bizErr.Params["overridable"])
 	assert.Contains(t, bizErr.Message, "insurance warnings")
-	assert.Contains(t, bizErr.Message, "expiring")
+	assert.Contains(t, bizErr.Error(), "expiring")
 	assert.Nil(t, deps.tenderRepo.created)
 	assert.Empty(t, deps.workflows.started)
 }

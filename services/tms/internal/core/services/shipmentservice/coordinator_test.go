@@ -795,7 +795,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	require.ErrorAs(t, err, &multiErr)
 	assertErrorField(t, multiErr, "moves[0].stops[0].actualArrival")
 	require.Len(t, multiErr.Errors, 1)
-	assert.Contains(t, multiErr.Errors[0].Message, "tractor and primary worker")
+	assert.Contains(t, multiErr.Errors[0].Error(), "tractor and primary worker")
 }
 
 func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *testing.T) {

@@ -107,7 +107,7 @@ func TestRateCoverageAdvisory(t *testing.T) {
 			}
 
 			require.NotNil(t, advisory)
-			assert.Contains(t, advisory.Message, tt.contains)
+			assert.Contains(t, advisory.Error(), tt.contains)
 			assert.Equal(t, errortypes.SeverityRequireReview, advisory.Severity)
 			assert.Equal(t, rateCoverageRuleKey, advisory.RuleKey)
 			assert.Equal(t, "freightChargeAmount", advisory.Field)

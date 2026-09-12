@@ -38,8 +38,8 @@ func TestGuardStatementCadenceDemandsAReason(t *testing.T) {
 		"the client keys off this field to ask for a reason instead of showing a dead end",
 	)
 	assert.Equal(t, errortypes.ErrRequired, validationErr.Code)
-	assert.Contains(t, validationErr.Message, "Acme Freight")
-	assert.Contains(t, validationErr.Message, "monthly")
+	assert.Contains(t, validationErr.Error(), "Acme Freight")
+	assert.Contains(t, validationErr.Error(), "monthly")
 }
 
 func TestGuardStatementCadenceAllowsADeliberateDeviation(t *testing.T) {

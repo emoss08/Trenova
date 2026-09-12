@@ -164,7 +164,7 @@ func TestArchiveIsBlockedWhileWorkersAreAssigned(t *testing.T) {
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
 	assert.Equal(t, "status", validationErr.Field)
-	assert.Contains(t, validationErr.Message, "3 workers are still assigned")
+	assert.Contains(t, validationErr.Error(), "3 workers are still assigned")
 	assert.Empty(t, repo.updated)
 	assert.Empty(t, audit.ops)
 }

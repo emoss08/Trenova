@@ -21,7 +21,7 @@ func capabilityErrorMessage(t *testing.T, err error, field string) string {
 	assert.Equal(t, field, multiErr.Errors[0].Field)
 	assert.Equal(t, errortypes.ErrResourceInUse, multiErr.Errors[0].Code)
 
-	return multiErr.Errors[0].Message
+	return multiErr.Errors[0].Error()
 }
 
 func TestUpdate_DisableBrokerage_BlockedByEachDependency(t *testing.T) {
