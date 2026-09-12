@@ -490,7 +490,11 @@ func (r *repository) Update(
 
 		results, err := r.db.DBForContext(c).NewUpdate().
 			Model(entity).
-			ExcludeColumn(sp.CreatedAt.Bare()).
+			ExcludeColumn(
+				sp.CreatedAt.Bare(),
+				sp.BillingTransferStatus.Bare(),
+				sp.TransferredToBillingAt.Bare(),
+			).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -598,8 +602,6 @@ func (r *repository) UpdateDerivedState(
 				sp.OtherChargeAmount.Bare(),
 				sp.TotalChargeAmount.Bare(),
 				sp.RatingDetail.Bare(),
-				sp.BillingTransferStatus.Bare(),
-				sp.TransferredToBillingAt.Bare(),
 				sp.MarkedReadyToBillAt.Bare(),
 				sp.BilledAt.Bare(),
 				sp.Version.Bare(),

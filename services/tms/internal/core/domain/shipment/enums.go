@@ -42,6 +42,7 @@ const (
 	BillingTransferException      = BillingTransferStatus("Exception")
 	BillingTransferSentBackToOps  = BillingTransferStatus("SentBackToOps")
 	BillingTransferApproved       = BillingTransferStatus("Approved")
+	BillingTransferPosted         = BillingTransferStatus("Posted")
 	BillingTransferCanceled       = BillingTransferStatus("Canceled")
 )
 
@@ -202,6 +203,7 @@ func (v BillingTransferStatus) IsValid() bool {
 		BillingTransferException,
 		BillingTransferSentBackToOps,
 		BillingTransferApproved,
+		BillingTransferPosted,
 		BillingTransferCanceled:
 		return true
 	default:
