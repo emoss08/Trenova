@@ -66,7 +66,6 @@ describe("CustomerBillingProfileFields fragment", () => {
       "splitBy",
       "sectionBy",
       "invoiceDetail",
-      "consolidationLookbackDays",
       "maxShipmentsPerInvoice",
       "autoApprove",
     ]) {

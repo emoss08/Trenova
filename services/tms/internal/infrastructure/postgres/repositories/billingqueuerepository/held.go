@@ -16,9 +16,10 @@ import (
 //
 // A statement that showed only approved freight understated the period: a biller
 // looking at 197 shipments had no way to know 12 more were sitting in review and
-// would miss the invoice. This is the same window and the same eligibility as
-// ListConsolidationCandidates, inverted on status — anything not yet Approved,
-// and not already dead.
+// would miss the invoice. This is the same eligibility as
+// ListConsolidationCandidates, inverted on status — anything not yet Approved, and
+// not already dead or billed — including freight from earlier periods, which is
+// just as owed.
 //
 // Grouped by customer so one query answers for every statement on the list.
 func (r *repository) CountHeldForPeriod(
@@ -39,9 +40,6 @@ func (r *repository) CountHeldForPeriod(
 		Join("JOIN shipments AS sp ON sp.id = bqi.shipment_id").
 		Join("AND sp.organization_id = bqi.organization_id").
 		Join("AND sp.business_unit_id = bqi.business_unit_id").
-		Join("LEFT JOIN customer_billing_profiles AS cbp ON cbp.customer_id = sp.customer_id").
-		Join("AND cbp.organization_id = sp.organization_id").
-		Join("AND cbp.business_unit_id = sp.business_unit_id").
 		Where("bqi.organization_id = ?", req.TenantInfo.OrgID).
 		Where("bqi.business_unit_id = ?", req.TenantInfo.BuID).
 		// Everything a biller could still act on. Canceled is gone for good, and
@@ -58,10 +56,17 @@ func (r *repository) CountHeldForPeriod(
 		Where("bqi.is_adjustment_origin = FALSE").
 		Where("sp.customer_id IN (?)", bun.List(req.CustomerIDs)).
 		Where("sp.status <> ?", shipment.StatusCanceled).
-		Where(
-			"COALESCE(sp.actual_delivery_date, bqi.created_at) >= ? - COALESCE(cbp.consolidation_lookback_days, 30) * 86400",
-			req.PeriodStart,
-		).
+		// Already billed. The invoice_id back-link is the primary double-bill guard,
+		// but it was backfilled conservatively for legacy order-grouped invoices, and
+		// a leg on a Draft invoice stays Approved until posting. This reads the truth
+		// straight from the invoice lines, so freight that is on any invoice is never
+		// swept onto a statement however it got there.
+		Where(`NOT EXISTS (
+			SELECT 1 FROM invoice_lines AS il
+			WHERE il.shipment_id = sp.id
+			  AND il.organization_id = sp.organization_id
+			  AND il.business_unit_id = sp.business_unit_id
+		)`).
 		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
 		GroupExpr("sp.customer_id").
 		Scan(ctx, &held)

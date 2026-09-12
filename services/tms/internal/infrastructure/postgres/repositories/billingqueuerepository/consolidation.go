@@ -120,10 +120,20 @@ func (r *repository) ListConsolidationCandidates(
 			shipment.StatusReadyToInvoice,
 			shipment.StatusCompleted,
 		})).
-		Where(
-			"COALESCE(sp.actual_delivery_date, bqi.created_at) >= ? - COALESCE(cbp.consolidation_lookback_days, 30) * 86400",
-			req.PeriodStart,
-		).
+		// Already billed. The invoice_id back-link is the primary double-bill guard,
+		// but it was backfilled conservatively for legacy order-grouped invoices, and
+		// a leg on a Draft invoice stays Approved until posting. This reads the truth
+		// straight from the invoice lines, so freight that is on any invoice is never
+		// swept onto a statement however it got there.
+		Where(`NOT EXISTS (
+			SELECT 1 FROM invoice_lines AS il
+			WHERE il.shipment_id = sp.id
+			  AND il.organization_id = sp.organization_id
+			  AND il.business_unit_id = sp.business_unit_id
+		)`).
+		// No lower bound. Approved, uninvoiced freight is owed however old it is:
+		// freight held under a customer's minimum is promised to the next period, and
+		// a window that let it age out silently dropped it from billing for good.
 		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
 		OrderExpr("sp.customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
 		Limit(limit).

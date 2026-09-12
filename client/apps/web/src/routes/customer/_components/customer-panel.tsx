@@ -46,7 +46,6 @@ const DEFAULT_VALUES: Customer = {
     splitBy: "Customer",
     sectionBy: "Shipment",
     invoiceDetail: "Detailed",
-    consolidationLookbackDays: 30,
     minConsolidatedAmount: null,
     maxShipmentsPerInvoice: 0,
     invoiceNumberFormat: "Default",

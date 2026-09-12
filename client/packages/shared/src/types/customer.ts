@@ -103,7 +103,6 @@ export const customerBillingProfileSchema = z
     splitBy: invoiceSplitKeySchema.default("Customer"),
     sectionBy: invoiceSectionKeySchema.default("Shipment"),
     invoiceDetail: invoiceDetailSchema.default("Detailed"),
-    consolidationLookbackDays: z.number().int().default(30),
     minConsolidatedAmount: decimalStringSchema,
     maxShipmentsPerInvoice: z.number().int().default(0),
     invoiceNumberFormat: invoiceNumberFormatSchema.default("Default"),

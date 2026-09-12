@@ -44,14 +44,16 @@ type AttachInvoiceRequest struct {
 	ItemIDs    []pulid.ID            `json:"-"`
 }
 
-// ListConsolidationCandidatesRequest windows the approved queue items a run may
-// bill. The lookback reaches before the period start to sweep shipments that were
-// delivered inside the period but only approved after it closed; without it those
-// straggle into the next period and the customer's statement is wrong twice.
+// ListConsolidationCandidatesRequest asks for the approved, unbilled queue items a
+// run may bill, up to the end of a period.
+//
+// There is deliberately no start. Freight is owed however old it is: an item held
+// under a customer's minimum is promised to the next period, and an item approved
+// after its own period closed belongs on the next statement. A lower bound could
+// only ever drop owed freight from billing without a trace.
 type ListConsolidationCandidatesRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	CustomerIDs []pulid.ID            `json:"-"`
-	PeriodStart int64                 `json:"-"`
 	PeriodEnd   int64                 `json:"-"`
 	Limit       int                   `json:"-"`
 }
@@ -95,13 +97,13 @@ type ConsolidationCandidate struct {
 	AutoBill               bool                       `bun:"auto_bill"`
 }
 
-// CountHeldForPeriodRequest asks what freight belongs to a period but is still
-// waiting on a biller. The window matches ListConsolidationCandidatesRequest, so
-// held and accrued freight are measured over exactly the same span.
+// CountHeldForPeriodRequest asks what freight is owed by the end of a period but is
+// still waiting on a biller. It has no start for the same reason
+// ListConsolidationCandidatesRequest has none, so held and accrued freight are
+// always measured over exactly the same span.
 type CountHeldForPeriodRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	CustomerIDs []pulid.ID            `json:"-"`
-	PeriodStart int64                 `json:"-"`
 	PeriodEnd   int64                 `json:"-"`
 }
 

@@ -365,7 +365,6 @@ var CustomerBillingProfileColumns = struct {
 	SplitBy                                   Column // "split_by" → qualified: "cbp.split_by"
 	SectionBy                                 Column // "section_by" → qualified: "cbp.section_by"
 	InvoiceDetail                             Column // "invoice_detail" → qualified: "cbp.invoice_detail"
-	ConsolidationLookbackDays                 Column // "consolidation_lookback_days" → qualified: "cbp.consolidation_lookback_days"
 	MinConsolidatedAmount                     Column // "min_consolidated_amount" → qualified: "cbp.min_consolidated_amount"
 	MinConsolidatedAmountMinor                Column // "min_consolidated_amount_minor" → qualified: "cbp.min_consolidated_amount_minor"
 	MaxShipmentsPerInvoice                    Column // "max_shipments_per_invoice" → qualified: "cbp.max_shipments_per_invoice"
@@ -421,7 +420,6 @@ var CustomerBillingProfileColumns = struct {
 	SplitBy:                         NewColumn("split_by", "cbp"),
 	SectionBy:                       NewColumn("section_by", "cbp"),
 	InvoiceDetail:                   NewColumn("invoice_detail", "cbp"),
-	ConsolidationLookbackDays:       NewColumn("consolidation_lookback_days", "cbp"),
 	MinConsolidatedAmount:           NewColumn("min_consolidated_amount", "cbp"),
 	MinConsolidatedAmountMinor:      NewColumn("min_consolidated_amount_minor", "cbp"),
 	MaxShipmentsPerInvoice:          NewColumn("max_shipments_per_invoice", "cbp"),
@@ -483,7 +481,6 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"splitBy":                         "split_by",
 	"sectionBy":                       "section_by",
 	"invoiceDetail":                   "invoice_detail",
-	"consolidationLookbackDays":       "consolidation_lookback_days",
 	"minConsolidatedAmount":           "min_consolidated_amount",
 	"minConsolidatedAmountMinor":      "min_consolidated_amount_minor",
 	"maxShipmentsPerInvoice":          "max_shipments_per_invoice",
@@ -543,7 +540,6 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"split_by",
 	"section_by",
 	"invoice_detail",
-	"consolidation_lookback_days",
 	"min_consolidated_amount",
 	"min_consolidated_amount_minor",
 	"max_shipments_per_invoice",
@@ -671,7 +667,6 @@ var CustomerBillingProfileFilter = struct {
 	SplitBy                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitBy" → DB: "split_by"
 	SectionBy                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sectionBy" → DB: "section_by"
 	InvoiceDetail                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDetail" → DB: "invoice_detail"
-	ConsolidationLookbackDays                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationLookbackDays" → DB: "consolidation_lookback_days"
 	MinConsolidatedAmount                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minConsolidatedAmount" → DB: "min_consolidated_amount"
 	MinConsolidatedAmountMinor                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minConsolidatedAmountMinor" → DB: "min_consolidated_amount_minor"
 	MaxShipmentsPerInvoice                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxShipmentsPerInvoice" → DB: "max_shipments_per_invoice"
@@ -768,9 +763,6 @@ var CustomerBillingProfileFilter = struct {
 	},
 	InvoiceDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceDetail", op, value)
-	},
-	ConsolidationLookbackDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("consolidationLookbackDays", op, value)
 	},
 	MinConsolidatedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("minConsolidatedAmount", op, value)

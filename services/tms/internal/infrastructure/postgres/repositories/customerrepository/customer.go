@@ -440,7 +440,6 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.SplitBy.SetExcluded()).
 		Set(cbp.SectionBy.SetExcluded()).
 		Set(cbp.InvoiceDetail.SetExcluded()).
-		Set(cbp.ConsolidationLookbackDays.SetExcluded()).
 		Set(cbp.MinConsolidatedAmount.SetExcluded()).
 		Set(cbp.MinConsolidatedAmountMinor.SetExcluded()).
 		Set(cbp.MaxShipmentsPerInvoice.SetExcluded()).

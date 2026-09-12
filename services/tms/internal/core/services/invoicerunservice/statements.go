@@ -132,7 +132,6 @@ func (s *Service) fillStatements(
 		&repositories.ListConsolidationCandidatesRequest{
 			TenantInfo:  req.TenantInfo,
 			CustomerIDs: customerIDs,
-			PeriodStart: window.start,
 			PeriodEnd:   window.end,
 		},
 	)
@@ -180,7 +179,6 @@ func (s *Service) fillHeldFreight(
 		&repositories.CountHeldForPeriodRequest{
 			TenantInfo:  req.TenantInfo,
 			CustomerIDs: customerIDs,
-			PeriodStart: window.start,
 			PeriodEnd:   window.end,
 		},
 	)

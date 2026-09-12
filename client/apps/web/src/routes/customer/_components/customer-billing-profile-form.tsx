@@ -346,16 +346,6 @@ export function CustomerBillingProfileForm() {
                 />
               </FormControl>
               <FormControl>
-                <NumberField
-                  control={control}
-                  name="billingProfile.consolidationLookbackDays"
-                  label="Lookback"
-                  placeholder="30"
-                  sideText="days"
-                  description="How far before the period start to sweep shipments that were approved late."
-                />
-              </FormControl>
-              <FormControl>
                 <SelectField
                   control={control}
                   name="billingProfile.splitBy"

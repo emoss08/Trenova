@@ -20,7 +20,6 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   splitBy
   sectionBy
   invoiceDetail
-  consolidationLookbackDays
   minConsolidatedAmount
   maxShipmentsPerInvoice
   invoiceNumberFormat

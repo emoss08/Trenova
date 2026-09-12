@@ -26,6 +26,7 @@ type CustomerBillingProfileResolver interface {
 	BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error)
 	BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error)
 
+	ConsolidationLookbackDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
@@ -1048,18 +1049,18 @@ func (ec *executionContext) _CustomerBillingProfile_consolidationLookbackDays(ct
 			return ec.fieldContext_CustomerBillingProfile_consolidationLookbackDays(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ConsolidationLookbackDays, nil
+			return ec.Resolvers.CustomerBillingProfile().ConsolidationLookbackDays(ctx, obj)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
-			return ec.marshalNInt2int16(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_consolidationLookbackDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_minConsolidatedAmount(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -2968,10 +2969,43 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "consolidationLookbackDays":
-			out.Values[i] = ec._CustomerBillingProfile_consolidationLookbackDays(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_consolidationLookbackDays(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "minConsolidatedAmount":
 			field := field
 
