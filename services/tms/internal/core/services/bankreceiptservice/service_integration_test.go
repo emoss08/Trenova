@@ -222,7 +222,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.InoviceLine{
+			Lines: []*invoice.InvoiceLine{
 				{
 					LineNumber:  1,
 					Type:        invoice.InvoiceLineTypeFreight,

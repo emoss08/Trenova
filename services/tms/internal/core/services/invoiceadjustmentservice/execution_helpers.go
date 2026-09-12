@@ -22,13 +22,14 @@ func (s *Service) createReplacementDraftInvoice(
 	item *billingqueue.BillingQueueItem,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	lines []*invoice.InoviceLine,
+	lines []*invoice.InvoiceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*invoice.Invoice, error) {
 	entity := &invoice.Invoice{
 		OrganizationID:     sourceInvoice.OrganizationID,
 		BusinessUnitID:     sourceInvoice.BusinessUnitID,
 		BillingQueueItemID: item.ID,
+		Scope:              invoice.ScopeAdjustment,
 		ShipmentID:         sourceInvoice.ShipmentID,
 		CustomerID:         sourceInvoice.CustomerID,
 		Number:             item.Number,

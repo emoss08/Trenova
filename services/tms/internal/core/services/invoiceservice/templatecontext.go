@@ -157,6 +157,9 @@ func invoiceContextFromPDFData(
 		HeaderRows:    invoiceKeyValues(data.HeaderRows),
 		CommodityRows: invoiceCommodityRows(data.CommodityRows),
 		ChargeRows:    invoiceChargeRows(data.ChargeRows),
+		ShipmentRows:  invoiceShipmentRows(data.ShipmentRows),
+		ShipmentCount: data.ShipmentCount,
+		Period:        data.Period,
 
 		Subtotal:   data.Subtotal,
 		Other:      data.Other,
@@ -204,6 +207,28 @@ func invoiceChargeRows(rows []invoicePDFChargeRow) []documenttemplate.ChargeRow 
 			Description: row.Description,
 			Quantity:    row.Quantity,
 			UnitPrice:   row.UnitPrice,
+			Amount:      row.Amount,
+			ProNumber:   row.ProNumber,
+		})
+	}
+
+	return out
+}
+
+func invoiceShipmentRows(rows []invoicePDFShipmentRow) []documenttemplate.ShipmentRow {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	out := make([]documenttemplate.ShipmentRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, documenttemplate.ShipmentRow{
+			ProNumber:   row.ProNumber,
+			BOL:         row.BOL,
+			PONumber:    row.PONumber,
+			ServiceDate: row.ServiceDate,
+			Origin:      row.Origin,
+			Destination: row.Destination,
 			Amount:      row.Amount,
 		})
 	}

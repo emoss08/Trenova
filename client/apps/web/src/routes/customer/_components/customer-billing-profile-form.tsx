@@ -12,16 +12,20 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import {
-  billingCycleTypeChoices,
-  consolidationGroupByChoices,
+  billingCycleChoices,
   creditStatusChoices,
   currencyChoices,
   customerFuelSurchargeModeChoices,
   customerPaymentTermChoices,
   invoiceAdjustmentSupportingDocumentPolicyChoices,
-  invoiceMethodChoices,
+  invoiceDeliveryChoices,
+  invoiceDetailChoices,
   invoiceNumberFormatChoices,
+  invoiceSectionKeyChoices,
+  invoiceSplitKeyChoices,
+  timezoneChoices,
 } from "@/lib/choices";
+import { BillingSchedulePreview } from "./billing-schedule-preview";
 import type { Customer } from "@trenova/shared/types/customer";
 import {
   BanknoteIcon,
@@ -36,6 +40,7 @@ import {
   UserCheckIcon,
   TruckIcon,
 } from "lucide-react";
+import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 function SectionHeader({
@@ -63,10 +68,6 @@ function SectionHeader({
 export function CustomerBillingProfileForm() {
   const { control } = useFormContext<Customer>();
 
-  const billingCycleType = useWatch({
-    control,
-    name: "billingProfile.billingCycleType",
-  });
   const creditStatus = useWatch({
     control,
     name: "billingProfile.creditStatus",
@@ -75,48 +76,61 @@ export function CustomerBillingProfileForm() {
     control,
     name: "billingProfile.invoiceNumberFormat",
   });
-  const allowInvoiceConsolidation = useWatch({
-    control,
-    name: "billingProfile.allowInvoiceConsolidation",
-  });
   const applyLateCharges = useWatch({
     control,
     name: "billingProfile.applyLateCharges",
   });
   const taxExempt = useWatch({ control, name: "billingProfile.taxExempt" });
   const fuelSurchargeMode = useWatch({ control, name: "billingProfile.fuelSurchargeMode" });
-  const showDayOfWeek = billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
+
+  const invoiceDelivery = useWatch({ control, name: "billingProfile.invoiceDelivery" });
+  const billingCycle = useWatch({ control, name: "billingProfile.billingCycle" });
+  const billingCycleAnchorDay = useWatch({
+    control,
+    name: "billingProfile.billingCycleAnchorDay",
+  });
+  const splitBy = useWatch({ control, name: "billingProfile.splitBy" });
+  const sectionBy = useWatch({ control, name: "billingProfile.sectionBy" });
+  const invoiceDetail = useWatch({ control, name: "billingProfile.invoiceDetail" });
+  const maxShipmentsPerInvoice = useWatch({
+    control,
+    name: "billingProfile.maxShipmentsPerInvoice",
+  });
+
   const showCreditHoldReason = creditStatus === "Hold" || creditStatus === "Suspended";
   const showCustomPrefix = invoiceNumberFormat === "CustomPrefix";
+  const isConsolidated = invoiceDelivery === "Consolidated";
+  const isWeeklyCycle = billingCycle === "Weekly" || billingCycle === "BiWeekly";
+
+  const schedulePreview = useMemo(
+    () => ({
+      invoiceDelivery: invoiceDelivery ?? "PerShipment",
+      billingCycle: billingCycle ?? "Immediate",
+      billingCycleAnchorDay: billingCycleAnchorDay ?? 1,
+      splitBy: splitBy ?? "Customer",
+      sectionBy: sectionBy ?? "Shipment",
+      invoiceDetail: invoiceDetail ?? "Detailed",
+      maxShipmentsPerInvoice: maxShipmentsPerInvoice ?? 0,
+    }),
+    [
+      invoiceDelivery,
+      billingCycle,
+      billingCycleAnchorDay,
+      splitBy,
+      sectionBy,
+      invoiceDetail,
+      maxShipmentsPerInvoice,
+    ],
+  );
 
   return (
     <div className="space-y-6">
       <SectionHeader
         icon={ClockIcon}
-        title="Billing Cycle & Payment"
-        description="Controls when invoices are generated and how long customers have to pay"
+        title="Payment Terms"
+        description="How long this customer has to pay, and in what currency"
       />
       <FormGroup cols={2}>
-        <FormControl>
-          <SelectField
-            control={control}
-            name="billingProfile.billingCycleType"
-            label="Billing Cycle"
-            description="Determines invoice generation frequency. 'Immediate' creates an invoice per shipment; 'Monthly' batches all shipments into one monthly invoice."
-            options={billingCycleTypeChoices}
-          />
-        </FormControl>
-        {showDayOfWeek && (
-          <FormControl>
-            <NumberField
-              control={control}
-              name="billingProfile.billingCycleDayOfWeek"
-              label="Day of Week"
-              placeholder="0-6"
-              description="Which day invoices are generated (0 = Sunday through 6 = Saturday). Only applies to weekly and bi-weekly cycles."
-            />
-          </FormControl>
-        )}
         <FormControl>
           <SelectField
             control={control}
@@ -217,15 +231,6 @@ export function CustomerBillingProfileForm() {
         <FormControl>
           <SelectField
             control={control}
-            name="billingProfile.invoiceMethod"
-            label="Invoice Method"
-            description="'Individual' creates one invoice per shipment. 'Summary' combines multiple shipments. 'Summary with Detail' includes line-level shipment breakdowns."
-            options={invoiceMethodChoices}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectField
-            control={control}
             name="billingProfile.invoiceNumberFormat"
             label="Invoice Number Format"
             description="How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier."
@@ -292,42 +297,114 @@ export function CustomerBillingProfileForm() {
 
       <SectionHeader
         icon={MailCheckIcon}
-        title="Invoice Consolidation"
-        description="Combine multiple shipments into fewer invoices to reduce AP processing overhead"
+        title="Billing Schedule"
+        description="How this customer's shipments turn into invoices, and how often"
       />
       <FormGroup cols={1}>
-        <FormControl className="min-h-[3em]">
-          <SwitchField
+        <FormControl>
+          <SelectField
             control={control}
-            name="billingProfile.allowInvoiceConsolidation"
-            label="Allow Invoice Consolidation"
-            description="When enabled, shipments within the consolidation period are combined into a single invoice instead of being billed individually."
-            position="left"
+            name="billingProfile.invoiceDelivery"
+            label="Invoice Delivery"
+            description="Whether this customer gets an invoice per shipment, per order, or one statement covering a billing period."
+            options={invoiceDeliveryChoices}
           />
         </FormControl>
-        {allowInvoiceConsolidation && (
-          <div className="flex flex-col pl-10">
-            <FormControl className="min-h-[3em] max-w-[400px]">
-              <NumberField
-                control={control}
-                name="billingProfile.consolidationPeriodDays"
-                label="Consolidation Window"
-                placeholder="7"
-                sideText="days"
-                description="How many days of shipments to batch into a single consolidated invoice."
-              />
-            </FormControl>
-            <FormControl className="min-h-[3em] max-w-[400px]">
-              <SelectField
-                control={control}
-                name="billingProfile.consolidationGroupBy"
-                label="Group By"
-                description="How line items are organized within a consolidated invoice. Grouping by location or PO number makes it easier for the customer to reconcile."
-                options={consolidationGroupByChoices}
-              />
-            </FormControl>
+
+        {isConsolidated && (
+          <div className="flex flex-col gap-4 pl-4 border-l">
+            <FormGroup cols={2}>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name="billingProfile.billingCycle"
+                  label="Bill Every"
+                  description="How often the period closes and invoices are produced."
+                  options={billingCycleChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="billingProfile.billingCycleAnchorDay"
+                  label={isWeeklyCycle ? "Day of Week" : "Day of Month"}
+                  placeholder={isWeeklyCycle ? "0-6" : "1-28"}
+                  description={
+                    isWeeklyCycle
+                      ? "0 = Sunday through 6 = Saturday."
+                      : "Capped at 28 so a monthly cycle never shifts in February."
+                  }
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name="billingProfile.billingCycleTimezone"
+                  label="Time Zone"
+                  description="The zone period boundaries are evaluated in. Getting this wrong moves loads into the wrong period."
+                  options={timezoneChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="billingProfile.consolidationLookbackDays"
+                  label="Lookback"
+                  placeholder="30"
+                  sideText="days"
+                  description="How far before the period start to sweep shipments that were approved late."
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name="billingProfile.splitBy"
+                  label="Separate Invoice For Each"
+                  description="Decides how many invoices a period produces. Choose nothing for a single statement."
+                  options={invoiceSplitKeyChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name="billingProfile.sectionBy"
+                  label="Group Lines By"
+                  description="How the lines inside each invoice are organised. Never changes how many invoices there are."
+                  options={invoiceSectionKeyChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name="billingProfile.invoiceDetail"
+                  label="Detail Level"
+                  description="Whether each section lists every charge or collapses to one line per shipment."
+                  options={invoiceDetailChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="billingProfile.maxShipmentsPerInvoice"
+                  label="Max Shipments Per Invoice"
+                  placeholder="0"
+                  description="Splits an oversized group across several invoices. Zero means no limit."
+                />
+              </FormControl>
+              <FormControl cols="full">
+                <NumberField
+                  control={control}
+                  name="billingProfile.minConsolidatedAmount"
+                  label="Minimum Invoice Amount"
+                  placeholder="0.00"
+                  description="A group worth less than this defers to the next period instead of billing."
+                />
+              </FormControl>
+            </FormGroup>
           </div>
         )}
+
+        <BillingSchedulePreview schedule={schedulePreview} />
       </FormGroup>
 
       <Separator />

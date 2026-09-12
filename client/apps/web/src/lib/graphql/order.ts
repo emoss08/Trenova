@@ -4,6 +4,7 @@ import {
   CancelOrderDocument,
   CloseOrderDocument,
   CreateInvoiceFromOrderDocument,
+  CreateInvoiceFromShipmentsDocument,
   CreateOrderDocument,
   DetachOrderShipmentDocument,
   OrderDetailDocument,
@@ -15,6 +16,7 @@ import {
   type CancelOrderMutation,
   type CloseOrderMutation,
   type CreateInvoiceFromOrderMutation,
+  type CreateInvoiceFromShipmentsMutation,
   type DetachOrderShipmentMutation,
   type OrderDetailQuery,
   type OrderInput,
@@ -119,16 +121,37 @@ export async function detachOrderShipment(
   return data.detachOrderShipment;
 }
 
+/**
+ * `offCycleReason` is only read for a customer on a periodic statement, where
+ * invoicing freight on its own takes it off that statement. Omitting it there
+ * fails with a validation error on `offCycleReason`, which is the signal to ask
+ * the biller for one.
+ */
 export async function createInvoiceFromOrder(
   orderId: string,
+  offCycleReason?: string,
 ): Promise<CreateInvoiceFromOrderMutation["createInvoiceFromOrder"]> {
   const data = await requestGraphQL({
     document: CreateInvoiceFromOrderDocument,
     operationName: "CreateInvoiceFromOrder",
-    variables: { orderId },
+    variables: { orderId, offCycleReason },
   });
 
   return data.createInvoiceFromOrder;
+}
+
+/** See createInvoiceFromOrder for what `offCycleReason` means. */
+export async function createInvoiceFromShipments(
+  shipmentIds: string[],
+  offCycleReason?: string,
+): Promise<CreateInvoiceFromShipmentsMutation["createInvoiceFromShipments"]> {
+  const data = await requestGraphQL({
+    document: CreateInvoiceFromShipmentsDocument,
+    operationName: "CreateInvoiceFromShipments",
+    variables: { shipmentIds, offCycleReason },
+  });
+
+  return data.createInvoiceFromShipments;
 }
 
 export async function addOrderCharge(

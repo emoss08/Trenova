@@ -40,6 +40,55 @@ enum CustomerConsolidationGroupBy {
   Division
 }
 
+"""How many invoices a customer's freight turns into."""
+enum CustomerInvoiceDelivery {
+  """One invoice per shipment."""
+  PerShipment
+  """One invoice per order, covering every billable leg."""
+  PerOrder
+  """One or more invoices per billing period, covering the period's shipments."""
+  Consolidated
+}
+
+"""How often a statement-billed customer is billed."""
+enum CustomerBillingCycle {
+  Immediate
+  Daily
+  Weekly
+  BiWeekly
+  SemiMonthly
+  Monthly
+  Quarterly
+}
+
+"""
+How many invoices a billing period yields. Customer means one; every other
+member means one per distinct value of that key.
+"""
+enum InvoiceSplitKey {
+  Customer
+  CustomerAndPONumber
+  CustomerAndShipmentBOL
+  CustomerAndOrder
+  CustomerAndOrigin
+  CustomerAndDestination
+  CustomerAndServiceType
+}
+
+"""How the lines inside one invoice are organised. Never changes how many there are."""
+enum InvoiceSectionKey {
+  Shipment
+  PONumber
+  Origin
+  Destination
+}
+
+"""How verbose each section of a consolidated invoice is."""
+enum InvoiceDetail {
+  Detailed
+  Summary
+}
+
 enum CustomerInvoiceNumberFormat {
   Default
   CustomPrefix
@@ -64,7 +113,26 @@ type CustomerBillingProfile {
   organizationId: ID!
   customerId: ID!
   billingCycleType: CustomerBillingCycleType!
+    @deprecated(reason: "Replaced by invoiceDelivery and billingCycle, which separate the delivery mode from the cadence. Removed in a later release.")
   billingCycleDayOfWeek: Int
+    @deprecated(reason: "Replaced by billingCycleAnchorDay, which also covers monthly and quarterly cycles. Removed in a later release.")
+  invoiceDelivery: CustomerInvoiceDelivery!
+  billingCycle: CustomerBillingCycle!
+  """Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer."""
+  billingCycleAnchorDay: Int!
+  """IANA zone the period boundaries are evaluated in."""
+  billingCycleTimezone: String!
+  """End of the last period billed, so a missed cycle catches up rather than skipping."""
+  lastBilledPeriodEnd: Timestamp
+  splitBy: InvoiceSplitKey!
+  sectionBy: InvoiceSectionKey!
+  invoiceDetail: InvoiceDetail!
+  """How far before the period start to sweep shipments approved late."""
+  consolidationLookbackDays: Int!
+  """Below this, a group defers to the next period instead of billing."""
+  minConsolidatedAmount: Decimal
+  """Zero means unbounded."""
+  maxShipmentsPerInvoice: Int!
   paymentTerm: CustomerPaymentTerm!
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
@@ -74,10 +142,14 @@ type CustomerBillingProfile {
   autoCreditHold: Boolean!
   creditHoldReason: String!
   invoiceMethod: CustomerInvoiceMethod!
+    @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
   allowInvoiceConsolidation: Boolean!
+    @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   consolidationPeriodDays: Int!
+    @deprecated(reason: "Split into billingCycle (cadence) and consolidationLookbackDays (how far back to sweep). Removed in a later release.")
   consolidationGroupBy: CustomerConsolidationGroupBy!
+    @deprecated(reason: "Split into splitBy (how many invoices) and sectionBy (organisation within one). Removed in a later release.")
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!

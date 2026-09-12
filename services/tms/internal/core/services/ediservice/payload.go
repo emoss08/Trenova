@@ -212,30 +212,82 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 		},
 	}
 
-	lines := make([]*invoice.InoviceLine, 0, len(source.Lines))
+	lines := make([]*invoice.InvoiceLine, 0, len(source.Lines))
 	for _, line := range source.Lines {
 		if line == nil {
 			continue
 		}
 		lines = append(lines, line)
 	}
-	slices.SortFunc(lines, func(a, b *invoice.InoviceLine) int {
+	slices.SortFunc(lines, func(a, b *invoice.InvoiceLine) int {
 		return cmp.Compare(a.LineNumber, b.LineNumber)
 	})
 
+	// Attribution is only meaningful when the invoice bills more than one
+	// shipment. On a single-shipment invoice the header already says which one,
+	// and repeating it on every charge changes the wire format of every 210 we
+	// have ever sent for no gain.
+	consolidated := source.ShipmentCount > 1
+
 	for _, line := range lines {
-		payload.LineCharges = append(payload.LineCharges, edi.FreightInvoiceCharge{
+		charge := edi.FreightInvoiceCharge{
 			Sequence:    int64(line.LineNumber),
 			Code:        string(line.Type),
 			Description: line.Description,
 			Amount:      line.Amount,
-		})
+		}
+		if consolidated {
+			charge.ShipmentID = line.ShipmentID
+			charge.ProNumber = line.ShipmentProNumber
+			charge.BOL = line.ShipmentBOL
+		}
+		payload.LineCharges = append(payload.LineCharges, charge)
+	}
+
+	if consolidated {
+		payload.Shipments = freightInvoiceShipments(lines)
 	}
 
 	return edi.DocumentPayload{
 		TransactionSet: edi.TransactionSet210,
 		FreightInvoice: &payload,
 	}
+}
+
+// freightInvoiceShipments rolls the lines up into one reference per shipment.
+//
+// The lines are the only record of which shipments an invoice covers, so this
+// reads them rather than taking a list that could disagree. Order-level charges
+// carry no shipment and contribute no reference, which is correct: they belong
+// to the invoice, not to any one load.
+func freightInvoiceShipments(lines []*invoice.InvoiceLine) []edi.FreightInvoiceShipment {
+	order := make([]pulid.ID, 0, len(lines))
+	byID := make(map[pulid.ID]*edi.FreightInvoiceShipment, len(lines))
+
+	for _, line := range lines {
+		if line.ShipmentID.IsNil() {
+			continue
+		}
+		existing, seen := byID[line.ShipmentID]
+		if !seen {
+			order = append(order, line.ShipmentID)
+			byID[line.ShipmentID] = &edi.FreightInvoiceShipment{
+				ShipmentID: line.ShipmentID,
+				ProNumber:  line.ShipmentProNumber,
+				BOL:        line.ShipmentBOL,
+				Amount:     decimal.NewNullDecimal(line.Amount),
+			}
+			continue
+		}
+		existing.Amount = decimal.NewNullDecimal(existing.Amount.Decimal.Add(line.Amount))
+	}
+
+	out := make([]edi.FreightInvoiceShipment, 0, len(order))
+	for _, id := range order {
+		out = append(out, *byID[id])
+	}
+
+	return out
 }
 
 func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {

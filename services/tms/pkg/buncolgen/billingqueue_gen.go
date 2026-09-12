@@ -67,6 +67,7 @@ var BillingQueueItemColumns = struct {
 	CanceledAt                Column // "canceled_at" → qualified: "bqi.canceled_at"
 	CancelReason              Column // "cancel_reason" → qualified: "bqi.cancel_reason"
 	IsAdjustmentOrigin        Column // "is_adjustment_origin" → qualified: "bqi.is_adjustment_origin"
+	InvoiceID                 Column // "invoice_id" → qualified: "bqi.invoice_id"
 	SourceInvoiceID           Column // "source_invoice_id" → qualified: "bqi.source_invoice_id"
 	SourceInvoiceAdjustmentID Column // "source_invoice_adjustment_id" → qualified: "bqi.source_invoice_adjustment_id"
 	SourceCreditMemoInvoiceID Column // "source_credit_memo_invoice_id" → qualified: "bqi.source_credit_memo_invoice_id"
@@ -97,6 +98,7 @@ var BillingQueueItemColumns = struct {
 	CanceledAt:                NewColumn("canceled_at", "bqi"),
 	CancelReason:              NewColumn("cancel_reason", "bqi"),
 	IsAdjustmentOrigin:        NewColumn("is_adjustment_origin", "bqi"),
+	InvoiceID:                 NewColumn("invoice_id", "bqi"),
 	SourceInvoiceID:           NewColumn("source_invoice_id", "bqi"),
 	SourceInvoiceAdjustmentID: NewColumn("source_invoice_adjustment_id", "bqi"),
 	SourceCreditMemoInvoiceID: NewColumn("source_credit_memo_invoice_id", "bqi"),
@@ -133,6 +135,7 @@ var BillingQueueItemFieldMap = map[string]string{
 	"canceledAt":                "canceled_at",
 	"cancelReason":              "cancel_reason",
 	"isAdjustmentOrigin":        "is_adjustment_origin",
+	"invoiceId":                 "invoice_id",
 	"sourceInvoiceId":           "source_invoice_id",
 	"sourceInvoiceAdjustmentId": "source_invoice_adjustment_id",
 	"sourceCreditMemoInvoiceId": "source_credit_memo_invoice_id",
@@ -167,6 +170,7 @@ var BillingQueueItemInsertableColumns = []string{
 	"canceled_at",
 	"cancel_reason",
 	"is_adjustment_origin",
+	"invoice_id",
 	"source_invoice_id",
 	"source_invoice_adjustment_id",
 	"source_credit_memo_invoice_id",
@@ -263,6 +267,7 @@ var BillingQueueItemFilter = struct {
 	CanceledAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
 	CancelReason              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
 	IsAdjustmentOrigin        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentOrigin" → DB: "is_adjustment_origin"
+	InvoiceID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
 	SourceInvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceId" → DB: "source_invoice_id"
 	SourceInvoiceAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceAdjustmentId" → DB: "source_invoice_adjustment_id"
 	SourceCreditMemoInvoiceID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceCreditMemoInvoiceId" → DB: "source_credit_memo_invoice_id"
@@ -328,6 +333,9 @@ var BillingQueueItemFilter = struct {
 	},
 	IsAdjustmentOrigin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isAdjustmentOrigin", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
 	},
 	SourceInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceInvoiceId", op, value)

@@ -7,6 +7,15 @@ const (
 	StatusPosted = Status("Posted")
 )
 
+type Scope string
+
+const (
+	ScopeShipment     = Scope("Shipment")
+	ScopeOrder        = Scope("Order")
+	ScopeConsolidated = Scope("Consolidated")
+	ScopeAdjustment   = Scope("Adjustment")
+)
+
 type InvoiceLineType string
 
 const (
@@ -63,6 +72,15 @@ const (
 func (s Status) IsValid() bool {
 	switch s {
 	case StatusDraft, StatusPosted:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s Scope) IsValid() bool {
+	switch s {
+	case ScopeShipment, ScopeOrder, ScopeConsolidated, ScopeAdjustment:
 		return true
 	default:
 		return false

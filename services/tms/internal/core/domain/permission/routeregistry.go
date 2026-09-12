@@ -728,6 +728,27 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/invoice-runs",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceInvoiceRun, Operation: OpRead},
+		},
+		DisplayName: "Invoice Runs",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/invoice-runs/new",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceInvoiceRun, Operation: OpCreate},
+		},
+		DisplayName: "New Invoice Run",
+		Category:    "Billing",
+		ParentRoute: "/billing/invoice-runs",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/billing/invoices/new",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

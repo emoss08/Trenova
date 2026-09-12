@@ -203,7 +203,7 @@ func (r *repository) GetByIDs(
 		Relation(rel.PDFDocument).
 		Relation(buncolgen.Rel(rel.PDFDocument, buncolgen.DocumentRelations.DocumentType)).
 		Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order(buncolgen.InoviceLineColumns.LineNumber.OrderAsc())
+			return q.Order(buncolgen.InvoiceLineColumns.LineNumber.OrderAsc())
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -218,14 +218,16 @@ func (r *repository) GetByBillingQueueItemID(
 	ctx context.Context,
 	req repositories.GetInvoiceByBillingQueueItemIDRequest,
 ) (*invoice.Invoice, error) {
+	inv := buncolgen.InvoiceColumns
+
 	var entity invoice.Invoice
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entity).
-		Where("inv.billing_queue_item_id = ?", req.BillingQueueItemID).
-		Where("inv.organization_id = ?", req.TenantInfo.OrgID).
-		Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
+	err := buncolgen.InvoiceScopeTenant(
+		r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entity).
+			Where(inv.BillingQueueItemID.Eq(), req.BillingQueueItemID),
+		req.TenantInfo,
+	).Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Invoice")
 	}

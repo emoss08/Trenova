@@ -173,35 +173,86 @@ func (r *repository) Update(
 	})
 }
 
-// MarkPostedByOrderID flips every non-posted billing-queue item belonging to an order
-// to Posted. Used when a grouped invoice posts so all of the order's leg items settle
-// together, not just the anchor. Returns the number of rows updated.
-func (r *repository) MarkPostedByOrderID(
+// AttachInvoice links the given billing-queue items to the invoice that bills them.
+func (r *repository) AttachInvoice(
 	ctx context.Context,
-	req *repositories.MarkPostedByOrderRequest,
+	req *repositories.AttachInvoiceRequest,
 ) (int64, error) {
-	if req.OrderID.IsNil() {
+	if req.InvoiceID.IsNil() || len(req.ItemIDs) == 0 {
 		return 0, nil
 	}
 
 	bqi := buncolgen.BillingQueueItemColumns
-	q := r.db.DBForContext(ctx).NewUpdate().
+	result, err := r.db.DBForContext(ctx).NewUpdate().
 		Model((*billingqueue.BillingQueueItem)(nil)).
-		Where(bqi.OrderID.Eq(), req.OrderID).
+		Where(bqi.ID.In(), bun.List(req.ItemIDs)).
 		Where(bqi.OrganizationID.Eq(), req.TenantInfo.OrgID).
 		Where(bqi.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Set(bqi.InvoiceID.Set(), req.InvoiceID).
+		Set(bqi.Version.Inc(1)).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("attach invoice to billing queue items: %w", err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("rows affected: %w", err)
+	}
+
+	return affected, nil
+}
+
+// MarkPostedForInvoice flips every non-terminal billing-queue item an invoice bills to
+// Posted, so a grouped or consolidated invoice settles all of its items and not just
+// the anchor. The invoice back-link is the predicate; the order fallback exists only
+// for rows written before that link, which the migration could not always resolve.
+func (r *repository) MarkPostedForInvoice(
+	ctx context.Context,
+	req *repositories.MarkPostedForInvoiceRequest,
+) (int64, error) {
+	if req.InvoiceID.IsNil() {
+		return 0, nil
+	}
+
+	bqi := buncolgen.BillingQueueItemColumns
+	affected, err := r.markPosted(ctx, req.TenantInfo, func(q *bun.UpdateQuery) *bun.UpdateQuery {
+		return q.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
+	})
+	if err != nil {
+		return 0, err
+	}
+	if affected > 0 || req.OrderID.IsNil() {
+		return affected, nil
+	}
+
+	return r.markPosted(ctx, req.TenantInfo, func(q *bun.UpdateQuery) *bun.UpdateQuery {
+		q = q.Where(bqi.OrderID.Eq(), req.OrderID)
+		if len(req.ShipmentIDs) > 0 {
+			q = q.Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs))
+		}
+		return q
+	})
+}
+
+func (r *repository) markPosted(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	scope func(*bun.UpdateQuery) *bun.UpdateQuery,
+) (int64, error) {
+	bqi := buncolgen.BillingQueueItemColumns
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*billingqueue.BillingQueueItem)(nil)).
+		Where(bqi.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(bqi.BusinessUnitID.Eq(), tenantInfo.BuID).
 		Where(bqi.Status.Ne(), billingqueue.StatusPosted).
 		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
 		Set(bqi.Status.Set(), billingqueue.StatusPosted).
 		Set(bqi.Version.Inc(1))
 
-	if len(req.ShipmentIDs) > 0 {
-		q = q.Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs))
-	}
-
-	result, err := q.Exec(ctx)
+	result, err := scope(q).Exec(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("mark billing queue items posted by order: %w", err)
+		return 0, fmt.Errorf("mark billing queue items posted: %w", err)
 	}
 
 	affected, err := result.RowsAffected()

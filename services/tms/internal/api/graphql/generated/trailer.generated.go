@@ -264,8 +264,8 @@ type MutationResolver interface {
 	DeleteIFTAReturn(ctx context.Context, id string, version int) (bool, error)
 	RecalculateMoveJurisdictionMiles(ctx context.Context, shipmentMoveID string) ([]*shipment.ShipmentMoveJurisdictionMile, error)
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
-	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string) (*invoice.Invoice, error)
-	CreateInvoiceFromOrder(ctx context.Context, orderID string) (*invoice.Invoice, error)
+	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
+	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -2406,6 +2406,14 @@ func (ec *executionContext) field_Mutation_createInvoiceFromOrder_args(ctx conte
 		return nil, err
 	}
 	args["orderId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offCycleReason"] = arg1
 	return args, nil
 }
 
@@ -2420,6 +2428,14 @@ func (ec *executionContext) field_Mutation_createInvoiceFromShipments_args(ctx c
 		return nil, err
 	}
 	args["shipmentIds"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offCycleReason"] = arg1
 	return args, nil
 }
 
@@ -20394,7 +20410,7 @@ func (ec *executionContext) _Mutation_createInvoiceFromShipments(ctx context.Con
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().CreateInvoiceFromShipments(ctx, fc.Args["shipmentIds"].([]string))
+			return ec.Resolvers.Mutation().CreateInvoiceFromShipments(ctx, fc.Args["shipmentIds"].([]string), fc.Args["offCycleReason"].(*string))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
@@ -20438,7 +20454,7 @@ func (ec *executionContext) _Mutation_createInvoiceFromOrder(ctx context.Context
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().CreateInvoiceFromOrder(ctx, fc.Args["orderId"].(string))
+			return ec.Resolvers.Mutation().CreateInvoiceFromOrder(ctx, fc.Args["orderId"].(string), fc.Args["offCycleReason"].(*string))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {

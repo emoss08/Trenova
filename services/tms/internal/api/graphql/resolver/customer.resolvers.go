@@ -17,12 +17,24 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+func (r *customerBillingProfileResolver) BillingCycleType(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerBillingCycleType, error) {
+	return legacyBillingCycleType(obj), nil
+}
+
 func (r *customerBillingProfileResolver) BillingCycleDayOfWeek(ctx context.Context, obj *customer.CustomerBillingProfile) (*int, error) {
-	if obj.BillingCycleDayOfWeek == nil {
+	// The anchor only means a weekday on the weekly cycles; on a monthly cycle it
+	// is a day of the month, which this field cannot express.
+	if obj.BillingCycle != customer.BillingCycleWeekly &&
+		obj.BillingCycle != customer.BillingCycleBiWeekly {
 		return nil, nil
 	}
-	day := int(*obj.BillingCycleDayOfWeek)
+	day := int(obj.BillingCycleAnchorDay)
+
 	return &day, nil
+}
+
+func (r *customerBillingProfileResolver) MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
+	return nullDecimalToStringPtr(obj.MinConsolidatedAmount), nil
 }
 
 func (r *customerBillingProfileResolver) CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
@@ -33,8 +45,41 @@ func (r *customerBillingProfileResolver) CreditBalance(ctx context.Context, obj 
 	return obj.CreditBalance.String(), nil
 }
 
+func (r *customerBillingProfileResolver) InvoiceMethod(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceMethod, error) {
+	if obj.InvoiceDelivery != customer.InvoiceDeliveryConsolidated {
+		return gqlmodel.CustomerInvoiceMethodIndividual, nil
+	}
+	if obj.InvoiceDetail == customer.InvoiceDetailSummary {
+		return gqlmodel.CustomerInvoiceMethodSummary, nil
+	}
+
+	return gqlmodel.CustomerInvoiceMethodSummaryWithDetail, nil
+}
+
+func (r *customerBillingProfileResolver) AllowInvoiceConsolidation(ctx context.Context, obj *customer.CustomerBillingProfile) (bool, error) {
+	return obj.InvoiceDelivery == customer.InvoiceDeliveryConsolidated, nil
+}
+
 func (r *customerBillingProfileResolver) ConsolidationPeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {
-	return int(obj.ConsolidationPeriodDays), nil
+	// The old field conflated cadence with how far back to sweep. The lookback is
+	// the half a caller can still act on.
+	return int(obj.ConsolidationLookbackDays), nil
+}
+
+func (r *customerBillingProfileResolver) ConsolidationGroupBy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerConsolidationGroupBy, error) {
+	switch obj.SplitBy {
+	case customer.InvoiceSplitKeyCustomerAndPONumber:
+		return gqlmodel.CustomerConsolidationGroupByPONumber, nil
+	case customer.InvoiceSplitKeyCustomerAndShipmentBOL:
+		return gqlmodel.CustomerConsolidationGroupByBOL, nil
+	case customer.InvoiceSplitKeyCustomerAndOrigin,
+		customer.InvoiceSplitKeyCustomerAndDestination:
+		return gqlmodel.CustomerConsolidationGroupByLocation, nil
+	default:
+		// Order and ServiceType have no legacy equivalent, and Division never had
+		// an entity behind it, so both collapse to None as the old value did.
+		return gqlmodel.CustomerConsolidationGroupByNone, nil
+	}
 }
 
 func (r *customerBillingProfileResolver) InvoiceCopies(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error) {

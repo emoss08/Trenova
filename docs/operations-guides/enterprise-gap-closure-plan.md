@@ -1112,6 +1112,38 @@ insurance carrier integration.
 
 ### WS9 — Consolidated invoicing and invoice tax
 
+**Status: WS9-A (consolidation) is done. WS9-B (invoice tax) is not started.**
+
+> **As built — three deliberate deviations from the plan below.** Read these
+> before following the rest of this section, which was written first.
+>
+> 1. **No `invoice_billing_queue_items` join table.** The relation is N:1, not
+>    M:N, and `uk_invoices_billing_queue_item` already enforces that. The plan's
+>    nullable `invoices.billing_queue_item_id` would also have turned
+>    `billingQueueItemId: ID!` into `ID`, which `schemadiff` classifies as
+>    breaking with no allowlist. Built instead as the already-shipped anchor
+>    queue item plus a `billing_queue_items.invoice_id` back-link, so the posting
+>    sweep works from one exact predicate rather than inferring siblings from
+>    `OrderID`.
+> 2. **`ConsolidationGroupBy` became three axes, not one.** The codebase
+>    contradicted itself about whether it meant splitting or presentation, and
+>    both are real requirements. It is now `SplitBy` (how many invoices a period
+>    yields), `SectionBy` (how lines are organised inside each) and
+>    `InvoiceDetail` (how much charge detail shows). `Division` was dropped —
+>    no division entity exists.
+> 3. **No `consolidated210Mode` partner setting.** The plan scoped a setting
+>    whose only implemented value would have been `SingleTransaction`, which is
+>    dead configuration of exactly the kind C3 exists to remove. The single-ST
+>    210 carries an N9 reference loop per shipment and per-charge attribution;
+>    the conformance limitation is documented on `FreightInvoicePayload`. A
+>    partner who needs one ST per shipment is billed per shipment, which their
+>    billing profile already expresses.
+>
+> Also built beyond the plan: a **Statements** view in `/billing/queue` showing
+> each customer's open period as it accrues, derived live from the billing queue
+> rather than staged; and a **cadence guard** that refuses to invoice a statement
+> customer's freight individually without a recorded reason.
+
 **Gap:** analysis §3. Two independent halves.
 
 > **Read this before starting — the analysis conflated two different things.**
@@ -1348,11 +1380,11 @@ Update as part of your final commit for a workstream.
 | WS6 | Live ETA + customer portal | P1 | 6B after 6A | Not started | |
 | WS7 | Outbound webhooks | P1 | — | Not started | |
 | WS8 | Safety module | P1 | links to WS1, WS2 | Not started | |
-| WS9 | Invoice consolidation + tax | P1 | C4 | Not started | |
+| WS9 | Invoice consolidation + tax | P1 | C4 | WS9-A done; tax (WS9-B) not started | Statement billing ships: one schedule model, live statements in the billing queue, scheduled sweep, consolidated PDF and 210 |
 | C1 | Report catalog financial datasets | — | — | Not started | |
 | C2 | Orphaned schema decision | — | — | Not started | |
 | C3 | AP configuration honesty | — | — | Not started | |
-| C4 | Fix `InoviceLine` misspelling | — | before WS9 | Not started | |
+| C4 | Fix `InoviceLine` misspelling | — | before WS9 | Done | |
 
 ### Parallelization
 

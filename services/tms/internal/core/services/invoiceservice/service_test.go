@@ -184,7 +184,13 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 
 	svc := &Service{l: zap.NewNop()}
 
-	entity := svc.buildInvoiceEntity(item, shp, nil, cus, control)
+	entity := svc.buildInvoiceEntity(&buildInvoiceParams{
+		Anchor:   item,
+		Scope:    invoice.ScopeShipment,
+		Customer: cus,
+		Control:  control,
+		Legs:     []*shipment.Shipment{shp},
+	})
 
 	require.NotNil(t, entity)
 	assert.Equal(t, item.Number, entity.Number)
@@ -239,13 +245,13 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 		Name: "Acme Logistics",
 	}
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(
-		item,
-		shp,
-		nil,
-		cus,
-		&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30},
-	)
+	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(&buildInvoiceParams{
+		Anchor:   item,
+		Scope:    invoice.ScopeShipment,
+		Customer: cus,
+		Control:  &tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30},
+		Legs:     []*shipment.Shipment{shp},
+	})
 
 	require.NotNil(t, entity)
 	require.Len(t, entity.Lines, 2)
@@ -849,7 +855,7 @@ func TestBuildInvoicePDFDataChargesMatchInvoiceTotals(t *testing.T) {
 		SubtotalAmount: decimal.NewFromInt(100),
 		OtherAmount:    decimal.NewFromInt(25),
 		TotalAmount:    decimal.NewFromInt(125),
-		Lines: []*invoice.InoviceLine{
+		Lines: []*invoice.InvoiceLine{
 			{
 				LineNumber:  1,
 				Description: "Freight",
@@ -1389,7 +1395,7 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 		ShipmentBOL:       "BOL123",
 		CurrencyCode:      "USD",
 		ServiceDate:       new(int64(1_700_000_000)),
-		Lines: []*invoice.InoviceLine{
+		Lines: []*invoice.InvoiceLine{
 			{
 				Description: "Freight",
 				Amount:      amount,
@@ -1530,7 +1536,7 @@ func TestValidatorValidateCreateRejectsHeaderLineTotalMismatch(t *testing.T) {
 		TotalAmount:        decimal.NewFromInt(250),
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
-		Lines: []*invoice.InoviceLine{
+		Lines: []*invoice.InvoiceLine{
 			{
 				LineNumber:  1,
 				Type:        invoice.InvoiceLineTypeFreight,

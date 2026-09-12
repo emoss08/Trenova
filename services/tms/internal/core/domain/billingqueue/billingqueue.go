@@ -43,6 +43,7 @@ type BillingQueueItem struct {
 	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
 	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
 	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull"`
+	InvoiceID                 pulid.ID             `json:"invoiceId"                 bun:"invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
 	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
@@ -73,11 +74,14 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	if b.ShipmentID.IsNil() && b.OrderID.IsNil() {
+	// A correction of a consolidated invoice has neither a single shipment nor a
+	// single order to point at; the invoice it corrects is what identifies it.
+	if b.ShipmentID.IsNil() && b.OrderID.IsNil() &&
+		(b.SourceInvoiceID == nil || b.SourceInvoiceID.IsNil()) {
 		multiErr.Add(
 			"shipmentId",
 			errortypes.ErrRequired,
-			"A billing queue item must be attached to a shipment or an order",
+			"A billing queue item must be attached to a shipment, an order or a source invoice",
 		)
 	}
 }
