@@ -103,6 +103,11 @@ generator too. Never hand-write column references; see [docs/bun/buncolgen.md](.
 - `pnpm fmt:check` is not wired into any workflow. Formatting is convention, not a gate.
 - There is no `test` script in `packages/graphql`; its safety net is `tsc -b` plus the
   codegen check.
+- **Never run the formatter over a `generated/` directory.** `oxfmt src` will happily
+  reformat `src/types/generated/error-enums.ts` and `src/i18n/generated/locales.ts`, and the
+  codegen check compares against what the generator emits, not against what is formatted —
+  so a purely cosmetic reflow (an array collapsed onto one line) fails CI. Point the
+  formatter at the directories you changed, or regenerate afterwards.
 
 ## i18n
 

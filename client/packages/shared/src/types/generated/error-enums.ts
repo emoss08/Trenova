@@ -53,6 +53,9 @@ export type ProblemType = z.infer<typeof ProblemType>;
 // RETRYABLE_PROBLEM_TYPES is ProblemType.IsInternal() — the faults the server reports as
 // its own side of the wire. Anything absent from this set is the caller's to fix and must
 // not be replayed.
-export const RETRYABLE_PROBLEM_TYPES: readonly ProblemType[] = ["internal-error", "database-error"];
+export const RETRYABLE_PROBLEM_TYPES: readonly ProblemType[] = [
+  "internal-error",
+  "database-error",
+];
 
 export const retryableProblemTypes: ReadonlySet<ProblemType> = new Set(RETRYABLE_PROBLEM_TYPES);
