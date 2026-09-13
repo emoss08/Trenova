@@ -37,10 +37,19 @@ type PersistArgs = {
  * lazily-imported chunk of a few hundred kilobytes, so on a cold cache this is a real
  * network round trip rather than an instant toggle - which is why the caller shows a
  * pending state around it and why the menu prefetches on hover.
+ *
+ * The signed-in user's stored locale moves with it, and that is not bookkeeping: I18nProvider
+ * resolves from that stored preference and re-runs whenever the active locale changes, so a
+ * runtime swap that leaves the user record behind is immediately resolved back and undone.
+ * Before this, the language only stuck once the server round trip returned and updated the
+ * store - which is the delay this whole path was supposed to remove.
  */
 export async function applyLocale(next: Locale): Promise<void> {
   await setLocale(next);
   storeLocale(next);
+
+  const { user, setUser } = useAuthStore.getState();
+  if (user) setUser({ ...user, locale: next });
 }
 
 /**
@@ -152,7 +161,8 @@ export function LanguageSubmenu() {
                 onCheckedChange={() => void choose(locale)}
                 onPointerEnter={() => prefetch(locale)}
                 onFocus={() => prefetch(locale)}
-                disabled={pending !== null && !isPending}
+                closeOnClick={false}
+                disabled={pending !== null}
                 className="cursor-pointer"
               >
                 <span className="mr-2 inline-flex size-3.5 items-center justify-center">
