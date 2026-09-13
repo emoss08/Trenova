@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -139,6 +140,7 @@ func (s *Service) Preview(
 		PeriodEnd:      req.PeriodEnd,
 		InvoiceDate:    invoiceDate,
 		CustomerIDs:    idsToStrings(customerIDs),
+		CurrencyCode:   money.DefaultCurrencyCode,
 		BuiltByID:      actor.UserID,
 	}
 
