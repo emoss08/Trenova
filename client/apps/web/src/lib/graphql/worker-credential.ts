@@ -1,5 +1,4 @@
 import {
-  ActiveWorkerCredentialTypesDocument,
   ArchiveWorkerCredentialDocument,
   ArchiveWorkerCredentialTypeDocument,
   AttachWorkerCredentialDocumentDocument,
@@ -13,8 +12,6 @@ import {
   WorkerCredentialSummaryDocument,
   WorkerCredentialTypeTableDocument,
   WorkerCredentialsDocument,
-  type ActiveWorkerCredentialTypesQuery,
-  type ActiveWorkerCredentialTypesQueryVariables,
   type ArchiveWorkerCredentialInput,
   type ArchiveWorkerCredentialMutation,
   type ArchiveWorkerCredentialMutationVariables,
@@ -58,7 +55,6 @@ export type CredentialExpiryForecast = CredentialExpiryForecastQuery["credential
 export type CredentialExpiryForecastItem = CredentialExpiryForecast["items"][number];
 
 export const WORKER_CREDENTIAL_TYPE_LIST_KEY = "worker-credential-type-list";
-export const WORKER_CREDENTIAL_TYPES_KEY = "worker-credential-types";
 export const WORKER_CREDENTIALS_KEY = "worker-credentials";
 export const WORKER_CREDENTIAL_SUMMARY_KEY = "worker-credential-summary";
 export const CREDENTIAL_EXPIRY_FORECAST_KEY = "credential-expiry-forecast";
@@ -68,20 +64,6 @@ export const workerCredentialTypeTableGraphQLConfig = defineDataTableGraphQLConf
   operationName: "WorkerCredentialTypeTable",
   connectionKey: "workerCredentialTypes",
 });
-
-export async function fetchActiveWorkerCredentialTypes(options?: {
-  signal?: AbortSignal;
-}): Promise<WorkerCredentialTypeRow[]> {
-  const data = await requestGraphQL<
-    ActiveWorkerCredentialTypesQuery,
-    ActiveWorkerCredentialTypesQueryVariables
-  >({
-    document: ActiveWorkerCredentialTypesDocument,
-    operationName: "ActiveWorkerCredentialTypes",
-    signal: options?.signal,
-  });
-  return data.activeWorkerCredentialTypes as WorkerCredentialTypeRow[];
-}
 
 export async function fetchWorkerCredentials(
   workerId: string,

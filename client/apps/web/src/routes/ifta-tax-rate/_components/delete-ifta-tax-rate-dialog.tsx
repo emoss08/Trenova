@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
+import { jurisdictionLabel } from "@/lib/ifta-jurisdiction-options";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { deleteIftaTaxRate, type IftaTaxRateRow } from "@/lib/graphql/ifta-tax-rate";
 import { useMutation } from "@tanstack/react-query";

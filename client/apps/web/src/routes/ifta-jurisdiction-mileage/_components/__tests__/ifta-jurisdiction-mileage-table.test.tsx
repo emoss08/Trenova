@@ -21,7 +21,7 @@ vi.mock("../delete-ifta-mileage-entry-dialog", () => ({
   DeleteIftaMileageEntryDialog: () => null,
 }));
 
-vi.mock("@/components/fields/ifta-jurisdiction-select-field", () => ({
+vi.mock("@/lib/ifta-jurisdiction-options", () => ({
   useIftaJurisdictionOptions: () => ({ jurisdictions: [], groups: [], byId: new Map() }),
   jurisdictionFilterOptions: () => [],
   jurisdictionLabel: (jurisdiction: { code: string; name: string }) =>

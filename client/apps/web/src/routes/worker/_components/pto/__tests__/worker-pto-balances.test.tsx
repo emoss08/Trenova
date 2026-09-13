@@ -19,7 +19,6 @@ vi.mock("@/lib/graphql/pto-policy", async (importOriginal) => {
     fetchWorkerPtoBalances,
     fetchWorkerPtoPolicyAssignments,
     fetchWorkerPtoLedger,
-    fetchPtoPolicyOptions: vi.fn().mockResolvedValue([]),
     runPtoAccrual: vi.fn(),
     adjustWorkerPtoBalance: vi.fn(),
     assignWorkerPtoPolicy: vi.fn(),

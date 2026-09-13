@@ -2,11 +2,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import {
   archiveWorkerCredentialType,
   restoreWorkerCredentialType,
   WORKER_CREDENTIAL_TYPE_LIST_KEY,
-  WORKER_CREDENTIAL_TYPES_KEY,
   workerCredentialTypeTableGraphQLConfig,
   type WorkerCredentialTypeRow,
 } from "@/lib/graphql/worker-credential";
@@ -34,7 +34,7 @@ export default function CredentialTypeTable() {
         refetchType: "all",
       }),
       queryClient.invalidateQueries({
-        queryKey: [WORKER_CREDENTIAL_TYPES_KEY],
+        ...selectOptionsQueryFilter("WORKER_CREDENTIAL_TYPE"),
         refetchType: "all",
       }),
     ]);

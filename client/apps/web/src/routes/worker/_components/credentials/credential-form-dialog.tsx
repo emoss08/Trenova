@@ -1,21 +1,23 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { WorkerCredentialTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
-import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { useSelectOption } from "@/hooks/use-select-option";
+import {
+  selectOptionMetaBoolean,
+  selectOptionMetaNumber,
+  selectOptionMetaString,
+} from "@/lib/select-option-meta";
 import {
   createWorkerCredential,
-  fetchActiveWorkerCredentialTypes,
   updateWorkerCredential,
-  WORKER_CREDENTIAL_TYPES_KEY,
   type WorkerCredentialRow,
-  type WorkerCredentialTypeRow,
 } from "@/lib/graphql/worker-credential";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -133,13 +135,6 @@ export function CredentialFormDialog({
   const isEdit = mode === "edit";
   const copy = COPY[mode];
 
-  const { data: types = [], isLoading: typesLoading } = useQuery({
-    queryKey: [WORKER_CREDENTIAL_TYPES_KEY],
-    queryFn: ({ signal }) => fetchActiveWorkerCredentialTypes({ signal }),
-    enabled: open,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const form = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialFormSchema) as Resolver<CredentialFormValues>,
     defaultValues: buildDefaults(mode, credential, credentialTypeId, today),
@@ -172,23 +167,32 @@ export function CredentialFormDialog({
 
   const selectedTypeId = useWatch({ control, name: "credentialTypeId" });
   const issuedAt = useWatch({ control, name: "issuedAt" });
-  const selectedType = useMemo<WorkerCredentialTypeRow | undefined>(
-    () => types.find((type) => type.id === selectedTypeId),
-    [types, selectedTypeId],
-  );
+  const { option: selectedType } = useSelectOption("WORKER_CREDENTIAL_TYPE", selectedTypeId);
+  const requiresNumber = selectedType
+    ? selectOptionMetaBoolean(selectedType, "requiresNumber")
+    : false;
+  const requiresDocument = selectedType
+    ? selectOptionMetaBoolean(selectedType, "requiresDocument")
+    : false;
+  const requiresExpiry = selectedType
+    ? selectOptionMetaString(selectedType, "profileField") === "LicenseExpiry"
+    : false;
+  const validityMonths = selectedType
+    ? selectOptionMetaNumber(selectedType, "validityMonths")
+    : null;
 
   useEffect(() => {
-    setValue("requiresNumber", Boolean(selectedType?.requiresNumber));
-    setValue("requiresExpiry", selectedType?.profileField === "LicenseExpiry");
-  }, [selectedType, setValue]);
+    setValue("requiresNumber", requiresNumber);
+    setValue("requiresExpiry", requiresExpiry);
+  }, [requiresNumber, requiresExpiry, setValue]);
 
   useEffect(() => {
     if (isEdit || !selectedType) return;
     if (getFieldState("expiresAt").isDirty) return;
-    setValue("expiresAt", suggestExpiryUnix(issuedAt, selectedType.validityMonths), {
+    setValue("expiresAt", suggestExpiryUnix(issuedAt, validityMonths), {
       shouldDirty: false,
     });
-  }, [isEdit, selectedType, issuedAt, getFieldState, setValue]);
+  }, [isEdit, selectedType, validityMonths, issuedAt, getFieldState, setValue]);
 
   const { uploads, uploadFiles, cancelUpload } = useDocumentUpload({
     resourceId: workerId,
@@ -264,15 +268,6 @@ export function CredentialFormDialog({
     [mutateAsync],
   );
 
-  const typeOptions = useMemo(
-    () =>
-      types.map((type) => ({
-        value: type.id,
-        label: type.name,
-      })),
-    [types],
-  );
-
   const lockType = mode !== "create" || Boolean(credentialTypeId);
 
   return (
@@ -292,19 +287,20 @@ export function CredentialFormDialog({
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<CredentialFormValues>
+                <WorkerCredentialTypeAutocompleteField<CredentialFormValues>
                   control={control}
                   name="credentialTypeId"
                   label={t("Credential type")}
-                  options={typeOptions}
                   rules={{ required: true }}
-                  placeholder={typesLoading ? "Loading types..." : "Choose a credential type"}
-                  isReadOnly={lockType || typesLoading}
+                  placeholder={t("Choose a credential type")}
+                  disabled={lockType}
                   description={
-                    selectedType?.description ??
-                    (selectedType?.validityMonths
-                      ? `Typically valid for ${selectedType.validityMonths} months.`
-                      : "Decides what must be filled in and which profile field, if any, it backs.")
+                    selectedType?.description ||
+                    (validityMonths
+                      ? t("Typically valid for {0} months.", String(validityMonths))
+                      : t(
+                          "Decides what must be filled in and which profile field, if any, it backs.",
+                        ))
                   }
                 />
               </FormControl>
@@ -315,7 +311,7 @@ export function CredentialFormDialog({
                   label={t("Number")}
                   placeholder={t("e.g. 12345678")}
                   description={t("The number printed on the card or certificate.")}
-                  rules={{ required: Boolean(selectedType?.requiresNumber) }}
+                  rules={{ required: requiresNumber }}
                 />
               </FormControl>
               <FormControl>
@@ -343,7 +339,7 @@ export function CredentialFormDialog({
                   label={t("Expires")}
                   placeholder={t("Leave empty if it never expires")}
                   description={t("Drives the expiry warnings and the worker's compliance grade.")}
-                  rules={{ required: selectedType?.profileField === "LicenseExpiry" }}
+                  rules={{ required: requiresExpiry }}
                 />
               </FormControl>
               <FormControl cols="full">
@@ -360,7 +356,7 @@ export function CredentialFormDialog({
                 <div className="flex flex-col gap-2">
                   <p className="text-sm font-medium">
                     {t("Document")}
-                    {selectedType?.requiresDocument ? (
+                    {requiresDocument ? (
                       <span className="text-muted-foreground ml-1 text-xs font-normal">
                         {t("needed before this credential can be verified")}
                       </span>

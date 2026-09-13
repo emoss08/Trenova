@@ -3,7 +3,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import {
   jurisdictionFilterOptions,
   useIftaJurisdictionOptions,
-} from "@/components/fields/ifta-jurisdiction-select-field";
+} from "@/lib/ifta-jurisdiction-options";
 import { usePermission } from "@/hooks/use-permission";
 import {
   FUEL_PURCHASE_LIST_KEY,

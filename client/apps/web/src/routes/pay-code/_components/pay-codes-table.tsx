@@ -11,6 +11,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import { toast } from "sonner";
 import { getColumns, payCodeStatusInput } from "./pay-code-columns";
 import { PayCodePanel } from "./pay-code-panel";
@@ -34,6 +35,7 @@ export default function PayCodesTable() {
         { noun: "pay code", verb: status === "Active" ? "activated" : "deactivated" },
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-code-list"] });
+      await queryClient.invalidateQueries(selectOptionsQueryFilter("PAY_CODE"));
     },
     [queryClient, t],
   );

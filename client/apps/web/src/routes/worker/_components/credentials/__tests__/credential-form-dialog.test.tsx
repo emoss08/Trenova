@@ -6,21 +6,27 @@ import { useController, type Control } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CredentialFormDialog } from "../credential-form-dialog";
 
-const { createWorkerCredential, updateWorkerCredential, fetchActiveWorkerCredentialTypes } =
-  vi.hoisted(() => ({
+const { createWorkerCredential, updateWorkerCredential, fetchGraphQLSelectedOption } = vi.hoisted(
+  () => ({
     createWorkerCredential: vi.fn(),
     updateWorkerCredential: vi.fn(),
-    fetchActiveWorkerCredentialTypes: vi.fn(),
-  }));
+    fetchGraphQLSelectedOption: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/graphql/worker-credential", () => ({
   createWorkerCredential,
   updateWorkerCredential,
-  fetchActiveWorkerCredentialTypes,
   WORKER_CREDENTIALS_KEY: "worker-credentials",
   WORKER_CREDENTIAL_SUMMARY_KEY: "worker-credential-summary",
-  WORKER_CREDENTIAL_TYPES_KEY: "worker-credential-types",
   CREDENTIAL_EXPIRY_FORECAST_KEY: "credential-expiry-forecast",
+}));
+
+// The picker reads the selected type back one row at a time, so the fixture is
+// the select option the server would return, meta and all.
+vi.mock("@/lib/graphql/select-options", () => ({
+  fetchGraphQLSelectedOption,
+  fetchGraphQLSelectOptions: vi.fn(),
 }));
 
 vi.mock("@/hooks/use-document-upload", () => ({
@@ -38,35 +44,26 @@ vi.mock("@/components/documents/document-upload-zone", () => ({
   DocumentUploadZone: () => <div data-testid="upload-zone" />,
 }));
 
-vi.mock("@/components/fields/select-field", () => ({
-  SelectField: ({
+vi.mock("@/components/autocomplete-fields", () => ({
+  WorkerCredentialTypeAutocompleteField: ({
     control,
     name,
     label,
-    options,
-    isReadOnly,
+    disabled,
   }: {
     control: Control;
     name: string;
     label: string;
-    options: { value: string; label: string }[];
-    isReadOnly?: boolean;
+    disabled?: boolean;
   }) => {
     const { field } = useController({ control, name });
     return (
-      <select
+      <input
         aria-label={label}
-        disabled={isReadOnly}
+        disabled={disabled}
         value={(field.value as string) ?? ""}
         onChange={(event) => field.onChange(event.target.value)}
-      >
-        <option value="">—</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      />
     );
   },
 }));
@@ -100,54 +97,58 @@ vi.mock("sonner", () => ({
 }));
 
 const baseType = {
-  businessUnitId: "bu_1",
-  organizationId: "org_1",
   description: null,
-  category: "License",
-  status: "Active",
-  isRequired: true,
-  requiredForDriverTypes: [],
-  renewalWindowDays: 30,
-  requiresDocument: false,
-  isSystem: true,
-  activeCredentialCount: 0,
-  version: 0,
-  createdAt: 1,
-  updatedAt: 1,
+  meta: {
+    category: "License",
+    isRequired: true,
+    requiresDocument: false,
+  },
 };
 const types = [
   {
     ...baseType,
     id: "wct_cdl",
-    code: "CDL",
-    name: "Commercial Driver's License",
-    validityMonths: null,
-    requiresNumber: true,
-    profileField: "LicenseExpiry",
-    sortOrder: 10,
+    label: "Commercial Driver's License",
+    meta: {
+      ...baseType.meta,
+      code: "CDL",
+      validityMonths: null,
+      requiresNumber: true,
+      profileField: "LicenseExpiry",
+    },
   },
   {
     ...baseType,
     id: "wct_med",
-    code: "MED_CARD",
-    name: "DOT Medical Card",
-    validityMonths: 24,
-    requiresNumber: false,
-    profileField: "MedicalCardExpiry",
-    sortOrder: 20,
+    label: "DOT Medical Card",
+    meta: {
+      ...baseType.meta,
+      code: "MED_CARD",
+      validityMonths: 24,
+      requiresNumber: false,
+      profileField: "MedicalCardExpiry",
+    },
   },
   {
     ...baseType,
     id: "wct_fork",
-    code: "FORKLIFT",
-    name: "Forklift Certification",
-    isRequired: false,
-    validityMonths: 36,
-    requiresNumber: false,
-    profileField: null,
-    sortOrder: 90,
+    label: "Forklift Certification",
+    meta: {
+      ...baseType.meta,
+      code: "FORKLIFT",
+      isRequired: false,
+      validityMonths: 36,
+      requiresNumber: false,
+      profileField: "",
+    },
   },
 ];
+
+function selectedTypeIs(id: string) {
+  fetchGraphQLSelectedOption.mockImplementation(async (_resource: string, requestedId: string) =>
+    requestedId === id ? (types.find((type) => type.id === id) ?? null) : null,
+  );
+}
 
 function inputById(name: string): HTMLInputElement {
   const element = document.getElementById(`input-${name}`);
@@ -183,7 +184,7 @@ afterEach(() => {
 
 describe("CredentialFormDialog", () => {
   it("prefills issue date today and the expiry from the type's validity", async () => {
-    fetchActiveWorkerCredentialTypes.mockResolvedValue(types);
+    selectedTypeIs("wct_fork");
     createWorkerCredential.mockResolvedValue({ id: "wcred_new" });
     const today = getTodayDate();
     const { onOpenChange } = renderDialog({ credentialTypeId: "wct_fork" });
@@ -209,7 +210,7 @@ describe("CredentialFormDialog", () => {
   });
 
   it("renews with the type locked and the renew flag set", async () => {
-    fetchActiveWorkerCredentialTypes.mockResolvedValue(types);
+    selectedTypeIs("wct_med");
     createWorkerCredential.mockResolvedValue({ id: "wcred_new" });
     renderDialog({
       mode: "renew",
@@ -237,7 +238,7 @@ describe("CredentialFormDialog", () => {
   });
 
   it("refuses to save a type that requires a number without one", async () => {
-    fetchActiveWorkerCredentialTypes.mockResolvedValue(types);
+    selectedTypeIs("wct_cdl");
     renderDialog({ credentialTypeId: "wct_cdl" });
 
     const select = await screen.findByLabelText("Credential type");
@@ -249,7 +250,7 @@ describe("CredentialFormDialog", () => {
   });
 
   it("edits in place with the version for optimistic locking", async () => {
-    fetchActiveWorkerCredentialTypes.mockResolvedValue(types);
+    selectedTypeIs("wct_fork");
     updateWorkerCredential.mockResolvedValue({ id: "wcred_1" });
     renderDialog({
       mode: "edit",

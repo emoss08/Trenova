@@ -145,23 +145,6 @@ query PtoPolicy($id: ID!) {
   }
 }
 
-query PtoPolicyOptions($input: PTOPoliciesInput!) {
-  ptoPolicies(input: $input) {
-    edges {
-      node {
-        id
-        name
-        code
-        status
-        isDefault
-        rules {
-          ptoType
-        }
-      }
-    }
-  }
-}
-
 query WorkerPtoPolicyAssignments($workerId: ID!) {
   workerPtoPolicyAssignments(workerId: $workerId) {
     ...PtoPolicyAssignmentFields
