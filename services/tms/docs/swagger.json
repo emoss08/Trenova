@@ -10809,6 +10809,7 @@
                 "Exception",
                 "SentBackToOps",
                 "Approved",
+                "Posted",
                 "Canceled"
             ],
             "type": "string",
@@ -10820,6 +10821,7 @@
                 "BillingTransferException",
                 "BillingTransferSentBackToOps",
                 "BillingTransferApproved",
+                "BillingTransferPosted",
                 "BillingTransferCanceled"
             ]
         },

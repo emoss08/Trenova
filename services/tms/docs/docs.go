@@ -43114,6 +43114,7 @@ const docTemplate = `{
                 "Exception",
                 "SentBackToOps",
                 "Approved",
+                "Posted",
                 "Canceled"
             ],
             "x-enum-varnames": [
@@ -43124,6 +43125,7 @@ const docTemplate = `{
                 "BillingTransferException",
                 "BillingTransferSentBackToOps",
                 "BillingTransferApproved",
+                "BillingTransferPosted",
                 "BillingTransferCanceled"
             ]
         },
