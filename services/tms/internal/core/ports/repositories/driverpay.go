@@ -24,6 +24,11 @@ type ListPayProfileConnectionRequest struct {
 	Cursor pagination.CursorInfo    `json:"cursor"`
 }
 
+type PayProfileSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	Classification     driverpay.PayeeClassification
+}
+
 type CountActivePayAssignmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	ProfileIDs []pulid.ID            `json:"profileIds"`
@@ -38,6 +43,10 @@ type PayProfileRepository interface {
 		ctx context.Context,
 		req *ListPayProfileConnectionRequest,
 	) (*pagination.CursorListResult[*driverpay.PayProfile], error)
+	SelectOptions(
+		ctx context.Context,
+		req *PayProfileSelectOptionsRequest,
+	) (*pagination.ListResult[*driverpay.PayProfile], error)
 	GetByID(ctx context.Context, req GetPayProfileByIDRequest) (*driverpay.PayProfile, error)
 	Create(ctx context.Context, entity *driverpay.PayProfile) (*driverpay.PayProfile, error)
 	Update(ctx context.Context, entity *driverpay.PayProfile) (*driverpay.PayProfile, error)
@@ -166,6 +175,11 @@ type ListActivePayCodesRequest struct {
 	Direction  driverpay.PayCodeDirection `json:"direction"`
 }
 
+type PayCodeSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	Direction          driverpay.PayCodeDirection
+}
+
 type PayCodeRepository interface {
 	List(
 		ctx context.Context,
@@ -179,6 +193,10 @@ type PayCodeRepository interface {
 		ctx context.Context,
 		req ListActivePayCodesRequest,
 	) ([]*driverpay.PayCode, error)
+	SelectOptions(
+		ctx context.Context,
+		req *PayCodeSelectOptionsRequest,
+	) (*pagination.ListResult[*driverpay.PayCode], error)
 	GetByID(ctx context.Context, req GetPayCodeByIDRequest) (*driverpay.PayCode, error)
 	GetByIDs(
 		ctx context.Context,

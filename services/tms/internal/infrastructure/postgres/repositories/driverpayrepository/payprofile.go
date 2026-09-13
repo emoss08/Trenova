@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -131,6 +132,42 @@ func (r *payProfileRepository) ListConnection(
 	}
 
 	return result, nil
+}
+
+func (r *payProfileRepository) SelectOptions(
+	ctx context.Context,
+	req *repositories.PayProfileSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.PayProfile], error) {
+	cols := buncolgen.PayProfileColumns
+	return dbhelper.SelectOptions[*driverpay.PayProfile](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Name,
+				cols.Description,
+				cols.Classification,
+				cols.CurrencyCode,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+				if req.Classification != "" {
+					q = q.Where(cols.Classification.Eq(), req.Classification)
+				}
+				return q.Order(cols.Name.OrderAsc())
+			},
+			EntityName: "PayProfile",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
 }
 
 func (r *payProfileRepository) GetByID(

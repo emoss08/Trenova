@@ -93,6 +93,13 @@ func (s *Service) GetProfile(
 	return s.profileRepo.GetByID(ctx, req)
 }
 
+func (s *Service) ProfileSelectOptions(
+	ctx context.Context,
+	req *repositories.PayProfileSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.PayProfile], error) {
+	return s.profileRepo.SelectOptions(ctx, req)
+}
+
 func (s *Service) CreateProfile(
 	ctx context.Context,
 	entity *driverpay.PayProfile,

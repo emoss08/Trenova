@@ -35,6 +35,13 @@ func (s *Service) ActiveTemplates(
 	return s.repo.ListActiveTemplates(ctx, tenantInfo)
 }
 
+func (s *Service) TemplateSelectOptions(
+	ctx context.Context,
+	req *repositories.ReviewTemplateSelectOptionsRequest,
+) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
+	return s.repo.TemplateSelectOptions(ctx, req)
+}
+
 func (s *Service) validateTemplate(
 	ctx context.Context,
 	entity *worker.PerformanceReviewTemplate,

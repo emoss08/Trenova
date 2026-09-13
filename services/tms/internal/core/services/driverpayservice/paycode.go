@@ -45,6 +45,16 @@ func (s *Service) ListActivePayCodes(
 	return s.payCodeRepo.ListActive(ctx, req)
 }
 
+func (s *Service) PayCodeSelectOptions(
+	ctx context.Context,
+	req *repositories.PayCodeSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.PayCode], error) {
+	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
+		return nil, err
+	}
+	return s.payCodeRepo.SelectOptions(ctx, req)
+}
+
 func (s *Service) GetPayCode(
 	ctx context.Context,
 	req repositories.GetPayCodeByIDRequest,

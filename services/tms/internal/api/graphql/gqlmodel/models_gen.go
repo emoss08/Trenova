@@ -8810,6 +8810,14 @@ const (
 	SelectOptionResourceWorkerPolicy              SelectOptionResource = "WORKER_POLICY"
 	SelectOptionResourceJobPosition               SelectOptionResource = "JOB_POSITION"
 	SelectOptionResourceFuelCard                  SelectOptionResource = "FUEL_CARD"
+	SelectOptionResourceBenefitPlan               SelectOptionResource = "BENEFIT_PLAN"
+	SelectOptionResourceIFTAJurisdiction          SelectOptionResource = "IFTA_JURISDICTION"
+	SelectOptionResourcePayCode                   SelectOptionResource = "PAY_CODE"
+	SelectOptionResourcePayProfile                SelectOptionResource = "PAY_PROFILE"
+	SelectOptionResourcePerformanceReviewTemplate SelectOptionResource = "PERFORMANCE_REVIEW_TEMPLATE"
+	SelectOptionResourcePTOPolicy                 SelectOptionResource = "PTO_POLICY"
+	SelectOptionResourceTrainingCourse            SelectOptionResource = "TRAINING_COURSE"
+	SelectOptionResourceWorkerCredentialType      SelectOptionResource = "WORKER_CREDENTIAL_TYPE"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -8863,11 +8871,19 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceWorkerPolicy,
 	SelectOptionResourceJobPosition,
 	SelectOptionResourceFuelCard,
+	SelectOptionResourceBenefitPlan,
+	SelectOptionResourceIFTAJurisdiction,
+	SelectOptionResourcePayCode,
+	SelectOptionResourcePayProfile,
+	SelectOptionResourcePerformanceReviewTemplate,
+	SelectOptionResourcePTOPolicy,
+	SelectOptionResourceTrainingCourse,
+	SelectOptionResourceWorkerCredentialType,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
 		return true
 	}
 	return false

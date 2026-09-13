@@ -152,6 +152,45 @@ func (r *repository) ListActiveTypes(
 	return entities, nil
 }
 
+func (r *repository) TypeSelectOptions(
+	ctx context.Context,
+	req *repositories.WorkerCredentialTypeSelectOptionsRequest,
+) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+	cols := buncolgen.WorkerCredentialTypeColumns
+	return dbhelper.SelectOptions[*worker.WorkerCredentialType](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.Category,
+				cols.IsRequired,
+				cols.ValidityMonths,
+				cols.RequiresNumber,
+				cols.RequiresDocument,
+				cols.ProfileField,
+				cols.SortOrder,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return orderTypes(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
+			},
+			EntityName: "WorkerCredentialType",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
+}
+
 func (r *repository) GetTypeByID(
 	ctx context.Context,
 	req *repositories.GetCredentialTypeByIDRequest,

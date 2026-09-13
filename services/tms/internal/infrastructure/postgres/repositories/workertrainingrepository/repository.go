@@ -167,6 +167,44 @@ func (r *repository) ListActiveCourses(
 	return entities, nil
 }
 
+func (r *repository) CourseSelectOptions(
+	ctx context.Context,
+	req *repositories.TrainingCourseSelectOptionsRequest,
+) (*pagination.ListResult[*worker.TrainingCourse], error) {
+	cols := buncolgen.TrainingCourseColumns
+	return dbhelper.SelectOptions[*worker.TrainingCourse](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.Category,
+				cols.Delivery,
+				cols.DurationMinutes,
+				cols.PassingScore,
+				cols.DueDaysAfterAssignment,
+				cols.SortOrder,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return orderCourses(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
+			},
+			EntityName: "TrainingCourse",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
+}
+
 func (r *repository) GetCourseByID(
 	ctx context.Context,
 	req *repositories.GetTrainingCourseByIDRequest,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,6 +84,52 @@ func (r *repository) ListPlans(
 	}
 
 	return entities, nil
+}
+
+func (r *repository) PlanSelectOptions(
+	ctx context.Context,
+	req *repositories.BenefitPlanSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+	cols := buncolgen.BenefitPlanColumns
+	return dbhelper.SelectOptions[*driverpay.BenefitPlan](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.PlanType,
+				cols.Carrier,
+				cols.PlanYear,
+				cols.EmployeeCostMinor,
+				cols.EmployerCostMinor,
+				cols.CurrencyCode,
+				cols.WaitingPeriodDays,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+				if req.PlanYear > 0 {
+					q = q.Where(cols.PlanYear.Eq(), req.PlanYear)
+				}
+				return q.Order(cols.PlanYear.OrderDesc()).
+					Order(cols.PlanType.OrderAsc()).
+					Order(cols.Name.OrderAsc())
+			},
+			EntityName: "BenefitPlan",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.Carrier,
+			},
+		},
+	)
 }
 
 func (r *repository) GetPlanByID(

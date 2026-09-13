@@ -119,6 +119,43 @@ func (r *repository) List(
 	return result, nil
 }
 
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.PTOPolicySelectOptionsRequest,
+) (*pagination.ListResult[*worker.PTOPolicy], error) {
+	cols := buncolgen.PTOPolicyColumns
+	return dbhelper.SelectOptions[*worker.PTOPolicy](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.IsDefault,
+				cols.YearBasis,
+				cols.RequiresApproval,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
+					Order(cols.IsDefault.OrderDesc()).
+					Order(cols.Name.OrderAsc())
+			},
+			EntityName: "PTOPolicy",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetPTOPolicyByIDRequest,

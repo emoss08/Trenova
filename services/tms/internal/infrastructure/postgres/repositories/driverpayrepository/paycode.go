@@ -143,6 +143,45 @@ func (r *payCodeRepository) ListActive(
 	return items, nil
 }
 
+func (r *payCodeRepository) SelectOptions(
+	ctx context.Context,
+	req *repositories.PayCodeSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.PayCode], error) {
+	cols := buncolgen.PayCodeColumns
+	return dbhelper.SelectOptions[*driverpay.PayCode](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.Direction,
+				cols.Taxable,
+				cols.CountsTowardGuarantee,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+				if req.Direction != "" {
+					q = q.Where(cols.Direction.Eq(), req.Direction)
+				}
+				return q.Order(cols.Code.OrderAsc())
+			},
+			EntityName: "PayCode",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
+}
+
 func (r *payCodeRepository) GetByID(
 	ctx context.Context,
 	req repositories.GetPayCodeByIDRequest,

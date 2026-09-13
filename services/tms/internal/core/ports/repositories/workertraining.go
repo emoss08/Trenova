@@ -20,6 +20,10 @@ type GetTrainingCourseByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type TrainingCourseSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
 type TrainingCourseCodeExistsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Code       string                `json:"code"`
@@ -76,6 +80,10 @@ type WorkerTrainingRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*worker.TrainingCourse, error)
+	CourseSelectOptions(
+		ctx context.Context,
+		req *TrainingCourseSelectOptionsRequest,
+	) (*pagination.ListResult[*worker.TrainingCourse], error)
 	GetCourseByID(
 		ctx context.Context,
 		req *GetTrainingCourseByIDRequest,

@@ -35,6 +35,13 @@ func (s *Service) ActiveCourses(
 	return s.repo.ListActiveCourses(ctx, tenantInfo)
 }
 
+func (s *Service) CourseSelectOptions(
+	ctx context.Context,
+	req *repositories.TrainingCourseSelectOptionsRequest,
+) (*pagination.ListResult[*worker.TrainingCourse], error) {
+	return s.repo.CourseSelectOptions(ctx, req)
+}
+
 func (s *Service) validateCourse(ctx context.Context, entity *worker.TrainingCourse) error {
 	entity.NormalizeCode()
 	multiErr := errortypes.NewMultiError()

@@ -59,6 +59,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.PTOPolicySelectOptionsRequest,
+) (*pagination.ListResult[*worker.PTOPolicy], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req *repositories.GetPTOPolicyByIDRequest,
