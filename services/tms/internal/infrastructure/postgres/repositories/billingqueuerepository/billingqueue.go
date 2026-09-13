@@ -191,6 +191,8 @@ func (r *repository) Update(
 }
 
 // AttachInvoice links the given billing-queue items to the invoice that bills them.
+// Only items still approved and not on an invoice are linked, and the count says
+// how many were, so a caller can detect an item billed elsewhere in the meantime.
 func (r *repository) AttachInvoice(
 	ctx context.Context,
 	req *repositories.AttachInvoiceRequest,
@@ -205,6 +207,8 @@ func (r *repository) AttachInvoice(
 		Where(bqi.ID.In(), bun.List(req.ItemIDs)).
 		Where(bqi.OrganizationID.Eq(), req.TenantInfo.OrgID).
 		Where(bqi.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(bqi.Status.Eq(), billingqueue.StatusApproved).
+		Where(bqi.InvoiceID.IsNull()).
 		Set(bqi.InvoiceID.Set(), req.InvoiceID).
 		Set(bqi.Version.Inc(1)).
 		Exec(ctx)

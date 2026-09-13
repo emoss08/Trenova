@@ -3,6 +3,7 @@ package invoiceservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -18,12 +19,18 @@ import (
 // ConsolidatedInvoiceParams is a set of legs that should become one invoice
 // regardless of which orders they came from.
 //
+// QueueItems are the approved billing-queue items the legs already sit on, one
+// per leg. The invoice bills those items rather than minting new ones: the
+// active-item unique index allows a single live pipeline per shipment, so a
+// second item for freight that is already queued can never be inserted.
+//
 // RunID, when set, is the invoice run that proposed this group; the invoice
 // carries it so a committed statement can be traced back to the proposal an
 // operator actually approved.
 type ConsolidatedInvoiceParams struct {
 	TenantInfo  pagination.TenantInfo
 	Legs        []*shipment.Shipment
+	QueueItems  []*billingqueue.BillingQueueItem
 	RunID       pulid.ID
 	Number      string
 	InvoiceDate int64
@@ -34,9 +41,9 @@ type ConsolidatedInvoiceParams struct {
 // CreateConsolidated bills a set of shipments spanning any number of orders on a
 // single invoice.
 //
-// Every leg gets its own approved billing-queue item and the first is the anchor,
-// exactly as the order path does — that is what keeps the invoice's single-valued
-// queue-item FK and its idempotency lookup working without a join table.
+// The first queue item is the anchor, exactly as the order path does — that is
+// what keeps the invoice's single-valued queue-item FK and its idempotency lookup
+// working without a join table.
 func (s *Service) CreateConsolidated(
 	ctx context.Context,
 	params *ConsolidatedInvoiceParams,
@@ -66,6 +73,9 @@ func (s *Service) CreateConsolidated(
 				"All shipments on one invoice must share the billing customer",
 			)
 		}
+	}
+	if err := validateConsolidatedQueueItems(params.Legs, params.QueueItems); err != nil {
+		return nil, err
 	}
 
 	number := params.Number
@@ -115,11 +125,7 @@ func (s *Service) createConsolidatedTx(
 	customerID pulid.ID,
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
-	queueItems, txErr := s.createLegQueueItems(txCtx, params.TenantInfo, params.Legs, number)
-	if txErr != nil {
-		return nil, txErr
-	}
-	anchor := queueItems.Anchor
+	anchor := params.QueueItems[0]
 
 	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
 		ID:         customerID,
@@ -171,13 +177,28 @@ func (s *Service) createConsolidatedTx(
 
 	// Link every queue item this invoice bills, so the posting sweep and the
 	// double-bill guard both work from one exact predicate rather than from the
-	// order id, which a consolidated invoice does not have.
-	if _, txErr = s.billingQueueRepo.AttachInvoice(txCtx, &repositories.AttachInvoiceRequest{
+	// order id, which a consolidated invoice does not have. The attach only takes
+	// items that are still approved and unbilled, so an item another biller
+	// invoiced after the caller read it rolls this invoice back instead of
+	// billing the freight twice.
+	itemIDs := make([]pulid.ID, 0, len(params.QueueItems))
+	for _, item := range params.QueueItems {
+		itemIDs = append(itemIDs, item.ID)
+	}
+	attached, txErr := s.billingQueueRepo.AttachInvoice(txCtx, &repositories.AttachInvoiceRequest{
 		TenantInfo: params.TenantInfo,
 		InvoiceID:  created.ID,
-		ItemIDs:    queueItems.ItemIDs,
-	}); txErr != nil {
+		ItemIDs:    itemIDs,
+	})
+	if txErr != nil {
 		return nil, txErr
+	}
+	if attached != int64(len(itemIDs)) {
+		return nil, errortypes.NewValidationError(
+			"shipmentIds",
+			errortypes.ErrInvalidOperation,
+			"Some shipments were invoiced elsewhere while this invoice was being created",
+		)
 	}
 
 	auditActor := actor.AuditActor()
@@ -194,48 +215,57 @@ func (s *Service) createConsolidatedTx(
 	return created, nil
 }
 
-// createConsolidatedInvoiceFromLegs bills an ad-hoc selection, deriving the period
-// it covers from the legs themselves.
-func (s *Service) createConsolidatedInvoiceFromLegs(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+// validateConsolidatedQueueItems checks that the queue items are exactly the
+// legs' live invoice pipelines: one per leg, approved, and not yet on an invoice.
+func validateConsolidatedQueueItems(
 	legs []*shipment.Shipment,
-	actor *servicesports.RequestActor,
-) (*invoice.Invoice, error) {
-	start, end := legServiceWindow(legs)
+	items []*billingqueue.BillingQueueItem,
+) error {
+	if len(items) != len(legs) {
+		return errortypes.NewValidationError(
+			"billingQueueItemIds",
+			errortypes.ErrInvalid,
+			"Every shipment on a consolidated invoice must have exactly one billing queue item",
+		)
+	}
 
-	return s.CreateConsolidated(ctx, &ConsolidatedInvoiceParams{
-		TenantInfo:  tenantInfo,
-		Legs:        legs,
-		PeriodStart: start,
-		PeriodEnd:   end,
-	}, actor)
-}
-
-// legServiceWindow is the span the selection actually covers. A consolidated
-// invoice must state a period, and for an ad-hoc selection the only honest one is
-// the earliest to latest service date of what is on it.
-func legServiceWindow(legs []*shipment.Shipment) (int64, int64) {
-	var start, end int64
+	legIDs := make(map[pulid.ID]struct{}, len(legs))
 	for _, leg := range legs {
-		date := serviceDateFromShipment(leg)
-		if date == nil {
-			continue
+		legIDs[leg.ID] = struct{}{}
+	}
+
+	for _, item := range items {
+		if item == nil {
+			return errortypes.NewValidationError(
+				"billingQueueItemIds",
+				errortypes.ErrRequired,
+				"Billing queue item is required",
+			)
 		}
-		if start == 0 || *date < start {
-			start = *date
+		if _, ok := legIDs[item.ShipmentID]; !ok {
+			return errortypes.NewValidationError(
+				"billingQueueItemIds",
+				errortypes.ErrInvalid,
+				"Every billing queue item must belong to a shipment on this invoice",
+			)
 		}
-		if *date > end {
-			end = *date
+		delete(legIDs, item.ShipmentID)
+
+		if item.BillType != billingqueue.BillTypeInvoice || item.IsAdjustmentOrigin {
+			return errortypes.NewValidationError(
+				"billingQueueItemIds",
+				errortypes.ErrInvalid,
+				"Only original invoice billing queue items can be consolidated",
+			)
+		}
+		if item.Status != billingqueue.StatusApproved || !item.InvoiceID.IsNil() {
+			return errortypes.NewValidationError(
+				"billingQueueItemIds",
+				errortypes.ErrInvalidOperation,
+				"Some shipments are no longer approved and unbilled",
+			)
 		}
 	}
 
-	if start == 0 {
-		start = legs[0].CreatedAt
-	}
-	if end <= start {
-		end = start + 1
-	}
-
-	return start, end
+	return nil
 }

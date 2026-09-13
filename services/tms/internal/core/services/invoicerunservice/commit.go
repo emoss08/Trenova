@@ -128,7 +128,7 @@ func (s *Service) commitGroup(
 		return s.skipGroup(ctx, group, &outcome, reason)
 	}
 
-	legs, reason, err := s.resolveGroupLegs(ctx, tenantInfo, included)
+	legs, queueItems, reason, err := s.resolveGroupLegs(ctx, tenantInfo, included)
 	if err != nil {
 		return s.failGroup(ctx, group, &outcome, err)
 	}
@@ -141,6 +141,7 @@ func (s *Service) commitGroup(
 		&invoiceservice.ConsolidatedInvoiceParams{
 			TenantInfo:  tenantInfo,
 			Legs:        legs,
+			QueueItems:  queueItems,
 			RunID:       run.ID,
 			InvoiceDate: run.InvoiceDate,
 			PeriodStart: run.PeriodStart,
@@ -167,8 +168,8 @@ func (s *Service) commitGroup(
 	return outcome
 }
 
-// resolveGroupLegs loads the shipments a group bills and re-checks that every
-// queue item is still billable.
+// resolveGroupLegs loads the shipments a group bills and the queue items they
+// sit on, re-checking that every queue item is still billable.
 //
 // The re-check is the point: between preview and commit another operator can
 // invoice one of these shipments. Detecting it here turns that into a skipped
@@ -178,8 +179,9 @@ func (s *Service) resolveGroupLegs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	items []*invoicerun.InvoiceRunGroupItem,
-) ([]*shipment.Shipment, string, error) {
+) ([]*shipment.Shipment, []*billingqueue.BillingQueueItem, string, error) {
 	legs := make([]*shipment.Shipment, 0, len(items))
+	queueItems := make([]*billingqueue.BillingQueueItem, 0, len(items))
 
 	for _, item := range items {
 		queueItem, err := s.billingQueueRepo.GetByID(
@@ -190,13 +192,13 @@ func (s *Service) resolveGroupLegs(
 			},
 		)
 		if err != nil {
-			return nil, "", err
+			return nil, nil, "", err
 		}
 		if !queueItem.InvoiceID.IsNil() {
-			return nil, "Some shipments were invoiced elsewhere after this run was built", nil
+			return nil, nil, "Some shipments were invoiced elsewhere after this run was built", nil
 		}
 		if queueItem.Status != billingqueue.StatusApproved {
-			return nil, "Some shipments are no longer approved for billing", nil
+			return nil, nil, "Some shipments are no longer approved for billing", nil
 		}
 
 		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
@@ -207,12 +209,13 @@ func (s *Service) resolveGroupLegs(
 			},
 		})
 		if err != nil {
-			return nil, "", err
+			return nil, nil, "", err
 		}
 		legs = append(legs, shp)
+		queueItems = append(queueItems, queueItem)
 	}
 
-	return legs, "", nil
+	return legs, queueItems, "", nil
 }
 
 func (s *Service) skipGroup(

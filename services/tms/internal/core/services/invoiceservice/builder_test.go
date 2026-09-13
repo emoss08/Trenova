@@ -159,25 +159,3 @@ func TestBuildInvoiceEntityNoLegs(t *testing.T) {
 		(&Service{l: zap.NewNop()}).buildInvoiceEntity(builderParams(invoice.ScopeConsolidated)),
 	)
 }
-
-func TestLegServiceWindow(t *testing.T) {
-	t.Parallel()
-
-	early := int64(1_700_000_000)
-	late := early + 10*86_400
-
-	legs := []*shipment.Shipment{
-		{ActualDeliveryDate: &late},
-		{ActualDeliveryDate: &early},
-	}
-	start, end := legServiceWindow(legs)
-	assert.Equal(t, early, start)
-	assert.Equal(t, late, end)
-
-	// A selection with no service dates still has to state a period, so it falls
-	// back to something ordered rather than leaving the bounds equal.
-	undated := []*shipment.Shipment{{CreatedAt: early}}
-	start, end = legServiceWindow(undated)
-	assert.Equal(t, early, start)
-	assert.Greater(t, end, start)
-}
