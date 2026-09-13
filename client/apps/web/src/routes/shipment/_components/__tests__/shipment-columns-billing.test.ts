@@ -1,8 +1,9 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { getColumns } from "@/routes/shipment/_components/shipment-columns";
 import { describe, expect, it } from "vitest";
 
 describe("shipment billing column", () => {
-  const columns = getColumns([]);
+  const columns = getColumns([], translate);
   const column = columns.find((entry) => entry.id === "billing");
 
   it("sits right after the tender column", () => {
