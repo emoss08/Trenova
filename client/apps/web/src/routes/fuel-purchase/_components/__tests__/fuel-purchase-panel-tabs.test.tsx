@@ -29,10 +29,7 @@ vi.mock("@/components/autocomplete-fields", () => ({
   TractorAutocompleteField: pickerStub(),
   WorkerAutocompleteField: pickerStub(),
   FuelCardAutocompleteField: pickerStub(),
-}));
-
-vi.mock("@/components/fields/ifta-jurisdiction-select-field", () => ({
-  IftaJurisdictionSelectField: pickerStub(),
+  IftaJurisdictionAutocompleteField: pickerStub(),
 }));
 
 vi.mock("@/components/fields/select-field", () => ({

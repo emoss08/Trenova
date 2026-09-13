@@ -1,14 +1,24 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
 import type {
   SelectOption as GraphQLSelectOption,
   GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
+import {
+  selectOptionMetaBoolean,
+  selectOptionMetaNumber,
+  selectOptionMetaString,
+} from "@/lib/select-option-meta";
 import { formatRange } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
+import {
+  TRAINING_DELIVERY_LABELS,
+  type TrainingDelivery,
+} from "@trenova/shared/types/worker-training";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
 import type { ReactNode } from "react";
 
@@ -45,7 +55,12 @@ type ControlledAutocompleteFieldProps<TOption> = {
   onValueChange: (value: string) => void;
   onOptionChange?: (option: TOption | null) => void;
   description?: string;
-  link: SELECT_OPTIONS_ENDPOINTS;
+  /**
+   * REST route for the options. Optional for the same reason as on
+   * AutocompleteField: a select-option resource that only exists behind GraphQL
+   * has no REST route to name.
+   */
+  link?: SELECT_OPTIONS_ENDPOINTS;
   selectedValueLink?: API_ENDPOINTS;
   graphql?: GraphQLSelectOptionsConfig;
   renderOption: (option: TOption) => ReactNode;
@@ -109,20 +124,6 @@ function toPermissionSelectOptions(
     label: definition.label,
     description: definition.description,
   }));
-}
-
-function selectOptionMetaString(option: GraphQLSelectOption, key: string) {
-  const value = option.meta?.[key];
-  return typeof value === "string" ? value : "";
-}
-
-function selectOptionMetaNumber(option: GraphQLSelectOption, key: string) {
-  const value = option.meta?.[key];
-  return typeof value === "number" ? value : null;
-}
-
-function selectOptionMetaBoolean(option: GraphQLSelectOption, key: string) {
-  return option.meta?.[key] === true;
 }
 
 function selectOptionDateRange(option: GraphQLSelectOption) {
@@ -2227,6 +2228,325 @@ export function IftaFuelTypeAutocompleteField<T extends FieldValues>({
               {t(option.description)}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+const payCodeSelectOptionsGraphQL = {
+  resource: "PAY_CODE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const payProfileSelectOptionsGraphQL = {
+  resource: "PAY_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const workerCredentialTypeSelectOptionsGraphQL = {
+  resource: "WORKER_CREDENTIAL_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const trainingCourseSelectOptionsGraphQL = {
+  resource: "TRAINING_COURSE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const performanceReviewTemplateSelectOptionsGraphQL = {
+  resource: "PERFORMANCE_REVIEW_TEMPLATE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ptoPolicySelectOptionsGraphQL = {
+  resource: "PTO_POLICY",
+} satisfies GraphQLSelectOptionsConfig;
+
+const benefitPlanSelectOptionsGraphQL = {
+  resource: "BENEFIT_PLAN",
+} satisfies GraphQLSelectOptionsConfig;
+
+const iftaJurisdictionSelectOptionsGraphQL = {
+  resource: "IFTA_JURISDICTION",
+} satisfies GraphQLSelectOptionsConfig;
+
+export type PayCodeDirection = "Earning" | "Deduction";
+
+/**
+ * A settlement line is either an earning or a deduction, never both, so a form
+ * that already knows which side it is on narrows the picker to that side. Left
+ * open, the option's own direction is spelled out so the two cannot be mixed up.
+ */
+export function PayCodeAutocompleteField<T extends FieldValues>({
+  direction,
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
+  direction?: PayCodeDirection;
+}) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={
+        direction
+          ? { ...payCodeSelectOptionsGraphQL, filters: { direction } }
+          : payCodeSelectOptionsGraphQL
+      }
+      popoutLink="/payroll/pay-codes"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => payCodeOptionLabel(option, direction)}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{payCodeOptionLabel(option, direction)}</span>
+          {selectOptionMetaString(option, "direction") && !direction && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {selectOptionMetaString(option, "direction")}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+function payCodeOptionLabel(option: GraphQLSelectOption, direction?: PayCodeDirection) {
+  const name = selectOptionMetaString(option, "name");
+  const label = name ? `${option.label} — ${name}` : option.label;
+  if (direction) return label;
+
+  const optionDirection = selectOptionMetaString(option, "direction");
+  return optionDirection ? `${label} (${optionDirection})` : label;
+}
+
+/**
+ * The uncontrolled twin of PayCodeAutocompleteField, for the adjustment dialogs
+ * that hold their state in useState rather than a react-hook-form control.
+ */
+export function ControlledPayCodeAutocompleteField({
+  label = "Pay Code",
+  placeholder = "Search pay codes...",
+  direction,
+  ...props
+}: ControlledGraphQLAutocompleteFieldProps & {
+  direction?: PayCodeDirection;
+}) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      graphql={
+        direction
+          ? { ...payCodeSelectOptionsGraphQL, filters: { direction } }
+          : payCodeSelectOptionsGraphQL
+      }
+      placeholder={placeholder}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => payCodeOptionLabel(option, direction)}
+      renderOption={(option) => (
+        <EDIOptionStack
+          primary={payCodeOptionLabel(option, direction)}
+          secondary={direction ? undefined : selectOptionMetaString(option, "direction")}
+        />
+      )}
+      {...props}
+    />
+  );
+}
+
+export function PayProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={payProfileSelectOptionsGraphQL}
+      popoutLink="/payroll/pay-profiles"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => payProfileOptionLabel(option)}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{payProfileOptionLabel(option)}</span>
+          {option.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+function payProfileOptionLabel(option: GraphQLSelectOption) {
+  return selectOptionMetaString(option, "classification") === "OwnerOperator"
+    ? `${option.label} (O-O)`
+    : option.label;
+}
+
+export function WorkerCredentialTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={workerCredentialTypeSelectOptionsGraphQL}
+      popoutLink="/hr/credential-types"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "code")}
+            {option.description ? ` · ${option.description}` : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function TrainingCourseAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={trainingCourseSelectOptionsGraphQL}
+      popoutLink="/hr/training-courses"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {trainingCourseOptionSummary(option)}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function trainingCourseOptionSummary(option: GraphQLSelectOption) {
+  const delivery = selectOptionMetaString(option, "delivery") as TrainingDelivery;
+  const parts = [TRAINING_DELIVERY_LABELS[delivery] ?? delivery];
+  const minutes = selectOptionMetaNumber(option, "durationMinutes");
+  if (minutes) parts.push(`${minutes} min`);
+  const passingScore = selectOptionMetaString(option, "passingScore");
+  if (passingScore) parts.push(`pass ≥ ${Number(passingScore).toFixed(0)}%`);
+  const validityMonths = selectOptionMetaNumber(option, "validityMonths");
+  if (validityMonths) parts.push(`valid ${validityMonths} mo`);
+
+  return parts.filter(Boolean).join(" · ");
+}
+
+export function PerformanceReviewTemplateAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={performanceReviewTemplateSelectOptionsGraphQL}
+      popoutLink="/hr/review-templates"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {reviewTemplateOptionSummary(option)}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+function reviewTemplateOptionSummary(option: GraphQLSelectOption) {
+  const itemCount = selectOptionMetaNumber(option, "itemCount") ?? 0;
+  const cadenceMonths = selectOptionMetaNumber(option, "cadenceMonths");
+  const items = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
+
+  return cadenceMonths ? `${items} · every ${cadenceMonths} months` : items;
+}
+
+export function PtoPolicyAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={ptoPolicySelectOptionsGraphQL}
+      popoutLink="/hr/pto-policies"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "code")}
+            {selectOptionMetaBoolean(option, "isDefault") ? " · Default" : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function BenefitPlanAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={benefitPlanSelectOptionsGraphQL}
+      popoutLink="/hr/benefits"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => benefitPlanOptionLabel(option)}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{benefitPlanOptionLabel(option)}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {benefitPlanTypeLabel(selectOptionMetaString(option, "planType"))}
+            {selectOptionMetaString(option, "carrier")
+              ? ` · ${selectOptionMetaString(option, "carrier")}`
+              : ""}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+function benefitPlanOptionLabel(option: GraphQLSelectOption) {
+  const planYear = selectOptionMetaNumber(option, "planYear");
+  return planYear ? `${option.label} (${planYear})` : option.label;
+}
+
+/**
+ * Non-member jurisdictions stay selectable — mileage is still recorded in them,
+ * it just does not land on the IFTA return — so the option says which it is
+ * rather than the list quietly leaving them out.
+ */
+export function IftaJurisdictionAutocompleteField<T extends FieldValues>({
+  membersOnly,
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
+  membersOnly?: boolean;
+}) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={
+        membersOnly
+          ? { ...iftaJurisdictionSelectOptionsGraphQL, filters: { membersOnly: true } }
+          : iftaJurisdictionSelectOptionsGraphQL
+      }
+      initialLimit={100}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {selectOptionMetaString(option, "countryCode")}
+            {selectOptionMetaBoolean(option, "isIftaMember") ? "" : " · Not an IFTA member"}
+          </span>
         </div>
       )}
       {...props}

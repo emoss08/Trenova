@@ -1,16 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  DocumentTypeAutocompleteField,
+  WorkerCredentialTypeAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { statusChoices } from "@/lib/choices";
-import {
-  fetchActiveWorkerCredentialTypes,
-  WORKER_CREDENTIAL_TYPES_KEY,
-} from "@/lib/graphql/worker-credential";
-import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -27,7 +25,6 @@ import {
   type ChecklistTemplateFormValues,
 } from "@trenova/shared/types/worker-checklist";
 import { GripVerticalIcon, InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useMemo } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const KIND_OPTIONS = checklistKindSchema.options.map((value) => ({
@@ -68,16 +65,6 @@ export function ChecklistTemplateForm({
   const { control } = useFormContext<ChecklistTemplateFormValues>();
   const itemsArray = useFieldArray({ control, name: "items" });
   const trigger = useWatch({ control, name: "trigger" });
-
-  const { data: credentialTypes = [] } = useQuery({
-    queryKey: [WORKER_CREDENTIAL_TYPES_KEY],
-    queryFn: ({ signal }) => fetchActiveWorkerCredentialTypes({ signal }),
-    staleTime: 5 * 60 * 1000,
-  });
-  const credentialTypeOptions = useMemo(
-    () => credentialTypes.map((type) => ({ value: type.id, label: type.name })),
-    [credentialTypes],
-  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -217,7 +204,6 @@ export function ChecklistTemplateForm({
             <ItemRow
               key={field.id}
               index={index}
-              credentialTypeOptions={credentialTypeOptions}
               onRemove={itemsArray.fields.length > 1 ? () => itemsArray.remove(index) : undefined}
               onMoveUp={index > 0 ? () => itemsArray.move(index, index - 1) : undefined}
               onMoveDown={
@@ -235,13 +221,11 @@ export function ChecklistTemplateForm({
 
 function ItemRow({
   index,
-  credentialTypeOptions,
   onRemove,
   onMoveUp,
   onMoveDown,
 }: {
   index: number;
-  credentialTypeOptions: { value: string; label: string }[];
   onRemove?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -326,11 +310,10 @@ function ItemRow({
         </FormControl>
         {kind === "Credential" ? (
           <FormControl className="col-span-2">
-            <SelectField
+            <WorkerCredentialTypeAutocompleteField
               control={control}
               name={`items.${index}.credentialTypeId`}
               label={t("Credential type")}
-              options={credentialTypeOptions}
               rules={{ required: true }}
               placeholder={t("Which credential completes this item")}
               description={t(

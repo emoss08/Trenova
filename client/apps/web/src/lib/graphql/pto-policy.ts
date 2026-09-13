@@ -7,7 +7,6 @@ import {
   PreviewWorkerPtoAccrualDocument,
   PtoBalanceSummaryDocument,
   PtoLiabilityReportDocument,
-  PtoPolicyOptionsDocument,
   PtoPolicyTableDocument,
   RestorePtoPolicyDocument,
   RunPtoAccrualDocument,
@@ -37,8 +36,6 @@ import {
   type PtoLiabilityReportQuery,
   type PtoLiabilityReportQueryVariables,
   type PtoPolicyInput,
-  type PtoPolicyOptionsQuery,
-  type PtoPolicyOptionsQueryVariables,
   type PtoPolicyAssignmentFieldsFragment,
   type PtoPolicyFieldsFragment,
   type PlannedPtoAccrualFieldsFragment,
@@ -65,9 +62,6 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type PTOPolicyRow = PtoPolicyFieldsFragment;
-export type PTOPolicyOption = NonNullable<
-  PtoPolicyOptionsQuery["ptoPolicies"]["edges"]
->[number]["node"];
 export type PTOPolicyAssignment = PtoPolicyAssignmentFieldsFragment;
 export type WorkerPTOBalanceView = WorkerPtoBalanceFieldsFragment;
 export type WorkerPTOLedgerEntry = WorkerPtoLedgerEntryFieldsFragment;
@@ -79,7 +73,6 @@ export type PlannedPTOAccrual = PlannedPtoAccrualFieldsFragment;
 export type PTOAccrualRun = RunPtoAccrualMutation["runPtoAccrual"];
 
 export const PTO_POLICY_LIST_KEY = "pto-policy-list";
-export const PTO_POLICY_OPTIONS_KEY = "pto-policy-options";
 export const WORKER_PTO_BALANCES_KEY = "worker-pto-balances";
 export const WORKER_PTO_LEDGER_KEY = "worker-pto-ledger";
 export const WORKER_PTO_ASSIGNMENTS_KEY = "worker-pto-assignments";
@@ -91,18 +84,6 @@ export const ptoPolicyTableGraphQLConfig = defineDataTableGraphQLConfig({
   operationName: "PtoPolicyTable",
   connectionKey: "ptoPolicies",
 });
-
-export async function fetchPtoPolicyOptions(options?: {
-  signal?: AbortSignal;
-}): Promise<PTOPolicyOption[]> {
-  const data = await requestGraphQL<PtoPolicyOptionsQuery, PtoPolicyOptionsQueryVariables>({
-    document: PtoPolicyOptionsDocument,
-    operationName: "PtoPolicyOptions",
-    variables: { input: { first: 100, status: "Active" } },
-    signal: options?.signal,
-  });
-  return (data.ptoPolicies.edges ?? []).map((edge) => edge.node);
-}
 
 export async function createPtoPolicy(input: PtoPolicyInput): Promise<PTOPolicyRow> {
   const data = await requestGraphQL<CreatePtoPolicyMutation, CreatePtoPolicyMutationVariables>({
