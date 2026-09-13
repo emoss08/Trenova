@@ -12,15 +12,18 @@
     "zh-TW": "繁體中文",
     "zh-CN": "简体中文"
   },
-  "flags": {
-    "en": "🇺🇸",
-    "es": "🇲🇽",
-    "zh-TW": "🇹🇼",
-    "zh-CN": "🇨🇳"
-  },
   "$comment": [
-    "flags are for the language switcher only. A flag is a country, not a language,",
-    "so these are the region each translation is actually written for: es is Latin",
-    "American Spanish (glossary.json), not Castilian."
-  ]
+    "regions drive the flag shown in the language switcher, and nothing else. A flag is a",
+    "country, not a language, so these name the region each translation is actually written",
+    "for: es is Latin American Spanish (glossary.json), not Castilian.",
+    "Emoji flags were tried first and do not render on Windows, which ships no flag emoji",
+    "font, so these codes select an inline SVG from i18n/locale-flag.tsx. A region with no",
+    "SVG falls back to the code itself, so adding a language never breaks the switcher."
+  ],
+  "regions": {
+    "en": "US",
+    "es": "MX",
+    "zh-TW": "TW",
+    "zh-CN": "CN"
+  }
 }
