@@ -46,6 +46,16 @@ func (s *Service) ActiveTypes(
 	return s.repo.ListActiveTypes(ctx, tenantInfo)
 }
 
+func (s *Service) TypeSelectOptions(
+	ctx context.Context,
+	req *repositories.WorkerCredentialTypeSelectOptionsRequest,
+) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+	if err := s.ensureSystemTypes(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
+		return nil, err
+	}
+	return s.repo.TypeSelectOptions(ctx, req)
+}
+
 func (s *Service) ensureSystemTypes(ctx context.Context, tenantInfo pagination.TenantInfo) error {
 	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return nil

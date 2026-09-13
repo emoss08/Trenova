@@ -17,6 +17,12 @@ type ListBenefitPlansRequest struct {
 	Limit          int   `json:"limit"`
 }
 
+type BenefitPlanSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	// PlanYear narrows to one year; zero returns every year on file.
+	PlanYear int16
+}
+
 type GetBenefitPlanByIDRequest struct {
 	ID             pulid.ID              `json:"id"`
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
@@ -57,6 +63,10 @@ type BenefitCostRow struct {
 
 type BenefitRepository interface {
 	ListPlans(ctx context.Context, req *ListBenefitPlansRequest) ([]*driverpay.BenefitPlan, error)
+	PlanSelectOptions(
+		ctx context.Context,
+		req *BenefitPlanSelectOptionsRequest,
+	) (*pagination.ListResult[*driverpay.BenefitPlan], error)
 	GetPlanByID(
 		ctx context.Context,
 		req *GetBenefitPlanByIDRequest,

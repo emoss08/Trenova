@@ -1,12 +1,17 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  PayCodeAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { PayCodeSelectField, usePayCodeOptions } from "@/components/fields/pay-code-select-field";
 import { SelectField } from "@/components/fields/select-field";
+import { useSelectOption } from "@/hooks/use-select-option";
+import type { SelectOption } from "@/lib/graphql/select-options";
+import { selectOptionMetaBoolean, selectOptionMetaNumber } from "@/lib/select-option-meta";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { recurringEarningFrequencyChoices, recurringEarningStatusChoices } from "@/lib/choices";
 import {
@@ -22,7 +27,7 @@ import {
 } from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm, useFormContext, useWatch, type Control, type Resolver } from "react-hook-form";
+import { useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 
 function buildDefaults(row?: RecurringEarningRow | null): RecurringEarningFormValues {
   if (!row) {
@@ -150,28 +155,25 @@ function EarningEditPanel({
   );
 }
 
-function useDefaultAmountPrefill(control: Control<RecurringEarningFormValues>) {
+function useDefaultAmountPrefill(selectedCode: SelectOption | null) {
   const { setValue, getValues } = useFormContext<RecurringEarningFormValues>();
-  const payCodeId = useWatch({ control, name: "payCodeId" });
-  const { data: options } = usePayCodeOptions("Earning");
 
   useEffect(() => {
-    if (!payCodeId || getValues("amount") > 0) return;
-    const option = (options ?? []).find((code) => code.id === payCodeId);
-    if (option?.defaultAmountMinor != null) {
-      setValue("amount", option.defaultAmountMinor / 100, { shouldDirty: true });
+    if (!selectedCode || getValues("amount") > 0) return;
+    const defaultAmountMinor = selectOptionMetaNumber(selectedCode, "defaultAmountMinor");
+    if (defaultAmountMinor != null) {
+      setValue("amount", defaultAmountMinor / 100, { shouldDirty: true });
     }
-  }, [payCodeId, options, setValue, getValues]);
+  }, [selectedCode, setValue, getValues]);
 }
 
 function EarningForm({ isEdit }: { isEdit: boolean }) {
   const t = useT();
 
   const { control } = useFormContext<RecurringEarningFormValues>();
-  useDefaultAmountPrefill(control);
   const payCodeId = useWatch({ control, name: "payCodeId" });
-  const { data: options } = usePayCodeOptions("Earning");
-  const selectedCode = (options ?? []).find((code) => code.id === payCodeId);
+  const { option: selectedCode } = useSelectOption("PAY_CODE", payCodeId);
+  useDefaultAmountPrefill(selectedCode);
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,10 +189,13 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           />
         </FormControl>
         <FormControl>
-          <PayCodeSelectField
+          <PayCodeAutocompleteField
             control={control}
             name="payCodeId"
+            label={t("Pay Code")}
+            placeholder={t("Select pay code")}
             direction="Earning"
+            rules={{ required: true }}
             description={t(
               "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.",
             )}
@@ -277,7 +282,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
           />
         </FormControl>
       </FormGroup>
-      {selectedCode != null && !selectedCode.taxable && (
+      {selectedCode != null && !selectOptionMetaBoolean(selectedCode, "taxable") && (
         <p className="text-muted-foreground text-xs">
           {t(
             "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.",

@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -256,6 +257,30 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceEmailProfile: {
 			resolve: r.resolveEmailProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourcePayCode: {
+			resolve: r.resolvePayCodeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourcePayProfile: {
+			resolve: r.resolvePayProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceWorkerCredentialType: {
+			resolve: r.resolveWorkerCredentialTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceTrainingCourse: {
+			resolve: r.resolveTrainingCourseSelectOptions,
+		},
+		gqlmodel.SelectOptionResourcePerformanceReviewTemplate: {
+			resolve: r.resolvePerformanceReviewTemplateSelectOptions,
+		},
+		gqlmodel.SelectOptionResourcePTOPolicy: {
+			resolve: r.resolvePTOPolicySelectOptions,
+		},
+		gqlmodel.SelectOptionResourceBenefitPlan: {
+			resolve: r.resolveBenefitPlanSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceIFTAJurisdiction: {
+			resolve: r.resolveIFTAJurisdictionSelectOptions,
 		},
 	}
 }
@@ -1739,6 +1764,29 @@ func selectOptionBoolFilter(filters map[string]any, key string) bool {
 		return v == "true"
 	default:
 		return false
+	}
+}
+
+func selectOptionInt16Filter(filters map[string]any, key string) int16 {
+	value, ok := filters[key]
+	if !ok {
+		return 0
+	}
+	switch v := value.(type) {
+	case float64:
+		return int16(v)
+	case int:
+		return int16(v) //nolint:gosec // callers pass calendar years
+	case int64:
+		return int16(v) //nolint:gosec // callers pass calendar years
+	case string:
+		parsed, err := strconv.ParseInt(v, 10, 16)
+		if err != nil {
+			return 0
+		}
+		return int16(parsed)
+	default:
+		return 0
 	}
 }
 

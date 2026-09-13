@@ -110,6 +110,13 @@ func (s *Service) ListPlans(
 	return s.repo.ListPlans(ctx, req)
 }
 
+func (s *Service) PlanSelectOptions(
+	ctx context.Context,
+	req *repositories.BenefitPlanSelectOptionsRequest,
+) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+	return s.repo.PlanSelectOptions(ctx, req)
+}
+
 func (s *Service) GetPlan(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

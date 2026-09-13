@@ -1,13 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { TrainingCourseAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
-import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useSelectOption } from "@/hooks/use-select-option";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import {
   completeWorkerTraining,
-  fetchActiveTrainingCourses,
-  TRAINING_COURSES_KEY,
   type WorkerTrainingRecordRow,
 } from "@/lib/graphql/worker-training";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -26,7 +26,6 @@ import {
   type CompleteTrainingFormValues,
 } from "@trenova/shared/types/worker-training";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,13 +51,6 @@ export function CompleteTrainingDialog({
   const t = useT();
 
   const invalidate = useTrainingInvalidation(workerId);
-  const coursesQuery = useQuery({
-    queryKey: [TRAINING_COURSES_KEY],
-    queryFn: ({ signal }) => fetchActiveTrainingCourses({ signal }),
-    enabled: open,
-    staleTime: 5 * 60 * 1000,
-  });
-  const courses = useMemo(() => coursesQuery.data ?? [], [coursesQuery.data]);
   const lockedCourseId = record?.courseId ?? courseId ?? "";
 
   const form = useForm<CompleteTrainingFormValues>({
@@ -85,8 +77,13 @@ export function CompleteTrainingDialog({
   }, [open, lockedCourseId, reset]);
 
   const selectedId = useWatch({ control, name: "courseId" });
-  const selected = record?.course ?? courses.find((course) => course.id === selectedId);
-  const scored = Boolean(selected?.passingScore);
+  const { option: selectedCourse } = useSelectOption("TRAINING_COURSE", selectedId);
+  // The open record carries the score the assignment was made under; the option
+  // only says what the course requires today.
+  const passingScore =
+    record?.course?.passingScore ??
+    (selectedCourse ? selectOptionMetaString(selectedCourse, "passingScore") || null : null);
+  const scored = passingScore != null;
 
   useEffect(() => {
     setValue("requiresScore", scored);
@@ -94,9 +91,9 @@ export function CompleteTrainingDialog({
 
   const score = useWatch({ control, name: "score" });
   const projected = useMemo(() => {
-    if (!selected?.passingScore || !score) return null;
-    return Number(score) >= Number(selected.passingScore) ? "pass" : "fail";
-  }, [score, selected]);
+    if (passingScore == null || !score) return null;
+    return Number(score) >= Number(passingScore) ? "pass" : "fail";
+  }, [score, passingScore]);
 
   const { mutateAsync, isPending } = useApiMutation<
     WorkerTrainingRecordRow,
@@ -135,11 +132,6 @@ export function CompleteTrainingDialog({
     },
   });
 
-  const courseOptions = useMemo(
-    () => courses.map((course) => ({ value: course.id, label: course.name })),
-    [courses],
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -149,7 +141,7 @@ export function CompleteTrainingDialog({
             {scored
               ? t(
                   "Scored course — {0}% or better passes. A fail closes the assignment; assign it again for a retake.",
-                  Number(selected?.passingScore).toFixed(0),
+                  Number(passingScore).toFixed(0),
                 )
               : t(
                   "Marks the course complete on the date given. Recurring courses get their expiry from the course's validity.",
@@ -166,22 +158,17 @@ export function CompleteTrainingDialog({
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<CompleteTrainingFormValues>
+                <TrainingCourseAutocompleteField<CompleteTrainingFormValues>
                   control={control}
                   name="courseId"
                   label={t("Course")}
                   placeholder={t("Select a course")}
-                  options={
-                    record?.course
-                      ? [{ value: record.course.id, label: record.course.name }]
-                      : courseOptions
-                  }
                   rules={{ required: true }}
-                  isReadOnly={Boolean(record)}
+                  disabled={Boolean(record)}
                   description={
                     record
-                      ? "Locked to the assignment being closed."
-                      : "The course this result is for."
+                      ? t("Locked to the assignment being closed.")
+                      : t("The course this result is for.")
                   }
                 />
               </FormControl>

@@ -1,11 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FuelCardAutocompleteField,
+  IftaJurisdictionAutocompleteField,
   TractorAutocompleteField,
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
-import { IftaJurisdictionSelectField } from "@/components/fields/ifta-jurisdiction-select-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -155,7 +155,7 @@ export function FuelPurchaseForm({
           </FormControl>
           <FormControl>
             <div className="relative">
-              <IftaJurisdictionSelectField<FuelPurchaseFormValues>
+              <IftaJurisdictionAutocompleteField<FuelPurchaseFormValues>
                 control={control}
                 name="jurisdictionId"
                 label={t("Jurisdiction")}

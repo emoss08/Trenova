@@ -19,6 +19,10 @@ type GetReviewTemplateByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ReviewTemplateSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
 type ReviewTemplateCodeExistsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Code       string                `json:"code"`
@@ -71,6 +75,10 @@ type PerformanceReviewRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*worker.PerformanceReviewTemplate, error)
+	TemplateSelectOptions(
+		ctx context.Context,
+		req *ReviewTemplateSelectOptionsRequest,
+	) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error)
 	GetTemplateByID(
 		ctx context.Context,
 		req *GetReviewTemplateByIDRequest,

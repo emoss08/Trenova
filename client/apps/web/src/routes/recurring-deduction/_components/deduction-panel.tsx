@@ -1,13 +1,17 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  PayCodeAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { PayCodeSelectField, usePayCodeOptions } from "@/components/fields/pay-code-select-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
+import { useSelectOption } from "@/hooks/use-select-option";
+import { selectOptionMetaNumber } from "@/lib/select-option-meta";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { recurringDeductionFrequencyChoices, recurringDeductionStatusChoices } from "@/lib/choices";
 import {
@@ -70,15 +74,15 @@ function toSharedInput(values: RecurringDeductionFormValues) {
 function useDefaultAmountPrefill(control: Control<RecurringDeductionFormValues>) {
   const { setValue, getValues } = useFormContext<RecurringDeductionFormValues>();
   const payCodeId = useWatch({ control, name: "payCodeId" });
-  const { data: options } = usePayCodeOptions("Deduction");
+  const { option: selectedCode } = useSelectOption("PAY_CODE", payCodeId);
 
   useEffect(() => {
-    if (!payCodeId || getValues("amount") > 0) return;
-    const option = (options ?? []).find((code) => code.id === payCodeId);
-    if (option?.defaultAmountMinor != null) {
-      setValue("amount", option.defaultAmountMinor / 100, { shouldDirty: true });
+    if (!selectedCode || getValues("amount") > 0) return;
+    const defaultAmountMinor = selectOptionMetaNumber(selectedCode, "defaultAmountMinor");
+    if (defaultAmountMinor != null) {
+      setValue("amount", defaultAmountMinor / 100, { shouldDirty: true });
     }
-  }, [payCodeId, options, setValue, getValues]);
+  }, [selectedCode, setValue, getValues]);
 }
 
 export function DeductionPanel({
@@ -192,10 +196,13 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
           />
         </FormControl>
         <FormControl>
-          <PayCodeSelectField
+          <PayCodeAutocompleteField
             control={control}
             name="payCodeId"
+            label={t("Pay Code")}
+            placeholder={t("Select pay code")}
             direction="Deduction"
+            rules={{ required: true }}
             description={t(
               "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.",
             )}

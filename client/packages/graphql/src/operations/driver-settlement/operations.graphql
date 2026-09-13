@@ -44,23 +44,6 @@ query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
   }
 }
 
-query PayProfileOptions($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
-  payProfiles(input: $input) {
-    edges {
-      node {
-        id
-        name
-        classification
-        status
-      }
-    }
-    totalCount @include(if: $includeTotalCount)
-    pageInfo {
-      ...DataTablePageInfoFields
-    }
-  }
-}
-
 query WorkerPayAssignments($workerId: ID!) {
   workerPayAssignments(workerId: $workerId) {
     id
@@ -273,17 +256,6 @@ query PayCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolea
     pageInfo {
       ...DataTablePageInfoFields
     }
-  }
-}
-
-query PayCodeOptions($direction: PayCodeDirection) {
-  payCodeOptions(direction: $direction) {
-    id
-    direction
-    code
-    name
-    taxable
-    defaultAmountMinor
   }
 }
 

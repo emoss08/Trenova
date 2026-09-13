@@ -1,18 +1,17 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PerformanceReviewTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useFirstSelectOption } from "@/hooks/use-select-option";
 import {
   createPerformanceReview,
-  fetchActivePerformanceReviewTemplates,
-  REVIEW_TEMPLATES_KEY,
   updatePerformanceReview,
   type PerformanceReviewRow,
 } from "@/lib/graphql/performance-review";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -71,13 +70,6 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
   const t = useT();
 
   const invalidate = useReviewInvalidation(workerId);
-  const templatesQuery = useQuery({
-    queryKey: [REVIEW_TEMPLATES_KEY],
-    queryFn: ({ signal }) => fetchActivePerformanceReviewTemplates({ signal }),
-    enabled: open,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const form = useForm<CreateReviewFormValues>({
     resolver: zodResolver(createReviewFormSchema) as Resolver<CreateReviewFormValues>,
     defaultValues: {
@@ -99,11 +91,16 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
     });
   }, [open, reset]);
 
-  const templates = useMemo(() => templatesQuery.data ?? [], [templatesQuery.data]);
+  // The provider orders default templates first, so the first option is the one
+  // a reviewer would have picked anyway.
+  const { option: preferredTemplate, isLoading: templatesLoading } = useFirstSelectOption(
+    "PERFORMANCE_REVIEW_TEMPLATE",
+    { enabled: open },
+  );
   useEffect(() => {
-    const preferred = templates.find((template) => template.isDefault) ?? templates[0];
-    if (preferred) setValue("templateId", preferred.id);
-  }, [templates, setValue]);
+    if (preferredTemplate) setValue("templateId", preferredTemplate.id);
+  }, [preferredTemplate, setValue]);
+  const noTemplates = !templatesLoading && preferredTemplate == null;
 
   const { mutateAsync, isPending } = useApiMutation<
     PerformanceReviewRow,
@@ -151,23 +148,19 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<CreateReviewFormValues>
+                <PerformanceReviewTemplateAutocompleteField<CreateReviewFormValues>
                   control={control}
                   name="templateId"
                   label={t("Template")}
-                  placeholder={templatesQuery.isLoading ? "Loading..." : "Select a template"}
-                  options={templates.map((template) => ({
-                    value: template.id,
-                    label: template.name,
-                    description: `${template.items.length} item${template.items.length === 1 ? "" : "s"}${
-                      template.cadenceMonths ? ` · every ${template.cadenceMonths} months` : ""
-                    }`,
-                  }))}
+                  placeholder={t("Select a template")}
                   rules={{ required: true }}
+                  noResultsMessage={t(
+                    "No active templates. Create one under Review Templates first.",
+                  )}
                   description={
-                    templates.length === 0 && !templatesQuery.isLoading
-                      ? "No active templates. Create one under Review Templates first."
-                      : "Decides which items are rated and how they are weighted."
+                    noTemplates
+                      ? t("No active templates. Create one under Review Templates first.")
+                      : t("Decides which items are rated and how they are weighted.")
                   }
                 />
               </FormControl>
@@ -210,7 +203,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                 type="submit"
                 isLoading={isPending}
                 loadingText={t("Starting...")}
-                disabled={templates.length === 0}
+                disabled={noTemplates}
               >
                 {t("Start review")}
               </Button>
