@@ -1,8 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  PayProfileAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { NumberField } from "@/components/fields/number-field";
-import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -17,11 +19,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Input } from "@trenova/shared/components/ui/input";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { getTodayDate } from "@trenova/shared/lib/date";
-import {
-  assignPayProfileToWorker,
-  fetchPayProfileDetail,
-  fetchPayProfileOptions,
-} from "@/lib/graphql/driver-settlement";
+import { assignPayProfileToWorker, fetchPayProfileDetail } from "@/lib/graphql/driver-settlement";
 import {
   assignPayProfileFormSchema,
   type AssignPayProfileFormValues,
@@ -84,12 +82,6 @@ export function AssignPayProfileDialog({
   }, [open, reset, workerId, payProfileId]);
 
   const selectedProfileId = useWatch({ control, name: "payProfileId" });
-
-  const { data: profileOptions } = useQuery({
-    queryKey: ["pay-profile-options"],
-    queryFn: ({ signal }) => fetchPayProfileOptions(undefined, { signal }),
-    enabled: open && !payProfileId,
-  });
 
   const { data: selectedProfile } = useQuery({
     queryKey: ["pay-profile-detail", selectedProfileId],
@@ -158,17 +150,11 @@ export function AssignPayProfileDialog({
               )}
               {!payProfileId && (
                 <FormControl className="col-span-2">
-                  <SelectField
+                  <PayProfileAutocompleteField
                     control={control}
                     name="payProfileId"
                     label={t("Pay Profile")}
                     placeholder={t("Select pay profile")}
-                    options={(profileOptions ?? []).map((option) => ({
-                      label: `${option.name}${
-                        option.classification === "OwnerOperator" ? " (O-O)" : ""
-                      }`,
-                      value: option.id,
-                    }))}
                     rules={{ required: true }}
                     description={t(
                       "Profiles are shared templates — set driver-specific rates below instead of cloning profiles.",

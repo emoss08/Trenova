@@ -1,6 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
+import { jurisdictionLabel } from "@/lib/ifta-jurisdiction-options";
 import { iftaFuelTypeChoices, iftaQuarterChoices } from "@/lib/choices";
 import type { IftaTaxRateRow } from "@/lib/graphql/ifta-tax-rate";
 import { Badge } from "@trenova/shared/components/ui/badge";

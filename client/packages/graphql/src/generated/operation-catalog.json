@@ -1,5 +1,5 @@
 {
-  "operationCount": 698,
+  "operationCount": 694,
   "fragmentCount": 168,
   "operations": [
     {
@@ -268,22 +268,6 @@
       ],
       "usages": [],
       "sdl": "query ActiveWorkerChecklistTemplates {\n  activeWorkerChecklistTemplates {\n    ...WorkerChecklistTemplateFields\n  }\n}\n\nfragment WorkerChecklistTemplateFields on WorkerChecklistTemplate {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  kind\n  trigger\n  status\n  isDefault\n  openChecklistCount\n  version\n  createdAt\n  updatedAt\n  items {\n    id\n    templateId\n    label\n    description\n    kind\n    required\n    dueOffsetDays\n    owner\n    credentialTypeId\n    documentTypeId\n    documentTypeName\n    sortOrder\n    credentialType {\n      id\n      code\n      name\n    }\n  }\n}"
-    },
-    {
-      "name": "ActiveWorkerCredentialTypes",
-      "kind": "query",
-      "domain": "worker-credential",
-      "sourceFile": "src/operations/worker-credential/operations.graphql",
-      "hash": "sha256:27ab56f6cbbfa526f821006cecb83c4be41b99d22a12de2080b54ab81645ac1b",
-      "rootFields": [
-        "activeWorkerCredentialTypes"
-      ],
-      "variables": [],
-      "fragments": [
-        "WorkerCredentialTypeFields"
-      ],
-      "usages": [],
-      "sdl": "query ActiveWorkerCredentialTypes {\n  activeWorkerCredentialTypes {\n    ...WorkerCredentialTypeFields\n  }\n}\n\nfragment WorkerCredentialTypeFields on WorkerCredentialType {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  category\n  status\n  isRequired\n  requiredForDriverTypes\n  renewalWindowDays\n  validityMonths\n  requiresNumber\n  requiresDocument\n  profileField\n  isSystem\n  sortOrder\n  activeCredentialCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AddCarrierSettlementAdjustment",
@@ -8997,26 +8981,6 @@
       "sdl": "query PayAdvanceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  payAdvances(input: $input) {\n    edges {\n      node {\n        id\n        workerId\n        status\n        source\n        reference\n        issuedDate\n        amountMinor\n        recoveredMinor\n        writtenOffMinor\n        outstandingMinor\n        writeOffReason\n        notes\n        currencyCode\n        version\n        createdAt\n        updatedAt\n        worker {\n          id\n          firstName\n          lastName\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
-      "name": "PayCodeOptions",
-      "kind": "query",
-      "domain": "driver-settlement",
-      "sourceFile": "src/operations/driver-settlement/operations.graphql",
-      "hash": "sha256:936a60ce21a22bf3cb1ec09b8e12a1d12b6cffb98550835e69d0255f713dfd72",
-      "rootFields": [
-        "payCodeOptions"
-      ],
-      "variables": [
-        {
-          "name": "direction",
-          "type": "PayCodeDirection",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [],
-      "usages": [],
-      "sdl": "query PayCodeOptions($direction: PayCodeDirection) {\n  payCodeOptions(direction: $direction) {\n    id\n    direction\n    code\n    name\n    taxable\n    defaultAmountMinor\n  }\n}"
-    },
-    {
       "name": "PayCodeTable",
       "kind": "query",
       "domain": "driver-settlement",
@@ -9082,33 +9046,6 @@
       "fragments": [],
       "usages": [],
       "sdl": "query PayProfileDetail($id: ID!) {\n  payProfile(id: $id) {\n    id\n    name\n    classification\n    currencyCode\n    components {\n      id\n      kind\n      method\n      description\n      rate\n      revenueBasis\n      isActive\n    }\n  }\n}"
-    },
-    {
-      "name": "PayProfileOptions",
-      "kind": "query",
-      "domain": "driver-settlement",
-      "sourceFile": "src/operations/driver-settlement/operations.graphql",
-      "hash": "sha256:737c821bc2cc6ff9cbdae31f9c1fc7a56b4b7254f0910822ac1f110c982cb5b8",
-      "rootFields": [
-        "payProfiles"
-      ],
-      "variables": [
-        {
-          "name": "input",
-          "type": "DataTableConnectionInput!",
-          "defaultValue": null
-        },
-        {
-          "name": "includeTotalCount",
-          "type": "Boolean",
-          "defaultValue": "true"
-        }
-      ],
-      "fragments": [
-        "DataTablePageInfoFields"
-      ],
-      "usages": [],
-      "sdl": "query PayProfileOptions($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  payProfiles(input: $input) {\n    edges {\n      node {\n        id\n        name\n        classification\n        status\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "PayProfileTable",
@@ -9555,26 +9492,6 @@
       ],
       "usages": [],
       "sdl": "query PtoPolicy($id: ID!) {\n  ptoPolicy(id: $id) {\n    ...PtoPolicyFields\n  }\n}\n\nfragment PtoPolicyFields on PTOPolicy {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  isDefault\n  yearBasis\n  countWeekends\n  waitingPeriodDays\n  requiresApproval\n  enforceBalance\n  allowNegative\n  negativeFloorDays\n  openAssignmentCount\n  version\n  createdAt\n  updatedAt\n  rules {\n    id\n    ptoPolicyId\n    ptoType\n    accrualMethod\n    accrualAmountDays\n    maxBalanceDays\n    carryoverCapDays\n    carryoverExpiryDays\n    tiers {\n      minMonths\n      accrualAmountDays\n      maxBalanceDays\n    }\n    onTermination\n    sortOrder\n  }\n}"
-    },
-    {
-      "name": "PtoPolicyOptions",
-      "kind": "query",
-      "domain": "pto-policy",
-      "sourceFile": "src/operations/pto-policy/operations.graphql",
-      "hash": "sha256:eea8403a82f36bd22f4f7ed3bb96e66c414bf822fb95efe703c606b309fbafc8",
-      "rootFields": [
-        "ptoPolicies"
-      ],
-      "variables": [
-        {
-          "name": "input",
-          "type": "PTOPoliciesInput!",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [],
-      "usages": [],
-      "sdl": "query PtoPolicyOptions($input: PTOPoliciesInput!) {\n  ptoPolicies(input: $input) {\n    edges {\n      node {\n        id\n        name\n        code\n        status\n        isDefault\n        rules {\n          ptoType\n        }\n      }\n    }\n  }\n}"
     },
     {
       "name": "PtoPolicyTable",
@@ -16282,7 +16199,6 @@
         "OrderTable",
         "PayAdvanceTable",
         "PayCodeTable",
-        "PayProfileOptions",
         "PayProfileTable",
         "RateAgreementTable",
         "RateMatrixTable",
@@ -18239,7 +18155,6 @@
       "sourceFile": "src/operations/worker-credential/operations.graphql",
       "fragments": [],
       "usedByOperations": [
-        "ActiveWorkerCredentialTypes",
         "ArchiveWorkerCredentialType",
         "CreateWorkerCredentialType",
         "RestoreWorkerCredentialType",
@@ -22861,14 +22776,6 @@
         }
       ],
       "sdl": "input OrgHolidayInput {\n  description: String\n  holidayDate: Timestamp!\n  kind: OrgHolidayKind!\n  name: String!\n  recursAnnually: Boolean!\n  version: Int\n}"
-    },
-    "PayCodeDirection": {
-      "kind": "enum",
-      "values": [
-        "Deduction",
-        "Earning"
-      ],
-      "sdl": "enum PayCodeDirection {\n  Deduction\n  Earning\n}"
     },
     "PayeeClassification": {
       "kind": "enum",
@@ -28579,6 +28486,14 @@
       ],
       "sdl": "\"\"\"\nFuel product as classified for the International Fuel Tax Agreement. The first\nfourteen are IFTA fuel types and enter the return; DEF, Reefer and Other are\ntracked as spend only and never earn or owe tax.\n\"\"\"\nenum IFTAFuelType {\n  A55\n  Biodiesel\n  CNG\n  DEF\n  Diesel\n  E85\n  Electricity\n  Ethanol\n  Gasohol\n  Gasoline\n  Hydrogen\n  LNG\n  M85\n  Methanol\n  Other\n  Propane\n  Reefer\n}"
     },
+    "PayCodeDirection": {
+      "kind": "enum",
+      "values": [
+        "Deduction",
+        "Earning"
+      ],
+      "sdl": "enum PayCodeDirection {\n  Deduction\n  Earning\n}"
+    },
     "PayProfileComponentInput": {
       "kind": "input",
       "fields": [
@@ -29897,6 +29812,7 @@
       "values": [
         "ACCESSORIAL_CHARGE",
         "ACCOUNT_TYPE",
+        "BENEFIT_PLAN",
         "CARRIER",
         "COMMODITY",
         "CUSTOMER",
@@ -29925,11 +29841,16 @@
         "GL_ACCOUNT",
         "HAZARDOUS_MATERIAL",
         "IFTA_FUEL_TYPE",
+        "IFTA_JURISDICTION",
         "JOB_POSITION",
         "LOCATION",
         "LOCATION_CATEGORY",
         "ORDER",
         "ORGANIZATION",
+        "PAY_CODE",
+        "PAY_PROFILE",
+        "PERFORMANCE_REVIEW_TEMPLATE",
+        "PTO_POLICY",
         "RATE_AGREEMENT",
         "RATE_MATRIX",
         "RATE_ZONE",
@@ -29941,12 +29862,14 @@
         "SHIPMENT_TYPE",
         "TRACTOR",
         "TRAILER",
+        "TRAINING_COURSE",
         "USER",
         "US_STATE",
         "WORKER",
+        "WORKER_CREDENTIAL_TYPE",
         "WORKER_POLICY"
       ],
-      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSACTION_SET\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_CARD\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  IFTA_FUEL_TYPE\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  USER\n  US_STATE\n  WORKER\n  WORKER_POLICY\n}"
+      "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  BENEFIT_PLAN\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSACTION_SET\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_CARD\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  IFTA_FUEL_TYPE\n  IFTA_JURISDICTION\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  PAY_CODE\n  PAY_PROFILE\n  PERFORMANCE_REVIEW_TEMPLATE\n  PTO_POLICY\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  TRAINING_COURSE\n  USER\n  US_STATE\n  WORKER\n  WORKER_CREDENTIAL_TYPE\n  WORKER_POLICY\n}"
     },
     "AvailabilityPreference": {
       "kind": "enum",

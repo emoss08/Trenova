@@ -6,6 +6,7 @@ import { updatePayCode, type PayCodeRow } from "@/lib/graphql/driver-settlement"
 import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import { toast } from "sonner";
 
 export function payCodeStatusInput(row: PayCodeRow, status: "Active" | "Inactive") {
@@ -33,6 +34,7 @@ function StatusCell({ row }: { row: PayCodeRow }) {
       onStatusChange={async (status) => {
         await updatePayCode(payCodeStatusInput(row, status));
         await queryClient.invalidateQueries({ queryKey: ["pay-code-list"] });
+        await queryClient.invalidateQueries(selectOptionsQueryFilter("PAY_CODE"));
         toast.success(
           status === "Active"
             ? "Pay code activated — it appears in dropdowns again"

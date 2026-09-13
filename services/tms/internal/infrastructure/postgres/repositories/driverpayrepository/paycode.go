@@ -161,6 +161,7 @@ func (r *payCodeRepository) SelectOptions(
 				cols.Direction,
 				cols.Taxable,
 				cols.CountsTowardGuarantee,
+				cols.DefaultAmountMinor,
 				cols.CreatedAt,
 			},
 			OrgColumnRef: &cols.OrganizationID,

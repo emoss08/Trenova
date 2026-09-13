@@ -42,10 +42,7 @@ vi.mock("@/components/autocomplete-fields", () => ({
   TractorAutocompleteField: NativePicker,
   WorkerAutocompleteField: NativePicker,
   FuelCardAutocompleteField: NativePicker,
-}));
-
-vi.mock("@/components/fields/ifta-jurisdiction-select-field", () => ({
-  IftaJurisdictionSelectField: ({ control, name, label }: PickerProps) => {
+  IftaJurisdictionAutocompleteField: ({ control, name, label }: PickerProps) => {
     const { field } = useController({ control, name });
     return (
       <input

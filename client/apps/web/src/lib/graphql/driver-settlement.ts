@@ -31,11 +31,9 @@ import {
   PayWorkerNowDocument,
   OpenEscrowAccountDocument,
   PayAdvanceTableDocument,
-  PayCodeOptionsDocument,
   PayCodeTableDocument,
   PayProfileAssignmentsDocument,
   PayProfileDetailDocument,
-  PayProfileOptionsDocument,
   PayProfileTableDocument,
   PostDriverSettlementDocument,
   UnsettledPayEventsDocument,
@@ -90,7 +88,6 @@ import {
   type PayProfileDetailQuery,
   type PayProfileTableQuery,
   type PayeeClassification,
-  type PayCodeOptionsQuery,
   type PayCodeTableQuery,
   type RecurringDeductionTableQuery,
   type RecurringEarningTableQuery,
@@ -115,7 +112,6 @@ export type RecurringDeductionRow = NonNullable<
   RecurringDeductionTableQuery["recurringDeductions"]["edges"]
 >[number]["node"];
 export type PayCodeRow = NonNullable<PayCodeTableQuery["payCodes"]["edges"]>[number]["node"];
-export type PayCodeOption = PayCodeOptionsQuery["payCodeOptions"][number];
 export type RecurringEarningRow = NonNullable<
   RecurringEarningTableQuery["recurringEarnings"]["edges"]
 >[number]["node"];
@@ -204,21 +200,6 @@ export const driverPayEventTableGraphQLConfig = defineDataTableGraphQLConfig({
   operationName: "DriverPayEventTable",
   connectionKey: "driverPayEvents",
 });
-
-export async function fetchPayProfileOptions(query?: string, options?: { signal?: AbortSignal }) {
-  const data = await requestGraphQL({
-    document: PayProfileOptionsDocument,
-    operationName: "PayProfileOptions",
-    variables: {
-      input: {
-        first: 50,
-        query: query || undefined,
-      },
-    },
-    signal: options?.signal,
-  });
-  return (data.payProfiles.edges ?? []).map((edge) => edge.node);
-}
 
 export async function fetchEffectiveWorkerPayAssignment(
   workerId: string,
@@ -414,19 +395,6 @@ export async function updateRecurringDeduction(input: UpdateRecurringDeductionIn
     variables: { input },
   });
   return data.updateRecurringDeduction;
-}
-
-export async function fetchPayCodeOptions(
-  direction?: "Earning" | "Deduction",
-  options?: { signal?: AbortSignal },
-) {
-  const data = await requestGraphQL({
-    document: PayCodeOptionsDocument,
-    operationName: "PayCodeOptions",
-    variables: { direction },
-    signal: options?.signal,
-  });
-  return data.payCodeOptions;
 }
 
 export async function createPayCode(input: CreatePayCodeInput) {

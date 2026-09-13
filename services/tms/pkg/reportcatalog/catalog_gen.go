@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:3489682d01dccba330e20e890a8d905ca2426e8e4d16c3de2fc4dc49615699f7"
+const Version = "sha256:7c92f4240029945ed4716f3fe9fba98d30e9c427bc8d2f8368ab19e128039df8"
 
 var Default = indexed(defaultCatalog)
 
@@ -14815,6 +14815,7 @@ var defaultCatalog = Catalog{
 						{Value: "Exception", Label: "Exception"},
 						{Value: "SentBackToOps", Label: "Sent Back To Ops"},
 						{Value: "Approved", Label: "Approved"},
+						{Value: "Posted", Label: "Posted"},
 						{Value: "Canceled", Label: "Canceled"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

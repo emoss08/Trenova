@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { IftaJurisdictionSelectField } from "@/components/fields/ifta-jurisdiction-select-field";
+import { IftaJurisdictionAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -53,7 +53,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
             />
           </FormControl>
           <FormControl>
-            <IftaJurisdictionSelectField<IftaTaxRateFormValues>
+            <IftaJurisdictionAutocompleteField<IftaTaxRateFormValues>
               control={control}
               name="jurisdictionId"
               label={t("Jurisdiction")}

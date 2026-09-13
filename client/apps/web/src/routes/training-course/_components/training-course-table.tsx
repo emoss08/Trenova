@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import {
   archiveTrainingCourse,
   restoreTrainingCourse,
@@ -31,6 +32,10 @@ export default function TrainingCourseTable() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [TRAINING_COURSE_LIST_KEY], refetchType: "all" }),
       queryClient.invalidateQueries({ queryKey: [TRAINING_COURSES_KEY], refetchType: "all" }),
+      queryClient.invalidateQueries({
+        ...selectOptionsQueryFilter("TRAINING_COURSE"),
+        refetchType: "all",
+      }),
     ]);
   }, [queryClient]);
 

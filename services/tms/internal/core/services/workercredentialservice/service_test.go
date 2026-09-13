@@ -57,6 +57,19 @@ func (f *fakeRepo) ListActiveTypes(
 	return out, nil
 }
 
+func (f *fakeRepo) TypeSelectOptions(
+	_ context.Context,
+	_ *repositories.WorkerCredentialTypeSelectOptionsRequest,
+) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+	out := make([]*worker.WorkerCredentialType, 0, len(f.types))
+	for _, typ := range f.types {
+		if typ.Status == domaintypes.StatusActive {
+			out = append(out, typ)
+		}
+	}
+	return &pagination.ListResult[*worker.WorkerCredentialType]{Items: out, Total: len(out)}, nil
+}
+
 func (f *fakeRepo) GetTypeByID(
 	_ context.Context,
 	req *repositories.GetCredentialTypeByIDRequest,

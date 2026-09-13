@@ -2,10 +2,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import {
   archivePtoPolicy,
   PTO_POLICY_LIST_KEY,
-  PTO_POLICY_OPTIONS_KEY,
   ptoPolicyTableGraphQLConfig,
   restorePtoPolicy,
   type PTOPolicyRow,
@@ -30,7 +30,10 @@ export default function PTOPolicyTable() {
   const invalidate = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [PTO_POLICY_LIST_KEY], refetchType: "all" }),
-      queryClient.invalidateQueries({ queryKey: [PTO_POLICY_OPTIONS_KEY], refetchType: "all" }),
+      queryClient.invalidateQueries({
+        ...selectOptionsQueryFilter("PTO_POLICY"),
+        refetchType: "all",
+      }),
     ]);
   }, [queryClient]);
 

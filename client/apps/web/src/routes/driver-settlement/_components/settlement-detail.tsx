@@ -13,16 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { usePayCodeOptions } from "@/components/fields/pay-code-select-field";
+import { ControlledPayCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
@@ -605,8 +598,7 @@ function AddAdjustmentDialog({
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [payCodeId, setPayCodeId] = useState<string>("none");
-  const { data: payCodes } = usePayCodeOptions();
+  const [payCodeId, setPayCodeId] = useState<string>("");
 
   const parsedAmount = Number(amount);
   const valid = description.trim() !== "" && !Number.isNaN(parsedAmount) && parsedAmount !== 0;
@@ -617,13 +609,13 @@ function AddAdjustmentDialog({
         settlementId,
         description: description.trim(),
         amountMinor: Math.round(parsedAmount * 100),
-        payCodeId: payCodeId === "none" ? undefined : payCodeId,
+        payCodeId: payCodeId || undefined,
       }),
     onSuccess: () => {
       toast.success(t("Adjustment added"));
       setDescription("");
       setAmount("");
-      setPayCodeId("none");
+      setPayCodeId("");
       onOpenChange(false);
       onChanged();
     },
@@ -661,33 +653,14 @@ function AddAdjustmentDialog({
               {t("Dollars, not cents; positive adds pay, negative deducts.")}
             </p>
           </div>
-          <div>
-            <Select
-              value={payCodeId}
-              items={(payCodes ?? []).map((code) => ({
-                label: `${code.code} — ${code.name} (${code.direction})`,
-                value: code.id,
-              }))}
-              onValueChange={(value) => setPayCodeId(value ?? "none")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t("Pay code (optional)")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">{t("No pay code")}</SelectItem>
-                {(payCodes ?? []).map((code) => (
-                  <SelectItem key={code.id} value={code.id}>
-                    {code.code} — {code.name} ({code.direction})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground mt-1 text-[11px]">
-              {t(
-                "Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.",
-              )}
-            </p>
-          </div>
+          <ControlledPayCodeAutocompleteField
+            label={t("Pay code (optional)")}
+            value={payCodeId}
+            onValueChange={setPayCodeId}
+            description={t(
+              "Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.",
+            )}
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

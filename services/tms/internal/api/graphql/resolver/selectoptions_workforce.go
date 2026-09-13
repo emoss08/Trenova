@@ -115,6 +115,7 @@ func trainingCourseSelectOptionItem(entity *worker.TrainingCourse) selectOptionC
 		"delivery":               string(entity.Delivery),
 		"durationMinutes":        entity.DurationMinutes,
 		"dueDaysAfterAssignment": entity.DueDaysAfterAssignment,
+		"validityMonths":         int32Value(entity.ValidityMonths),
 		"passingScore":           nil,
 	}
 	if entity.PassingScore.Valid {
@@ -199,8 +200,9 @@ func (r *Resolver) resolvePTOPolicySelectOptions(
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
 		for _, id := range req.ids {
 			entity, err := r.ptoPolicyService.Get(ctx, &repositories.GetPTOPolicyByIDRequest{
-				ID:         id,
-				TenantInfo: req.tenantInfo,
+				ID:           id,
+				TenantInfo:   req.tenantInfo,
+				IncludeRules: true,
 			})
 			if err != nil {
 				return nil, err
@@ -237,6 +239,7 @@ func ptoPolicySelectOptionItem(entity *worker.PTOPolicy) selectOptionConnectionI
 				"isDefault":        entity.IsDefault,
 				"yearBasis":        string(entity.YearBasis),
 				"requiresApproval": entity.RequiresApproval,
+				"ptoTypes":         ptoPolicyTrackedTypes(entity),
 			},
 		},
 		entity.CreatedAt,
@@ -306,4 +309,16 @@ func int32Value(value *int32) any {
 		return nil
 	}
 	return *value
+}
+
+// ptoPolicyTrackedTypes is what the assignment form turns into one opening
+// balance row per type, so a policy with no rules has to report an empty list
+// rather than a null the form would have to guard.
+func ptoPolicyTrackedTypes(entity *worker.PTOPolicy) []string {
+	types := make([]string, 0, len(entity.Rules))
+	for _, rule := range entity.Rules {
+		types = append(types, string(rule.PTOType))
+	}
+
+	return types
 }

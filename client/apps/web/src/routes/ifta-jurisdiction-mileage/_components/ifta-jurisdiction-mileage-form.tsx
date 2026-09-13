@@ -1,7 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { TractorAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  IftaJurisdictionAutocompleteField,
+  TractorAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
-import { IftaJurisdictionSelectField } from "@/components/fields/ifta-jurisdiction-select-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -76,13 +78,13 @@ export function IftaJurisdictionMileageForm({
             />
           </FormControl>
           <FormControl>
-            <IftaJurisdictionSelectField<IftaMileageEntryFormValues>
+            <IftaJurisdictionAutocompleteField<IftaMileageEntryFormValues>
               control={control}
               name="jurisdictionId"
               label={t("Jurisdiction")}
               rules={{ required: true }}
               placeholder={t("Select a jurisdiction")}
-              isReadOnly={computed}
+              disabled={computed}
               description={t(
                 "The state or province the miles were run in, not where the trip started.",
               )}

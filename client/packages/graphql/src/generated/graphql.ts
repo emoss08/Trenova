@@ -3571,6 +3571,7 @@ export type SegregationType =
 export type SelectOptionResource =
   | 'ACCESSORIAL_CHARGE'
   | 'ACCOUNT_TYPE'
+  | 'BENEFIT_PLAN'
   | 'CARRIER'
   | 'COMMODITY'
   | 'CUSTOMER'
@@ -3599,11 +3600,16 @@ export type SelectOptionResource =
   | 'GL_ACCOUNT'
   | 'HAZARDOUS_MATERIAL'
   | 'IFTA_FUEL_TYPE'
+  | 'IFTA_JURISDICTION'
   | 'JOB_POSITION'
   | 'LOCATION'
   | 'LOCATION_CATEGORY'
   | 'ORDER'
   | 'ORGANIZATION'
+  | 'PAY_CODE'
+  | 'PAY_PROFILE'
+  | 'PERFORMANCE_REVIEW_TEMPLATE'
+  | 'PTO_POLICY'
   | 'RATE_AGREEMENT'
   | 'RATE_MATRIX'
   | 'RATE_ZONE'
@@ -3615,9 +3621,11 @@ export type SelectOptionResource =
   | 'SHIPMENT_TYPE'
   | 'TRACTOR'
   | 'TRAILER'
+  | 'TRAINING_COURSE'
   | 'USER'
   | 'US_STATE'
   | 'WORKER'
+  | 'WORKER_CREDENTIAL_TYPE'
   | 'WORKER_POLICY';
 
 export type SelectOptionsInput = {
@@ -6361,14 +6369,6 @@ export type PayProfileTableQueryVariables = Exact<{
 
 export type PayProfileTableQuery = { payProfiles: { totalCount?: number | null, edges: Array<{ node: { id: string, organizationId: string, businessUnitId: string, status: EntityStatus, name: string, description: string, classification: PayeeClassification, currencyCode: string, guaranteedPeriodMinimumMinor: number, perDiemRatePerMile: string, perDiemDailyCapMinor: number, version: number, createdAt: number, updatedAt: number, activeAssignmentCount: number, components: Array<{ id: string, kind: PayComponentKind, method: PayCalcMethod, description: string, rate: string, revenueBasis: PayRevenueBasis | null, freeTimeMinutes: number, minAmountMinor: number | null, maxAmountMinor: number | null, sequence: number, isActive: boolean, bands: Array<{ minMiles: number, maxMiles: number, rate: string }> | null }> | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type PayProfileOptionsQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-  includeTotalCount?: boolean | null | undefined;
-}>;
-
-
-export type PayProfileOptionsQuery = { payProfiles: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, classification: PayeeClassification, status: EntityStatus } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
 export type WorkerPayAssignmentsQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -6420,13 +6420,6 @@ export type PayCodeTableQueryVariables = Exact<{
 
 
 export type PayCodeTableQuery = { payCodes: { totalCount?: number | null, edges: Array<{ node: { id: string, status: EntityStatus, direction: PayCodeDirection, code: string, name: string, description: string, taxable: boolean, countsTowardGuarantee: boolean, glAccountId: string | null, defaultAmountMinor: number | null, isSystem: boolean, version: number, createdAt: number, updatedAt: number, glAccount: { id: string, accountCode: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
-export type PayCodeOptionsQueryVariables = Exact<{
-  direction?: PayCodeDirection | null | undefined;
-}>;
-
-
-export type PayCodeOptionsQuery = { payCodeOptions: Array<{ id: string, direction: PayCodeDirection, code: string, name: string, taxable: boolean, defaultAmountMinor: number | null }> };
 
 export type PayAdvanceTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -8199,13 +8192,6 @@ export type PtoPolicyQueryVariables = Exact<{
 
 export type PtoPolicyQuery = { ptoPolicy: { ' $fragmentRefs'?: { 'PtoPolicyFieldsFragment': PtoPolicyFieldsFragment } } };
 
-export type PtoPolicyOptionsQueryVariables = Exact<{
-  input: PtoPoliciesInput;
-}>;
-
-
-export type PtoPolicyOptionsQuery = { ptoPolicies: { edges: Array<{ node: { id: string, name: string, code: string, status: PtoPolicyStatus, isDefault: boolean, rules: Array<{ ptoType: PtoType }> } }> } };
-
 export type WorkerPtoPolicyAssignmentsQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -9656,11 +9642,6 @@ export type WorkerCredentialTypeTableQueryVariables = Exact<{
 
 
 export type WorkerCredentialTypeTableQuery = { workerCredentialTypes: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'WorkerCredentialTypeFieldsFragment': WorkerCredentialTypeFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
-
-export type ActiveWorkerCredentialTypesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ActiveWorkerCredentialTypesQuery = { activeWorkerCredentialTypes: Array<{ ' $fragmentRefs'?: { 'WorkerCredentialTypeFieldsFragment': WorkerCredentialTypeFieldsFragment } }> };
 
 export type WorkerCredentialsQueryVariables = Exact<{
   workerId: string | number;
@@ -15983,7 +15964,6 @@ export const MyReviewsDocument = {"__meta__":{"kind":"query","name":"MyReviews",
 export const AcknowledgeMyReviewDocument = {"__meta__":{"kind":"mutation","name":"AcknowledgeMyReview","hash":"sha256:c7c2b8a9b23822531e9f5787d630e6c9a01c1cb0455d2b4fd59e9dcd8bfeb9b5"}} as unknown as TypedDocumentString<AcknowledgeMyReviewMutation, AcknowledgeMyReviewMutationVariables>;
 export const MyLeaveDocument = {"__meta__":{"kind":"query","name":"MyLeave","hash":"sha256:f5a39098e5d30f883abd0052accff180b38b2766aeaf78296caf500436e0cef6"}} as unknown as TypedDocumentString<MyLeaveQuery, MyLeaveQueryVariables>;
 export const PayProfileTableDocument = {"__meta__":{"kind":"query","name":"PayProfileTable","hash":"sha256:3989e49328ac63b780194fec25e0906117a2e8e36b6a93cff9b3606f1e069c0a"}} as unknown as TypedDocumentString<PayProfileTableQuery, PayProfileTableQueryVariables>;
-export const PayProfileOptionsDocument = {"__meta__":{"kind":"query","name":"PayProfileOptions","hash":"sha256:737c821bc2cc6ff9cbdae31f9c1fc7a56b4b7254f0910822ac1f110c982cb5b8"}} as unknown as TypedDocumentString<PayProfileOptionsQuery, PayProfileOptionsQueryVariables>;
 export const WorkerPayAssignmentsDocument = {"__meta__":{"kind":"query","name":"WorkerPayAssignments","hash":"sha256:1bf635cd5fa402d1768672762dcc0cca45e44bfd28abb08b7c7caa1a7efc6528"}} as unknown as TypedDocumentString<WorkerPayAssignmentsQuery, WorkerPayAssignmentsQueryVariables>;
 export const EffectiveWorkerPayAssignmentDocument = {"__meta__":{"kind":"query","name":"EffectiveWorkerPayAssignment","hash":"sha256:2249cf1dac4bf029650c70b40a3b51522bdfb085d8d4b0783a8e58b649b5524b"}} as unknown as TypedDocumentString<EffectiveWorkerPayAssignmentQuery, EffectiveWorkerPayAssignmentQueryVariables>;
 export const PayProfileAssignmentsDocument = {"__meta__":{"kind":"query","name":"PayProfileAssignments","hash":"sha256:a5cd25fafd7706fafd7a770aec517285d5ed7b8ab090cbd5756fb66f7e528221"}} as unknown as TypedDocumentString<PayProfileAssignmentsQuery, PayProfileAssignmentsQueryVariables>;
@@ -15991,7 +15971,6 @@ export const PayProfileDetailDocument = {"__meta__":{"kind":"query","name":"PayP
 export const RecurringDeductionTableDocument = {"__meta__":{"kind":"query","name":"RecurringDeductionTable","hash":"sha256:2091e3bab8818f8f4a18a10e312c215085875fc70cbcd99bb82c1c2ea4365f31"}} as unknown as TypedDocumentString<RecurringDeductionTableQuery, RecurringDeductionTableQueryVariables>;
 export const RecurringEarningTableDocument = {"__meta__":{"kind":"query","name":"RecurringEarningTable","hash":"sha256:bb6735298137ec6251ef3203a3d02ef9e86f4ec0fe7e6cb6c21de0921df49652"}} as unknown as TypedDocumentString<RecurringEarningTableQuery, RecurringEarningTableQueryVariables>;
 export const PayCodeTableDocument = {"__meta__":{"kind":"query","name":"PayCodeTable","hash":"sha256:1ca53d6794a3244983c50cc59845638848fab2830144fa5bf1bbd5bc316ae7f9"}} as unknown as TypedDocumentString<PayCodeTableQuery, PayCodeTableQueryVariables>;
-export const PayCodeOptionsDocument = {"__meta__":{"kind":"query","name":"PayCodeOptions","hash":"sha256:936a60ce21a22bf3cb1ec09b8e12a1d12b6cffb98550835e69d0255f713dfd72"}} as unknown as TypedDocumentString<PayCodeOptionsQuery, PayCodeOptionsQueryVariables>;
 export const PayAdvanceTableDocument = {"__meta__":{"kind":"query","name":"PayAdvanceTable","hash":"sha256:10c3df571b55032b71491b50a4a24ab051acf8b45a2915d43242a252092c642a"}} as unknown as TypedDocumentString<PayAdvanceTableQuery, PayAdvanceTableQueryVariables>;
 export const EscrowAccountTableDocument = {"__meta__":{"kind":"query","name":"EscrowAccountTable","hash":"sha256:916f0bb7ac7aa5145b3d17132631582632435a983dc6071c949475b621237fdf"}} as unknown as TypedDocumentString<EscrowAccountTableQuery, EscrowAccountTableQueryVariables>;
 export const EscrowAccountDetailDocument = {"__meta__":{"kind":"query","name":"EscrowAccountDetail","hash":"sha256:57e8a0b5d1c97b85fcb0dc2aa0b40ffaec3b9fbfaf20e3d00e4983912db939b9"}} as unknown as TypedDocumentString<EscrowAccountDetailQuery, EscrowAccountDetailQueryVariables>;
@@ -16215,7 +16194,6 @@ export const ClosePerformanceReviewDocument = {"__meta__":{"kind":"mutation","na
 export const DeletePerformanceReviewDocument = {"__meta__":{"kind":"mutation","name":"DeletePerformanceReview","hash":"sha256:7bc8f4751dceb92e8db26ad9b0ca9b5ec34ae318396ec826f0953738c34909ce"}} as unknown as TypedDocumentString<DeletePerformanceReviewMutation, DeletePerformanceReviewMutationVariables>;
 export const PtoPolicyTableDocument = {"__meta__":{"kind":"query","name":"PtoPolicyTable","hash":"sha256:0efb44e4f416a85656cdf8267b6ac87b1371a0912a554333e44452f89c420430"}} as unknown as TypedDocumentString<PtoPolicyTableQuery, PtoPolicyTableQueryVariables>;
 export const PtoPolicyDocument = {"__meta__":{"kind":"query","name":"PtoPolicy","hash":"sha256:335b38a9d27e09e894c4334bf5cdf48e75049cb04f51d1d9ed140124267d1bd0"}} as unknown as TypedDocumentString<PtoPolicyQuery, PtoPolicyQueryVariables>;
-export const PtoPolicyOptionsDocument = {"__meta__":{"kind":"query","name":"PtoPolicyOptions","hash":"sha256:eea8403a82f36bd22f4f7ed3bb96e66c414bf822fb95efe703c606b309fbafc8"}} as unknown as TypedDocumentString<PtoPolicyOptionsQuery, PtoPolicyOptionsQueryVariables>;
 export const WorkerPtoPolicyAssignmentsDocument = {"__meta__":{"kind":"query","name":"WorkerPtoPolicyAssignments","hash":"sha256:fcf14dc0a3ec782be8a5aa87232e8badced8cf0bd3c89fdc0af59bdb29215883"}} as unknown as TypedDocumentString<WorkerPtoPolicyAssignmentsQuery, WorkerPtoPolicyAssignmentsQueryVariables>;
 export const WorkerPtoBalancesDocument = {"__meta__":{"kind":"query","name":"WorkerPtoBalances","hash":"sha256:82a747fab6af45b8de61146243d58bc4a7ed8e3369b53d76b2e9f5b3d27da8fd"}} as unknown as TypedDocumentString<WorkerPtoBalancesQuery, WorkerPtoBalancesQueryVariables>;
 export const WorkerPtoLedgerDocument = {"__meta__":{"kind":"query","name":"WorkerPtoLedger","hash":"sha256:63f7efbaff3c4b175210cfd3d38f2482b60f5af74b5ad9f1b776f2d5bb59fbbf"}} as unknown as TypedDocumentString<WorkerPtoLedgerQuery, WorkerPtoLedgerQueryVariables>;
@@ -16394,7 +16372,6 @@ export const MarkWorkerChecklistItemNotApplicableDocument = {"__meta__":{"kind":
 export const ReopenWorkerChecklistItemDocument = {"__meta__":{"kind":"mutation","name":"ReopenWorkerChecklistItem","hash":"sha256:f4f4e9e31f071740b4809d176bb8998c3ffb80916dff15e0bb84da655c49aafc"}} as unknown as TypedDocumentString<ReopenWorkerChecklistItemMutation, ReopenWorkerChecklistItemMutationVariables>;
 export const CancelWorkerChecklistDocument = {"__meta__":{"kind":"mutation","name":"CancelWorkerChecklist","hash":"sha256:addd413a576790a2a87288624d1cc084e037e2414db1d3d1aac7ef612f045276"}} as unknown as TypedDocumentString<CancelWorkerChecklistMutation, CancelWorkerChecklistMutationVariables>;
 export const WorkerCredentialTypeTableDocument = {"__meta__":{"kind":"query","name":"WorkerCredentialTypeTable","hash":"sha256:a89342f74638193feedaa4f3874a5e6f97e1ffbc23d81e9ac2c90024cf21c60d"}} as unknown as TypedDocumentString<WorkerCredentialTypeTableQuery, WorkerCredentialTypeTableQueryVariables>;
-export const ActiveWorkerCredentialTypesDocument = {"__meta__":{"kind":"query","name":"ActiveWorkerCredentialTypes","hash":"sha256:27ab56f6cbbfa526f821006cecb83c4be41b99d22a12de2080b54ab81645ac1b"}} as unknown as TypedDocumentString<ActiveWorkerCredentialTypesQuery, ActiveWorkerCredentialTypesQueryVariables>;
 export const WorkerCredentialsDocument = {"__meta__":{"kind":"query","name":"WorkerCredentials","hash":"sha256:0320ec07050c260a17fd2849704f8d82aa62d764a60c9b8df3456bbd1ef34d77"}} as unknown as TypedDocumentString<WorkerCredentialsQuery, WorkerCredentialsQueryVariables>;
 export const WorkerCredentialSummaryDocument = {"__meta__":{"kind":"query","name":"WorkerCredentialSummary","hash":"sha256:2d9cb3e5cccc1c8c6f1c33e6844d9a40273d024c9516fa232a9150e68db8a5a8"}} as unknown as TypedDocumentString<WorkerCredentialSummaryQuery, WorkerCredentialSummaryQueryVariables>;
 export const CredentialExpiryForecastDocument = {"__meta__":{"kind":"query","name":"CredentialExpiryForecast","hash":"sha256:fe715ac7fa2322f8e5ad39e40177591a80100a7d3b1e0703e3c6d7f3090e88a0"}} as unknown as TypedDocumentString<CredentialExpiryForecastQuery, CredentialExpiryForecastQueryVariables>;

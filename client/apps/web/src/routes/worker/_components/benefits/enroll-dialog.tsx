@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { BenefitPlanAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
@@ -9,11 +10,10 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   BENEFIT_ENROLLMENTS_KEY,
   enrollBenefit,
-  fetchBenefitPlans,
   TOTAL_COMPENSATION_KEY,
 } from "@/lib/graphql/benefits";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -25,17 +25,13 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import {
-  benefitPlanTypeLabel,
-  COVERAGE_TIER_ORDER,
-  coverageTierLabel,
-} from "@trenova/shared/lib/benefits";
+import { COVERAGE_TIER_ORDER, coverageTierLabel } from "@trenova/shared/lib/benefits";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   benefitEnrollmentFormSchema,
   type BenefitEnrollmentFormValues,
 } from "@trenova/shared/types/benefits";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -78,22 +74,6 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
   }, [open, reset]);
 
   const waive = useWatch({ control, name: "waive" });
-
-  const plansQuery = useQuery({
-    queryKey: ["benefit-plans", "active"],
-    queryFn: ({ signal }) => fetchBenefitPlans({ activeOnly: true }, { signal }),
-    enabled: open,
-  });
-
-  const planOptions = useMemo(
-    () =>
-      (plansQuery.data ?? []).map((plan) => ({
-        value: plan.id,
-        label: `${plan.name} (${plan.planYear})`,
-        description: benefitPlanTypeLabel(plan.planType),
-      })),
-    [plansQuery.data],
-  );
 
   const { mutateAsync, isPending } = useApiMutation<
     { id: string },
@@ -147,11 +127,10 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<BenefitEnrollmentFormValues>
+                <BenefitPlanAutocompleteField<BenefitEnrollmentFormValues>
                   control={control}
                   name="benefitPlanId"
                   label={t("Plan")}
-                  options={planOptions}
                   rules={{ required: true }}
                   placeholder={t("Pick a plan")}
                   description={t(

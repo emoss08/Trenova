@@ -187,6 +187,7 @@ func (r *repository) CourseSelectOptions(
 				cols.DurationMinutes,
 				cols.PassingScore,
 				cols.DueDaysAfterAssignment,
+				cols.ValidityMonths,
 				cols.SortOrder,
 				cols.CreatedAt,
 			},

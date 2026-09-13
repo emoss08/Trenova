@@ -60,6 +60,7 @@ func payCodeSelectOptionItem(entity *driverpay.PayCode) selectOptionConnectionIt
 				"direction":             string(entity.Direction),
 				"taxable":               entity.Taxable,
 				"countsTowardGuarantee": entity.CountsTowardGuarantee,
+				"defaultAmountMinor":    int64PtrValue(entity.DefaultAmountMinor),
 			},
 		},
 		entity.CreatedAt,
@@ -121,4 +122,11 @@ func payProfileSelectOptionItem(entity *driverpay.PayProfile) selectOptionConnec
 		entity.CreatedAt,
 		entity.ID,
 	)
+}
+
+func int64PtrValue(value *int64) any {
+	if value == nil {
+		return nil
+	}
+	return *value
 }

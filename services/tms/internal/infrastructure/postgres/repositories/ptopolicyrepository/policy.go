@@ -131,6 +131,11 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
 				cols.ID,
+				// The tenant keys are selected so Bun can key the Rules
+				// relation; the picker offers a policy's tracked PTO types as
+				// the opening-balance rows to fill in.
+				cols.OrganizationID,
+				cols.BusinessUnitID,
 				cols.Code,
 				cols.Name,
 				cols.Description,
@@ -143,6 +148,7 @@ func (r *repository) SelectOptions(
 			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
+					Relation(buncolgen.PTOPolicyRelations.Rules, orderRules).
 					Order(cols.IsDefault.OrderDesc()).
 					Order(cols.Name.OrderAsc())
 			},

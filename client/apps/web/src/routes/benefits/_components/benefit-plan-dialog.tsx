@@ -2,7 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
-import { PayCodeSelectField } from "@/components/fields/pay-code-select-field";
+import { PayCodeAutocompleteField } from "@/components/autocomplete-fields";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -132,6 +133,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
     onSuccess: () => {
       toast.success(isEdit ? "Plan updated" : "Plan added");
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_PLANS_KEY] });
+      void queryClient.invalidateQueries(selectOptionsQueryFilter("BENEFIT_PLAN"));
       void queryClient.invalidateQueries({ queryKey: [BENEFIT_COSTS_KEY] });
       onOpenChange(false);
     },
@@ -216,11 +218,12 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                 />
               </FormControl>
               <FormControl>
-                <PayCodeSelectField<BenefitPlanFormValues>
+                <PayCodeAutocompleteField<BenefitPlanFormValues>
                   control={control}
                   name="payCodeId"
                   label={t("Pay code")}
-                  required
+                  placeholder={t("Select pay code")}
+                  rules={{ required: true }}
                   description={t(
                     "The line a contribution shows up as on a settlement, so every deduction can be explained.",
                   )}

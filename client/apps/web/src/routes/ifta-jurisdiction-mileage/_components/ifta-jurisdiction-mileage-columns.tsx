@@ -1,6 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
-import { jurisdictionLabel } from "@/components/fields/ifta-jurisdiction-select-field";
+import { jurisdictionLabel } from "@/lib/ifta-jurisdiction-options";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { iftaMileageSourceChoices } from "@/lib/choices";
 import type { TractorRow } from "@/lib/graphql/equipment-table";

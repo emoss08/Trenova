@@ -1,18 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PtoPolicyAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
-import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ptoTypeChoices } from "@/lib/choices";
-import {
-  assignWorkerPtoPolicy,
-  fetchPtoPolicyOptions,
-  PTO_POLICY_OPTIONS_KEY,
-  type PTOPolicyOption,
-} from "@/lib/graphql/pto-policy";
+import { useSelectOption } from "@/hooks/use-select-option";
+import type { SelectOption } from "@/lib/graphql/select-options";
+import { assignWorkerPtoPolicy } from "@/lib/graphql/pto-policy";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -28,7 +24,7 @@ import {
   assignPtoPolicyFormSchema,
   type AssignPTOPolicyFormValues,
 } from "@trenova/shared/types/pto-policy";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -40,8 +36,11 @@ export type AssignPolicyDialogProps = {
   onAssigned?: () => void;
 };
 
-function trackedTypes(policy: PTOPolicyOption | undefined): string[] {
-  return policy ? policy.rules.map((rule) => rule.ptoType) : [];
+function trackedTypes(policy: SelectOption | null): string[] {
+  const types = policy?.meta?.ptoTypes;
+  if (!Array.isArray(types)) return [];
+
+  return types.filter((ptoType): ptoType is string => typeof ptoType === "string");
 }
 
 export function AssignPolicyDialog({
@@ -52,12 +51,6 @@ export function AssignPolicyDialog({
   onAssigned,
 }: AssignPolicyDialogProps) {
   const t = useT();
-
-  const { data: policies = [], isLoading } = useQuery({
-    queryKey: [PTO_POLICY_OPTIONS_KEY],
-    queryFn: ({ signal }) => fetchPtoPolicyOptions({ signal }),
-    enabled: open,
-  });
 
   const form = useForm<AssignPTOPolicyFormValues>({
     resolver: zodResolver(assignPtoPolicyFormSchema) as Resolver<AssignPTOPolicyFormValues>,
@@ -78,10 +71,7 @@ export function AssignPolicyDialog({
     }
   }, [open, reset]);
 
-  const selectedPolicy = useMemo(
-    () => policies.find((policy) => policy.id === selectedPolicyId),
-    [policies, selectedPolicyId],
-  );
+  const { option: selectedPolicy } = useSelectOption("PTO_POLICY", selectedPolicyId);
 
   useEffect(() => {
     const types = trackedTypes(selectedPolicy);
@@ -94,16 +84,11 @@ export function AssignPolicyDialog({
     );
   }, [selectedPolicy, setValue]);
 
-  const policyOptions = useMemo(
-    () =>
-      policies
-        .filter((policy) => policy.id !== currentPolicyId)
-        .map((policy) => ({
-          value: policy.id,
-          label: policy.isDefault ? `${policy.name} (default)` : policy.name,
-          description: policy.code,
-        })),
-    [currentPolicyId, policies],
+  // The policy already assigned is left out: "changing" a worker onto the
+  // policy they are already on is not a change the server will accept.
+  const hideCurrentPolicy = useCallback(
+    (option: SelectOption) => option.id !== currentPolicyId,
+    [currentPolicyId],
   );
 
   const { mutateAsync, isPending } = useApiMutation<
@@ -170,13 +155,13 @@ export function AssignPolicyDialog({
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<AssignPTOPolicyFormValues>
+                <PtoPolicyAutocompleteField<AssignPTOPolicyFormValues>
                   control={control}
                   name="ptoPolicyId"
                   label={t("Policy")}
-                  options={policyOptions}
                   rules={{ required: true }}
-                  placeholder={isLoading ? "Loading policies..." : "Pick a policy"}
+                  placeholder={t("Pick a policy")}
+                  filterOption={hideCurrentPolicy}
                   description={t("Decides how time off accrues and which PTO types are tracked.")}
                 />
               </FormControl>

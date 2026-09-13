@@ -90,12 +90,6 @@ query WorkerCredentialTypeTable(
   }
 }
 
-query ActiveWorkerCredentialTypes {
-  activeWorkerCredentialTypes {
-    ...WorkerCredentialTypeFields
-  }
-}
-
 query WorkerCredentials($workerId: ID!, $includeArchived: Boolean) {
   workerCredentials(workerId: $workerId, includeArchived: $includeArchived) {
     ...WorkerCredentialFields
