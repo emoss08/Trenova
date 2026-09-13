@@ -15,6 +15,10 @@ type ListCredentialTypesRequest struct {
 	Category string                   `json:"category"`
 }
 
+type WorkerCredentialTypeSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
 type GetCredentialTypeByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -129,6 +133,10 @@ type WorkerCredentialRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*worker.WorkerCredentialType, error)
+	TypeSelectOptions(
+		ctx context.Context,
+		req *WorkerCredentialTypeSelectOptionsRequest,
+	) (*pagination.ListResult[*worker.WorkerCredentialType], error)
 	GetTypeByID(
 		ctx context.Context,
 		req *GetCredentialTypeByIDRequest,

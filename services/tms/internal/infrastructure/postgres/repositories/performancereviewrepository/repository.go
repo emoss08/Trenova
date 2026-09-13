@@ -153,6 +153,43 @@ func (r *repository) ListActiveTemplates(
 	return entities, nil
 }
 
+func (r *repository) TemplateSelectOptions(
+	ctx context.Context,
+	req *repositories.ReviewTemplateSelectOptionsRequest,
+) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
+	cols := buncolgen.PerformanceReviewTemplateColumns
+	return dbhelper.SelectOptions[*worker.PerformanceReviewTemplate](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.IsDefault,
+				cols.CadenceMonths,
+				cols.Items,
+				cols.CreatedAt,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive).
+					Order(cols.IsDefault.OrderDesc()).
+					Order(cols.Name.OrderAsc())
+			},
+			EntityName: "PerformanceReviewTemplate",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
+			},
+		},
+	)
+}
+
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
 	req *repositories.GetReviewTemplateByIDRequest,

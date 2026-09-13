@@ -1,17 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { TrainingCourseAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
-import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  assignWorkerTraining,
-  fetchActiveTrainingCourses,
-  TRAINING_COURSES_KEY,
-  type TrainingCourseRow,
-  type WorkerTrainingRecordRow,
-} from "@/lib/graphql/worker-training";
+import { useSelectOption } from "@/hooks/use-select-option";
+import type { SelectOption } from "@/lib/graphql/select-options";
+import { selectOptionMetaNumber } from "@/lib/select-option-meta";
+import { assignWorkerTraining, type WorkerTrainingRecordRow } from "@/lib/graphql/worker-training";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -25,11 +21,9 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { getTodayDate } from "@trenova/shared/lib/date";
 import {
   assignTrainingFormSchema,
-  TRAINING_DELIVERY_LABELS,
   type AssignTrainingFormValues,
-  type TrainingDelivery,
 } from "@trenova/shared/types/worker-training";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useTrainingInvalidation } from "./use-training-invalidation";
@@ -56,13 +50,6 @@ export function AssignTrainingDialog({
   const t = useT();
 
   const invalidate = useTrainingInvalidation(workerId);
-  const coursesQuery = useQuery({
-    queryKey: [TRAINING_COURSES_KEY],
-    queryFn: ({ signal }) => fetchActiveTrainingCourses({ signal }),
-    enabled: open,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const form = useForm<AssignTrainingFormValues>({
     resolver: zodResolver(assignTrainingFormSchema) as Resolver<AssignTrainingFormValues>,
     defaultValues: { courseId: courseId ?? "", dueAt: null, notes: null },
@@ -74,31 +61,26 @@ export function AssignTrainingDialog({
   }, [open, courseId, reset]);
 
   const selectedId = useWatch({ control, name: "courseId" });
-  const courses = useMemo(
-    () => (coursesQuery.data ?? []).filter((course) => !openCourseIds.has(course.id)),
-    [coursesQuery.data, openCourseIds],
+  const { option: selected } = useSelectOption("TRAINING_COURSE", selectedId);
+  const dueDaysAfterAssignment = selected
+    ? (selectOptionMetaNumber(selected, "dueDaysAfterAssignment") ?? 0)
+    : 0;
+
+  // Courses the worker already has open are hidden rather than rejected on
+  // submit: assigning one twice is the mistake this dialog is most likely to
+  // invite.
+  const hideAssignedCourses = useCallback(
+    (option: SelectOption) => !openCourseIds.has(option.id),
+    [openCourseIds],
   );
-  const selected = courses.find((course) => course.id === selectedId);
 
   useEffect(() => {
     if (!selected) return;
     setValue(
       "dueAt",
-      selected.dueDaysAfterAssignment > 0
-        ? getTodayDate() + selected.dueDaysAfterAssignment * DAY
-        : null,
+      dueDaysAfterAssignment > 0 ? getTodayDate() + dueDaysAfterAssignment * DAY : null,
     );
-  }, [selected, setValue]);
-
-  const options = useMemo(
-    () =>
-      courses.map((course) => ({
-        value: course.id,
-        label: course.name,
-        description: describeCourse(course),
-      })),
-    [courses],
-  );
+  }, [selected, dueDaysAfterAssignment, setValue]);
 
   const { mutateAsync, isPending } = useApiMutation<
     WorkerTrainingRecordRow,
@@ -147,18 +129,16 @@ export function AssignTrainingDialog({
           >
             <FormGroup className="pb-2" cols={2}>
               <FormControl cols="full">
-                <SelectField<AssignTrainingFormValues>
+                <TrainingCourseAutocompleteField<AssignTrainingFormValues>
                   control={control}
                   name="courseId"
                   label={t("Course")}
                   placeholder={t("Select a course")}
-                  options={options}
                   rules={{ required: true }}
+                  filterOption={hideAssignedCourses}
+                  noResultsMessage={t("Every active course is already assigned to this worker.")}
                   description={
-                    selected?.description ??
-                    (courses.length === 0 && !coursesQuery.isLoading
-                      ? "Every active course is already assigned to this worker."
-                      : "Courses with an open assignment are not listed.")
+                    selected?.description || t("Courses with an open assignment are not listed.")
                   }
                 />
               </FormControl>
@@ -169,9 +149,9 @@ export function AssignTrainingDialog({
                   label={t("Due")}
                   placeholder={t("No due date")}
                   description={
-                    selected && selected.dueDaysAfterAssignment > 0
-                      ? `Defaults to ${selected.dueDaysAfterAssignment} days from today.`
-                      : "Leave empty for no deadline; a date in the past is rejected."
+                    dueDaysAfterAssignment > 0
+                      ? t("Defaults to {0} days from today.", String(dueDaysAfterAssignment))
+                      : t("Leave empty for no deadline; a date in the past is rejected.")
                   }
                 />
               </FormControl>
@@ -190,12 +170,7 @@ export function AssignTrainingDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
-              <Button
-                type="submit"
-                isLoading={isPending}
-                loadingText={t("Assigning...")}
-                disabled={courses.length === 0}
-              >
+              <Button type="submit" isLoading={isPending} loadingText={t("Assigning...")}>
                 {t("Assign")}
               </Button>
             </DialogFooter>
@@ -204,12 +179,4 @@ export function AssignTrainingDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function describeCourse(course: TrainingCourseRow): string {
-  const parts = [TRAINING_DELIVERY_LABELS[course.delivery as TrainingDelivery]];
-  if (course.durationMinutes > 0) parts.push(`${course.durationMinutes} min`);
-  if (course.passingScore) parts.push(`pass ≥ ${Number(course.passingScore).toFixed(0)}%`);
-  if (course.validityMonths) parts.push(`valid ${course.validityMonths} mo`);
-  return parts.join(" · ");
 }

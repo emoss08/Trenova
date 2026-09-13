@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
-import { useIftaJurisdictionOptions } from "@/components/fields/ifta-jurisdiction-select-field";
+import { useIftaJurisdictionOptions } from "@/lib/ifta-jurisdiction-options";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { handleMutationError } from "@/hooks/use-api-mutation";

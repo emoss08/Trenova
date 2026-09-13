@@ -21,6 +21,10 @@ type GetPTOPolicyByIDRequest struct {
 	IncludeRules bool                  `json:"includeRules"`
 }
 
+type PTOPolicySelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
 type PTOPolicyCodeExistsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Code       string                `json:"code"`
@@ -74,6 +78,10 @@ type PTOPolicyRepository interface {
 		ctx context.Context,
 		req *ListPTOPoliciesRequest,
 	) (*pagination.CursorListResult[*worker.PTOPolicy], error)
+	SelectOptions(
+		ctx context.Context,
+		req *PTOPolicySelectOptionsRequest,
+	) (*pagination.ListResult[*worker.PTOPolicy], error)
 	GetByID(ctx context.Context, req *GetPTOPolicyByIDRequest) (*worker.PTOPolicy, error)
 	GetDefault(ctx context.Context, tenantInfo pagination.TenantInfo) (*worker.PTOPolicy, error)
 	CodeExists(ctx context.Context, req *PTOPolicyCodeExistsRequest) (bool, error)

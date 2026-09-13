@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
+import { selectOptionsQueryFilter } from "@/lib/select-options-cache";
 import {
   archivePerformanceReviewTemplate,
   restorePerformanceReviewTemplate,
@@ -37,6 +38,10 @@ export default function ReviewTemplateTable() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [REVIEW_TEMPLATE_LIST_KEY], refetchType: "all" }),
       queryClient.invalidateQueries({ queryKey: [REVIEW_TEMPLATES_KEY], refetchType: "all" }),
+      queryClient.invalidateQueries({
+        ...selectOptionsQueryFilter("PERFORMANCE_REVIEW_TEMPLATE"),
+        refetchType: "all",
+      }),
     ]);
   }, [queryClient]);
 
