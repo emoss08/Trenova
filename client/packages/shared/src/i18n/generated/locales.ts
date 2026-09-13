@@ -17,12 +17,12 @@ export const LOCALE_NAMES: Record<Locale, string> = {
 };
 
 // A flag is a country, not a language. These name the region each translation is written
-// for, and exist for the language switcher alone - never to infer a locale from.
-export const LOCALE_FLAGS: Record<Locale, string> = {
-  "en": "🇺🇸",
-  "es": "🇲🇽",
-  "zh-TW": "🇹🇼",
-  "zh-CN": "🇨🇳",
+// for, and exist to pick the switcher's flag alone - never to infer a locale from.
+export const LOCALE_REGIONS: Record<Locale, string> = {
+  "en": "US",
+  "es": "MX",
+  "zh-TW": "TW",
+  "zh-CN": "CN",
 };
 
 export const CATALOG_LOADERS: Record<Locale, () => Promise<Record<string, string>>> = {
