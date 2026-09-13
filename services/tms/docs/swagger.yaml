@@ -7747,6 +7747,7 @@ definitions:
             - Exception
             - SentBackToOps
             - Approved
+            - Posted
             - Canceled
         type: string
         x-enum-varnames:
@@ -7757,6 +7758,7 @@ definitions:
             - BillingTransferException
             - BillingTransferSentBackToOps
             - BillingTransferApproved
+            - BillingTransferPosted
             - BillingTransferCanceled
     github_com_emoss08_trenova_internal_core_domain_shipment.CarrierAssignment:
         properties:
