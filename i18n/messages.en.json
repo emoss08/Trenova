@@ -25374,12 +25374,13 @@
     ]
   },
   "Choose a credential type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/worker"
     ]
   },
   "Choose a customer above and their receivables profile, running ledger and payment history are laid out here.": {
@@ -33434,6 +33435,15 @@
       "domain/permission"
     ]
   },
+  "Courses with an open assignment are not listed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Cover": {
     "sites": 3,
     "scope": [
@@ -38422,7 +38432,25 @@
       "routes/worker"
     ]
   },
+  "Decides what must be filled in and which profile field, if any, it backs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Decides which balance the days are taken from.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Decides which items are rated and how they are weighted.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -39551,6 +39579,15 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "Defaults to {0} days from today.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Defaults used when building a service failure EDI 214 payload.": {
@@ -45237,6 +45274,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Drag to resize, double-click to reset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Draw": {
@@ -52054,6 +52100,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Every active course is already assigned to this worker.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Every active worker is compliant, in date and off the watch list.": {
@@ -73235,6 +73290,15 @@
       "domain/permission"
     ]
   },
+  "Leave empty for no deadline; a date in the past is rejected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Leave empty for permanent assignment": {
     "sites": 1,
     "scope": [
@@ -76171,6 +76235,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Locked to the assignment being closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "Locked — shipment has been invoiced": {
@@ -84426,6 +84499,15 @@
       "routes/random-testing"
     ]
   },
+  "No active templates. Create one under Review Templates first.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "No active, assignable drivers match the current filters.": {
     "sites": 1,
     "scope": [
@@ -86424,16 +86506,6 @@
     ],
     "areas": [
       "service/driversettlementservice"
-    ]
-  },
-  "No pay code": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/driver-settlement",
-      "routes/settlement-dispute"
     ]
   },
   "No pay profile assigned": {
@@ -98426,12 +98498,14 @@
     ]
   },
   "Pay Code": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pay-code"
+      "routes/pay-code",
+      "routes/recurring-deduction",
+      "routes/recurring-earning"
     ]
   },
   "Pay Codes": {
@@ -100971,6 +101045,15 @@
     ]
   },
   "Pick a plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Pick a policy": {
     "sites": 1,
     "scope": [
       "ts"
@@ -123563,6 +123646,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "Select a template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Select a template version and segment to edit.": {
     "sites": 1,
     "scope": [
@@ -124471,6 +124563,17 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Select pay code": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/benefits",
+      "routes/recurring-deduction",
+      "routes/recurring-earning"
     ]
   },
   "Select pay profile": {
@@ -138890,6 +138993,15 @@
       "routes/worker"
     ]
   },
+  "The course this result is for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "The courses workers can be put through — which are required for each driver type, how they are delivered, what passes, and how long a completion stays valid.": {
     "sites": 1,
     "scope": [
@@ -150544,6 +150656,15 @@
     ],
     "areas": [
       "routes/worker-credential-type"
+    ]
+  },
+  "Typically valid for {0} months.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
     ]
   },
   "U.S. state for the billing address. Used for tax jurisdiction determination and regional reporting.": {
