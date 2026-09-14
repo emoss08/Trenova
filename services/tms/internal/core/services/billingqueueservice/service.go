@@ -698,7 +698,7 @@ func (s *service) UpdateCharges(
 	}
 
 	freight := shp.FreightChargeAmount.Decimal
-	otherTotal := shipmentcommercial.CalculateAdditionalCharges(shp.AdditionalCharges, freight)
+	otherTotal := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
 	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
 

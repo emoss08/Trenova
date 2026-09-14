@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:7c92f4240029945ed4716f3fe9fba98d30e9c427bc8d2f8368ab19e128039df8"
+const Version = "sha256:bc440c547dcae66bb93fcb688b4250453ed78950c3ef7a79b9c54fa1d651549c"
 
 var Default = indexed(defaultCatalog)
 
@@ -8859,6 +8859,85 @@ var defaultCatalog = Catalog{
 					Label:        "Amount Minor",
 					Type:         FieldInt,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "accessorialChargeId",
+					Column:       buncolgen.NewColumn("accessorial_charge_id", "invl"),
+					Label:        "Accessorial Charge ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "chargeCode",
+					Column:       buncolgen.NewColumn("charge_code", "invl"),
+					Label:        "Charge Code",
+					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:      "chargeMethod",
+					Column:   buncolgen.NewColumn("charge_method", "invl"),
+					Label:    "Charge Method",
+					Type:     FieldEnum,
+					Nullable: true,
+					EnumValues: []EnumValue{
+						{Value: "Flat", Label: "Flat"},
+						{Value: "PerUnit", Label: "Per Unit"},
+						{Value: "Percentage", Label: "Percentage"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:      "rateUnit",
+					Column:   buncolgen.NewColumn("rate_unit", "invl"),
+					Label:    "Rate Unit",
+					Type:     FieldEnum,
+					Nullable: true,
+					EnumValues: []EnumValue{
+						{Value: "Mile", Label: "Mile"},
+						{Value: "Hour", Label: "Hour"},
+						{Value: "Day", Label: "Day"},
+						{Value: "Stop", Label: "Stop"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rate",
+					Column:       buncolgen.NewColumn("rate", "invl"),
+					Label:        "Rate",
+					Type:         FieldDecimal,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+				},
+				{
+					Key:          "rateBasisAmount",
+					Column:       buncolgen.NewColumn("rate_basis_amount", "invl"),
+					Label:        "Rate Basis Amount",
+					Type:         FieldDecimal,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+				},
+				{
+					Key:          "formulaTemplateName",
+					Column:       buncolgen.NewColumn("formula_template_name", "invl"),
+					Label:        "Formula Template Name",
+					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
 				},

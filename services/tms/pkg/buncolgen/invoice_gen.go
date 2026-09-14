@@ -1581,41 +1581,55 @@ var InvoiceLineTable = TableInfo{
 //	q.Where(InvoiceLineColumns.ID.Eq(), id)           // WHERE invl.id = ?
 //	q.Order(InvoiceLineColumns.CreatedAt.OrderDesc())  // ORDER BY invl.created_at DESC
 var InvoiceLineColumns = struct {
-	ID                Column // "id" → qualified: "invl.id"
-	OrganizationID    Column // "organization_id" → qualified: "invl.organization_id"
-	BusinessUnitID    Column // "business_unit_id" → qualified: "invl.business_unit_id"
-	InvoiceID         Column // "invoice_id" → qualified: "invl.invoice_id"
-	ShipmentID        Column // "shipment_id" → qualified: "invl.shipment_id"
-	ShipmentProNumber Column // "shipment_pro_number" → qualified: "invl.shipment_pro_number"
-	ShipmentBOL       Column // "shipment_bol" → qualified: "invl.shipment_bol"
-	LineNumber        Column // "line_number" → qualified: "invl.line_number"
-	Type              Column // "type" → qualified: "invl.type"
-	Description       Column // "description" → qualified: "invl.description"
-	Quantity          Column // "quantity" → qualified: "invl.quantity"
-	UnitPrice         Column // "unit_price" → qualified: "invl.unit_price"
-	Amount            Column // "amount" → qualified: "invl.amount"
-	AmountMinor       Column // "amount_minor" → qualified: "invl.amount_minor"
-	Version           Column // "version" → qualified: "invl.version"
-	CreatedAt         Column // "created_at" → qualified: "invl.created_at"
-	UpdatedAt         Column // "updated_at" → qualified: "invl.updated_at"
+	ID                  Column // "id" → qualified: "invl.id"
+	OrganizationID      Column // "organization_id" → qualified: "invl.organization_id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "invl.business_unit_id"
+	InvoiceID           Column // "invoice_id" → qualified: "invl.invoice_id"
+	ShipmentID          Column // "shipment_id" → qualified: "invl.shipment_id"
+	ShipmentProNumber   Column // "shipment_pro_number" → qualified: "invl.shipment_pro_number"
+	ShipmentBOL         Column // "shipment_bol" → qualified: "invl.shipment_bol"
+	LineNumber          Column // "line_number" → qualified: "invl.line_number"
+	Type                Column // "type" → qualified: "invl.type"
+	Description         Column // "description" → qualified: "invl.description"
+	Quantity            Column // "quantity" → qualified: "invl.quantity"
+	UnitPrice           Column // "unit_price" → qualified: "invl.unit_price"
+	Amount              Column // "amount" → qualified: "invl.amount"
+	AmountMinor         Column // "amount_minor" → qualified: "invl.amount_minor"
+	AccessorialChargeID Column // "accessorial_charge_id" → qualified: "invl.accessorial_charge_id"
+	ChargeCode          Column // "charge_code" → qualified: "invl.charge_code"
+	ChargeMethod        Column // "charge_method" → qualified: "invl.charge_method"
+	RateUnit            Column // "rate_unit" → qualified: "invl.rate_unit"
+	Rate                Column // "rate" → qualified: "invl.rate"
+	RateBasisAmount     Column // "rate_basis_amount" → qualified: "invl.rate_basis_amount"
+	FormulaTemplateName Column // "formula_template_name" → qualified: "invl.formula_template_name"
+	Version             Column // "version" → qualified: "invl.version"
+	CreatedAt           Column // "created_at" → qualified: "invl.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "invl.updated_at"
 }{
-	ID:                NewColumn("id", "invl"),
-	OrganizationID:    NewColumn("organization_id", "invl"),
-	BusinessUnitID:    NewColumn("business_unit_id", "invl"),
-	InvoiceID:         NewColumn("invoice_id", "invl"),
-	ShipmentID:        NewColumn("shipment_id", "invl"),
-	ShipmentProNumber: NewColumn("shipment_pro_number", "invl"),
-	ShipmentBOL:       NewColumn("shipment_bol", "invl"),
-	LineNumber:        NewColumn("line_number", "invl"),
-	Type:              NewColumn("type", "invl"),
-	Description:       NewColumn("description", "invl"),
-	Quantity:          NewColumn("quantity", "invl"),
-	UnitPrice:         NewColumn("unit_price", "invl"),
-	Amount:            NewColumn("amount", "invl"),
-	AmountMinor:       NewColumn("amount_minor", "invl"),
-	Version:           NewColumn("version", "invl"),
-	CreatedAt:         NewColumn("created_at", "invl"),
-	UpdatedAt:         NewColumn("updated_at", "invl"),
+	ID:                  NewColumn("id", "invl"),
+	OrganizationID:      NewColumn("organization_id", "invl"),
+	BusinessUnitID:      NewColumn("business_unit_id", "invl"),
+	InvoiceID:           NewColumn("invoice_id", "invl"),
+	ShipmentID:          NewColumn("shipment_id", "invl"),
+	ShipmentProNumber:   NewColumn("shipment_pro_number", "invl"),
+	ShipmentBOL:         NewColumn("shipment_bol", "invl"),
+	LineNumber:          NewColumn("line_number", "invl"),
+	Type:                NewColumn("type", "invl"),
+	Description:         NewColumn("description", "invl"),
+	Quantity:            NewColumn("quantity", "invl"),
+	UnitPrice:           NewColumn("unit_price", "invl"),
+	Amount:              NewColumn("amount", "invl"),
+	AmountMinor:         NewColumn("amount_minor", "invl"),
+	AccessorialChargeID: NewColumn("accessorial_charge_id", "invl"),
+	ChargeCode:          NewColumn("charge_code", "invl"),
+	ChargeMethod:        NewColumn("charge_method", "invl"),
+	RateUnit:            NewColumn("rate_unit", "invl"),
+	Rate:                NewColumn("rate", "invl"),
+	RateBasisAmount:     NewColumn("rate_basis_amount", "invl"),
+	FormulaTemplateName: NewColumn("formula_template_name", "invl"),
+	Version:             NewColumn("version", "invl"),
+	CreatedAt:           NewColumn("created_at", "invl"),
+	UpdatedAt:           NewColumn("updated_at", "invl"),
 }
 
 // InvoiceLineFieldMap maps JSON API field names to database column names.
@@ -1623,23 +1637,30 @@ var InvoiceLineColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by InvoiceLine.GetStaticFieldMap().
 var InvoiceLineFieldMap = map[string]string{
-	"id":                "id",
-	"organizationId":    "organization_id",
-	"businessUnitId":    "business_unit_id",
-	"invoiceId":         "invoice_id",
-	"shipmentId":        "shipment_id",
-	"shipmentProNumber": "shipment_pro_number",
-	"shipmentBol":       "shipment_bol",
-	"lineNumber":        "line_number",
-	"type":              "type",
-	"description":       "description",
-	"quantity":          "quantity",
-	"unitPrice":         "unit_price",
-	"amount":            "amount",
-	"amountMinor":       "amount_minor",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":                  "id",
+	"organizationId":      "organization_id",
+	"businessUnitId":      "business_unit_id",
+	"invoiceId":           "invoice_id",
+	"shipmentId":          "shipment_id",
+	"shipmentProNumber":   "shipment_pro_number",
+	"shipmentBol":         "shipment_bol",
+	"lineNumber":          "line_number",
+	"type":                "type",
+	"description":         "description",
+	"quantity":            "quantity",
+	"unitPrice":           "unit_price",
+	"amount":              "amount",
+	"amountMinor":         "amount_minor",
+	"accessorialChargeId": "accessorial_charge_id",
+	"chargeCode":          "charge_code",
+	"chargeMethod":        "charge_method",
+	"rateUnit":            "rate_unit",
+	"rate":                "rate",
+	"rateBasisAmount":     "rate_basis_amount",
+	"formulaTemplateName": "formula_template_name",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
 }
 
 // InvoiceLineInsertableColumns lists column names suitable for INSERT statements on the "invoice_lines" table.
@@ -1659,6 +1680,13 @@ var InvoiceLineInsertableColumns = []string{
 	"unit_price",
 	"amount",
 	"amount_minor",
+	"accessorial_charge_id",
+	"charge_code",
+	"charge_method",
+	"rate_unit",
+	"rate",
+	"rate_basis_amount",
+	"formula_template_name",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1725,23 +1753,30 @@ func InvoiceLineApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bu
 //	InvoiceLineFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var InvoiceLineFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	InvoiceID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
-	ShipmentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	ShipmentProNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
-	ShipmentBOL       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
-	LineNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
-	Type              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Quantity          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
-	UnitPrice         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
-	Amount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	AmountMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	ShipmentID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	ShipmentProNumber   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
+	ShipmentBOL         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
+	LineNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
+	Type                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Quantity            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
+	UnitPrice           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
+	Amount              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	AmountMinor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
+	AccessorialChargeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
+	ChargeCode          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargeCode" → DB: "charge_code"
+	ChargeMethod        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargeMethod" → DB: "charge_method"
+	RateUnit            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
+	Rate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
+	RateBasisAmount     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateBasisAmount" → DB: "rate_basis_amount"
+	FormulaTemplateName func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateName" → DB: "formula_template_name"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1785,8 +1820,240 @@ var InvoiceLineFilter = struct {
 	AmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("amountMinor", op, value)
 	},
+	AccessorialChargeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accessorialChargeId", op, value)
+	},
+	ChargeCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("chargeCode", op, value)
+	},
+	ChargeMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("chargeMethod", op, value)
+	},
+	RateUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rateUnit", op, value)
+	},
+	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rate", op, value)
+	},
+	RateBasisAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rateBasisAmount", op, value)
+	},
+	FormulaTemplateName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("formulaTemplateName", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// InvoiceShare — table "invoice_shares", alias "invsh"
+// ---------------------------------------------------------------------------
+
+// InvoiceShareTable holds the table name, alias, and primary key columns
+// for the "invoice_shares" table. The alias "invsh" is used in all generated
+// SQL fragments (e.g. "invsh.id = ?").
+var InvoiceShareTable = TableInfo{
+	Name:       "invoice_shares",
+	Alias:      "invsh",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// InvoiceShareColumns provides type-safe column references for the "invoice_shares" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(InvoiceShareColumns.ID.String())
+//	// SELECT invsh.id FROM invoice_shares AS invsh
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(InvoiceShareColumns.ID.Eq(), id)           // WHERE invsh.id = ?
+//	q.Order(InvoiceShareColumns.CreatedAt.OrderDesc())  // ORDER BY invsh.created_at DESC
+var InvoiceShareColumns = struct {
+	ID             Column // "id" → qualified: "invsh.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "invsh.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "invsh.organization_id"
+	InvoiceID      Column // "invoice_id" → qualified: "invsh.invoice_id"
+	SharedWithID   Column // "shared_with_id" → qualified: "invsh.shared_with_id"
+	SharedByID     Column // "shared_by_id" → qualified: "invsh.shared_by_id"
+	Note           Column // "note" → qualified: "invsh.note"
+	Tab            Column // "tab" → qualified: "invsh.tab"
+	ShareCount     Column // "share_count" → qualified: "invsh.share_count"
+	FirstSharedAt  Column // "first_shared_at" → qualified: "invsh.first_shared_at"
+	LastSharedAt   Column // "last_shared_at" → qualified: "invsh.last_shared_at"
+	CreatedAt      Column // "created_at" → qualified: "invsh.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "invsh.updated_at"
+}{
+	ID:             NewColumn("id", "invsh"),
+	BusinessUnitID: NewColumn("business_unit_id", "invsh"),
+	OrganizationID: NewColumn("organization_id", "invsh"),
+	InvoiceID:      NewColumn("invoice_id", "invsh"),
+	SharedWithID:   NewColumn("shared_with_id", "invsh"),
+	SharedByID:     NewColumn("shared_by_id", "invsh"),
+	Note:           NewColumn("note", "invsh"),
+	Tab:            NewColumn("tab", "invsh"),
+	ShareCount:     NewColumn("share_count", "invsh"),
+	FirstSharedAt:  NewColumn("first_shared_at", "invsh"),
+	LastSharedAt:   NewColumn("last_shared_at", "invsh"),
+	CreatedAt:      NewColumn("created_at", "invsh"),
+	UpdatedAt:      NewColumn("updated_at", "invsh"),
+}
+
+// InvoiceShareFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by InvoiceShare.GetStaticFieldMap().
+var InvoiceShareFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"invoiceId":      "invoice_id",
+	"sharedWithId":   "shared_with_id",
+	"sharedById":     "shared_by_id",
+	"note":           "note",
+	"tab":            "tab",
+	"shareCount":     "share_count",
+	"firstSharedAt":  "first_shared_at",
+	"lastSharedAt":   "last_shared_at",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// InvoiceShareInsertableColumns lists column names suitable for INSERT statements on the "invoice_shares" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var InvoiceShareInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"invoice_id",
+	"shared_with_id",
+	"shared_by_id",
+	"note",
+	"tab",
+	"share_count",
+	"first_shared_at",
+	"last_shared_at",
+	"created_at",
+	"updated_at",
+}
+
+// InvoiceShareRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(InvoiceShareRelations.SharedWith)
+//	// Bun eager-loads the SharedWith association via a separate query
+var InvoiceShareRelations = struct {
+	SharedWith string
+	SharedBy   string
+}{
+	SharedWith: "SharedWith",
+	SharedBy:   "SharedBy",
+}
+
+// InvoiceShareScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE invsh.organization_id = ? AND invsh.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.InvoiceShareScopeTenant(sq, ti).
+//		Where(buncolgen.InvoiceShareColumns.ID.Eq(), id)
+func InvoiceShareScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, InvoiceShareColumns.OrganizationID, InvoiceShareColumns.BusinessUnitID, ti)
+}
+
+// InvoiceShareScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.InvoiceShareScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.InvoiceShareColumns.ID.In(), bun.List(ids))
+//	})
+func InvoiceShareScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, InvoiceShareColumns.OrganizationID, InvoiceShareColumns.BusinessUnitID, ti)
+}
+
+// InvoiceShareScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.InvoiceShareScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.InvoiceShareColumns.ID.Eq(), id)
+//	})
+func InvoiceShareScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, InvoiceShareColumns.OrganizationID, InvoiceShareColumns.BusinessUnitID, ti)
+}
+
+// InvoiceShareApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.InvoiceShareApplyTenant(tenantInfo))
+func InvoiceShareApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(InvoiceShareColumns.OrganizationID, InvoiceShareColumns.BusinessUnitID, ti)
+}
+
+// InvoiceShareFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_shares" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	InvoiceShareFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var InvoiceShareFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	SharedWithID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sharedWithId" → DB: "shared_with_id"
+	SharedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sharedById" → DB: "shared_by_id"
+	Note           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "note" → DB: "note"
+	Tab            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tab" → DB: "tab"
+	ShareCount     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shareCount" → DB: "share_count"
+	FirstSharedAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstSharedAt" → DB: "first_shared_at"
+	LastSharedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSharedAt" → DB: "last_shared_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	SharedWithID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sharedWithId", op, value)
+	},
+	SharedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sharedById", op, value)
+	},
+	Note: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("note", op, value)
+	},
+	Tab: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tab", op, value)
+	},
+	ShareCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shareCount", op, value)
+	},
+	FirstSharedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("firstSharedAt", op, value)
+	},
+	LastSharedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastSharedAt", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

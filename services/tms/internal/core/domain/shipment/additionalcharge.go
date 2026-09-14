@@ -106,6 +106,38 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 // Exactly one owner column is set on any system charge, which the database
 // enforces. That is what keeps three engines writing charges from ever billing
 // the same thing twice.
+func (c *AdditionalCharge) Total(baseCharge decimal.Decimal) decimal.Decimal {
+	if c == nil {
+		return decimal.Zero
+	}
+
+	switch c.Method {
+	case accessorialcharge.MethodFlat:
+		return c.Amount.Mul(decimal.NewFromInt32(int32(max(c.Unit, 1))))
+	case accessorialcharge.MethodPerUnit:
+		if c.Unit < 1 {
+			return decimal.Zero
+		}
+		return c.Amount.Mul(decimal.NewFromInt32(int32(c.Unit)))
+	case accessorialcharge.MethodPercentage:
+		return baseCharge.Mul(c.Amount.Div(decimal.NewFromInt(100)))
+	default:
+		return decimal.Zero
+	}
+}
+
+func AdditionalChargesTotal(
+	charges []*AdditionalCharge,
+	baseCharge decimal.Decimal,
+) decimal.Decimal {
+	total := decimal.Zero
+	for _, charge := range charges {
+		total = total.Add(charge.Total(baseCharge))
+	}
+
+	return total
+}
+
 func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
 	for _, charge := range original {

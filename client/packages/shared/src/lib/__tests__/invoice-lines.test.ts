@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   ORDER_CHARGES_GROUP_KEY,
+  chargeComposition,
+  describeChargeCalculation,
   groupInvoiceLinesByShipment,
+  hasUnitBreakdown,
 } from "@trenova/shared/lib/invoice-lines";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { InvoiceLine } from "@trenova/shared/types/invoice";
 
 function line(overrides: Partial<InvoiceLine> & Pick<InvoiceLine, "id" | "lineNumber">) {
@@ -112,5 +116,180 @@ describe("groupInvoiceLinesByShipment", () => {
 
   it("returns no groups for no lines", () => {
     expect(groupInvoiceLinesByShipment([])).toEqual([]);
+  });
+});
+
+describe("hasUnitBreakdown", () => {
+  it("is false for a flat charge whose one unit is the whole amount", () => {
+    expect(hasUnitBreakdown(line({ id: "l1", lineNumber: 1 }))).toBe(false);
+  });
+
+  it("is true when more than one unit was billed", () => {
+    expect(
+      hasUnitBreakdown(line({ id: "l1", lineNumber: 1, quantity: 3, unitPrice: 50, amount: 150 })),
+    ).toBe(true);
+  });
+
+  it("is true for a fractional quantity", () => {
+    expect(
+      hasUnitBreakdown(
+        line({ id: "l1", lineNumber: 1, quantity: 0.5, unitPrice: 200, amount: 100 }),
+      ),
+    ).toBe(true);
+  });
+
+  it("is true when a single unit is priced differently from the amount", () => {
+    expect(
+      hasUnitBreakdown(
+        line({ id: "l1", lineNumber: 1, quantity: 1, unitPrice: 2.5, amount: 1250 }),
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores sub-cent unit price precision the amount rounds away", () => {
+    // Unit prices carry four decimal places; amounts are money.
+    expect(
+      hasUnitBreakdown(
+        line({ id: "l1", lineNumber: 1, quantity: 1, unitPrice: 100.0049, amount: 100 }),
+      ),
+    ).toBe(false);
+  });
+
+  it("treats a null quantity as no breakdown worth showing", () => {
+    expect(
+      hasUnitBreakdown(
+        line({ id: "l1", lineNumber: 1, quantity: null, unitPrice: null, amount: 100 }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("chargeComposition", () => {
+  it("splits freight and accessorials into shares of their sum", () => {
+    expect(chargeComposition(750, 250)).toEqual({ freightShare: 0.75, accessorialShare: 0.25 });
+  });
+
+  it("gives freight the whole bar when there are no accessorials", () => {
+    expect(chargeComposition(400, 0)).toEqual({ freightShare: 1, accessorialShare: 0 });
+  });
+
+  it("has nothing to draw when both are zero", () => {
+    expect(chargeComposition(0, 0)).toBeNull();
+  });
+
+  it("has nothing to draw for a credit memo's negative amounts", () => {
+    expect(chargeComposition(-400, -50)).toBeNull();
+    expect(chargeComposition(400, -50)).toBeNull();
+  });
+
+  it("has nothing to draw when an amount is not a number", () => {
+    expect(chargeComposition(Number.NaN, 50)).toBeNull();
+  });
+});
+
+describe("describeChargeCalculation", () => {
+  const accessorial = (overrides: Partial<InvoiceLine>) =>
+    line({ id: "a", lineNumber: 2, type: "Accessorial", description: "Detention", ...overrides });
+
+  it("states a per-unit charge's rate and the units it was billed for", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({
+          chargeMethod: "PerUnit",
+          rateUnit: "Hour",
+          rate: 75,
+          quantity: 2,
+          unitPrice: 75,
+          amount: 150,
+        }),
+        "USD",
+        translate,
+      ),
+    ).toBe("$75.00 × 2 hours");
+  });
+
+  it("uses the singular unit for one unit and a generic unit when none was recorded", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "PerUnit", rateUnit: "Mile", rate: 2.5, quantity: 1 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("$2.50 × 1 mile");
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "PerUnit", rateUnit: null, rate: 10, quantity: 3 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("$10.00 × 3 units");
+  });
+
+  it("states a percentage charge against the line haul it was taken from", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "Percentage", rate: 10, rateBasisAmount: 2450, amount: 245 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("10% of line haul ($2,450.00)");
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "Percentage", rate: 12.5, rateBasisAmount: null }),
+        "USD",
+        translate,
+      ),
+    ).toBe("12.5% of line haul");
+  });
+
+  it("calls a single flat charge flat and shows a repeated one's multiple", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "Flat", rate: 150, quantity: 1, unitPrice: 150, amount: 150 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("Flat rate");
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: "Flat", rate: 150, quantity: 2, unitPrice: 150, amount: 300 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("$150.00 × 2");
+  });
+
+  it("falls back to quantity and unit price for lines written before the method was recorded", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: null, rate: null, quantity: 3, unitPrice: 50, amount: 150 }),
+        "USD",
+        translate,
+      ),
+    ).toBe("3 × $50.00");
+    expect(
+      describeChargeCalculation(
+        accessorial({ chargeMethod: null, rate: null, quantity: 1, unitPrice: 150, amount: 150 }),
+        "USD",
+        translate,
+      ),
+    ).toBeNull();
+  });
+
+  it("does not describe freight as an accessorial calculation", () => {
+    expect(
+      describeChargeCalculation(
+        line({
+          id: "f",
+          lineNumber: 1,
+          chargeMethod: "Flat",
+          rate: 3.5,
+          amount: 2450,
+          unitPrice: 2450,
+        }),
+        "USD",
+        translate,
+      ),
+    ).toBeNull();
   });
 });

@@ -45,3 +45,10 @@ func (e *Invoice) GetStaticFieldMap() map[string]string {
 func (e *InvoiceLine) GetStaticFieldMap() map[string]string {
 	return buncolgen.InvoiceLineFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceShare].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.InvoiceShareFieldMap] instead of parsing struct tags via reflection.
+func (e *InvoiceShare) GetStaticFieldMap() map[string]string {
+	return buncolgen.InvoiceShareFieldMap
+}

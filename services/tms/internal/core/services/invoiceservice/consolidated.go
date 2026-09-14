@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,6 +127,15 @@ func (s *Service) createConsolidatedTx(
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
 	anchor := params.QueueItems[0]
+
+	if err := invoicelines.HydrateAccessorials(
+		txCtx,
+		s.accessorialRepo,
+		params.TenantInfo,
+		params.Legs...,
+	); err != nil {
+		return nil, err
+	}
 
 	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
 		ID:         customerID,

@@ -37,15 +37,15 @@ func consolidatedInvoice(mutate func(*invoice.Invoice)) *invoice.Invoice {
 	periodEnd := int64(1_774_000_000)
 
 	entity := &invoice.Invoice{
-		Number:        "INV-9001",
-		Scope:         invoice.ScopeConsolidated,
-		CurrencyCode:  "USD",
-		InvoiceDate:   1_774_000_000,
-		ShipmentCount: 2,
-		PeriodStart:   &periodStart,
-		PeriodEnd:     &periodEnd,
-		Detail:        customer.InvoiceDetailDetailed,
-		Customer:      &customer.Customer{Name: "Acme Freight", Code: "ACME"},
+		Number:         "INV-9001",
+		Scope:          invoice.ScopeConsolidated,
+		CurrencyCode:   "USD",
+		InvoiceDate:    1_774_000_000,
+		ShipmentCount:  2,
+		PeriodStart:    &periodStart,
+		PeriodEnd:      &periodEnd,
+		Detail:         customer.InvoiceDetailDetailed,
+		Customer:       &customer.Customer{Name: "Acme Freight", Code: "ACME"},
 		SubtotalAmount: amt("400"),
 		TotalAmount:    amt("400"),
 		Lines: []*invoice.InvoiceLine{

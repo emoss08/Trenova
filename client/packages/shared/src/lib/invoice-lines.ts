@@ -1,3 +1,7 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatCurrency } from "@trenova/shared/lib/utils";
+import type { RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { InvoiceLine } from "@trenova/shared/types/invoice";
 
 /**
@@ -73,4 +77,108 @@ export function groupInvoiceLinesByShipment(lines: readonly InvoiceLine[]): Invo
   }
 
   return ordered;
+}
+
+function toMinorUnits(value: number): number {
+  return Math.round(value * 100);
+}
+
+/**
+ * Whether a line's quantity and unit price say anything its amount does not.
+ *
+ * A flat charge is one unit priced at its own amount, so repeating `1 × $900.00`
+ * beside `$900.00` is noise. Unit prices carry four decimal places while amounts
+ * are money, so the comparison is made in cents.
+ */
+export function hasUnitBreakdown(line: InvoiceLine): boolean {
+  if (line.quantity == null) return false;
+  if (line.quantity !== 1) return true;
+  return toMinorUnits(line.unitPrice ?? 0) !== toMinorUnits(line.amount ?? 0);
+}
+
+export type ChargeComposition = {
+  freightShare: number;
+  accessorialShare: number;
+};
+
+/**
+ * How an invoice's charges divide between freight and accessorials, as shares of
+ * their sum. A proportion only means something for non-negative amounts, so a
+ * credit memo's negative lines, or an invoice with nothing on it, have none.
+ */
+export function chargeComposition(freight: number, accessorial: number): ChargeComposition | null {
+  if (!Number.isFinite(freight) || !Number.isFinite(accessorial)) return null;
+  if (freight < 0 || accessorial < 0) return null;
+
+  const total = freight + accessorial;
+  if (total <= 0) return null;
+
+  return { freightShare: freight / total, accessorialShare: accessorial / total };
+}
+
+function formatQuantity(value: number): string {
+  return formatNumber(value, { maximumFractionDigits: 4 });
+}
+
+function perUnitQuantity(t: TranslateFn, unit: RateUnit | null, quantity: number): string {
+  switch (unit) {
+    case "Mile":
+      return t("{0, plural, one {# mile} other {# miles}}", quantity);
+    case "Hour":
+      return t("{0, plural, one {# hour} other {# hours}}", quantity);
+    case "Day":
+      return t("{0, plural, one {# day} other {# days}}", quantity);
+    case "Stop":
+      return t("{0, plural, one {# stop} other {# stops}}", quantity);
+    default:
+      return t("{0, plural, one {# unit} other {# units}}", quantity);
+  }
+}
+
+/**
+ * How a charge line's amount was reached, in the words the billing queue uses:
+ * "$75.00 × 2 hours", "10% of line haul ($2,450.00)", "Flat rate".
+ *
+ * Lines written before invoices recorded the charge method only have their
+ * quantity and unit price, so those fall back to "3 × $50.00" when it says more
+ * than the amount, and to nothing when it does not.
+ */
+export function describeChargeCalculation(
+  line: InvoiceLine,
+  currencyCode: string,
+  t: TranslateFn,
+): string | null {
+  const quantity = line.quantity ?? 1;
+  const rate = line.rate ?? null;
+
+  if (line.type === "Accessorial" && line.chargeMethod && rate !== null) {
+    switch (line.chargeMethod) {
+      case "PerUnit":
+        return t(
+          "{0} × {1}",
+          formatCurrency(rate, currencyCode),
+          perUnitQuantity(t, line.rateUnit ?? null, quantity),
+        );
+      case "Percentage":
+        return line.rateBasisAmount != null
+          ? t(
+              "{0}% of line haul ({1})",
+              formatQuantity(rate),
+              formatCurrency(line.rateBasisAmount, currencyCode),
+            )
+          : t("{0}% of line haul", formatQuantity(rate));
+      case "Flat":
+        return quantity > 1
+          ? t("{0} × {1}", formatCurrency(rate, currencyCode), formatQuantity(quantity))
+          : t("Flat rate");
+    }
+  }
+
+  if (!hasUnitBreakdown(line)) return null;
+
+  return t(
+    "{0} × {1}",
+    formatQuantity(quantity),
+    formatCurrency(line.unitPrice ?? 0, currencyCode),
+  );
 }

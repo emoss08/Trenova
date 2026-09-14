@@ -137,22 +137,6 @@ func findGeneratedFuelSurchargeCharge(entity *shipment.Shipment) *shipment.Addit
 	return nil
 }
 
-func CalculateAdditionalCharges(
-	charges []*shipment.AdditionalCharge,
-	baseCharge decimal.Decimal,
-) decimal.Decimal {
-	total := decimal.Zero
-	for _, charge := range charges {
-		if charge == nil {
-			continue
-		}
-
-		total = total.Add(CalculateAdditionalCharge(charge, baseCharge))
-	}
-
-	return total
-}
-
 func (c *Calculator) calculateCommercialTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
@@ -183,7 +167,7 @@ func (c *Calculator) calculateCommercialTotals(
 	// stored freight amount, the only base there is before the linehaul is
 	// priced; the authoritative total is returned below, against the real base.
 	entity.OtherChargeAmount = decimal.NewNullDecimal(
-		CalculateAdditionalCharges(entity.AdditionalCharges, entity.FreightChargeAmount.Decimal),
+		shipment.AdditionalChargesTotal(entity.AdditionalCharges, entity.FreightChargeAmount.Decimal),
 	)
 
 	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)
@@ -204,34 +188,10 @@ func (c *Calculator) calculateCommercialTotals(
 		}
 	}
 
-	return baseCharge, CalculateAdditionalCharges(
+	return baseCharge, shipment.AdditionalChargesTotal(
 		entity.AdditionalCharges,
 		baseCharge,
 	), ratingDetail, nil
-}
-
-func CalculateAdditionalCharge(
-	charge *shipment.AdditionalCharge,
-	baseCharge decimal.Decimal,
-) decimal.Decimal {
-	if charge == nil {
-		return decimal.Zero
-	}
-
-	switch charge.Method {
-	case accessorialcharge.MethodFlat:
-		unit := max(charge.Unit, 1)
-		return charge.Amount.Mul(decimal.NewFromInt32(int32(unit)))
-	case accessorialcharge.MethodPerUnit:
-		if charge.Unit < 1 {
-			return decimal.Zero
-		}
-		return charge.Amount.Mul(decimal.NewFromInt32(int32(charge.Unit)))
-	case accessorialcharge.MethodPercentage:
-		return baseCharge.Mul(charge.Amount.Div(decimal.NewFromInt(100)))
-	default:
-		return decimal.Zero
-	}
 }
 
 // calculateBaseCharge produces the linehaul from the shipment's own rating
@@ -675,7 +635,7 @@ func nonFuelSurchargeChargeTotal(
 		if charge == nil || (charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil) {
 			continue
 		}
-		total = total.Add(CalculateAdditionalCharge(charge, baseCharge))
+		total = total.Add(charge.Total(baseCharge))
 	}
 	return total
 }

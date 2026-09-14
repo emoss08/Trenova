@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -18,6 +19,7 @@ func loadInvoiceLegs(
 	shipmentRepo repositories.ShipmentRepository,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
+	withDetails bool,
 ) ([]*shipment.Shipment, error) {
 	legIDs := entity.LegShipmentIDs()
 	if len(legIDs) == 0 {
@@ -26,7 +28,7 @@ func loadInvoiceLegs(
 
 	legs := make([]*shipment.Shipment, 0, len(legIDs))
 	for _, legID := range legIDs {
-		shp, err := shipmentRepo.GetByID(ctx, basicShipmentByIDRequest(legID, tenantInfo))
+		shp, err := shipmentRepo.GetByID(ctx, shipmentByIDRequest(legID, tenantInfo, withDetails))
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +63,7 @@ func reconciliationExpectedTotal(
 		legTotal = legTotal.Add(shp.TotalChargeAmount.Decimal)
 	}
 
-	expected := signedAmount(entity.BillType, legTotal)
+	expected := invoicelines.SignedAmount(entity.BillType, legTotal)
 	if entity.Scope == invoice.ScopeShipment {
 		return expected
 	}

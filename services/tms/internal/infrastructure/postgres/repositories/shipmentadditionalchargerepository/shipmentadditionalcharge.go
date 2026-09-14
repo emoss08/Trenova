@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -41,6 +42,10 @@ func (r *repository) SyncForShipment(
 	tx bun.IDB,
 	entity *shipment.Shipment,
 ) error {
+	if entity.AdditionalCharges == nil {
+		return nil
+	}
+
 	existingCharges, err := r.getExistingCharges(ctx, tx, entity)
 	if err != nil {
 		return err
@@ -82,19 +87,48 @@ func (r *repository) SyncForShipment(
 		deleteIDs = append(deleteIDs, id)
 	}
 
-	if len(deleteIDs) == 0 {
+	if len(deleteIDs) > 0 {
+		if _, err = tx.NewDelete().
+			Model((*shipment.AdditionalCharge)(nil)).
+			Where("id IN (?)", bun.List(deleteIDs)).
+			Where("shipment_id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("delete shipment additional charges: %w", err)
+		}
+	}
+
+	return r.reconcileHeaderTotals(ctx, tx, entity)
+}
+
+func (r *repository) reconcileHeaderTotals(
+	ctx context.Context,
+	tx bun.IDB,
+	entity *shipment.Shipment,
+) error {
+	freight := entity.FreightChargeAmount.Decimal
+	other := shipment.AdditionalChargesTotal(entity.AdditionalCharges, freight)
+	total := freight.Add(other)
+
+	if entity.OtherChargeAmount.Valid && entity.OtherChargeAmount.Decimal.Equal(other) &&
+		entity.TotalChargeAmount.Valid && entity.TotalChargeAmount.Decimal.Equal(total) {
 		return nil
 	}
 
-	_, err = tx.NewDelete().
-		Model((*shipment.AdditionalCharge)(nil)).
-		Where("id IN (?)", bun.List(deleteIDs)).
-		Where("shipment_id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("delete shipment additional charges: %w", err)
+	entity.OtherChargeAmount = decimal.NewNullDecimal(other)
+	entity.TotalChargeAmount = decimal.NewNullDecimal(total)
+
+	sp := buncolgen.ShipmentColumns
+	if _, err := tx.NewUpdate().
+		Model((*shipment.Shipment)(nil)).
+		Set(sp.OtherChargeAmount.Set(), other).
+		Set(sp.TotalChargeAmount.Set(), total).
+		Where(sp.ID.Eq(), entity.ID).
+		Where(sp.OrganizationID.Eq(), entity.OrganizationID).
+		Where(sp.BusinessUnitID.Eq(), entity.BusinessUnitID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("reconcile shipment charge totals: %w", err)
 	}
 
 	return nil

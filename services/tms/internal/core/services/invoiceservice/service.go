@@ -21,8 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,6 +57,7 @@ type Params struct {
 	JournalRepo         repositories.JournalPostingRepository
 	AdjustmentRepo      repositories.InvoiceAdjustmentRepository
 	NotificationService *notificationservice.Service
+	AccessorialRepo     repositories.AccessorialChargeRepository
 	EmailRepo           repositories.EmailRepository
 	Validator           *Validator
 	AuditService        servicesports.AuditService
@@ -89,6 +90,7 @@ type Service struct {
 	journalRepo         repositories.JournalPostingRepository
 	adjustmentRepo      repositories.InvoiceAdjustmentRepository
 	notificationService *notificationservice.Service
+	accessorialRepo     repositories.AccessorialChargeRepository
 	emailRepo           repositories.EmailRepository
 	validator           *Validator
 	auditService        servicesports.AuditService
@@ -148,6 +150,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		journalRepo:         p.JournalRepo,
 		adjustmentRepo:      p.AdjustmentRepo,
 		notificationService: p.NotificationService,
+		accessorialRepo:     p.AccessorialRepo,
 		emailRepo:           p.EmailRepo,
 		validator:           p.Validator,
 		auditService:        p.AuditService,
@@ -541,7 +544,7 @@ func (s *Service) markInvoicedLegs(
 	now int64,
 	tenantInfo pagination.TenantInfo,
 ) ([]*shipment.Shipment, error) {
-	legs, err := loadInvoiceLegs(ctx, s.shipmentRepo, entity, tenantInfo)
+	legs, err := loadInvoiceLegs(ctx, s.shipmentRepo, entity, tenantInfo, true)
 	if err != nil {
 		return nil, err
 	}
@@ -704,6 +707,9 @@ func (s *Service) getInvoiceDependencies(
 	if err != nil {
 		return nil, err
 	}
+	if err = invoicelines.HydrateAccessorials(ctx, s.accessorialRepo, req.TenantInfo, shp); err != nil {
+		return nil, err
+	}
 
 	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 		ID:         customerID,
@@ -862,7 +868,7 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 	lines := make([]*invoice.InvoiceLine, 0, len(p.Legs))
 	nextLineNumber := 1
 	for _, leg := range p.Legs {
-		legLines := buildInvoiceLinesForShipment(p.Anchor.BillType, leg, nextLineNumber)
+		legLines := invoicelines.ForShipment(p.Anchor.BillType, leg, nextLineNumber)
 		lines = append(lines, legLines...)
 		nextLineNumber += len(legLines)
 	}
@@ -874,7 +880,7 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 		if charge == nil {
 			continue
 		}
-		amount := signedAmount(p.Anchor.BillType, charge.Amount)
+		amount := invoicelines.SignedAmount(p.Anchor.BillType, charge.Amount)
 		lines = append(lines, &invoice.InvoiceLine{
 			LineNumber:  nextLineNumber,
 			Type:        invoice.InvoiceLineTypeAccessorial,
@@ -1113,88 +1119,7 @@ func buildInvoiceLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 ) []*invoice.InvoiceLine {
-	return buildInvoiceLinesForShipment(billType, shp, 1)
-}
-
-// buildInvoiceLinesForShipment builds the freight + accessorial lines for a single
-// leg, stamping each line with the leg's identity so a grouped (multi-leg) invoice
-// remains attributable per shipment. startLineNumber lets the caller keep line
-// numbers globally unique across legs.
-func buildInvoiceLinesForShipment(
-	billType billingqueue.BillType,
-	shp *shipment.Shipment,
-	startLineNumber int,
-) []*invoice.InvoiceLine {
-	lines := make([]*invoice.InvoiceLine, 0, 1+len(shp.AdditionalCharges))
-	freightAmount := signedAmount(billType, shp.FreightChargeAmount.Decimal)
-	lines = append(lines, &invoice.InvoiceLine{
-		ShipmentID:        shp.ID,
-		ShipmentProNumber: shp.ProNumber,
-		ShipmentBOL:       shp.BOL,
-		LineNumber:        startLineNumber,
-		Type:              invoice.InvoiceLineTypeFreight,
-		Description:       "Freight charge",
-		Quantity:          decimal.NewFromInt(1),
-		UnitPrice:         freightAmount,
-		Amount:            freightAmount,
-	})
-
-	lineNumber := startLineNumber
-	for _, charge := range shp.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-
-		lineNumber++
-
-		quantity := decimal.NewFromInt(int64(charge.Unit))
-		if quantity.LessThanOrEqual(decimal.Zero) {
-			quantity = decimal.NewFromInt(1)
-		}
-
-		amount := signedAmount(
-			billType,
-			shipmentcommercial.CalculateAdditionalCharge(
-				charge,
-				shp.FreightChargeAmount.Decimal,
-			),
-		)
-		unitPrice := amount
-		if !quantity.IsZero() {
-			unitPrice = amount.Div(quantity)
-		}
-
-		description := "Accessorial charge"
-		if charge.AccessorialCharge != nil &&
-			strings.TrimSpace(charge.AccessorialCharge.Description) != "" {
-			description = charge.AccessorialCharge.Description
-		}
-
-		lines = append(lines, &invoice.InvoiceLine{
-			ShipmentID:        shp.ID,
-			ShipmentProNumber: shp.ProNumber,
-			ShipmentBOL:       shp.BOL,
-			LineNumber:        lineNumber,
-			Type:              invoice.InvoiceLineTypeAccessorial,
-			Description:       description,
-			Quantity:          quantity,
-			UnitPrice:         unitPrice,
-			Amount:            amount,
-		})
-	}
-
-	return lines
-}
-
-func signedAmount(
-	billType billingqueue.BillType,
-	amount decimal.Decimal,
-) decimal.Decimal {
-	if billType == billingqueue.BillTypeCreditMemo {
-		return amount.Neg()
-	}
-
-	return amount
+	return invoicelines.ForShipment(billType, shp, 1)
 }
 
 func paymentTermFromCustomer(cus *customer.Customer) invoice.PaymentTerm {

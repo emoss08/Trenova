@@ -267,7 +267,7 @@ func (v *Validator) validatePostingReconciliation(
 		return
 	}
 
-	legs, err := loadInvoiceLegs(ctx, v.shipmentRepo, entity, tenantInfo)
+	legs, err := loadInvoiceLegs(ctx, v.shipmentRepo, entity, tenantInfo, false)
 	if err != nil {
 		multiErr.Add(
 			"shipmentId",

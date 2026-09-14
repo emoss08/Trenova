@@ -134,9 +134,12 @@ func TestSyncForShipment_RejectsUnknownAdditionalChargeID(t *testing.T) {
 
 func newShipmentEntity() *shipment.Shipment {
 	return &shipment.Shipment{
-		ID:             pulid.MustNew("shp_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
+		ID:                  pulid.MustNew("shp_"),
+		OrganizationID:      pulid.MustNew("org_"),
+		BusinessUnitID:      pulid.MustNew("bu_"),
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(100)),
+		OtherChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(10)),
+		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(110)),
 		AdditionalCharges: []*shipment.AdditionalCharge{
 			{
 				AccessorialChargeID: pulid.MustNew("acc_"),
@@ -146,4 +149,74 @@ func newShipmentEntity() *shipment.Shipment {
 			},
 		},
 	}
+}
+
+func TestSyncForShipment_LeavesRowsAloneWhenChargesWereNeverLoaded(t *testing.T) {
+	t.Parallel()
+
+	repo, db, mock := newTestRepository(t)
+	entity := newShipmentEntity()
+	entity.AdditionalCharges = nil
+
+	err := repo.SyncForShipment(t.Context(), db, entity)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSyncForShipment_DeletesEveryRowForAnEmptyPayloadAndZeroesTheHeader(t *testing.T) {
+	t.Parallel()
+
+	repo, db, mock := newTestRepository(t)
+	entity := newShipmentEntity()
+	entity.AdditionalCharges = []*shipment.AdditionalCharge{}
+	staleID := pulid.MustNew("ac_")
+
+	mock.ExpectQuery(`SELECT .*FROM "additional_charges" AS "ac".*`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
+		}).
+			AddRow(staleID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, pulid.MustNew("acc_"), accessorialcharge.MethodFlat, decimal.NewFromInt(10).String(), 1, 1))
+	mock.ExpectExec(`DELETE FROM "additional_charges" AS "ac".*`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`UPDATE "shipments" AS "sp" SET other_charge_amount = .0., total_charge_amount = .100. WHERE .*`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err := repo.SyncForShipment(t.Context(), db, entity)
+
+	require.NoError(t, err)
+	assert.True(t, entity.OtherChargeAmount.Decimal.IsZero())
+	assert.True(t, entity.TotalChargeAmount.Decimal.Equal(decimal.NewFromInt(100)))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSyncForShipment_RewritesHeaderTotalsThatDisagreeWithTheRows(t *testing.T) {
+	t.Parallel()
+
+	repo, db, mock := newTestRepository(t)
+	entity := newShipmentEntity()
+	entity.AdditionalCharges = append(entity.AdditionalCharges, &shipment.AdditionalCharge{
+		AccessorialChargeID: pulid.MustNew("acc_"),
+		Method:              accessorialcharge.MethodPercentage,
+		Amount:              decimal.NewFromInt(5),
+		Unit:                1,
+	})
+
+	mock.ExpectQuery(`SELECT .*FROM "additional_charges" AS "ac".*`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "organization_id", "business_unit_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit", "version",
+		}))
+	mock.ExpectQuery(`INSERT INTO "additional_charges".*RETURNING .*`).
+		WillReturnRows(sqlmock.NewRows([]string{"updated_at"}).AddRow(0))
+	mock.ExpectQuery(`INSERT INTO "additional_charges".*RETURNING .*`).
+		WillReturnRows(sqlmock.NewRows([]string{"updated_at"}).AddRow(0))
+	mock.ExpectExec(`UPDATE "shipments" AS "sp" SET other_charge_amount = .15., total_charge_amount = .115. WHERE .*`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err := repo.SyncForShipment(t.Context(), db, entity)
+
+	require.NoError(t, err)
+	assert.True(t, entity.OtherChargeAmount.Decimal.Equal(decimal.NewFromInt(15)))
+	assert.True(t, entity.TotalChargeAmount.Decimal.Equal(decimal.NewFromInt(115)))
+	require.NoError(t, mock.ExpectationsWereMet())
 }

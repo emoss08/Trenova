@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { accessorialChargeMethodSchema, rateUnitSchema } from "./accessorial-charge";
 import { billTypeSchema, billingQueueItemSchema } from "./billing-queue";
 import { customerPaymentTermSchema, customerSchema } from "./customer";
 import { documentSchema } from "./document";
@@ -15,6 +16,13 @@ import { shipmentSchema } from "./shipment";
 export const invoiceStatusSchema = z.enum(["Draft", "Posted"]);
 export type InvoiceStatus = z.infer<typeof invoiceStatusSchema>;
 
+/**
+ * What an invoice covers, stamped by the server when it is created. Read this
+ * rather than inferring shape from which of shipmentId / orderId is set.
+ */
+export const invoiceScopeSchema = z.enum(["Shipment", "Order", "Consolidated", "Adjustment"]);
+export type InvoiceScope = z.infer<typeof invoiceScopeSchema>;
+
 export const invoiceSendStatusSchema = z.enum([
   "NotSent",
   "Sending",
@@ -26,6 +34,17 @@ export type InvoiceSendStatus = z.infer<typeof invoiceSendStatusSchema>;
 
 export const invoiceLineTypeSchema = z.enum(["Freight", "Accessorial"]);
 export type InvoiceLineType = z.infer<typeof invoiceLineTypeSchema>;
+
+export const invoiceLineChargeMethodSchema = z
+  .union([accessorialChargeMethodSchema, z.literal("")])
+  .nullish()
+  .transform((value) => (value ? value : null));
+export type InvoiceLineChargeMethod = NonNullable<z.infer<typeof invoiceLineChargeMethodSchema>>;
+
+export const invoiceLineRateUnitSchema = z
+  .union([rateUnitSchema, z.literal("")])
+  .nullish()
+  .transform((value) => (value ? value : null));
 
 export const invoiceLineSchema = z.object({
   ...tenantInfoSchema.shape,
@@ -40,6 +59,13 @@ export const invoiceLineSchema = z.object({
   quantity: decimalStringSchema,
   unitPrice: decimalStringSchema,
   amount: decimalStringSchema,
+  accessorialChargeId: nullableStringSchema,
+  chargeCode: nullableStringSchema,
+  chargeMethod: invoiceLineChargeMethodSchema,
+  rateUnit: invoiceLineRateUnitSchema,
+  rate: decimalStringSchema.nullish(),
+  rateBasisAmount: decimalStringSchema.nullish(),
+  formulaTemplateName: nullableStringSchema,
 });
 export type InvoiceLine = z.infer<typeof invoiceLineSchema>;
 
@@ -190,6 +216,14 @@ export const invoiceSchema = z.object({
   id: z.string(),
   billingQueueItemId: z.string(),
   shipmentId: nullableStringSchema,
+  scope: invoiceScopeSchema.default("Shipment"),
+  /** The invoice run that billed this invoice. Set on consolidated invoices only. */
+  invoiceRunId: nullableStringSchema,
+  /** The billing period a consolidated invoice covers. Null on every other scope. */
+  periodStart: nullableIntegerSchema,
+  periodEnd: nullableIntegerSchema,
+  /** Distinct shipments this invoice bills. */
+  shipmentCount: z.number().int().nonnegative().default(0),
   detail: invoiceDetailSchema.default("Detailed"),
   sectionBy: invoiceSectionKeySchema.default("Shipment"),
   /**

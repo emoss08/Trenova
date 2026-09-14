@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -440,6 +441,14 @@ func (s *Service) createOrderInvoiceTx(
 
 	legs, txErr := s.collectBillableLegs(txCtx, ord, req.TenantInfo, req.ShipmentIDs)
 	if txErr != nil {
+		return nil, txErr
+	}
+	if txErr = invoicelines.HydrateAccessorials(
+		txCtx,
+		s.accessorialRepo,
+		req.TenantInfo,
+		legs...,
+	); txErr != nil {
 		return nil, txErr
 	}
 	if len(legs) == 0 {

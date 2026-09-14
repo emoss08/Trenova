@@ -15,13 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,6 +55,7 @@ type Params struct {
 	CustomerRepo       repositories.CustomerRepository
 	BillingQueueRepo   repositories.BillingQueueRepository
 	ShipmentRepo       repositories.ShipmentRepository
+	AccessorialRepo    repositories.AccessorialChargeRepository
 	ShipmentCtrlRepo   repositories.ShipmentControlRepository
 	BillingCtrlRepo    repositories.BillingControlRepository
 	AdjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
@@ -78,6 +79,7 @@ type Service struct {
 	customerRepo       repositories.CustomerRepository
 	billingQueueRepo   repositories.BillingQueueRepository
 	shipmentRepo       repositories.ShipmentRepository
+	accessorialRepo    repositories.AccessorialChargeRepository
 	shipmentCtrlRepo   repositories.ShipmentControlRepository
 	billingCtrlRepo    repositories.BillingControlRepository
 	adjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
@@ -135,6 +137,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		customerRepo:       p.CustomerRepo,
 		billingQueueRepo:   p.BillingQueueRepo,
 		shipmentRepo:       p.ShipmentRepo,
+		accessorialRepo:    p.AccessorialRepo,
 		shipmentCtrlRepo:   p.ShipmentCtrlRepo,
 		billingCtrlRepo:    p.BillingCtrlRepo,
 		adjustmentCtrlRepo: p.AdjustmentCtrlRepo,
@@ -1114,14 +1117,16 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			if creditQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = creditAmount.Div(creditQuantity)
 			}
-			creditLines = append(creditLines, &invoice.InvoiceLine{
+			creditLine := &invoice.InvoiceLine{
 				LineNumber:  sourceLine.LineNumber,
 				Type:        sourceLine.Type,
 				Description: description,
 				Quantity:    creditQuantity,
 				UnitPrice:   unitPrice.Neg(),
 				Amount:      creditAmount.Neg(),
-			})
+			}
+			creditLine.CopyChargeDetail(sourceLine)
+			creditLines = append(creditLines, creditLine)
 		}
 
 		if rebillAmount.GreaterThan(decimal.Zero) {
@@ -1129,14 +1134,16 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			if rebillQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = rebillAmount.Div(rebillQuantity)
 			}
-			replacementLines = append(replacementLines, &invoice.InvoiceLine{
+			replacementLine := &invoice.InvoiceLine{
 				LineNumber:  len(replacementLines) + 1,
 				Type:        sourceLine.Type,
 				Description: description,
 				Quantity:    maxDecimal(rebillQuantity, decimal.NewFromInt(1)),
 				UnitPrice:   unitPrice,
 				Amount:      rebillAmount,
-			})
+			}
+			replacementLine.CopyChargeDetail(sourceLine)
+			replacementLines = append(replacementLines, replacementLine)
 		}
 	}
 
@@ -1816,8 +1823,16 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 		if legErr = s.commercial.Recalculate(ctx, shp, control, tenantInfo.UserID); legErr != nil {
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}
+		if legErr = invoicelines.HydrateAccessorials(
+			ctx,
+			s.accessorialRepo,
+			tenantInfo,
+			shp,
+		); legErr != nil {
+			return nil, decimal.Zero, decimal.Zero, legErr
+		}
 
-		legLines := buildReplacementLinesForLeg(shp, nextLineNumber)
+		legLines := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, nextLineNumber)
 		lines = append(lines, legLines...)
 		nextLineNumber += len(legLines)
 		total = total.Add(shp.TotalChargeAmount.Decimal)
@@ -1831,14 +1846,16 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			if line == nil || !line.ShipmentID.IsNil() {
 				continue
 			}
-			lines = append(lines, &invoice.InvoiceLine{
+			carried := &invoice.InvoiceLine{
 				LineNumber:  nextLineNumber,
 				Type:        line.Type,
 				Description: line.Description,
 				Quantity:    line.Quantity,
 				UnitPrice:   line.UnitPrice,
 				Amount:      line.Amount,
-			})
+			}
+			carried.CopyChargeDetail(line)
+			lines = append(lines, carried)
 			nextLineNumber++
 			total = total.Add(line.Amount)
 		}
@@ -2451,59 +2468,6 @@ func sumInvoiceLines(
 		}
 	}
 	return total
-}
-
-func buildReplacementLinesForLeg(
-	shp *shipment.Shipment,
-	startLineNumber int,
-) []*invoice.InvoiceLine {
-	lines := make([]*invoice.InvoiceLine, 0, 1+len(shp.AdditionalCharges))
-	freight := shp.FreightChargeAmount.Decimal
-	lines = append(lines, &invoice.InvoiceLine{
-		LineNumber:        startLineNumber,
-		ShipmentID:        shp.ID,
-		ShipmentProNumber: shp.ProNumber,
-		ShipmentBOL:       shp.BOL,
-		Type:              invoice.InvoiceLineTypeFreight,
-		Description:       "Freight charge",
-		Quantity:          decimal.NewFromInt(1),
-		UnitPrice:         freight,
-		Amount:            freight,
-	})
-	for _, charge := range shp.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-		qty := decimal.NewFromInt32(int32(charge.Unit))
-		if qty.LessThanOrEqual(decimal.Zero) {
-			qty = decimal.NewFromInt(1)
-		}
-		amount := shipmentcommercial.CalculateAdditionalCharge(
-			charge,
-			shp.FreightChargeAmount.Decimal,
-		)
-		unitPrice := amount
-		if qty.GreaterThan(decimal.Zero) {
-			unitPrice = amount.Div(qty)
-		}
-		description := "Accessorial charge"
-		if charge.AccessorialCharge != nil &&
-			strings.TrimSpace(charge.AccessorialCharge.Description) != "" {
-			description = charge.AccessorialCharge.Description
-		}
-		lines = append(lines, &invoice.InvoiceLine{
-			LineNumber:        startLineNumber + len(lines),
-			ShipmentID:        shp.ID,
-			ShipmentProNumber: shp.ProNumber,
-			ShipmentBOL:       shp.BOL,
-			Type:              invoice.InvoiceLineTypeAccessorial,
-			Description:       description,
-			Quantity:          qty,
-			UnitPrice:         unitPrice,
-			Amount:            amount,
-		})
-	}
-	return lines
 }
 
 func optionalPulidStringPtr(item *billingqueue.BillingQueueItem) *string {

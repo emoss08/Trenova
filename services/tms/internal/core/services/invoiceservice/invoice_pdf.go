@@ -45,7 +45,7 @@ type invoicePDFData struct {
 	// Period is the billing window a consolidated invoice covers, blank otherwise.
 	Period string
 
-	Subtotal string
+	Subtotal      string
 	Other         string
 	Total         string
 	BalanceDue    string
