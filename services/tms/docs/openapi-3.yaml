@@ -4619,15 +4619,23 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_domain_invoice.InvoiceLine:
             properties:
+                accessorialChargeId:
+                    type: string
                 amount:
                     type: number
                 amountMinor:
                     type: integer
                 businessUnitId:
                     type: string
+                chargeCode:
+                    type: string
+                chargeMethod:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method'
                 createdAt:
                     type: integer
                 description:
+                    type: string
+                formulaTemplateName:
                     type: string
                 id:
                     type: string
@@ -4639,6 +4647,12 @@ components:
                     type: string
                 quantity:
                     type: number
+                rate:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                rateBasisAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                rateUnit:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.RateUnit'
                 shipmentBol:
                     type: string
                 shipmentId:

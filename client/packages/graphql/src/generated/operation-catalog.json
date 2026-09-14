@@ -1,5 +1,5 @@
 {
-  "operationCount": 694,
+  "operationCount": 696,
   "fragmentCount": 168,
   "operations": [
     {
@@ -1687,6 +1687,51 @@
       "sdl": "query BenefitPlans($activeOnly: Boolean, $planYear: Int) {\n  benefitPlans(activeOnly: $activeOnly, planYear: $planYear) {\n    id\n    status\n    code\n    name\n    description\n    planType\n    carrier\n    policyNumber\n    payCodeId\n    planYear\n    employeeCostMinor\n    employerCostMinor\n    currencyCode\n    waitingPeriodDays\n    version\n    payCode {\n      id\n      code\n      description\n    }\n  }\n}"
     },
     {
+      "name": "BillingTransferCandidateIds",
+      "kind": "query",
+      "domain": "billing-queue",
+      "sourceFile": "src/operations/billing-queue/transfer.graphql",
+      "hash": "sha256:705c57e3782a1890e509966d298df4f97e2f1d2b2aa33b27b1068d98258381a6",
+      "rootFields": [
+        "shipmentBillingTransferCandidateIds"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ShipmentBillingTransferCandidateIdsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query BillingTransferCandidateIds($input: ShipmentBillingTransferCandidateIdsInput!) {\n  shipmentBillingTransferCandidateIds(input: $input) {\n    ids\n    totalCount\n    truncated\n  }\n}"
+    },
+    {
+      "name": "BillingTransferCandidates",
+      "kind": "query",
+      "domain": "billing-queue",
+      "sourceFile": "src/operations/billing-queue/transfer.graphql",
+      "hash": "sha256:450580ede6ca95f084bf654b2fe54bcf394a97d7d927989fbea661193da083ee",
+      "rootFields": [
+        "shipments"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ShipmentsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query BillingTransferCandidates($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {\n  shipments(input: $input) {\n    edges {\n      node {\n        id\n        proNumber\n        bol\n        status\n        billingTransferStatus\n        totalChargeAmount\n        actualDeliveryDate\n        customer {\n          id\n          code\n          name\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}"
+    },
+    {
       "name": "BulkAssignTraining",
       "kind": "mutation",
       "domain": "worker-training",
@@ -1731,7 +1776,7 @@
       "kind": "mutation",
       "domain": "shipment",
       "sourceFile": "src/operations/shipment/page.graphql",
-      "hash": "sha256:46beae0d55af6f6abff7b4c2090ce9ae974f805e505c3ff2c60ababb2f33e0a2",
+      "hash": "sha256:2e546a8270ba509bfd9851cb2e51b4f3ae7f4287ee866fa47c7b1bb26edec644",
       "rootFields": [
         "bulkTransferShipmentsToBilling"
       ],
@@ -1744,7 +1789,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {\n  bulkTransferShipmentsToBilling(input: $input) {\n    results {\n      shipmentId\n      success\n      error\n    }\n    totalCount\n    successCount\n    errorCount\n  }\n}"
+      "sdl": "mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {\n  bulkTransferShipmentsToBilling(input: $input) {\n    results {\n      shipmentId\n      proNumber\n      success\n      markedReadyToInvoice\n      failureCode\n      error\n      billingQueueItem {\n        id\n        number\n        status\n      }\n      missingRequirements {\n        documentTypeId\n        documentTypeCode\n        documentTypeName\n      }\n      validationFailures {\n        field\n        code\n        message\n      }\n    }\n    totalCount\n    successCount\n    errorCount\n  }\n}"
     },
     {
       "name": "BulkUpdateEquipmentTypeStatus",
@@ -7281,7 +7326,7 @@
       "kind": "query",
       "domain": "invoice",
       "sourceFile": "src/operations/invoice/table.graphql",
-      "hash": "sha256:63d68f9764990f48180ca1e6c938cec819f504ae13f959b9b1abd06dffdd4609",
+      "hash": "sha256:d6a736f86aff0ee2c4a07bc1ff083baf7461b4856e82c4b3f0f7e9768160e566",
       "rootFields": [
         "invoices"
       ],
@@ -7302,7 +7347,7 @@
         "InvoiceTableRowFields"
       ],
       "usages": [],
-      "sdl": "query InvoiceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  invoices(input: $input) {\n    edges {\n      node {\n        ...InvoiceTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment InvoiceTableRowFields on Invoice {\n  id\n  billingQueueItemId\n  shipmentId\n  customerId\n  number\n  billType\n  status\n  paymentTerm\n  currencyCode\n  invoiceDate\n  dueDate\n  billToName\n  subtotalAmount\n  otherAmount\n  totalAmount\n  appliedAmount\n  settlementStatus\n  disputeStatus\n  sendStatus\n  isAdjustmentArtifact\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n}"
+      "sdl": "query InvoiceTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  invoices(input: $input) {\n    edges {\n      node {\n        ...InvoiceTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment InvoiceTableRowFields on Invoice {\n  id\n  billingQueueItemId\n  shipmentId\n  orderId\n  customerId\n  number\n  billType\n  scope\n  periodStart\n  periodEnd\n  shipmentCount\n  status\n  paymentTerm\n  currencyCode\n  invoiceDate\n  dueDate\n  billToName\n  subtotalAmount\n  otherAmount\n  totalAmount\n  appliedAmount\n  settlementStatus\n  disputeStatus\n  sendStatus\n  isAdjustmentArtifact\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n}"
     },
     {
       "name": "IssueDisciplinaryAction",
@@ -16960,7 +17005,7 @@
         "InvoiceTable"
       ],
       "usages": [],
-      "sdl": "fragment InvoiceTableRowFields on Invoice {\n  id\n  billingQueueItemId\n  shipmentId\n  customerId\n  number\n  billType\n  status\n  paymentTerm\n  currencyCode\n  invoiceDate\n  dueDate\n  billToName\n  subtotalAmount\n  otherAmount\n  totalAmount\n  appliedAmount\n  settlementStatus\n  disputeStatus\n  sendStatus\n  isAdjustmentArtifact\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n}"
+      "sdl": "fragment InvoiceTableRowFields on Invoice {\n  id\n  billingQueueItemId\n  shipmentId\n  orderId\n  customerId\n  number\n  billType\n  scope\n  periodStart\n  periodEnd\n  shipmentCount\n  status\n  paymentTerm\n  currencyCode\n  invoiceDate\n  dueDate\n  billToName\n  subtotalAmount\n  otherAmount\n  totalAmount\n  appliedAmount\n  settlementStatus\n  disputeStatus\n  sendStatus\n  isAdjustmentArtifact\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n}"
     },
     {
       "name": "JournalReversalTableRowFields",
@@ -24794,6 +24839,32 @@
       ],
       "sdl": "input ShipmentAnalyticsInput {\n  endDate: Timestamp\n  include: String\n  limit: Int\n  offset: Int\n  startDate: Timestamp\n  timezone: String\n  windowDays: Int\n}"
     },
+    "ShipmentBillingTransferCandidateIdsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "ShipmentStatus",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ShipmentBillingTransferCandidateIdsInput {\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  query: String\n  \"\"\"Narrow to Completed or ReadyToInvoice shipments.\"\"\"\n  status: ShipmentStatus\n}"
+    },
     "ShipmentBulkTransferToBillingInput": {
       "kind": "input",
       "fields": [
@@ -24804,12 +24875,18 @@
           "defaultJson": "Invoice"
         },
         {
+          "name": "markCompletedReadyToInvoice",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
           "name": "shipmentIds",
           "type": "[ID!]!",
           "defaultValue": null
         }
       ],
-      "sdl": "input ShipmentBulkTransferToBillingInput {\n  billType: BillType = Invoice\n  shipmentIds: [ID!]!\n}"
+      "sdl": "input ShipmentBulkTransferToBillingInput {\n  billType: BillType = Invoice\n  \"\"\"\n  Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.\n  \"\"\"\n  markCompletedReadyToInvoice: Boolean = false\n  shipmentIds: [ID!]!\n}"
     },
     "ShipmentCancelInput": {
       "kind": "input",
@@ -25356,6 +25433,12 @@
           "defaultValue": null
         },
         {
+          "name": "billingTransferEligible",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
           "name": "expandShipmentDetails",
           "type": "Boolean",
           "defaultValue": "false",
@@ -25378,6 +25461,12 @@
           "defaultJson": 20
         },
         {
+          "name": "includeCustomer",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
           "name": "query",
           "type": "String",
           "defaultValue": null
@@ -25393,7 +25482,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input ShipmentsInput {\n  activityWindowEnd: Timestamp\n  activityWindowStart: Timestamp\n  after: String\n  expandShipmentDetails: Boolean = false\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  query: String\n  sort: [SortFieldInput!]\n  status: String\n}"
+      "sdl": "input ShipmentsInput {\n  activityWindowEnd: Timestamp\n  activityWindowStart: Timestamp\n  after: String\n  \"\"\"\n  Only Completed or Ready to Invoice shipments that are not in the billing queue.\n  \"\"\"\n  billingTransferEligible: Boolean = false\n  expandShipmentDetails: Boolean = false\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  \"\"\"\n  Load each shipment's customer without expanding the rest of its details.\n  \"\"\"\n  includeCustomer: Boolean = false\n  query: String\n  sort: [SortFieldInput!]\n  status: String\n}"
     },
     "ShipmentTransferOwnershipInput": {
       "kind": "input",
@@ -29880,6 +29969,22 @@
       ],
       "sdl": "\"\"\"\nWhat a driver would rather work on a weekday. It is a statement, never a\nconstraint: dispatch is free to override it, and the rota shows where it did so\nthe override is visible rather than silent.\n\"\"\"\nenum AvailabilityPreference {\n  Available\n  Preferred\n  Unavailable\n}"
     },
+    "ShipmentStatus": {
+      "kind": "enum",
+      "values": [
+        "Assigned",
+        "Canceled",
+        "Completed",
+        "Delayed",
+        "InTransit",
+        "Invoiced",
+        "New",
+        "PartiallyAssigned",
+        "PartiallyCompleted",
+        "ReadyToInvoice"
+      ],
+      "sdl": "enum ShipmentStatus {\n  Assigned\n  Canceled\n  Completed\n  Delayed\n  InTransit\n  Invoiced\n  New\n  PartiallyAssigned\n  PartiallyCompleted\n  ReadyToInvoice\n}"
+    },
     "BillType": {
       "kind": "enum",
       "values": [
@@ -30174,22 +30279,6 @@
         }
       ],
       "sdl": "input ShipmentMoveInput {\n  distance: Float\n  distanceCalculatedAt: Timestamp\n  distanceDataVersion: String\n  distanceMetadata: JSON\n  distanceProvider: String\n  distanceRouteSignature: String\n  distanceRoutingType: String\n  distanceSource: String\n  distanceUnits: String\n  id: ID\n  loaded: Boolean = true\n  sequence: Int = 0\n  shipmentId: ID\n  status: MoveStatus = New\n  stops: [ShipmentStopInput!] = []\n  version: Int\n}"
-    },
-    "ShipmentStatus": {
-      "kind": "enum",
-      "values": [
-        "Assigned",
-        "Canceled",
-        "Completed",
-        "Delayed",
-        "InTransit",
-        "Invoiced",
-        "New",
-        "PartiallyAssigned",
-        "PartiallyCompleted",
-        "ReadyToInvoice"
-      ],
-      "sdl": "enum ShipmentStatus {\n  Assigned\n  Canceled\n  Completed\n  Delayed\n  InTransit\n  Invoiced\n  New\n  PartiallyAssigned\n  PartiallyCompleted\n  ReadyToInvoice\n}"
     },
     "ShipmentTenderStatus": {
       "kind": "enum",

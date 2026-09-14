@@ -38792,6 +38792,9 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_domain_invoice.InvoiceLine": {
             "type": "object",
             "properties": {
+                "accessorialChargeId": {
+                    "type": "string"
+                },
                 "amount": {
                     "type": "number"
                 },
@@ -38801,10 +38804,19 @@ const docTemplate = `{
                 "businessUnitId": {
                     "type": "string"
                 },
+                "chargeCode": {
+                    "type": "string"
+                },
+                "chargeMethod": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method"
+                },
                 "createdAt": {
                     "type": "integer"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "formulaTemplateName": {
                     "type": "string"
                 },
                 "id": {
@@ -38821,6 +38833,15 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "number"
+                },
+                "rate": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "rateBasisAmount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "rateUnit": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.RateUnit"
                 },
                 "shipmentBol": {
                     "type": "string"

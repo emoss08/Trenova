@@ -1281,6 +1281,15 @@
       "service/ediservice"
     ]
   },
+  "A bulk transfer can include at most {0} shipments per request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A calculated rate basis is required before billing can proceed": {
     "sites": 1,
     "scope": [
@@ -3734,6 +3743,15 @@
       "routes/scheduling"
     ]
   },
+  "A retry must name the transfer it retries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
+    ]
+  },
   "A return already generated for {0} keeps its figures until it is recomputed, so recompute the return after deleting if the quarter is still open. {1}": {
     "sites": 1,
     "scope": [
@@ -4499,6 +4517,34 @@
       "template/notification.shipment_comment_reply"
     ]
   },
+  "A teammate shared invoice {0} for {1} with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
+  "A teammate shared invoice {0} with you": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email",
+      "template/notification.invoice_shared"
+    ]
+  },
+  "A teammate shared invoice {0} with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
   "A template cannot be approved by its submitter": {
     "sites": 1,
     "scope": [
@@ -4632,6 +4678,24 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "A transfer can include at most 5000 shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
+    ]
+  },
+  "A transfer must include at least one shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
     ]
   },
   "A transfer needs a new fleet code or manager": {
@@ -6131,7 +6195,7 @@
     ]
   },
   "Accessorials": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -6139,6 +6203,7 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
+      "routes/invoice",
       "routes/rate-agreement",
       "routes/shipment"
     ]
@@ -8272,6 +8337,15 @@
       "routes/worker"
     ]
   },
+  "Add a note for {0} (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Add a plan": {
     "sites": 4,
     "scope": [
@@ -9008,6 +9082,15 @@
       "routes/admin"
     ]
   },
+  "Add teammates by name, username, or email.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Add term...": {
     "sites": 1,
     "scope": [
@@ -9702,12 +9785,13 @@
     ]
   },
   "Adjustment": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "packages/shared/components",
       "routes/billing-queue",
       "routes/invoice-adjustment-batch"
     ]
@@ -10522,6 +10606,15 @@
       "routes/admin"
     ]
   },
+  "All Scopes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "All Statuses": {
     "sites": 4,
     "scope": [
@@ -10580,13 +10673,12 @@
     ]
   },
   "All bill types": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
-      "routes/invoice"
+      "routes/billing-queue"
     ]
   },
   "All billers": {
@@ -10696,6 +10788,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "All eligible": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "All events": {
@@ -10915,7 +11016,7 @@
     ]
   },
   "All statuses": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -10924,7 +11025,6 @@
       "routes/bank-receipt-queue",
       "routes/billing-queue",
       "routes/edi",
-      "routes/invoice",
       "routes/invoice-adjustment-batch",
       "routes/invoice-reconciliation"
     ]
@@ -11408,6 +11508,15 @@
     ],
     "areas": [
       "domain/fuelpurchase"
+    ]
+  },
+  "Already in billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Already on file": {
@@ -12566,6 +12675,15 @@
       "service/driverportalservice"
     ]
   },
+  "An invoice can be shared with at most {0} teammates at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
+    ]
+  },
   "An invoice run that is {0} can no longer be adjusted": {
     "sites": 1,
     "scope": [
@@ -13157,6 +13275,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Anyone who can view this invoice sees the note in the list below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Anyone whose role lets them view invoices can open it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Anyone with something that stops them working or should: non-compliant, training that blocks dispatch, or a safety rating of At risk. Watch items alone do not count here.": {
@@ -16202,13 +16338,12 @@
     ]
   },
   "At least one shipment ID is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql",
-      "api/handlers"
+      "go/other"
     ]
   },
   "At least one table row is required for table-based methods": {
@@ -18172,13 +18307,14 @@
     ]
   },
   "Back": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/auth",
+      "routes/billing-queue",
       "routes/journal-entry",
       "routes/worker"
     ]
@@ -18800,13 +18936,14 @@
     ]
   },
   "Base Rate": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/billing-queue",
+      "routes/invoice",
       "routes/shipment"
     ]
   },
@@ -19596,12 +19733,22 @@
       "domain/edi"
     ]
   },
-  "Bill type is required": {
+  "Bill type": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Bill type is required": {
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/billingtransfer",
       "domain/invoice"
     ]
   },
@@ -19929,6 +20076,15 @@
       "routes/customer"
     ]
   },
+  "Billing Period": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Billing Profile": {
     "sites": 1,
     "scope": [
@@ -19959,6 +20115,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Billing Queue Number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Billing Queue Transfer Batch Size": {
@@ -20191,12 +20356,13 @@
     ]
   },
   "Billing queue item is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/invoicerun"
+      "domain/invoicerun",
+      "service/invoiceservice"
     ]
   },
   "Billing queue review and approval": {
@@ -20209,7 +20375,7 @@
     ]
   },
   "Billing queue service is unavailable": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -21318,13 +21484,14 @@
     ]
   },
   "Business unit is required": {
-    "sites": 99,
+    "sites": 101,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/ailog",
       "domain/apikey",
+      "domain/billingtransfer",
       "domain/costingcontrol",
       "domain/customer",
       "domain/customfield",
@@ -21708,11 +21875,12 @@
     ]
   },
   "Calculation": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/invoice",
       "routes/reports"
     ]
   },
@@ -21889,6 +22057,15 @@
       "routes/worker"
     ]
   },
+  "Can view": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Can you take this load?": {
     "sites": 1,
     "scope": [
@@ -21927,7 +22104,7 @@
     ]
   },
   "Cancel": {
-    "sites": 224,
+    "sites": 225,
     "scope": [
       "ts"
     ],
@@ -24761,13 +24938,14 @@
     ]
   },
   "Charge": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "routes/edi",
+      "routes/invoice",
       "routes/rate-agreement",
       "routes/shipment",
       "service/edix12inspect"
@@ -24867,6 +25045,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Charges are copied from each shipment's rating when the invoice is generated. Review the rating in the billing queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Charges before other amounts, with currency.": {
@@ -25627,6 +25814,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Choose at least one teammate to share with": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
     ]
   },
   "Choose at least one worker": {
@@ -27019,12 +27215,13 @@
     ]
   },
   "Clear selection": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/billing-queue"
     ]
   },
   "Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer.": {
@@ -27043,6 +27240,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Clear teammate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Clearinghouse queries": {
@@ -27330,7 +27536,7 @@
     ]
   },
   "Close": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -27349,6 +27555,7 @@
       "routes/fuel-purchase",
       "routes/home",
       "routes/ifta-tax-rate",
+      "routes/invoice",
       "routes/manual-journal",
       "routes/rate-agreement",
       "routes/settlement-workspace",
@@ -28178,11 +28385,12 @@
     ]
   },
   "Collapse all": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/invoice",
       "routes/org-structure"
     ]
   },
@@ -29193,7 +29401,7 @@
     ]
   },
   "Completed": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -29203,6 +29411,7 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/bank-receipt-batch",
+      "routes/billing-queue",
       "routes/invoice-adjustment-batch",
       "routes/shipment",
       "routes/worker"
@@ -30714,6 +30923,16 @@
       "routes/admin"
     ]
   },
+  "Consolidated": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "packages/shared/components"
+    ]
+  },
   "Consolidated invoice batch preview and commit": {
     "sites": 1,
     "scope": [
@@ -31934,14 +32153,15 @@
     ]
   },
   "Copied": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/detention-desk"
+      "routes/detention-desk",
+      "routes/invoice"
     ]
   },
   "Copied onto every training record this run creates.": {
@@ -31982,7 +32202,7 @@
     ]
   },
   "Copy": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -31990,7 +32210,8 @@
       "apps/web/components",
       "routes/admin",
       "routes/detention-desk",
-      "routes/edi"
+      "routes/edi",
+      "routes/invoice"
     ]
   },
   "Copy API Key": {
@@ -32063,6 +32284,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Copy link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Copy message": {
@@ -33113,6 +33343,15 @@
       "routes/shipment"
     ]
   },
+  "Couldn't load who this invoice is shared with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Couldn't mark all as read": {
     "sites": 1,
     "scope": [
@@ -33223,6 +33462,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Counting shipments...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Counting stopped at {0} days, as the log requires.": {
@@ -36171,7 +36419,7 @@
     ]
   },
   "Customer": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -36182,6 +36430,7 @@
       "packages/shared/types",
       "routes/ar-aging",
       "routes/ar-open-items",
+      "routes/billing-queue",
       "routes/customer",
       "routes/customer-ledger",
       "routes/customer-payments",
@@ -36380,6 +36629,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Customer copy lists every charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Customer copy lists one line per shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Customer invoice sender email is invalid": {
@@ -40784,13 +41051,14 @@
     ]
   },
   "Delivered": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/documenttemplate",
+      "routes/billing-queue",
       "routes/home",
       "routes/shipment"
     ]
@@ -41428,7 +41696,7 @@
     ]
   },
   "Description": {
-    "sites": 137,
+    "sites": 136,
     "scope": [
       "go",
       "ts"
@@ -41851,13 +42119,14 @@
     ]
   },
   "Details": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/billing-queue",
       "routes/edi",
       "routes/hold-reason",
       "routes/service-failure-reason-code",
@@ -42632,6 +42901,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Direct link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Direct phone number for this contact.": {
@@ -44946,14 +45224,16 @@
     ]
   },
   "Done": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/billing-queue",
       "routes/fuel-purchase",
       "routes/home",
+      "routes/invoice",
       "routes/invoice-adjustment-batch",
       "routes/rate-agreement",
       "routes/shipment"
@@ -45026,6 +45306,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Download report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Download template": {
@@ -47986,6 +48275,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Earlier of arrival or appointment": {
@@ -52039,6 +52337,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Every Completed and Ready to Invoice shipment is already in the billing queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Every DOT-regulated employer in the three years before the application has to be investigated within thirty days of hire (49 CFR 391.23).": {
     "sites": 1,
     "scope": [
@@ -52181,6 +52488,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Every billing queue item must belong to a shipment on this invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.": {
@@ -52695,6 +53011,33 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Every shipment on a consolidated invoice must have exactly one billing queue item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Every shipment transferred.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Every shipment was processed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Every side of a calculation needs a measure or a target value": {
@@ -53567,11 +53910,12 @@
     ]
   },
   "Expand all": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/invoice",
       "routes/org-structure"
     ]
   },
@@ -58487,6 +58831,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Finding eligible shipments...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Fine": {
     "sites": 1,
     "scope": [
@@ -59099,6 +59452,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Flat rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Flat total or per-mile rate offered.": {
@@ -60212,13 +60574,14 @@
     ]
   },
   "Freight": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "routes/edi",
+      "routes/invoice",
       "routes/order",
       "routes/shipment",
       "template/invoice.pdf"
@@ -60250,16 +60613,6 @@
     ],
     "areas": [
       "routes/commodity"
-    ]
-  },
-  "Freight charge": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceadjustmentservice",
-      "service/invoiceservice"
     ]
   },
   "Freight charges": {
@@ -62077,6 +62430,15 @@
       "routes/invoice"
     ]
   },
+  "Generated from Statement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Generated shipment": {
     "sites": 1,
     "scope": [
@@ -63788,23 +64150,25 @@
     ]
   },
   "Hi {0},": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
       "template/account.password_reset.email",
-      "template/driverportal.invitation.email"
+      "template/driverportal.invitation.email",
+      "template/invoice.share.email"
     ]
   },
   "Hi,": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
       "template/account.password_reset.email",
-      "template/driverportal.invitation.email"
+      "template/driverportal.invitation.email",
+      "template/invoice.share.email"
     ]
   },
   "Hidden from default selection while preserving historical audit data.": {
@@ -69249,6 +69613,24 @@
       "routes/worker"
     ]
   },
+  "Invite": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Invite teammates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Invite this driver to Dash so they can see their loads, settlement statements, pay history, and raise pay questions from their phone.": {
     "sites": 1,
     "scope": [
@@ -69283,6 +69665,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Inviting...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Invoice": {
@@ -69691,7 +70082,7 @@
     ]
   },
   "Invoice is required": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -69726,6 +70117,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "Invoice link": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Invoice linked to carrier": {
@@ -69927,6 +70327,15 @@
       "service/invoiceservice"
     ]
   },
+  "Invoice scope": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Invoice scope is required": {
     "sites": 1,
     "scope": [
@@ -69954,6 +70363,15 @@
       "domain/customer"
     ]
   },
+  "Invoice status": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Invoice status is required": {
     "sites": 1,
     "scope": [
@@ -69970,6 +70388,16 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "Invoice tab is invalid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice",
+      "service/invoiceshareservice"
     ]
   },
   "Invoice this outside the statement?": {
@@ -70035,6 +70463,15 @@
       "service/invoiceservice"
     ]
   },
+  "Invoice totals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review.": {
     "sites": 1,
     "scope": [
@@ -70071,6 +70508,15 @@
       "template/invoice.email"
     ]
   },
+  "Invoice {0} for {1} is waiting for you to review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.invoice_shared"
+    ]
+  },
   "Invoice {0} from {1}": {
     "sites": 1,
     "scope": [
@@ -70096,6 +70542,15 @@
     ],
     "areas": [
       "template/invoice.email"
+    ]
+  },
+  "Invoice {0} is waiting for you to review.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.invoice_shared"
     ]
   },
   "Invoiced": {
@@ -71518,6 +71973,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Keep this window open. Shipments are sent in batches, and stopping takes effect once the current batch finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Keep typing to search records...": {
@@ -74162,7 +74626,7 @@
     ]
   },
   "Line": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -74171,18 +74635,18 @@
       "apps/web/types",
       "routes/fuel-purchase",
       "routes/ifta-tax-rate",
-      "routes/invoice",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
     ]
   },
   "Line Haul": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "Line Items": {
@@ -74211,6 +74675,15 @@
     ],
     "areas": [
       "domain/carriersettlement"
+    ]
+  },
+  "Line haul": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Line is required": {
@@ -74274,6 +74747,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "Line {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Line-level credit and rebill values that created the exception.": {
@@ -74956,12 +75438,13 @@
     ]
   },
   "Load more": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/billing-queue",
       "routes/fuel-purchase",
       "routes/notifications.tsx",
       "routes/worker"
@@ -75519,6 +76002,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading more shipments...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Loading more...": {
@@ -78198,6 +78690,15 @@
       "apps/web/lib"
     ]
   },
+  "Marked Ready to Invoice": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Marked as exception": {
     "sites": 1,
     "scope": [
@@ -80703,6 +81204,15 @@
       "apps/web/components"
     ]
   },
+  "Missing Documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Missing Fields": {
     "sites": 2,
     "scope": [
@@ -80740,6 +81250,15 @@
       "apps/web/lib"
     ]
   },
+  "Missing billing requirements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Missing commodity dimensions": {
     "sites": 1,
     "scope": [
@@ -80747,6 +81266,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "Missing documents:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Missing error codes": {
@@ -82771,6 +83299,15 @@
       "routes/formula-template"
     ]
   },
+  "Name, username, or email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Named groupings of geography that lane rules and rate matrices are written against": {
     "sites": 1,
     "scope": [
@@ -84206,7 +84743,7 @@
     ]
   },
   "No": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -84214,6 +84751,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/billing-queue",
       "routes/document-packet-rule",
       "routes/journal-entry",
       "routes/reports"
@@ -84365,12 +84903,13 @@
     ]
   },
   "No accessorial charges": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "No accessorials. Add lumper fees, detention, or other pass-through charges the carrier bills for this move.": {
@@ -84835,6 +85374,15 @@
       "routes/admin"
     ]
   },
+  "No charges on this invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "No checklists yet": {
     "sites": 1,
     "scope": [
@@ -85061,11 +85609,12 @@
     ]
   },
   "No customer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/shipment"
     ]
   },
@@ -87339,6 +87888,24 @@
       "apps/web/components"
     ]
   },
+  "No shipment that can transfer fits the search and status. Widen them, or clear them to see every eligible shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "No shipment transferred.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No shipment types found": {
     "sites": 1,
     "scope": [
@@ -87382,6 +87949,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No shipments matched, so nothing was transferred.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "No simulation has run yet": {
@@ -87535,6 +88111,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No teammates who can view invoices match.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "No telematics forms for this shipment yet.": {
@@ -88569,6 +89154,15 @@
       "routes/worker"
     ]
   },
+  "Not processed": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Not qualified": {
     "sites": 1,
     "scope": [
@@ -88614,6 +89208,15 @@
       "routes/formula-template"
     ]
   },
+  "Not ready to bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Not recordable": {
     "sites": 1,
     "scope": [
@@ -88653,11 +89256,12 @@
     ]
   },
   "Not sent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/invoice"
     ]
   },
@@ -88686,6 +89290,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not shared with anyone yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Not started": {
@@ -88743,6 +89356,15 @@
       "routes/worker"
     ]
   },
+  "Not transferred": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Not verified": {
     "sites": 1,
     "scope": [
@@ -88798,8 +89420,9 @@
     ]
   },
   "Note": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -88808,8 +89431,10 @@
       "routes/edi",
       "routes/fuel-purchase",
       "routes/holiday",
+      "routes/invoice",
       "routes/time-attendance",
-      "routes/worker"
+      "routes/worker",
+      "template/invoice.share.email"
     ]
   },
   "Note (optional)": {
@@ -88850,6 +89475,15 @@
       "routes/worker"
     ]
   },
+  "Note from {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
   "Note must be 255 characters or fewer": {
     "sites": 2,
     "scope": [
@@ -88859,6 +89493,16 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Note must be {0} characters or fewer": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice",
+      "service/invoiceshareservice"
     ]
   },
   "Notes": {
@@ -89195,12 +89839,13 @@
     ]
   },
   "Nothing matches": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/home",
       "routes/shipment"
@@ -89592,6 +90237,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Nothing to transfer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Nothing waiting on you": {
@@ -91529,6 +92183,15 @@
       "routes/pto-policy"
     ]
   },
+  "One run transfers the oldest {0}. Run it again for the rest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "One shipment is required": {
     "sites": 1,
     "scope": [
@@ -91646,6 +92309,15 @@
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "Only Completed or Ready to Invoice shipments can transfer. The shipment's status changed after it was listed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Only Draft and Published versions are available for simulation.": {
@@ -91908,6 +92580,15 @@
     ],
     "areas": [
       "service/workerdqfservice"
+    ]
+  },
+  "Only a signed-in user can share an invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
     ]
   },
   "Only a submitted review the worker has not signed can be reopened": {
@@ -92236,6 +92917,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Only completed or ready to invoice shipments can be transferred to billing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Only computed columns may carry a computed expression": {
@@ -92618,6 +93308,15 @@
     ],
     "areas": [
       "service/servicefailureservice"
+    ]
+  },
+  "Only original invoice billing queue items can be consolidated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Only outbound EDI messages can be delivered": {
@@ -93598,6 +94297,24 @@
       "routes/driver-settlement"
     ]
   },
+  "Open invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
+  "Open invoice:": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
   "Open items": {
     "sites": 1,
     "scope": [
@@ -93614,6 +94331,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open queue item": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Open reviews": {
@@ -93644,12 +94370,23 @@
     ]
   },
   "Open shipment": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi",
+      "routes/invoice"
+    ]
+  },
+  "Open shipment {0}": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "Open shipments": {
@@ -94856,23 +95593,25 @@
     ]
   },
   "Or paste this link into your browser:": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "template/account.password_reset.email",
       "template/driverportal.invitation.email",
+      "template/invoice.share.email",
       "template/rateconfirmation.email"
     ]
   },
   "Order": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "packages/shared/components",
       "routes/document-packet-rule",
       "routes/invoice",
       "routes/order",
@@ -94923,6 +95662,15 @@
     ],
     "areas": [
       "service/orderservice"
+    ]
+  },
+  "Order charges": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Order closed": {
@@ -95250,13 +95998,14 @@
     ]
   },
   "Organization is required": {
-    "sites": 98,
+    "sites": 100,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/ailog",
       "domain/apikey",
+      "domain/billingtransfer",
       "domain/costingcontrol",
       "domain/customer",
       "domain/customfield",
@@ -95741,7 +96490,7 @@
     ]
   },
   "Other Charges": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -96000,11 +96749,12 @@
     ]
   },
   "Outcome": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/jurisdiction-rule",
       "routes/osha",
       "routes/rate-agreement",
@@ -96842,12 +97592,13 @@
     ]
   },
   "PRO": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/load-detail.tsx",
       "service/invoiceservice"
     ]
@@ -96863,11 +97614,12 @@
     ]
   },
   "PRO Number": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/invoice",
       "routes/shipment"
     ]
@@ -100034,12 +100786,13 @@
     ]
   },
   "Per-unit rate before formula": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "Per-unit rate used by the formula template to calculate freight charges.": {
@@ -103055,6 +103808,15 @@
       "routes/admin"
     ]
   },
+  "PostGIS spatial queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -103213,6 +103975,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "PostgreSQL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Postgres full-text search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -106334,7 +107114,7 @@
     ]
   },
   "Quantity": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -106343,7 +107123,6 @@
       "apps/web/lib",
       "go/other",
       "routes/fuel-purchase",
-      "routes/invoice",
       "template/invoice.pdf"
     ]
   },
@@ -107826,6 +108605,15 @@
       "packages/shared/types"
     ]
   },
+  "Rate validation failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Rate validation must be resolved before transfer to billing": {
     "sites": 1,
     "scope": [
@@ -108190,12 +108978,13 @@
     ]
   },
   "Rating:": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "Ratings": {
@@ -108929,12 +109718,13 @@
     ]
   },
   "Ready to Invoice": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/billing-queue"
     ]
   },
   "Ready to accept": {
@@ -109091,7 +109881,7 @@
     ]
   },
   "Reason": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -109991,12 +110781,14 @@
     ]
   },
   "Recipient is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/edi"
+      "domain/edi",
+      "domain/invoice",
+      "service/invoiceshareservice"
     ]
   },
   "Recipient kind is required": {
@@ -114343,7 +115135,7 @@
     ]
   },
   "Request is required": {
-    "sites": 20,
+    "sites": 24,
     "scope": [
       "go"
     ],
@@ -114353,7 +115145,8 @@
       "service/bankreceiptservice",
       "service/customerpaymentservice",
       "service/invoicerunservice",
-      "service/invoiceservice"
+      "service/invoiceservice",
+      "service/invoiceshareservice"
     ]
   },
   "Request recorded": {
@@ -114569,6 +115362,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Requester is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
     ]
   },
   "Requesting {0} credit": {
@@ -116537,6 +117339,15 @@
       "apps/web/components"
     ]
   },
+  "Retry {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Retrying ({0})...": {
     "sites": 1,
     "scope": [
@@ -116792,6 +117603,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Returned to operations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Returned to work": {
@@ -119659,6 +120479,15 @@
       "routes/time-attendance"
     ]
   },
+  "Running the readiness check and transferring...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Running v{0}": {
     "sites": 1,
     "scope": [
@@ -120017,6 +120846,15 @@
       "routes/edi"
     ]
   },
+  "SELECT ... FOR UPDATE row locking": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -120096,6 +120934,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "SQLite": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "SSN": {
@@ -121847,11 +122694,12 @@
     ]
   },
   "Scope is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/billingtransfer",
       "domain/worker"
     ]
   },
@@ -122120,7 +122968,7 @@
     ]
   },
   "Search PRO, BOL...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -122189,6 +123037,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Search cannot be longer than 200 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
     ]
   },
   "Search carrier or number": {
@@ -122666,6 +123523,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Searching...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Second hazardous material class": {
@@ -123783,6 +124649,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Select all shown shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Select all visible settlements": {
@@ -125180,6 +126055,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Select {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Select...": {
     "sites": 2,
     "scope": [
@@ -125634,6 +126518,15 @@
       "domain/permission"
     ]
   },
+  "Send teammates a link to this invoice. Sharing doesn't change who can see it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Send the comment you are composing": {
     "sites": 1,
     "scope": [
@@ -125974,12 +126867,13 @@
     ]
   },
   "Sent back": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/billing-queue"
     ]
   },
   "Sent back to ops": {
@@ -127797,12 +128691,22 @@
     ]
   },
   "Share": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/invoice"
+    ]
+  },
+  "Share invoice {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/invoice"
     ]
   },
   "Share of available drivers currently holding work; average empty miles across covered moves with a live position.": {
@@ -127913,6 +128817,15 @@
       "routes/reports"
     ]
   },
+  "Shared by {0} on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Shared oversize and overweight limits per state. This data is global: it has no organization column and every tenant reads the same rows, so a change here alters what the whole platform is told is legal. Carrier-specific posture belongs in an override.": {
     "sites": 1,
     "scope": [
@@ -127920,6 +128833,78 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Shared with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but some emails couldn't be sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but the emails couldn't be sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Shared with {0, plural, one {# teammate} other {# teammates}}. They'll get a notification and an email.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Shared with {0, plural, one {# teammate} other {# teammates}}. They'll see it in their notifications; email isn't set up for shares.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Sharer is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
+  "Sharing does not change who can see this invoice. You can open it because your role already lets you view invoices.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
+  "Sharing does not change who can see this invoice. You can open it because your role in {0} already lets you view invoices.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
     ]
   },
   "Shift": {
@@ -128161,12 +129146,13 @@
     ]
   },
   "Shipment ID": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/billing-queue",
       "routes/formula-template",
       "routes/shipment"
     ]
@@ -129099,6 +130085,15 @@
       "domain/platformcatalog"
     ]
   },
+  "Shipment must be completed before it can be marked ready to invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
   "Shipment must be completed or ready to invoice": {
     "sites": 1,
     "scope": [
@@ -129118,12 +130113,22 @@
     ]
   },
   "Shipment must be in ReadyToInvoice status to transfer to billing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/billingqueueservice"
+      "service/billingqueueservice",
+      "service/shipmentservice"
+    ]
+  },
+  "Shipment not found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Shipment ownership transfer requires a user actor": {
@@ -129169,6 +130174,15 @@
     ],
     "areas": [
       "service/shipmenteventservice"
+    ]
+  },
+  "Shipment status": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Shipment status reason code is required when AT7 shipment status code is SD": {
@@ -129326,7 +130340,7 @@
     ]
   },
   "Shipments": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -129398,6 +130412,15 @@
       "apps/web/lib"
     ]
   },
+  "Shipments in the batch that was running may still have transferred. Their queue entries appear once the list refreshes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Shipments moving on or after this date price against this contract": {
     "sites": 1,
     "scope": [
@@ -129414,6 +130437,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Shipments that can transfer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Shipper": {
@@ -129847,6 +130879,15 @@
       "routes/worker"
     ]
   },
+  "Show outcome": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Show the results in the email": {
     "sites": 1,
     "scope": [
@@ -129935,6 +130976,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Showing {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Showing {0} of {1} {2}": {
@@ -130488,6 +131538,15 @@
       "apps/web/lib"
     ]
   },
+  "Single Shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Single number": {
     "sites": 1,
     "scope": [
@@ -130884,6 +131943,24 @@
       "service/driversettlementservice"
     ]
   },
+  "Some shipments are no longer approved and unbilled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Some shipments were invoiced elsewhere while this invoice was being created": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Some transactions processed with warnings. Review the failure reason.": {
     "sites": 1,
     "scope": [
@@ -130928,6 +132005,15 @@
     ],
     "areas": [
       "routes/settlement.tsx"
+    ]
+  },
+  "Something outside the billing policy stopped the transfer. Try it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Something went wrong": {
@@ -132396,6 +133482,15 @@
       "service/workerinjuryservice"
     ]
   },
+  "Start transfer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Start typing an expression and the result appears here.": {
     "sites": 1,
     "scope": [
@@ -132835,7 +133930,7 @@
     ]
   },
   "Status": {
-    "sites": 213,
+    "sites": 214,
     "scope": [
       "go",
       "ts"
@@ -132995,7 +134090,7 @@
     ]
   },
   "Status is required": {
-    "sites": 114,
+    "sites": 115,
     "scope": [
       "go"
     ],
@@ -133003,6 +134098,7 @@
       "domain/accounttype",
       "domain/agent",
       "domain/apikey",
+      "domain/billingtransfer",
       "domain/carrier",
       "domain/dedicatedlane",
       "domain/detention",
@@ -133281,7 +134377,7 @@
     ]
   },
   "Stop": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -133289,6 +134385,7 @@
     "areas": [
       "apps/web/lib",
       "routes/admin",
+      "routes/billing-queue",
       "routes/service-failure",
       "template/rateconfirmation.pdf"
     ]
@@ -133506,6 +134603,15 @@
       "routes/admin",
       "routes/edi",
       "routes/shipment"
+    ]
+  },
+  "Stopping after this batch...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Stops": {
@@ -135923,6 +137029,24 @@
       "routes/order"
     ]
   },
+  "Teammate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Teammate not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
+    ]
+  },
   "Teammates get an in-app notification with the download when it completes.": {
     "sites": 1,
     "scope": [
@@ -135930,6 +137054,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Teammates who can view invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Telematics": {
@@ -136023,6 +137156,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "Temp Max": {
@@ -138091,6 +139233,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The billing policy sends shipments with review items back to operations to be corrected first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The billing queue is clear.": {
     "sites": 1,
     "scope": [
@@ -139182,6 +140333,15 @@
       "routes/rate-agreement"
     ]
   },
+  "The customer's billing requirements are not met and the billing policy blocks transfer until they are.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The customer's purchase order number, shown on their invoice.": {
     "sites": 1,
     "scope": [
@@ -139882,6 +141042,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "The eligible shipments could not be found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The email address the VAN provider uses for service notifications.": {
@@ -141054,6 +142223,15 @@
     ],
     "areas": [
       "template/rateconfirmation.email"
+    ]
+  },
+  "The link that opens the invoice, on the tab the sharer was looking at. Required: without it the message has no purpose.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -142292,6 +143470,15 @@
       "service/shipmentservice"
     ]
   },
+  "The rate did not pass validation and the billing policy blocks transfer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The rate that applies after free time, in words.": {
     "sites": 1,
     "scope": [
@@ -143052,6 +144239,15 @@
       "routes/shipment"
     ]
   },
+  "The shipment is already in the billing queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The shipment milestone at which carrier cost accrues into the settlement pool.": {
     "sites": 1,
     "scope": [
@@ -143070,6 +144266,15 @@
       "routes/order"
     ]
   },
+  "The shipment no longer exists or belongs to another organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "The shipment will be duplicated in the background.": {
     "sites": 1,
     "scope": [
@@ -143086,6 +144291,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "The shipments could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The shipments have been attached to this order.": {
@@ -143547,6 +144761,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "The teammate's first name.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
   "The template below has every column the importer recognises, with two example rows.": {
     "sites": 1,
     "scope": [
@@ -143726,6 +144949,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The transfer stopped early": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The truck stop or station, as it appears on the receipt.": {
@@ -145449,6 +146681,15 @@
       "routes/accept.tsx"
     ]
   },
+  "This invoice bills {0, plural, one {# shipment} other {# shipments}}. Their documents stay on each shipment; the Charges tab lists every shipment it covers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "This invoice does not currently have shipment context loaded for document review.": {
     "sites": 1,
     "scope": [
@@ -146527,6 +147768,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "This user is not an active member of your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
     ]
   },
   "This usually takes a few seconds": {
@@ -148259,7 +149509,7 @@
     ]
   },
   "Total": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -149820,6 +151070,33 @@
       "routes/shipment"
     ]
   },
+  "Transfer all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Transfer failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Transfer more": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Transfer ownership request is required": {
     "sites": 1,
     "scope": [
@@ -149829,6 +151106,15 @@
       "service/shipmentservice"
     ]
   },
+  "Transfer progress": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Transfer shipments to billing queue": {
     "sites": 1,
     "scope": [
@@ -149836,6 +151122,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Transfer summary": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Transfer this shipment to a different user.": {
@@ -149848,12 +151143,13 @@
     ]
   },
   "Transfer to Billing": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/hooks"
+      "apps/web/hooks",
+      "routes/billing-queue"
     ]
   },
   "Transfer to billing request is required": {
@@ -149863,6 +151159,33 @@
     ],
     "areas": [
       "service/billingqueueservice"
+    ]
+  },
+  "Transfer {0} selected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Transferred": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Transferred for billing review with open items:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Transferred to billing": {
@@ -150343,7 +151666,7 @@
     ]
   },
   "Try again": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -150352,6 +151675,7 @@
       "packages/shared/components",
       "routes/accept.tsx",
       "routes/admin",
+      "routes/billing-queue",
       "routes/detention-desk",
       "routes/detention-intelligence",
       "routes/hos.tsx",
@@ -150546,7 +151870,7 @@
     ]
   },
   "Type": {
-    "sites": 43,
+    "sites": 42,
     "scope": [
       "go",
       "ts"
@@ -150564,7 +151888,6 @@
       "routes/fiscal-year",
       "routes/formula-template",
       "routes/hold-reason",
-      "routes/invoice",
       "routes/location-category",
       "routes/osha",
       "routes/pay-profile",
@@ -151497,15 +152820,6 @@
       "routes/worker"
     ]
   },
-  "Unit Price": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/invoice"
-    ]
-  },
   "Unit must be greater than or equal to 1": {
     "sites": 1,
     "scope": [
@@ -151912,12 +153226,13 @@
     ]
   },
   "Unknown user": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/invoice"
     ]
   },
   "Unknown widget configuration kind \"{0}\"": {
@@ -154281,6 +155596,15 @@
       "routes/admin"
     ]
   },
+  "Validation Failures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Validation Issues": {
     "sites": 1,
     "scope": [
@@ -155114,6 +156438,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "View Order": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "View PDF": {
@@ -157823,6 +159156,15 @@
       "routes/dash-control"
     ]
   },
+  "What each person can do comes from their role. Sharing never grants access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "What each report filters on and breaks down by. Turning one on narrows every tile built on the same data.": {
     "sites": 1,
     "scope": [
@@ -158182,6 +159524,15 @@
     ],
     "areas": [
       "routes/review-template"
+    ]
+  },
+  "What the sharer wrote, if anything. Print it: it is the reason the invoice was shared.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
     ]
   },
   "What the signature is on": {
@@ -159981,6 +161332,24 @@
     ]
   },
   "Who ran the report or owns the schedule.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
+  "Who shared the invoice.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/documenttemplate"
+    ]
+  },
+  "Who shared the invoice. Name them: a share from nobody gives the reader no reason to open it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -161870,7 +163239,7 @@
     ]
   },
   "Yes": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -161878,6 +163247,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/billing-queue",
       "routes/document-packet-rule",
       "routes/journal-entry",
       "routes/reports"
@@ -161998,6 +163368,16 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "You cannot share an invoice with yourself": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice",
+      "service/invoiceshareservice"
     ]
   },
   "You choose what it shows before it lands.": {
@@ -162225,6 +163605,15 @@
     "areas": [
       "apps/web/components",
       "routes/home"
+    ]
+  },
+  "You stopped the transfer. The remaining shipments were not sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "You're all caught up. Load assignments, settlements, and pay updates land here.": {
@@ -163237,6 +164626,15 @@
       "routes/scheduling"
     ]
   },
+  "advisory locks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -163495,6 +164893,15 @@
       "template/report.delivery.email"
     ]
   },
+  "concurrent index creation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -163567,6 +164974,15 @@
       "go/other"
     ]
   },
+  "database session diagnostics": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -163601,6 +165017,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "declarative table partitioning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "did not apply.": {
@@ -165663,6 +167088,15 @@
       "routes/reports"
     ]
   },
+  "exact decimal arithmetic": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -165679,6 +167113,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "exclusion constraints": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -166051,6 +167494,15 @@
       "service/samsarasyncservice"
     ]
   },
+  "logical-replication change data capture": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -166076,6 +167528,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "materialized views": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -167183,6 +168644,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "trigram similarity search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {
     "sites": 2,
     "scope": [
@@ -167620,6 +169090,24 @@
       "routes/formula-template"
     ]
   },
+  "{0, plural, one {# charge} other {# charges}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "{0, plural, one {# charge} other {# charges}} across {1, plural, one {# shipment} other {# shipments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0, plural, one {# condition} other {# conditions}}": {
     "sites": 2,
     "scope": [
@@ -167631,11 +169119,12 @@
     ]
   },
   "{0, plural, one {# day} other {# days}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/worker"
     ]
   },
@@ -167774,6 +169263,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# hour} other {# hours}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": {
     "sites": 1,
     "scope": [
@@ -167826,6 +169324,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0, plural, one {# mile} other {# miles}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "{0, plural, one {# missing requirement} other {# missing requirements}}": {
@@ -168020,6 +169527,15 @@
       "routes/shipment"
     ]
   },
+  "{0, plural, one {# shipment can transfer} other {# shipments can transfer}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0, plural, one {# shipment isn't booked as an order} other {# shipments aren't booked as orders}}, so splitting by order bills each on its own invoice. If {1} expects one invoice for the period,": {
     "sites": 1,
     "scope": [
@@ -168030,12 +169546,13 @@
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/invoice"
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}} held back": {
@@ -168093,11 +169610,12 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/admin",
       "routes/load-detail.tsx"
     ]
@@ -168147,6 +169665,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0, plural, one {# unit} other {# units}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "{0, plural, one {# unread notification} other {# unread notifications}}": {
     "sites": 1,
     "scope": [
@@ -168181,6 +169708,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "{0, plural, one {Transfer all # shipment that matches the current search and status?} other {Transfer all # shipments that match the current search and status?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {permission} other {permissions}}": {
@@ -168613,6 +170149,15 @@
     ],
     "areas": [
       "domain/rateagreement"
+    ]
+  },
+  "{0} cannot view invoices, so the link would not open for them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceshareservice"
     ]
   },
   "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .": {
@@ -169402,6 +170947,15 @@
       "service/authservice"
     ]
   },
+  "{0} marked Ready to Invoice first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "{0} matrix-priced lanes are untouched — their rates live in the matrix cells.": {
     "sites": 1,
     "scope": [
@@ -169829,6 +171383,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} of {1} shipments checked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} of {1} signed": {
@@ -170367,13 +171930,14 @@
     ]
   },
   "{0} selected": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/billing-queue",
       "routes/carrier-settlement-workspace",
       "routes/settlement-workspace"
     ]
@@ -170412,6 +171976,34 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0} shared invoice {1} for {2} with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
+    ]
+  },
+  "{0} shared invoice {1} with you": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email",
+      "template/notification.invoice_shared"
+    ]
+  },
+  "{0} shared invoice {1} with you.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/invoice.share.email"
     ]
   },
   "{0} shp": {
@@ -170469,13 +172061,12 @@
     ]
   },
   "{0} subtotal": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ifta-return",
-      "routes/invoice"
+      "routes/ifta-return"
     ]
   },
   "{0} tenders the shipment below to {1} at the agreed rate. This confirmation, together with a clean proof of delivery, is the basis on which the carrier is paid.": {
@@ -171057,6 +172648,15 @@
       "apps/web/components"
     ]
   },
+  "{0} · {1, plural, one {# shipment} other {# shipments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0} · {1} drivers in the pool · drawn {2}": {
     "sites": 1,
     "scope": [
@@ -171230,6 +172830,24 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0}% of line haul": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "{0}% of line haul ({1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "{0}% of total": {
@@ -171487,6 +173105,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{1} more {0, plural, one {shipment} other {shipments}} matched than one run transfers. Run Transfer all again for the rest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{P}-{Y}{M}-{S}": {

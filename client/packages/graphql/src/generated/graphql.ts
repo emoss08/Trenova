@@ -2200,6 +2200,20 @@ export type InvoicePaymentTerm =
   | 'Net60'
   | 'Net90';
 
+/**
+ * What an invoice covers. Read this rather than inferring shape from which of
+ * shipmentId / orderId happens to be set.
+ */
+export type InvoiceScope =
+  /** A credit memo, rebill or reversal in a correction chain. */
+  | 'Adjustment'
+  /** A customer's shipments across a billing period, spanning orders. */
+  | 'Consolidated'
+  /** Every billable leg of one order. */
+  | 'Order'
+  /** One shipment. */
+  | 'Shipment';
+
 /** How the lines inside one invoice are organised. Never changes how many there are. */
 export type InvoiceSectionKey =
   | 'Destination'
@@ -3772,8 +3786,35 @@ export type ShipmentAnalyticsInput = {
   windowDays?: number | null | undefined;
 };
 
+export type ShipmentBillingTransferCandidateIdsInput = {
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  query?: string | null | undefined;
+  /** Narrow to Completed or ReadyToInvoice shipments. */
+  status?: ShipmentStatus | null | undefined;
+};
+
+/** Why a shipment in a bulk transfer did not reach the billing queue. */
+export type ShipmentBillingTransferFailureCode =
+  /** The shipment is already in the billing queue. */
+  | 'AlreadyTransferred'
+  /** The shipment is not Ready to Invoice, or Completed with marking ready enabled. */
+  | 'InvalidStatus'
+  /** The shipment does not exist in this organization. */
+  | 'NotFound'
+  /** Rate validation failed and the billing policy blocks transfer. */
+  | 'RateValidation'
+  /** Required billing documents or fields are missing and the billing policy blocks transfer. */
+  | 'RequirementsUnmet'
+  /** The billing policy returns shipments with review items to operations. */
+  | 'ReturnToOperations'
+  /** The transfer failed for a reason outside the billing policy. */
+  | 'Unexpected';
+
 export type ShipmentBulkTransferToBillingInput = {
   billType?: BillType | null | undefined;
+  /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
+  markCompletedReadyToInvoice?: boolean | null | undefined;
   shipmentIds: Array<string | number>;
 };
 
@@ -4083,10 +4124,14 @@ export type ShipmentsInput = {
   activityWindowEnd?: number | null | undefined;
   activityWindowStart?: number | null | undefined;
   after?: string | null | undefined;
+  /** Only Completed or Ready to Invoice shipments that are not in the billing queue. */
+  billingTransferEligible?: boolean | null | undefined;
   expandShipmentDetails?: boolean | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
   filterGroups?: Array<FilterGroupInput> | null | undefined;
   first?: number | null | undefined;
+  /** Load each shipment's customer without expanding the rest of its details. */
+  includeCustomer?: boolean | null | undefined;
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   status?: string | null | undefined;
@@ -5365,6 +5410,21 @@ export type AssignBillingQueueBillerMutationVariables = Exact<{
 
 
 export type AssignBillingQueueBillerMutation = { assignBillingQueueBiller: { ' $fragmentRefs'?: { 'BillingQueueActionFieldsFragment': BillingQueueActionFieldsFragment } } };
+
+export type BillingTransferCandidatesQueryVariables = Exact<{
+  input: ShipmentsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type BillingTransferCandidatesQuery = { shipments: { totalCount?: number | null, edges: Array<{ node: { id: string, proNumber: string, bol: string | null, status: ShipmentStatus, billingTransferStatus: string | null, totalChargeAmount: string, actualDeliveryDate: number | null, customer: { id: string, code: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type BillingTransferCandidateIdsQueryVariables = Exact<{
+  input: ShipmentBillingTransferCandidateIdsInput;
+}>;
+
+
+export type BillingTransferCandidateIdsQuery = { shipmentBillingTransferCandidateIds: { ids: Array<string>, totalCount: number, truncated: boolean } };
 
 export type CarrierSettlementTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -7643,7 +7703,7 @@ export type DeleteIftaTaxRateMutationVariables = Exact<{
 
 export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
 
-export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, customerId: string, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
+export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, orderId: string | null, customerId: string, number: string, billType: BillType, scope: InvoiceScope, periodStart: number | null, periodEnd: number | null, shipmentCount: number, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
 export type InvoiceTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -9054,7 +9114,7 @@ export type BulkTransferShipmentsToBillingMutationVariables = Exact<{
 }>;
 
 
-export type BulkTransferShipmentsToBillingMutation = { bulkTransferShipmentsToBilling: { totalCount: number, successCount: number, errorCount: number, results: Array<{ shipmentId: string, success: boolean, error: string | null }> } };
+export type BulkTransferShipmentsToBillingMutation = { bulkTransferShipmentsToBilling: { totalCount: number, successCount: number, errorCount: number, results: Array<{ shipmentId: string, proNumber: string | null, success: boolean, markedReadyToInvoice: boolean, failureCode: ShipmentBillingTransferFailureCode | null, error: string | null, billingQueueItem: { id: string, number: string, status: BillingQueueStatus } | null, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string }>, validationFailures: Array<{ field: string, code: string, message: string }> }> } };
 
 export type CalculateShipmentTotalsMutationVariables = Exact<{
   input: ShipmentInput;
@@ -12668,9 +12728,14 @@ export const InvoiceTableRowFieldsFragmentDoc = new TypedDocumentString(`
   id
   billingQueueItemId
   shipmentId
+  orderId
   customerId
   number
   billType
+  scope
+  periodStart
+  periodEnd
+  shipmentCount
   status
   paymentTerm
   currencyCode
@@ -15823,6 +15888,8 @@ export const EnrollBenefitDocument = {"__meta__":{"kind":"mutation","name":"Enro
 export const EndBenefitEnrollmentDocument = {"__meta__":{"kind":"mutation","name":"EndBenefitEnrollment","hash":"sha256:269f0db73fa33163afee2142e5f751214078a9ae4171658a2610e7bd0bdb7a7c"}} as unknown as TypedDocumentString<EndBenefitEnrollmentMutation, EndBenefitEnrollmentMutationVariables>;
 export const UpdateBillingQueueStatusDocument = {"__meta__":{"kind":"mutation","name":"UpdateBillingQueueStatus","hash":"sha256:941445cb1c9ee5677f5b115525133c96fcdac96cbfa2591e8f587620cba61272"}} as unknown as TypedDocumentString<UpdateBillingQueueStatusMutation, UpdateBillingQueueStatusMutationVariables>;
 export const AssignBillingQueueBillerDocument = {"__meta__":{"kind":"mutation","name":"AssignBillingQueueBiller","hash":"sha256:9850f8da7824976fc1edee6d78fb22738914fc8ffefb4d3588e54e6c6f66bd9f"}} as unknown as TypedDocumentString<AssignBillingQueueBillerMutation, AssignBillingQueueBillerMutationVariables>;
+export const BillingTransferCandidatesDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidates","hash":"sha256:450580ede6ca95f084bf654b2fe54bcf394a97d7d927989fbea661193da083ee"}} as unknown as TypedDocumentString<BillingTransferCandidatesQuery, BillingTransferCandidatesQueryVariables>;
+export const BillingTransferCandidateIdsDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidateIds","hash":"sha256:705c57e3782a1890e509966d298df4f97e2f1d2b2aa33b27b1068d98258381a6"}} as unknown as TypedDocumentString<BillingTransferCandidateIdsQuery, BillingTransferCandidateIdsQueryVariables>;
 export const CarrierSettlementTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementTable","hash":"sha256:eadf21c42815fc3a90fbd8614c13a9e4960c83698f4cc6a50395a0232c35a5d1"}} as unknown as TypedDocumentString<CarrierSettlementTableQuery, CarrierSettlementTableQueryVariables>;
 export const CarrierSettlementDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementDetail","hash":"sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90"}} as unknown as TypedDocumentString<CarrierSettlementDetailQuery, CarrierSettlementDetailQueryVariables>;
 export const CarrierSettlementBatchTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchTable","hash":"sha256:073382253e84d646f0909341ebf8fa4421b0830503743352686b6e3e2faee5bc"}} as unknown as TypedDocumentString<CarrierSettlementBatchTableQuery, CarrierSettlementBatchTableQueryVariables>;
@@ -16125,7 +16192,7 @@ export const BackfillJurisdictionMilesDocument = {"__meta__":{"kind":"mutation",
 export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
-export const InvoiceTableDocument = {"__meta__":{"kind":"query","name":"InvoiceTable","hash":"sha256:63d68f9764990f48180ca1e6c938cec819f504ae13f959b9b1abd06dffdd4609"}} as unknown as TypedDocumentString<InvoiceTableQuery, InvoiceTableQueryVariables>;
+export const InvoiceTableDocument = {"__meta__":{"kind":"query","name":"InvoiceTable","hash":"sha256:d6a736f86aff0ee2c4a07bc1ff083baf7461b4856e82c4b3f0f7e9768160e566"}} as unknown as TypedDocumentString<InvoiceTableQuery, InvoiceTableQueryVariables>;
 export const JournalEntryDetailDocument = {"__meta__":{"kind":"query","name":"JournalEntryDetail","hash":"sha256:9115c76311ea912a3c9abf400bf6fc66c811ec2227b1500769f88a829782a646"}} as unknown as TypedDocumentString<JournalEntryDetailQuery, JournalEntryDetailQueryVariables>;
 export const JournalSourceByObjectDocument = {"__meta__":{"kind":"query","name":"JournalSourceByObject","hash":"sha256:9fc6924e799999cbc0d1e413752b76e244eb6f3d8f0cef4eec55f1c5d2b785af"}} as unknown as TypedDocumentString<JournalSourceByObjectQuery, JournalSourceByObjectQueryVariables>;
 export const JournalEntriesBySourceDocument = {"__meta__":{"kind":"query","name":"JournalEntriesBySource","hash":"sha256:fda3eefb446f90d8e933f63b8db868bf7045f0a841ecafdd013ff3240df17e1f"}} as unknown as TypedDocumentString<JournalEntriesBySourceQuery, JournalEntriesBySourceQueryVariables>;
@@ -16295,7 +16362,7 @@ export const UncancelShipmentDocument = {"__meta__":{"kind":"mutation","name":"U
 export const DuplicateShipmentDocument = {"__meta__":{"kind":"mutation","name":"DuplicateShipment","hash":"sha256:0dcc6ec862a4ef66a9e7137e45548bb355204f1bc766d172a035b5e537298ecf"}} as unknown as TypedDocumentString<DuplicateShipmentMutation, DuplicateShipmentMutationVariables>;
 export const TransferShipmentOwnershipDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentOwnership","hash":"sha256:9a6103656bdc65c8fc5c09f445ae0b982d3bcb71ff9a0a5c08b4f4594b13d0a9"}} as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = {"__meta__":{"kind":"mutation","name":"TransferShipmentToBilling","hash":"sha256:7849b77f08e7c2e7cb6af2c2abbc53185d0811092df155557be1c6803b335473"}} as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
-export const BulkTransferShipmentsToBillingDocument = {"__meta__":{"kind":"mutation","name":"BulkTransferShipmentsToBilling","hash":"sha256:46beae0d55af6f6abff7b4c2090ce9ae974f805e505c3ff2c60ababb2f33e0a2"}} as unknown as TypedDocumentString<BulkTransferShipmentsToBillingMutation, BulkTransferShipmentsToBillingMutationVariables>;
+export const BulkTransferShipmentsToBillingDocument = {"__meta__":{"kind":"mutation","name":"BulkTransferShipmentsToBilling","hash":"sha256:2e546a8270ba509bfd9851cb2e51b4f3ae7f4287ee866fa47c7b1bb26edec644"}} as unknown as TypedDocumentString<BulkTransferShipmentsToBillingMutation, BulkTransferShipmentsToBillingMutationVariables>;
 export const CalculateShipmentTotalsDocument = {"__meta__":{"kind":"mutation","name":"CalculateShipmentTotals","hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}} as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
 export const PreviewShipmentContractRateDocument = {"__meta__":{"kind":"mutation","name":"PreviewShipmentContractRate","hash":"sha256:b3609be8eacbbcd92db634d5a0939e1cf3bd0d4c1635b56ac8a7e1082d7aaaff"}} as unknown as TypedDocumentString<PreviewShipmentContractRateMutation, PreviewShipmentContractRateMutationVariables>;
 export const AutoRateShipmentDocument = {"__meta__":{"kind":"mutation","name":"AutoRateShipment","hash":"sha256:0afeac8a383afc1ec96502ad9878cd88eaaa4aeb3ba477c4d4d49537be41c6c0"}} as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
