@@ -93,3 +93,57 @@ describe("notification registry — generic link handling", () => {
     expect(getNotificationLink(notification({ eventType: "tca.table_change" }))).toBeNull();
   });
 });
+
+describe("notification registry — invoice notifications", () => {
+  it("files a shared invoice under Billing with the sharer as its avatar", () => {
+    const descriptor = getNotificationDescriptor("invoice_shared");
+    const shared = notification({
+      eventType: "invoice_shared",
+      data: { sharedById: "usr_marcus", sharedByName: "Marcus Bell" },
+    });
+
+    expect(descriptor).not.toBe(getNotificationDescriptor("some.unregistered.event"));
+    expect(descriptor.category).toBe("Billing");
+    expect(descriptor.avatar?.(shared)).toEqual({ userId: "usr_marcus", name: "Marcus Bell" });
+  });
+
+  it("opens a shared invoice on the tab the sharer linked", () => {
+    const link = getNotificationLink(
+      notification({
+        eventType: "invoice_shared",
+        data: { link: "/billing/invoices?item=inv_1&tab=charges" },
+        relatedEntities: { invoiceId: "inv_1" },
+      }),
+    );
+
+    expect(link).toBe("/billing/invoices?item=inv_1&tab=charges");
+  });
+
+  it("opens a shared invoice from its id when the link is missing", () => {
+    const link = getNotificationLink(
+      notification({ eventType: "invoice_shared", relatedEntities: { invoiceId: "inv_1" } }),
+    );
+
+    expect(link).toBe("/billing/invoices?item=inv_1");
+  });
+
+  it("selects the invoice for a reconciliation warning using the parameter the page reads", () => {
+    const link = getNotificationLink(
+      notification({
+        eventType: "invoice_reconciliation_warning",
+        relatedEntities: { invoiceId: "inv_9" },
+      }),
+    );
+
+    expect(link).toBe("/billing/invoices?item=inv_9");
+  });
+
+  it("falls back to the invoice list when no invoice is named", () => {
+    expect(getNotificationLink(notification({ eventType: "invoice_shared" }))).toBe(
+      "/billing/invoices",
+    );
+    expect(getNotificationLink(notification({ eventType: "invoice_reconciliation_warning" }))).toBe(
+      "/billing/invoices",
+    );
+  });
+});

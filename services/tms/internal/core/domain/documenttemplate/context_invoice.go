@@ -574,6 +574,67 @@ func (r *Registry) registerBillingKinds() {
 	})
 }
 
+type InvoiceShareEmailContext struct {
+	RecipientFirstName string
+	SharedByName       string
+	InvoiceNumber      string
+	CustomerName       string
+	Note               string
+	InvoiceURL         template.URL
+	CompanyName        string
+}
+
+func newInvoiceShareEmailSampleContext() any {
+	return InvoiceShareEmailContext{
+		RecipientFirstName: "Dana",
+		SharedByName:       "Marcus Bell",
+		InvoiceNumber:      sampleInvoiceNo,
+		CustomerName:       sampleCustomerName,
+		Note:               "Halstead disputed the detention line on this one. Can you check it against the gate times before we send?",
+		InvoiceURL: template.URL(
+			"https://app.example.com/billing/invoices?item=inv_01J2Y8Z3Q4R5S6T7V8W9X0Y1Z2&tab=charges",
+		),
+		CompanyName: sampleCompanyName,
+	}
+}
+
+func (r *Registry) registerInvoiceShareKinds() {
+	_ = r.Register(&KindDefinition{
+		Kind:          KindInvoiceShareEmail,
+		DisplayName:   "Invoice Shared With a Teammate",
+		Description:   "Tells a teammate someone shared an invoice with them, with the sharer's note and a link that opens it. Not customer-scoped: the recipient is a user who can already view invoices.",
+		Category:      "Billing",
+		Channels:      []Channel{ChannelSubject, ChannelEmailHTML, ChannelEmailText},
+		sampleFactory: newInvoiceShareEmailSampleContext,
+		Variables: []VariableDefinition{
+			{
+				Path:        "RecipientFirstName",
+				Type:        VariableString,
+				Description: "The teammate's first name.",
+			},
+			{
+				Path:        "SharedByName",
+				Type:        VariableString,
+				Description: "Who shared the invoice. Name them: a share from nobody gives the reader no reason to open it.",
+			},
+			invoiceNumberVariable(true, "The invoice that was shared."),
+			customerNameVariable(false, "The billed customer's name."),
+			{
+				Path:        "Note",
+				Type:        VariableString,
+				Description: "What the sharer wrote, if anything. Print it: it is the reason the invoice was shared.",
+			},
+			{
+				Path:        "InvoiceURL",
+				Type:        VariableString,
+				Required:    true,
+				Description: "The link that opens the invoice, on the tab the sharer was looking at. Required: without it the message has no purpose.",
+			},
+			companyNameVariable(),
+		},
+	})
+}
+
 // The sample fixtures below describe one shipment consistently across every kind,
 // so an administrator previewing an invoice, the email that delivers it, and the
 // detention notice that preceded it sees the same load rather than three unrelated

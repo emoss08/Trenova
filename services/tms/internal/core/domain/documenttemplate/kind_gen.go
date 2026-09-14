@@ -18,7 +18,8 @@ const (
 	// KindInvoicePDF is the customer invoice document.
 	KindInvoicePDF Kind = "invoice.pdf"
 	// KindInvoiceEmail is the message that delivers an invoice.
-	KindInvoiceEmail Kind = "invoice.email"
+	KindInvoiceEmail      Kind = "invoice.email"
+	KindInvoiceShareEmail Kind = "invoice.share.email"
 
 	// Detention.
 
@@ -128,6 +129,8 @@ const (
 	KindNotificationCommentMention Kind = "notification.shipment_comment_mention"
 	// KindNotificationCommentReply tells someone their comment got a reply.
 	KindNotificationCommentReply Kind = "notification.shipment_comment_reply"
+
+	KindNotificationInvoiceShared Kind = "notification.invoice_shared"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -138,6 +141,7 @@ func AllKinds() []Kind {
 	return []Kind{
 		KindInvoicePDF,
 		KindInvoiceEmail,
+		KindInvoiceShareEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
 		KindRateConfirmationPDF,
@@ -174,5 +178,6 @@ func AllKinds() []Kind {
 		KindNotificationReportScheduleSkipped,
 		KindNotificationCommentMention,
 		KindNotificationCommentReply,
+		KindNotificationInvoiceShared,
 	}
 }

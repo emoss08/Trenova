@@ -8,6 +8,7 @@ app:
   debug: true # Enable debug mode
   version: 1.0.0 # Application version
   problemTypeBaseUri: https://api.trenova.app/problems/ # RFC 9457 problem type base URI
+  webBaseUrl: https://app.example.com # Origin of the web app, used for links in user emails such as invoice shares. Leave empty and those emails are not sent.
 
 platform:
   mode: self_hosted # community/self_hosted/development/cloud/enterprise

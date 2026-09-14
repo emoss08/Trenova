@@ -1,0 +1,1 @@
+{{ if .SharedByName }}{{ t "{0} shared invoice {1} with you" .SharedByName .InvoiceNumber }}{{ else }}{{ t "A teammate shared invoice {0} with you" .InvoiceNumber }}{{ end }}

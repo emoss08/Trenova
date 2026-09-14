@@ -1210,6 +1210,11 @@ type AppConfig struct {
 	Debug              bool   `mapstructure:"debug"`
 	Version            string `mapstructure:"version"            validate:"required"`
 	ProblemTypeBaseURI string `mapstructure:"problemTypeBaseUri"`
+	WebBaseURL         string `mapstructure:"webBaseUrl"         validate:"omitempty,url"`
+}
+
+func (c *AppConfig) GetWebBaseURL() string {
+	return strings.TrimSuffix(c.WebBaseURL, "/")
 }
 
 func (c *AppConfig) IsDevelopment() bool { return c.Env == EnvDevelopment }

@@ -54,6 +54,7 @@ func RegisterEntities() []any {
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},
 		&invoice.DocumentShareToken{},
+		&invoice.InvoiceShare{},
 		&invoicerun.InvoiceRun{},
 		&invoicerun.InvoiceRunGroup{},
 		&invoicerun.InvoiceRunGroupItem{},

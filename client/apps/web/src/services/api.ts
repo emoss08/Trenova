@@ -54,6 +54,7 @@ import { RecurringShipmentService } from "@/services/recurring-shipment";
 import { IntegrationService } from "./integration";
 import { InvoiceService } from "./invoice";
 import { InvoiceRunService } from "./invoice-run";
+import { InvoiceShareService } from "./invoice-share";
 import { InvoiceAdjustmentService } from "./invoice-adjustment";
 import { InvoiceAdjustmentControlService } from "./invoice-adjustment-control";
 import { JournalReversalService } from "./journal-reversal";
@@ -133,6 +134,7 @@ class APIService {
   public billingQueueService: BillingQueueService;
   public invoiceService: InvoiceService;
   public invoiceRunService: InvoiceRunService;
+  public invoiceShareService: InvoiceShareService;
   public dataEntryControlService: DataEntryControlService;
   public detentionService: DetentionService;
   public detentionPolicyService: DetentionPolicyService;
@@ -221,6 +223,7 @@ class APIService {
     this.billingQueueService = new BillingQueueService();
     this.invoiceService = new InvoiceService();
     this.invoiceRunService = new InvoiceRunService();
+    this.invoiceShareService = new InvoiceShareService();
     this.dataEntryControlService = new DataEntryControlService();
     this.detentionService = new DetentionService();
     this.detentionPolicyService = new DetentionPolicyService();

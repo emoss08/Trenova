@@ -554,6 +554,40 @@ func commentNotificationVariables() []VariableDefinition {
 	}
 }
 
+type InvoiceShareNotificationContext struct {
+	SharedByName  string
+	InvoiceNumber string
+	CustomerName  string
+}
+
+func newInvoiceShareNotificationSampleContext() any {
+	return InvoiceShareNotificationContext{
+		SharedByName:  "Marcus Bell",
+		InvoiceNumber: sampleInvoiceNo,
+		CustomerName:  sampleCustomerName,
+	}
+}
+
+func invoiceShareNotificationVariables() []VariableDefinition {
+	return []VariableDefinition{
+		{
+			Path:        "SharedByName",
+			Type:        VariableString,
+			Description: "Who shared the invoice.",
+		},
+		invoiceNumberVariable(false, "The invoice that was shared."),
+		customerNameVariable(false, "The billed customer's name."),
+	}
+}
+
+var invoiceNotificationKinds = []notificationKind{
+	{
+		kind:        KindNotificationInvoiceShared,
+		displayName: "Invoice Shared With You",
+		description: "Tells someone a teammate shared an invoice with them. The sharer's note is not available here: in-app notifications are broadcast to the organization's live clients, so it is only sent by email.",
+	},
+}
+
 // notificationKind is one registered event, sharing its family's context.
 type notificationKind struct {
 	kind        Kind
@@ -723,6 +757,11 @@ func (r *Registry) registerNotificationKinds() {
 		commentNotificationKinds,
 		commentNotificationVariables(),
 		newCommentNotificationSampleContext,
+	)
+	r.registerNotificationFamily(
+		invoiceNotificationKinds,
+		invoiceShareNotificationVariables(),
+		newInvoiceShareNotificationSampleContext,
 	)
 }
 

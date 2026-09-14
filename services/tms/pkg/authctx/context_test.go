@@ -1,6 +1,7 @@
 package authctx_test
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -276,4 +277,43 @@ func TestAddContextToRequest(t *testing.T) {
 		var entity *EntityWithOrgAndBu
 		authctx.AddContextToRequest(ac, entity)
 	})
+}
+
+type probeKey struct{}
+
+func TestWithoutSessionRoleActivation(t *testing.T) {
+	t.Parallel()
+
+	roleID := pulid.MustNew("rol_")
+	base := context.WithValue(t.Context(), probeKey{}, "kept")
+	withActivation := authctx.WithSessionRoleActivation(base, []pulid.ID{roleID}, true)
+
+	activation, ok := authctx.GetSessionRoleActivation(withActivation)
+	require.True(t, ok)
+	require.Equal(t, []pulid.ID{roleID}, activation.ActiveRoleIDs)
+
+	masked := authctx.WithoutSessionRoleActivation(withActivation)
+
+	_, ok = authctx.GetSessionRoleActivation(masked)
+	assert.False(t, ok)
+	assert.Equal(t, "kept", masked.Value(probeKey{}))
+
+	reactivated := authctx.WithSessionRoleActivation(masked, nil, false)
+	activation, ok = authctx.GetSessionRoleActivation(reactivated)
+	require.True(t, ok)
+	assert.Empty(t, activation.ActiveRoleIDs)
+	assert.False(t, activation.RequiresActivation)
+}
+
+func TestWithoutSessionRoleActivationKeepsCancellation(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	masked := authctx.WithoutSessionRoleActivation(
+		authctx.WithSessionRoleActivation(ctx, nil, true),
+	)
+
+	cancel()
+
+	assert.ErrorIs(t, masked.Err(), context.Canceled)
 }

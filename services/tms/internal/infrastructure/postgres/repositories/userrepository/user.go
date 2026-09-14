@@ -256,6 +256,7 @@ func (ur *repository) SelectOptions(
 			"username",
 			"email_address",
 			"status",
+			"is_locked",
 			"profile_pic_url",
 			"thumbnail_url",
 		},

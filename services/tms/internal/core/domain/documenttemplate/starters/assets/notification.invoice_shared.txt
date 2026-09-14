@@ -1,0 +1,1 @@
+{{ if .CustomerName }}{{ t "Invoice {0} for {1} is waiting for you to review." .InvoiceNumber .CustomerName }}{{ else }}{{ t "Invoice {0} is waiting for you to review." .InvoiceNumber }}{{ end }}

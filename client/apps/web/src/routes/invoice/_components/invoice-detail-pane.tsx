@@ -3,6 +3,7 @@ import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
 import {
+  PlainInvoiceScopeBadge,
   PlainInvoiceStatusBadge,
   PlainSettlementStatusBadge,
 } from "@trenova/shared/components/status-badge";
@@ -22,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { formatUnixDate } from "@trenova/shared/lib/date";
+import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
 import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
@@ -42,12 +44,15 @@ import {
   ReceiptTextIcon,
   SendIcon,
 } from "lucide-react";
+import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
 import { InvoiceChargesTab } from "./invoice-charges-tab";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
+import { InvoiceShareDialog } from "./invoice-share-dialog";
+import { invoiceDetailTabSearchParamsParser, isInvoiceDetailTab } from "../use-invoice-state";
 
 const ShipmentRouteMap = lazy(() =>
   import("@/components/command-palette/_components/shipment/shipment-preview-map").then((m) => ({
@@ -68,6 +73,7 @@ export default function InvoiceDetailPane({
 }) {
   const t = useT();
 
+  const [{ tab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
   const { data: invoice, isLoading } = useQuery({
     ...queries.invoice.get(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
@@ -120,9 +126,9 @@ export default function InvoiceDetailPane({
   const shipment = invoice.shipment;
   const customer = invoice.customer;
   const totalAmount = Number(invoice.totalAmount ?? 0);
-  const billedShipmentCount = new Set(
-    (invoice.lines ?? []).map((line) => line.shipmentId).filter(Boolean),
-  ).size;
+  const billedShipmentCount = invoice.shipmentCount;
+  const billingPeriod = invoiceBillingPeriod(invoice);
+  const billsSingleShipment = invoiceBillsSingleShipment(invoice.scope);
   const customerName = customer?.name ?? invoice.billToName;
   const isCurrentVersion =
     !invoice.correctionGroupId ||
@@ -133,6 +139,7 @@ export default function InvoiceDetailPane({
         <div className="flex flex-wrap items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{invoice.number}</h2>
+            <PlainInvoiceScopeBadge scope={invoice.scope} />
             <PlainInvoiceStatusBadge status={invoice.status} />
             <PlainSettlementStatusBadge status={invoice.settlementStatus} />
           </div>
@@ -148,6 +155,7 @@ export default function InvoiceDetailPane({
                 {t("Post Invoice")}
               </Button>
             )}
+            <InvoiceShareDialog invoice={invoice} />
             <InvoiceAdjustmentPanel invoice={invoice} />
           </div>
         </div>
@@ -164,13 +172,16 @@ export default function InvoiceDetailPane({
           <MetadataCell label={t("Due Date")} value={formatUnixDate(invoice.dueDate)} />
           <MetadataCell label={t("Payment Terms")} value={invoice.paymentTerm} />
           <MetadataCell label={t("Bill Type")} value={invoice.billType} />
-          {billedShipmentCount > 1 ? (
+          {billingPeriod ? (
+            <MetadataCell label={t("Billing Period")} value={billingPeriod} />
+          ) : null}
+          {billedShipmentCount > 1 || !billsSingleShipment ? (
             <MetadataCell label={t("Shipments")} value={String(billedShipmentCount)} />
           ) : null}
-          {billedShipmentCount <= 1 && invoice.shipmentProNumber ? (
+          {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentProNumber ? (
             <MetadataCell label={t("PRO Number")} value={invoice.shipmentProNumber} />
           ) : null}
-          {billedShipmentCount <= 1 && invoice.shipmentBol ? (
+          {billedShipmentCount <= 1 && billsSingleShipment && invoice.shipmentBol ? (
             <MetadataCell label={t("BOL")} value={invoice.shipmentBol} />
           ) : null}
         </div>
@@ -182,7 +193,15 @@ export default function InvoiceDetailPane({
         </div>
       ) : null}
 
-      <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          if (isInvoiceDetailTab(value)) {
+            void setTabState({ tab: value });
+          }
+        }}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
           <TabsTrigger value="delivery">{t("Delivery")}</TabsTrigger>
@@ -223,9 +242,16 @@ export default function InvoiceDetailPane({
                 <div className="flex h-full items-center justify-center p-6">
                   <EmptyState
                     title={t("No shipment documents available")}
-                    description={t(
-                      "This invoice does not currently have shipment context loaded for document review.",
-                    )}
+                    description={
+                      billsSingleShipment
+                        ? t(
+                            "This invoice does not currently have shipment context loaded for document review.",
+                          )
+                        : t(
+                            "This invoice bills {0, plural, one {# shipment} other {# shipments}}. Their documents stay on each shipment; the Charges tab lists every shipment it covers.",
+                            billedShipmentCount,
+                          )
+                    }
                     icons={[FileTextIcon, ReceiptTextIcon, PackageCheckIcon]}
                     className="max-w-xl border-none p-8 shadow-none"
                   />

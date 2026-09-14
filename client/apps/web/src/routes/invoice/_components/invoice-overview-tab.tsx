@@ -3,7 +3,8 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
-import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
+import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
+import { getDestinationLocation, getOriginLocation, shipmentPanelPath } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoice-adjustment";
@@ -29,6 +30,8 @@ export function InvoiceOverviewTab({
   const shipment = invoice.shipment;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destinationLocation = shipment ? getDestinationLocation(shipment) : null;
+  const billsSingleShipment = invoiceBillsSingleShipment(invoice.scope);
+  const billingPeriod = invoiceBillingPeriod(invoice);
 
   return (
     <ScrollArea className="h-full">
@@ -99,10 +102,10 @@ export function InvoiceOverviewTab({
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("References")}</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-                {invoice.shipmentId ? (
+                {billsSingleShipment && invoice.shipmentId ? (
                   <PropertyCell label={t("Shipment")}>
                     <Link
-                      to={`/shipment-management/shipments?item=${invoice.shipmentId}`}
+                      to={shipmentPanelPath(invoice.shipmentId)}
                       className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
                     >
                       {invoice.shipmentProNumber || invoice.shipmentId.slice(0, 12)}
@@ -121,16 +124,27 @@ export function InvoiceOverviewTab({
                     </Link>
                   </PropertyCell>
                 ) : null}
-                <PropertyCell label={t("Billing Queue")}>
-                  <Link
-                    to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
-                    className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-                  >
-                    {t("Queue Item")}
-                    <ExternalLinkIcon className="size-2.5" />
-                  </Link>
-                </PropertyCell>
-                {invoice.shipmentBol ? (
+                {billsSingleShipment ? (
+                  <PropertyCell label={t("Billing Queue")}>
+                    <Link
+                      to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
+                      className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+                    >
+                      {t("Queue Item")}
+                      <ExternalLinkIcon className="size-2.5" />
+                    </Link>
+                  </PropertyCell>
+                ) : (
+                  <PropertyCell label={t("Shipments")}>
+                    <span className="text-xs font-medium">
+                      {t(
+                        "{0, plural, one {# shipment} other {# shipments}}",
+                        invoice.shipmentCount,
+                      )}
+                    </span>
+                  </PropertyCell>
+                )}
+                {billsSingleShipment && invoice.shipmentBol ? (
                   <PropertyCell label={t("BOL")}>
                     <span className="text-xs font-medium">{invoice.shipmentBol}</span>
                   </PropertyCell>
@@ -151,9 +165,17 @@ export function InvoiceOverviewTab({
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("Invoice Details")}</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
-                <PropertyCell label={t("Service Date")}>
-                  <span className="text-xs font-medium">{formatUnixDate(invoice.serviceDate)}</span>
-                </PropertyCell>
+                {billingPeriod ? (
+                  <PropertyCell label={t("Billing Period")}>
+                    <span className="text-xs font-medium">{billingPeriod}</span>
+                  </PropertyCell>
+                ) : (
+                  <PropertyCell label={t("Service Date")}>
+                    <span className="text-xs font-medium">
+                      {formatUnixDate(invoice.serviceDate)}
+                    </span>
+                  </PropertyCell>
+                )}
                 <PropertyCell label={t("Currency")}>
                   <span className="text-xs font-medium">{invoice.currencyCode}</span>
                 </PropertyCell>
@@ -180,7 +202,11 @@ export function InvoiceOverviewTab({
               <SectionLabel>{t("Lifecycle")}</SectionLabel>
               <div className="mt-2">
                 <LifecycleStep
-                  label={t("Generated from Billing Queue")}
+                  label={
+                    invoice.scope === "Consolidated"
+                      ? t("Generated from Statement")
+                      : t("Generated from Billing Queue")
+                  }
                   active
                   timestamp={formatUnixDateTime(invoice.createdAt)}
                 />

@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -17,7 +17,7 @@ import {
   type InvoiceTableRowFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
-import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
+import { billTypeChoices, invoiceScopeChoices, invoiceStatusChoices } from "@/lib/choices";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -47,16 +47,27 @@ export function InvoiceSidebar({
   const t = useT();
 
   const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
-  const { status, query, billType } = searchParams;
+  const { status, query, billType, scope } = searchParams;
   const deferredSearch = useDeferredValue(query);
-  const hasActiveFilters = Boolean(status || billType || query);
-  const clearFilters = () => void setSearchParams({ status: null, billType: null, query: "" });
+  const hasActiveFilters = Boolean(status || billType || scope || query);
+  const clearFilters = () =>
+    void setSearchParams({ status: null, billType: null, scope: null, query: "" });
   const observerTarget = useRef<HTMLDivElement>(null);
   const { mutate: postInvoice } = usePostInvoice();
 
+  const statusOptions = useMemo(
+    () => withAllOption(t("All Statuses"), invoiceStatusChoices, t),
+    [t],
+  );
+  const billTypeOptions = useMemo(
+    () => withAllOption(t("All Bill Types"), billTypeChoices, t),
+    [t],
+  );
+  const scopeOptions = useMemo(() => withAllOption(t("All Scopes"), invoiceScopeChoices, t), [t]);
+
   const queryKey = useMemo(
-    () => ["invoice-list", status, billType, deferredSearch],
-    [status, billType, deferredSearch],
+    () => ["invoice-list", status, billType, scope, deferredSearch],
+    [status, billType, scope, deferredSearch],
   );
 
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -69,6 +80,9 @@ export function InvoiceSidebar({
       }
       if (billType) {
         fieldFilters.push({ field: "billType", operator: "eq", value: billType });
+      }
+      if (scope) {
+        fieldFilters.push({ field: "scope", operator: "eq", value: scope });
       }
 
       return requestGraphQL<InvoiceTablePage, InvoiceTableQueryVariables>({
@@ -129,45 +143,26 @@ export function InvoiceSidebar({
           onChange={(event) => void setSearchParams({ query: event.target.value })}
           className="h-7 text-xs"
         />
-        <div className="flex gap-2">
-          <Select
-            value={status ?? "all"}
-            items={invoiceStatusChoices}
-            onValueChange={(value) =>
-              void setSearchParams({ status: value === "all" ? null : value })
-            }
-          >
-            <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder={t("All statuses")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("All Statuses")}</SelectItem>
-              {invoiceStatusChoices.map((choice) => (
-                <SelectItem key={choice.value} value={choice.value}>
-                  {t(choice.label)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={billType ?? "all"}
-            items={billTypeChoices}
-            onValueChange={(value) =>
-              void setSearchParams({ billType: value === "all" ? null : value })
-            }
-          >
-            <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder={t("All bill types")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("All Bill Types")}</SelectItem>
-              {billTypeChoices.map((choice) => (
-                <SelectItem key={choice.value} value={choice.value}>
-                  {t(choice.label)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <FilterSelect
+            label={t("Invoice status")}
+            value={status}
+            options={statusOptions}
+            onChange={(value) => void setSearchParams({ status: value })}
+          />
+          <FilterSelect
+            label={t("Bill type")}
+            value={billType}
+            options={billTypeOptions}
+            onChange={(value) => void setSearchParams({ billType: value })}
+          />
+          <FilterSelect
+            label={t("Invoice scope")}
+            value={scope}
+            options={scopeOptions}
+            onChange={(value) => void setSearchParams({ scope: value })}
+            className="col-span-2"
+          />
         </div>
       </div>
 
@@ -206,5 +201,53 @@ export function InvoiceSidebar({
         </div>
       </ScrollArea>
     </div>
+  );
+}
+
+const ALL_FILTER_VALUE = "all";
+
+type FilterOption = { value: string; label: string };
+
+function withAllOption(
+  allLabel: string,
+  choices: ReadonlyArray<{ value: string; label: string }>,
+  t: TranslateFn,
+): FilterOption[] {
+  return [
+    { value: ALL_FILTER_VALUE, label: allLabel },
+    ...choices.map((choice) => ({ value: choice.value, label: t(choice.label) })),
+  ];
+}
+
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string | null;
+  options: FilterOption[];
+  onChange: (value: string | null) => void;
+  className?: string;
+}) {
+  return (
+    <Select
+      value={value ?? ALL_FILTER_VALUE}
+      items={options}
+      onValueChange={(next) => onChange(!next || next === ALL_FILTER_VALUE ? null : next)}
+    >
+      <SelectTrigger className={cn("h-7 w-full text-xs", className)} aria-label={label}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

@@ -348,6 +348,21 @@ func GetSessionRoleActivation(ctx context.Context) (SessionRoleActivation, bool)
 	return value, ok
 }
 
+type withoutSessionRoleActivationContext struct {
+	context.Context
+}
+
+func (c withoutSessionRoleActivationContext) Value(key any) any {
+	if _, ok := key.(sessionRoleActivationContextKey); ok {
+		return nil
+	}
+	return c.Context.Value(key)
+}
+
+func WithoutSessionRoleActivation(ctx context.Context) context.Context {
+	return withoutSessionRoleActivationContext{Context: ctx}
+}
+
 func AddContextToRequest(authCtx *AuthContext, req any) {
 	val := reflect.ValueOf(req)
 	if val.Kind() != reflect.Pointer {

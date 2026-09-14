@@ -28,6 +28,7 @@ import { integration } from "./integration";
 import { invoice } from "./invoice";
 import { invoiceAdjustment } from "./invoice-adjustment";
 import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
+import { invoiceShare } from "./invoice-share";
 import { location } from "./location";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
@@ -69,6 +70,7 @@ const financialQueries = mergeQueryKeys(
   invoice,
   invoiceAdjustment,
   invoiceAdjustmentControl,
+  invoiceShare,
   customer,
   customerPayment,
   formulaTemplate,

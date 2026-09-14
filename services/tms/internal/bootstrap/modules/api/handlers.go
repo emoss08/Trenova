@@ -66,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
@@ -136,6 +137,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	integrationhandler.New,
 	invoicehandler.New,
 	invoicerunhandler.New,
+	invoicesharehandler.New,
 	workerhandler.New,
 	permissionhandler.New,
 	platformcataloghandler.New,

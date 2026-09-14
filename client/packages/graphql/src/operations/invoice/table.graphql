@@ -2,9 +2,14 @@ fragment InvoiceTableRowFields on Invoice {
   id
   billingQueueItemId
   shipmentId
+  orderId
   customerId
   number
   billType
+  scope
+  periodStart
+  periodEnd
+  shipmentCount
   status
   paymentTerm
   currencyCode

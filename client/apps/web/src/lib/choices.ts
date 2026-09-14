@@ -177,7 +177,7 @@ import {
   type IftaReturnStatus,
 } from "@trenova/shared/types/fuel-ifta-enums";
 import type { EquipmentStatus, Status } from "@trenova/shared/types/helpers";
-import type { InvoiceStatus } from "@trenova/shared/types/invoice";
+import type { InvoiceScope, InvoiceStatus } from "@trenova/shared/types/invoice";
 import type { LocationGeofenceType } from "@trenova/shared/types/location";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
@@ -1547,6 +1547,13 @@ export const invoiceStatusChoices = [
   { value: "Draft", label: "Draft" },
   { value: "Posted", label: "Posted" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceStatus>>;
+
+export const invoiceScopeChoices = [
+  { value: "Shipment", label: "Single Shipment" },
+  { value: "Order", label: "Order" },
+  { value: "Consolidated", label: "Consolidated" },
+  { value: "Adjustment", label: "Adjustment" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceScope>>;
 
 export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
   MissingDocumentation: "Missing Documentation",

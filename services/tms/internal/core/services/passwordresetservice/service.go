@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/fx"
@@ -365,7 +366,7 @@ func (s *Service) sendResetEmail(
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindPasswordResetEmail,
 		Data: documenttemplate.PasswordResetContext{
-			FirstName:        firstName(user.Name),
+			FirstName:        stringutils.FirstName(user.Name),
 			FullName:         user.Name,
 			CompanyName:      s.companyName(ctx, user),
 			ResetURL:         template.URL(resetURL), //nolint:gosec // built from configured base URL + generated token
@@ -423,15 +424,4 @@ func (s *Service) companyName(ctx context.Context, user *tenant.User) string {
 		return "Trenova"
 	}
 	return org.Name
-}
-
-func firstName(fullName string) string {
-	name := strings.TrimSpace(fullName)
-	if name == "" {
-		return ""
-	}
-	if space := strings.IndexByte(name, ' '); space > 0 {
-		return name[:space]
-	}
-	return name
 }

@@ -1,0 +1,25 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:560px">
+  <p style="margin:0 0 16px">{{ if .RecipientFirstName }}{{ t "Hi {0}," .RecipientFirstName }}{{ else }}{{ t "Hi," }}{{ end }}</p>
+
+  <p style="margin:0 0 20px">
+    {{ if .SharedByName }}{{ if .CustomerName }}{{ t "{0} shared invoice {1} for {2} with you." .SharedByName .InvoiceNumber .CustomerName }}{{ else }}{{ t "{0} shared invoice {1} with you." .SharedByName .InvoiceNumber }}{{ end }}{{ else }}{{ if .CustomerName }}{{ t "A teammate shared invoice {0} for {1} with you." .InvoiceNumber .CustomerName }}{{ else }}{{ t "A teammate shared invoice {0} with you." .InvoiceNumber }}{{ end }}{{ end }}
+  </p>
+
+  {{ if .Note }}<div style="margin:0 0 20px;padding:12px 16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px">
+    <p style="margin:0 0 4px;color:#6b7280;font-size:12px;font-weight:600">{{ if .SharedByName }}{{ t "Note from {0}" .SharedByName }}{{ else }}{{ t "Note" }}{{ end }}</p>
+    <p style="margin:0;white-space:pre-line">{{ .Note }}</p>
+  </div>{{ end }}
+
+  <p style="margin:0 0 20px">
+    <a href="{{ .InvoiceURL }}" style="display:inline-block;padding:11px 20px;background:#111827;color:#ffffff;font-weight:600;text-decoration:none;border-radius:6px">{{ t "Open invoice" }}</a>
+  </p>
+
+  <p style="margin:0 0 20px;color:#4b5563;font-size:13px">
+    {{ t "Or paste this link into your browser:" }}<br>
+    <span style="word-break:break-all">{{ .InvoiceURL }}</span>
+  </p>
+
+  <p style="margin:0;color:#6b7280;font-size:13px">
+    {{ if .CompanyName }}{{ t "Sharing does not change who can see this invoice. You can open it because your role in {0} already lets you view invoices." .CompanyName }}{{ else }}{{ t "Sharing does not change who can see this invoice. You can open it because your role already lets you view invoices." }}{{ end }}
+  </p>
+</div>

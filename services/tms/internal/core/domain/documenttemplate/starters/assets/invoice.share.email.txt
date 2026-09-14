@@ -1,0 +1,11 @@
+{{ if .RecipientFirstName }}{{ t "Hi {0}," .RecipientFirstName }}{{ else }}{{ t "Hi," }}{{ end }}
+
+{{ if .SharedByName }}{{ if .CustomerName }}{{ t "{0} shared invoice {1} for {2} with you." .SharedByName .InvoiceNumber .CustomerName }}{{ else }}{{ t "{0} shared invoice {1} with you." .SharedByName .InvoiceNumber }}{{ end }}{{ else }}{{ if .CustomerName }}{{ t "A teammate shared invoice {0} for {1} with you." .InvoiceNumber .CustomerName }}{{ else }}{{ t "A teammate shared invoice {0} with you." .InvoiceNumber }}{{ end }}{{ end }}
+{{ if .Note }}
+{{ if .SharedByName }}{{ t "Note from {0}" .SharedByName }}{{ else }}{{ t "Note" }}{{ end }}:
+{{ .Note }}
+{{ end }}
+{{ t "Open invoice:" }}
+{{ .InvoiceURL }}
+
+{{ if .CompanyName }}{{ t "Sharing does not change who can see this invoice. You can open it because your role in {0} already lets you view invoices." .CompanyName }}{{ else }}{{ t "Sharing does not change who can see this invoice. You can open it because your role already lets you view invoices." }}{{ end }}

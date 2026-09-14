@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerunrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicesharerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalreversalrepository"
@@ -373,6 +374,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	invoiceadjustmentrepository.New,
 	invoicerepository.New,
 	invoicerunrepository.New,
+	invoicesharerepository.New,
 	journalentryrepository.New,
 	journalpostingrepository.New,
 	journalreversalrepository.New,

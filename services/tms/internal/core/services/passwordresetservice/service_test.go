@@ -363,14 +363,6 @@ func TestResetURL_BuildsTheLinkFromTheConfiguredOrigin(t *testing.T) {
 	assert.Equal(t, "https://app.example.com/auth/reset?token=raw-token", url)
 }
 
-func TestFirstName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "Dana", firstName("Dana Whitfield"))
-	assert.Equal(t, "Dana", firstName("Dana"))
-	assert.Empty(t, firstName("   "))
-}
-
 func adminRequest(target pulid.ID) AdminResetRequest {
 	return AdminResetRequest{
 		TargetUserID: target,

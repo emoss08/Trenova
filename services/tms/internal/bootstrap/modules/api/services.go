@@ -94,6 +94,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
@@ -418,6 +419,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	// service, because the job package is imported by the invoice service the
 	// run service itself depends on.
 	func(s *invoicerunservice.Service) services.InvoiceRunSweeper { return s },
+	invoiceshareservice.New,
+	func(s *invoiceshareservice.Service) services.InvoiceShareService { return s },
 	journalentryservice.New,
 	journalreversalservice.New,
 	manualjournalservice.New,

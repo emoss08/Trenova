@@ -1,3 +1,4 @@
+import { invoicePanelPath } from "@/lib/invoice-links";
 import type { Notification } from "@trenova/shared/types/notification";
 import {
   ArrowLeftRightIcon,
@@ -19,6 +20,7 @@ import {
   MailWarningIcon,
   OctagonAlertIcon,
   ReceiptTextIcon,
+  Share2Icon,
   ShieldAlertIcon,
   TriangleAlertIcon,
   type LucideIcon,
@@ -87,6 +89,11 @@ export interface NotificationDescriptor {
 }
 
 const reportRunsLink = () => "/reports/runs";
+
+const invoiceLink = (notification: Notification) => {
+  const invoiceId = notificationRelatedId(notification, "invoiceId");
+  return invoiceId ? invoicePanelPath(invoiceId) : "/billing/invoices";
+};
 
 const dispatchConsoleLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? "/dispatch/console";
@@ -177,7 +184,19 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     icon: ReceiptTextIcon,
     iconClass: "text-warning",
     tileClass: "bg-warning/10",
-    getLink: (n) => entityPanelLink("/billing/invoices", notificationRelatedId(n, "invoiceId")),
+    getLink: invoiceLink,
+  },
+  invoice_shared: {
+    category: "Billing",
+    icon: Share2Icon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand/10",
+    avatar: (n) => {
+      const userId = notificationDataString(n, "sharedById");
+      const name = notificationDataString(n, "sharedByName");
+      return userId || name ? { userId: userId ?? undefined, name: name ?? undefined } : null;
+    },
+    getLink: (n) => notificationDataString(n, "link") ?? invoiceLink(n),
   },
   billing_exception_recorded: {
     category: "Billing",

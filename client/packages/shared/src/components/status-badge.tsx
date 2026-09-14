@@ -20,7 +20,7 @@ import type {
   CarrierSettlementBatchStatus,
   CarrierSettlementStatus,
 } from "@trenova/shared/types/carrier-settlement";
-import type { InvoiceStatus, SettlementStatus } from "@trenova/shared/types/invoice";
+import type { InvoiceScope, InvoiceStatus, SettlementStatus } from "@trenova/shared/types/invoice";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import {
@@ -546,6 +546,45 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
       )}
     >
       {statusAttributes[status].text}
+    </span>
+  );
+}
+
+/**
+ * Names what an invoice covers when it is anything other than one shipment. A
+ * single-shipment invoice is the ordinary case and carries no badge, so the
+ * badge is what makes a statement or an order invoice stand out in a list.
+ */
+export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
+  const t = useT();
+
+  const scopeAttributes: Record<Exclude<InvoiceScope, "Shipment">, PlainBadgeAttrProps> = {
+    Order: {
+      className: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      text: t("Order"),
+    },
+    Consolidated: {
+      className: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+      text: t("Consolidated"),
+    },
+    Adjustment: {
+      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      text: t("Adjustment"),
+    },
+  };
+
+  if (scope === "Shipment") {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        scopeAttributes[scope].className,
+      )}
+    >
+      {scopeAttributes[scope].text}
     </span>
   );
 }
