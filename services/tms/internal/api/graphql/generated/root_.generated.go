@@ -6202,6 +6202,7 @@ type ComplexityRoot struct {
 		Shipment                            func(childComplexity int, id string, expandShipmentDetails *bool, status *string) int
 		ShipmentAnalytics                   func(childComplexity int, input gqlmodel.ShipmentAnalyticsInput) int
 		ShipmentBillingReadiness            func(childComplexity int, shipmentID string) int
+		ShipmentBillingTransferCandidateIds func(childComplexity int, input gqlmodel.ShipmentBillingTransferCandidateIdsInput) int
 		ShipmentCommentCount                func(childComplexity int, shipmentID string) int
 		ShipmentCommentReplies              func(childComplexity int, shipmentID string, commentID string, first *int, after *string) int
 		ShipmentComments                    func(childComplexity int, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) int
@@ -7528,6 +7529,12 @@ type ComplexityRoot struct {
 		Satisfied        func(childComplexity int) int
 	}
 
+	ShipmentBillingTransferCandidateIds struct {
+		Ids        func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+		Truncated  func(childComplexity int) int
+	}
+
 	ShipmentBillingValidation struct {
 		Code    func(childComplexity int) int
 		Field   func(childComplexity int) int
@@ -7559,9 +7566,15 @@ type ComplexityRoot struct {
 	}
 
 	ShipmentBulkTransferToBillingResult struct {
-		Error      func(childComplexity int) int
-		ShipmentID func(childComplexity int) int
-		Success    func(childComplexity int) int
+		BillingQueueItem     func(childComplexity int) int
+		Error                func(childComplexity int) int
+		FailureCode          func(childComplexity int) int
+		MarkedReadyToInvoice func(childComplexity int) int
+		MissingRequirements  func(childComplexity int) int
+		ProNumber            func(childComplexity int) int
+		ShipmentID           func(childComplexity int) int
+		Success              func(childComplexity int) int
+		ValidationFailures   func(childComplexity int) int
 	}
 
 	ShipmentCarrierEvent struct {
@@ -41974,6 +41987,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ShipmentBillingReadiness(childComplexity, args["shipmentId"].(string)), true
+	case "Query.shipmentBillingTransferCandidateIds":
+		if e.ComplexityRoot.Query.ShipmentBillingTransferCandidateIds == nil {
+			break
+		}
+
+		args, err := ec.field_Query_shipmentBillingTransferCandidateIds_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ShipmentBillingTransferCandidateIds(childComplexity, args["input"].(gqlmodel.ShipmentBillingTransferCandidateIdsInput)), true
 	case "Query.shipmentCommentCount":
 		if e.ComplexityRoot.Query.ShipmentCommentCount == nil {
 			break
@@ -48663,6 +48687,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentBillingRequirement.Satisfied(childComplexity), true
 
+	case "ShipmentBillingTransferCandidateIds.ids":
+		if e.ComplexityRoot.ShipmentBillingTransferCandidateIds.Ids == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingTransferCandidateIds.Ids(childComplexity), true
+	case "ShipmentBillingTransferCandidateIds.totalCount":
+		if e.ComplexityRoot.ShipmentBillingTransferCandidateIds.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingTransferCandidateIds.TotalCount(childComplexity), true
+	case "ShipmentBillingTransferCandidateIds.truncated":
+		if e.ComplexityRoot.ShipmentBillingTransferCandidateIds.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingTransferCandidateIds.Truncated(childComplexity), true
+
 	case "ShipmentBillingValidation.code":
 		if e.ComplexityRoot.ShipmentBillingValidation.Code == nil {
 			break
@@ -48775,12 +48818,42 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentBulkTransferToBillingResponse.TotalCount(childComplexity), true
 
+	case "ShipmentBulkTransferToBillingResult.billingQueueItem":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.BillingQueueItem == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.BillingQueueItem(childComplexity), true
 	case "ShipmentBulkTransferToBillingResult.error":
 		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.Error == nil {
 			break
 		}
 
 		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.Error(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.failureCode":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.FailureCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.FailureCode(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.markedReadyToInvoice":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.MarkedReadyToInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.MarkedReadyToInvoice(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.missingRequirements":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.MissingRequirements == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.MissingRequirements(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.proNumber":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.ProNumber(childComplexity), true
 	case "ShipmentBulkTransferToBillingResult.shipmentId":
 		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.ShipmentID == nil {
 			break
@@ -48793,6 +48866,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.Success(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.validationFailures":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.ValidationFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.ValidationFailures(childComplexity), true
 
 	case "ShipmentCarrierEvent.actor":
 		if e.ComplexityRoot.ShipmentCarrierEvent.Actor == nil {
@@ -60543,6 +60622,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputShiftTemplateInput,
 		ec.unmarshalInputShipmentAdditionalChargeInput,
 		ec.unmarshalInputShipmentAnalyticsInput,
+		ec.unmarshalInputShipmentBillingTransferCandidateIdsInput,
 		ec.unmarshalInputShipmentBulkTransferToBillingInput,
 		ec.unmarshalInputShipmentCancelInput,
 		ec.unmarshalInputShipmentCommentInput,
@@ -73656,10 +73736,45 @@ type ShipmentPreviousRatesResponse {
   total: Int!
 }
 
+"Why a shipment in a bulk transfer did not reach the billing queue."
+enum ShipmentBillingTransferFailureCode {
+  "The shipment does not exist in this organization."
+  NotFound
+  "The shipment is not Ready to Invoice, or Completed with marking ready enabled."
+  InvalidStatus
+  "The shipment is already in the billing queue."
+  AlreadyTransferred
+  "Required billing documents or fields are missing and the billing policy blocks transfer."
+  RequirementsUnmet
+  "Rate validation failed and the billing policy blocks transfer."
+  RateValidation
+  "The billing policy returns shipments with review items to operations."
+  ReturnToOperations
+  "The transfer failed for a reason outside the billing policy."
+  Unexpected
+}
+
 type ShipmentBulkTransferToBillingResult {
   shipmentId: ID!
+  proNumber: String
   success: Boolean!
+  "The shipment was Completed and this transfer marked it Ready to Invoice."
+  markedReadyToInvoice: Boolean!
+  "The queue item the shipment became, when it transferred."
+  billingQueueItem: BillingQueueItem
+  failureCode: ShipmentBillingTransferFailureCode
   error: String
+  "Required documents the readiness check found missing, whether or not they blocked the transfer."
+  missingRequirements: [ShipmentBillingRequirement!]!
+  "Readiness validation failures, whether or not they blocked the transfer."
+  validationFailures: [ShipmentBillingValidation!]!
+}
+
+type ShipmentBillingTransferCandidateIds {
+  ids: [ID!]!
+  totalCount: Int!
+  "More shipments matched than a single request returns."
+  truncated: Boolean!
 }
 
 type ShipmentBulkTransferToBillingResponse {
@@ -74531,6 +74646,16 @@ input ShipmentTransferToBillingInput {
 input ShipmentBulkTransferToBillingInput {
   shipmentIds: [ID!]!
   billType: BillType = Invoice
+  "Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it."
+  markCompletedReadyToInvoice: Boolean = false
+}
+
+input ShipmentBillingTransferCandidateIdsInput {
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  "Narrow to Completed or ReadyToInvoice shipments."
+  status: ShipmentStatus
 }
 
 input ShipmentCommentInput {
@@ -74583,6 +74708,10 @@ input ShipmentsInput {
   status: String
   activityWindowStart: Timestamp
   activityWindowEnd: Timestamp
+  "Only Completed or Ready to Invoice shipments that are not in the billing queue."
+  billingTransferEligible: Boolean = false
+  "Load each shipment's customer without expanding the rest of its details."
+  includeCustomer: Boolean = false
 }
 
 input ShipmentEventsInput {
@@ -74612,6 +74741,7 @@ extend type Query {
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
+  shipmentBillingTransferCandidateIds(input: ShipmentBillingTransferCandidateIdsInput!): ShipmentBillingTransferCandidateIds!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
@@ -91789,6 +91919,18 @@ func (ec *executionContext) childFields_ShipmentBillingRequirement(ctx context.C
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingRequirement", field.Name)
 }
 
+func (ec *executionContext) childFields_ShipmentBillingTransferCandidateIds(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "ids":
+		return ec.fieldContext_ShipmentBillingTransferCandidateIds_ids(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_ShipmentBillingTransferCandidateIds_totalCount(ctx, field)
+	case "truncated":
+		return ec.fieldContext_ShipmentBillingTransferCandidateIds_truncated(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingTransferCandidateIds", field.Name)
+}
+
 func (ec *executionContext) childFields_ShipmentBillingValidation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "field":
@@ -91853,10 +91995,22 @@ func (ec *executionContext) childFields_ShipmentBulkTransferToBillingResult(ctx 
 	switch field.Name {
 	case "shipmentId":
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_shipmentId(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_proNumber(ctx, field)
 	case "success":
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_success(ctx, field)
+	case "markedReadyToInvoice":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_markedReadyToInvoice(ctx, field)
+	case "billingQueueItem":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_billingQueueItem(ctx, field)
+	case "failureCode":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_failureCode(ctx, field)
 	case "error":
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_error(ctx, field)
+	case "missingRequirements":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_missingRequirements(ctx, field)
+	case "validationFailures":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_validationFailures(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentBulkTransferToBillingResult", field.Name)
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -6388,6 +6389,75 @@ func (ec *executionContext) fieldContext_ShipmentBillingRequirement_documentIds(
 	return graphql.NewScalarFieldContext("ShipmentBillingRequirement", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentBillingTransferCandidateIds_ids(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBillingTransferCandidateIds) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBillingTransferCandidateIds_ids(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Ids, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBillingTransferCandidateIds_ids(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBillingTransferCandidateIds", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentBillingTransferCandidateIds_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBillingTransferCandidateIds) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBillingTransferCandidateIds_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBillingTransferCandidateIds_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBillingTransferCandidateIds", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentBillingTransferCandidateIds_truncated(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBillingTransferCandidateIds) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBillingTransferCandidateIds_truncated(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Truncated, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBillingTransferCandidateIds_truncated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBillingTransferCandidateIds", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentBillingValidation_field(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBillingValidation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6843,6 +6913,29 @@ func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_shi
 	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_proNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_proNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_proNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentBulkTransferToBillingResult_success(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6866,6 +6959,84 @@ func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_suc
 	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_markedReadyToInvoice(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_markedReadyToInvoice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarkedReadyToInvoice, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_markedReadyToInvoice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_billingQueueItem(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_billingQueueItem(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingQueueItem, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.BillingQueueItem) graphql.Marshaler {
+			return ec.marshalOBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_billingQueueItem(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentBulkTransferToBillingResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_BillingQueueItem(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_failureCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_failureCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FailureCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.BillingTransferFailureCode) graphql.Marshaler {
+			return ec.marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐBillingTransferFailureCode(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_failureCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type ShipmentBillingTransferFailureCode does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentBulkTransferToBillingResult_error(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6887,6 +7058,70 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResult_error(ctx conte
 }
 func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ShipmentBulkTransferToBillingResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_missingRequirements(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_missingRequirements(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MissingRequirements, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.ShipmentBillingRequirement) graphql.Marshaler {
+			return ec.marshalNShipmentBillingRequirement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingRequirementᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_missingRequirements(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentBulkTransferToBillingResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentBillingRequirement(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentBulkTransferToBillingResult_validationFailures(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentBulkTransferToBillingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentBulkTransferToBillingResult_validationFailures(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ValidationFailures, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.ShipmentBillingValidation) graphql.Marshaler {
+			return ec.marshalNShipmentBillingValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingValidationᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentBulkTransferToBillingResult_validationFailures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentBulkTransferToBillingResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentBillingValidation(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _ShipmentCarrierEvent_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCarrierEvent) (ret graphql.Marshaler) {
@@ -20382,6 +20617,57 @@ func (ec *executionContext) unmarshalInputShipmentAnalyticsInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputShipmentBillingTransferCandidateIdsInput(ctx context.Context, obj any) (gqlmodel.ShipmentBillingTransferCandidateIdsInput, error) {
+	var it gqlmodel.ShipmentBillingTransferCandidateIdsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"query", "fieldFilters", "filterGroups", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		case "fieldFilters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fieldFilters"))
+			data, err := ec.unmarshalOFieldFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFieldFilterInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FieldFilters = data
+		case "filterGroups":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filterGroups"))
+			data, err := ec.unmarshalOFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFilterGroupInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FilterGroups = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOShipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputShipmentBulkTransferToBillingInput(ctx context.Context, obj any) (gqlmodel.ShipmentBulkTransferToBillingInput, error) {
 	var it gqlmodel.ShipmentBulkTransferToBillingInput
 	if obj == nil {
@@ -20396,8 +20682,11 @@ func (ec *executionContext) unmarshalInputShipmentBulkTransferToBillingInput(ctx
 	if _, present := asMap["billType"]; !present {
 		asMap["billType"] = "Invoice"
 	}
+	if _, present := asMap["markCompletedReadyToInvoice"]; !present {
+		asMap["markCompletedReadyToInvoice"] = false
+	}
 
-	fieldsInOrder := [...]string{"shipmentIds", "billType"}
+	fieldsInOrder := [...]string{"shipmentIds", "billType", "markCompletedReadyToInvoice"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20418,6 +20707,13 @@ func (ec *executionContext) unmarshalInputShipmentBulkTransferToBillingInput(ctx
 				return it, err
 			}
 			it.BillType = data
+		case "markCompletedReadyToInvoice":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markCompletedReadyToInvoice"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarkCompletedReadyToInvoice = data
 		}
 	}
 	return it, nil
@@ -21940,8 +22236,14 @@ func (ec *executionContext) unmarshalInputShipmentsInput(ctx context.Context, ob
 	if _, present := asMap["expandShipmentDetails"]; !present {
 		asMap["expandShipmentDetails"] = false
 	}
+	if _, present := asMap["billingTransferEligible"]; !present {
+		asMap["billingTransferEligible"] = false
+	}
+	if _, present := asMap["includeCustomer"]; !present {
+		asMap["includeCustomer"] = false
+	}
 
-	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd"}
+	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd", "billingTransferEligible", "includeCustomer"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22018,6 +22320,20 @@ func (ec *executionContext) unmarshalInputShipmentsInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ActivityWindowEnd = data
+		case "billingTransferEligible":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingTransferEligible"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingTransferEligible = data
+		case "includeCustomer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeCustomer"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludeCustomer = data
 		}
 	}
 	return it, nil
@@ -24281,6 +24597,54 @@ func (ec *executionContext) _ShipmentBillingRequirement(ctx context.Context, sel
 	return out
 }
 
+var shipmentBillingTransferCandidateIdsImplementors = []string{"ShipmentBillingTransferCandidateIds"}
+
+func (ec *executionContext) _ShipmentBillingTransferCandidateIds(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentBillingTransferCandidateIds) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingTransferCandidateIdsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentBillingTransferCandidateIds")
+		case "ids":
+			out.Values[i] = ec._ShipmentBillingTransferCandidateIds_ids(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._ShipmentBillingTransferCandidateIds_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "truncated":
+			out.Values[i] = ec._ShipmentBillingTransferCandidateIds_truncated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var shipmentBillingValidationImplementors = []string{"ShipmentBillingValidation"}
 
 func (ec *executionContext) _ShipmentBillingValidation(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentBillingValidation) graphql.Marshaler {
@@ -24520,14 +24884,44 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResult(ctx context.Con
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "proNumber":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "success":
 			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "markedReadyToInvoice":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_markedReadyToInvoice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billingQueueItem":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_billingQueueItem(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "failureCode":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_failureCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "error":
 			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_error(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "missingRequirements":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_missingRequirements(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "validationFailures":
+			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_validationFailures(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -29816,6 +30210,21 @@ func (ec *executionContext) marshalNShipmentBillingRequirement2ᚖgithubᚗcom�
 	return ec._ShipmentBillingRequirement(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNShipmentBillingTransferCandidateIds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingTransferCandidateIds(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentBillingTransferCandidateIds) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ShipmentBillingTransferCandidateIds(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNShipmentBillingTransferCandidateIdsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingTransferCandidateIdsInput(ctx context.Context, v any) (gqlmodel.ShipmentBillingTransferCandidateIdsInput, error) {
+	res, err := ec.unmarshalInputShipmentBillingTransferCandidateIdsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNShipmentBillingValidation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingValidationᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentBillingValidation) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -30902,6 +31311,13 @@ func (ec *executionContext) marshalOBillingQueueExceptionReasonCode2ᚖgithubᚗ
 	return res
 }
 
+func (ec *executionContext) marshalOBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.BillingQueueItem) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BillingQueueItem(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignment(ctx context.Context, sel ast.SelectionSet, v *shipment.CarrierAssignment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31001,6 +31417,25 @@ func (ec *executionContext) marshalOShipmentAtRisk2ᚖgithubᚗcomᚋemoss08ᚋt
 		return graphql.Null
 	}
 	return ec._ShipmentAtRisk(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐBillingTransferFailureCode(ctx context.Context, v any) (*services.BillingTransferFailureCode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := services.BillingTransferFailureCode(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOShipmentBillingTransferFailureCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐBillingTransferFailureCode(ctx context.Context, sel ast.SelectionSet, v *services.BillingTransferFailureCode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOShipmentBillingWarningContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingWarningContext(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentBillingWarningContext) graphql.Marshaler {

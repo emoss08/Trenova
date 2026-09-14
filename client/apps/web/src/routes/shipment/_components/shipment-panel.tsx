@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { apiService } from "@/services/api";
@@ -7,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
@@ -27,7 +27,6 @@ import { parseAsBoolean, useQueryState } from "nuqs";
 import { lazy } from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
-import { ShipmentBillingQueueStatus } from "./shipment-billing-queue-status";
 import { ShipmentForm } from "./shipment-form";
 
 const AuditTab = lazy(() => import("@/components/audit-tab"));
@@ -216,12 +215,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         mutationFn={(values, currentRow) =>
           apiService.shipmentService.update(currentRow.id!, values as ShipmentUpdateInput)
         }
-        descriptionExtra={
-          <div className="flex items-center gap-3">
-            {row && <ShipmentBillingQueueStatus shipment={row} />}
-            <OwnerDisplay ownerId={row?.ownerId} />
-          </div>
-        }
+        descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
         headerActions={
           <>
             {row && <ShipmentBillingActionsMenu shipment={row} />}

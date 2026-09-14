@@ -1,9 +1,13 @@
 package resolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -11,22 +15,6 @@ import (
 func shipmentBillingReadinessToModel(
 	readiness *services.ShipmentBillingReadiness,
 ) *gqlmodel.ShipmentBillingReadiness {
-	requirements := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(readiness.Requirements))
-	for _, item := range readiness.Requirements {
-		requirements = append(requirements, shipmentBillingRequirementToModel(item))
-	}
-	missing := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(readiness.MissingRequirements))
-	for _, item := range readiness.MissingRequirements {
-		missing = append(missing, shipmentBillingRequirementToModel(item))
-	}
-	validations := make([]*gqlmodel.ShipmentBillingValidation, 0, len(readiness.ValidationFailures))
-	for _, item := range readiness.ValidationFailures {
-		validations = append(validations, &gqlmodel.ShipmentBillingValidation{
-			Field:   item.Field,
-			Code:    item.Code,
-			Message: item.Message,
-		})
-	}
 	warnings := make([]*gqlmodel.ShipmentBillingWarning, 0, len(readiness.Warnings))
 	for _, item := range readiness.Warnings {
 		warnings = append(warnings, &gqlmodel.ShipmentBillingWarning{
@@ -56,9 +44,9 @@ func shipmentBillingReadinessToModel(
 				readiness.Policy.BillingQueueTransferMode,
 			),
 		},
-		Requirements:        requirements,
-		MissingRequirements: missing,
-		ValidationFailures:  validations,
+		Requirements:        shipmentBillingRequirementsToModel(readiness.Requirements),
+		MissingRequirements: shipmentBillingRequirementsToModel(readiness.MissingRequirements),
+		ValidationFailures:  shipmentBillingValidationsToModel(readiness.ValidationFailures),
 		Warnings:            warnings,
 		ServiceFailureContext: &gqlmodel.ShipmentServiceFailureBillingContext{
 			HasUnresolved:     readiness.ServiceFailureContext.HasUnresolved,
@@ -72,21 +60,45 @@ func shipmentBillingReadinessToModel(
 }
 
 func shipmentBillingWarningContextToModel(
-	context map[string]any,
+	values map[string]any,
 ) *gqlmodel.ShipmentBillingWarningContext {
-	if len(context) == 0 {
+	if len(values) == 0 {
 		return nil
 	}
 	return &gqlmodel.ShipmentBillingWarningContext{
-		DocumentTypeID:          sliceutils.StringPtrValue(context["documentTypeId"]),
-		DocumentTypeCode:        sliceutils.StringPtrValue(context["documentTypeCode"]),
-		DocumentTypeName:        sliceutils.StringPtrValue(context["documentTypeName"]),
-		DocumentCount:           intutils.IntPtrValue(context["documentCount"]),
-		RequirementCount:        intutils.IntPtrValue(context["requirementCount"]),
-		MissingRequirementCount: intutils.IntPtrValue(context["missingRequirementCount"]),
-		ServiceFailureIds:       sliceutils.StringSliceValue(context["serviceFailureIds"]),
-		UnresolvedCount:         intutils.IntPtrValue(context["unresolvedCount"]),
+		DocumentTypeID:          sliceutils.StringPtrValue(values["documentTypeId"]),
+		DocumentTypeCode:        sliceutils.StringPtrValue(values["documentTypeCode"]),
+		DocumentTypeName:        sliceutils.StringPtrValue(values["documentTypeName"]),
+		DocumentCount:           intutils.IntPtrValue(values["documentCount"]),
+		RequirementCount:        intutils.IntPtrValue(values["requirementCount"]),
+		MissingRequirementCount: intutils.IntPtrValue(values["missingRequirementCount"]),
+		ServiceFailureIds:       sliceutils.StringSliceValue(values["serviceFailureIds"]),
+		UnresolvedCount:         intutils.IntPtrValue(values["unresolvedCount"]),
 	}
+}
+
+func shipmentBillingRequirementsToModel(
+	items []services.ShipmentBillingRequirement,
+) []*gqlmodel.ShipmentBillingRequirement {
+	out := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(items))
+	for _, item := range items {
+		out = append(out, shipmentBillingRequirementToModel(item))
+	}
+	return out
+}
+
+func shipmentBillingValidationsToModel(
+	items []services.ShipmentBillingValidation,
+) []*gqlmodel.ShipmentBillingValidation {
+	out := make([]*gqlmodel.ShipmentBillingValidation, 0, len(items))
+	for _, item := range items {
+		out = append(out, &gqlmodel.ShipmentBillingValidation{
+			Field:   item.Field,
+			Code:    item.Code,
+			Message: item.Message,
+		})
+	}
+	return out
 }
 
 func shipmentBillingRequirementToModel(
@@ -103,21 +115,66 @@ func shipmentBillingRequirementToModel(
 }
 
 func bulkTransferToBillingToModel(
+	ctx context.Context,
 	response *services.BulkTransferToBillingResponse,
-) *gqlmodel.ShipmentBulkTransferToBillingResponse {
+) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error) {
+	locale := i18n.FromContext(ctx)
+	classifier := helpers.NewDefaultClassifier()
+	sanitizer := helpers.NewSanitizer(false)
+
 	results := make([]*gqlmodel.ShipmentBulkTransferToBillingResult, 0, len(response.Results))
-	for _, item := range response.Results {
-		results = append(results, &gqlmodel.ShipmentBulkTransferToBillingResult{
-			ShipmentID: item.ShipmentID.String(),
-			Success:    item.Success,
-			Error:      stringPtrFromValue(item.Error),
-		})
+	for i := range response.Results {
+		item := &response.Results[i]
+
+		queueItem, err := billingQueueItemToModel(item.Item)
+		if err != nil {
+			return nil, err
+		}
+
+		result := &gqlmodel.ShipmentBulkTransferToBillingResult{
+			ShipmentID:           item.ShipmentID.String(),
+			ProNumber:            stringPtrFromValue(item.ProNumber),
+			Success:              item.Success,
+			MarkedReadyToInvoice: item.MarkedReadyToInvoice,
+			BillingQueueItem:     queueItem,
+			MissingRequirements:  shipmentBillingRequirementsToModel(item.MissingRequirements),
+			ValidationFailures:   shipmentBillingValidationsToModel(item.ValidationFailures),
+		}
+		if !item.Success {
+			code := item.FailureCode
+			result.FailureCode = &code
+			result.Error = stringPtrFromValue(item.Error)
+			if item.Err != nil {
+				message := sanitizer.
+					SanitizeMessage(item.Err, classifier.Classify(item.Err)).
+					Localize(locale)
+				result.Error = &message
+			}
+		}
+
+		results = append(results, result)
 	}
+
 	return &gqlmodel.ShipmentBulkTransferToBillingResponse{
 		Results:      results,
 		TotalCount:   response.TotalCount,
 		SuccessCount: response.SuccessCount,
 		ErrorCount:   response.ErrorCount,
+	}, nil
+}
+
+func billingTransferCandidateIDsToModel(
+	response *services.BillingTransferCandidateIDsResponse,
+) *gqlmodel.ShipmentBillingTransferCandidateIds {
+	ids := make([]string, 0, len(response.IDs))
+	for _, id := range response.IDs {
+		ids = append(ids, id.String())
+	}
+
+	return &gqlmodel.ShipmentBillingTransferCandidateIds{
+		Ids:        ids,
+		TotalCount: response.TotalCount,
+		Truncated:  response.Truncated,
 	}
 }
 

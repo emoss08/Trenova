@@ -1,0 +1,255 @@
+package shipmentservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"go.uber.org/zap"
+)
+
+const unexpectedBillingTransferMessage = "The shipment could not be transferred to billing because of an unexpected error"
+
+type billingTransferAttemptParams struct {
+	ShipmentID                  pulid.ID
+	BillType                    billingqueue.BillType
+	MarkCompletedReadyToInvoice bool
+	Actor                       *services.RequestActor
+}
+
+type billingTransferAttempt struct {
+	entity      *shipment.Shipment
+	readiness   *services.ShipmentBillingReadiness
+	item        *billingqueue.BillingQueueItem
+	markedReady bool
+	failure     services.BillingTransferFailureCode
+	err         error
+}
+
+func (a *billingTransferAttempt) fail(
+	code services.BillingTransferFailureCode,
+	err error,
+) *billingTransferAttempt {
+	a.failure = code
+	a.err = err
+	return a
+}
+
+func (s *service) BulkTransferToBilling(
+	ctx context.Context,
+	req *services.BulkTransferShipmentToBillingRequest,
+	actor *services.RequestActor,
+) (*services.BulkTransferToBillingResponse, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+	if s.billingQueueService == nil {
+		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
+	}
+
+	shipmentIDs := sliceutils.Dedupe(req.ShipmentIDs)
+	response := &services.BulkTransferToBillingResponse{
+		Results:    make([]services.BulkTransferToBillingResult, 0, len(shipmentIDs)),
+		TotalCount: len(shipmentIDs),
+	}
+
+	for _, shipmentID := range shipmentIDs {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
+			ShipmentID:                  shipmentID,
+			BillType:                    req.BillType,
+			MarkCompletedReadyToInvoice: req.MarkCompletedReadyToInvoice,
+			Actor:                       actor,
+		})
+
+		result := newBulkTransferResult(shipmentID, attempt)
+		if result.Success {
+			response.SuccessCount++
+		}
+		response.Results = append(response.Results, result)
+	}
+
+	response.ErrorCount = response.TotalCount - response.SuccessCount
+
+	return response, nil
+}
+
+func (s *service) ListBillingTransferCandidateIDs(
+	ctx context.Context,
+	req *services.ListBillingTransferCandidateIDsRequest,
+) (*services.BillingTransferCandidateIDsResponse, error) {
+	if req.Status != "" && !req.Status.IsBillingTransferCandidate() {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Only completed or ready to invoice shipments can be transferred to billing",
+		)
+	}
+
+	result, err := s.repo.ListBillingTransferCandidateIDs(
+		ctx,
+		&repositories.ListBillingTransferCandidateIDsRequest{
+			Filter: req.Filter,
+			Status: req.Status,
+			Limit:  services.MaxBillingTransferCandidateIDs,
+		},
+	)
+	if err != nil {
+		s.l.Error("failed to list billing transfer candidate ids", zap.Error(err))
+		return nil, err
+	}
+
+	return &services.BillingTransferCandidateIDsResponse{
+		IDs:        result.IDs,
+		TotalCount: result.TotalCount,
+		Truncated:  result.TotalCount > len(result.IDs),
+	}, nil
+}
+
+func (s *service) attemptBillingTransfer(
+	ctx context.Context,
+	p *billingTransferAttemptParams,
+) *billingTransferAttempt {
+	attempt := new(billingTransferAttempt)
+	tenantInfo := pagination.TenantInfo{
+		OrgID: p.Actor.OrganizationID,
+		BuID:  p.Actor.BusinessUnitID,
+	}
+	log := s.l.With(
+		zap.String("operation", "TransferToBilling"),
+		zap.String("shipmentID", p.ShipmentID.String()),
+	)
+
+	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         p.ShipmentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return attempt.fail(services.BillingTransferFailureNotFound, err)
+		}
+		log.Error("failed to get shipment for billing transfer", zap.Error(err))
+		return attempt.fail(services.BillingTransferFailureUnexpected, err)
+	}
+	attempt.entity = entity
+
+	if !entity.BillingTransferStatus.IsOutsideBillingQueue() {
+		return attempt.fail(
+			services.BillingTransferFailureAlreadyTransferred,
+			errortypes.NewValidationError(
+				"billingTransferStatus",
+				errortypes.ErrInvalidOperation,
+				"Shipment has already been transferred to billing",
+			),
+		)
+	}
+
+	markReady := p.MarkCompletedReadyToInvoice && entity.Status == shipment.StatusCompleted
+	if entity.Status != shipment.StatusReadyToInvoice && !markReady {
+		return attempt.fail(
+			services.BillingTransferFailureInvalidStatus,
+			errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalidOperation,
+				"Shipment must be in ReadyToInvoice status to transfer to billing",
+			),
+		)
+	}
+
+	readiness, err := s.evaluateBillingReadiness(ctx, entity)
+	if err != nil {
+		log.Error("failed to evaluate billing readiness for transfer", zap.Error(err))
+		return attempt.fail(services.BillingTransferFailureUnexpected, err)
+	}
+	attempt.readiness = readiness
+	s.notifyBillingExceptions(ctx, entity, readiness)
+
+	if code, policyErr := billingTransferPolicyViolation(readiness); policyErr != nil {
+		return attempt.fail(code, policyErr)
+	}
+
+	if markReady {
+		updated, marked, markErr := s.markReadyToInvoice(ctx, &markReadyToInvoiceParams{
+			ShipmentID: entity.ID,
+			TenantInfo: tenantInfo,
+			Actor:      p.Actor.AuditActor(),
+			Comment:    "Shipment marked ready to invoice for billing transfer",
+		})
+		if markErr != nil {
+			if errortypes.IsError(markErr) {
+				return attempt.fail(services.BillingTransferFailureInvalidStatus, markErr)
+			}
+			log.Error("failed to mark shipment ready to invoice for transfer", zap.Error(markErr))
+			return attempt.fail(services.BillingTransferFailureUnexpected, markErr)
+		}
+		if marked {
+			attempt.markedReady = true
+			s.emitStatusChangeEvent(ctx, entity, updated, p.Actor.AuditActor())
+		}
+	}
+
+	billType := p.BillType
+	if billType == "" {
+		billType = billingqueue.BillTypeInvoice
+	}
+
+	item, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
+		ShipmentID:  entity.ID,
+		BillType:    billType,
+		AutoApprove: readiness.ShouldAutoApproveBilling,
+		TenantInfo:  tenantInfo,
+	}, p.Actor)
+	if err != nil {
+		if errortypes.IsConflictError(err) {
+			return attempt.fail(services.BillingTransferFailureAlreadyTransferred, err)
+		}
+		log.Error("failed to transfer shipment to billing", zap.Error(err))
+		return attempt.fail(services.BillingTransferFailureUnexpected, err)
+	}
+	attempt.item = item
+
+	return attempt
+}
+
+func newBulkTransferResult(
+	shipmentID pulid.ID,
+	attempt *billingTransferAttempt,
+) services.BulkTransferToBillingResult {
+	result := services.BulkTransferToBillingResult{
+		ShipmentID:           shipmentID,
+		MarkedReadyToInvoice: attempt.markedReady,
+		Item:                 attempt.item,
+		MissingRequirements:  []services.ShipmentBillingRequirement{},
+		ValidationFailures:   []services.ShipmentBillingValidation{},
+	}
+	if attempt.entity != nil {
+		result.ProNumber = attempt.entity.ProNumber
+	}
+	if attempt.readiness != nil {
+		result.MissingRequirements = attempt.readiness.MissingRequirements
+		result.ValidationFailures = attempt.readiness.ValidationFailures
+	}
+
+	if attempt.err == nil {
+		result.Success = true
+		return result
+	}
+
+	result.FailureCode = attempt.failure
+	result.Err = attempt.err
+	result.Error = unexpectedBillingTransferMessage
+	if attempt.failure != services.BillingTransferFailureUnexpected {
+		result.Error = attempt.err.Error()
+	}
+
+	return result
+}

@@ -10538,6 +10538,7 @@ type Query {
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
+  shipmentBillingTransferCandidateIds(input: ShipmentBillingTransferCandidateIdsInput!): ShipmentBillingTransferCandidateIds!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
@@ -12991,6 +12992,43 @@ type ShipmentBillingRequirement {
   satisfied: Boolean!
 }
 
+type ShipmentBillingTransferCandidateIds {
+  ids: [ID!]!
+  totalCount: Int!
+  """More shipments matched than a single request returns."""
+  truncated: Boolean!
+}
+
+input ShipmentBillingTransferCandidateIdsInput {
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  query: String
+  """Narrow to Completed or ReadyToInvoice shipments."""
+  status: ShipmentStatus
+}
+
+"""Why a shipment in a bulk transfer did not reach the billing queue."""
+enum ShipmentBillingTransferFailureCode {
+  """The shipment is already in the billing queue."""
+  AlreadyTransferred
+  """
+  The shipment is not Ready to Invoice, or Completed with marking ready enabled.
+  """
+  InvalidStatus
+  """The shipment does not exist in this organization."""
+  NotFound
+  """Rate validation failed and the billing policy blocks transfer."""
+  RateValidation
+  """
+  Required billing documents or fields are missing and the billing policy blocks transfer.
+  """
+  RequirementsUnmet
+  """The billing policy returns shipments with review items to operations."""
+  ReturnToOperations
+  """The transfer failed for a reason outside the billing policy."""
+  Unexpected
+}
+
 type ShipmentBillingValidation {
   code: String!
   field: String!
@@ -13016,6 +13054,10 @@ type ShipmentBillingWarningContext {
 
 input ShipmentBulkTransferToBillingInput {
   billType: BillType = Invoice
+  """
+  Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.
+  """
+  markCompletedReadyToInvoice: Boolean = false
   shipmentIds: [ID!]!
 }
 
@@ -13027,9 +13069,25 @@ type ShipmentBulkTransferToBillingResponse {
 }
 
 type ShipmentBulkTransferToBillingResult {
+  """The queue item the shipment became, when it transferred."""
+  billingQueueItem: BillingQueueItem
   error: String
+  failureCode: ShipmentBillingTransferFailureCode
+  """
+  The shipment was Completed and this transfer marked it Ready to Invoice.
+  """
+  markedReadyToInvoice: Boolean!
+  """
+  Required documents the readiness check found missing, whether or not they blocked the transfer.
+  """
+  missingRequirements: [ShipmentBillingRequirement!]!
+  proNumber: String
   shipmentId: ID!
   success: Boolean!
+  """
+  Readiness validation failures, whether or not they blocked the transfer.
+  """
+  validationFailures: [ShipmentBillingValidation!]!
 }
 
 input ShipmentCancelInput {
@@ -14323,10 +14381,18 @@ input ShipmentsInput {
   activityWindowEnd: Timestamp
   activityWindowStart: Timestamp
   after: String
+  """
+  Only Completed or Ready to Invoice shipments that are not in the billing queue.
+  """
+  billingTransferEligible: Boolean = false
   expandShipmentDetails: Boolean = false
   fieldFilters: [FieldFilterInput!]
   filterGroups: [FilterGroupInput!]
   first: Int = 20
+  """
+  Load each shipment's customer without expanding the rest of its details.
+  """
+  includeCustomer: Boolean = false
   query: String
   sort: [SortFieldInput!]
   status: String

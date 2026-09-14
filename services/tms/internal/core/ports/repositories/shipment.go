@@ -12,10 +12,12 @@ import (
 )
 
 type ShipmentOptions struct {
-	ExpandShipmentDetails bool   `form:"expandShipmentDetails" json:"expandShipmentDetails" query:"expandShipmentDetails"`
-	Status                string `form:"status"                json:"status"                query:"status"`
-	ActivityWindowStart   int64  `form:"activityWindowStart"   json:"activityWindowStart"   query:"activityWindowStart"`
-	ActivityWindowEnd     int64  `form:"activityWindowEnd"     json:"activityWindowEnd"     query:"activityWindowEnd"`
+	ExpandShipmentDetails   bool   `form:"expandShipmentDetails"   json:"expandShipmentDetails"   query:"expandShipmentDetails"`
+	Status                  string `form:"status"                  json:"status"                  query:"status"`
+	ActivityWindowStart     int64  `form:"activityWindowStart"     json:"activityWindowStart"     query:"activityWindowStart"`
+	ActivityWindowEnd       int64  `form:"activityWindowEnd"       json:"activityWindowEnd"       query:"activityWindowEnd"`
+	BillingTransferEligible bool   `form:"billingTransferEligible" json:"billingTransferEligible" query:"billingTransferEligible"`
+	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
 }
 
 func (o ShipmentOptions) HasActivityWindow() bool {
@@ -411,6 +413,17 @@ type PreviousRateSummary struct {
 	CreatedAt           int64           `json:"createdAt"           bun:"created_at"`
 }
 
+type ListBillingTransferCandidateIDsRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Status shipment.Status          `json:"status"`
+	Limit  int                      `json:"limit"`
+}
+
+type BillingTransferCandidateIDsResult struct {
+	IDs        []pulid.ID `json:"ids"`
+	TotalCount int        `json:"totalCount"`
+}
+
 type GetShipmentsByIDsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
@@ -477,6 +490,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetShipmentsByIDsRequest,
 	) ([]*shipment.Shipment, error)
+	ListBillingTransferCandidateIDs(
+		ctx context.Context,
+		req *ListBillingTransferCandidateIDsRequest,
+	) (*BillingTransferCandidateIDsResult, error)
 	ListSummariesByIDs(
 		ctx context.Context,
 		req *ListShipmentSummariesRequest,

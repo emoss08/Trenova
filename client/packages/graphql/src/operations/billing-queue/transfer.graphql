@@ -1,0 +1,33 @@
+query BillingTransferCandidates($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
+  shipments(input: $input) {
+    edges {
+      node {
+        id
+        proNumber
+        bol
+        status
+        billingTransferStatus
+        totalChargeAmount
+        actualDeliveryDate
+        customer {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query BillingTransferCandidateIds($input: ShipmentBillingTransferCandidateIdsInput!) {
+  shipmentBillingTransferCandidateIds(input: $input) {
+    ids
+    totalCount
+    truncated
+  }
+}

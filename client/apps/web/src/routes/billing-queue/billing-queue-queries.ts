@@ -1,4 +1,9 @@
+import {
+  listBillingTransferCandidatesGraphQL,
+  type BillingTransferCandidateFilters,
+} from "@/lib/graphql/billing-transfer";
 import { apiService } from "@/services/api";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { billingQueueItemSchema } from "@trenova/shared/types/billing-queue";
@@ -6,6 +11,9 @@ import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export const BILLING_QUEUE_LIST_KEY = "billing-queue-list";
 export const BILLING_QUEUE_FILTER_PRESETS_KEY = "billing-queue-filter-presets";
+export const BILLING_TRANSFER_CANDIDATES_KEY = "billing-transfer-candidates";
+
+const BILLING_TRANSFER_CANDIDATES_PAGE_SIZE = 50;
 
 const FILTER_PRESETS_STALE_TIME_MS = 5 * 60 * 1000;
 
@@ -81,4 +89,28 @@ export function billingQueueListQuery({
       return safeParse(billingQueueListSchema, response, "BillingQueueList");
     },
   };
+}
+
+/**
+ * Shipments that can still move into the queue, a page at a time. The search is
+ * trimmed in the key so a trailing space does not refetch an identical list.
+ */
+export function billingTransferCandidatesQuery({ query, status }: BillingTransferCandidateFilters) {
+  const search = query.trim();
+  return infiniteQueryOptions({
+    queryKey: [BILLING_TRANSFER_CANDIDATES_KEY, search, status] as const,
+    queryFn: ({ pageParam, signal }) =>
+      listBillingTransferCandidatesGraphQL(
+        {
+          first: BILLING_TRANSFER_CANDIDATES_PAGE_SIZE,
+          after: pageParam,
+          query: search,
+          status,
+        },
+        { signal },
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
+  });
 }

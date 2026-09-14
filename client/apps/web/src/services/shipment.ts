@@ -1,6 +1,5 @@
 import {
   autoRateShipmentGraphQL,
-  bulkTransferShipmentsToBillingGraphQL,
   calculateShipmentDistanceGraphQL,
   calculateShipmentLoadingOptimizationGraphQL,
   calculateShipmentTotalsGraphQL,
@@ -41,7 +40,6 @@ import {
   type PermitCreateInput,
 } from "@trenova/shared/types/permit";
 import {
-  bulkTransferToBillingResponseSchema,
   contractRateSchema,
   duplicateShipmentResponseSchema,
   previousRatesResponseSchema,
@@ -52,7 +50,6 @@ import {
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
   shipmentUpdateSchema,
-  type BulkTransferToBillingRequest,
   type DuplicateShipmentRequest,
   type GetPreviousRatesRequest,
   type Shipment,
@@ -201,12 +198,6 @@ export class ShipmentService {
 
   public async transferToBilling(shipmentId: string, billType?: BillType) {
     return transferShipmentToBillingGraphQL(shipmentId, billType);
-  }
-
-  public async bulkTransferToBilling(req: BulkTransferToBillingRequest) {
-    const response = await bulkTransferShipmentsToBillingGraphQL(req);
-
-    return safeParse(bulkTransferToBillingResponseSchema, response, "Bulk Transfer to Billing");
   }
 
   public async getBillingReadiness(shipmentId: Shipment["id"]) {

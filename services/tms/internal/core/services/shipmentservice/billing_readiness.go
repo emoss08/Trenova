@@ -94,23 +94,75 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 
-	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         shipmentID,
+	actor := &services.RequestActor{
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+	}
+
+	s.l.Info("auto-marking shipment ready to invoice",
+		zap.String("shipmentId", shipmentID.String()),
+		zap.String("currentStatus", string(readiness.ShipmentStatus)),
+	)
+
+	updatedEntity, marked, err := s.markReadyToInvoice(ctx, &markReadyToInvoiceParams{
+		ShipmentID: shipmentID,
 		TenantInfo: tenantInfo,
+		Actor:      actor.AuditActor(),
+		Comment:    "Shipment auto-marked ready to invoice",
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !marked {
+		s.l.Info("shipment already past auto-mark target status",
+			zap.String("shipmentId", shipmentID.String()),
+			zap.String("shipmentStatus", string(updatedEntity.Status)),
+		)
+		return updatedEntity, nil
+	}
+
+	if readiness.ShouldAutoTransferToBilling {
+		s.autoTransferToBillingQueue(ctx, updatedEntity, actor)
+	}
+
+	return updatedEntity, nil
+}
+
+type markReadyToInvoiceParams struct {
+	ShipmentID pulid.ID
+	TenantInfo pagination.TenantInfo
+	Actor      services.AuditActor
+	Comment    string
+}
+
+func (s *service) markReadyToInvoice(
+	ctx context.Context,
+	p *markReadyToInvoiceParams,
+) (*shipment.Shipment, bool, error) {
+	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         p.ShipmentID,
+		TenantInfo: p.TenantInfo,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	if entity.Status == shipment.StatusReadyToInvoice || entity.Status == shipment.StatusInvoiced {
-		s.l.Info("shipment already past auto-mark target status",
-			zap.String("shipmentId", shipmentID.String()),
-			zap.String("shipmentStatus", string(entity.Status)),
+	switch entity.Status { //nolint:exhaustive // only the billing lifecycle statuses decide this
+	case shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+		return entity, false, nil
+	case shipment.StatusCompleted:
+	default:
+		return nil, false, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Shipment must be completed before it can be marked ready to invoice",
 		)
-		return entity, nil
 	}
 
 	previousEntity := *entity
@@ -118,65 +170,45 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 	now := timeutils.NowUnix()
 	entity.MarkedReadyToBillAt = &now
 
-	s.l.Info("auto-marking shipment ready to invoice",
-		zap.String("shipmentId", shipmentID.String()),
-		zap.String("currentStatus", string(readiness.ShipmentStatus)),
-	)
-
-	auditActor := (&services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
-		PrincipalID:    userID,
-		UserID:         userID,
-		BusinessUnitID: tenantInfo.BuID,
-		OrganizationID: tenantInfo.OrgID,
-	}).AuditActor()
-
 	updatedEntity, err := s.repo.UpdateDerivedState(ctx, entity)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if err = s.recomputeOrdersForShipments(
 		ctx,
-		tenantInfo,
+		p.TenantInfo,
 		[]*shipment.Shipment{updatedEntity},
 	); err != nil {
-		s.l.Warn("failed to recompute order after auto-mark", zap.Error(err))
+		s.l.Warn("failed to recompute order after marking ready to invoice", zap.Error(err))
 	}
 
 	if err = s.logShipmentAction(
 		updatedEntity,
-		auditActor,
+		p.Actor,
 		permission.OpUpdate,
 		&previousEntity,
 		updatedEntity,
-		auditservice.WithComment("Shipment auto-marked ready to invoice"),
+		auditservice.WithComment(p.Comment),
 		auditservice.WithDiff(&previousEntity, updatedEntity),
 	); err != nil {
-		s.l.Error("failed to log auto-mark shipment action", zap.Error(err))
+		s.l.Error("failed to log mark ready to invoice shipment action", zap.Error(err))
 	}
 
 	if err = s.publishShipmentInvalidation(
 		ctx,
 		updatedEntity,
-		auditActor,
+		p.Actor,
 		"updated",
 		updatedEntity,
 	); err != nil {
-		s.l.Warn("failed to publish shipment invalidation after auto-mark", zap.Error(err))
+		s.l.Warn(
+			"failed to publish shipment invalidation after marking ready to invoice",
+			zap.Error(err),
+		)
 	}
 
-	if readiness.ShouldAutoTransferToBilling {
-		s.autoTransferToBillingQueue(ctx, updatedEntity, &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeUser,
-			PrincipalID:    userID,
-			UserID:         userID,
-			BusinessUnitID: tenantInfo.BuID,
-			OrganizationID: tenantInfo.OrgID,
-		})
-	}
-
-	return updatedEntity, nil
+	return updatedEntity, true, nil
 }
 
 func (s *service) validateBillingReadinessForStatusChange(
@@ -879,102 +911,16 @@ func (s *service) TransferToBilling(
 		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
 	}
 
-	log := s.l.With(
-		zap.String("operation", "TransferToBilling"),
-		zap.String("shipmentID", req.ShipmentID.String()),
-	)
-
-	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: actor.OrganizationID,
-			BuID:  actor.BusinessUnitID,
-		},
+	attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
+		ShipmentID: req.ShipmentID,
+		BillType:   req.BillType,
+		Actor:      actor,
 	})
-	if err != nil {
-		log.Error("failed to get shipment for billing transfer", zap.Error(err))
-		return nil, err
+	if attempt.err != nil {
+		return nil, attempt.err
 	}
 
-	if entity.BillingTransferStatus != shipment.BillingTransferNone &&
-		entity.BillingTransferStatus != shipment.BillingTransferSentBackToOps {
-		return nil, errortypes.NewValidationError(
-			"billingTransferStatus",
-			errortypes.ErrInvalidOperation,
-			"Shipment has already been transferred to billing",
-		)
-	}
-
-	readiness, err := s.evaluateBillingReadiness(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-	s.notifyBillingExceptions(ctx, entity, readiness)
-
-	if transferErr := validateBillingTransferPolicy(readiness); transferErr != nil {
-		return nil, transferErr
-	}
-
-	billType := req.BillType
-	if billType == "" {
-		billType = billingqueue.BillTypeInvoice
-	}
-
-	item, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
-		ShipmentID:  req.ShipmentID,
-		BillType:    billType,
-		AutoApprove: readiness.ShouldAutoApproveBilling,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: actor.OrganizationID,
-			BuID:  actor.BusinessUnitID,
-		},
-	}, actor)
-	if err != nil {
-		log.Error("failed to transfer shipment to billing", zap.Error(err))
-		return nil, err
-	}
-
-	return item, nil
-}
-
-func (s *service) BulkTransferToBilling(
-	ctx context.Context,
-	req *services.BulkTransferShipmentToBillingRequest,
-	actor *services.RequestActor,
-) (*services.BulkTransferToBillingResponse, error) {
-	if len(req.ShipmentIDs) == 0 {
-		return &services.BulkTransferToBillingResponse{}, nil
-	}
-
-	results := make([]services.BulkTransferToBillingResult, 0, len(req.ShipmentIDs))
-	successCount := 0
-
-	for _, shipmentID := range req.ShipmentIDs {
-		item, err := s.TransferToBilling(ctx, &services.TransferShipmentToBillingRequest{
-			ShipmentID: shipmentID,
-			BillType:   req.BillType,
-		}, actor)
-
-		result := services.BulkTransferToBillingResult{
-			ShipmentID: shipmentID,
-		}
-		if err != nil {
-			result.Error = err.Error()
-		} else {
-			result.Success = true
-			result.Item = item
-			successCount++
-		}
-
-		results = append(results, result)
-	}
-
-	return &services.BulkTransferToBillingResponse{
-		Results:      results,
-		TotalCount:   len(req.ShipmentIDs),
-		SuccessCount: successCount,
-		ErrorCount:   len(req.ShipmentIDs) - successCount,
-	}, nil
+	return attempt.item, nil
 }
 
 func (s *service) autoTransferToBillingQueue(
@@ -993,10 +939,12 @@ func (s *service) autoTransferToBillingQueue(
 	}
 }
 
-func validateBillingTransferPolicy(readiness *services.ShipmentBillingReadiness) error {
+func billingTransferPolicyViolation(
+	readiness *services.ShipmentBillingReadiness,
+) (services.BillingTransferFailureCode, error) {
 	if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
 		hasShipmentRequirementIssues(readiness) {
-		return errortypes.NewValidationError(
+		return services.BillingTransferFailureRequirementsUnmet, errortypes.NewValidationError(
 			"billingReadiness",
 			errortypes.ErrInvalidOperation,
 			"Shipment billing requirements must be resolved before transfer to billing",
@@ -1004,8 +952,8 @@ func validateBillingTransferPolicy(readiness *services.ShipmentBillingReadiness)
 	}
 
 	if readiness.Policy.RateValidationEnforcement == tenant.EnforcementLevelBlock &&
-		hasValidationCodePrefix(readiness.ValidationFailures, "rate_") {
-		return errortypes.NewValidationError(
+		hasRateIssues(readiness) {
+		return services.BillingTransferFailureRateValidation, errortypes.NewValidationError(
 			"rateValidation",
 			errortypes.ErrInvalidOperation,
 			"Rate validation must be resolved before transfer to billing",
@@ -1016,14 +964,14 @@ func validateBillingTransferPolicy(readiness *services.ShipmentBillingReadiness)
 		(readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview ||
 			readiness.Policy.RateValidationEnforcement == tenant.EnforcementLevelRequireReview) &&
 		(hasShipmentRequirementIssues(readiness) || hasRateIssues(readiness)) {
-		return errortypes.NewValidationError(
+		return services.BillingTransferFailureReturnToOperations, errortypes.NewValidationError(
 			"billingExceptionDisposition",
 			errortypes.ErrInvalidOperation,
 			"Shipment must be corrected in operations before it can be transferred to billing",
 		)
 	}
 
-	return nil
+	return "", nil
 }
 
 func (s *service) notifyBillingExceptions(

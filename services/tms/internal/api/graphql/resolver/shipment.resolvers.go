@@ -254,20 +254,16 @@ func (r *mutationResolver) BulkTransferShipmentsToBilling(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	if len(shipmentIDs) == 0 {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("shipmentIds", errortypes.ErrRequired, "At least one shipment ID is required")
-		return nil, multiErr
-	}
 	response, err := r.shipmentService.BulkTransferToBilling(ctx, &services.BulkTransferShipmentToBillingRequest{
-		ShipmentIDs: shipmentIDs,
-		BillType:    parseBillType(input.BillType),
+		ShipmentIDs:                 shipmentIDs,
+		BillType:                    parseBillType(input.BillType),
+		MarkCompletedReadyToInvoice: boolValue(input.MarkCompletedReadyToInvoice),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return bulkTransferToBillingToModel(response), nil
+	return bulkTransferToBillingToModel(ctx, response)
 }
 
 func (r *mutationResolver) CalculateShipmentTotals(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentTotalsResponse, error) {
@@ -679,10 +675,12 @@ func (r *queryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: boolValue(input.ExpandShipmentDetails),
-			Status:                stringValue(input.Status),
-			ActivityWindowStart:   int64Value(input.ActivityWindowStart),
-			ActivityWindowEnd:     int64Value(input.ActivityWindowEnd),
+			ExpandShipmentDetails:   boolValue(input.ExpandShipmentDetails),
+			Status:                  stringValue(input.Status),
+			ActivityWindowStart:     int64Value(input.ActivityWindowStart),
+			ActivityWindowEnd:       int64Value(input.ActivityWindowEnd),
+			BillingTransferEligible: boolValue(input.BillingTransferEligible),
+			IncludeCustomer:         boolValue(input.IncludeCustomer),
 		},
 	})
 	if err != nil {
@@ -885,6 +883,33 @@ func (r *queryResolver) ShipmentBillingReadiness(ctx context.Context, shipmentID
 	}
 
 	return shipmentBillingReadinessToModel(readiness), nil
+}
+
+func (r *queryResolver) ShipmentBillingTransferCandidateIds(ctx context.Context, input gqlmodel.ShipmentBillingTransferCandidateIdsInput) (*gqlmodel.ShipmentBillingTransferCandidateIds, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	var status shipmentdomain.Status
+	if input.Status != nil {
+		status = shipmentdomain.Status(*input.Status)
+	}
+
+	response, err := r.shipmentService.ListBillingTransferCandidateIDs(ctx, &services.ListBillingTransferCandidateIDsRequest{
+		Filter: queryOptionsFromGraphQL(gqlListOptions{
+			TenantInfo:   tenantInfo(authCtx),
+			Query:        stringValue(input.Query),
+			FieldFilters: input.FieldFilters,
+			FilterGroups: input.FilterGroups,
+		}),
+		Status: status,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return billingTransferCandidateIDsToModel(response), nil
 }
 
 func (r *queryResolver) ShipmentEvents(ctx context.Context, input gqlmodel.ShipmentEventsInput) ([]gqlmodel.ShipmentEvent, error) {

@@ -846,30 +846,6 @@ export const getPreviousRatesRequestSchema = z.object({
 
 export type GetPreviousRatesRequest = z.infer<typeof getPreviousRatesRequestSchema>;
 
-const bulkTransferToBillingResultSchema = z.object({
-  shipmentId: z.string(),
-  success: z.boolean(),
-  error: optionalStringSchema,
-});
-
-export type BulkTransferToBillingResult = z.infer<typeof bulkTransferToBillingResultSchema>;
-
-export const bulkTransferToBillingResponseSchema = z.object({
-  results: z.array(bulkTransferToBillingResultSchema),
-  totalCount: z.number(),
-  successCount: z.number(),
-  errorCount: z.number(),
-});
-
-export type BulkTransferToBillingResponse = z.infer<typeof bulkTransferToBillingResponseSchema>;
-
-export const bulkTransferToBillingRequestSchema = z.object({
-  shipmentIds: z.array(z.string()).min(1, { error: "At least one Shipment ID is required" }),
-  billType: defaultBillTypeSchema,
-});
-
-export type BulkTransferToBillingRequest = z.infer<typeof bulkTransferToBillingRequestSchema>;
-
 export const transferToBillingRequestSchema = z.object({
   shipmentId: z.string().min(1, { error: "Shipment ID is required" }),
   billType: defaultBillTypeSchema,

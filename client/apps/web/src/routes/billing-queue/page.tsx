@@ -31,6 +31,7 @@ import {
   statementSelectionSearchParamsParser,
 } from "./use-billing-queue-state";
 import { BillingQueueViewSwitch } from "./_components/billing-queue-view-switch";
+import { BulkBillingTransferAction } from "./_components/bulk-transfer/bulk-billing-transfer-action";
 import { StatementKPIStrip } from "./_components/statements/statement-kpi-strip";
 import { StatementSidebar } from "./_components/statements/statement-sidebar";
 
@@ -107,12 +108,15 @@ export function BillingQueuePage() {
   const { data: statementData, isLoading: statementsLoading } = useQuery(statementListQuery());
   const statements = statementData?.results ?? EMPTY_STATEMENTS;
 
-  const viewSwitch = (
-    <BillingQueueViewSwitch
-      view={view}
-      statementCount={statementData ? statements.filter((s) => s.shipmentCount > 0).length : null}
-      onChange={(next) => void setViewParams({ view: next })}
-    />
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <BulkBillingTransferAction />
+      <BillingQueueViewSwitch
+        view={view}
+        statementCount={statementData ? statements.filter((s) => s.shipmentCount > 0).length : null}
+        onChange={(next) => void setViewParams({ view: next })}
+      />
+    </div>
   );
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
@@ -182,7 +186,7 @@ export function BillingQueuePage() {
           description: t(
             "What each statement customer has accrued this period, and the invoices it becomes",
           ),
-          actions: viewSwitch,
+          actions: headerActions,
         }}
         className="gap-y-2 p-0"
         toolbar={<StatementKPIStrip statements={statements} nowSeconds={nowSeconds} />}
@@ -214,7 +218,7 @@ export function BillingQueuePage() {
         pageHeaderProps={{
           title: t("Billing Queue"),
           description: t("Review and approve shipments before invoicing"),
-          actions: viewSwitch,
+          actions: headerActions,
         }}
         className="gap-y-2 p-0"
         toolbar={

@@ -5019,6 +5019,21 @@ type ShipmentBillingRequirement struct {
 	DocumentIds      []string `json:"documentIds"`
 }
 
+type ShipmentBillingTransferCandidateIds struct {
+	Ids        []string `json:"ids"`
+	TotalCount int      `json:"totalCount"`
+	// More shipments matched than a single request returns.
+	Truncated bool `json:"truncated"`
+}
+
+type ShipmentBillingTransferCandidateIdsInput struct {
+	Query        *string             `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
+	// Narrow to Completed or ReadyToInvoice shipments.
+	Status *ShipmentStatus `json:"status,omitempty"`
+}
+
 type ShipmentBillingValidation struct {
 	Field   string `json:"field"`
 	Code    string `json:"code"`
@@ -5045,6 +5060,8 @@ type ShipmentBillingWarningContext struct {
 type ShipmentBulkTransferToBillingInput struct {
 	ShipmentIds []string               `json:"shipmentIds"`
 	BillType    *billingqueue.BillType `json:"billType,omitempty"`
+	// Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.
+	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
 
 type ShipmentBulkTransferToBillingResponse struct {
@@ -5056,8 +5073,18 @@ type ShipmentBulkTransferToBillingResponse struct {
 
 type ShipmentBulkTransferToBillingResult struct {
 	ShipmentID string  `json:"shipmentId"`
+	ProNumber  *string `json:"proNumber,omitempty"`
 	Success    bool    `json:"success"`
-	Error      *string `json:"error,omitempty"`
+	// The shipment was Completed and this transfer marked it Ready to Invoice.
+	MarkedReadyToInvoice bool `json:"markedReadyToInvoice"`
+	// The queue item the shipment became, when it transferred.
+	BillingQueueItem *BillingQueueItem                    `json:"billingQueueItem,omitempty"`
+	FailureCode      *services.BillingTransferFailureCode `json:"failureCode,omitempty"`
+	Error            *string                              `json:"error,omitempty"`
+	// Required documents the readiness check found missing, whether or not they blocked the transfer.
+	MissingRequirements []*ShipmentBillingRequirement `json:"missingRequirements"`
+	// Readiness validation failures, whether or not they blocked the transfer.
+	ValidationFailures []*ShipmentBillingValidation `json:"validationFailures"`
 }
 
 type ShipmentCancelInput struct {
@@ -6267,6 +6294,10 @@ type ShipmentsInput struct {
 	Status                *string             `json:"status,omitempty"`
 	ActivityWindowStart   *int                `json:"activityWindowStart,omitempty"`
 	ActivityWindowEnd     *int                `json:"activityWindowEnd,omitempty"`
+	// Only Completed or Ready to Invoice shipments that are not in the billing queue.
+	BillingTransferEligible *bool `json:"billingTransferEligible,omitempty"`
+	// Load each shipment's customer without expanding the rest of its details.
+	IncludeCustomer *bool `json:"includeCustomer,omitempty"`
 }
 
 type SidebarActivityPreference struct {

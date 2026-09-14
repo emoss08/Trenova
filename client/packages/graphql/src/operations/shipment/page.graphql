@@ -1018,8 +1018,26 @@ mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInp
   bulkTransferShipmentsToBilling(input: $input) {
     results {
       shipmentId
+      proNumber
       success
+      markedReadyToInvoice
+      failureCode
       error
+      billingQueueItem {
+        id
+        number
+        status
+      }
+      missingRequirements {
+        documentTypeId
+        documentTypeCode
+        documentTypeName
+      }
+      validationFailures {
+        field
+        code
+        message
+      }
     }
     totalCount
     successCount

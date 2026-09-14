@@ -211,6 +211,18 @@ func (v BillingTransferStatus) IsValid() bool {
 	}
 }
 
+func (v BillingTransferStatus) IsOutsideBillingQueue() bool {
+	return v == BillingTransferNone || v == BillingTransferSentBackToOps
+}
+
+func BillingTransferCandidateStatuses() []Status {
+	return []Status{StatusCompleted, StatusReadyToInvoice}
+}
+
+func (v Status) IsBillingTransferCandidate() bool {
+	return v == StatusCompleted || v == StatusReadyToInvoice
+}
+
 func (v MoveStatus) IsValid() bool {
 	switch v {
 	case MoveStatusNew,

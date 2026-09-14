@@ -1263,6 +1263,9 @@ models:
   BillType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.BillType
+  ShipmentBillingTransferFailureCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.FailureCode
   BillingQueueExceptionReasonCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode

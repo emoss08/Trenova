@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  chunk,
   getNameInitials,
   downloadJsonFile,
   downloadTextFile,
@@ -352,5 +353,26 @@ describe("getNameInitials", () => {
 
   it("collapses runs of whitespace rather than emitting a blank initial", () => {
     expect(getNameInitials("Alpha   Beta Gamma", "ORG", { maxLength: 3, pad: true })).toBe("ABG");
+  });
+});
+
+describe("chunk", () => {
+  it("splits into consecutive groups of the given size, keeping order", () => {
+    expect(chunk(["a", "b", "c", "d", "e"], 2)).toEqual([["a", "b"], ["c", "d"], ["e"]]);
+  });
+
+  it("returns one group when the size covers every item", () => {
+    expect(chunk([1, 2, 3], 3)).toEqual([[1, 2, 3]]);
+    expect(chunk([1, 2, 3], 10)).toEqual([[1, 2, 3]]);
+  });
+
+  it("returns no groups for no items", () => {
+    expect(chunk([], 5)).toEqual([]);
+  });
+
+  it("rejects a size that could never make progress", () => {
+    expect(() => chunk([1], 0)).toThrow(RangeError);
+    expect(() => chunk([1], -1)).toThrow(RangeError);
+    expect(() => chunk([1], 1.5)).toThrow(RangeError);
   });
 });

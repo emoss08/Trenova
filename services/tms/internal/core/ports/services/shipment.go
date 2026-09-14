@@ -5,11 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -155,16 +157,62 @@ type TransferShipmentToBillingRequest struct {
 	BillType   billingqueue.BillType `json:"billType"`
 }
 
+const (
+	MaxBulkTransferToBillingShipments = 100
+	MaxBillingTransferCandidateIDs    = billingtransfer.MaxRunShipments
+)
+
+type BillingTransferFailureCode = billingtransfer.FailureCode
+
+const (
+	BillingTransferFailureNotFound           = billingtransfer.FailureNotFound
+	BillingTransferFailureInvalidStatus      = billingtransfer.FailureInvalidStatus
+	BillingTransferFailureAlreadyTransferred = billingtransfer.FailureAlreadyTransferred
+	BillingTransferFailureRequirementsUnmet  = billingtransfer.FailureRequirementsUnmet
+	BillingTransferFailureRateValidation     = billingtransfer.FailureRateValidation
+	BillingTransferFailureReturnToOperations = billingtransfer.FailureReturnToOperations
+	BillingTransferFailureUnexpected         = billingtransfer.FailureUnexpected
+)
+
 type BulkTransferShipmentToBillingRequest struct {
-	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
-	BillType    billingqueue.BillType `json:"billType"`
+	ShipmentIDs                 []pulid.ID            `json:"shipmentIds"`
+	BillType                    billingqueue.BillType `json:"billType"`
+	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice"`
+}
+
+func (r *BulkTransferShipmentToBillingRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	switch {
+	case len(r.ShipmentIDs) == 0:
+		multiErr.Add("shipmentIds", errortypes.ErrRequired, "At least one shipment ID is required")
+	case len(r.ShipmentIDs) > MaxBulkTransferToBillingShipments:
+		multiErr.Add(
+			"shipmentIds",
+			errortypes.ErrInvalid,
+			"A bulk transfer can include at most {0} shipments per request",
+			MaxBulkTransferToBillingShipments,
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 type BulkTransferToBillingResult struct {
-	ShipmentID pulid.ID                       `json:"shipmentId"`
-	Success    bool                           `json:"success"`
-	Item       *billingqueue.BillingQueueItem `json:"item,omitempty"`
-	Error      string                         `json:"error,omitempty"`
+	ShipmentID           pulid.ID                       `json:"shipmentId"`
+	ProNumber            string                         `json:"proNumber,omitempty"`
+	Success              bool                           `json:"success"`
+	MarkedReadyToInvoice bool                           `json:"markedReadyToInvoice"`
+	Item                 *billingqueue.BillingQueueItem `json:"item,omitempty"`
+	FailureCode          BillingTransferFailureCode     `json:"failureCode,omitempty"`
+	Error                string                         `json:"error,omitempty"`
+	Err                  error                          `json:"-"`
+	MissingRequirements  []ShipmentBillingRequirement   `json:"missingRequirements"`
+	ValidationFailures   []ShipmentBillingValidation    `json:"validationFailures"`
 }
 
 type BulkTransferToBillingResponse struct {
@@ -172,6 +220,17 @@ type BulkTransferToBillingResponse struct {
 	TotalCount   int                           `json:"totalCount"`
 	SuccessCount int                           `json:"successCount"`
 	ErrorCount   int                           `json:"errorCount"`
+}
+
+type ListBillingTransferCandidateIDsRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Status shipment.Status          `json:"status"`
+}
+
+type BillingTransferCandidateIDsResponse struct {
+	IDs        []pulid.ID `json:"ids"`
+	TotalCount int        `json:"totalCount"`
+	Truncated  bool       `json:"truncated"`
 }
 
 type ShipmentMutationObserver interface {
@@ -391,4 +450,8 @@ type ShipmentService interface {
 		req *BulkTransferShipmentToBillingRequest,
 		actor *RequestActor,
 	) (*BulkTransferToBillingResponse, error)
+	ListBillingTransferCandidateIDs(
+		ctx context.Context,
+		req *ListBillingTransferCandidateIDsRequest,
+	) (*BillingTransferCandidateIDsResponse, error)
 }

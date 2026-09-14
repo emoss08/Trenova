@@ -1591,6 +1591,74 @@ func (_c *MockShipmentService_GetUnassigned_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// ListBillingTransferCandidateIDs provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) ListBillingTransferCandidateIDs(ctx context.Context, req *services.ListBillingTransferCandidateIDsRequest) (*services.BillingTransferCandidateIDsResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBillingTransferCandidateIDs")
+	}
+
+	var r0 *services.BillingTransferCandidateIDsResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ListBillingTransferCandidateIDsRequest) (*services.BillingTransferCandidateIDsResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ListBillingTransferCandidateIDsRequest) *services.BillingTransferCandidateIDsResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.BillingTransferCandidateIDsResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ListBillingTransferCandidateIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_ListBillingTransferCandidateIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBillingTransferCandidateIDs'
+type MockShipmentService_ListBillingTransferCandidateIDs_Call struct {
+	*mock.Call
+}
+
+// ListBillingTransferCandidateIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ListBillingTransferCandidateIDsRequest
+func (_e *MockShipmentService_Expecter) ListBillingTransferCandidateIDs(ctx any, req any) *MockShipmentService_ListBillingTransferCandidateIDs_Call {
+	return &MockShipmentService_ListBillingTransferCandidateIDs_Call{Call: _e.mock.On("ListBillingTransferCandidateIDs", ctx, req)}
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidateIDs_Call) Run(run func(ctx context.Context, req *services.ListBillingTransferCandidateIDsRequest)) *MockShipmentService_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ListBillingTransferCandidateIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ListBillingTransferCandidateIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidateIDs_Call) Return(billingTransferCandidateIDsResponse *services.BillingTransferCandidateIDsResponse, err error) *MockShipmentService_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Return(billingTransferCandidateIDsResponse, err)
+	return _c
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidateIDs_Call) RunAndReturn(run func(ctx context.Context, req *services.ListBillingTransferCandidateIDsRequest) (*services.BillingTransferCandidateIDsResponse, error)) *MockShipmentService_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) List(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	ret := _mock.Called(ctx, req)

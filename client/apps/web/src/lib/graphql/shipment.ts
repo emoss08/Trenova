@@ -1,7 +1,6 @@
 import {
   AcknowledgeShipmentCommentDocument,
   AutoRateShipmentDocument,
-  BulkTransferShipmentsToBillingDocument,
   CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
   CalculateShipmentTotalsDocument,
@@ -42,7 +41,6 @@ import {
   type FieldFilterInput,
   type FilterGroupInput,
   type ShipmentAdditionalChargeInput,
-  type ShipmentBulkTransferToBillingInput,
   type ShipmentCommentInput,
   type ShipmentCommentUpdateInput,
   type ShipmentCommentsFilterInput,
@@ -61,7 +59,6 @@ import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import type { LoadingOptimizationRequest } from "@/types/loading-optimization";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import type {
-  BulkTransferToBillingRequest,
   DuplicateShipmentRequest,
   GetPreviousRatesRequest,
   Shipment,
@@ -380,20 +377,6 @@ export async function transferShipmentToBillingGraphQL(shipmentId: string, billT
     },
   });
   return data.transferShipmentToBilling;
-}
-
-export async function bulkTransferShipmentsToBillingGraphQL(req: BulkTransferToBillingRequest) {
-  const data = await requestShipmentGraphQL({
-    document: BulkTransferShipmentsToBillingDocument,
-    operationName: "BulkTransferShipmentsToBilling",
-    variables: {
-      input: {
-        shipmentIds: req.shipmentIds,
-        billType: req.billType,
-      } satisfies ShipmentBulkTransferToBillingInput,
-    },
-  });
-  return data.bulkTransferShipmentsToBilling;
 }
 
 export async function calculateShipmentTotalsGraphQL(payload: Shipment) {

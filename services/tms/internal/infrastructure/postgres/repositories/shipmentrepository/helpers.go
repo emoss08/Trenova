@@ -40,6 +40,8 @@ func standardShipmentFilter(
 			Relation(buncolgen.ShipmentRelations.TrailerType).
 			Relation(buncolgen.ShipmentRelations.CanceledBy).
 			Relation(buncolgen.ShipmentRelations.Owner)
+	} else if opts.IncludeCustomer {
+		q = q.Relation(buncolgen.ShipmentRelations.Customer)
 	}
 
 	return q
@@ -76,6 +78,7 @@ func countShipmentListQuery(
 ) *bun.SelectQuery {
 	countReq := *req
 	countReq.ShipmentOptions.ExpandShipmentDetails = false
+	countReq.ShipmentOptions.IncludeCustomer = false
 
 	return baseShipmentListQuery(q, dba, &countReq)
 }
@@ -109,6 +112,9 @@ func applyShipmentOptionFilters(
 	}
 	if opts.HasActivityWindow() {
 		q = q.Where("EXISTS (?)", activityWindowPredicate(dba, opts))
+	}
+	if opts.BillingTransferEligible {
+		q = billingTransferCandidatePredicate(q)
 	}
 
 	return q

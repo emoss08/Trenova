@@ -1214,6 +1214,74 @@ func (_c *MockShipmentRepository_ListAutoDelayShipmentTenants_Call) RunAndReturn
 	return _c
 }
 
+// ListBillingTransferCandidateIDs provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) ListBillingTransferCandidateIDs(ctx context.Context, req *repositories.ListBillingTransferCandidateIDsRequest) (*repositories.BillingTransferCandidateIDsResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBillingTransferCandidateIDs")
+	}
+
+	var r0 *repositories.BillingTransferCandidateIDsResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListBillingTransferCandidateIDsRequest) (*repositories.BillingTransferCandidateIDsResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListBillingTransferCandidateIDsRequest) *repositories.BillingTransferCandidateIDsResult); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.BillingTransferCandidateIDsResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListBillingTransferCandidateIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_ListBillingTransferCandidateIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBillingTransferCandidateIDs'
+type MockShipmentRepository_ListBillingTransferCandidateIDs_Call struct {
+	*mock.Call
+}
+
+// ListBillingTransferCandidateIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListBillingTransferCandidateIDsRequest
+func (_e *MockShipmentRepository_Expecter) ListBillingTransferCandidateIDs(ctx any, req any) *MockShipmentRepository_ListBillingTransferCandidateIDs_Call {
+	return &MockShipmentRepository_ListBillingTransferCandidateIDs_Call{Call: _e.mock.On("ListBillingTransferCandidateIDs", ctx, req)}
+}
+
+func (_c *MockShipmentRepository_ListBillingTransferCandidateIDs_Call) Run(run func(ctx context.Context, req *repositories.ListBillingTransferCandidateIDsRequest)) *MockShipmentRepository_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListBillingTransferCandidateIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListBillingTransferCandidateIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListBillingTransferCandidateIDs_Call) Return(billingTransferCandidateIDsResult *repositories.BillingTransferCandidateIDsResult, err error) *MockShipmentRepository_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Return(billingTransferCandidateIDsResult, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListBillingTransferCandidateIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListBillingTransferCandidateIDsRequest) (*repositories.BillingTransferCandidateIDsResult, error)) *MockShipmentRepository_ListBillingTransferCandidateIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListRatedByFormulaTemplate provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) ListRatedByFormulaTemplate(ctx context.Context, req *repositories.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)

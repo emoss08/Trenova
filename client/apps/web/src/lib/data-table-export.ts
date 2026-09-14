@@ -66,6 +66,19 @@ function formatCsvValue(value: unknown): string {
   return JSON.stringify(value) ?? "";
 }
 
+const SPREADSHEET_FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
+/**
+ * Stops a spreadsheet from evaluating free text as a formula. Excel, Sheets and
+ * Numbers all treat a cell starting with one of these characters as an
+ * expression, so user-entered text written to a CSV must be prefixed with a
+ * quote before it is opened.
+ */
+export function spreadsheetSafeText(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return SPREADSHEET_FORMULA_PREFIX.test(value) ? `'${value}` : value;
+}
+
 function escapeCsvValue(value: string): string {
   if (/[",\n\r]/.test(value)) {
     return `"${value.replaceAll('"', '""')}"`;

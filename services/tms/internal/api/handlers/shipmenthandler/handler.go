@@ -1160,13 +1160,6 @@ func (h *Handler) bulkTransferToBilling(c *gin.Context) {
 		return
 	}
 
-	if len(req.ShipmentIDs) == 0 {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("shipmentIds", errortypes.ErrRequired, "At least one shipment ID is required")
-		h.eh.HandleError(c, multiErr)
-		return
-	}
-
 	actor := actorutil.FromAuthContext(authCtx)
 	response, err := h.service.BulkTransferToBilling(c.Request.Context(), req, actor)
 	if err != nil {

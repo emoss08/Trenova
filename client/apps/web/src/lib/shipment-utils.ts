@@ -136,3 +136,16 @@ export function canTransferShipmentToBilling(shipment: Shipment) {
   const transferStatus = shipment.billingTransferStatus;
   return !transferStatus || transferStatus === "SentBackToOps";
 }
+
+/**
+ * Where a shipment opens: its row expanded on the shipments board with its edit
+ * panel showing.
+ */
+export function shipmentPanelPath(shipmentId: string): string {
+  const params = new URLSearchParams({
+    expanded: shipmentId,
+    panelType: "edit",
+    panelEntityId: shipmentId,
+  });
+  return `/shipment-management/shipments?${params.toString()}`;
+}

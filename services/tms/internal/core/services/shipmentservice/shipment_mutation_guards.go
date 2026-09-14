@@ -10,14 +10,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-//nolint:exhaustive // only actionable enum states require explicit handling here
-var billingUnlockedStatuses = map[shipment.BillingTransferStatus]struct{}{
-	shipment.BillingTransferNone:          {},
-	shipment.BillingTransferSentBackToOps: {},
-}
-
 func validateShipmentNotLockedForBilling(entity *shipment.Shipment) *errortypes.MultiError {
-	if _, unlocked := billingUnlockedStatuses[entity.BillingTransferStatus]; unlocked {
+	if entity.BillingTransferStatus.IsOutsideBillingQueue() {
 		return nil
 	}
 
