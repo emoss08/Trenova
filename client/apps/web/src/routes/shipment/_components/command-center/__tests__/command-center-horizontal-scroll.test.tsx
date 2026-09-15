@@ -34,9 +34,21 @@ const savedViews = vi.hoisted(() => ({
   lastSavedConfig: null as TableConfig | null,
 }));
 
+// The real tableConfiguration factory exposes all/detail/default, and the toolbar's
+// lazily-loaded DataTableConfigManager calls `all`. Mocking only `default` left this suite
+// passing in isolation and failing whenever that lazy boundary happened to resolve before
+// the assertions - which is what it did under CI's parallel load.
 vi.mock("@/lib/queries", () => ({
   queries: {
     tableConfiguration: {
+      all: () => ({
+        queryKey: ["table-config-all"],
+        queryFn: async () => ({ results: [], count: 0 }),
+      }),
+      detail: (id: string) => ({
+        queryKey: ["table-config-detail", id],
+        queryFn: async () => null,
+      }),
       default: () => ({
         queryKey: ["table-config-default"],
         queryFn: async () => savedViews.defaultConfig,
