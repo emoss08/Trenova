@@ -32,6 +32,23 @@ const (
 	EntryMethodEDI    = EntryMethod("EDI")
 )
 
+type FreightTerms string
+
+const (
+	FreightTermsPrepaid    = FreightTerms("Prepaid")
+	FreightTermsCollect    = FreightTerms("Collect")
+	FreightTermsThirdParty = FreightTerms("ThirdParty")
+)
+
+func (f FreightTerms) IsValid() bool {
+	switch f {
+	case FreightTermsPrepaid, FreightTermsCollect, FreightTermsThirdParty:
+		return true
+	default:
+		return false
+	}
+}
+
 type BillingTransferStatus string
 
 const (

@@ -53,11 +53,13 @@ type DriverPaySeed struct {
 	seedhelpers.BaseSeed
 }
 
+const driverPaySeedProPrefix = "SEED-PAY-"
+
 func NewDriverPaySeed() *DriverPaySeed {
 	seed := &DriverPaySeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"DriverPay",
-		"1.0.0",
+		"1.1.0",
 		"Creates pay profiles, completed shipments with assigned moves, pay events, and settlements for development",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -72,17 +74,17 @@ func NewDriverPaySeed() *DriverPaySeed {
 }
 
 type payRefs struct {
-	orgID          pulid.ID
-	buID           pulid.ID
-	adminID        pulid.ID
-	locations      map[string]pulid.ID
-	customers      map[string]pulid.ID
-	serviceTypes   map[string]pulid.ID
-	shipmentTypes  map[string]pulid.ID
-	tractors       map[string]pulid.ID
-	trailers       map[string]pulid.ID
-	commodities    map[string]pulid.ID
-	flatTemplateID pulid.ID
+	orgID         pulid.ID
+	buID          pulid.ID
+	adminID       pulid.ID
+	locations     map[string]pulid.ID
+	customers     map[string]pulid.ID
+	serviceTypes  map[string]pulid.ID
+	shipmentTypes map[string]pulid.ID
+	tractors      map[string]pulid.ID
+	trailers      map[string]pulid.ID
+	commodities   map[string]pulid.ID
+	flatTemplate  formulatemplate.FormulaTemplate
 }
 
 type paidMoveDef struct {
@@ -176,6 +178,22 @@ func (s *DriverPaySeed) Run(ctx context.Context, tx bun.Tx) error {
 			moves, err := s.createPaidShipments(ctx, tx, sc, refs, workers)
 			if err != nil {
 				return fmt.Errorf("create paid shipments: %w", err)
+			}
+
+			backfilled, err := backfillSeededRatingDetails(ctx, tx, seededRatingBackfill{
+				orgID:     refs.orgID,
+				buID:      refs.buID,
+				proPrefix: driverPaySeedProPrefix,
+				now:       timeutils.NowUnix(),
+			})
+			if err != nil {
+				return fmt.Errorf("backfill paid shipment rating details: %w", err)
+			}
+			if backfilled > 0 {
+				seedhelpers.LogSuccess(
+					"Backfilled rating details on seeded paid shipments",
+					fmt.Sprintf("- Stamped %d shipments", backfilled),
+				)
 			}
 
 			if len(moves) > 0 {
@@ -279,14 +297,12 @@ func (s *DriverPaySeed) loadRefs(
 		refs.commodities[comms[i].Name] = comms[i].ID
 	}
 
-	var flatTemplate formulatemplate.FormulaTemplate
-	if err := tx.NewSelect().Model(&flatTemplate).Column("id").
+	if err := tx.NewSelect().Model(&refs.flatTemplate).Column("id", "name", "expression").
 		Where("organization_id = ?", orgID).Where("business_unit_id = ?", buID).
 		Where("name = ?", "Flat Rate").Limit(1).
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("get flat rate formula template: %w", err)
 	}
-	refs.flatTemplateID = flatTemplate.ID
 
 	return refs, nil
 }
@@ -1254,7 +1270,7 @@ func (s *DriverPaySeed) createPaidShipments(
 			CustomerID:         customerID,
 			ServiceTypeID:      stdServiceID,
 			ShipmentTypeID:     ftlTypeID,
-			FormulaTemplateID:  refs.flatTemplateID,
+			FormulaTemplateID:  refs.flatTemplate.ID,
 			Status:             shipment.StatusCompleted,
 			ProNumber:          def.pro,
 			BOL:                def.bol,
@@ -1270,6 +1286,7 @@ func (s *DriverPaySeed) createPaidShipments(
 			TotalChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
 			RatingUnit:        1,
 		}
+		shp.RatingDetail = seededRatingDetail(shp, &refs.flatTemplate, timeutils.NowUnix())
 		if _, err = tx.NewInsert().Model(shp).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("insert shipment %s: %w", def.pro, err)
 		}

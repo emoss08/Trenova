@@ -11,6 +11,7 @@ import (
 	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 )
 
 type mockScheduleHandle struct {
@@ -544,6 +545,47 @@ func TestReconcile_AlreadyExistsErrorInCreate_FallsBackToUpdate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, result.Created, 1)
 	assert.Contains(t, result.Created, "already-exists-schedule")
+	assert.Empty(t, result.Errors)
+	assert.True(t, handle.updateCalled)
+}
+
+func TestReconcile_ScheduleAlreadyRunningInCreate_FallsBackToUpdate(t *testing.T) {
+	t.Parallel()
+
+	logger := newTestLogger()
+	registry := NewRegistry(logger)
+
+	provider := &testProvider{
+		schedules: []*Schedule{
+			{
+				ID:        "stale-list-schedule",
+				Spec:      Every(30 * time.Minute),
+				Workflow:  dummyWorkflow,
+				TaskQueue: "test-queue",
+			},
+		},
+	}
+	registry.RegisterProvider(provider)
+
+	handle := &mockScheduleHandle{id: "stale-list-schedule", invokeUpdate: true}
+
+	mc := &mockTemporalClient{
+		scheduleClient: &mockScheduleClient{
+			listIter: &mockScheduleListIterator{
+				entries: []*client.ScheduleListEntry{},
+			},
+			createErr: temporal.ErrScheduleAlreadyRunning,
+			handles: map[string]*mockScheduleHandle{
+				"stale-list-schedule": handle,
+			},
+		},
+	}
+
+	reconciler := NewReconciler(mc, registry, logger)
+	result, err := reconciler.Reconcile(t.Context())
+
+	require.NoError(t, err)
+	assert.Contains(t, result.Created, "stale-list-schedule")
 	assert.Empty(t, result.Errors)
 	assert.True(t, handle.updateCalled)
 }

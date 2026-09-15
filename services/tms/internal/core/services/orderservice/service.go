@@ -2,7 +2,9 @@ package orderservice
 
 import (
 	"context"
+	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -25,38 +27,44 @@ import (
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	DB              ports.DBConnection
-	Repo            repositories.OrderRepository
-	Validator       *Validator
-	AuditService    services.AuditService
-	Generator       seqgen.Generator
-	OrderDerivation services.OrderDerivationService
-	ShipmentService services.ShipmentService
+	Logger               *zap.Logger
+	DB                   ports.DBConnection
+	Repo                 repositories.OrderRepository
+	Validator            *Validator
+	AuditService         services.AuditService
+	Generator            seqgen.Generator
+	OrderDerivation      services.OrderDerivationService
+	ShipmentService      services.ShipmentService
+	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	CustomerRepo         repositories.CustomerRepository
 }
 
 type Service struct {
-	l               *zap.Logger
-	db              ports.DBConnection
-	repo            repositories.OrderRepository
-	validator       *Validator
-	auditService    services.AuditService
-	generator       seqgen.Generator
-	orderDerivation services.OrderDerivationService
-	shipmentService services.ShipmentService
+	l                    *zap.Logger
+	db                   ports.DBConnection
+	repo                 repositories.OrderRepository
+	validator            *Validator
+	auditService         services.AuditService
+	generator            seqgen.Generator
+	orderDerivation      services.OrderDerivationService
+	shipmentService      services.ShipmentService
+	chargeAllocationRepo repositories.ChargeAllocationRepository
+	customerRepo         repositories.CustomerRepository
 }
 
 //nolint:gocritic // fx constructor
 func New(p Params) *Service {
 	return &Service{
-		l:               p.Logger.Named("service.order"),
-		db:              p.DB,
-		repo:            p.Repo,
-		validator:       p.Validator,
-		auditService:    p.AuditService,
-		generator:       p.Generator,
-		orderDerivation: p.OrderDerivation,
-		shipmentService: p.ShipmentService,
+		l:                    p.Logger.Named("service.order"),
+		db:                   p.DB,
+		repo:                 p.Repo,
+		validator:            p.Validator,
+		auditService:         p.AuditService,
+		generator:            p.Generator,
+		orderDerivation:      p.OrderDerivation,
+		shipmentService:      p.ShipmentService,
+		chargeAllocationRepo: p.ChargeAllocationRepo,
+		customerRepo:         p.CustomerRepo,
 	}
 }
 
@@ -533,8 +541,44 @@ func (s *Service) AddCharge(
 	amount decimal.Decimal,
 	actor *services.RequestActor,
 ) (*order.Order, error) {
+	return s.AddChargeWithAllocations(ctx, &AddChargeRequest{
+		TenantInfo:  tenantInfo,
+		OrderID:     orderID,
+		Description: description,
+		Amount:      amount,
+	}, actor)
+}
+
+type AddChargeRequest struct {
+	TenantInfo  pagination.TenantInfo
+	OrderID     pulid.ID
+	Description string
+	Amount      decimal.Decimal
+	// Allocations divides the charge among payers. Nil bills it to the order's
+	// payer; the rows must add up to the charge.
+	Allocations []*shipment.ChargeAllocation
+}
+
+type SetChargeAllocationsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	OrderID     pulid.ID
+	ChargeID    pulid.ID
+	Allocations []*shipment.ChargeAllocation
+}
+
+func (s *Service) AddChargeWithAllocations(
+	ctx context.Context,
+	req *AddChargeRequest,
+	actor *services.RequestActor,
+) (*order.Order, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+	}
+	tenantInfo := req.TenantInfo
+	orderID := req.OrderID
+
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
@@ -550,17 +594,24 @@ func (s *Service) AddCharge(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			OrderID:        orderID,
-			Description:    description,
-			Amount:         amount,
+			Description:    req.Description,
+			Amount:         req.Amount,
 		}
 		multiErr := errortypes.NewMultiError()
 		charge.Validate(multiErr)
 		if multiErr.HasErrors() {
 			return multiErr
 		}
+		if multiErr = s.validateChargeAllocations(txCtx, tenantInfo, charge, req.Allocations); multiErr != nil {
+			return multiErr
+		}
 
 		if _, txErr = s.repo.AddCharge(txCtx, charge); txErr != nil {
 			s.l.Error("failed to add order charge", zap.Error(txErr))
+			return txErr
+		}
+
+		if txErr = s.syncChargeAllocations(txCtx, tx, tenantInfo, charge, req.Allocations); txErr != nil {
 			return txErr
 		}
 
@@ -643,7 +694,7 @@ func (s *Service) UpdateCharge(
 	actor *services.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
 			ID:         req.OrderID,
 			TenantInfo: req.TenantInfo,
@@ -669,6 +720,9 @@ func (s *Service) UpdateCharge(
 		if multiErr.HasErrors() {
 			return multiErr
 		}
+		if multiErr = s.validateChargeAllocations(txCtx, req.TenantInfo, charge, req.Allocations); multiErr != nil {
+			return multiErr
+		}
 
 		affected, txErr := s.repo.UpdateCharge(txCtx, charge)
 		if txErr != nil {
@@ -681,6 +735,10 @@ func (s *Service) UpdateCharge(
 				errortypes.ErrInvalid,
 				"Order charge was modified by someone else, is already invoiced, or does not exist",
 			)
+		}
+
+		if txErr = s.syncChargeAllocations(txCtx, tx, req.TenantInfo, charge, req.Allocations); txErr != nil {
+			return txErr
 		}
 
 		if txErr = s.orderDerivation.RecomputeOrder(
@@ -713,6 +771,216 @@ type UpdateChargeRequest struct {
 	Description string
 	Amount      decimal.Decimal
 	Version     int64
+	// Allocations, when non-nil, replaces how the charge is divided among payers.
+	Allocations []*shipment.ChargeAllocation
+}
+
+// SetChargeAllocations replaces how one order charge is divided among payers
+// without touching the charge itself.
+func (s *Service) SetChargeAllocations(
+	ctx context.Context,
+	req *SetChargeAllocationsRequest,
+	actor *services.RequestActor,
+) (*order.Order, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+	}
+	allocations := req.Allocations
+	if allocations == nil {
+		allocations = []*shipment.ChargeAllocation{}
+	}
+
+	var updated *order.Order
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+			ID:         req.OrderID,
+			TenantInfo: req.TenantInfo,
+		})
+		if txErr != nil {
+			return txErr
+		}
+		if txErr = guardMembershipChange(ord); txErr != nil {
+			return txErr
+		}
+
+		charges, txErr := s.repo.ListCharges(txCtx, req.TenantInfo, req.OrderID)
+		if txErr != nil {
+			return txErr
+		}
+		var charge *order.OrderCharge
+		for _, candidate := range charges {
+			if candidate != nil && candidate.ID == req.ChargeID {
+				charge = candidate
+				break
+			}
+		}
+		if charge == nil {
+			return errortypes.NewNotFoundError("Order charge not found")
+		}
+		if charge.InvoiceID.IsNotNil() || charge.IsFullyInvoiced() {
+			return errortypes.NewValidationError(
+				"chargeId",
+				errortypes.ErrInvalidOperation,
+				"An invoiced order charge cannot be re-allocated",
+			)
+		}
+
+		if multiErr := s.validateChargeAllocations(txCtx, req.TenantInfo, charge, allocations); multiErr != nil {
+			return multiErr
+		}
+		if txErr = s.syncChargeAllocations(txCtx, tx, req.TenantInfo, charge, allocations); txErr != nil {
+			return txErr
+		}
+
+		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+			ID:              req.OrderID,
+			TenantInfo:      req.TenantInfo,
+			IncludeShipment: true,
+		})
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.logMembershipChange(updated, actor, "Order charge allocations updated")
+	return updated, nil
+}
+
+// validateChargeAllocations checks a charge's payer split: known, active payers
+// in this tenant, no invoiced row changing hands, and rows that add up to the
+// charge. A nil list means the split is not being touched.
+func (s *Service) validateChargeAllocations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	charge *order.OrderCharge,
+	allocations []*shipment.ChargeAllocation,
+) *errortypes.MultiError {
+	if allocations == nil {
+		return nil
+	}
+
+	payerIDs := make([]pulid.ID, 0, len(allocations))
+	rowIDs := make([]pulid.ID, 0, len(allocations))
+	seen := make(map[pulid.ID]struct{}, len(allocations))
+	for _, allocation := range allocations {
+		if allocation == nil {
+			continue
+		}
+		allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
+		if charge.ID.IsNotNil() {
+			chargeID := charge.ID
+			allocation.OrderChargeID = &chargeID
+		}
+		if allocation.ID.IsNotNil() {
+			rowIDs = append(rowIDs, allocation.ID)
+		}
+		if allocation.BillToCustomerID.IsNil() {
+			continue
+		}
+		if _, ok := seen[allocation.BillToCustomerID]; ok {
+			continue
+		}
+		seen[allocation.BillToCustomerID] = struct{}{}
+		payerIDs = append(payerIDs, allocation.BillToCustomerID)
+	}
+
+	customers := make(map[pulid.ID]*customer.Customer, len(payerIDs))
+	if len(payerIDs) > 0 && s.customerRepo != nil {
+		found, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+			TenantInfo:  tenantInfo,
+			CustomerIDs: payerIDs,
+		})
+		if err != nil {
+			multiErr := errortypes.NewMultiError()
+			multiErr.Add("allocations", errortypes.ErrInvalid, "Unable to verify bill-to customers")
+			return multiErr
+		}
+		for _, cus := range found {
+			if cus != nil {
+				customers[cus.ID] = cus
+			}
+		}
+	}
+
+	locked := make(map[pulid.ID]struct{})
+	if len(rowIDs) > 0 && s.chargeAllocationRepo != nil {
+		found, err := s.chargeAllocationRepo.LockedIDs(ctx, tenantInfo, rowIDs)
+		if err != nil {
+			multiErr := errortypes.NewMultiError()
+			multiErr.Add("allocations", errortypes.ErrInvalid, "Unable to verify invoiced allocations")
+			return multiErr
+		}
+		locked = found
+	}
+
+	// A charge that has no id yet is validated against a placeholder so the
+	// rows can name it; the repository stamps the real id on insert.
+	chargeID := charge.ID
+	if chargeID.IsNil() {
+		chargeID = pulid.MustNew("ordchg_")
+		for _, allocation := range allocations {
+			if allocation != nil {
+				id := chargeID
+				allocation.OrderChargeID = &id
+			}
+		}
+	}
+
+	multiErr := shipment.ValidateAllocations(&shipment.ValidateAllocationsParams{
+		TenantOrgID: tenantInfo.OrgID,
+		TenantBuID:  tenantInfo.BuID,
+		Allocations: allocations,
+		Customers:   customers,
+		Locked:      locked,
+		Field:       "allocations",
+	})
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	if _, err := shipment.ResolveOrderChargeShares(
+		[]shipment.OrderChargeRef{{ID: chargeID, Description: charge.Description, Amount: charge.Amount}},
+		allocations,
+		pulid.Nil,
+	); err != nil {
+		var typed *errortypes.Error
+		if errors.As(err, &typed) {
+			multiErr.Add(typed.Field, typed.Code, typed.Message)
+		} else {
+			multiErr.Add("allocations", errortypes.ErrInvalid, err.Error())
+		}
+		return multiErr
+	}
+
+	if charge.ID.IsNil() {
+		for _, allocation := range allocations {
+			if allocation != nil {
+				allocation.OrderChargeID = nil
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) syncChargeAllocations(
+	ctx context.Context,
+	tx bun.Tx,
+	tenantInfo pagination.TenantInfo,
+	charge *order.OrderCharge,
+	allocations []*shipment.ChargeAllocation,
+) error {
+	if allocations == nil || s.chargeAllocationRepo == nil {
+		return nil
+	}
+
+	return s.chargeAllocationRepo.SyncForOrderCharge(ctx, tx, &repositories.SyncOrderChargeAllocationsRequest{
+		TenantInfo:    tenantInfo,
+		OrderID:       charge.OrderID,
+		OrderChargeID: charge.ID,
+		Allocations:   allocations,
+	})
 }
 
 func (s *Service) ListCharges(

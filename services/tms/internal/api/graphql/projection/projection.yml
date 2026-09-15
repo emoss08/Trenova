@@ -65,6 +65,32 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  Invoice:
+    - relatedInvoices
+    - shipperCustomer
+    - referenceInvoice
+    - openBalance
+    - creditRemaining
+    - daysPastDue
+    - paymentApplications
+    - creditApplications
+    - disputes
+    - openDispute
+    - lateChargeAssessments
+    - ediSendPlan
+  LateChargeAssessment:
+    - sourceInvoice
+    - debitMemo
+  InvoiceDispute:
+    - invoice
+    - customer
+  CreditMemoApplication:
+    - creditMemo
+    - invoice
+  OrderCharge:
+    - allocations
+  BillingQueueItem:
+    - billToCustomer
   FuelPurchaseImportBatch:
     - rows
   FuelPurchaseImportRow:
@@ -164,15 +190,18 @@ virtuals:
     - glAccount
   Shipment:
     - customer
+    - billToCustomer
     - formulaTemplate
     - sourceDocumentId
     - orderNumber
     - orderStatus
     - profitabilityEstimate
+    - billingSplitSummary
   ShipmentCustomer:
     - ediPartner
   ShipmentAdditionalCharge:
     - accessorialCharge
+    - detentionOccurrenceId
   ShipmentCommodity:
     - commodity
   ShipmentComment:
@@ -224,6 +253,7 @@ virtuals:
     - customer
   CustomerPaymentApplication:
     - invoice
+    - payment
 
 specials:
   Tractor:

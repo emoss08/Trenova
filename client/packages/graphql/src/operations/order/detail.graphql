@@ -32,8 +32,12 @@ query OrderDetail($id: ID!) {
       description
       amount
       invoiceId
+      invoicedAt
       version
       createdAt
+      allocations {
+        ...ChargeAllocationFields
+      }
     }
   }
 }

@@ -34,6 +34,8 @@ export const queueSearchParamsParser = {
   query: parseAsString.withDefault(""),
   billType: parseAsString,
   billers: parseAsStringArray,
+  /** Narrows the queue to the items billed to one customer, on any shipment. */
+  payer: parseAsString,
   includePosted: parseAsBoolean.withDefault(false),
   preset: parseAsString,
 };
@@ -60,6 +62,7 @@ export const queueSidebarSearchParamsParser = {
   query: queueSearchParamsParser.query,
   billType: queueSearchParamsParser.billType,
   billers: queueSearchParamsParser.billers,
+  payer: queueSearchParamsParser.payer,
   includePosted: queueSearchParamsParser.includePosted,
   preset: queueSearchParamsParser.preset,
 };

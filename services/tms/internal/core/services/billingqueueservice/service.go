@@ -37,6 +37,7 @@ type Params struct {
 	CustomerRepo    repositories.CustomerRepository
 	UserRepo        repositories.UserRepository
 	AdjustmentRepo  repositories.InvoiceAdjustmentRepository
+	InvoiceRepo     repositories.InvoiceRepository
 	InvoiceSvc      services.InvoiceService
 	Commercial      *shipmentcommercial.Calculator
 	Generator       seqgen.Generator
@@ -56,6 +57,7 @@ type service struct {
 	customerRepo    repositories.CustomerRepository
 	userRepo        repositories.UserRepository
 	adjustmentRepo  repositories.InvoiceAdjustmentRepository
+	invoiceRepo     repositories.InvoiceRepository
 	invoiceSvc      services.InvoiceService
 	commercial      *shipmentcommercial.Calculator
 	generator       seqgen.Generator
@@ -77,6 +79,7 @@ func New(p Params) services.BillingQueueService {
 		customerRepo:    p.CustomerRepo,
 		userRepo:        p.UserRepo,
 		adjustmentRepo:  p.AdjustmentRepo,
+		invoiceRepo:     p.InvoiceRepo,
 		invoiceSvc:      p.InvoiceSvc,
 		commercial:      p.Commercial,
 		generator:       p.Generator,
@@ -150,6 +153,24 @@ func (s *service) expandShipmentDetails(
 		item.Shipment.Customer = cust
 	}
 
+	// The payer's billing profile is what the queue reads for review rules and
+	// auto-approval, and on a split shipment it is not the shipment customer's.
+	switch {
+	case item.BillToCustomerID.IsNil() || item.BillToCustomerID == fullShipment.CustomerID:
+		item.BillToCustomer = item.Shipment.Customer
+	default:
+		payer, payerErr := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			ID:         item.BillToCustomerID,
+			TenantInfo: tenantInfo,
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if payerErr == nil {
+			item.BillToCustomer = payer
+		}
+	}
+
 	return nil
 }
 
@@ -188,11 +209,32 @@ func (s *service) GetStats(
 	}, nil
 }
 
+// TransferToBilling queues a shipment for billing and returns the primary
+// payer's item. A split-billed shipment gets one item per payer; callers that
+// need every item use TransferToBillingItems.
 func (s *service) TransferToBilling(
 	ctx context.Context,
 	req *services.TransferToBillingRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
+	result, err := s.TransferToBillingItems(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Primary, nil
+}
+
+// TransferToBillingItems creates one billing queue item per payer of the
+// shipment, all in one transaction so a split shipment is either fully queued or
+// not queued at all. Each item carries its payer and that payer's share of the
+// charges, which is what lets the queue, the statements and the invoices work
+// per payer from here on.
+func (s *service) TransferToBillingItems(
+	ctx context.Context,
+	req *services.TransferToBillingRequest,
+	actor *services.RequestActor,
+) (*services.TransferToBillingResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -220,62 +262,120 @@ func (s *service) TransferToBilling(
 		)
 	}
 
-	exists, err := s.repo.ExistsByShipmentAndType(ctx, req.TenantInfo, req.ShipmentID, req.BillType)
+	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
-	if exists {
-		return nil, errortypes.NewConflictError(
-			"A billing queue item already exists for this shipment and bill type",
+
+	for _, share := range resolution.Shares {
+		exists, existsErr := s.repo.ExistsByShipmentPayerAndType(
+			ctx,
+			req.TenantInfo,
+			req.ShipmentID,
+			share.PayerID,
+			req.BillType,
 		)
+		if existsErr != nil {
+			return nil, existsErr
+		}
+		if exists {
+			return nil, errortypes.NewConflictError(
+				"A billing queue item already exists for this shipment, payer and bill type",
+			)
+		}
 	}
 
-	number, err := s.generateBillingNumber(
-		ctx,
-		req.BillType,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-	)
+	entities := make([]*billingqueue.BillingQueueItem, 0, len(resolution.Shares))
+	for _, share := range resolution.Shares {
+		number, numberErr := s.generateBillingNumber(
+			ctx,
+			req.BillType,
+			req.TenantInfo.OrgID,
+			req.TenantInfo.BuID,
+		)
+		if numberErr != nil {
+			return nil, numberErr
+		}
+
+		entity := &billingqueue.BillingQueueItem{
+			OrganizationID:       req.TenantInfo.OrgID,
+			BusinessUnitID:       req.TenantInfo.BuID,
+			ShipmentID:           req.ShipmentID,
+			OrderID:              shp.OrderID,
+			BillToCustomerID:     share.PayerID,
+			AllocatedTotalAmount: share.TotalAmount,
+			Status:               billingqueue.StatusReadyForReview,
+			BillType:             req.BillType,
+			Number:               number,
+		}
+		entity.SyncAllocatedMinor()
+		if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+			return nil, multiErr
+		}
+		entities = append(entities, entity)
+	}
+
+	created := make([]*billingqueue.BillingQueueItem, 0, len(entities))
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		for _, entity := range entities {
+			item, txErr := s.repo.Create(txCtx, entity)
+			if txErr != nil {
+				return txErr
+			}
+			created = append(created, item)
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &billingqueue.BillingQueueItem{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ShipmentID:     req.ShipmentID,
-		Status:         billingqueue.StatusReadyForReview,
-		BillType:       req.BillType,
-		Number:         number,
+	result := &services.TransferToBillingResult{
+		Items: make([]*billingqueue.BillingQueueItem, 0, len(created)),
 	}
-
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	s.autoAssignDefaultBiller(ctx, created, shp.CustomerID, req.TenantInfo, actor)
-
-	if req.AutoApprove {
-		created = s.autoApprove(ctx, created, req.TenantInfo, actor)
-	}
-
 	auditActor := actor.AuditActor()
-	s.logAction(
-		created,
-		auditActor,
-		permission.OpCreate,
-		nil,
-		created,
-		"Shipment transferred to billing queue",
-	)
-	s.publishInvalidation(ctx, created, auditActor, "created", created)
+	for _, item := range created {
+		s.autoAssignDefaultBiller(ctx, item, item.BillToCustomerID, req.TenantInfo, actor)
 
-	return created, nil
+		if s.shouldAutoApprove(req, item.BillToCustomerID) {
+			item = s.autoApprove(ctx, item, req.TenantInfo, actor)
+		}
+
+		s.logAction(
+			item,
+			auditActor,
+			permission.OpCreate,
+			nil,
+			item,
+			"Shipment transferred to billing queue",
+		)
+		s.publishInvalidation(ctx, item, auditActor, "created", item)
+
+		result.Items = append(result.Items, item)
+		if item.BillToCustomerID == shp.PayerID() {
+			result.Primary = item
+		}
+	}
+	if result.Primary == nil && len(result.Items) > 0 {
+		result.Primary = result.Items[0]
+	}
+
+	return result, nil
+}
+
+// shouldAutoApprove reports whether one payer's item may skip review: either the
+// whole transfer was cleared, or this payer is among those who opted in.
+func (s *service) shouldAutoApprove(req *services.TransferToBillingRequest, payerID pulid.ID) bool {
+	if req.AutoApprove {
+		return true
+	}
+	for _, id := range req.AutoApprovePayerIDs {
+		if id == payerID {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *service) generateBillingNumber(
@@ -659,6 +759,10 @@ func (s *service) UpdateCharges(
 		)
 	}
 
+	if err = s.guardSiblingPayersUnposted(ctx, item, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         item.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -725,6 +829,40 @@ func (s *service) UpdateCharges(
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
+}
+
+// guardSiblingPayersUnposted refuses a charge edit once any other payer's share
+// of the same shipment has been invoiced: the charges are shared, so changing
+// them now would silently disagree with an invoice already in a customer's hands.
+func (s *service) guardSiblingPayersUnposted(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if item.ShipmentID.IsNil() {
+		return nil
+	}
+
+	invoices, err := s.invoiceRepo.ListByShipmentIDs(ctx, repositories.ListInvoicesByShipmentIDsRequest{
+		TenantInfo:  tenantInfo,
+		ShipmentIDs: []pulid.ID{item.ShipmentID},
+	})
+	if err != nil {
+		return err
+	}
+	for _, inv := range invoices[item.ShipmentID] {
+		if inv == nil || inv.CustomerID == item.BillToCustomerID || inv.IsAdjustmentArtifact {
+			continue
+		}
+		return errortypes.NewValidationError(
+			"additionalCharges",
+			errortypes.ErrInvalidOperation,
+			"Charges are locked: another payer's share of this shipment is already on invoice {0}",
+			inv.Number,
+		)
+	}
+
+	return nil
 }
 
 func (s *service) applyStatusFields(

@@ -15,11 +15,21 @@ type TransferToBillingRequest struct {
 	ShipmentID pulid.ID
 	BillType   billingqueue.BillType
 	TenantInfo pagination.TenantInfo
-	// AutoApprove clears the new item straight through the queue, for freight
-	// that passed every billing requirement and whose customer asked for clean
+	// AutoApprove clears every new item straight through the queue, for freight
+	// that passed every billing requirement and whose payers all asked for clean
 	// loads to pass without review. The caller has already made that decision —
 	// see ShipmentBillingReadiness.ShouldAutoApproveBilling.
 	AutoApprove bool
+	// AutoApprovePayerIDs narrows auto-approval to these payers' items when the
+	// shipment is split-billed and only some payers opted in.
+	AutoApprovePayerIDs []pulid.ID
+}
+
+// TransferToBillingResult is every queue item a transfer created: one per payer
+// of the shipment. Primary is the item for the shipment's own payer.
+type TransferToBillingResult struct {
+	Items   []*billingqueue.BillingQueueItem `json:"items"`
+	Primary *billingqueue.BillingQueueItem   `json:"primary"`
 }
 
 type AssignBillerRequest struct {
@@ -76,6 +86,11 @@ type BillingQueueService interface {
 		req *TransferToBillingRequest,
 		actor *RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	TransferToBillingItems(
+		ctx context.Context,
+		req *TransferToBillingRequest,
+		actor *RequestActor,
+	) (*TransferToBillingResult, error)
 	AssignBiller(
 		ctx context.Context,
 		req *AssignBillerRequest,

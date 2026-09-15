@@ -63,7 +63,16 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		Return(loaded, nil).
 		Once()
 
-	svc := &Service{l: zap.NewNop(), shipmentRepo: repo}
+	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo.EXPECT().
+		ListActiveInvoiceItemsByShipmentIDs(mock.Anything, &repositories.ListActiveInvoiceItemsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: []pulid.ID{shipmentID},
+		}).
+		Return(nil, nil).
+		Once()
+
+	svc := &Service{l: zap.NewNop(), shipmentRepo: repo, billingQueueRepo: billingQueueRepo}
 	entity := &invoice.Invoice{
 		ID:             pulid.MustNew("inv_"),
 		OrganizationID: tenantInfo.OrgID,

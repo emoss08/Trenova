@@ -119,6 +119,7 @@ type Params struct {
 	AccountsReceivableService    *accountsreceivableservice.Service
 	CustomerPaymentService       services.CustomerPaymentService
 	CustomerPaymentRepo          repositories.CustomerPaymentRepository
+	InvoiceDisputeRepo           repositories.InvoiceDisputeRepository
 	CarrierRepo                  repositories.CarrierRepository
 	CustomerRepo                 repositories.CustomerRepository
 	GLAccountRepo                repositories.GLAccountRepository
@@ -201,6 +202,8 @@ type Params struct {
 	BillingQueueService          services.BillingQueueService
 	InvoiceService               services.InvoiceService
 	InvoiceAdjustmentService     services.InvoiceAdjustmentService
+	InvoiceDisputeService        services.InvoiceDisputeService
+	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentProposalService         services.AgentProposalService
 	AgentExceptionService        services.AgentExceptionService
@@ -255,6 +258,7 @@ type Resolver struct {
 	accountsReceivableService    *accountsreceivableservice.Service
 	customerPaymentService       services.CustomerPaymentService
 	customerPaymentRepo          repositories.CustomerPaymentRepository
+	invoiceDisputeRepo           repositories.InvoiceDisputeRepository
 	carrierRepo                  repositories.CarrierRepository
 	customerRepo                 repositories.CustomerRepository
 	glAccountRepo                repositories.GLAccountRepository
@@ -338,6 +342,8 @@ type Resolver struct {
 	billingQueueService          services.BillingQueueService
 	invoiceService               services.InvoiceService
 	invoiceAdjustmentService     services.InvoiceAdjustmentService
+	invoiceDisputeService        services.InvoiceDisputeService
+	lateChargeService            services.LateChargeService
 	agentRunService              services.AgentRunService
 	agentProposalService         services.AgentProposalService
 	agentExceptionService        services.AgentExceptionService
@@ -393,6 +399,7 @@ func New(p Params) *Resolver {
 		accountsReceivableService:    p.AccountsReceivableService,
 		customerPaymentService:       p.CustomerPaymentService,
 		customerPaymentRepo:          p.CustomerPaymentRepo,
+		invoiceDisputeRepo:           p.InvoiceDisputeRepo,
 		carrierRepo:                  p.CarrierRepo,
 		customerRepo:                 p.CustomerRepo,
 		glAccountRepo:                p.GLAccountRepo,
@@ -476,6 +483,8 @@ func New(p Params) *Resolver {
 		billingQueueService:          p.BillingQueueService,
 		invoiceService:               p.InvoiceService,
 		invoiceAdjustmentService:     p.InvoiceAdjustmentService,
+		invoiceDisputeService:        p.InvoiceDisputeService,
+		lateChargeService:            p.LateChargeService,
 		agentRunService:              p.AgentRunService,
 		agentProposalService:         p.AgentProposalService,
 		agentExceptionService:        p.AgentExceptionService,

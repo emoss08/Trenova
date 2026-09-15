@@ -74,6 +74,7 @@ require (
 	go.starlark.net v0.0.0-20260908191801-89a6a09411d5
 	go.temporal.io/api v1.63.5
 	go.temporal.io/sdk v1.48.0
+	go.temporal.io/sdk/contrib/envconfig v1.0.2
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.28.0
@@ -95,6 +96,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.13.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/go-openapi/swag/pools v0.29.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect

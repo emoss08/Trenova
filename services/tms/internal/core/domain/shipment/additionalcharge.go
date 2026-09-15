@@ -28,7 +28,7 @@ type AdditionalCharge struct {
 	Unit                   int16                    `json:"unit"                   bun:"unit,type:INTEGER,notnull"`
 	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
 	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
-	DetentionOccurrenceID  *pulid.ID                `json:"detentionOccurrenceId"  bun:"detention_occurrence_id,type:VARCHAR(100),nullzero"`
+	IsDetention            bool                     `json:"isDetention" bun:"is_detention,type:BOOLEAN,notnull"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
 	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero"`
@@ -36,6 +36,8 @@ type AdditionalCharge struct {
 	Version                    int64     `json:"version"                    bun:"version,type:BIGINT"`
 	CreatedAt                  int64     `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                  int64     `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	DetentionOccurrenceIDs []pulid.ID `json:"-" bun:"-"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization                 `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
@@ -96,7 +98,7 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 // the rating engines own rather than the caller: whether a charge was machine
 // generated, and which engine owns it.
 //
-// No caller may claim any of them. A payload that drops the occurrence link —
+// No caller may claim any of them. A payload that drops the detention marker —
 // an older client, an integration, any editor that rebuilds the list from the
 // fields it cares about — would otherwise turn a detention charge into a manual
 // one and leave the next recalculation free to bill the same dwell twice. The
@@ -155,14 +157,14 @@ func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 		source := originals[charge.ID]
 		if charge.ID.IsNil() || source == nil {
 			charge.IsSystemGenerated = false
-			charge.DetentionOccurrenceID = nil
+			charge.IsDetention = false
 			charge.RateAgreementAccessorialID = nil
 			charge.FuelSurchargeProgramID = nil
 			continue
 		}
 
 		charge.IsSystemGenerated = source.IsSystemGenerated
-		charge.DetentionOccurrenceID = source.DetentionOccurrenceID
+		charge.IsDetention = source.IsDetention
 		charge.RateAgreementAccessorialID = source.RateAgreementAccessorialID
 		charge.FuelSurchargeProgramID = source.FuelSurchargeProgramID
 	}
@@ -186,7 +188,7 @@ func (a *AdditionalCharge) Owner() SystemOwner {
 		return SystemOwnerNone
 	case a.FuelSurchargeProgramID != nil:
 		return SystemOwnerFuel
-	case a.DetentionOccurrenceID != nil:
+	case a.IsDetention:
 		return SystemOwnerDetention
 	case a.RateAgreementAccessorialID != nil:
 		return SystemOwnerAgreement

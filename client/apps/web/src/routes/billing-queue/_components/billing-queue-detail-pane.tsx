@@ -74,8 +74,15 @@ export default function BillingQueueDetailPane({
 
   const shipment = item.shipment;
   const customerName = shipment?.customer?.name ?? "Unknown Customer";
+  const payerName = item.billToCustomer?.name ?? customerName;
+  const onBehalfOf =
+    item.billToCustomerId && shipment?.customerId && item.billToCustomerId !== shipment.customerId
+      ? customerName
+      : null;
   const proNumber = shipment?.proNumber ?? item.shipmentId.slice(0, 12);
   const totalCharge = Number(shipment?.totalChargeAmount ?? 0);
+  const allocated = item.allocatedTotalAmount != null ? Number(item.allocatedTotalAmount) : null;
+  const isPartial = allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destLocation = shipment ? getDestinationLocation(shipment) : null;
 
@@ -99,13 +106,24 @@ export default function BillingQueueDetailPane({
           </div>
         </div>
 
-        <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold tabular-nums">{formatCurrency(totalCharge)}</span>
-          <span className="text-muted-foreground text-sm">{customerName}</span>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-2xl font-bold tabular-nums">
+            {formatCurrency(isPartial && allocated != null ? allocated : totalCharge)}
+          </span>
+          <span className="text-muted-foreground text-sm">{payerName}</span>
+          {isPartial ? (
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {t("of {0} shipment total", formatCurrency(totalCharge))}
+            </span>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
           {item.number ? <MetadataCell label={t("Queue #")} value={item.number} /> : null}
+          {item.billToCustomer ? (
+            <MetadataCell label={t("Bill To")} value={item.billToCustomer.name} />
+          ) : null}
+          {onBehalfOf ? <MetadataCell label={t("On behalf of")} value={onBehalfOf} /> : null}
           {shipment?.bol ? <MetadataCell label={t("BOL")} value={shipment.bol} /> : null}
           {item.assignedBiller ? (
             <MetadataCell label={t("Assigned Biller")} value={item.assignedBiller.name} />

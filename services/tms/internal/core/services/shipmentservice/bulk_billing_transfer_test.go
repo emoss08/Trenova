@@ -112,6 +112,21 @@ func (f *bulkTransferFixture) expectReadiness(
 	control *tenant.BillingControl,
 	docs []*document.Document,
 ) {
+	f.repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == entity.ID &&
+				req.TenantInfo == f.tenant() &&
+				req.ExpandShipmentDetails
+		})).
+		Return(entity, nil).
+		Once()
+	f.customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
+				req.IncludeBillingProfile
+		})).
+		Return(nil, nil).
+		Once()
 	f.customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomerByIDRequest) bool {
 			return req.ID == entity.CustomerID
@@ -143,12 +158,15 @@ func (f *bulkTransferFixture) expectQueued(
 		Number:         "INV-" + entity.ProNumber,
 	}
 	f.billingQueue.EXPECT().
-		TransferToBilling(mock.Anything, mock.MatchedBy(func(req *services.TransferToBillingRequest) bool {
+		TransferToBillingItems(mock.Anything, mock.MatchedBy(func(req *services.TransferToBillingRequest) bool {
 			return req.ShipmentID == entity.ID &&
 				req.BillType == billingqueue.BillTypeInvoice &&
 				req.TenantInfo == f.tenant()
 		}), mock.Anything).
-		Return(item, nil).
+		Return(&services.TransferToBillingResult{
+			Items:   []*billingqueue.BillingQueueItem{item},
+			Primary: item,
+		}, nil).
 		Once()
 
 	return item
@@ -393,7 +411,7 @@ func TestBulkTransferToBilling_ReportsAQueueConflictAsAlreadyTransferred(t *test
 	f.expectShipment(raced)
 	f.expectReadiness(raced, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.billingQueue.EXPECT().
-		TransferToBilling(mock.Anything, mock.Anything, mock.Anything).
+		TransferToBillingItems(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewConflictError("A billing queue item already exists for this shipment and bill type")).
 		Once()
 

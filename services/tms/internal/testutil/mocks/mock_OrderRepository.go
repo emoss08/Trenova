@@ -320,6 +320,72 @@ func (_c *MockOrderRepository_CreateInTx_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// ClearChargesInvoice provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ClearChargesInvoice(ctx context.Context, req *repositories.ClearOrderChargesInvoiceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearChargesInvoice")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ClearOrderChargesInvoiceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ClearOrderChargesInvoiceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ClearOrderChargesInvoiceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ClearChargesInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearChargesInvoice'
+type MockOrderRepository_ClearChargesInvoice_Call struct {
+	*mock.Call
+}
+
+// ClearChargesInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ClearOrderChargesInvoiceRequest
+func (_e *MockOrderRepository_Expecter) ClearChargesInvoice(ctx any, req any) *MockOrderRepository_ClearChargesInvoice_Call {
+	return &MockOrderRepository_ClearChargesInvoice_Call{Call: _e.mock.On("ClearChargesInvoice", ctx, req)}
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) Run(run func(ctx context.Context, req *repositories.ClearOrderChargesInvoiceRequest)) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ClearOrderChargesInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ClearOrderChargesInvoiceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) Return(v0 int64, err error) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ClearChargesInvoice_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ClearOrderChargesInvoiceRequest) (int64, error)) *MockOrderRepository_ClearChargesInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteIfEmpty provides a mock function for the type MockOrderRepository
 func (_mock *MockOrderRepository) DeleteIfEmpty(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) (int64, error) {
 	ret := _mock.Called(ctx, tenantInfo, orderID)
@@ -1040,6 +1106,140 @@ func (_c *MockOrderRepository_ListUninvoicedCharges_Call) Return(orderCharges []
 }
 
 func (_c *MockOrderRepository_ListUninvoicedCharges_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]*order.OrderCharge, error)) *MockOrderRepository_ListUninvoicedCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUninvoicedChargeSharesForPayer provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) ListUninvoicedChargeSharesForPayer(ctx context.Context, req *repositories.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUninvoicedChargeSharesForPayer")
+	}
+
+	var r0 []*order.OrderCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUninvoicedChargeSharesRequest) []*order.OrderCharge); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*order.OrderCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListUninvoicedChargeSharesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUninvoicedChargeSharesForPayer'
+type MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call struct {
+	*mock.Call
+}
+
+// ListUninvoicedChargeSharesForPayer is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListUninvoicedChargeSharesRequest
+func (_e *MockOrderRepository_Expecter) ListUninvoicedChargeSharesForPayer(ctx any, req any) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	return &MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call{Call: _e.mock.On("ListUninvoicedChargeSharesForPayer", ctx, req)}
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Run(run func(ctx context.Context, req *repositories.ListUninvoicedChargeSharesRequest)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListUninvoicedChargeSharesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListUninvoicedChargeSharesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) Return(v0 []*order.OrderCharge, err error) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUninvoicedChargeSharesRequest) ([]*order.OrderCharge, error)) *MockOrderRepository_ListUninvoicedChargeSharesForPayer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkChargesFullyInvoicedWhereComplete provides a mock function for the type MockOrderRepository
+func (_mock *MockOrderRepository) MarkChargesFullyInvoicedWhereComplete(ctx context.Context, req *repositories.MarkChargesFullyInvoicedRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkChargesFullyInvoicedWhereComplete")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkChargesFullyInvoicedRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.MarkChargesFullyInvoicedRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.MarkChargesFullyInvoicedRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkChargesFullyInvoicedWhereComplete'
+type MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call struct {
+	*mock.Call
+}
+
+// MarkChargesFullyInvoicedWhereComplete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.MarkChargesFullyInvoicedRequest
+func (_e *MockOrderRepository_Expecter) MarkChargesFullyInvoicedWhereComplete(ctx any, req any) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
+	return &MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call{Call: _e.mock.On("MarkChargesFullyInvoicedWhereComplete", ctx, req)}
+}
+
+func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) Run(run func(ctx context.Context, req *repositories.MarkChargesFullyInvoicedRequest)) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.MarkChargesFullyInvoicedRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.MarkChargesFullyInvoicedRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) Return(v0 int64, err error) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call) RunAndReturn(run func(ctx context.Context, req *repositories.MarkChargesFullyInvoicedRequest) (int64, error)) *MockOrderRepository_MarkChargesFullyInvoicedWhereComplete_Call {
 	_c.Call.Return(run)
 	return _c
 }

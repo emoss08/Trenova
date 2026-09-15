@@ -7,6 +7,8 @@ package mocks
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/pulid"
+
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -104,6 +106,338 @@ func (_c *MockCustomerPaymentRepository_Create_Call) Return(payment *customerpay
 }
 
 func (_c *MockCustomerPaymentRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *customerpayment.Payment) (*customerpayment.Payment, error)) *MockCustomerPaymentRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateCreditMemoApplications provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) CreateCreditMemoApplications(ctx context.Context, applications []*customerpayment.CreditMemoApplication) error {
+	ret := _mock.Called(ctx, applications)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateCreditMemoApplications")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*customerpayment.CreditMemoApplication) error); ok {
+		return returnFunc(ctx, applications)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*customerpayment.CreditMemoApplication) error); ok {
+		r0 = returnFunc(ctx, applications)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCustomerPaymentRepository_CreateCreditMemoApplications_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateCreditMemoApplications'
+type MockCustomerPaymentRepository_CreateCreditMemoApplications_Call struct {
+	*mock.Call
+}
+
+// CreateCreditMemoApplications is a helper method to define mock.On call
+//   - ctx context.Context
+//   - applications []*customerpayment.CreditMemoApplication
+func (_e *MockCustomerPaymentRepository_Expecter) CreateCreditMemoApplications(ctx any, applications any) *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call {
+	return &MockCustomerPaymentRepository_CreateCreditMemoApplications_Call{Call: _e.mock.On("CreateCreditMemoApplications", ctx, applications)}
+}
+
+func (_c *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call) Run(run func(ctx context.Context, applications []*customerpayment.CreditMemoApplication)) *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*customerpayment.CreditMemoApplication
+		if args[1] != nil {
+			arg1 = args[1].([]*customerpayment.CreditMemoApplication)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call) Return(err error) *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call) RunAndReturn(run func(ctx context.Context, applications []*customerpayment.CreditMemoApplication) error) *MockCustomerPaymentRepository_CreateCreditMemoApplications_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCreditMemoApplicationByID provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) GetCreditMemoApplicationByID(ctx context.Context, req repositories.GetCreditMemoApplicationRequest) (*customerpayment.CreditMemoApplication, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCreditMemoApplicationByID")
+	}
+
+	var r0 *customerpayment.CreditMemoApplication
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCreditMemoApplicationRequest) (*customerpayment.CreditMemoApplication, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCreditMemoApplicationRequest) *customerpayment.CreditMemoApplication); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*customerpayment.CreditMemoApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCreditMemoApplicationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCreditMemoApplicationByID'
+type MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call struct {
+	*mock.Call
+}
+
+// GetCreditMemoApplicationByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetCreditMemoApplicationRequest
+func (_e *MockCustomerPaymentRepository_Expecter) GetCreditMemoApplicationByID(ctx any, req any) *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call {
+	return &MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call{Call: _e.mock.On("GetCreditMemoApplicationByID", ctx, req)}
+}
+
+func (_c *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call) Run(run func(ctx context.Context, req repositories.GetCreditMemoApplicationRequest)) *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetCreditMemoApplicationRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetCreditMemoApplicationRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call) Return(v0 *customerpayment.CreditMemoApplication, err error) *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCreditMemoApplicationRequest) (*customerpayment.CreditMemoApplication, error)) *MockCustomerPaymentRepository_GetCreditMemoApplicationByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListApplicationsByInvoiceIDs provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) ListApplicationsByInvoiceIDs(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.Application, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListApplicationsByInvoiceIDs")
+	}
+
+	var r0 map[pulid.ID][]*customerpayment.Application
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.Application, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) map[pulid.ID][]*customerpayment.Application); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID][]*customerpayment.Application)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListApplicationsByInvoiceIDs'
+type MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call struct {
+	*mock.Call
+}
+
+// ListApplicationsByInvoiceIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListApplicationsByInvoiceIDsRequest
+func (_e *MockCustomerPaymentRepository_Expecter) ListApplicationsByInvoiceIDs(ctx any, req any) *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call {
+	return &MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call{Call: _e.mock.On("ListApplicationsByInvoiceIDs", ctx, req)}
+}
+
+func (_c *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call) Run(run func(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest)) *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListApplicationsByInvoiceIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListApplicationsByInvoiceIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call) Return(v0 map[pulid.ID][]*customerpayment.Application, err error) *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.Application, error)) *MockCustomerPaymentRepository_ListApplicationsByInvoiceIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListCreditMemoApplicationsByInvoiceIDs provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) ListCreditMemoApplicationsByInvoiceIDs(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListCreditMemoApplicationsByInvoiceIDs")
+	}
+
+	var r0 map[pulid.ID][]*customerpayment.CreditMemoApplication
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) map[pulid.ID][]*customerpayment.CreditMemoApplication); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID][]*customerpayment.CreditMemoApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListApplicationsByInvoiceIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCreditMemoApplicationsByInvoiceIDs'
+type MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call struct {
+	*mock.Call
+}
+
+// ListCreditMemoApplicationsByInvoiceIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListApplicationsByInvoiceIDsRequest
+func (_e *MockCustomerPaymentRepository_Expecter) ListCreditMemoApplicationsByInvoiceIDs(ctx any, req any) *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call {
+	return &MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call{Call: _e.mock.On("ListCreditMemoApplicationsByInvoiceIDs", ctx, req)}
+}
+
+func (_c *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call) Run(run func(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest)) *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListApplicationsByInvoiceIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListApplicationsByInvoiceIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call) Return(v0 map[pulid.ID][]*customerpayment.CreditMemoApplication, err error) *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListApplicationsByInvoiceIDsRequest) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error)) *MockCustomerPaymentRepository_ListCreditMemoApplicationsByInvoiceIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateCreditMemoApplication provides a mock function for the type MockCustomerPaymentRepository
+func (_mock *MockCustomerPaymentRepository) UpdateCreditMemoApplication(ctx context.Context, application *customerpayment.CreditMemoApplication) (*customerpayment.CreditMemoApplication, error) {
+	ret := _mock.Called(ctx, application)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateCreditMemoApplication")
+	}
+
+	var r0 *customerpayment.CreditMemoApplication
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerpayment.CreditMemoApplication) (*customerpayment.CreditMemoApplication, error)); ok {
+		return returnFunc(ctx, application)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *customerpayment.CreditMemoApplication) *customerpayment.CreditMemoApplication); ok {
+		r0 = returnFunc(ctx, application)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*customerpayment.CreditMemoApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *customerpayment.CreditMemoApplication) error); ok {
+		r1 = returnFunc(ctx, application)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateCreditMemoApplication'
+type MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call struct {
+	*mock.Call
+}
+
+// UpdateCreditMemoApplication is a helper method to define mock.On call
+//   - ctx context.Context
+//   - application *customerpayment.CreditMemoApplication
+func (_e *MockCustomerPaymentRepository_Expecter) UpdateCreditMemoApplication(ctx any, application any) *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call {
+	return &MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call{Call: _e.mock.On("UpdateCreditMemoApplication", ctx, application)}
+}
+
+func (_c *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call) Run(run func(ctx context.Context, application *customerpayment.CreditMemoApplication)) *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *customerpayment.CreditMemoApplication
+		if args[1] != nil {
+			arg1 = args[1].(*customerpayment.CreditMemoApplication)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call) Return(v0 *customerpayment.CreditMemoApplication, err error) *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call) RunAndReturn(run func(ctx context.Context, application *customerpayment.CreditMemoApplication) (*customerpayment.CreditMemoApplication, error)) *MockCustomerPaymentRepository_UpdateCreditMemoApplication_Call {
 	_c.Call.Return(run)
 	return _c
 }

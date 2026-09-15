@@ -53,6 +53,8 @@ func (s *Service) createReplacementDraftInvoice(
 		BillToState:               sourceInvoice.BillToState,
 		BillToPostalCode:          sourceInvoice.BillToPostalCode,
 		BillToCountry:             sourceInvoice.BillToCountry,
+		ShipperCustomerID:         sourceInvoice.ShipperCustomerID,
+		IsSplitBill:               sourceInvoice.IsSplitBill,
 		SubtotalAmount:            sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight),
 		OtherAmount:               sumInvoiceLines(lines, invoice.InvoiceLineTypeAccessorial),
 		TotalAmount:               preview.RebillTotalAmount,

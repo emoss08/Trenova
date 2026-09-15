@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,6 +55,12 @@ type BillingControl struct {
 	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  bun:"require_rate_override_reason,type:BOOLEAN,notnull"`
 	EnforceMarginFloor         bool                       `json:"enforceMarginFloor"         bun:"enforce_margin_floor,type:BOOLEAN,notnull,default:false"`
 
+	// LateChargeAssessmentMode says whether the nightly run previews or raises
+	// late-charge debit memos; the rate and grace live on each customer.
+	LateChargeAssessmentMode LateChargeAssessmentMode `json:"lateChargeAssessmentMode" bun:"late_charge_assessment_mode,type:late_charge_assessment_mode_enum,notnull,default:'Disabled'"`
+	// LateChargeMinimumAmount is the smallest total a run will bill a customer.
+	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount" bun:"late_charge_minimum_amount,type:NUMERIC(19,4),notnull,default:0"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -63,6 +70,9 @@ type BillingControl struct {
 }
 
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
+	if bc.LateChargeMinimumAmount.LessThan(decimal.Zero) {
+		multiErr.Add("lateChargeMinimumAmount", errortypes.ErrInvalid, "Late charge minimum cannot be negative")
+	}
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		bc,
 		validation.Field(&bc.DefaultPaymentTerm, validation.Required),
@@ -73,6 +83,13 @@ func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&bc.ShipmentBillingRequirementEnforcement, validation.Required),
 		validation.Field(&bc.RateValidationEnforcement, validation.Required),
 		validation.Field(&bc.BillingExceptionDisposition, validation.Required),
+		validation.Field(
+			&bc.LateChargeAssessmentMode,
+			validation.When(
+				bc.LateChargeAssessmentMode != "",
+				domainvalidation.ValidEnum[LateChargeAssessmentMode]("Invalid late charge assessment mode"),
+			),
+		),
 		validation.Field(&bc.RateVarianceAutoResolutionMode, validation.Required),
 		validation.Field(
 			&bc.RateVarianceTolerancePercent,

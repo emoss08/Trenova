@@ -362,6 +362,8 @@ var CustomerBillingProfileColumns = struct {
 	AutoCreditHold                            Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
 	CreditHoldReason                          Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
 	AutoSendInvoiceOnGeneration               Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
+	EmailInvoiceEnabled                       Column // "email_invoice_enabled" → qualified: "cbp.email_invoice_enabled"
+	EDIInvoiceEnabled                         Column // "edi_invoice_enabled" → qualified: "cbp.edi_invoice_enabled"
 	SplitBy                                   Column // "split_by" → qualified: "cbp.split_by"
 	SectionBy                                 Column // "section_by" → qualified: "cbp.section_by"
 	InvoiceDetail                             Column // "invoice_detail" → qualified: "cbp.invoice_detail"
@@ -417,6 +419,8 @@ var CustomerBillingProfileColumns = struct {
 	AutoCreditHold:                  NewColumn("auto_credit_hold", "cbp"),
 	CreditHoldReason:                NewColumn("credit_hold_reason", "cbp"),
 	AutoSendInvoiceOnGeneration:     NewColumn("auto_send_invoice_on_generation", "cbp"),
+	EmailInvoiceEnabled:             NewColumn("email_invoice_enabled", "cbp"),
+	EDIInvoiceEnabled:               NewColumn("edi_invoice_enabled", "cbp"),
 	SplitBy:                         NewColumn("split_by", "cbp"),
 	SectionBy:                       NewColumn("section_by", "cbp"),
 	InvoiceDetail:                   NewColumn("invoice_detail", "cbp"),
@@ -478,6 +482,8 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"autoCreditHold":                  "auto_credit_hold",
 	"creditHoldReason":                "credit_hold_reason",
 	"autoSendInvoiceOnGeneration":     "auto_send_invoice_on_generation",
+	"emailInvoiceEnabled":             "email_invoice_enabled",
+	"ediInvoiceEnabled":               "edi_invoice_enabled",
 	"splitBy":                         "split_by",
 	"sectionBy":                       "section_by",
 	"invoiceDetail":                   "invoice_detail",
@@ -537,6 +543,8 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"auto_credit_hold",
 	"credit_hold_reason",
 	"auto_send_invoice_on_generation",
+	"email_invoice_enabled",
+	"edi_invoice_enabled",
 	"split_by",
 	"section_by",
 	"invoice_detail",
@@ -664,6 +672,8 @@ var CustomerBillingProfileFilter = struct {
 	AutoCreditHold                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
 	CreditHoldReason                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
 	AutoSendInvoiceOnGeneration               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
+	EmailInvoiceEnabled                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailInvoiceEnabled" → DB: "email_invoice_enabled"
+	EDIInvoiceEnabled                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInvoiceEnabled" → DB: "edi_invoice_enabled"
 	SplitBy                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "splitBy" → DB: "split_by"
 	SectionBy                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sectionBy" → DB: "section_by"
 	InvoiceDetail                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDetail" → DB: "invoice_detail"
@@ -754,6 +764,12 @@ var CustomerBillingProfileFilter = struct {
 	},
 	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoSendInvoiceOnGeneration", op, value)
+	},
+	EmailInvoiceEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailInvoiceEnabled", op, value)
+	},
+	EDIInvoiceEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediInvoiceEnabled", op, value)
 	},
 	SplitBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("splitBy", op, value)

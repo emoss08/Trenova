@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -125,4 +126,37 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
+}
+
+func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	conn := postgres.NewTestConnection(db)
+	repo := New(Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+
+	tenant := pagination.TenantInfo{
+		OrgID: data.Organization.ID,
+		BuID:  data.BusinessUnit.ID,
+	}
+
+	before, err := repo.ListHorizonPlanningTenants(ctx)
+	require.NoError(t, err)
+	assert.NotContains(t, before, tenant)
+
+	control, err := repo.GetOrCreate(ctx, data.Organization.ID, data.BusinessUnit.ID)
+	require.NoError(t, err)
+
+	control.EnableAutoAssignment = true
+	control.PlanningMode = dispatchcontrol.PlanningModeHorizon
+	_, err = repo.Update(ctx, control)
+	require.NoError(t, err)
+
+	after, err := repo.ListHorizonPlanningTenants(ctx)
+	require.NoError(t, err)
+	assert.Contains(t, after, tenant)
 }

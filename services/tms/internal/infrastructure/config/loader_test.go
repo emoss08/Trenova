@@ -937,6 +937,33 @@ func TestLoad(t *testing.T) {
 		assert.Equal(t, "remotehost", cfg.Database.Host)
 	})
 
+	t.Run("temporal cloud connection settings resolve from env vars", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configContent := validConfigYAML()
+		err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(configContent), 0o600)
+		require.NoError(t, err)
+
+		t.Setenv("APP_ENV", "development")
+		t.Setenv("TRENOVA_TEMPORAL_PROFILE", "cloud")
+		t.Setenv("TRENOVA_TEMPORAL_CONFIGFILE", "/etc/temporal/temporal.toml")
+		t.Setenv("TRENOVA_TEMPORAL_APIKEY", "env-api-key")
+		t.Setenv("TRENOVA_TEMPORAL_TLS_ENABLED", "true")
+		t.Setenv("TRENOVA_TEMPORAL_TLS_SERVERNAME", "temporal.example.com")
+
+		l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("development"))
+
+		cfg, err := l.Load()
+
+		require.NoError(t, err)
+		require.NotNil(t, cfg)
+		assert.Equal(t, "cloud", cfg.Temporal.Profile)
+		assert.True(t, cfg.Temporal.UsesProfile())
+		assert.Equal(t, "/etc/temporal/temporal.toml", cfg.Temporal.ConfigFile)
+		assert.Equal(t, "env-api-key", cfg.Temporal.APIKey)
+		assert.True(t, cfg.Temporal.TLS.Enabled)
+		assert.Equal(t, "temporal.example.com", cfg.Temporal.TLS.ServerName)
+	})
+
 	t.Run("error on invalid config values", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		invalidConfig := `

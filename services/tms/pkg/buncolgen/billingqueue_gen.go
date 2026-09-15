@@ -54,6 +54,9 @@ var BillingQueueItemColumns = struct {
 	BusinessUnitID            Column // "business_unit_id" → qualified: "bqi.business_unit_id"
 	ShipmentID                Column // "shipment_id" → qualified: "bqi.shipment_id"
 	OrderID                   Column // "order_id" → qualified: "bqi.order_id"
+	BillToCustomerID          Column // "bill_to_customer_id" → qualified: "bqi.bill_to_customer_id"
+	AllocatedTotalAmount      Column // "allocated_total_amount" → qualified: "bqi.allocated_total_amount"
+	AllocatedTotalAmountMinor Column // "allocated_total_amount_minor" → qualified: "bqi.allocated_total_amount_minor"
 	AssignedBillerID          Column // "assigned_biller_id" → qualified: "bqi.assigned_biller_id"
 	Number                    Column // "number" → qualified: "bqi.number"
 	Status                    Column // "status" → qualified: "bqi.status"
@@ -85,6 +88,9 @@ var BillingQueueItemColumns = struct {
 	BusinessUnitID:            NewColumn("business_unit_id", "bqi"),
 	ShipmentID:                NewColumn("shipment_id", "bqi"),
 	OrderID:                   NewColumn("order_id", "bqi"),
+	BillToCustomerID:          NewColumn("bill_to_customer_id", "bqi"),
+	AllocatedTotalAmount:      NewColumn("allocated_total_amount", "bqi"),
+	AllocatedTotalAmountMinor: NewColumn("allocated_total_amount_minor", "bqi"),
 	AssignedBillerID:          NewColumn("assigned_biller_id", "bqi"),
 	Number:                    NewColumn("number", "bqi"),
 	Status:                    NewColumn("status", "bqi"),
@@ -122,6 +128,9 @@ var BillingQueueItemFieldMap = map[string]string{
 	"businessUnitId":            "business_unit_id",
 	"shipmentId":                "shipment_id",
 	"orderId":                   "order_id",
+	"billToCustomerId":          "bill_to_customer_id",
+	"allocatedTotalAmount":      "allocated_total_amount",
+	"allocatedTotalAmountMinor": "allocated_total_amount_minor",
 	"assignedBillerId":          "assigned_biller_id",
 	"number":                    "number",
 	"status":                    "status",
@@ -157,6 +166,9 @@ var BillingQueueItemInsertableColumns = []string{
 	"business_unit_id",
 	"shipment_id",
 	"order_id",
+	"bill_to_customer_id",
+	"allocated_total_amount",
+	"allocated_total_amount_minor",
 	"assigned_biller_id",
 	"number",
 	"status",
@@ -191,10 +203,12 @@ var BillingQueueItemInsertableColumns = []string{
 //	// Bun eager-loads the Shipment association via a separate query
 var BillingQueueItemRelations = struct {
 	Shipment       string
+	BillToCustomer string
 	AssignedBiller string
 	CanceledBy     string
 }{
 	Shipment:       "Shipment",
+	BillToCustomer: "BillToCustomer",
 	AssignedBiller: "AssignedBiller",
 	CanceledBy:     "CanceledBy",
 }
@@ -254,6 +268,9 @@ var BillingQueueItemFilter = struct {
 	BusinessUnitID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	ShipmentID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
 	OrderID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderId" → DB: "order_id"
+	BillToCustomerID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCustomerId" → DB: "bill_to_customer_id"
+	AllocatedTotalAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allocatedTotalAmount" → DB: "allocated_total_amount"
+	AllocatedTotalAmountMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allocatedTotalAmountMinor" → DB: "allocated_total_amount_minor"
 	AssignedBillerID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assignedBillerId" → DB: "assigned_biller_id"
 	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
 	Status                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
@@ -294,6 +311,15 @@ var BillingQueueItemFilter = struct {
 	},
 	OrderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("orderId", op, value)
+	},
+	BillToCustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billToCustomerId", op, value)
+	},
+	AllocatedTotalAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allocatedTotalAmount", op, value)
+	},
+	AllocatedTotalAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allocatedTotalAmountMinor", op, value)
 	},
 	AssignedBillerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("assignedBillerId", op, value)

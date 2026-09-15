@@ -40,7 +40,7 @@ func (r *repository) ListConsolidationCandidates(
 		ColumnExpr("bqi.id AS billing_queue_item_id").
 		ColumnExpr("bqi.shipment_id AS shipment_id").
 		ColumnExpr("COALESCE(sp.order_id, '') AS order_id").
-		ColumnExpr("sp.customer_id AS customer_id").
+		ColumnExpr("bqi.bill_to_customer_id AS customer_id").
 		ColumnExpr("COALESCE(cus.name, '') AS customer_name").
 		ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
 		ColumnExpr("COALESCE(sp.bol, '') AS shipment_bol").
@@ -50,7 +50,7 @@ func (r *repository) ListConsolidationCandidates(
 		ColumnExpr("COALESCE(origin.location_key, '') AS origin_key").
 		ColumnExpr("COALESCE(dest.location_key, '') AS destination_key").
 		ColumnExpr("sp.actual_delivery_date AS service_date").
-		ColumnExpr("sp.total_charge_amount AS total_charge_amount").
+		ColumnExpr("bqi.allocated_total_amount AS total_charge_amount").
 		ColumnExpr("COALESCE(cbp.billing_currency, 'USD') AS currency_code").
 		ColumnExpr("COALESCE(cbp.split_by, 'Customer') AS split_by").
 		ColumnExpr("COALESCE(cbp.section_by, 'Shipment') AS section_by").
@@ -59,15 +59,15 @@ func (r *repository) ListConsolidationCandidates(
 		ColumnExpr("cbp.min_consolidated_amount AS min_consolidated_amount").
 		ColumnExpr("COALESCE(cbp.auto_bill, FALSE) AS auto_bill").
 		ColumnExpr(
-			"COUNT(*) FILTER (WHERE TRUE) OVER (PARTITION BY sp.order_id) AS order_eligible_legs",
+			"COUNT(*) FILTER (WHERE TRUE) OVER (PARTITION BY sp.order_id, bqi.bill_to_customer_id) AS order_eligible_legs",
 		).
 		ColumnExpr("COALESCE(legs.total, 0) AS order_total_legs").
 		Join("JOIN shipments AS sp ON sp.id = bqi.shipment_id").
 		Join("AND sp.organization_id = bqi.organization_id").
 		Join("AND sp.business_unit_id = bqi.business_unit_id").
-		Join("JOIN customers AS cus ON cus.id = sp.customer_id").
-		Join("AND cus.organization_id = sp.organization_id").
-		Join("AND cus.business_unit_id = sp.business_unit_id").
+		Join("JOIN customers AS cus ON cus.id = bqi.bill_to_customer_id").
+		Join("AND cus.organization_id = bqi.organization_id").
+		Join("AND cus.business_unit_id = bqi.business_unit_id").
 		Join("LEFT JOIN customer_billing_profiles AS cbp ON cbp.customer_id = cus.id").
 		Join("AND cbp.organization_id = cus.organization_id").
 		Join("AND cbp.business_unit_id = cus.business_unit_id").
@@ -115,27 +115,32 @@ func (r *repository) ListConsolidationCandidates(
 		// never a candidate again.
 		Where("bqi.invoice_id IS NULL").
 		Where("bqi.is_adjustment_origin = FALSE").
-		Where("sp.customer_id IN (?)", bun.In(req.CustomerIDs)).
+		Where("bqi.bill_to_customer_id IN (?)", bun.In(req.CustomerIDs)).
 		Where("sp.status IN (?)", bun.In([]shipment.Status{
 			shipment.StatusReadyToInvoice,
 			shipment.StatusCompleted,
 		})).
-		// Already billed. The invoice_id back-link is the primary double-bill guard,
-		// but it was backfilled conservatively for legacy order-grouped invoices, and
-		// a leg on a Draft invoice stays Approved until posting. This reads the truth
-		// straight from the invoice lines, so freight that is on any invoice is never
-		// swept onto a statement however it got there.
+		// Already billed to this payer. The invoice_id back-link is the primary
+		// double-bill guard, but it was backfilled conservatively for legacy
+		// order-grouped invoices, and a leg on a Draft invoice stays Approved until
+		// posting. This reads the truth straight from the invoice lines, scoped to
+		// the payer, so a shipment whose other payer is already invoiced is still a
+		// candidate for this one.
 		Where(`NOT EXISTS (
 			SELECT 1 FROM invoice_lines AS il
+			JOIN invoices AS inv ON inv.id = il.invoice_id
+			  AND inv.organization_id = il.organization_id
+			  AND inv.business_unit_id = il.business_unit_id
 			WHERE il.shipment_id = sp.id
 			  AND il.organization_id = sp.organization_id
 			  AND il.business_unit_id = sp.business_unit_id
+			  AND inv.customer_id = bqi.bill_to_customer_id
 		)`).
 		// No lower bound. Approved, uninvoiced freight is owed however old it is:
 		// freight held under a customer's minimum is promised to the next period, and
 		// a window that let it age out silently dropped it from billing for good.
 		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
-		OrderExpr("sp.customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
+		OrderExpr("bqi.bill_to_customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
 		Limit(limit).
 		Scan(ctx, &candidates)
 	if err != nil {

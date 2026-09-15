@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -10,9 +10,10 @@ import {
 } from "@trenova/shared/components/ui/number-field";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { chargeLineTotal, splitCharges } from "@trenova/shared/lib/charge-split";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
-import type { AdditionalCharge } from "@trenova/shared/types/shipment";
+import type { AdditionalCharge, ChargeAllocation } from "@trenova/shared/types/shipment";
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -61,16 +62,30 @@ function formatChargeBreakdown(charge: AdditionalCharge): string {
   }
 }
 
-function chargeLineTotal(charge: AdditionalCharge): number {
-  const amount = Number(charge.amount ?? 0);
-  const unit = charge.unit ?? 1;
-  switch (charge.method) {
-    case "PerUnit":
-    case "Flat":
-      return amount * unit;
-    default:
-      return amount;
-  }
+/**
+ * What this queue item's payer owes of one charge. Nothing for a charge billed
+ * whole to them; the share when it is split; a note when it belongs to another
+ * payer entirely, since the charge still shows on the shipment.
+ */
+function payerShareLabel(
+  charge: AdditionalCharge,
+  lineTotal: number,
+  allocations: readonly ChargeAllocation[],
+  payerId: string | null | undefined,
+  defaultPayerId: string,
+  t: TranslateFn,
+): string | null {
+  if (!payerId) return null;
+  const rows = allocations.filter((row) => row?.billToCustomerId);
+  if (rows.length === 0) return payerId === defaultPayerId ? null : t("Billed to another payer");
+  const share = splitCharges(lineTotal, rows, defaultPayerId).find(
+    (entry) => entry.billToCustomerId === payerId,
+  );
+  if (!share) return t("Billed to another payer");
+  if (!share.partial) return null;
+  return share.percent != null
+    ? t("This payer's share: {0} ({1}%)", formatCurrency(share.amount), share.percent)
+    : t("This payer's share: {0}", formatCurrency(share.amount));
 }
 
 export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
@@ -354,7 +369,20 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           const name =
             charge.accessorialCharge?.description ?? charge.accessorialCharge?.code ?? "Charge";
           const breakdown = formatChargeBreakdown(charge);
-          const total = chargeLineTotal(charge);
+          const total = chargeLineTotal(charge, freightCharge);
+          const allocations =
+            charge.allocations ??
+            (shipment.chargeAllocations ?? []).filter(
+              (row) => row.additionalChargeId != null && row.additionalChargeId === charge.id,
+            );
+          const share = payerShareLabel(
+            charge,
+            total,
+            allocations,
+            item.billToCustomerId,
+            shipment.billToCustomerId || shipment.customerId,
+            t,
+          );
 
           return (
             <div
@@ -364,6 +392,9 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm">{name}</span>
                 <span className="text-muted-foreground text-[11px]">{breakdown}</span>
+                {share ? (
+                  <span className="text-[11px] text-indigo-600 dark:text-indigo-400">{share}</span>
+                ) : null}
               </div>
               <div className="relative flex min-w-20 items-center justify-end">
                 <span

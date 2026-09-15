@@ -144,6 +144,10 @@ type CustomerBillingProfile {
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
+  "Whether invoices may be emailed to this customer."
+  emailInvoiceEnabled: Boolean!
+  "Whether invoices are sent to this customer's EDI partner as an 210."
+  ediInvoiceEnabled: Boolean!
   allowInvoiceConsolidation: Boolean!
     @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   consolidationPeriodDays: Int!

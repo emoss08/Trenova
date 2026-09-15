@@ -1,6 +1,7 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccessorialChargeAutocompleteField } from "@/components/autocomplete-fields";
+import { ChargeSplitEditor } from "@/components/billing/charge-split-editor";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -15,9 +16,10 @@ import {
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
+import { chargeLineTotal } from "@trenova/shared/lib/charge-split";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useRef } from "react";
-import { useFormContext } from "react-hook-form";
+import { type Control, type FieldValues, useFormContext, useWatch } from "react-hook-form";
 
 export function AdditionalChargeDialog({
   open,
@@ -37,6 +39,20 @@ export function AdditionalChargeDialog({
   const t = useT();
 
   const { control, setValue, getValues, trigger } = useFormContext<Shipment>();
+  const method = useWatch({ control, name: `additionalCharges.${index}.method` });
+  const amount = useWatch({ control, name: `additionalCharges.${index}.amount` });
+  const unit = useWatch({ control, name: `additionalCharges.${index}.unit` });
+  const customerId = useWatch({ control, name: "customerId" });
+  const billToCustomerId = useWatch({ control, name: "billToCustomerId" });
+  const customer = useWatch({ control, name: "customer" });
+  const billToCustomer = useWatch({ control, name: "billToCustomer" });
+  const payerId = billToCustomerId || customerId;
+  const payerLabel = billToCustomerId ? billToCustomer?.name : customer?.name;
+  // A percentage accessorial is priced against the freight charge on the
+  // server, so its dollar total is unknown here and only a percent split can
+  // be checked against it.
+  const percentOnly = method === "Percentage";
+  const lineTotal = percentOnly ? null : chargeLineTotal({ method, amount, unit });
   const lastAppliedChargeIdRef = useRef<string | null>(
     isEditing ? (getValues(`additionalCharges.${index}.accessorialChargeId`) ?? null) : null,
   );
@@ -63,6 +79,7 @@ export function AdditionalChargeDialog({
       `additionalCharges.${index}.unit`,
       `additionalCharges.${index}.method`,
       `additionalCharges.${index}.amount`,
+      `additionalCharges.${index}.allocations`,
     ]);
 
     if (!isValid) {
@@ -145,6 +162,15 @@ export function AdditionalChargeDialog({
               description={t(
                 "Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement",
               )}
+            />
+          </FormControl>
+          <FormControl className="col-span-2">
+            <ChargeSplitEditor
+              control={control as unknown as Control<FieldValues>}
+              name={`additionalCharges.${index}.allocations`}
+              chargeAmount={lineTotal}
+              percentOnly={percentOnly}
+              defaultPayer={payerId ? { id: payerId, label: payerLabel ?? t("customer") } : null}
             />
           </FormControl>
         </FormGroup>

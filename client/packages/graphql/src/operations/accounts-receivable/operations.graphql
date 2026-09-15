@@ -221,6 +221,9 @@ query ArCollectionsWorklist($limit: Int) {
     isDisputed
     hasShortPay
     severity
+    openDisputeReasonCode
+    disputedAmountMinor
+    disputeOpenedAt
   }
 }
 

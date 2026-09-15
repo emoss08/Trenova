@@ -20,7 +20,13 @@ import type {
   CarrierSettlementBatchStatus,
   CarrierSettlementStatus,
 } from "@trenova/shared/types/carrier-settlement";
-import type { InvoiceScope, InvoiceStatus, SettlementStatus } from "@trenova/shared/types/invoice";
+import type {
+  InvoiceDisputeCaseStatus,
+  InvoiceEdiSendStatus,
+  InvoiceScope,
+  InvoiceStatus,
+  SettlementStatus,
+} from "@trenova/shared/types/invoice";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import {
@@ -459,6 +465,10 @@ export function InvoiceStatusBadge({
       variant: "active",
       text: t("Posted"),
     },
+    Voided: {
+      variant: "inactive",
+      text: t("Voided"),
+    },
   };
 
   return (
@@ -536,6 +546,10 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
       className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: t("Posted"),
     },
+    Voided: {
+      className: "bg-red-50 text-red-700 line-through dark:bg-red-950 dark:text-red-300",
+      text: t("Voided"),
+    },
   };
 
   return (
@@ -546,6 +560,107 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
       )}
     >
       {statusAttributes[status].text}
+    </span>
+  );
+}
+
+/**
+ * The invoice's quick-read dispute flag: Disputed while a case is open, and
+ * nothing at all otherwise, so a register row only draws the eye when it
+ * should.
+ */
+export function PlainInvoiceDisputeBadge({
+  disputeStatus,
+}: {
+  disputeStatus: "None" | "Disputed" | null | undefined;
+}) {
+  const t = useT();
+
+  if (disputeStatus !== "Disputed") {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+      {t("Disputed")}
+    </span>
+  );
+}
+
+export function InvoiceDisputeCaseStatusBadge({
+  status,
+  className,
+}: {
+  status: InvoiceDisputeCaseStatus;
+  className?: string;
+}) {
+  const t = useT();
+
+  const statusAttributes: Record<InvoiceDisputeCaseStatus, BadgeAttrProps> = {
+    Open: { variant: "orange", text: t("Open") },
+    Resolved: { variant: "active", text: t("Resolved") },
+    Withdrawn: { variant: "secondary", text: t("Withdrawn") },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className={cn("max-h-5", className)}>
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+/**
+ * Where an invoice's outbound 210 stands. NotSent is the resting state of an
+ * invoice whose customer takes EDI and has not been sent yet; NotConfigured
+ * says the customer cannot take EDI at all, which is a setup problem rather
+ * than a delivery one.
+ */
+export function InvoiceEdiSendStatusBadge({
+  status,
+  className,
+}: {
+  status: InvoiceEdiSendStatus;
+  className?: string;
+}) {
+  const t = useT();
+
+  const statusAttributes: Record<InvoiceEdiSendStatus, BadgeAttrProps> = {
+    NotSent: { variant: "outline", text: t("Not sent") },
+    NotConfigured: { variant: "secondary", text: t("Not configured") },
+    Queued: { variant: "info", text: t("Queued") },
+    Generated: { variant: "info", text: t("Generated") },
+    Sending: { variant: "info", text: t("Sending") },
+    Sent: { variant: "active", text: t("Sent") },
+    Failed: { variant: "inactive", text: t("Failed") },
+    DeadLettered: { variant: "inactive", text: t("Dead-lettered") },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className={cn("max-h-5", className)}>
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+/**
+ * Marks an invoice that bills only part of what its shipments charged, because
+ * another payer carries the rest. Reads as a warning to anyone reconciling it
+ * against the shipment total.
+ */
+export function PlainInvoiceSplitBadge({
+  isSplitBill,
+}: {
+  isSplitBill: boolean | null | undefined;
+}) {
+  const t = useT();
+
+  if (!isSplitBill) {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+      {t("Split bill")}
     </span>
   );
 }
@@ -570,6 +685,10 @@ export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
     Adjustment: {
       className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       text: t("Adjustment"),
+    },
+    Memo: {
+      className: "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+      text: t("Memo"),
     },
   };
 

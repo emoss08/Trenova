@@ -127,6 +127,8 @@ type MutationResolver interface {
 	PostAndApplyCustomerPayment(ctx context.Context, input gqlmodel.PostCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyUnappliedCustomerPayment(ctx context.Context, input gqlmodel.ApplyCustomerPaymentInput) (*customerpayment.Payment, error)
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
+	ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error)
+	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -266,6 +268,15 @@ type MutationResolver interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
+	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error)
+	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*services.CreateInvoicesResult, error)
+	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*services.VoidInvoiceResult, error)
+	CreateMemo(ctx context.Context, input gqlmodel.CreateMemoInput) (*invoice.Invoice, error)
+	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*services.InvoiceEDISendResult, error)
+	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
+	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
+	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
+	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -275,8 +286,9 @@ type MutationResolver interface {
 	UpdateOrder(ctx context.Context, id string, input gqlmodel.OrderInput) (*order.Order, error)
 	AttachOrderShipments(ctx context.Context, orderID string, shipmentIds []string) (*order.Order, error)
 	DetachOrderShipment(ctx context.Context, orderID string, shipmentID string) (*order.Order, error)
-	AddOrderCharge(ctx context.Context, orderID string, description string, amount string) (*order.Order, error)
+	AddOrderCharge(ctx context.Context, orderID string, description string, amount string, allocations []*gqlmodel.ChargeAllocationInput) (*order.Order, error)
 	UpdateOrderCharge(ctx context.Context, input gqlmodel.UpdateOrderChargeInput) (*order.Order, error)
+	SetOrderChargeAllocations(ctx context.Context, input gqlmodel.SetOrderChargeAllocationsInput) (*order.Order, error)
 	RemoveOrderCharge(ctx context.Context, input gqlmodel.RemoveOrderChargeInput) (*order.Order, error)
 	CloseOrder(ctx context.Context, id string) (*order.Order, error)
 	CancelOrder(ctx context.Context, id string, cancelReason string) (*order.Order, error)
@@ -341,6 +353,7 @@ type MutationResolver interface {
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
 	TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.BillingQueueItem, error)
+	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
 	BulkTransferShipmentsToBilling(ctx context.Context, input gqlmodel.ShipmentBulkTransferToBillingInput) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error)
 	CalculateShipmentTotals(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentTotalsResponse, error)
 	PreviewShipmentContractRate(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentContractRate, error)
@@ -697,6 +710,7 @@ type QueryResolver interface {
 	IFTACurrentPeriod(ctx context.Context) (*ifta.Period, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
+	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
@@ -705,6 +719,7 @@ type QueryResolver interface {
 	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
 	JurisdictionRule(ctx context.Context, id string) (*jurisdictionrule.JurisdictionRule, error)
 	JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error)
+	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
 	Locations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationConnection, error)
 	Location(ctx context.Context, id string) (*location.Location, error)
 	LocationCategories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationCategoryConnection, error)
@@ -1103,6 +1118,14 @@ func (ec *executionContext) field_Mutation_addOrderCharge_args(ctx context.Conte
 		return nil, err
 	}
 	args["amount"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "allocations",
+		func(ctx context.Context, v any) ([]*gqlmodel.ChargeAllocationInput, error) {
+			return ec.unmarshalOChargeAllocationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChargeAllocationInputᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["allocations"] = arg3
 	return args, nil
 }
 
@@ -1162,6 +1185,20 @@ func (ec *executionContext) field_Mutation_amendWorkerEmploymentEvent_args(ctx c
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.AmendWorkerEmploymentEventInput, error) {
 			return ec.unmarshalNAmendWorkerEmploymentEventInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAmendWorkerEmploymentEventInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_applyCreditMemo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ApplyCreditMemoInput, error) {
+			return ec.unmarshalNApplyCreditMemoInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApplyCreditMemoInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1370,6 +1407,20 @@ func (ec *executionContext) field_Mutation_archiveWorkerCredential_args(ctx cont
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.ArchiveWorkerCredentialInput, error) {
 			return ec.unmarshalNArchiveWorkerCredentialInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐArchiveWorkerCredentialInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_assessLateCharges_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (*gqlmodel.LateChargeAssessmentInput, error) {
+			return ec.unmarshalOLateChargeAssessmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLateChargeAssessmentInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2440,12 +2491,70 @@ func (ec *executionContext) field_Mutation_createInvoiceFromShipments_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createInvoicesFromOrder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "orderId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["orderId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offCycleReason"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createInvoicesFromShipments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentIds"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offCycleReason",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offCycleReason"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createJobPosition_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.JobPositionInput, error) {
 			return ec.unmarshalNJobPositionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJobPositionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createMemo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateMemoInput, error) {
+			return ec.unmarshalNCreateMemoInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateMemoInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -4008,6 +4117,20 @@ func (ec *executionContext) field_Mutation_openEscrowAccount_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_openInvoiceDispute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.OpenInvoiceDisputeInput, error) {
+			return ec.unmarshalNOpenInvoiceDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOpenInvoiceDisputeInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_openLeaveCase_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4864,6 +4987,20 @@ func (ec *executionContext) field_Mutation_resolveFuelPurchaseImportRows_args(ct
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_resolveInvoiceDispute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ResolveInvoiceDisputeInput, error) {
+			return ec.unmarshalNResolveInvoiceDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐResolveInvoiceDisputeInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_resolveSettlementDispute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5242,6 +5379,28 @@ func (ec *executionContext) field_Mutation_sendDetentionNotice_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_sendInvoiceEdi_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invoiceId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["invoiceId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "force",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["force"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_sendTestMessageTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5276,6 +5435,20 @@ func (ec *executionContext) field_Mutation_setMyAvailability_args(ctx context.Co
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.SetMyAvailabilityInput, error) {
 			return ec.unmarshalNSetMyAvailabilityInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetMyAvailabilityInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setOrderChargeAllocations_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SetOrderChargeAllocationsInput, error) {
+			return ec.unmarshalNSetOrderChargeAllocationsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetOrderChargeAllocationsInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5482,6 +5655,20 @@ func (ec *executionContext) field_Mutation_transferShipmentOwnership_args(ctx co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_transferShipmentToBillingItems_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ShipmentTransferToBillingInput, error) {
+			return ec.unmarshalNShipmentTransferToBillingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTransferToBillingInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_transferShipmentToBilling_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5516,6 +5703,20 @@ func (ec *executionContext) field_Mutation_transitionTimesheet_args(ctx context.
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.TransitionTimesheetInput, error) {
 			return ec.unmarshalNTransitionTimesheetInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTransitionTimesheetInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unapplyCreditMemoApplication_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UnapplyCreditMemoApplicationInput, error) {
+			return ec.unmarshalNUnapplyCreditMemoApplicationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUnapplyCreditMemoApplicationInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -6798,6 +6999,20 @@ func (ec *executionContext) field_Mutation_voidDriverSettlement_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_voidInvoice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.VoidInvoiceInput, error) {
+			return ec.unmarshalNVoidInvoiceInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVoidInvoiceInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_voidPayrollExport_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6832,6 +7047,20 @@ func (ec *executionContext) field_Mutation_waiveWorkerTraining_args(ctx context.
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.WaiveWorkerTrainingInput, error) {
 			return ec.unmarshalNWaiveWorkerTrainingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWaiveWorkerTrainingInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_withdrawInvoiceDispute_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.WithdrawInvoiceDisputeInput, error) {
+			return ec.unmarshalNWithdrawInvoiceDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWithdrawInvoiceDisputeInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -9346,6 +9575,20 @@ func (ec *executionContext) field_Query_iftaTaxRates_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_invoiceDisputes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invoiceId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["invoiceId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_invoice_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -9544,6 +9787,20 @@ func (ec *executionContext) field_Query_jurisdictionRules_args(ctx context.Conte
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_lateChargePreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (*gqlmodel.LateChargeAssessmentInput, error) {
+			return ec.unmarshalOLateChargeAssessmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLateChargeAssessmentInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -14414,6 +14671,94 @@ func (ec *executionContext) fieldContext_Mutation_reverseCustomerPayment(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_reverseCustomerPayment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_applyCreditMemo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_applyCreditMemo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ApplyCreditMemo(ctx, fc.Args["input"].(gqlmodel.ApplyCreditMemoInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
+			return ec.marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_applyCreditMemo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CreditMemoApplication(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_applyCreditMemo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unapplyCreditMemoApplication(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_unapplyCreditMemoApplication(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UnapplyCreditMemoApplication(ctx, fc.Args["input"].(gqlmodel.UnapplyCreditMemoApplicationInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *customerpayment.CreditMemoApplication) graphql.Marshaler {
+			return ec.marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_unapplyCreditMemoApplication(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CreditMemoApplication(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unapplyCreditMemoApplication_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20503,6 +20848,402 @@ func (ec *executionContext) fieldContext_Mutation_createInvoiceFromOrder(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createInvoicesFromShipments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createInvoicesFromShipments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateInvoicesFromShipments(ctx, fc.Args["shipmentIds"].([]string), fc.Args["offCycleReason"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.CreateInvoicesResult) graphql.Marshaler {
+			return ec.marshalNCreateInvoicesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCreateInvoicesResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createInvoicesFromShipments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CreateInvoicesResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createInvoicesFromShipments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createInvoicesFromOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createInvoicesFromOrder(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateInvoicesFromOrder(ctx, fc.Args["orderId"].(string), fc.Args["offCycleReason"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.CreateInvoicesResult) graphql.Marshaler {
+			return ec.marshalNCreateInvoicesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCreateInvoicesResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createInvoicesFromOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CreateInvoicesResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createInvoicesFromOrder_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_voidInvoice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_voidInvoice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().VoidInvoice(ctx, fc.Args["input"].(gqlmodel.VoidInvoiceInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.VoidInvoiceResult) graphql.Marshaler {
+			return ec.marshalNVoidInvoiceResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐVoidInvoiceResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_voidInvoice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_VoidInvoiceResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_voidInvoice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createMemo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createMemo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateMemo(ctx, fc.Args["input"].(gqlmodel.CreateMemoInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+			return ec.marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createMemo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Invoice(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createMemo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_sendInvoiceEdi(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_sendInvoiceEdi(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SendInvoiceEDI(ctx, fc.Args["invoiceId"].(string), fc.Args["force"].(*bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.InvoiceEDISendResult) graphql.Marshaler {
+			return ec.marshalNInvoiceEDISendResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐInvoiceEDISendResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_sendInvoiceEdi(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvoiceEDISendResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendInvoiceEdi_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_openInvoiceDispute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_openInvoiceDispute(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().OpenInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.OpenInvoiceDisputeInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.InvoiceDispute) graphql.Marshaler {
+			return ec.marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceDispute(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_openInvoiceDispute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvoiceDispute(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_openInvoiceDispute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resolveInvoiceDispute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resolveInvoiceDispute(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ResolveInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.ResolveInvoiceDisputeInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.InvoiceDispute) graphql.Marshaler {
+			return ec.marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceDispute(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resolveInvoiceDispute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvoiceDispute(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_resolveInvoiceDispute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_withdrawInvoiceDispute(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_withdrawInvoiceDispute(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().WithdrawInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.WithdrawInvoiceDisputeInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.InvoiceDispute) graphql.Marshaler {
+			return ec.marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceDispute(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_withdrawInvoiceDispute(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvoiceDispute(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_withdrawInvoiceDispute_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_assessLateCharges(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_assessLateCharges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AssessLateCharges(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.LateChargeAssessmentResult) graphql.Marshaler {
+			return ec.marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeAssessmentResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_assessLateCharges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_LateChargeAssessmentResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_assessLateCharges_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_markNotificationsRead(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -20888,7 +21629,7 @@ func (ec *executionContext) _Mutation_addOrderCharge(ctx context.Context, field 
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddOrderCharge(ctx, fc.Args["orderId"].(string), fc.Args["description"].(string), fc.Args["amount"].(string))
+			return ec.Resolvers.Mutation().AddOrderCharge(ctx, fc.Args["orderId"].(string), fc.Args["description"].(string), fc.Args["amount"].(string), fc.Args["allocations"].([]*gqlmodel.ChargeAllocationInput))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *order.Order) graphql.Marshaler {
@@ -20960,6 +21701,50 @@ func (ec *executionContext) fieldContext_Mutation_updateOrderCharge(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrderCharge_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setOrderChargeAllocations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setOrderChargeAllocations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetOrderChargeAllocations(ctx, fc.Args["input"].(gqlmodel.SetOrderChargeAllocationsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *order.Order) graphql.Marshaler {
+			return ec.marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setOrderChargeAllocations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Order(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setOrderChargeAllocations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -23776,6 +24561,50 @@ func (ec *executionContext) fieldContext_Mutation_transferShipmentToBilling(ctx 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_transferShipmentToBilling_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_transferShipmentToBillingItems(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_transferShipmentToBillingItems(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().TransferShipmentToBillingItems(ctx, fc.Args["input"].(gqlmodel.ShipmentTransferToBillingInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentTransferToBillingResult) graphql.Marshaler {
+			return ec.marshalNShipmentTransferToBillingResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTransferToBillingResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_transferShipmentToBillingItems(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentTransferToBillingResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_transferShipmentToBillingItems_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -38863,6 +39692,50 @@ func (ec *executionContext) fieldContext_Query_invoice(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_invoiceDisputes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_invoiceDisputes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().InvoiceDisputes(ctx, fc.Args["invoiceId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*invoice.InvoiceDispute) graphql.Marshaler {
+			return ec.marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoiceDisputeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_invoiceDisputes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvoiceDispute(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_invoiceDisputes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_journalEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -39209,6 +40082,50 @@ func (ec *executionContext) fieldContext_Query_jurisdictionRuleOverrides(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_jurisdictionRuleOverrides_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_lateChargePreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_lateChargePreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().LateChargePreview(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.LateChargeAssessmentResult) graphql.Marshaler {
+			return ec.marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeAssessmentResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_lateChargePreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_LateChargeAssessmentResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_lateChargePreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -48979,6 +49896,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "applyCreditMemo":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_applyCreditMemo(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unapplyCreditMemoApplication":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unapplyCreditMemoApplication(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createDetentionPolicy":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createDetentionPolicy(ctx, field)
@@ -49952,6 +50883,69 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createInvoicesFromShipments":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createInvoicesFromShipments(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createInvoicesFromOrder":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createInvoicesFromOrder(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "voidInvoice":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_voidInvoice(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createMemo":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createMemo(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendInvoiceEdi":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendInvoiceEdi(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "openInvoiceDispute":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_openInvoiceDispute(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resolveInvoiceDispute":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resolveInvoiceDispute(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "withdrawInvoiceDispute":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_withdrawInvoiceDispute(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assessLateCharges":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_assessLateCharges(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "markNotificationsRead":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_markNotificationsRead(ctx, field)
@@ -50025,6 +51019,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateOrderCharge":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrderCharge(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setOrderChargeAllocations":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setOrderChargeAllocations(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -50473,6 +51474,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "transferShipmentToBilling":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_transferShipmentToBilling(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "transferShipmentToBillingItems":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_transferShipmentToBillingItems(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -56431,6 +57439,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "invoiceDisputes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_invoiceDisputes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "journalEntry":
 			field := field
 
@@ -56595,6 +57625,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_jurisdictionRuleOverrides(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "lateChargePreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_lateChargePreview(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

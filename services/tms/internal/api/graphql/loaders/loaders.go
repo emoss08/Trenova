@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
@@ -11,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/latecharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -62,6 +65,14 @@ type FactoryParams struct {
 	UserByID                                  *UserByIDLoaderFactory
 	DocumentByID                              *DocumentByIDLoaderFactory
 	UsStateByID                               *UsStateByIDLoaderFactory
+	InvoicesByShipmentID                      *InvoicesByShipmentIDLoaderFactory
+	ChargeAllocationsByShipmentID             *ChargeAllocationsByShipmentIDLoaderFactory
+	ChargeAllocationsByOrderChargeID          *ChargeAllocationsByOrderChargeIDLoaderFactory
+	CustomerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
+	CreditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
+	InvoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
+	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 }
 
 type Factory struct {
@@ -94,6 +105,14 @@ type Factory struct {
 	userByID                                  *UserByIDLoaderFactory
 	documentByID                              *DocumentByIDLoaderFactory
 	usStateByID                               *UsStateByIDLoaderFactory
+	invoicesByShipmentID                      *InvoicesByShipmentIDLoaderFactory
+	chargeAllocationsByShipmentID             *ChargeAllocationsByShipmentIDLoaderFactory
+	chargeAllocationsByOrderChargeID          *ChargeAllocationsByOrderChargeIDLoaderFactory
+	customerPaymentApplicationsByInvoiceID    *CustomerPaymentApplicationsByInvoiceIDLoaderFactory
+	creditMemoApplicationsByInvoiceID         *CreditMemoApplicationsByInvoiceIDLoaderFactory
+	invoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
+	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
+	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
 }
 
 type Loaders struct {
@@ -126,6 +145,14 @@ type Loaders struct {
 	UserByID                                  *dataloadgen.Loader[string, *tenant.User]
 	DocumentByID                              *dataloadgen.Loader[string, *document.Document]
 	UsStateByID                               *dataloadgen.Loader[string, *usstate.UsState]
+	InvoicesByShipmentID                      *dataloadgen.Loader[string, []*invoice.Invoice]
+	ChargeAllocationsByShipmentID             *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
+	ChargeAllocationsByOrderChargeID          *dataloadgen.Loader[string, []*shipment.ChargeAllocation]
+	CustomerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
+	CreditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
+	InvoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
+	LateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
+	InvoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *services.InvoiceEDISendPlan]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -159,6 +186,14 @@ func NewFactory(p FactoryParams) *Factory {
 		userByID:                                  p.UserByID,
 		documentByID:                              p.DocumentByID,
 		usStateByID:                               p.UsStateByID,
+		invoicesByShipmentID:                      p.InvoicesByShipmentID,
+		chargeAllocationsByShipmentID:             p.ChargeAllocationsByShipmentID,
+		chargeAllocationsByOrderChargeID:          p.ChargeAllocationsByOrderChargeID,
+		customerPaymentApplicationsByInvoiceID:    p.CustomerPaymentApplicationsByInvoiceID,
+		creditMemoApplicationsByInvoiceID:         p.CreditMemoApplicationsByInvoiceID,
+		invoiceDisputesByInvoiceID:                p.InvoiceDisputesByInvoiceID,
+		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
+		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
 	}
 }
 
@@ -193,6 +228,14 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		UserByID:                                  f.userByID.NewForTenant(tenantInfo),
 		DocumentByID:                              f.documentByID.NewForTenant(tenantInfo),
 		UsStateByID:                               f.usStateByID.NewForTenant(tenantInfo),
+		InvoicesByShipmentID:                      f.invoicesByShipmentID.NewForTenant(tenantInfo),
+		ChargeAllocationsByShipmentID:             f.chargeAllocationsByShipmentID.NewForTenant(tenantInfo),
+		ChargeAllocationsByOrderChargeID:          f.chargeAllocationsByOrderChargeID.NewForTenant(tenantInfo),
+		CustomerPaymentApplicationsByInvoiceID:    f.customerPaymentApplicationsByInvoiceID.NewForTenant(tenantInfo),
+		CreditMemoApplicationsByInvoiceID:         f.creditMemoApplicationsByInvoiceID.NewForTenant(tenantInfo),
+		InvoiceDisputesByInvoiceID:                f.invoiceDisputesByInvoiceID.NewForTenant(tenantInfo),
+		LateChargeAssessmentsByInvoiceID:          f.lateChargeAssessmentsByInvoiceID.NewForTenant(tenantInfo),
+		InvoiceEDISendPlanByInvoiceID:             f.invoiceEDISendPlanByInvoiceID.NewForTenant(tenantInfo),
 	}
 }
 

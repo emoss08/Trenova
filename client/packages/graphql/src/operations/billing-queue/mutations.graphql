@@ -3,6 +3,13 @@ fragment BillingQueueActionFields on BillingQueueItem {
   organizationId
   businessUnitId
   shipmentId
+  billToCustomerId
+  allocatedTotalAmount
+  billToCustomer {
+    id
+    name
+    code
+  }
   assignedBillerId
   number
   status

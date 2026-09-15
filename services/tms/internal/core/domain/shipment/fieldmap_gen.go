@@ -32,6 +32,13 @@ func (e *CarrierAssignmentAccessorial) GetStaticFieldMap() map[string]string {
 	return buncolgen.CarrierAssignmentAccessorialFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ChargeAllocation].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ChargeAllocationFieldMap] instead of parsing struct tags via reflection.
+func (e *ChargeAllocation) GetStaticFieldMap() map[string]string {
+	return buncolgen.ChargeAllocationFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Shipment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ShipmentFieldMap] instead of parsing struct tags via reflection.

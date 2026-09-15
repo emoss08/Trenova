@@ -859,6 +859,18 @@ const accountingModule: NavModule = {
           path: "/accounting/ar/open-items",
         },
         {
+          id: "invoice-register",
+          label: "Invoice Register",
+          path: "/accounting/ar/invoices",
+          resource: Resource.Invoice,
+        },
+        {
+          id: "late-charges",
+          label: "Late Charges",
+          path: "/accounting/ar/late-charges",
+          resource: Resource.AccountsReceivable,
+        },
+        {
           id: "customer-payments",
           label: "Customer Payments",
           path: "/accounting/ar/payments",

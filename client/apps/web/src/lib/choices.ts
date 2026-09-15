@@ -25,6 +25,7 @@ import type {
   EnforcementLevel,
   InvoiceDraftCreationMode,
   InvoicePostingMode,
+  LateChargeAssessmentMode,
   PaymentTerm,
   RateVarianceAutoResolutionMode,
   ReadyToBillAssignmentMode,
@@ -177,7 +178,14 @@ import {
   type IftaReturnStatus,
 } from "@trenova/shared/types/fuel-ifta-enums";
 import type { EquipmentStatus, Status } from "@trenova/shared/types/helpers";
-import type { InvoiceScope, InvoiceStatus } from "@trenova/shared/types/invoice";
+import type {
+  InvoiceDisputeReasonCode,
+  InvoiceDisputeResolution,
+  InvoiceEdiSendStatus,
+  InvoiceScope,
+  InvoiceStatus,
+  InvoiceVoidDisposition,
+} from "@trenova/shared/types/invoice";
 import type { LocationGeofenceType } from "@trenova/shared/types/location";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
@@ -668,6 +676,32 @@ export const shipmentTenderStatusChoices = [
   { label: "Expired", value: "Expired", color: "#f97316" },
   { label: "Canceled", value: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<ShipmentTenderStatus>>;
+
+export const freightTermsChoices = [
+  {
+    value: "Prepaid",
+    label: "Prepaid",
+    color: "#15803d",
+    description: "The shipper pays the carrier",
+  },
+  {
+    value: "Collect",
+    label: "Collect",
+    color: "#0891b2",
+    description: "The consignee pays the carrier on delivery",
+  },
+  {
+    value: "ThirdParty",
+    label: "Third Party",
+    color: "#7c3aed",
+    description: "A party other than shipper or consignee pays",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const allocationMethodChoices = [
+  { value: "Percent", label: "Percent", color: "#3b82f6" },
+  { value: "Amount", label: "Amount", color: "#15803d" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const billTypeChoices = [
   { label: "Invoice", value: "Invoice", color: "#3b82f6" },
@@ -1546,13 +1580,68 @@ export const documentKindChoices = [
 export const invoiceStatusChoices = [
   { value: "Draft", label: "Draft" },
   { value: "Posted", label: "Posted" },
+  { value: "Voided", label: "Voided" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceStatus>>;
+
+export const invoiceVoidDispositionChoices = [
+  {
+    value: "Rebill",
+    label: "Release freight for rebilling",
+    description: "The billing queue items go back to Approved with a fresh number.",
+  },
+  {
+    value: "DoNotRebill",
+    label: "Do not rebill",
+    description: "The billing queue items are canceled and the shipments settle as completed.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceVoidDisposition>>;
+
+export const memoBillTypeChoices = [
+  { value: "CreditMemo", label: "Credit Memo" },
+  { value: "DebitMemo", label: "Debit Memo" },
+] satisfies ReadonlyArray<GenericSelectOption<"CreditMemo" | "DebitMemo">>;
+
+export const invoiceDisputeReasonCodeChoices = [
+  { value: "RateDiscrepancy", label: "Rate discrepancy" },
+  { value: "AccessorialDisputed", label: "Accessorial disputed" },
+  { value: "ServiceFailure", label: "Service failure" },
+  { value: "DuplicateBilling", label: "Duplicate billing" },
+  { value: "WrongBillTo", label: "Wrong bill-to" },
+  { value: "MissingDocumentation", label: "Missing documentation" },
+  { value: "Other", label: "Other" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceDisputeReasonCode>>;
+
+export const invoiceDisputeResolutionChoices = [
+  { value: "CreditIssued", label: "Credit issued" },
+  { value: "InvoiceUpheld", label: "Invoice upheld" },
+  { value: "Rebilled", label: "Rebilled" },
+  { value: "WrittenOff", label: "Written off" },
+  { value: "CustomerWithdrew", label: "Customer withdrew" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceDisputeResolution>>;
+
+export const invoiceEdiSendStatusChoices = [
+  { value: "NotSent", label: "Not sent" },
+  { value: "NotConfigured", label: "Not configured" },
+  { value: "Queued", label: "Queued" },
+  { value: "Generated", label: "Generated" },
+  { value: "Sending", label: "Sending" },
+  { value: "Sent", label: "Sent" },
+  { value: "Failed", label: "Failed" },
+  { value: "DeadLettered", label: "Dead-lettered" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceEdiSendStatus>>;
+
+export const lateChargeAssessmentModeChoices = [
+  { value: "Disabled", label: "Disabled" },
+  { value: "Preview", label: "Preview only" },
+  { value: "Automatic", label: "Automatic" },
+] satisfies ReadonlyArray<GenericSelectOption<LateChargeAssessmentMode>>;
 
 export const invoiceScopeChoices = [
   { value: "Shipment", label: "Single Shipment" },
   { value: "Order", label: "Order" },
   { value: "Consolidated", label: "Consolidated" },
   { value: "Adjustment", label: "Adjustment" },
+  { value: "Memo", label: "Memo" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceScope>>;
 
 export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -77,6 +78,7 @@ func (s *Service) deliverMessage(
 	if err != nil {
 		return nil, err
 	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusSending, "", nil)
 
 	transportStartedAt := time.Now()
 	transportResult, deliveryErr := s.transport.Deliver(
@@ -155,6 +157,7 @@ func (s *Service) deliverMessage(
 	if err != nil {
 		return nil, err
 	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusSent, "", &now)
 	if err = s.completeTenderChangeDelivery(ctx, message); err != nil {
 		return nil, err
 	}
@@ -245,6 +248,7 @@ func (s *Service) recordDeliveryFailure(
 			zap.Error(updateErr),
 		)
 	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusFailed, deliveryErr.Error(), nil)
 }
 
 func (s *Service) MarkMessageDeadLettered(
@@ -279,6 +283,7 @@ func (s *Service) MarkMessageDeadLettered(
 	if err != nil {
 		return err
 	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusDeadLettered, payload.Reason, nil)
 	s.metrics.RecordDeadLetter(message.EDIPartnerID.String(), string(message.TransactionSet))
 	s.NotifyOperationalFailure(ctx, &EDIOperationalAlert{
 		OrganizationID: message.OrganizationID,
@@ -704,4 +709,35 @@ func messageTenantInfo(message *edi.EDIMessage) pagination.TenantInfo {
 
 func buildDeliverMessageWorkflowID(messageID pulid.ID) string {
 	return "edi-deliver-message-" + messageID.String()
+}
+
+// syncInvoiceEDIStatus writes a 210's delivery outcome back to the invoice it
+// bills, so the invoice reads Sent or Failed without a trip through the EDI
+// console. Any other message, or a write failure, leaves the invoice alone.
+func (s *Service) syncInvoiceEDIStatus(
+	ctx context.Context,
+	message *edi.EDIMessage,
+	status invoice.EDISendStatus,
+	lastError string,
+	sentAt *int64,
+) {
+	if message == nil || message.InvoiceID.IsNil() ||
+		message.TransactionSet != edi.TransactionSet210 || s.invoiceRepo == nil {
+		return
+	}
+	if err := s.invoiceRepo.UpdateEDISendStatus(ctx, repositories.UpdateInvoiceEDISendStatusRequest{
+		TenantInfo: messageTenantInfo(message),
+		InvoiceID:  message.InvoiceID,
+		MessageID:  message.ID,
+		Status:     status,
+		Error:      lastError,
+		SentAt:     sentAt,
+	}); err != nil {
+		s.l.Warn(
+			"failed to sync invoice EDI status",
+			zap.String("invoiceId", message.InvoiceID.String()),
+			zap.String("messageId", message.ID.String()),
+			zap.Error(err),
+		)
+	}
 }

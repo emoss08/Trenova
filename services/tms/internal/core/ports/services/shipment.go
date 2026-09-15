@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -61,6 +62,20 @@ type ShipmentBillingRequirement struct {
 	DocumentIDs      []string `json:"documentIds"`
 }
 
+// ShipmentBillingPayerReadiness is one payer's standing on a shipment: what
+// they owe, whether their credit allows billing, and whether their profile
+// lets clean freight skip review.
+type ShipmentBillingPayerReadiness struct {
+	PayerID                  pulid.ID              `json:"payerId"`
+	PayerName                string                `json:"payerName"`
+	PayerCode                string                `json:"payerCode"`
+	IsPrimary                bool                  `json:"isPrimary"`
+	ShareAmount              decimal.Decimal       `json:"shareAmount"`
+	CreditStatus             customer.CreditStatus `json:"creditStatus"`
+	CreditHold               bool                  `json:"creditHold"`
+	ShouldAutoApproveBilling bool                  `json:"shouldAutoApproveBilling"`
+}
+
 type ShipmentBillingReadiness struct {
 	ShipmentID                   string                               `json:"shipmentId"`
 	ShipmentStatus               shipment.Status                      `json:"shipmentStatus"`
@@ -75,8 +90,11 @@ type ShipmentBillingReadiness struct {
 	ShouldAutoTransferToBilling  bool                                 `json:"shouldAutoTransferToBilling"`
 	// ShouldAutoApproveBilling means this shipment may clear the billing queue
 	// without a biller looking at it, because it has no requirement or rate issue
-	// and its customer asked for clean freight to pass straight through.
+	// and every payer asked for clean freight to pass straight through.
 	ShouldAutoApproveBilling bool `json:"shouldAutoApproveBilling"`
+	// Payers is every customer with a share of this shipment, the shipment's own
+	// payer first. Requirements above are the union of theirs.
+	Payers []ShipmentBillingPayerReadiness `json:"payers"`
 }
 
 type JurisdictionMileResult struct {
@@ -208,11 +226,14 @@ type BulkTransferToBillingResult struct {
 	Success              bool                           `json:"success"`
 	MarkedReadyToInvoice bool                           `json:"markedReadyToInvoice"`
 	Item                 *billingqueue.BillingQueueItem `json:"item,omitempty"`
-	FailureCode          BillingTransferFailureCode     `json:"failureCode,omitempty"`
-	Error                string                         `json:"error,omitempty"`
-	Err                  error                          `json:"-"`
-	MissingRequirements  []ShipmentBillingRequirement   `json:"missingRequirements"`
-	ValidationFailures   []ShipmentBillingValidation    `json:"validationFailures"`
+	// Items is every queue item the transfer created, one per payer; Item is
+	// the primary payer's and stays for callers that expect one.
+	Items               []*billingqueue.BillingQueueItem `json:"items"`
+	FailureCode         BillingTransferFailureCode       `json:"failureCode,omitempty"`
+	Error               string                           `json:"error,omitempty"`
+	Err                 error                            `json:"-"`
+	MissingRequirements []ShipmentBillingRequirement     `json:"missingRequirements"`
+	ValidationFailures  []ShipmentBillingValidation      `json:"validationFailures"`
 }
 
 type BulkTransferToBillingResponse struct {
@@ -445,6 +466,11 @@ type ShipmentService interface {
 		req *TransferShipmentToBillingRequest,
 		actor *RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	TransferToBillingItems(
+		ctx context.Context,
+		req *TransferShipmentToBillingRequest,
+		actor *RequestActor,
+	) (*TransferToBillingResult, error)
 	BulkTransferToBilling(
 		ctx context.Context,
 		req *BulkTransferShipmentToBillingRequest,

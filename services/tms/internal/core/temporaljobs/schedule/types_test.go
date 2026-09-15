@@ -7,7 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/workflow"
 )
+
+type argsTestInput struct {
+	Limit int
+}
+
+func contextWorkflowWithInput(workflow.Context, argsTestInput) error {
+	return nil
+}
+
+func contextWorkflowWithoutInput(workflow.Context) error {
+	return nil
+}
+
+func variadicWorkflow(workflow.Context, string, ...argsTestInput) error {
+	return nil
+}
 
 func dummyWorkflow() error {
 	return nil
@@ -140,6 +157,57 @@ func TestSchedule_Validate_Invalid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.schedule.Validate()
 			assert.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestSchedule_Validate_Args(t *testing.T) {
+	t.Parallel()
+
+	base := func(wf any, args ...any) *Schedule {
+		return &Schedule{
+			ID:        "args-schedule",
+			Spec:      Every(time.Minute),
+			Workflow:  wf,
+			TaskQueue: "test-queue",
+			Args:      args,
+		}
+	}
+
+	tests := []struct {
+		name    string
+		sched   *Schedule
+		wantErr bool
+	}{
+		{name: "context and input with one arg", sched: base(contextWorkflowWithInput, argsTestInput{})},
+		{name: "context and input without args", sched: base(contextWorkflowWithInput), wantErr: true},
+		{
+			name:    "context and input with extra args",
+			sched:   base(contextWorkflowWithInput, argsTestInput{}, argsTestInput{}),
+			wantErr: true,
+		},
+		{name: "context only without args", sched: base(contextWorkflowWithoutInput)},
+		{name: "context only with args", sched: base(contextWorkflowWithoutInput, 1), wantErr: true},
+		{name: "no context without args", sched: base(dummyWorkflow)},
+		{name: "variadic with required arg", sched: base(variadicWorkflow, "x")},
+		{
+			name:  "variadic with extra args",
+			sched: base(variadicWorkflow, "x", argsTestInput{}, argsTestInput{}),
+		},
+		{name: "variadic missing required arg", sched: base(variadicWorkflow), wantErr: true},
+		{name: "workflow referenced by name", sched: base("NamedWorkflow")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.sched.Validate()
+			if tt.wantErr {
+				require.ErrorIs(t, err, ErrWorkflowArgsInvalid)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

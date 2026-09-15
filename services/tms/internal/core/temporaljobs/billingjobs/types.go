@@ -25,6 +25,7 @@ type AutoPostInvoiceResult struct {
 	PostedAt      int64    `json:"postedAt"`
 	CompletedAt   int64    `json:"completedAt"`
 	AlreadyPosted bool     `json:"alreadyPosted"`
+	Voided        bool     `json:"voided"`
 }
 
 type SendInvoiceEmailPayload struct {

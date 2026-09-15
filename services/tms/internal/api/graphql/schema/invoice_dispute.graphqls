@@ -1,0 +1,94 @@
+"Where a dispute case stands. An invoice is Disputed while it has an Open case."
+enum InvoiceDisputeCaseStatus {
+  Open
+  Resolved
+  Withdrawn
+}
+
+enum InvoiceDisputeReasonCode {
+  RateDiscrepancy
+  AccessorialDisputed
+  ServiceFailure
+  DuplicateBilling
+  WrongBillTo
+  MissingDocumentation
+  Other
+}
+
+enum InvoiceDisputeResolution {
+  "A credit memo settled the disputed amount; names the executed adjustment."
+  CreditIssued
+  "The invoice stands as billed."
+  InvoiceUpheld
+  "The invoice was credited and rebilled."
+  Rebilled
+  "The disputed amount was written off; names the executed adjustment."
+  WrittenOff
+  "The customer dropped the dispute."
+  CustomerWithdrew
+}
+
+"One dispute case raised against a posted invoice."
+type InvoiceDispute {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  customerId: ID!
+  status: InvoiceDisputeCaseStatus!
+  reasonCode: InvoiceDisputeReasonCode!
+  disputedAmount: Decimal!
+  disputedAmountMinor: Int!
+  notes: String!
+  openedById: ID!
+  openedAt: Timestamp!
+  resolvedById: ID
+  resolvedAt: Timestamp
+  resolution: InvoiceDisputeResolution
+  resolutionAdjustmentId: ID
+  resolutionNotes: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  invoice: Invoice
+  customer: Customer
+}
+
+input OpenInvoiceDisputeInput {
+  invoiceId: ID!
+  reasonCode: InvoiceDisputeReasonCode!
+  "At most the invoice's open balance."
+  disputedAmount: Decimal!
+  notes: String
+}
+
+input ResolveInvoiceDisputeInput {
+  disputeId: ID!
+  resolution: InvoiceDisputeResolution!
+  "Required for CreditIssued and WrittenOff: the executed adjustment on this invoice."
+  resolutionAdjustmentId: ID
+  resolutionNotes: String
+}
+
+input WithdrawInvoiceDisputeInput {
+  disputeId: ID!
+  notes: String
+}
+
+extend type Invoice {
+  "Every dispute case on this invoice, newest first."
+  disputes: [InvoiceDispute!]!
+  "The open case, when the invoice is disputed."
+  openDispute: InvoiceDispute
+}
+
+extend type Query {
+  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+}
+
+extend type Mutation {
+  "Opens a dispute on a posted invoice; the invoice reads Disputed until it closes."
+  openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
+  resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
+  withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +38,19 @@ type OrderCharge struct {
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Order        *Order               `json:"order,omitempty"        bun:"rel:belongs-to,join:order_id=id"`
+
+	Allocations []*shipment.ChargeAllocation `json:"allocations,omitempty" bun:"rel:has-many,join:id=order_charge_id"`
+}
+
+// IsFullyInvoiced reports whether every share of this charge has been billed.
+// InvoicedAt is stamped only once the last unbilled share is invoiced, so a
+// split charge stays open until each payer's invoice exists.
+func (c *OrderCharge) IsFullyInvoiced() bool {
+	return c != nil && c.InvoicedAt != 0
+}
+
+func (c *OrderCharge) HasAllocations() bool {
+	return c != nil && len(c.Allocations) > 0
 }
 
 func (c *OrderCharge) Validate(multiErr *errortypes.MultiError) {

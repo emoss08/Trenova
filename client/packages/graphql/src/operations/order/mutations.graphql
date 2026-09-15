@@ -18,20 +18,6 @@ mutation DetachOrderShipment($orderId: ID!, $shipmentId: ID!) {
   }
 }
 
-mutation CreateInvoiceFromOrder($orderId: ID!, $offCycleReason: String) {
-  createInvoiceFromOrder(orderId: $orderId, offCycleReason: $offCycleReason) {
-    id
-    number
-  }
-}
-
-mutation CreateInvoiceFromShipments($shipmentIds: [ID!]!, $offCycleReason: String) {
-  createInvoiceFromShipments(shipmentIds: $shipmentIds, offCycleReason: $offCycleReason) {
-    id
-    number
-  }
-}
-
 mutation CreateOrder($input: OrderInput!) {
   createOrder(input: $input) {
     id
@@ -50,8 +36,24 @@ mutation UpdateOrder($id: ID!, $input: OrderInput!) {
   }
 }
 
-mutation AddOrderCharge($orderId: ID!, $description: String!, $amount: Decimal!) {
-  addOrderCharge(orderId: $orderId, description: $description, amount: $amount) {
+mutation AddOrderCharge(
+  $orderId: ID!
+  $description: String!
+  $amount: Decimal!
+  $allocations: [ChargeAllocationInput!]
+) {
+  addOrderCharge(
+    orderId: $orderId
+    description: $description
+    amount: $amount
+    allocations: $allocations
+  ) {
+    ...OrderMutationResult
+  }
+}
+
+mutation SetOrderChargeAllocations($input: SetOrderChargeAllocationsInput!) {
+  setOrderChargeAllocations(input: $input) {
     ...OrderMutationResult
   }
 }

@@ -4,6 +4,8 @@ fragment InvoiceTableRowFields on Invoice {
   shipmentId
   orderId
   customerId
+  shipperCustomerId
+  isSplitBill
   number
   billType
   scope

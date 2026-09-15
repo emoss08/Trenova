@@ -31,6 +31,7 @@ type EDIMessage struct {
 	TemplateID               pulid.ID                    `json:"templateId"               bun:"template_id,type:VARCHAR(100),nullzero"`
 	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        bun:"template_version_id,type:VARCHAR(100),nullzero"`
 	ShipmentID               pulid.ID                    `json:"shipmentId"               bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	InvoiceID                pulid.ID                    `json:"invoiceId"                bun:"invoice_id,type:VARCHAR(100),nullzero"`
 	TransferID               pulid.ID                    `json:"transferId"               bun:"transfer_id,type:VARCHAR(100),nullzero"`
 	InboundFileID            pulid.ID                    `json:"inboundFileId"            bun:"inbound_file_id,type:VARCHAR(100),nullzero"`
 	Direction                DocumentDirection           `json:"direction"                bun:"direction,type:edi_document_direction_enum,notnull"`

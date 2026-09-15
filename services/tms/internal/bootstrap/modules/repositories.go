@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/costingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
@@ -108,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerunrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicesharerepository"
@@ -115,6 +117,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalreversalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalsourcerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/latechargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
@@ -289,6 +292,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	sequenceconfigrepository.New,
 	shipmentcontrolrepository.New,
 	shipmentadditionalchargerepository.New,
+	chargeallocationrepository.New,
 	shipmentcommodityrepository.New,
 	shipmentcommentrepository.New,
 	shipmenteventrepository.New,
@@ -373,6 +377,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	invoiceadjustmentcontrolrepository.New,
 	invoiceadjustmentrepository.New,
 	invoicerepository.New,
+	invoicedisputerepository.New,
+	latechargerepository.New,
 	invoicerunrepository.New,
 	invoicesharerepository.New,
 	journalentryrepository.New,

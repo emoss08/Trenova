@@ -109,47 +109,48 @@ func (_c *MockBillingQueueRepository_Create_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// ExistsByShipmentAndType provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) ExistsByShipmentAndType(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, billType billingqueue.BillType) (bool, error) {
-	ret := _mock.Called(ctx, tenantInfo, shipmentID, billType)
+// ExistsByShipmentPayerAndType provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ExistsByShipmentPayerAndType(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType) (bool, error) {
+	ret := _mock.Called(ctx, tenantInfo, shipmentID, payerID, billType)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ExistsByShipmentAndType")
+		panic("no return value specified for ExistsByShipmentPayerAndType")
 	}
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, billingqueue.BillType) (bool, error)); ok {
-		return returnFunc(ctx, tenantInfo, shipmentID, billType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) (bool, error)); ok {
+		return returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, billingqueue.BillType) bool); ok {
-		r0 = returnFunc(ctx, tenantInfo, shipmentID, billType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) bool); ok {
+		r0 = returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, billingqueue.BillType) error); ok {
-		r1 = returnFunc(ctx, tenantInfo, shipmentID, billType)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID, pulid.ID, billingqueue.BillType) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, shipmentID, payerID, billType)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockBillingQueueRepository_ExistsByShipmentAndType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsByShipmentAndType'
-type MockBillingQueueRepository_ExistsByShipmentAndType_Call struct {
+// MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistsByShipmentPayerAndType'
+type MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call struct {
 	*mock.Call
 }
 
-// ExistsByShipmentAndType is a helper method to define mock.On call
+// ExistsByShipmentPayerAndType is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
 //   - shipmentID pulid.ID
+//   - payerID pulid.ID
 //   - billType billingqueue.BillType
-func (_e *MockBillingQueueRepository_Expecter) ExistsByShipmentAndType(ctx any, tenantInfo any, shipmentID any, billType any) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
-	return &MockBillingQueueRepository_ExistsByShipmentAndType_Call{Call: _e.mock.On("ExistsByShipmentAndType", ctx, tenantInfo, shipmentID, billType)}
+func (_e *MockBillingQueueRepository_Expecter) ExistsByShipmentPayerAndType(ctx any, tenantInfo any, shipmentID any, payerID any, billType any) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
+	return &MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call{Call: _e.mock.On("ExistsByShipmentPayerAndType", ctx, tenantInfo, shipmentID, payerID, billType)}
 }
 
-func (_c *MockBillingQueueRepository_ExistsByShipmentAndType_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, billType billingqueue.BillType)) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
+func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -163,26 +164,99 @@ func (_c *MockBillingQueueRepository_ExistsByShipmentAndType_Call) Run(run func(
 		if args[2] != nil {
 			arg2 = args[2].(pulid.ID)
 		}
-		var arg3 billingqueue.BillType
+		var arg3 pulid.ID
 		if args[3] != nil {
-			arg3 = args[3].(billingqueue.BillType)
+			arg3 = args[3].(pulid.ID)
+		}
+		var arg4 billingqueue.BillType
+		if args[4] != nil {
+			arg4 = args[4].(billingqueue.BillType)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_ExistsByShipmentAndType_Call) Return(b bool, err error) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
-	_c.Call.Return(b, err)
+func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) Return(v0 bool, err error) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
+	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_ExistsByShipmentAndType_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, billType billingqueue.BillType) (bool, error)) *MockBillingQueueRepository_ExistsByShipmentAndType_Call {
+func (_c *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID, payerID pulid.ID, billType billingqueue.BillType) (bool, error)) *MockBillingQueueRepository_ExistsByShipmentPayerAndType_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListActiveInvoiceItemsByShipmentIDs provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListActiveInvoiceItemsByShipmentIDs(ctx context.Context, req *repositories.ListActiveInvoiceItemsRequest) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListActiveInvoiceItemsByShipmentIDs")
+	}
+
+	var r0 map[pulid.ID][]*billingqueue.BillingQueueItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveInvoiceItemsRequest) (map[pulid.ID][]*billingqueue.BillingQueueItem, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveInvoiceItemsRequest) map[pulid.ID][]*billingqueue.BillingQueueItem); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID][]*billingqueue.BillingQueueItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListActiveInvoiceItemsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListActiveInvoiceItemsByShipmentIDs'
+type MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call struct {
+	*mock.Call
+}
+
+// ListActiveInvoiceItemsByShipmentIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListActiveInvoiceItemsRequest
+func (_e *MockBillingQueueRepository_Expecter) ListActiveInvoiceItemsByShipmentIDs(ctx any, req any) *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call {
+	return &MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call{Call: _e.mock.On("ListActiveInvoiceItemsByShipmentIDs", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call) Run(run func(ctx context.Context, req *repositories.ListActiveInvoiceItemsRequest)) *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListActiveInvoiceItemsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListActiveInvoiceItemsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call) Return(v0 map[pulid.ID][]*billingqueue.BillingQueueItem, err error) *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListActiveInvoiceItemsRequest) (map[pulid.ID][]*billingqueue.BillingQueueItem, error)) *MockBillingQueueRepository_ListActiveInvoiceItemsByShipmentIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -655,6 +729,74 @@ func (_c *MockBillingQueueRepository_AttachInvoice_Call) Return(n int64, err err
 }
 
 func (_c *MockBillingQueueRepository_AttachInvoice_Call) RunAndReturn(run func(ctx context.Context, req *repositories.AttachInvoiceRequest) (int64, error)) *MockBillingQueueRepository_AttachInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReleaseForInvoice provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ReleaseForInvoice(ctx context.Context, req *repositories.ReleaseForInvoiceRequest) ([]*billingqueue.BillingQueueItem, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseForInvoice")
+	}
+
+	var r0 []*billingqueue.BillingQueueItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ReleaseForInvoiceRequest) ([]*billingqueue.BillingQueueItem, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ReleaseForInvoiceRequest) []*billingqueue.BillingQueueItem); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*billingqueue.BillingQueueItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ReleaseForInvoiceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ReleaseForInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReleaseForInvoice'
+type MockBillingQueueRepository_ReleaseForInvoice_Call struct {
+	*mock.Call
+}
+
+// ReleaseForInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ReleaseForInvoiceRequest
+func (_e *MockBillingQueueRepository_Expecter) ReleaseForInvoice(ctx any, req any) *MockBillingQueueRepository_ReleaseForInvoice_Call {
+	return &MockBillingQueueRepository_ReleaseForInvoice_Call{Call: _e.mock.On("ReleaseForInvoice", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ReleaseForInvoice_Call) Run(run func(ctx context.Context, req *repositories.ReleaseForInvoiceRequest)) *MockBillingQueueRepository_ReleaseForInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ReleaseForInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ReleaseForInvoiceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ReleaseForInvoice_Call) Return(v0 []*billingqueue.BillingQueueItem, err error) *MockBillingQueueRepository_ReleaseForInvoice_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ReleaseForInvoice_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ReleaseForInvoiceRequest) ([]*billingqueue.BillingQueueItem, error)) *MockBillingQueueRepository_ReleaseForInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }

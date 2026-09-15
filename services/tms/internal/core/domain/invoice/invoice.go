@@ -112,6 +112,21 @@ type Invoice struct {
 	SupersededByInvoiceID     pulid.ID              `json:"supersededByInvoiceId"     bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceAdjustmentID pulid.ID              `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
 	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull"`
+	ShipperCustomerID         pulid.ID              `json:"shipperCustomerId"         bun:"shipper_customer_id,type:VARCHAR(100),nullzero"`
+	IsSplitBill               bool                  `json:"isSplitBill"               bun:"is_split_bill,type:BOOLEAN,notnull"`
+	VoidedAt                  *int64                `json:"voidedAt"                  bun:"voided_at,type:BIGINT,nullzero"`
+	VoidedByID                pulid.ID              `json:"voidedById"                bun:"voided_by_id,type:VARCHAR(100),nullzero"`
+	VoidReason                string                `json:"voidReason"                bun:"void_reason,type:TEXT,nullzero"`
+	VoidDisposition           VoidDisposition       `json:"voidDisposition"           bun:"void_disposition,type:VARCHAR(20),nullzero"`
+	VoidedByAdjustmentID      pulid.ID              `json:"voidedByAdjustmentId"      bun:"voided_by_adjustment_id,type:VARCHAR(100),nullzero"`
+	ReferenceInvoiceID        pulid.ID              `json:"referenceInvoiceId"        bun:"reference_invoice_id,type:VARCHAR(100),nullzero"`
+	MemoReason                string                `json:"memoReason"                bun:"memo_reason,type:TEXT,nullzero"`
+	MemoKind                  MemoKind              `json:"memoKind"                  bun:"memo_kind,type:VARCHAR(30),nullzero"`
+	EDISendStatus             EDISendStatus         `json:"ediSendStatus"             bun:"edi_send_status,type:VARCHAR(30),notnull,default:'NotSent'"`
+	LastEDIMessageID          pulid.ID              `json:"lastEdiMessageId"          bun:"last_edi_message_id,type:VARCHAR(100),nullzero"`
+	EDISentAt                 *int64                `json:"ediSentAt"                 bun:"edi_sent_at,type:BIGINT,nullzero"`
+	LastEDIError              string                `json:"lastEdiError"              bun:"last_edi_error,type:TEXT,nullzero"`
+	BalanceDueMinor           int64                 `json:"balanceDueMinor"           bun:"balance_due_minor,scanonly"`
 	Version                   int64                 `json:"version"                   bun:"version,type:BIGINT,notnull"`
 	CreatedAt                 int64                 `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                 int64                 `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -120,6 +135,8 @@ type Invoice struct {
 	Shipment         *shipment.Shipment             `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Order            *order.Order                   `json:"order,omitempty"            bun:"rel:belongs-to,join:order_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Customer         *customer.Customer             `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ShipperCustomer  *customer.Customer             `json:"shipperCustomer,omitempty"  bun:"rel:belongs-to,join:shipper_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReferenceInvoice *Invoice                       `json:"referenceInvoice,omitempty" bun:"rel:belongs-to,join:reference_invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	PDFDocument      *document.Document             `json:"pdfDocument,omitempty"      bun:"rel:belongs-to,join:pdf_document_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Lines            []*InvoiceLine                 `json:"lines,omitempty"            bun:"rel:has-many,join:id=invoice_id"`
 	Attachments      []*Attachment                  `json:"attachments,omitempty"      bun:"rel:has-many,join:id=invoice_id"`
@@ -151,6 +168,8 @@ type InvoiceLine struct {
 	Rate                decimal.NullDecimal        `json:"rate"                bun:"rate,type:NUMERIC(19,4),nullzero"`
 	RateBasisAmount     decimal.NullDecimal        `json:"rateBasisAmount"     bun:"rate_basis_amount,type:NUMERIC(19,4),nullzero"`
 	FormulaTemplateName string                     `json:"formulaTemplateName" bun:"formula_template_name,type:TEXT,nullzero"`
+	AllocationPercent   decimal.NullDecimal        `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"`
+	ChargeAllocationID  pulid.ID                   `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"`
 
 	Version   int64 `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -389,6 +408,110 @@ func (i *Invoice) validateScope(multiErr *errortypes.MultiError) {
 				"An adjustment invoice must belong to a correction chain",
 			)
 		}
+	case ScopeMemo:
+		if i.BillType != billingqueue.BillTypeCreditMemo &&
+			i.BillType != billingqueue.BillTypeDebitMemo {
+			multiErr.Add(
+				"billType",
+				errortypes.ErrInvalid,
+				"A standalone memo must be a credit memo or a debit memo",
+			)
+		}
+		if strings.TrimSpace(i.MemoReason) == "" {
+			multiErr.Add("memoReason", errortypes.ErrRequired, "A memo needs a reason")
+		}
+		if !i.MemoKind.IsValid() {
+			multiErr.Add("memoKind", errortypes.ErrInvalid, "Invalid memo kind")
+		}
+		if !i.ShipmentID.IsNil() || !i.OrderID.IsNil() {
+			multiErr.Add(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"A standalone memo cannot name a shipment or an order",
+			)
+		}
+	}
+
+	if i.Status == StatusVoided {
+		if strings.TrimSpace(i.VoidReason) == "" {
+			multiErr.Add("voidReason", errortypes.ErrRequired, "A voided invoice must say why")
+		}
+		if i.VoidedAt == nil {
+			multiErr.Add("voidedAt", errortypes.ErrRequired, "A voided invoice must say when")
+		}
+		if !i.VoidDisposition.IsValid() {
+			multiErr.Add("voidDisposition", errortypes.ErrInvalid, "Invalid void disposition")
+		}
+	}
+}
+
+// IsOpen reports whether the invoice still carries a balance a customer owes.
+func (i *Invoice) IsOpen() bool {
+	return i != nil && i.Status == StatusPosted &&
+		(i.BillType == billingqueue.BillTypeInvoice ||
+			i.BillType == billingqueue.BillTypeDebitMemo) &&
+		i.OpenBalanceMinor() > 0
+}
+
+func (i *Invoice) IsCreditMemo() bool {
+	return i != nil && i.BillType == billingqueue.BillTypeCreditMemo
+}
+
+// CreditTotalMinor is the credit a memo carries, as a positive figure.
+func (i *Invoice) CreditTotalMinor() int64 {
+	if !i.IsCreditMemo() {
+		return 0
+	}
+	if i.TotalAmountMinor < 0 {
+		return -i.TotalAmountMinor
+	}
+
+	return i.TotalAmountMinor
+}
+
+// CreditRemainingMinor is what is left of a posted credit memo to apply.
+func (i *Invoice) CreditRemainingMinor() int64 {
+	if !i.IsCreditMemo() || i.Status != StatusPosted {
+		return 0
+	}
+	remaining := i.CreditTotalMinor() - i.AppliedAmountMinor
+	if remaining < 0 {
+		return 0
+	}
+
+	return remaining
+}
+
+// ApplyCreditMinor records part of a credit memo being used against an invoice.
+func (i *Invoice) ApplyCreditMinor(amountMinor int64) {
+	if amountMinor <= 0 || !i.IsCreditMemo() {
+		return
+	}
+	i.AppliedAmountMinor += amountMinor
+	i.AppliedAmount = money.DecimalFromMinor(i.AppliedAmountMinor)
+	i.syncCreditSettlement()
+}
+
+func (i *Invoice) ReleaseCreditMinor(amountMinor int64) {
+	if amountMinor <= 0 || !i.IsCreditMemo() {
+		return
+	}
+	i.AppliedAmountMinor -= amountMinor
+	if i.AppliedAmountMinor < 0 {
+		i.AppliedAmountMinor = 0
+	}
+	i.AppliedAmount = money.DecimalFromMinor(i.AppliedAmountMinor)
+	i.syncCreditSettlement()
+}
+
+func (i *Invoice) syncCreditSettlement() {
+	switch {
+	case i.AppliedAmountMinor <= 0:
+		i.SettlementStatus = SettlementStatusUnpaid
+	case i.AppliedAmountMinor >= i.CreditTotalMinor():
+		i.SettlementStatus = SettlementStatusPaid
+	default:
+		i.SettlementStatus = SettlementStatusPartiallyPaid
 	}
 }
 
@@ -418,7 +541,7 @@ func (i *Invoice) LegShipmentIDs() []pulid.ID {
 }
 
 func (i *Invoice) OpenBalanceAmount() decimal.Decimal {
-	if i.BillType == billingqueue.BillTypeCreditMemo {
+	if i.BillType == billingqueue.BillTypeCreditMemo || i.Status == StatusVoided {
 		return decimal.Zero
 	}
 
@@ -446,7 +569,7 @@ func (i *Invoice) SyncMinorAmounts() {
 }
 
 func (i *Invoice) OpenBalanceMinor() int64 {
-	if i.BillType == billingqueue.BillTypeCreditMemo {
+	if i.BillType == billingqueue.BillTypeCreditMemo || i.Status == StatusVoided {
 		return 0
 	}
 	openBalance := i.TotalAmountMinor - i.AppliedAmountMinor
@@ -502,6 +625,15 @@ func (l *InvoiceLine) CopyChargeDetail(src *InvoiceLine) {
 	l.Rate = src.Rate
 	l.RateBasisAmount = src.RateBasisAmount
 	l.FormulaTemplateName = src.FormulaTemplateName
+	l.AllocationPercent = src.AllocationPercent
+	l.ChargeAllocationID = src.ChargeAllocationID
+}
+
+// IsPartialShare reports whether the line bills only part of its charge, which
+// is what a split invoice says on the face of every shared line.
+func (l *InvoiceLine) IsPartialShare() bool {
+	return l != nil && l.AllocationPercent.Valid &&
+		!l.AllocationPercent.Decimal.Equal(decimal.NewFromInt(100))
 }
 
 func (l *InvoiceLine) SyncMinorAmount() {
@@ -682,6 +814,16 @@ func (i *Invoice) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				ForeignKey:   "customer_id",
 				ReferenceKey: "id",
 				Alias:        "cus",
+				Queryable:    true,
+			},
+			{
+				Field:        "shipperCustomer",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*customer.Customer)(nil),
+				TargetTable:  "customers",
+				ForeignKey:   "shipper_customer_id",
+				ReferenceKey: "id",
+				Alias:        "shipper_cus",
 				Queryable:    true,
 			},
 		},

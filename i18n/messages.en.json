@@ -1227,7 +1227,7 @@
       "service/invoiceservice"
     ]
   },
-  "A billing queue item already exists for this shipment": {
+  "A billing queue item already exists for this shipment and payer": {
     "sites": 1,
     "scope": [
       "go"
@@ -1236,7 +1236,7 @@
       "service/invoiceservice"
     ]
   },
-  "A billing queue item already exists for this shipment and bill type": {
+  "A billing queue item already exists for this shipment, payer and bill type": {
     "sites": 1,
     "scope": [
       "go"
@@ -1245,7 +1245,7 @@
       "service/billingqueueservice"
     ]
   },
-  "A billing queue item must be attached to a shipment, an order or a source invoice": {
+  "A billing queue item must be attached to a shipment, an order, a source invoice or a bill-to customer": {
     "sites": 1,
     "scope": [
       "go"
@@ -1591,6 +1591,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "A charge must be split either by percent or by amount, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "A chart can plot at most {0} measures": {
@@ -1939,6 +1948,24 @@
       "service/workercredentialservice"
     ]
   },
+  "A credit memo cannot be applied to itself": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/customerpayment"
+    ]
+  },
+  "A credit memo settles invoices and debit memos only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
   "A current operational-status snapshot, not a total shipment count.": {
     "sites": 1,
     "scope": [
@@ -1973,6 +2000,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "A customer whose late charges for a run add up to less than this is skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "A customized home screen needs a layout": {
@@ -2240,6 +2276,15 @@
     ],
     "areas": [
       "template/notification.dash.disciplinary_issued"
+    ]
+  },
+  "A dispute is open; late charges pause until it closes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "A disqualified carrier must record the disqualification reason": {
@@ -2560,6 +2605,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A freight allocation targets only the shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "A friendly name to identify this subscription.": {
@@ -2967,6 +3021,60 @@
       "domain/report"
     ]
   },
+  "A memo can only reference a posted invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "A memo may carry at most {0} lines": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "A memo must be a credit memo or a debit memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "A memo needs a reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
+  "A memo needs at least one line": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "A memo with no shipment behind it: a goodwill credit, a returned-cheque fee, a correction the customer agreed to. To credit or rebill an invoice, use Adjust Invoice on that invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A metric strip holds at most {0} metrics": {
     "sites": 1,
     "scope": [
@@ -3076,6 +3184,15 @@
       "go/other"
     ]
   },
+  "A party other than shipper or consignee pays": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "A passed return-to-duty test only releases the driver once this date is set.": {
     "sites": 1,
     "scope": [
@@ -3101,6 +3218,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "A percent allocation cannot carry an amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "A period cannot end before it begins": {
@@ -3243,6 +3369,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "A posted invoice is voided through a full-reversal credit memo. The invoice keeps its number and stays readable, but nothing more is owed on it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "A posted reversal must name the entry it created": {
@@ -3723,6 +3858,15 @@
     ],
     "areas": [
       "service/driversettlementservice"
+    ]
+  },
+  "A resolved dispute needs a resolution": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
     ]
   },
   "A response has already been recorded for this offer. Contact the broker if anything changed.": {
@@ -4323,6 +4467,24 @@
       "domain/worker"
     ]
   },
+  "A standalone memo cannot name a shipment or an order": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
+  "A standalone memo must be a credit memo or a debit memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
   "A start date is required": {
     "sites": 2,
     "scope": [
@@ -4806,6 +4968,33 @@
       "service/carriersettlementservice",
       "service/driversettlementservice",
       "service/rateconfirmationservice"
+    ]
+  },
+  "A voided invoice cannot be disputed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "A voided invoice must say when": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
+  "A voided invoice must say why": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
     ]
   },
   "A voided rate confirmation must record its reason": {
@@ -6185,6 +6374,15 @@
       "routes/shipment"
     ]
   },
+  "Accessorial disputed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Accessorial {0}": {
     "sites": 1,
     "scope": [
@@ -6209,7 +6407,7 @@
     ]
   },
   "Accessorials {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -6491,25 +6689,27 @@
     ]
   },
   "Accounting date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/invoice"
     ]
   },
   "Accounting date is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/customerpayment",
       "service/customerpaymentservice"
     ]
   },
   "Accounting date must fall within a fiscal period": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -7520,12 +7720,13 @@
     ]
   },
   "Actor is required": {
-    "sites": 5,
+    "sites": 9,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/invoiceservice"
+      "service/invoiceservice",
+      "service/latechargeservice"
     ]
   },
   "Actor label cannot be longer than 100 characters": {
@@ -8774,6 +8975,15 @@
       "routes/shipment"
     ]
   },
+  "Add line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Add manual adjustment": {
     "sites": 2,
     "scope": [
@@ -8917,6 +9127,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Add payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Add place": {
@@ -9785,7 +10004,7 @@
     ]
   },
   "Adjustment": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -9793,6 +10012,7 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/billing-queue",
+      "routes/invoice",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -10270,13 +10490,14 @@
     ]
   },
   "Aging": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-dashboard",
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "routes/invoice"
     ]
   },
   "Aging Summary": {
@@ -10745,13 +10966,14 @@
     ]
   },
   "All customers": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/ar-aging",
-      "routes/ar-open-items"
+      "routes/ar-open-items",
+      "routes/late-charges"
     ]
   },
   "All database sessions are running clean": {
@@ -10943,6 +11165,15 @@
       "routes/edi"
     ]
   },
+  "All payers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "All required equipment and workers have been assigned to this shipment's moves.": {
     "sites": 1,
     "scope": [
@@ -11006,7 +11237,7 @@
       "service/invoiceservice"
     ]
   },
-  "All shipments on one invoice must share the billing customer": {
+  "All shipments on one invoice must bill the same payer": {
     "sites": 1,
     "scope": [
       "go"
@@ -11108,6 +11339,60 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Allocated {0} · {1} remaining": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Allocated {0}% · {1}% remaining": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Allocation method is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Allocation method must be Percent or Amount": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Allocation points at an additional charge that does not exist": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Allocation points at an additional charge that is not on this shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Allow": {
@@ -11702,13 +11987,14 @@
     ]
   },
   "Amount": {
-    "sites": 36,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/accessorial-charge",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
@@ -11806,6 +12092,15 @@
       "apps/web/lib"
     ]
   },
+  "Amount allocations for this charge must add up to {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
   "Amount cannot be negative": {
     "sites": 3,
     "scope": [
@@ -11840,7 +12135,7 @@
     ]
   },
   "Amount is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -11859,7 +12154,7 @@
     ]
   },
   "Amount must be a valid number": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -11868,14 +12163,16 @@
     ]
   },
   "Amount must be greater than zero": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/driverpay",
-      "packages/shared/types"
+      "domain/shipment",
+      "packages/shared/types",
+      "service/invoiceservice"
     ]
   },
   "Amount per Application": {
@@ -11904,6 +12201,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Amount to apply to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Amount: {0}": {
@@ -11942,6 +12248,15 @@
       "domain/tender"
     ]
   },
+  "An EDI send for this invoice is already in progress": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "An Error has occurred. Please try again.": {
     "sites": 1,
     "scope": [
@@ -11976,6 +12291,25 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "An accessorial allocation cannot target an order charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "An accessorial allocation must name its charge": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment",
+      "go/other"
     ]
   },
   "An account with this email address already exists. Contact your carrier to resolve this.": {
@@ -12122,6 +12456,24 @@
       "routes/rate-agreement"
     ]
   },
+  "An allocation already carried on an invoice cannot be removed": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An allocation already carried on an invoice cannot change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An amendment must add or replace at least one rate": {
     "sites": 1,
     "scope": [
@@ -12147,6 +12499,15 @@
     ],
     "areas": [
       "service/rateagreementservice"
+    ]
+  },
+  "An amount allocation cannot carry a percent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "An announcement is at most {0} characters": {
@@ -12711,6 +13072,15 @@
       "service/invoicerunservice"
     ]
   },
+  "An invoiced order charge cannot be re-allocated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice"
+    ]
+  },
   "An open case can still accrue days away or restricted; close it once the count is final.": {
     "sites": 1,
     "scope": [
@@ -12736,6 +13106,24 @@
     ],
     "areas": [
       "routes/tractor"
+    ]
+  },
+  "An order charge allocation must name its charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "An order charge allocation targets only the order charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "An order invoice must name the order it bills": {
@@ -13570,6 +13958,16 @@
       "routes/admin"
     ]
   },
+  "Application is required": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql",
+      "service/customerpaymentservice"
+    ]
+  },
   "Application role assigned to users in this external group.": {
     "sites": 1,
     "scope": [
@@ -13580,12 +13978,13 @@
     ]
   },
   "Applications": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/invoice"
     ]
   },
   "Applications and refunds must be negative": {
@@ -13597,15 +13996,25 @@
       "domain/driverpay"
     ]
   },
+  "Applications exceed the credit memo's remaining balance by {0} minor units": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
   "Applied": {
-    "sites": 6,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/ar-open-items",
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/invoice"
     ]
   },
   "Applied after guardrails; production, preview, and scenarios all round the same way": {
@@ -13624,6 +14033,25 @@
     ],
     "areas": [
       "domain/customerpayment"
+    ]
+  },
+  "Applied amount exceeds the invoice open balance by {0} minor units": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
+  "Applied amount must be greater than zero": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/customerpayment",
+      "service/customerpaymentservice"
     ]
   },
   "Applied amount must not be negative": {
@@ -13696,6 +14124,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Applied to invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Applied to new escrow accounts unless overridden per account.": {
@@ -13780,13 +14217,14 @@
     ]
   },
   "Apply": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
+      "routes/invoice",
       "routes/reports",
       "routes/worker"
     ]
@@ -13926,6 +14364,15 @@
       "domain/rateagreement"
     ]
   },
+  "Apply credit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Apply recurring deductions, escrow, and advance recovery": {
     "sites": 1,
     "scope": [
@@ -13971,6 +14418,15 @@
       "apps/web/components"
     ]
   },
+  "Apply to invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Apply to open invoices": {
     "sites": 1,
     "scope": [
@@ -13980,6 +14436,15 @@
       "routes/customer-payments"
     ]
   },
+  "Apply to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Apply worker availability and paid-time-away restrictions during assignment.": {
     "sites": 1,
     "scope": [
@@ -13987,6 +14452,33 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Apply {0} to invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Applying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Applying a credit memo requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
     ]
   },
   "Applying replaces your {0} existing {1}.": {
@@ -15145,6 +15637,15 @@
       "apps/web/lib"
     ]
   },
+  "As of": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "As of Date": {
     "sites": 2,
     "scope": [
@@ -15171,6 +15672,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "As-of date is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
     ]
   },
   "As-of date must be a valid date (YYYY-MM-DD)": {
@@ -15271,6 +15781,60 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Assess late charges": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "Assess late charges now?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "Assess late charges on overdue invoices for every tenant that opted in": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Assess late charges on overdue invoices for tenants with assessment enabled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Assess now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "Assessment Mode": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "Asset": {
@@ -16070,6 +16634,15 @@
       "domain/invoiceadjustment"
     ]
   },
+  "At least one application is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
   "At least one auto-post source event is required when journal posting mode is Automatic": {
     "sites": 1,
     "scope": [
@@ -16389,6 +16962,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At most the open balance of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "At most {0} quick actions can be selected": {
@@ -17575,7 +18157,7 @@
     ]
   },
   "Automatic": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -18277,7 +18859,7 @@
     ]
   },
   "BOL is required before the shipment can be invoiced": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -19204,11 +19786,12 @@
     ]
   },
   "Basis": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/late-charges",
       "routes/shipment"
     ]
   },
@@ -19604,14 +20187,17 @@
     ]
   },
   "Bill To": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/carrier-invoice-matching",
+      "routes/invoice-register",
       "routes/rate-agreement",
+      "routes/shipment",
       "template/invoice.pdf"
     ]
   },
@@ -19724,6 +20310,15 @@
       "routes/order"
     ]
   },
+  "Bill to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Bill to name cannot be longer than 200 characters": {
     "sites": 1,
     "scope": [
@@ -19731,6 +20326,24 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Bill to one payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Bill to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Bill type": {
@@ -19777,6 +20390,43 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Bill-to customer belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Bill-to customer is not active": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Bill-to customer is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingqueue",
+      "domain/shipment"
+    ]
+  },
+  "Bill-to customer was not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "Bill-to name is required": {
@@ -19882,6 +20532,15 @@
       "routes/shipment"
     ]
   },
+  "Billed on behalf of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Billed outside this customer's statement": {
     "sites": 1,
     "scope": [
@@ -19898,6 +20557,16 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Billed to another payer": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/shipment"
     ]
   },
   "Billed today": {
@@ -20182,6 +20851,24 @@
       "routes/customer"
     ]
   },
+  "Billing by payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Billing control": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "Billing control is required for invoice auto-posting": {
     "sites": 1,
     "scope": [
@@ -20365,6 +21052,15 @@
       "service/invoiceservice"
     ]
   },
+  "Billing queue item {0} cannot be released from {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Billing queue review and approval": {
     "sites": 1,
     "scope": [
@@ -20375,7 +21071,7 @@
     ]
   },
   "Billing queue service is unavailable": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -20390,6 +21086,15 @@
     ],
     "areas": [
       "service/billingcontrolservice"
+    ]
+  },
+  "Billing queue transfer did not return a result": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Billing queue transfer did not return an item": {
@@ -22104,7 +22809,7 @@
     ]
   },
   "Cancel": {
-    "sites": 225,
+    "sites": 233,
     "scope": [
       "ts"
     ],
@@ -22142,6 +22847,7 @@
       "routes/journal-reversal",
       "routes/jurisdiction-rule",
       "routes/jurisdiction-rule-override",
+      "routes/late-charges",
       "routes/location",
       "routes/manual-journal",
       "routes/order",
@@ -24938,7 +25644,7 @@
     ]
   },
   "Charge": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -24946,6 +25652,7 @@
     "areas": [
       "routes/edi",
       "routes/invoice",
+      "routes/late-charges",
       "routes/rate-agreement",
       "routes/shipment",
       "service/edix12inspect"
@@ -24995,6 +25702,33 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Charge kind is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Charge kind must be Freight, Accessorial or OrderCharge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Charge must be greater than zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
     ]
   },
   "Charge removed": {
@@ -25054,6 +25788,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Charges are locked: another payer's share of this shipment is already on invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Charges before other amounts, with currency.": {
@@ -25579,6 +26322,15 @@
       "routes/customer-ledger"
     ]
   },
+  "Choose a dispute reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Choose a document type and name the EDI template before editing its version details.": {
     "sites": 1,
     "scope": [
@@ -25859,6 +26611,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Choose how the dispute was resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
     ]
   },
   "Choose how the value is compared": {
@@ -27536,7 +28297,7 @@
     ]
   },
   "Close": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -27984,6 +28745,15 @@
       "packages/shared/components"
     ]
   },
+  "Closed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Closing a review schedules the next one this far out. Leave empty for one-off reviews.": {
     "sites": 1,
     "scope": [
@@ -28392,6 +29162,15 @@
     "areas": [
       "routes/invoice",
       "routes/org-structure"
+    ]
+  },
+  "Collect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Collectability is reduced without a notice receipt": {
@@ -34586,6 +35365,15 @@
       "domain/permission"
     ]
   },
+  "Create credit memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Create custom field definitions": {
     "sites": 1,
     "scope": [
@@ -34611,6 +35399,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Create debit memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Create draft settlements for every driver listed here in one pass": {
@@ -35358,7 +36155,7 @@
     ]
   },
   "Credit Memo": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -35462,6 +36259,53 @@
       "service/glaccountservice"
     ]
   },
+  "Credit hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Credit hold: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Credit issued": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Credit memo": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/invoice"
+    ]
+  },
+  "Credit memo is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/customerpayment",
+      "service/customerpaymentservice"
+    ]
+  },
   "Credit memo total must be zero or negative": {
     "sites": 1,
     "scope": [
@@ -35480,7 +36324,25 @@
       "domain/invoiceadjustment"
     ]
   },
+  "Credit remaining": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Credit the original and issue a corrected invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Credit unapplied": {
     "sites": 1,
     "scope": [
       "ts"
@@ -35871,7 +36733,7 @@
     ]
   },
   "Current": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -36419,12 +37281,13 @@
     ]
   },
   "Customer": {
-    "sites": 33,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "packages/shared/lib",
       "packages/shared/types",
@@ -36437,6 +37300,7 @@
       "routes/detention-policy",
       "routes/distance-override",
       "routes/edi",
+      "routes/late-charges",
       "routes/order",
       "routes/rate-agreement",
       "routes/recurring-shipment",
@@ -36668,7 +37532,7 @@
     ]
   },
   "Customer is required": {
-    "sites": 9,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -36677,11 +37541,14 @@
       "domain/detention",
       "domain/documenttemplate",
       "domain/edi",
+      "domain/invoice",
       "domain/invoicerun",
+      "domain/latecharge",
       "domain/order",
       "domain/rateagreement",
       "domain/shipment",
-      "service/invoicerunservice"
+      "service/invoicerunservice",
+      "service/invoiceservice"
     ]
   },
   "Customer lookup is not available": {
@@ -36829,6 +37696,15 @@
     ],
     "areas": [
       "service/detentionservice"
+    ]
+  },
+  "Customer withdrew": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Customer, rating method, and charge amounts": {
@@ -37690,7 +38566,7 @@
     ]
   },
   "Date": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -37707,6 +38583,7 @@
       "routes/edi",
       "routes/escrow-account",
       "routes/holiday",
+      "routes/invoice",
       "routes/osha",
       "routes/shipment",
       "routes/worker",
@@ -38339,6 +39216,15 @@
       "routes/worker"
     ]
   },
+  "Days past due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Days restricted or transferred": {
     "sites": 1,
     "scope": [
@@ -38515,11 +39401,13 @@
     ]
   },
   "Dead-lettered": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/edi"
     ]
   },
@@ -38592,7 +39480,7 @@
     ]
   },
   "Debit Memo": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -38625,6 +39513,15 @@
     ],
     "areas": [
       "service/glaccountservice"
+    ]
+  },
+  "Debit memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Debited to": {
@@ -41696,7 +42593,7 @@
     ]
   },
   "Description": {
-    "sites": 136,
+    "sites": 138,
     "scope": [
       "go",
       "ts"
@@ -41855,7 +42752,7 @@
     ]
   },
   "Description is required": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go"
     ],
@@ -41870,7 +42767,8 @@
       "domain/invoiceadjustment",
       "domain/order",
       "domain/shipment",
-      "go/other"
+      "go/other",
+      "service/invoiceservice"
     ]
   },
   "Description is required for custom components": {
@@ -43051,7 +43949,7 @@
     ]
   },
   "Disabled": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -43643,6 +44541,42 @@
       "routes/billing-control"
     ]
   },
+  "Disposition must be Rebill or DoNotRebill": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
+    ]
+  },
+  "Dispute cases raised against posted invoices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Dispute is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Dispute moved to review": {
     "sites": 1,
     "scope": [
@@ -43650,6 +44584,15 @@
     ],
     "areas": [
       "routes/settlement-dispute"
+    ]
+  },
+  "Dispute opened on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Dispute packet copied": {
@@ -43679,6 +44622,24 @@
       "routes/detention-desk"
     ]
   },
+  "Dispute resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Dispute withdrawn": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Dispute withdrawn.": {
     "sites": 1,
     "scope": [
@@ -43689,13 +44650,15 @@
     ]
   },
   "Disputed": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/components",
       "routes/accounting-dashboard",
       "routes/ar-open-items",
+      "routes/invoice-register",
       "routes/shipment"
     ]
   },
@@ -43706,6 +44669,34 @@
     ],
     "areas": [
       "routes/invoice-adjustment-control"
+    ]
+  },
+  "Disputed amount": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Disputed amount exceeds the open balance of {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "Disputed amount must be greater than zero": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice",
+      "service/invoicedisputeservice"
     ]
   },
   "Disputed invoice adjustments must not be allowed without approval": {
@@ -43726,6 +44717,24 @@
       "routes/settlement-dispute"
     ]
   },
+  "Disputed only": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Disputed · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-dashboard"
+    ]
+  },
   "Disputed — the state contradicts this": {
     "sites": 1,
     "scope": [
@@ -43736,12 +44745,13 @@
     ]
   },
   "Disputes": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "routes/invoice"
     ]
   },
   "Disqualification Reason": {
@@ -44109,6 +45119,15 @@
       "apps/web/lib"
     ]
   },
+  "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Divided by (÷)": {
     "sites": 1,
     "scope": [
@@ -44290,6 +45309,15 @@
     ]
   },
   "Do Not Use": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Do not rebill": {
     "sites": 1,
     "scope": [
       "ts"
@@ -45355,7 +46383,7 @@
     ]
   },
   "Draft": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -45368,6 +46396,7 @@
       "routes/admin",
       "routes/carrier-settlement-workspace",
       "routes/jurisdiction-rule",
+      "routes/late-charges",
       "routes/osha",
       "routes/pto-policy",
       "routes/random-testing",
@@ -46690,6 +47719,15 @@
       "routes/shipment"
     ]
   },
+  "Drops the case without recording an outcome. The invoice stops reading Disputed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Drug": {
     "sites": 4,
     "scope": [
@@ -46805,7 +47843,7 @@
     ]
   },
   "Due Date": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -46814,7 +47852,8 @@
       "go/other",
       "routes/ar-open-items",
       "routes/customer-statement",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/invoice-register"
     ]
   },
   "Due after": {
@@ -46994,6 +48033,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "Duplicate billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Duplicate chart ID": {
@@ -47281,13 +48329,15 @@
     ]
   },
   "EDI": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/invoice",
+      "routes/invoice-register"
     ]
   },
   "EDI 210": {
@@ -47308,6 +48358,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "EDI 210 for {0} queued": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "EDI 214 payload generated": {
     "sites": 1,
     "scope": [
@@ -47324,6 +48383,15 @@
     ],
     "areas": [
       "routes/service-failure-reason-code"
+    ]
+  },
+  "EDI Delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "EDI Inbound File Retention (days)": {
@@ -47534,6 +48602,24 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "EDI invoices (210)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
+  "EDI invoicing is not enabled for this customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "EDI is running clean.": {
@@ -48185,6 +49271,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Each invoice may appear once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
     ]
   },
   "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.": {
@@ -49387,6 +50482,15 @@
     ],
     "areas": [
       "service/tenderservice"
+    ]
+  },
+  "Email invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Email is required": {
@@ -52733,6 +53837,15 @@
       "routes/shipment"
     ]
   },
+  "Every invoice issued, with its bill-to, shipper, dates and settlement status.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
+    ]
+  },
   "Every invoice on this statement is under the customer's minimum": {
     "sites": 1,
     "scope": [
@@ -53764,6 +54877,15 @@
     ]
   },
   "Execute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Executed adjustment ID on this invoice": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56020,7 +57142,7 @@
     ]
   },
   "Failed": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -56830,6 +57952,15 @@
       "routes/edi"
     ]
   },
+  "Failed to load the late charge preview. Try refreshing the page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "Failed to load version history": {
     "sites": 1,
     "scope": [
@@ -57260,6 +58391,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Failed to start invoice EDI send": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Failed to start invoice PDF generation": {
@@ -58775,6 +59915,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Find it on the invoice's adjustment panel; it must have executed against this invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Find on the board": {
@@ -60615,6 +61764,15 @@
       "routes/commodity"
     ]
   },
+  "Freight Terms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Freight charges": {
     "sites": 1,
     "scope": [
@@ -60676,6 +61834,51 @@
     ],
     "areas": [
       "routes/commodity"
+    ]
+  },
+  "Freight disposition": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Freight retired, not rebilled": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Freight terms are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Freight terms must be Prepaid, Collect or ThirdParty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Freight {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Freight, accessorial, and total charges per customer with volume, miles, and revenue per mile over a rolling window": {
@@ -62211,6 +63414,15 @@
       "go/other"
     ]
   },
+  "Generate and deliver the outbound EDI 210 for a posted invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Generate archive message": {
     "sites": 1,
     "scope": [
@@ -62338,7 +63550,7 @@
     ]
   },
   "Generated": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -62383,6 +63595,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Generated as a memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Generated at is required": {
@@ -68891,6 +70112,15 @@
     ]
   },
   "Invalid accessorial charge": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Invalid adjustment": {
     "sites": 1,
     "scope": [
       "go"
@@ -68989,8 +70219,26 @@
       "api/graphql"
     ]
   },
+  "Invalid credit memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Invalid credit memo application": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid customer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -69026,7 +70274,7 @@
     ]
   },
   "Invalid dispute": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -69212,7 +70460,7 @@
     ]
   },
   "Invalid invoice": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -69283,6 +70531,16 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Invalid memo kind": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice",
+      "service/invoiceservice"
     ]
   },
   "Invalid method": {
@@ -69378,6 +70636,15 @@
     ]
   },
   "Invalid purchased transportation account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Invalid reference invoice": {
     "sites": 1,
     "scope": [
       "go"
@@ -69550,6 +70817,15 @@
       "service/customfieldservice"
     ]
   },
+  "Invalid void disposition": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
   "Invalid worker": {
     "sites": 10,
     "scope": [
@@ -69677,7 +70953,7 @@
     ]
   },
   "Invoice": {
-    "sites": 13,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -69687,9 +70963,20 @@
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/customer-statement",
+      "routes/invoice",
       "routes/invoice-adjustment-batch",
+      "routes/late-charges",
       "template/invoice.email",
       "template/invoice.pdf"
+    ]
+  },
+  "Invoice #": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
     ]
   },
   "Invoice Adjustment": {
@@ -69748,7 +71035,7 @@
     ]
   },
   "Invoice Date": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -69758,7 +71045,8 @@
       "routes/ar-open-items",
       "routes/carrier-invoice-matching",
       "routes/customer-statement",
-      "routes/invoice"
+      "routes/invoice",
+      "routes/invoice-register"
     ]
   },
   "Invoice Defaults": {
@@ -69771,7 +71059,7 @@
     ]
   },
   "Invoice Delivery": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -69795,6 +71083,15 @@
     ],
     "areas": [
       "routes/billing-control"
+    ]
+  },
+  "Invoice EDI delivery requires workflow processing to be enabled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Invoice ID": {
@@ -69906,6 +71203,16 @@
       "routes/customer"
     ]
   },
+  "Invoice Register": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/invoice-register"
+    ]
+  },
   "Invoice Status": {
     "sites": 1,
     "scope": [
@@ -69927,6 +71234,15 @@
       "service/invoiceservice"
     ]
   },
+  "Invoice actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Invoice adjustment can no longer be processed because its correction group is no longer valid. Refresh the invoice and try again.": {
     "sites": 1,
     "scope": [
@@ -69943,6 +71259,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Invoice adjustments are unavailable; a posted invoice cannot be voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Invoice anyway": {
@@ -69990,6 +71315,16 @@
       "service/customerpaymentservice"
     ]
   },
+  "Invoice cannot be voided from its current status": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice",
+      "service/invoiceservice"
+    ]
+  },
   "Invoice created": {
     "sites": 1,
     "scope": [
@@ -70001,6 +71336,15 @@
   },
   "Invoice customer must match payment customer": {
     "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
+  "Invoice customer must match the credit memo customer": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70081,15 +71425,45 @@
       "service/invoiceadjustmentservice"
     ]
   },
-  "Invoice is required": {
-    "sites": 8,
+  "Invoice has no shipment, order or customer to store generated PDFs against": {
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "go/other"
+    ]
+  },
+  "Invoice is no longer a draft; reload and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Invoice is required": {
+    "sites": 12,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/customerpayment",
       "domain/invoice",
       "domain/invoiceadjustment",
+      "service/customerpaymentservice",
+      "service/invoicedisputeservice",
       "service/invoiceservice"
+    ]
+  },
+  "Invoice is required to store generated invoice PDFs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invoice line description is required": {
@@ -70481,6 +71855,15 @@
       "routes/carrier-settlement-control"
     ]
   },
+  "Invoice upheld": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Invoice was not found": {
     "sites": 3,
     "scope": [
@@ -70508,6 +71891,15 @@
       "template/invoice.email"
     ]
   },
+  "Invoice {0} already has an open dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Invoice {0} for {1} is waiting for you to review.": {
     "sites": 1,
     "scope": [
@@ -70524,6 +71916,42 @@
     ],
     "areas": [
       "template/invoice.email"
+    ]
+  },
+  "Invoice {0} has been voided and cannot be sent as a freight invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
+    ]
+  },
+  "Invoice {0} has been voided and cannot be {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Invoice {0} has no open balance to dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "Invoice {0} is already voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Invoice {0} is attached ({1}).": {
@@ -70619,6 +72047,24 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Invoices may be emailed to this customer. Auto-send after posting needs this on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
+  "Invoices {0} were created from this order, one per payer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/order"
     ]
   },
   "Invoicing": {
@@ -72347,12 +73793,13 @@
     ]
   },
   "Kind": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/holiday",
+      "routes/invoice",
       "routes/reports",
       "routes/worker",
       "routes/worker-checklist-template"
@@ -73082,7 +74529,7 @@
     ]
   },
   "Last sent {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -73210,6 +74657,17 @@
       "routes/customer"
     ]
   },
+  "Late Charges": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/billing-control",
+      "routes/late-charges"
+    ]
+  },
   "Late Charges & Tax": {
     "sites": 1,
     "scope": [
@@ -73299,6 +74757,42 @@
     ],
     "areas": [
       "domain/detention"
+    ]
+  },
+  "Late charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Late charge assessment is disabled for this organization. You can still preview here; enable it in billing control to raise memos.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "Late charge assessment is disabled for this organization; enable it in billing control or run a preview": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/latechargeservice"
+    ]
+  },
+  "Late charge minimum cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
     ]
   },
   "Late minutes is required": {
@@ -74687,12 +76181,14 @@
     ]
   },
   "Line is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/manualjournal"
+      "api/graphql",
+      "domain/manualjournal",
+      "service/invoiceservice"
     ]
   },
   "Line number is required": {
@@ -74750,7 +76246,7 @@
     ]
   },
   "Line {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -74913,6 +76409,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Lines": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lines exceed the total": {
@@ -76253,6 +77758,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Loading the detention claim file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Loading the log": {
@@ -77882,7 +79396,7 @@
     ]
   },
   "Manual": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -80122,16 +81636,55 @@
     ]
   },
   "Memo": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/invoice"
+    ]
+  },
+  "Memo date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Memo text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Memo type": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Memos": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Mention a teammate with @ or reference a shipment, worker, or customer with #": {
@@ -80331,7 +81884,7 @@
     ]
   },
   "Method": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -80342,6 +81895,7 @@
       "routes/customer-payments",
       "routes/edi",
       "routes/fuel-management",
+      "routes/invoice",
       "routes/pay-profile",
       "routes/random-testing",
       "routes/rate-agreement",
@@ -81041,6 +82595,15 @@
       "domain/dedicatedlane"
     ]
   },
+  "Minimum late charge": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "Minimum length cannot be negative": {
     "sites": 2,
     "scope": [
@@ -81266,6 +82829,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "Missing documentation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Missing documents:": {
@@ -82550,7 +84122,7 @@
     ]
   },
   "Must be a valid decimal number": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -83252,6 +84824,17 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Name the executed adjustment that settled this dispute": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types",
+      "service/invoicedisputeservice"
     ]
   },
   "Name the scenario and pick the partner document profile it certifies.": {
@@ -84234,6 +85817,15 @@
       "apps/web/lib"
     ]
   },
+  "New credit memo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "New dashboard": {
     "sites": 1,
     "scope": [
@@ -84244,6 +85836,15 @@
     ]
   },
   "New data available": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "New debit memo": {
     "sites": 1,
     "scope": [
       "ts"
@@ -84800,6 +86401,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No EDI partner is linked to this customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "No HOS data for any drivers yet.": {
@@ -85800,6 +87410,15 @@
       "routes/worker"
     ]
   },
+  "No dispute has been raised on this invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "No docs": {
     "sites": 1,
     "scope": [
@@ -86488,6 +88107,15 @@
       "routes/rate-agreement"
     ]
   },
+  "No late charges are assessed; the Late Charges page can still preview them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
   "No leave case has been opened for this worker.": {
     "sites": 1,
     "scope": [
@@ -86903,6 +88531,15 @@
       "routes/dispatch-console"
     ]
   },
+  "No open dispute on this invoice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "No open moves suit this driver right now.": {
     "sites": 1,
     "scope": [
@@ -87073,6 +88710,15 @@
     ],
     "areas": [
       "service/driverportalservice"
+    ]
+  },
+  "No payments applied yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "No payments received yet": {
@@ -88680,7 +90326,7 @@
     ]
   },
   "None": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -88691,6 +90337,7 @@
       "routes/carrier-settlement-workspace",
       "routes/edi",
       "routes/formula-template",
+      "routes/invoice-register",
       "routes/reports",
       "routes/table-change-alert",
       "routes/time-attendance"
@@ -88914,6 +90561,15 @@
       "routes/shipment"
     ]
   },
+  "Not applied to any invoice yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Not approved": {
     "sites": 1,
     "scope": [
@@ -88960,11 +90616,13 @@
     ]
   },
   "Not configured": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/admin"
     ]
   },
@@ -89256,11 +90914,13 @@
     ]
   },
   "Not sent": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
+      "packages/shared/components",
       "routes/billing-queue",
       "routes/invoice"
     ]
@@ -89357,12 +91017,13 @@
     ]
   },
   "Not transferred": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/shipment"
     ]
   },
   "Not verified": {
@@ -89506,7 +91167,7 @@
     ]
   },
   "Notes": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -89521,6 +91182,7 @@
       "routes/fuel-card",
       "routes/fuel-purchase",
       "routes/ifta-jurisdiction-mileage",
+      "routes/invoice",
       "routes/location",
       "routes/osha",
       "routes/pay-advance",
@@ -89556,6 +91218,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Notes must be at most {0} characters": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
     ]
   },
   "Nothing": {
@@ -91686,6 +93357,25 @@
       "packages/shared/components"
     ]
   },
+  "On behalf of": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/invoice"
+    ]
+  },
+  "On behalf of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "On canvas": {
     "sites": 1,
     "scope": [
@@ -92010,6 +93700,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "One invoice is issued to each payer for their share of the charges.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "One is past its deadline — leave can be denied once it is.": {
@@ -92464,6 +94163,15 @@
       "domain/fuelpurchase"
     ]
   },
+  "Only a credit memo can be applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
   "Only a draft can be deleted. A published version is the record of what was sent — archive it instead.": {
     "sites": 1,
     "scope": [
@@ -92571,6 +94279,33 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Only a posted credit memo can be applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
+  "Only a posted invoice can be disputed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "Only a posted invoice can be sent by EDI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Only a request that is awaiting a response can be chased": {
@@ -92845,6 +94580,24 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Only an open dispute can be resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "Only an open dispute can be withdrawn": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
     ]
   },
   "Only applies when negative balances are allowed": {
@@ -93219,6 +94972,15 @@
       "service/ediservice"
     ]
   },
+  "Only invoices and debit memos can be disputed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Only issued settlements can be disputed": {
     "sites": 1,
     "scope": [
@@ -93482,6 +95244,15 @@
     ]
   },
   "Only posted invoices can accept customer payments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
+  "Only posted invoices can take a credit": {
     "sites": 1,
     "scope": [
       "go"
@@ -93898,7 +95669,7 @@
     ]
   },
   "Open": {
-    "sites": 33,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -93916,7 +95687,9 @@
       "routes/customer-statement",
       "routes/dispatch-console",
       "routes/home",
+      "routes/invoice",
       "routes/invoice-reconciliation",
+      "routes/invoice-register",
       "routes/osha",
       "routes/random-testing",
       "routes/reports",
@@ -94124,6 +95897,24 @@
       "apps/dash/_components"
     ]
   },
+  "Open a dispute on an invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Open a dispute on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Open a leave case": {
     "sites": 1,
     "scope": [
@@ -94176,6 +95967,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Open balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Open billing queue": {
@@ -94260,6 +96060,15 @@
       "routes/home"
     ]
   },
+  "Open dispute": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Open due (forecast)": {
     "sites": 1,
     "scope": [
@@ -94297,12 +96106,23 @@
       "routes/driver-settlement"
     ]
   },
-  "Open invoice": {
+  "Open in workspace": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
+      "routes/invoice-register"
+    ]
+  },
+  "Open invoice": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice",
       "template/invoice.share.email"
     ]
   },
@@ -94451,15 +96271,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Open the detention claim file": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Open the document": {
@@ -94678,6 +96489,24 @@
       "routes/escrow-account"
     ]
   },
+  "Opened at is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
+  "Opened by is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
+    ]
+  },
   "Opened date is required": {
     "sites": 1,
     "scope": [
@@ -94685,6 +96514,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Opened {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Opened {0}{1}": {
@@ -94703,6 +96541,15 @@
     ],
     "areas": [
       "routes/customer-statement"
+    ]
+  },
+  "Opening a dispute requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
     ]
   },
   "Opening balances": {
@@ -95646,6 +97493,24 @@
       "routes/order"
     ]
   },
+  "Order charge contains an unknown allocation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Order charge not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice"
+    ]
+  },
   "Order charge not found or already carried on an invoice": {
     "sites": 1,
     "scope": [
@@ -96463,7 +98328,7 @@
     ]
   },
   "Other": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -96960,6 +98825,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
     ]
   },
   "Overlaps": {
@@ -98080,7 +99963,7 @@
     ]
   },
   "Paid": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -98090,6 +99973,7 @@
       "packages/shared/lib",
       "routes/carrier-settlement-workspace",
       "routes/fuel-purchase",
+      "routes/invoice-register",
       "routes/settlement-workspace"
     ]
   },
@@ -98473,6 +100357,15 @@
     "areas": [
       "apps/web/lib",
       "packages/shared/components"
+    ]
+  },
+  "Partially Paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
     ]
   },
   "Partially Paid Invoice Adjustment Policy": {
@@ -98959,6 +100852,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Past Due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
     ]
   },
   "Past free time and billing by the minute": {
@@ -99861,6 +101763,25 @@
       "routes/carrier"
     ]
   },
+  "Payer": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/billing-queue"
+    ]
+  },
+  "Payers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Paying...": {
     "sites": 1,
     "scope": [
@@ -99927,12 +101848,13 @@
     ]
   },
   "Payment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/invoice"
     ]
   },
   "Payment Amount": {
@@ -100167,12 +102089,13 @@
     ]
   },
   "Payments": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "routes/invoice"
     ]
   },
   "Payments to this carrier should be included in 1099 reporting.": {
@@ -100805,11 +102728,13 @@
     ]
   },
   "Percent": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "apps/web/lib",
       "apps/web/types",
       "routes/rate-agreement"
     ]
@@ -100821,6 +102746,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Percent allocations for this charge must total 100": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "Percent basis is invalid": {
@@ -100848,6 +102782,33 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Percent is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Percent must be a valid number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Percent must be greater than 0 and at most 100": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "Percent of Revenue": {
@@ -100969,7 +102930,7 @@
     ]
   },
   "Period": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -100978,6 +102939,7 @@
       "apps/web/components",
       "domain/documenttemplate",
       "routes/carrier-settlement-batch",
+      "routes/late-charges",
       "routes/random-testing",
       "routes/reconciliation-summary",
       "routes/settlement-batch",
@@ -101155,6 +103117,15 @@
       "service/driversettlementservice"
     ]
   },
+  "Period end must not precede its start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
+    ]
+  },
   "Period from": {
     "sites": 1,
     "scope": [
@@ -101162,6 +103133,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Period index starts at 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
     ]
   },
   "Period is required": {
@@ -101259,12 +103239,13 @@
     ]
   },
   "Period {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fiscal-year"
+      "routes/fiscal-year",
+      "routes/late-charges"
     ]
   },
   "Permanently Closed": {
@@ -103751,6 +105732,15 @@
       "go/other"
     ]
   },
+  "Post immediately": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Post it where employees can see it, from February 1 to April 30.": {
     "sites": 1,
     "scope": [
@@ -103767,6 +105757,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Post the memo to the ledger in the same step.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Post to GL": {
@@ -103906,7 +105905,7 @@
     ]
   },
   "Posted": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -103919,6 +105918,7 @@
       "routes/driver-settlement",
       "routes/fuel-feed-run",
       "routes/invoice",
+      "routes/late-charges",
       "routes/settlement-workspace"
     ]
   },
@@ -103939,6 +105939,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "Posted invoices are sent to {0} as an EDI 210.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
     ]
   },
   "Posted invoices carrying a balance, with amount applied and open balance, oldest due dates first": {
@@ -104336,6 +106345,15 @@
       "apps/web/lib"
     ]
   },
+  "Prepaid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Preparing extraction": {
     "sites": 1,
     "scope": [
@@ -104514,6 +106532,15 @@
       "routes/admin"
     ]
   },
+  "Preview as of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "Preview could not run": {
     "sites": 1,
     "scope": [
@@ -104548,6 +106575,15 @@
     ],
     "areas": [
       "service/documentservice"
+    ]
+  },
+  "Preview only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Preview output is unavailable.": {
@@ -105042,12 +107078,13 @@
     ]
   },
   "Primary": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/_components"
+      "apps/dash/_components",
+      "routes/shipment"
     ]
   },
   "Primary Contact": {
@@ -105204,6 +107241,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Printed on the memo, optional": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Prior week price": {
@@ -107029,11 +109075,13 @@
     ]
   },
   "Qty": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/components",
       "template/invoice.pdf"
     ]
   },
@@ -107145,12 +109193,13 @@
     ]
   },
   "Quantity must be greater than zero": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/fuelpurchase"
+      "domain/fuelpurchase",
+      "service/invoiceservice"
     ]
   },
   "Quantity of units this charge applies to (number of pallets, hours of detention, etc.)": {
@@ -107357,7 +109406,7 @@
     ]
   },
   "Queued": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -107631,6 +109680,15 @@
       "apps/web/lib"
     ]
   },
+  "Raise a credit or debit memo for this customer with no shipment behind it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Raise a validation error when empty.": {
     "sites": 1,
     "scope": [
@@ -107665,6 +109723,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Raises {0, plural, one {# debit memo} other {# debit memos}} totalling {1}. Each invoice period is charged once; a rerun cannot double-charge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
     ]
   },
   "Ramp": {
@@ -107937,7 +110004,7 @@
     ]
   },
   "Rate": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -107950,6 +110017,7 @@
       "routes/dispatch-console",
       "routes/ifta-return",
       "routes/ifta-tax-rate",
+      "routes/late-charges",
       "routes/rate-agreement",
       "routes/routing-guide",
       "routes/tender-offer-public",
@@ -108297,6 +110365,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Rate discrepancy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Rate every item from 1 to 5 and write the summary the worker will read. Nothing reaches them until you submit.": {
@@ -109881,7 +111958,7 @@
     ]
   },
   "Reason": {
-    "sites": 37,
+    "sites": 41,
     "scope": [
       "ts"
     ],
@@ -110174,13 +112251,14 @@
     ]
   },
   "Reason is required": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/email",
+      "domain/invoice",
       "domain/invoiceadjustment",
       "domain/journalreversal",
       "domain/worker",
@@ -110194,6 +112272,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Reason must be at most {0} characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "Reason must be between 1 and 255 characters": {
@@ -110370,6 +112457,15 @@
     ],
     "areas": [
       "domain/invoiceadjustment"
+    ]
+  },
+  "Rebilled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Rebuild every line from the miles, fuel and rates on file now.": {
@@ -111446,6 +113542,15 @@
       "packages/shared/types"
     ]
   },
+  "Record how the dispute ended. A credit or write-off must name the executed adjustment that settled it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Record how the inspection went": {
     "sites": 2,
     "scope": [
@@ -111509,6 +113614,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Record payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Record permit": {
@@ -112550,6 +114664,15 @@
       "apps/web/components"
     ]
   },
+  "Referenced invoice": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "References": {
     "sites": 1,
     "scope": [
@@ -113286,6 +115409,15 @@
       "routes/manual-journal"
     ]
   },
+  "Related invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Relative": {
     "sites": 1,
     "scope": [
@@ -113313,6 +115445,15 @@
       "routes/driver-pay-event"
     ]
   },
+  "Release freight for rebilling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Release hold": {
     "sites": 1,
     "scope": [
@@ -113320,6 +115461,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Released for rebilling": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Releasing...": {
@@ -113748,6 +115898,15 @@
       "routes/edi"
     ]
   },
+  "Remove line {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Remove logo": {
     "sites": 2,
     "scope": [
@@ -113782,6 +115941,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "Remove payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Remove pinned comments from the top of a shipment": {
@@ -115135,7 +117303,7 @@
     ]
   },
   "Request is required": {
-    "sites": 24,
+    "sites": 35,
     "scope": [
       "go"
     ],
@@ -115144,9 +117312,12 @@
       "service/bankreceiptbatchservice",
       "service/bankreceiptservice",
       "service/customerpaymentservice",
+      "service/invoicedisputeservice",
       "service/invoicerunservice",
       "service/invoiceservice",
-      "service/invoiceshareservice"
+      "service/invoiceshareservice",
+      "service/latechargeservice",
+      "service/orderservice"
     ]
   },
   "Request recorded": {
@@ -116216,6 +118387,15 @@
       "routes/organization"
     ]
   },
+  "Resend EDI": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Resend credentials are stored here. Sender profiles and purpose assignments are managed from Organization Email Profiles.": {
     "sites": 1,
     "scope": [
@@ -116374,12 +118554,13 @@
     ]
   },
   "Resolution": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/bank-receipt-queue",
+      "routes/invoice",
       "routes/settlement-dispute",
       "routes/worker"
     ]
@@ -116420,6 +118601,15 @@
       "service/bankreceiptworkitemservice"
     ]
   },
+  "Resolution notes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Resolution notes...": {
     "sites": 1,
     "scope": [
@@ -116439,17 +118629,27 @@
     ]
   },
   "Resolve": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/bank-receipt-queue",
       "routes/billing-queue",
+      "routes/invoice",
       "routes/service-failure"
     ]
   },
   "Resolve agent exceptions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Resolve an open dispute": {
     "sites": 1,
     "scope": [
       "go"
@@ -116468,11 +118668,12 @@
     ]
   },
   "Resolve dispute": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/invoice",
       "routes/settlement-dispute"
     ]
   },
@@ -116558,7 +118759,7 @@
     ]
   },
   "Resolved": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -116663,6 +118864,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Resolving a dispute requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
     ]
   },
   "Resource": {
@@ -120252,6 +122462,15 @@
       "domain/permission"
     ]
   },
+  "Run as of {0}: {1, plural, one {# memo} other {# memos}} raised, {2} skipped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "Run asynchronous AI extraction for an indexed document": {
     "sites": 1,
     "scope": [
@@ -120313,6 +122532,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Run key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
     ]
   },
   "Run now ({0})": {
@@ -121199,6 +123427,42 @@
       "apps/web/lib"
     ]
   },
+  "Same as customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Same as customer ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Same as shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Same as shipment ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Same every week": {
     "sites": 1,
     "scope": [
@@ -121464,7 +123728,7 @@
     ]
   },
   "Save": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -122219,6 +124483,24 @@
       "service/workeremploymentservice"
     ]
   },
+  "Say why the invoice is being voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Say why the memo is being raised": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Say why the shipment is being taken off the invoice": {
     "sites": 1,
     "scope": [
@@ -122684,13 +124966,14 @@
     ]
   },
   "Scope": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "routes/invoice-register"
     ]
   },
   "Scope is required": {
@@ -123985,6 +126268,15 @@
       "routes/accounting-control"
     ]
   },
+  "Select Freight Terms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Select Fuel Index": {
     "sites": 1,
     "scope": [
@@ -124632,13 +126924,14 @@
     ]
   },
   "Select all": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/ar-open-items",
+      "routes/late-charges",
       "routes/settlement-workspace"
     ]
   },
@@ -124923,11 +127216,12 @@
     ]
   },
   "Select customer": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/customer-payments",
       "routes/edi",
       "routes/rate-agreement"
@@ -125460,6 +127754,15 @@
       "apps/web/components"
     ]
   },
+  "Select payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Select period": {
     "sites": 1,
     "scope": [
@@ -125551,6 +127854,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Select reason": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Select reason...": {
     "sites": 1,
     "scope": [
@@ -125576,6 +127888,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Select resolution": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Select resolution type": {
@@ -126056,12 +128377,13 @@
     ]
   },
   "Select {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/late-charges"
     ]
   },
   "Select...": {
@@ -126218,6 +128540,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Send EDI": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Send EDI Load Tender": {
@@ -126727,7 +129058,7 @@
     ]
   },
   "Sending": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -126816,6 +129147,15 @@
       "routes/reports"
     ]
   },
+  "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer"
+    ]
+  },
   "Senior role is required": {
     "sites": 1,
     "scope": [
@@ -126836,7 +129176,7 @@
     ]
   },
   "Sent": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -126928,6 +129268,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Sent to {0} by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Sent {0}{1}{2}": {
@@ -127088,7 +129437,7 @@
     ]
   },
   "Sequence cannot be negative": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -127151,6 +129500,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Sequence must be between 0 and 32767": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Sequence type can only appear once": {
@@ -127412,6 +129770,15 @@
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/service-type"
+    ]
+  },
+  "Service failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Service failure EDI 214 preflight failed: {0}": {
@@ -128167,17 +130534,18 @@
     ]
   },
   "Settled": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/invoice"
     ]
   },
   "Settlement": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -128185,6 +130553,7 @@
       "routes/carrier-cost-event",
       "routes/carrier-settlement-batch",
       "routes/customer-payments",
+      "routes/invoice-register",
       "routes/settlement-batch",
       "routes/settlement-dispute"
     ]
@@ -129173,15 +131542,6 @@
       "service/shipmentholdservice"
     ]
   },
-  "Shipment ID is required to store generated invoice PDFs as shipment documents": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Shipment ID must match the service failure": {
     "sites": 1,
     "scope": [
@@ -129545,6 +131905,15 @@
       "go/other"
     ]
   },
+  "Shipment contains an unknown charge allocation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Shipment contains an unknown commodity": {
     "sites": 1,
     "scope": [
@@ -129885,7 +132254,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go"
     ],
@@ -130312,6 +132681,15 @@
       "service/invoicerunservice"
     ]
   },
+  "Shipment {0} owes nothing to this payer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Shipment, trailer, tractor, or worker": {
     "sites": 1,
     "scope": [
@@ -130449,7 +132827,7 @@
     ]
   },
   "Shipper": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -130457,7 +132835,17 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/invoice-register",
       "template/invoice.pdf"
+    ]
+  },
+  "Shipper not recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Shipper:": {
@@ -130575,6 +132963,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Short pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Short unique identifier for this program.": {
@@ -132369,6 +134766,15 @@
       "domain/telematics"
     ]
   },
+  "Source invoice is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/latecharge"
+    ]
+  },
   "Source is invalid": {
     "sites": 1,
     "scope": [
@@ -132751,11 +135157,13 @@
     ]
   },
   "Split": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
+      "routes/invoice-register",
       "routes/pay-profile",
       "routes/shipment",
       "routes/worker"
@@ -132795,6 +135203,42 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Split between payers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Split bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components"
+    ]
+  },
+  "Split freight charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Split method": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Split percent must be between 0 and 100": {
@@ -132850,6 +135294,16 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Split {0} ways": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "Splits an oversized group across several invoices. Zero means no limit.": {
@@ -133930,7 +136384,7 @@
     ]
   },
   "Status": {
-    "sites": 214,
+    "sites": 217,
     "scope": [
       "go",
       "ts"
@@ -133970,8 +136424,10 @@
       "routes/hazardous-material",
       "routes/hazmat-segregation-rule",
       "routes/ifta-return",
+      "routes/invoice",
       "routes/invoice-adjustment-batch",
       "routes/invoice-reconciliation",
+      "routes/invoice-register",
       "routes/journal-reversal",
       "routes/jurisdiction-rule",
       "routes/location",
@@ -138963,6 +141419,24 @@
       "service/reporting"
     ]
   },
+  "The adjustment does not belong to invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
+  "The adjustment has not executed yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "The agreed fuel surcharge amount.": {
     "sites": 1,
     "scope": [
@@ -139258,6 +141732,24 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The billing queue items are canceled and the shipments settle as completed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The billing queue items go back to Approved with a fresh number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The billing unit minutes are rounded onto. Typically 15, 30, or 60.": {
@@ -140054,6 +142546,15 @@
       "routes/edi"
     ]
   },
+  "The consignee pays the carrier on delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The content matches what is already approved; approving records a fresh review without changing any rate.": {
     "sites": 1,
     "scope": [
@@ -140298,6 +142799,15 @@
     ]
   },
   "The customer has rejected this charge. Work the claim before it is invoiced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "The customer invoiced for this shipment when it is not the one who ordered it. Leave blank to bill the customer.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -140808,6 +143318,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "The draft is voided at once and keeps its number so the audit trail stays readable.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "The driver confirms in Dash that they took the course.": {
@@ -141721,6 +144240,15 @@
       "routes/admin"
     ]
   },
+  "The full-reversal adjustment needs an approver. The invoice reads Voided the moment it executes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "The functional group identifier.": {
     "sites": 1,
     "scope": [
@@ -141926,6 +144454,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The invoice reads Disputed until the case is resolved or withdrawn, and no late charge is assessed on it meanwhile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "The invoice this credit settled has been voided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
     ]
   },
   "The invoice total, with currency.": {
@@ -142673,6 +145219,42 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "The nightly run computes what it would raise and writes nothing; use the Late Charges page to raise memos by hand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
+    ]
+  },
+  "The nightly run only previews: it computes what it would raise and writes nothing. Run it here to raise the memos, or switch the mode to Automatic in billing control.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "The nightly run raises and posts these debit memos automatically; running now assesses them ahead of it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
+  "The nightly run raises the debit memos, posting them when invoice posting is automatic.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-control"
     ]
   },
   "The note that goes with it, when there is one.": {
@@ -143623,6 +146205,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "The referenced invoice belongs to another customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "The rejection reason is sent back to the trading partner on the outbound 990 response.": {
     "sites": 1,
     "scope": [
@@ -144318,6 +146909,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The shipper pays the carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The short name lanes and tariffs refer to": {
@@ -145690,6 +148290,15 @@
       "routes/shipment"
     ]
   },
+  "Third Party": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "This API key has been revoked. All fields are read-only.": {
     "sites": 1,
     "scope": [
@@ -145796,6 +148405,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "This allocation is already carried on a posted invoice and cannot change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
     ]
   },
   "This applies to every year.": {
@@ -145922,6 +148540,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "This charge bills {0} detained stops. Open a claim file:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "This charge is over the policy approval threshold and cannot be billed until cleared.": {
@@ -146122,6 +148749,24 @@
       "packages/shared/types"
     ]
   },
+  "This credit memo application has already been unapplied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
+  "This credit memo has nothing left to apply": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
+    ]
+  },
   "This custom field has": {
     "sites": 1,
     "scope": [
@@ -146138,6 +148783,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "This customer has no open invoices to apply the credit to.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "This customer has no open invoices — the full amount will post as unapplied cash.": {
@@ -146690,6 +149344,24 @@
       "routes/invoice"
     ]
   },
+  "This invoice bills {0} for freight ordered by another customer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "This invoice bills {0}'s share of a shipment split between payers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "This invoice does not currently have shipment context loaded for document review.": {
     "sites": 1,
     "scope": [
@@ -146697,6 +149369,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "This invoice has already been sent by EDI; resend it with force": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
     ]
   },
   "This invoice is linked to a carrier in the master and can be matched against its assignments.": {
@@ -147162,6 +149843,33 @@
       "routes/load-detail.tsx"
     ]
   },
+  "This payer no longer has a share of shipment {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
+  "This payer's share: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "This payer's share: {0} ({1}%)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "This period has closed — bill it": {
     "sites": 1,
     "scope": [
@@ -147478,6 +150186,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "This resolution needs the adjustment that settled it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/invoice"
     ]
   },
   "This review is not waiting for your sign-off": {
@@ -149107,16 +151824,18 @@
     ]
   },
   "Today": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/types",
       "packages/shared/lib",
       "routes/ar-aging",
       "routes/ar-open-items",
       "routes/dispatch-console",
+      "routes/late-charges",
       "routes/scheduling",
       "routes/shipment",
       "routes/worker"
@@ -149509,7 +152228,7 @@
     ]
   },
   "Total": {
-    "sites": 25,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -149525,6 +152244,7 @@
       "routes/ifta-return",
       "routes/invoice",
       "routes/invoice-adjustment-batch",
+      "routes/invoice-register",
       "routes/order",
       "routes/rate-agreement",
       "routes/rate-confirmation-public",
@@ -151870,7 +154590,7 @@
     ]
   },
   "Type": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -151888,6 +154608,7 @@
       "routes/fiscal-year",
       "routes/formula-template",
       "routes/hold-reason",
+      "routes/invoice-register",
       "routes/location-category",
       "routes/osha",
       "routes/pay-profile",
@@ -152382,6 +155103,26 @@
       "routes/admin"
     ]
   },
+  "Unable to verify bill-to customers": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice",
+      "service/shipmentservice"
+    ]
+  },
+  "Unable to verify invoiced allocations": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice",
+      "service/shipmentservice"
+    ]
+  },
   "Unable to verify the referenced formula templates": {
     "sites": 1,
     "scope": [
@@ -152401,13 +155142,14 @@
     ]
   },
   "Unapplied": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/customer-payments",
-      "routes/home"
+      "routes/home",
+      "routes/invoice"
     ]
   },
   "Unapplied Cash": {
@@ -152463,6 +155205,42 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "Unapply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Unapply the customer payments and credit memos on this invoice before voiding it": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Unapply this credit memo from the invoices it settles before voiding it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Unapplying a credit memo requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/customerpaymentservice"
     ]
   },
   "Unassign": {
@@ -153382,12 +156160,13 @@
     ]
   },
   "Unpaid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/invoice-register"
     ]
   },
   "Unpaid break (minutes)": {
@@ -156883,6 +159662,15 @@
       "routes/shipment"
     ]
   },
+  "View invoice disputes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View invoice runs": {
     "sites": 1,
     "scope": [
@@ -157223,6 +160011,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "View shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-register"
     ]
   },
   "View shipment comments": {
@@ -157679,7 +160476,7 @@
     ]
   },
   "Void": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -157687,6 +160484,7 @@
       "apps/web/components",
       "routes/carrier-settlement",
       "routes/driver-settlement",
+      "routes/invoice-register",
       "routes/random-testing",
       "routes/service-failure",
       "routes/time-attendance",
@@ -157711,6 +160509,42 @@
       "domain/permission"
     ]
   },
+  "Void invoice": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Void invoice {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Void invoices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Void of {0} requested; awaiting reversal approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Void rate confirmation": {
     "sites": 1,
     "scope": [
@@ -157727,6 +160561,15 @@
     ],
     "areas": [
       "service/servicefailureservice"
+    ]
+  },
+  "Void requested; awaiting reversal approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Void round {0}?": {
@@ -157775,6 +160618,15 @@
       "domain/permission"
     ]
   },
+  "Void the late-charge memo(s) {0} raised on this invoice first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "Void the round": {
     "sites": 1,
     "scope": [
@@ -157794,7 +160646,7 @@
     ]
   },
   "Voided": {
-    "sites": 13,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -157803,8 +160655,36 @@
       "packages/shared/components",
       "routes/carrier-settlement",
       "routes/driver-settlement",
+      "routes/invoice",
       "routes/random-testing",
       "routes/time-attendance"
+    ]
+  },
+  "Voided invoices cannot be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
+  "Voided invoices do not generate documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Voided {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Voided: {0}": {
@@ -159220,6 +162100,15 @@
       "routes/billing-control"
     ]
   },
+  "What happens to the billing queue items and shipments this invoice billed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "What happens when the week's price hasn't published yet.": {
     "sites": 1,
     "scope": [
@@ -159434,6 +162323,15 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "What the customer is contesting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "What the customer pays once free time is exhausted": {
@@ -161286,6 +164184,15 @@
       "routes/scheduling"
     ]
   },
+  "Who is invoiced for this charge. Leave blank to bill the shipment's payer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Who is on it": {
     "sites": 1,
     "scope": [
@@ -161302,6 +164209,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Who is responsible for the freight charges: prepaid by the shipper, collect from the consignee, or a third party.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Who issued it, so a verifier knows where to check.": {
@@ -161577,6 +164493,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Why it is being withdrawn, optional": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "Why it would not read": {
     "sites": 1,
     "scope": [
@@ -161623,6 +164548,15 @@
       "routes/worker"
     ]
   },
+  "Why the memo is being raised": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Why these miles exist, so an auditor can see the reason without asking.": {
     "sites": 1,
     "scope": [
@@ -161657,6 +164591,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Why this invoice should not stand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Why this organization runs tighter than the statute": {
@@ -161871,12 +164814,13 @@
     ]
   },
   "Withdraw": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/invoice",
       "routes/money.tsx"
     ]
   },
@@ -161887,6 +164831,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Withdraw an open dispute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Withdraw dispute": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Withdraw outstanding tenders": {
@@ -161907,6 +164869,24 @@
       "routes/worker"
     ]
   },
+  "Withdrawal notes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
+  "Withdrawing a dispute requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Withdrawing...": {
     "sites": 1,
     "scope": [
@@ -161917,7 +164897,7 @@
     ]
   },
   "Withdrawn": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -162947,6 +165927,15 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
+  "Written off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Written off amount cannot be negative": {
     "sites": 1,
     "scope": [
@@ -162954,6 +165943,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Wrong bill-to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Wyoming (WY)": {
@@ -167106,6 +170104,15 @@
       "routes/admin"
     ]
   },
+  "exceeds an invoice's open balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "exceeds open amount": {
     "sites": 1,
     "scope": [
@@ -167113,6 +170120,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "exceeds the credit remaining": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "exclusion constraints": {
@@ -167683,6 +170699,15 @@
     ],
     "areas": [
       "routes/customer-ledger"
+    ]
+  },
+  "of {0} shipment total": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "of {0} widgets": {
@@ -169173,6 +172198,15 @@
       "routes/scheduling"
     ]
   },
+  "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/late-charges"
+    ]
+  },
   "{0, plural, one {# doc} other {# docs}}": {
     "sites": 1,
     "scope": [
@@ -169610,14 +172644,15 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
       "routes/admin",
-      "routes/load-detail.tsx"
+      "routes/load-detail.tsx",
+      "routes/shipment"
     ]
   },
   "{0, plural, one {# swap} other {# swaps}} to decide": {
@@ -169998,6 +173033,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "{0} applied to {1, plural, one {# invoice} other {# invoices}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
+    ]
+  },
   "{0} at risk": {
     "sites": 1,
     "scope": [
@@ -170232,6 +173276,15 @@
       "routes/benefits"
     ]
   },
+  "{0} created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} created, {1} updated, {2} skipped.": {
     "sites": 1,
     "scope": [
@@ -170257,6 +173310,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} days past due": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0} diagnostics returned by backend validation": {
@@ -170657,6 +173719,15 @@
     "areas": [
       "routes/accept.tsx",
       "template/driverportal.invitation.email"
+    ]
+  },
+  "{0} invoices created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/order"
     ]
   },
   "{0} is a message, not a document, so it has no page setup": {
@@ -171220,6 +174291,15 @@
       "routes/shipment"
     ]
   },
+  "{0} no longer has a share of shipment {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "{0} not covered": {
     "sites": 1,
     "scope": [
@@ -171716,6 +174796,15 @@
     ],
     "areas": [
       "domain/rateagreement"
+    ]
+  },
+  "{0} remains on this credit memo. Pick the open invoices it settles and how much of each.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0} renewal due": {
@@ -172239,6 +175328,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "{0} vs {1}": {
@@ -172875,6 +175973,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0}% share": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "{0}% · Nothing is recorded until you review the rows and confirm.": {

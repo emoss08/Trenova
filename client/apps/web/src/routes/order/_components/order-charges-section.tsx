@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ChargePayerChip } from "@/components/billing/charge-payer-chip";
 import { EmptyState } from "@/components/empty-state";
 import {
   AlertDialog,
@@ -112,6 +113,7 @@ export function OrderChargesSection() {
                 >
                   <span className="col-span-7 flex items-center gap-2">
                     <span className="truncate">{t(charge.description)}</span>
+                    <ChargePayerChip allocations={charge.allocations} currencyCode={currency} />
                     {invoiced && (
                       <Badge variant="outline" className="shrink-0">
                         {t("Invoiced")}
@@ -182,6 +184,7 @@ export function OrderChargesSection() {
         orderId={orderId}
         currency={currency}
         charge={chargeBeingEdited}
+        customer={order?.customer ?? null}
       />
 
       <AlertDialog

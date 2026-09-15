@@ -15,6 +15,11 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { billTypeChoices, billingQueueStatusChoices } from "@/lib/choices";
+import type {
+  GraphQLSelectOptionsConfig,
+  SelectOption as GraphQLSelectOption,
+} from "@/lib/graphql/select-options";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { apiService } from "@/services/api";
 import type {
   BillingQueueFilterPreset,
@@ -38,6 +43,9 @@ import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
 import { BillingQueueItemCard } from "./billing-queue-item-card";
 import { BillingQueueSavePresetDialog } from "./billing-queue-save-preset-dialog";
+
+/** The queue filters on the customer invoiced, which for a split shipment is not the shipper. */
+const CUSTOMER_SELECT_OPTIONS = { resource: "CUSTOMER" } satisfies GraphQLSelectOptionsConfig;
 
 const EMPTY_ITEMS: BillingQueueItem[] = [];
 
@@ -83,6 +91,7 @@ export function BillingQueueSidebar({
     query: search,
     billType: billTypeFilter,
     billers: billerFilter,
+    payer: payerFilter,
     includePosted,
     preset: selectedPresetId,
   } = searchParams;
@@ -97,6 +106,7 @@ export function BillingQueueSidebar({
     (statusFilter ? 1 : 0) +
     (billerFilter.length > 0 ? 1 : 0) +
     (billTypeFilter ? 1 : 0) +
+    (payerFilter ? 1 : 0) +
     (includePosted ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0 || !!search;
 
@@ -124,6 +134,7 @@ export function BillingQueueSidebar({
       status: (f.status as string) ?? null,
       billers: Array.isArray(f.assignedBillerIds) ? f.assignedBillerIds : [],
       billType: (f.billType as string) ?? null,
+      payer: (f.billToCustomerId as string) ?? null,
       query: (f.search as string) ?? "",
       includePosted: f.includePosted === true,
       preset: preset.id,
@@ -146,6 +157,7 @@ export function BillingQueueSidebar({
       status: statusFilter,
       billers: billerFilter,
       billType: billTypeFilter,
+      payer: payerFilter,
       search: deferredSearch,
       includePosted,
     }),
@@ -198,6 +210,7 @@ export function BillingQueueSidebar({
       status: null,
       billers: [],
       billType: null,
+      payer: null,
       query: "",
       includePosted: false,
       preset: null,
@@ -208,6 +221,7 @@ export function BillingQueueSidebar({
     status: statusFilter,
     assignedBillerIds: billerFilter.length > 0 ? billerFilter : null,
     billType: billTypeFilter,
+    billToCustomerId: payerFilter,
     search: search || null,
     includePosted: includePosted ? "true" : null,
   };
@@ -298,6 +312,23 @@ export function BillingQueueSidebar({
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className="text-muted-foreground text-[11px]">{t("Payer")}</p>
+                  <Autocomplete<GraphQLSelectOption, FieldValues>
+                    graphql={CUSTOMER_SELECT_OPTIONS}
+                    value={payerFilter}
+                    onChange={(val) => void setSearchParams({ payer: val || null })}
+                    getOptionValue={(option) => option.id}
+                    getDisplayValue={(option) => {
+                      const code = selectOptionMetaString(option, "code");
+                      return code ? `${code} - ${option.label}` : option.label;
+                    }}
+                    renderOption={(option) => <span className="text-xs">{option.label}</span>}
+                    placeholder={t("All payers")}
+                    clearable
+                    triggerClassName="h-7 text-xs"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-muted-foreground text-[11px]">{t("Assigned Billers")}</p>

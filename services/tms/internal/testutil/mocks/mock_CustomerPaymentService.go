@@ -115,6 +115,154 @@ func (_c *MockCustomerPaymentService_ApplyUnapplied_Call) RunAndReturn(run func(
 	return _c
 }
 
+// ApplyCreditMemo provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) ApplyCreditMemo(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor) ([]*customerpayment.CreditMemoApplication, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApplyCreditMemo")
+	}
+
+	var r0 []*customerpayment.CreditMemoApplication
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) ([]*customerpayment.CreditMemoApplication, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) []*customerpayment.CreditMemoApplication); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*customerpayment.CreditMemoApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_ApplyCreditMemo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyCreditMemo'
+type MockCustomerPaymentService_ApplyCreditMemo_Call struct {
+	*mock.Call
+}
+
+// ApplyCreditMemo is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ApplyCreditMemoRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) ApplyCreditMemo(ctx any, req any, actor any) *MockCustomerPaymentService_ApplyCreditMemo_Call {
+	return &MockCustomerPaymentService_ApplyCreditMemo_Call{Call: _e.mock.On("ApplyCreditMemo", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_ApplyCreditMemo_Call) Run(run func(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor)) *MockCustomerPaymentService_ApplyCreditMemo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ApplyCreditMemoRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ApplyCreditMemoRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_ApplyCreditMemo_Call) Return(v0 []*customerpayment.CreditMemoApplication, err error) *MockCustomerPaymentService_ApplyCreditMemo_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_ApplyCreditMemo_Call) RunAndReturn(run func(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor) ([]*customerpayment.CreditMemoApplication, error)) *MockCustomerPaymentService_ApplyCreditMemo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnapplyCreditMemoApplication provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) UnapplyCreditMemoApplication(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor) (*customerpayment.CreditMemoApplication, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnapplyCreditMemoApplication")
+	}
+
+	var r0 *customerpayment.CreditMemoApplication
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) (*customerpayment.CreditMemoApplication, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) *customerpayment.CreditMemoApplication); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*customerpayment.CreditMemoApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_UnapplyCreditMemoApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnapplyCreditMemoApplication'
+type MockCustomerPaymentService_UnapplyCreditMemoApplication_Call struct {
+	*mock.Call
+}
+
+// UnapplyCreditMemoApplication is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.UnapplyCreditMemoApplicationRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) UnapplyCreditMemoApplication(ctx any, req any, actor any) *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call {
+	return &MockCustomerPaymentService_UnapplyCreditMemoApplication_Call{Call: _e.mock.On("UnapplyCreditMemoApplication", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call) Run(run func(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor)) *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.UnapplyCreditMemoApplicationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.UnapplyCreditMemoApplicationRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call) Return(v0 *customerpayment.CreditMemoApplication, err error) *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call) RunAndReturn(run func(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor) (*customerpayment.CreditMemoApplication, error)) *MockCustomerPaymentService_UnapplyCreditMemoApplication_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function for the type MockCustomerPaymentService
 func (_mock *MockCustomerPaymentService) Get(ctx context.Context, req *services.GetCustomerPaymentRequest) (*customerpayment.Payment, error) {
 	ret := _mock.Called(ctx, req)

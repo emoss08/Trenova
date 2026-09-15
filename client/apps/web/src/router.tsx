@@ -723,6 +723,26 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/accounting/ar/invoices",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceRegisterPage } = await import("@/routes/invoice-register/page");
+              return { Component: InvoiceRegisterPage };
+            },
+          },
+          {
+            path: "/accounting/ar/late-charges",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountsReceivable),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/late-charges/page"))),
+            ),
+            async lazy() {
+              const { LateChargesPage } = await import("@/routes/late-charges/page");
+              return { Component: LateChargesPage };
+            },
+          },
+          {
             path: "/accounting/ar/payments",
             loader: combineLoaders(
               protectedLoader,

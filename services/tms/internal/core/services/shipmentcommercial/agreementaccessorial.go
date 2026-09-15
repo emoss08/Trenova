@@ -246,7 +246,7 @@ func agreementCharge(
 	// Clearing the others here means a charge can never be claimed by two
 	// engines even if it was previously produced by one of them.
 	charge.FuelSurchargeProgramID = nil
-	charge.DetentionOccurrenceID = nil
+	charge.IsDetention = false
 
 	return charge
 }

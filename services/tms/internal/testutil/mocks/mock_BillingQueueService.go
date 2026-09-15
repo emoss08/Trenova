@@ -393,6 +393,80 @@ func (_c *MockBillingQueueService_TransferToBilling_Call) RunAndReturn(run func(
 	return _c
 }
 
+// TransferToBillingItems provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) TransferToBillingItems(ctx context.Context, req *services.TransferToBillingRequest, actor *services.RequestActor) (*services.TransferToBillingResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TransferToBillingItems")
+	}
+
+	var r0 *services.TransferToBillingResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.TransferToBillingRequest, *services.RequestActor) (*services.TransferToBillingResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.TransferToBillingRequest, *services.RequestActor) *services.TransferToBillingResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.TransferToBillingResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.TransferToBillingRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_TransferToBillingItems_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransferToBillingItems'
+type MockBillingQueueService_TransferToBillingItems_Call struct {
+	*mock.Call
+}
+
+// TransferToBillingItems is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.TransferToBillingRequest
+//   - actor *services.RequestActor
+func (_e *MockBillingQueueService_Expecter) TransferToBillingItems(ctx any, req any, actor any) *MockBillingQueueService_TransferToBillingItems_Call {
+	return &MockBillingQueueService_TransferToBillingItems_Call{Call: _e.mock.On("TransferToBillingItems", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_TransferToBillingItems_Call) Run(run func(ctx context.Context, req *services.TransferToBillingRequest, actor *services.RequestActor)) *MockBillingQueueService_TransferToBillingItems_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.TransferToBillingRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.TransferToBillingRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_TransferToBillingItems_Call) Return(v0 *services.TransferToBillingResult, err error) *MockBillingQueueService_TransferToBillingItems_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_TransferToBillingItems_Call) RunAndReturn(run func(ctx context.Context, req *services.TransferToBillingRequest, actor *services.RequestActor) (*services.TransferToBillingResult, error)) *MockBillingQueueService_TransferToBillingItems_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateCharges provides a mock function for the type MockBillingQueueService
 func (_mock *MockBillingQueueService) UpdateCharges(ctx context.Context, req *services.UpdateChargesRequest, actor *services.RequestActor) (*billingqueue.BillingQueueItem, error) {
 	ret := _mock.Called(ctx, req, actor)

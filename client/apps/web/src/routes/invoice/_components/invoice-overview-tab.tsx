@@ -3,6 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
 import { getDestinationLocation, getOriginLocation, shipmentPanelPath } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -11,6 +12,7 @@ import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoic
 import { ExternalLinkIcon, TriangleAlertIcon } from "lucide-react";
 import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
+import { InvoiceArContextSection } from "./invoice-ar-context-section";
 
 export function InvoiceOverviewTab({
   invoice,
@@ -78,6 +80,10 @@ export function InvoiceOverviewTab({
                 </div>
               </div>
             </div>
+
+            <InvoiceArContextSection invoice={invoice} />
+
+            {invoice.scope === "Memo" ? <MemoDetailsCard invoice={invoice} /> : null}
 
             <div className="bg-card rounded-lg border p-3">
               <SectionLabel>{t("Charge Summary")}</SectionLabel>
@@ -205,7 +211,9 @@ export function InvoiceOverviewTab({
                   label={
                     invoice.scope === "Consolidated"
                       ? t("Generated from Statement")
-                      : t("Generated from Billing Queue")
+                      : invoice.scope === "Memo"
+                        ? t("Generated as a memo")
+                        : t("Generated from Billing Queue")
                   }
                   active
                   timestamp={formatUnixDateTime(invoice.createdAt)}
@@ -217,10 +225,25 @@ export function InvoiceOverviewTab({
                 />
                 <LifecycleStep
                   label={t("Posted to Invoice History")}
-                  active={invoice.status === "Posted"}
+                  active={invoice.status === "Posted" || Boolean(invoice.postedAt)}
                   timestamp={formatUnixDateTime(invoice.postedAt)}
-                  isLast
+                  isLast={invoice.status !== "Voided"}
                 />
+                {invoice.status === "Voided" ? (
+                  <LifecycleStep
+                    label={t("Voided")}
+                    active
+                    tone="danger"
+                    timestamp={formatUnixDateTime(invoice.voidedAt)}
+                    details={[
+                      invoice.voidReason ?? "",
+                      invoice.voidDisposition === "Rebill"
+                        ? t("Released for rebilling")
+                        : t("Freight retired, not rebilled"),
+                    ].filter(Boolean)}
+                    isLast
+                  />
+                ) : null}
               </div>
             </div>
 
@@ -303,29 +326,78 @@ function LifecycleStep({
   label,
   active,
   timestamp,
+  details,
+  tone = "default",
   isLast = false,
 }: {
   label: string;
   active: boolean;
   timestamp: string;
+  details?: string[];
+  tone?: "default" | "danger";
   isLast?: boolean;
 }) {
+  const dot = tone === "danger" ? "bg-red-600" : "bg-green-600";
+  const line = tone === "danger" ? "bg-red-600/30" : "bg-green-600/30";
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
-        <div
-          className={cn(
-            "mt-1 size-2 rounded-full",
-            active ? "bg-green-600" : "bg-muted-foreground/30",
-          )}
-        />
-        {!isLast ? (
-          <div className={cn("my-0.5 w-px flex-1", active ? "bg-green-600/30" : "bg-border")} />
-        ) : null}
+        <div className={cn("mt-1 size-2 rounded-full", active ? dot : "bg-muted-foreground/30")} />
+        {!isLast ? <div className={cn("my-0.5 w-px flex-1", active ? line : "bg-border")} /> : null}
       </div>
       <div className={cn("pb-3", isLast && "pb-0")}>
-        <p className={cn("text-xs font-medium", !active && "text-muted-foreground")}>{label}</p>
+        <p
+          className={cn(
+            "text-xs font-medium",
+            !active && "text-muted-foreground",
+            tone === "danger" && active && "text-red-700 dark:text-red-400",
+          )}
+        >
+          {label}
+        </p>
         <p className="text-2xs text-muted-foreground">{timestamp}</p>
+        {details?.map((detail) => (
+          <p key={detail} className="text-2xs mt-0.5">
+            {detail}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * What a standalone memo is about. A memo has no shipment to explain it, so
+ * the reason and the invoice it corrects are the whole story.
+ */
+function MemoDetailsCard({ invoice }: { invoice: Invoice }) {
+  const t = useT();
+
+  return (
+    <div className="bg-card rounded-lg border p-3" data-testid="invoice-memo-details">
+      <SectionLabel>{t("Memo")}</SectionLabel>
+      <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
+        <PropertyCell label={t("Kind")}>
+          <span className="text-xs font-medium">
+            {invoice.memoKind === "LateCharge" ? t("Late charge") : t("Manual")}
+          </span>
+        </PropertyCell>
+        {invoice.referenceInvoiceId ? (
+          <PropertyCell label={t("Referenced invoice")}>
+            <Link
+              to={invoicePanelPath(invoice.referenceInvoiceId)}
+              className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              aria-label={t("Referenced invoice")}
+            >
+              {t("Open invoice")}
+              <ExternalLinkIcon className="size-2.5" />
+            </Link>
+          </PropertyCell>
+        ) : null}
+        <div className="col-span-2">
+          <p className="text-2xs text-muted-foreground">{t("Reason")}</p>
+          <p className="text-xs whitespace-pre-line">{invoice.memoReason || "—"}</p>
+        </div>
       </div>
     </div>
   );

@@ -34,9 +34,9 @@ func (r *repository) CountHeldForPeriod(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*billingqueue.BillingQueueItem)(nil)).
-		ColumnExpr("sp.customer_id AS customer_id").
+		ColumnExpr("bqi.bill_to_customer_id AS customer_id").
 		ColumnExpr("COUNT(*) AS shipment_count").
-		ColumnExpr("COALESCE(SUM(sp.total_charge_amount), 0) AS total_amount").
+		ColumnExpr("COALESCE(SUM(bqi.allocated_total_amount), 0) AS total_amount").
 		Join("JOIN shipments AS sp ON sp.id = bqi.shipment_id").
 		Join("AND sp.organization_id = bqi.organization_id").
 		Join("AND sp.business_unit_id = bqi.business_unit_id").
@@ -54,7 +54,7 @@ func (r *repository) CountHeldForPeriod(
 		Where("bqi.bill_type = ?", billingqueue.BillTypeInvoice).
 		Where("bqi.invoice_id IS NULL").
 		Where("bqi.is_adjustment_origin = FALSE").
-		Where("sp.customer_id IN (?)", bun.List(req.CustomerIDs)).
+		Where("bqi.bill_to_customer_id IN (?)", bun.List(req.CustomerIDs)).
 		Where("sp.status <> ?", shipment.StatusCanceled).
 		// Already billed. The invoice_id back-link is the primary double-bill guard,
 		// but it was backfilled conservatively for legacy order-grouped invoices, and
@@ -63,12 +63,16 @@ func (r *repository) CountHeldForPeriod(
 		// swept onto a statement however it got there.
 		Where(`NOT EXISTS (
 			SELECT 1 FROM invoice_lines AS il
+			JOIN invoices AS inv ON inv.id = il.invoice_id
+			  AND inv.organization_id = il.organization_id
+			  AND inv.business_unit_id = il.business_unit_id
 			WHERE il.shipment_id = sp.id
 			  AND il.organization_id = sp.organization_id
 			  AND il.business_unit_id = sp.business_unit_id
+			  AND inv.customer_id = bqi.bill_to_customer_id
 		)`).
 		Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
-		GroupExpr("sp.customer_id").
+		GroupExpr("bqi.bill_to_customer_id").
 		Scan(ctx, &held)
 	if err != nil {
 		r.l.Error("failed to count held billing queue items", zap.Error(err))

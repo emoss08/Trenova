@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -703,6 +704,29 @@ func (ec *executionContext) fieldContext_OrderCharge_invoiceId(_ context.Context
 	return graphql.NewScalarFieldContext("OrderCharge", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _OrderCharge_invoicedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.OrderCharge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OrderCharge_invoicedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InvoicedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_OrderCharge_invoicedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("OrderCharge", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _OrderCharge_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.OrderCharge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -747,6 +771,38 @@ func (ec *executionContext) _OrderCharge_createdAt(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_OrderCharge_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("OrderCharge", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _OrderCharge_allocations(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.OrderCharge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_OrderCharge_allocations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Allocations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*shipment.ChargeAllocation) graphql.Marshaler {
+			return ec.marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_OrderCharge_allocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrderCharge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ChargeAllocation(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _OrderConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.OrderConnection) (ret graphql.Marshaler) {
@@ -1149,6 +1205,50 @@ func (ec *executionContext) unmarshalInputRemoveOrderChargeInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSetOrderChargeAllocationsInput(ctx context.Context, obj any) (gqlmodel.SetOrderChargeAllocationsInput, error) {
+	var it gqlmodel.SetOrderChargeAllocationsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"orderId", "chargeId", "allocations"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "orderId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrderID = data
+		case "chargeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chargeId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChargeID = data
+		case "allocations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocations"))
+			data, err := ec.unmarshalNChargeAllocationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChargeAllocationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Allocations = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateOrderChargeInput(ctx context.Context, obj any) (gqlmodel.UpdateOrderChargeInput, error) {
 	var it gqlmodel.UpdateOrderChargeInput
 	if obj == nil {
@@ -1160,7 +1260,7 @@ func (ec *executionContext) unmarshalInputUpdateOrderChargeInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"orderId", "chargeId", "description", "amount", "version"}
+	fieldsInOrder := [...]string{"orderId", "chargeId", "description", "amount", "version", "allocations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1202,6 +1302,13 @@ func (ec *executionContext) unmarshalInputUpdateOrderChargeInput(ctx context.Con
 				return it, err
 			}
 			it.Version = data
+		case "allocations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocations"))
+			data, err := ec.unmarshalOChargeAllocationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChargeAllocationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Allocations = data
 		}
 	}
 	return it, nil
@@ -1560,6 +1667,11 @@ func (ec *executionContext) _OrderCharge(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "invoicedAt":
+			out.Values[i] = ec._OrderCharge_invoicedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._OrderCharge_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1567,6 +1679,11 @@ func (ec *executionContext) _OrderCharge(ctx context.Context, sel ast.SelectionS
 			}
 		case "createdAt":
 			out.Values[i] = ec._OrderCharge_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "allocations":
+			out.Values[i] = ec._OrderCharge_allocations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -1871,6 +1988,11 @@ func (ec *executionContext) marshalNOrderStatus2githubᚗcomᚋemoss08ᚋtrenova
 
 func (ec *executionContext) unmarshalNRemoveOrderChargeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRemoveOrderChargeInput(ctx context.Context, v any) (gqlmodel.RemoveOrderChargeInput, error) {
 	res, err := ec.unmarshalInputRemoveOrderChargeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSetOrderChargeAllocationsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetOrderChargeAllocationsInput(ctx context.Context, v any) (gqlmodel.SetOrderChargeAllocationsInput, error) {
+	res, err := ec.unmarshalInputSetOrderChargeAllocationsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

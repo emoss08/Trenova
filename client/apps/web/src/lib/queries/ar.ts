@@ -12,7 +12,9 @@ import {
   fetchArOpenItems,
   fetchArPaymentStats,
   fetchArTopOverdueCustomers,
+  fetchLateChargePreview,
 } from "@/lib/graphql/accounts-receivable";
+import type { LateChargeAssessmentInput } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const ar = createQueryKeys("ar", {
@@ -67,5 +69,9 @@ export const ar = createQueryKeys("ar", {
   paymentStats: () => ({
     queryKey: ["paymentStats"],
     queryFn: ({ signal }) => fetchArPaymentStats({ signal }),
+  }),
+  lateChargePreview: (input?: LateChargeAssessmentInput) => ({
+    queryKey: ["lateChargePreview", input ?? {}],
+    queryFn: async ({ signal }) => fetchLateChargePreview(input, { signal }),
   }),
 });

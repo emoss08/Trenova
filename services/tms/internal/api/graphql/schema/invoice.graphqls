@@ -1,6 +1,36 @@
 enum InvoiceStatus {
   Draft
   Posted
+  """
+  Taken out of circulation. The number and lines stay readable for the audit
+  trail; the open balance is zero and nothing is delivered.
+  """
+  Voided
+}
+
+"What happens to the freight a voided invoice billed."
+enum InvoiceVoidDisposition {
+  "The billing queue items go back to Approved with a fresh number, ready to bill again."
+  Rebill
+  "The billing queue items are canceled and the shipments settle as completed."
+  DoNotRebill
+}
+
+enum InvoiceMemoKind {
+  Manual
+  LateCharge
+}
+
+"Where the outbound EDI 210 for an invoice stands, separately from email."
+enum InvoiceEDISendStatus {
+  NotSent
+  NotConfigured
+  Queued
+  Generated
+  Sending
+  Sent
+  Failed
+  DeadLettered
 }
 
 enum InvoicePaymentTerm {
@@ -45,6 +75,8 @@ enum InvoiceScope {
   Consolidated
   """A credit memo, rebill or reversal in a correction chain."""
   Adjustment
+  """A standalone credit or debit memo with no shipment behind it."""
+  Memo
 }
 
 type Invoice {
@@ -87,6 +119,23 @@ type Invoice {
   shipmentBol: String!
   serviceDate: Timestamp
   billToName: String!
+  billToCode: String
+  billToAddressLine1: String
+  billToAddressLine2: String
+  billToCity: String
+  billToState: String
+  billToPostalCode: String
+  billToCountry: String
+  """
+  The customer who ordered the freight, when it is not the customer billed.
+  Null on an ordinary invoice and on consolidated ones, whose lines carry it.
+  """
+  shipperCustomerId: ID
+  shipperCustomer: Customer
+  "Whether this invoice bills only part of what its shipments charged."
+  isSplitBill: Boolean!
+  "Other invoices that bill any shipment on this one, split-bill siblings first."
+  relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
   totalAmount: Decimal!
@@ -96,6 +145,38 @@ type Invoice {
   sendStatus: InvoiceSendStatus!
   sentAt: Timestamp
   isAdjustmentArtifact: Boolean!
+  voidedAt: Timestamp
+  voidedById: ID
+  voidReason: String!
+  voidDisposition: InvoiceVoidDisposition
+  "The full-reversal adjustment that voided a posted invoice."
+  voidedByAdjustmentId: ID
+  "The invoice a memo corrects, when it corrects one."
+  referenceInvoiceId: ID
+  referenceInvoice: Invoice
+  memoReason: String!
+  memoKind: InvoiceMemoKind
+  "What is still owed on an open invoice or debit memo; zero on anything else."
+  openBalance: Decimal!
+  "Open balance in minor units, kept by the database for filtering and sorting."
+  balanceDueMinor: Int!
+  "How much of a posted credit memo has not yet been applied to an invoice."
+  creditRemaining: Decimal!
+  "Days past the due date for an open invoice; null when nothing is owed or overdue."
+  daysPastDue: Int
+  "Cash applied against this invoice, newest first, reversed payments included."
+  paymentApplications: [CustomerPaymentApplication!]!
+  """
+  Credit memo applications touching this invoice: the credits that settled it,
+  or, on a credit memo, the invoices it settled.
+  """
+  creditApplications: [CreditMemoApplication!]!
+  ediSendStatus: InvoiceEDISendStatus!
+  lastEdiMessageId: ID
+  ediSentAt: Timestamp
+  lastEdiError: String!
+  "Whether and where this invoice's outbound EDI 210 can go."
+  ediSendPlan: InvoiceEDISendPlan!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -107,6 +188,8 @@ type Invoice {
 enum InvoiceLineType {
   Freight
   Accessorial
+  "A memo line; counts toward the total and nothing else."
+  Memo
 }
 
 type InvoiceLine {
@@ -123,8 +206,91 @@ type InvoiceLine {
   quantity: Decimal!
   unitPrice: Decimal!
   amount: Decimal!
+  accessorialChargeId: ID
+  chargeCode: String
+  chargeMethod: String
+  rate: Decimal
+  "The share of the charge this line bills, when it is less than all of it."
+  allocationPercent: Decimal
+  chargeAllocationId: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"Every invoice a billing action produced; a split shipment yields one per payer."
+type CreateInvoicesResult {
+  invoices: [Invoice!]!
+  "The shipment's own payer's invoice."
+  primary: Invoice!
+}
+
+"Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands."
+type InvoiceEDISendPlan {
+  invoiceId: ID!
+  "The customer's EDI invoicing switch."
+  enabled: Boolean!
+  "Whether posting queues the 210 without a hand on it."
+  autoSend: Boolean!
+  partnerId: ID
+  partnerName: String!
+  documentProfileId: ID
+  communicationMethod: String!
+  status: InvoiceEDISendStatus!
+  lastMessageId: ID
+  lastError: String!
+  sentAt: Timestamp
+  "Why a send cannot happen right now; empty when it can."
+  blockers: [String!]!
+}
+
+type InvoiceEDISendResult {
+  invoiceId: ID!
+  status: InvoiceEDISendStatus!
+  workflowId: String!
+  workflowRunId: String!
+}
+
+type VoidInvoiceResult {
+  invoice: Invoice!
+  "The full-reversal adjustment raised for a posted invoice."
+  adjustmentId: ID
+  """
+  True when the reversal awaits an approver; the invoice is voided once it
+  executes.
+  """
+  pendingApproval: Boolean!
+  "Billing queue items released back to the queue or canceled."
+  releasedQueueItemIds: [ID!]!
+}
+
+input VoidInvoiceInput {
+  invoiceId: ID!
+  reason: String!
+  disposition: InvoiceVoidDisposition!
+}
+
+input MemoLineInput {
+  description: String!
+  amount: Decimal!
+  "Defaults to 1."
+  quantity: Decimal
+  "Names the accessorial this line corrects, so the memo reads like the charge."
+  accessorialChargeId: ID
+}
+
+input CreateMemoInput {
+  customerId: ID!
+  "CreditMemo or DebitMemo."
+  billType: BillType!
+  lines: [MemoLineInput!]!
+  referenceInvoiceId: ID
+  reason: String!
+  "Defaults to today."
+  invoiceDate: Timestamp
+  memo: String
+  memoKind: InvoiceMemoKind
+  "Post the memo in the same request."
+  autoPost: Boolean
 }
 
 type InvoiceEdge {
@@ -151,5 +317,24 @@ extend type Mutation {
   `offCycleReason` so the client can ask for one.
   """
   createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
+    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
   createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
+    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
+  "Bills the shipments, producing one invoice per payer of a split shipment."
+  createInvoicesFromShipments(shipmentIds: [ID!]!, offCycleReason: String): CreateInvoicesResult!
+  createInvoicesFromOrder(orderId: ID!, offCycleReason: String): CreateInvoicesResult!
+  """
+  Voids an invoice. A draft is voided at once. A posted invoice with nothing
+  applied is voided through a full-reversal adjustment, which may wait for an
+  approver; one with payments or credits applied is refused until they are
+  unapplied.
+  """
+  voidInvoice(input: VoidInvoiceInput!): VoidInvoiceResult!
+  "Raises a standalone credit or debit memo against a customer."
+  createMemo(input: CreateMemoInput!): Invoice!
+  """
+  Queues the outbound EDI 210 for a posted invoice. force resends one that
+  already went out.
+  """
+  sendInvoiceEdi(invoiceId: ID!, force: Boolean): InvoiceEDISendResult!
 }

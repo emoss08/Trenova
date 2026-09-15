@@ -374,10 +374,12 @@ var OrderChargeRelations = struct {
 	BusinessUnit string
 	Organization string
 	Order        string
+	Allocations  string
 }{
 	BusinessUnit: "BusinessUnit",
 	Organization: "Organization",
 	Order:        "Order",
+	Allocations:  "Allocations",
 }
 
 // OrderChargeScopeTenant restricts a query to a single tenant by adding:

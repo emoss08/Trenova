@@ -43,110 +43,113 @@ type MutationObserverSetter interface {
 type Params struct {
 	fx.In
 
-	Logger              *zap.Logger
-	Repo                repositories.ShipmentRepository
-	OrderRepo           repositories.OrderRepository
-	CacheRepo           repositories.ShipmentCacheRepository
-	AssignmentRepo      repositories.AssignmentRepository
-	UserRepo            repositories.UserRepository
-	ControlRepo         repositories.ShipmentControlRepository
-	ModeProfileService  services.ModeProfileService
-	PermitService       services.PermitService
-	ContinuityRepo      repositories.EquipmentContinuityRepository
-	CommodityRepo       repositories.CommodityRepository
-	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
-	EquipmentTypeRepo   repositories.EquipmentTypeRepository
-	AccessorialRepo     repositories.AccessorialChargeRepository
-	CustomerRepo        repositories.CustomerRepository
-	DocumentRepo        repositories.DocumentRepository
-	BillingRepo         repositories.BillingControlRepository
-	NotificationService *notificationservice.Service
-	BillingQueueService services.BillingQueueService          `optional:"true"`
-	ServiceFailureRepo  repositories.ServiceFailureRepository `optional:"true"`
-	ServiceFailures     services.ServiceFailureEvaluator      `optional:"true"`
-	Permissions         services.PermissionEngine
-	Validator           *Validator
-	AuditService        services.AuditService
-	EventService        services.ShipmentEventService
-	Realtime            services.RealtimeService
-	WorkflowStarter     services.WorkflowStarter
-	Coordinator         *shipmentstate.Coordinator
-	Commercial          *shipmentcommercial.Calculator
-	OrderDerivation     services.OrderDerivationService
-	DistanceCalculation services.DistanceCalculationService `optional:"true"`
-	TenderGuard         services.TenderGuard                `optional:"true"`
+	Logger               *zap.Logger
+	Repo                 repositories.ShipmentRepository
+	OrderRepo            repositories.OrderRepository
+	CacheRepo            repositories.ShipmentCacheRepository
+	AssignmentRepo       repositories.AssignmentRepository
+	UserRepo             repositories.UserRepository
+	ControlRepo          repositories.ShipmentControlRepository
+	ModeProfileService   services.ModeProfileService
+	PermitService        services.PermitService
+	ContinuityRepo       repositories.EquipmentContinuityRepository
+	CommodityRepo        repositories.CommodityRepository
+	HazmatRuleRepo       repositories.HazmatSegregationRuleRepository
+	EquipmentTypeRepo    repositories.EquipmentTypeRepository
+	AccessorialRepo      repositories.AccessorialChargeRepository
+	CustomerRepo         repositories.CustomerRepository
+	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	DocumentRepo         repositories.DocumentRepository
+	BillingRepo          repositories.BillingControlRepository
+	NotificationService  *notificationservice.Service
+	BillingQueueService  services.BillingQueueService          `optional:"true"`
+	ServiceFailureRepo   repositories.ServiceFailureRepository `optional:"true"`
+	ServiceFailures      services.ServiceFailureEvaluator      `optional:"true"`
+	Permissions          services.PermissionEngine
+	Validator            *Validator
+	AuditService         services.AuditService
+	EventService         services.ShipmentEventService
+	Realtime             services.RealtimeService
+	WorkflowStarter      services.WorkflowStarter
+	Coordinator          *shipmentstate.Coordinator
+	Commercial           *shipmentcommercial.Calculator
+	OrderDerivation      services.OrderDerivationService
+	DistanceCalculation  services.DistanceCalculationService `optional:"true"`
+	TenderGuard          services.TenderGuard                `optional:"true"`
 }
 
 type service struct {
-	l                   *zap.Logger
-	repo                repositories.ShipmentRepository
-	orderRepo           repositories.OrderRepository
-	cacheRepo           repositories.ShipmentCacheRepository
-	assignmentRepo      repositories.AssignmentRepository
-	userRepo            repositories.UserRepository
-	controlRepo         repositories.ShipmentControlRepository
-	modeProfileService  services.ModeProfileService
-	permitService       services.PermitService
-	continuityRepo      repositories.EquipmentContinuityRepository
-	commodityRepo       repositories.CommodityRepository
-	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
-	equipmentTypeRepo   repositories.EquipmentTypeRepository
-	accessorialRepo     repositories.AccessorialChargeRepository
-	customerRepo        repositories.CustomerRepository
-	documentRepo        repositories.DocumentRepository
-	billingRepo         repositories.BillingControlRepository
-	notificationService *notificationservice.Service
-	billingQueueService services.BillingQueueService
-	serviceFailureRepo  repositories.ServiceFailureRepository
-	serviceFailures     services.ServiceFailureEvaluator
-	permissions         services.PermissionEngine
-	validator           *Validator
-	auditService        services.AuditService
-	eventService        services.ShipmentEventService
-	realtime            services.RealtimeService
-	workflowStarter     services.WorkflowStarter
-	coordinator         *shipmentstate.Coordinator
-	commercial          *shipmentcommercial.Calculator
-	orderDerivation     services.OrderDerivationService
-	distanceCalculation services.DistanceCalculationService
-	tenderGuard         services.TenderGuard
-	mutationObservers   []services.ShipmentMutationObserver
+	l                    *zap.Logger
+	repo                 repositories.ShipmentRepository
+	orderRepo            repositories.OrderRepository
+	cacheRepo            repositories.ShipmentCacheRepository
+	assignmentRepo       repositories.AssignmentRepository
+	userRepo             repositories.UserRepository
+	controlRepo          repositories.ShipmentControlRepository
+	modeProfileService   services.ModeProfileService
+	permitService        services.PermitService
+	continuityRepo       repositories.EquipmentContinuityRepository
+	commodityRepo        repositories.CommodityRepository
+	hazmatRuleRepo       repositories.HazmatSegregationRuleRepository
+	equipmentTypeRepo    repositories.EquipmentTypeRepository
+	accessorialRepo      repositories.AccessorialChargeRepository
+	customerRepo         repositories.CustomerRepository
+	chargeAllocationRepo repositories.ChargeAllocationRepository
+	documentRepo         repositories.DocumentRepository
+	billingRepo          repositories.BillingControlRepository
+	notificationService  *notificationservice.Service
+	billingQueueService  services.BillingQueueService
+	serviceFailureRepo   repositories.ServiceFailureRepository
+	serviceFailures      services.ServiceFailureEvaluator
+	permissions          services.PermissionEngine
+	validator            *Validator
+	auditService         services.AuditService
+	eventService         services.ShipmentEventService
+	realtime             services.RealtimeService
+	workflowStarter      services.WorkflowStarter
+	coordinator          *shipmentstate.Coordinator
+	commercial           *shipmentcommercial.Calculator
+	orderDerivation      services.OrderDerivationService
+	distanceCalculation  services.DistanceCalculationService
+	tenderGuard          services.TenderGuard
+	mutationObservers    []services.ShipmentMutationObserver
 }
 
 func New(p Params) *service { //nolint:gocritic // stable API shape
 	return &service{
-		l:                   p.Logger.Named("service.shipment"),
-		repo:                p.Repo,
-		orderRepo:           p.OrderRepo,
-		cacheRepo:           p.CacheRepo,
-		assignmentRepo:      p.AssignmentRepo,
-		userRepo:            p.UserRepo,
-		controlRepo:         p.ControlRepo,
-		modeProfileService:  p.ModeProfileService,
-		permitService:       p.PermitService,
-		continuityRepo:      p.ContinuityRepo,
-		commodityRepo:       p.CommodityRepo,
-		hazmatRuleRepo:      p.HazmatRuleRepo,
-		equipmentTypeRepo:   p.EquipmentTypeRepo,
-		accessorialRepo:     p.AccessorialRepo,
-		customerRepo:        p.CustomerRepo,
-		documentRepo:        p.DocumentRepo,
-		billingRepo:         p.BillingRepo,
-		notificationService: p.NotificationService,
-		billingQueueService: p.BillingQueueService,
-		serviceFailureRepo:  p.ServiceFailureRepo,
-		serviceFailures:     p.ServiceFailures,
-		permissions:         p.Permissions,
-		validator:           p.Validator,
-		auditService:        p.AuditService,
-		eventService:        p.EventService,
-		realtime:            p.Realtime,
-		workflowStarter:     p.WorkflowStarter,
-		coordinator:         p.Coordinator,
-		commercial:          p.Commercial,
-		orderDerivation:     p.OrderDerivation,
-		distanceCalculation: p.DistanceCalculation,
-		tenderGuard:         p.TenderGuard,
+		l:                    p.Logger.Named("service.shipment"),
+		repo:                 p.Repo,
+		orderRepo:            p.OrderRepo,
+		cacheRepo:            p.CacheRepo,
+		assignmentRepo:       p.AssignmentRepo,
+		userRepo:             p.UserRepo,
+		controlRepo:          p.ControlRepo,
+		modeProfileService:   p.ModeProfileService,
+		permitService:        p.PermitService,
+		continuityRepo:       p.ContinuityRepo,
+		commodityRepo:        p.CommodityRepo,
+		hazmatRuleRepo:       p.HazmatRuleRepo,
+		equipmentTypeRepo:    p.EquipmentTypeRepo,
+		accessorialRepo:      p.AccessorialRepo,
+		customerRepo:         p.CustomerRepo,
+		chargeAllocationRepo: p.ChargeAllocationRepo,
+		documentRepo:         p.DocumentRepo,
+		billingRepo:          p.BillingRepo,
+		notificationService:  p.NotificationService,
+		billingQueueService:  p.BillingQueueService,
+		serviceFailureRepo:   p.ServiceFailureRepo,
+		serviceFailures:      p.ServiceFailures,
+		permissions:          p.Permissions,
+		validator:            p.Validator,
+		auditService:         p.AuditService,
+		eventService:         p.EventService,
+		realtime:             p.Realtime,
+		workflowStarter:      p.WorkflowStarter,
+		coordinator:          p.Coordinator,
+		commercial:           p.Commercial,
+		orderDerivation:      p.OrderDerivation,
+		distanceCalculation:  p.DistanceCalculation,
+		tenderGuard:          p.TenderGuard,
 	}
 }
 
@@ -281,6 +284,8 @@ func (s *service) Create(
 	}
 
 	entity.ApplyEntryMethodDefault(nil)
+	entity.ApplyFreightTermsDefault(nil)
+	entity.NormalizeBillTo()
 
 	if multiErr := s.coordinator.PrepareForCreateWithDelayThreshold(
 		entity,
@@ -310,6 +315,10 @@ func (s *service) Create(
 
 	if err = s.validateExplicitOrder(ctx, entity); err != nil {
 		return nil, err
+	}
+
+	if multiErr := s.validateChargeAllocations(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	multiErr, advisories := s.validator.ValidateCreateWithAdvisories(ctx, entity)
@@ -430,6 +439,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	entity.ApplyEntryMethodDefault(original)
+	entity.ApplyFreightTermsDefault(original)
+	shipment.FollowCustomerChange(original, entity)
+	entity.NormalizeBillTo()
+	entity.PreviousCustomerID = original.CustomerID
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
 	shipment.RestoreRateOwnedFields(original, entity)
@@ -472,6 +485,9 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		ctx, original, entity,
 	)
 	if multiErr != nil {
+		return nil, multiErr
+	}
+	if multiErr := s.validateChargeAllocations(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 	if multiErr := s.validateBillingReadinessForStatusChange(ctx, entity); multiErr != nil {

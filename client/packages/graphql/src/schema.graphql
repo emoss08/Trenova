@@ -73,12 +73,16 @@ type ARCollectionsWorklistItem {
   customerId: ID!
   customerName: String!
   daysPastDue: Int!
+  disputeOpenedAt: Timestamp
+  disputedAmountMinor: Int!
   dueDate: Timestamp!
   hasShortPay: Boolean!
   invoiceId: ID!
   invoiceNumber: String!
   isDisputed: Boolean!
   openAmountMinor: Int!
+  """Reason code of the open dispute case, empty when there is none."""
+  openDisputeReasonCode: String!
   severity: String!
 }
 
@@ -595,6 +599,12 @@ type ApiKeyEdge {
   node: ApiKey!
 }
 
+input ApplyCreditMemoInput {
+  accountingDate: Timestamp!
+  applications: [CreditMemoApplicationInput!]!
+  creditMemoId: ID!
+}
+
 input ApplyCustomerPaymentInput {
   accountingDate: Timestamp!
   applications: [CustomerPaymentApplicationInput!]!
@@ -914,8 +924,13 @@ type BillingQueueItem {
   Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
   """
   adjustmentContext: JSON!
+  """This payer's share of the shipment's charges."""
+  allocatedTotalAmount: Decimal!
   assignedBiller: User
   assignedBillerId: ID
+  billToCustomer: Customer
+  """The customer this item bills. A split shipment has one item per payer."""
+  billToCustomerId: ID!
   billType: BillType!
   businessUnitId: ID!
   cancelReason: String!
@@ -1676,6 +1691,54 @@ type CategoryCostLine {
   ratePerMile: Decimal!
 }
 
+"""
+One payer's share of one charge. A charge with no allocations is billed in
+full to the shipment's payer, so rows exist only where billing departs from
+that. Percent rows for a charge total 100; amount rows total the charge.
+"""
+type ChargeAllocation {
+  additionalChargeId: ID
+  amount: Decimal
+  billToCustomer: Customer
+  billToCustomerId: ID!
+  businessUnitId: ID!
+  chargeKind: ChargeAllocationKind!
+  createdAt: Timestamp!
+  id: ID!
+  """The invoice this share was billed on, once it has been."""
+  invoiceId: ID
+  invoicedAt: Timestamp
+  method: ChargeAllocationMethod!
+  orderChargeId: ID
+  organizationId: ID!
+  percent: Decimal
+  sequence: Int!
+  shipmentId: ID
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+input ChargeAllocationInput {
+  amount: Decimal
+  billToCustomerId: ID!
+  id: ID
+  method: ChargeAllocationMethod!
+  percent: Decimal
+  sequence: Int = 0
+  version: Int
+}
+
+enum ChargeAllocationKind {
+  Accessorial
+  Freight
+  OrderCharge
+}
+
+enum ChargeAllocationMethod {
+  Amount
+  Percent
+}
+
 enum ClearinghouseQueryType {
   AnnualLimited
   Full
@@ -1912,6 +1975,30 @@ input CreateFuelPurchaseImportInput {
   provider: FuelCardProvider!
 }
 
+"""
+Every invoice a billing action produced; a split shipment yields one per payer.
+"""
+type CreateInvoicesResult {
+  invoices: [Invoice!]!
+  """The shipment's own payer's invoice."""
+  primary: Invoice!
+}
+
+input CreateMemoInput {
+  """Post the memo in the same request."""
+  autoPost: Boolean
+  """CreditMemo or DebitMemo."""
+  billType: BillType!
+  customerId: ID!
+  """Defaults to today."""
+  invoiceDate: Timestamp
+  lines: [MemoLineInput!]!
+  memo: String
+  memoKind: InvoiceMemoKind
+  reason: String!
+  referenceInvoiceId: ID
+}
+
 input CreateMyLoadCommentInput {
   comment: String!
   shipmentId: ID!
@@ -2027,6 +2114,37 @@ type CredentialExpiryForecastItem {
   credential: WorkerCredential!
   daysUntilExpiry: Int!
   health: WorkerCredentialHealth!
+}
+
+"""Part of a posted credit memo used to settle an invoice."""
+type CreditMemoApplication {
+  accountingDate: Timestamp!
+  appliedAmountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID!
+  creditMemo: Invoice
+  creditMemoInvoiceId: ID!
+  id: ID!
+  invoice: Invoice
+  invoiceId: ID!
+  lineNumber: Int!
+  organizationId: ID!
+  status: CreditMemoApplicationStatus!
+  unappliedAt: Timestamp
+  unappliedById: ID
+  unappliedReason: String!
+  updatedAt: Timestamp!
+}
+
+input CreditMemoApplicationInput {
+  appliedAmountMinor: Int!
+  invoiceId: ID!
+}
+
+enum CreditMemoApplicationStatus {
+  Applied
+  Unapplied
 }
 
 type CustomFieldDefinition {
@@ -2188,6 +2306,10 @@ type CustomerBillingProfile {
   customerInvoicePrefix: String!
   defaultBillerId: ID
   documentTypes: [DocumentType!]
+  """Whether invoices are sent to this customer's EDI partner as an 210."""
+  ediInvoiceEnabled: Boolean!
+  """Whether invoices may be emailed to this customer."""
+  emailInvoiceEnabled: Boolean!
   enforceCreditLimit: Boolean!
   enforceCustomerBillingReq: Boolean!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
@@ -2359,6 +2481,7 @@ type CustomerPaymentApplication {
   invoiceId: ID!
   lineNumber: Int!
   organizationId: ID!
+  payment: CustomerPayment
   shortPayAmountMinor: Int!
   updatedAt: Timestamp!
 }
@@ -5688,6 +5811,13 @@ enum FreightClass {
   Class500
 }
 
+"""Who is expected to pay the carrier, as printed on the bill of lading."""
+enum FreightTerms {
+  Collect
+  Prepaid
+  ThirdParty
+}
+
 """
 A fuel card issued by a provider. Only the last four digits are stored; the
 external id is the provider's masked token, never the card number.
@@ -7225,42 +7355,97 @@ type InviteWorkerToPortalResult {
 
 type Invoice {
   appliedAmount: Decimal!
+  """
+  Open balance in minor units, kept by the database for filtering and sorting.
+  """
+  balanceDueMinor: Int!
+  billToAddressLine1: String
+  billToAddressLine2: String
+  billToCity: String
+  billToCode: String
+  billToCountry: String
   billToName: String!
+  billToPostalCode: String
+  billToState: String
   billType: BillType!
   billingQueueItemId: ID!
   businessUnitId: ID!
   createdAt: Timestamp!
+  """
+  Credit memo applications touching this invoice: the credits that settled it,
+  or, on a credit memo, the invoices it settled.
+  """
+  creditApplications: [CreditMemoApplication!]!
+  """
+  How much of a posted credit memo has not yet been applied to an invoice.
+  """
+  creditRemaining: Decimal!
   currencyCode: String!
   customer: Customer
   customerId: ID!
+  """
+  Days past the due date for an open invoice; null when nothing is owed or overdue.
+  """
+  daysPastDue: Int
   """
   How much charge detail this invoice shows, fixed when it was billed rather
   than read back from the customer.
   """
   detail: InvoiceDetail!
   disputeStatus: InvoiceDisputeStatus!
+  """Every dispute case on this invoice, newest first."""
+  disputes: [InvoiceDispute!]!
   dueDate: Timestamp
+  """Whether and where this invoice's outbound EDI 210 can go."""
+  ediSendPlan: InvoiceEDISendPlan!
+  ediSendStatus: InvoiceEDISendStatus!
+  ediSentAt: Timestamp
   id: ID!
   invoiceDate: Timestamp!
   isAdjustmentArtifact: Boolean!
+  """Whether this invoice bills only part of what its shipments charged."""
+  isSplitBill: Boolean!
+  lastEdiError: String!
+  lastEdiMessageId: ID
+  """Late charges assessed on this invoice, newest first."""
+  lateChargeAssessments: [LateChargeAssessment!]!
   lines: [InvoiceLine!]
+  memoKind: InvoiceMemoKind
+  memoReason: String!
   number: String!
   """
   Why this invoice was cut for a customer whose freight was supposed to
   accumulate onto a periodic statement. Null on every ordinary invoice.
   """
   offCycleReason: String
+  """
+  What is still owed on an open invoice or debit memo; zero on anything else.
+  """
+  openBalance: Decimal!
+  """The open case, when the invoice is disputed."""
+  openDispute: InvoiceDispute
   order: Order
   orderId: ID
   orderNumber: String
   organizationId: ID!
   otherAmount: Decimal!
+  """
+  Cash applied against this invoice, newest first, reversed payments included.
+  """
+  paymentApplications: [CustomerPaymentApplication!]!
   paymentTerm: InvoicePaymentTerm!
   """End of the period billed. Consolidated invoices only."""
   periodEnd: Timestamp
   """Start of the period billed. Consolidated invoices only."""
   periodStart: Timestamp
   postedAt: Timestamp
+  referenceInvoice: Invoice
+  """The invoice a memo corrects, when it corrects one."""
+  referenceInvoiceId: ID
+  """
+  Other invoices that bill any shipment on this one, split-bill siblings first.
+  """
+  relatedInvoices: [Invoice!]!
   scope: InvoiceScope!
   """How the lines on this invoice are organised for the reader."""
   sectionBy: InvoiceSectionKey!
@@ -7273,11 +7458,23 @@ type Invoice {
   shipmentCount: Int!
   shipmentId: ID
   shipmentProNumber: String!
+  shipperCustomer: Customer
+  """
+  The customer who ordered the freight, when it is not the customer billed.
+  Null on an ordinary invoice and on consolidated ones, whose lines carry it.
+  """
+  shipperCustomerId: ID
   status: InvoiceStatus!
   subtotalAmount: Decimal!
   totalAmount: Decimal!
   updatedAt: Timestamp!
   version: Int!
+  voidDisposition: InvoiceVoidDisposition
+  voidReason: String!
+  voidedAt: Timestamp
+  """The full-reversal adjustment that voided a posted invoice."""
+  voidedByAdjustmentId: ID
+  voidedById: ID
 }
 
 type InvoiceConnection {
@@ -7292,9 +7489,111 @@ enum InvoiceDetail {
   Summary
 }
 
+"""One dispute case raised against a posted invoice."""
+type InvoiceDispute {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  customer: Customer
+  customerId: ID!
+  disputedAmount: Decimal!
+  disputedAmountMinor: Int!
+  id: ID!
+  invoice: Invoice
+  invoiceId: ID!
+  notes: String!
+  openedAt: Timestamp!
+  openedById: ID!
+  organizationId: ID!
+  reasonCode: InvoiceDisputeReasonCode!
+  resolution: InvoiceDisputeResolution
+  resolutionAdjustmentId: ID
+  resolutionNotes: String!
+  resolvedAt: Timestamp
+  resolvedById: ID
+  status: InvoiceDisputeCaseStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""
+Where a dispute case stands. An invoice is Disputed while it has an Open case.
+"""
+enum InvoiceDisputeCaseStatus {
+  Open
+  Resolved
+  Withdrawn
+}
+
+enum InvoiceDisputeReasonCode {
+  AccessorialDisputed
+  DuplicateBilling
+  MissingDocumentation
+  Other
+  RateDiscrepancy
+  ServiceFailure
+  WrongBillTo
+}
+
+enum InvoiceDisputeResolution {
+  """
+  A credit memo settled the disputed amount; names the executed adjustment.
+  """
+  CreditIssued
+  """The customer dropped the dispute."""
+  CustomerWithdrew
+  """The invoice stands as billed."""
+  InvoiceUpheld
+  """The invoice was credited and rebilled."""
+  Rebilled
+  """The disputed amount was written off; names the executed adjustment."""
+  WrittenOff
+}
+
 enum InvoiceDisputeStatus {
   Disputed
   None
+}
+
+"""
+Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands.
+"""
+type InvoiceEDISendPlan {
+  """Whether posting queues the 210 without a hand on it."""
+  autoSend: Boolean!
+  """Why a send cannot happen right now; empty when it can."""
+  blockers: [String!]!
+  communicationMethod: String!
+  documentProfileId: ID
+  """The customer's EDI invoicing switch."""
+  enabled: Boolean!
+  invoiceId: ID!
+  lastError: String!
+  lastMessageId: ID
+  partnerId: ID
+  partnerName: String!
+  sentAt: Timestamp
+  status: InvoiceEDISendStatus!
+}
+
+type InvoiceEDISendResult {
+  invoiceId: ID!
+  status: InvoiceEDISendStatus!
+  workflowId: String!
+  workflowRunId: String!
+}
+
+"""
+Where the outbound EDI 210 for an invoice stands, separately from email.
+"""
+enum InvoiceEDISendStatus {
+  DeadLettered
+  Failed
+  Generated
+  NotConfigured
+  NotSent
+  Queued
+  Sending
+  Sent
 }
 
 type InvoiceEdge {
@@ -7303,8 +7602,16 @@ type InvoiceEdge {
 }
 
 type InvoiceLine {
+  accessorialChargeId: ID
+  """
+  The share of the charge this line bills, when it is less than all of it.
+  """
+  allocationPercent: Decimal
   amount: Decimal!
   businessUnitId: ID!
+  chargeAllocationId: ID
+  chargeCode: String
+  chargeMethod: String
   createdAt: Timestamp!
   description: String!
   id: ID!
@@ -7312,6 +7619,7 @@ type InvoiceLine {
   lineNumber: Int!
   organizationId: ID!
   quantity: Decimal!
+  rate: Decimal
   shipmentBol: String
   shipmentId: ID
   shipmentProNumber: String
@@ -7323,6 +7631,13 @@ type InvoiceLine {
 enum InvoiceLineType {
   Accessorial
   Freight
+  """A memo line; counts toward the total and nothing else."""
+  Memo
+}
+
+enum InvoiceMemoKind {
+  LateCharge
+  Manual
 }
 
 enum InvoicePaymentTerm {
@@ -7344,6 +7659,8 @@ enum InvoiceScope {
   Adjustment
   """A customer's shipments across a billing period, spanning orders."""
   Consolidated
+  """A standalone credit or debit memo with no shipment behind it."""
+  Memo
   """Every billable leg of one order."""
   Order
   """One shipment."""
@@ -7391,6 +7708,23 @@ enum InvoiceSplitKey {
 enum InvoiceStatus {
   Draft
   Posted
+  """
+  Taken out of circulation. The number and lines stay readable for the audit
+  trail; the open balance is zero and nothing is delivered.
+  """
+  Voided
+}
+
+"""What happens to the freight a voided invoice billed."""
+enum InvoiceVoidDisposition {
+  """
+  The billing queue items are canceled and the shipments settle as completed.
+  """
+  DoNotRebill
+  """
+  The billing queue items go back to Approved with a fresh number, ready to bill again.
+  """
+  Rebill
 }
 
 input IssueDisciplinaryActionInput {
@@ -7708,6 +8042,83 @@ enum JurisdictionVerificationState {
   Verified
 }
 
+"""A late charge recorded on one invoice for one period."""
+type LateChargeAssessment {
+  asOfDate: Timestamp!
+  basisOpenBalanceMinor: Int!
+  businessUnitId: ID!
+  chargeMinor: Int!
+  createdAt: Timestamp!
+  customerId: ID!
+  debitMemo: Invoice
+  debitMemoInvoiceId: ID
+  debitMemoLineId: ID
+  id: ID!
+  organizationId: ID!
+  periodEnd: Timestamp!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  ratePercent: Decimal!
+  runKey: String!
+  sourceInvoice: Invoice
+  sourceInvoiceId: ID!
+  updatedAt: Timestamp!
+}
+
+input LateChargeAssessmentInput {
+  """Defaults to now."""
+  asOfDate: Timestamp
+  """Limit the run to these customers; empty means every customer."""
+  customerIds: [ID!]
+}
+
+"""What the nightly late-charge run may do for an organization."""
+enum LateChargeAssessmentMode {
+  """
+  Raise a debit memo per customer, posted when invoice posting is automatic.
+  """
+  Automatic
+  Disabled
+  """Compute what would be charged and write nothing."""
+  Preview
+}
+
+type LateChargeAssessmentResult {
+  asOfDate: Timestamp!
+  customers: [LateChargeCustomerResult!]!
+  customersSkipped: Int!
+  memosCreated: Int!
+  memosPosted: Int!
+  mode: LateChargeAssessmentMode!
+  preview: Boolean!
+  totalChargeMinor: Int!
+}
+
+type LateChargeCustomerResult {
+  currencyCode: String!
+  customerId: ID!
+  customerName: String!
+  debitMemoId: ID
+  debitMemoNumber: String!
+  lines: [LateChargeLine!]!
+  posted: Boolean!
+  skipReason: String!
+  skipped: Boolean!
+  totalChargeMinor: Int!
+}
+
+"""One period of one invoice in a late-charge run."""
+type LateChargeLine {
+  basisOpenBalanceMinor: Int!
+  chargeMinor: Int!
+  invoiceId: ID!
+  invoiceNumber: String!
+  periodEnd: Timestamp!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  ratePercent: Decimal!
+}
+
 enum LeaveCaseStatus {
   Approved
   Closed
@@ -7980,6 +8391,17 @@ input MatchRoutingGuideInput {
   originState: String
 }
 
+input MemoLineInput {
+  """
+  Names the accessorial this line corrects, so the memo reads like the charge.
+  """
+  accessorialChargeId: ID
+  amount: Decimal!
+  description: String!
+  """Defaults to 1."""
+  quantity: Decimal
+}
+
 enum MoveCoverageType {
   carrier
   driver
@@ -8014,7 +8436,7 @@ type Mutation {
   addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
-  addOrderCharge(amount: Decimal!, description: String!, orderId: ID!): Order!
+  addOrderCharge(allocations: [ChargeAllocationInput!], amount: Decimal!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   """
@@ -8023,6 +8445,8 @@ type Mutation {
   """
   amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
+  """Settles open invoices of the same customer with a posted credit memo."""
+  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
@@ -8035,6 +8459,8 @@ type Mutation {
   archiveWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
   archiveWorkerCredential(input: ArchiveWorkerCredentialInput!): WorkerCredential!
   archiveWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
+  """Runs the late-charge assessment now and raises the debit memos."""
+  assessLateCharges(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
   assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
   assignFuelCard(input: AssignFuelCardInput!): FuelCard!
@@ -8131,15 +8557,22 @@ type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
-  createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice!
+  createInvoiceFromOrder(offCycleReason: String, orderId: ID!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
   """
   Bills the given shipments. offCycleReason is required only when the customer
   is on a periodic statement, where invoicing freight on its own takes it off
   that statement; omitting it there fails with a validation error on
   `offCycleReason` so the client can ask for one.
   """
-  createInvoiceFromShipments(offCycleReason: String, shipmentIds: [ID!]!): Invoice!
+  createInvoiceFromShipments(offCycleReason: String, shipmentIds: [ID!]!): Invoice! @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
+  createInvoicesFromOrder(offCycleReason: String, orderId: ID!): CreateInvoicesResult!
+  """
+  Bills the shipments, producing one invoice per payer of a split shipment.
+  """
+  createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
+  """Raises a standalone credit or debit memo against a customer."""
+  createMemo(input: CreateMemoInput!): Invoice!
   """
   Posts a driver update on one of the signed-in driver's loads. Recorded as a
   DriverUpdate comment with Driver visibility so dispatch sees it on the shipment.
@@ -8279,6 +8712,10 @@ type Mutation {
   markNotificationsUnread(ids: [ID!]!): Boolean!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
+  """
+  Opens a dispute on a posted invoice; the invoice reads Disputed until it closes.
+  """
+  openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
   openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
@@ -8364,6 +8801,7 @@ type Mutation {
   left alone.
   """
   resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
   """
   Resolves or denies a dispute, optionally applying a correcting adjustment (back office).
   """
@@ -8407,12 +8845,18 @@ type Mutation {
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
+  """
+  Queues the outbound EDI 210 for a posted invoice. force resends one that
+  already went out.
+  """
+  sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   """
   The signed-in driver stating what they would rather work on one weekday.
   """
   setMyAvailability(input: SetMyAvailabilityInput!): WorkerAvailabilityPreference!
+  setOrderChargeAllocations(input: SetOrderChargeAllocationsInput!): Order!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
@@ -8439,9 +8883,13 @@ type Mutation {
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
-  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem! @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
+  """Queues the shipment for billing, one item per payer."""
+  transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   transitionShiftSwap(input: TransitionShiftSwapInput!): ShiftSwapRequest!
   transitionTimesheet(input: TransitionTimesheetInput!): Timesheet!
+  """Takes one credit memo application back."""
+  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
   unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
   uncancelShipment(id: ID!): Shipment!
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
@@ -8522,9 +8970,17 @@ type Mutation {
   verifyWorkerCredential(id: ID!, version: Int): WorkerCredential!
   voidCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """
+  Voids an invoice. A draft is voided at once. A posted invoice with nothing
+  applied is voided through a full-reversal adjustment, which may wait for an
+  approver; one with payments or credits applied is refused until they are
+  unapplied.
+  """
+  voidInvoice(input: VoidInvoiceInput!): VoidInvoiceResult!
   voidPayrollExport(input: VoidPayrollExportInput!): PayrollExport!
   waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
   waiveWorkerTraining(input: WaiveWorkerTrainingInput!): WorkerTrainingRecord!
+  withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
   """The signed-in driver taking back a change they asked for."""
   withdrawMyProfileChange(id: ID!): WorkerProfileChangeRequest!
   """Withdraws one of the signed-in driver's own open disputes."""
@@ -8731,6 +9187,14 @@ input OpenEscrowAccountInput {
   workerId: ID!
 }
 
+input OpenInvoiceDisputeInput {
+  """At most the invoice's open balance."""
+  disputedAmount: Decimal!
+  invoiceId: ID!
+  notes: String
+  reasonCode: InvoiceDisputeReasonCode!
+}
+
 input OpenLeaveCaseInput {
   documentId: ID
   eligibilityHoursWorked: Int
@@ -8777,11 +9241,18 @@ type Order {
 }
 
 type OrderCharge {
+  """
+  How the charge is divided among payers; empty bills it to the order's payer.
+  """
+  allocations: [ChargeAllocation!]!
   amount: Decimal!
   createdAt: Timestamp!
   description: String!
   id: ID!
+  """The first invoice that carried any of this charge."""
   invoiceId: ID
+  """Set once every payer's share of the charge has been invoiced."""
+  invoicedAt: Timestamp
   orderId: ID!
   version: Int!
 }
@@ -10308,6 +10779,7 @@ type Query {
   iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
   iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
   invoice(id: ID!): Invoice
+  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
   """Everyone in a position from either roster, workers first."""
@@ -10321,6 +10793,10 @@ type Query {
   jurisdictionRule(id: ID!): JurisdictionRule
   jurisdictionRuleOverrides(input: DataTableConnectionInput!): JurisdictionRuleOverrideConnection!
   jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
+  """
+  What a late-charge run would raise as of the date, without writing anything.
+  """
+  lateChargePreview(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
   """
   Cases across the organisation still waiting on certification the employee
   owes.
@@ -11721,6 +12197,16 @@ input RescindDisciplinaryActionInput {
   version: Int
 }
 
+input ResolveInvoiceDisputeInput {
+  disputeId: ID!
+  resolution: InvoiceDisputeResolution!
+  """
+  Required for CreditIssued and WrittenOff: the executed adjustment on this invoice.
+  """
+  resolutionAdjustmentId: ID
+  resolutionNotes: String
+}
+
 input ResolveSettlementDisputeInput {
   """
   Optional correcting adjustment applied to the driver's open settlement (one is
@@ -12441,6 +12927,12 @@ input SetMyAvailabilityInput {
   preference: AvailabilityPreference!
 }
 
+input SetOrderChargeAllocationsInput {
+  allocations: [ChargeAllocationInput!]!
+  chargeId: ID!
+  orderId: ID!
+}
+
 """
 Groups every settlement generated for one pay period so a payroll run can be
 reviewed, exported, and reconciled as a unit. Batches can be generated manually
@@ -12734,13 +13226,25 @@ type Shipment {
   """When the contract priced this shipment. Null if none ever did."""
   autoRatedAt: Timestamp
   baseRate: Decimal!
+  billToCustomer: ShipmentCustomer
+  """
+  The customer billed by default. Null means the shipment's customer pays.
+  """
+  billToCustomerId: ID
   billedAt: Timestamp
+  """
+  What each payer owes. Populated when the shipment is read with its charges;
+  a list row carries none.
+  """
+  billingSplitSummary: [ShipmentBillingSplitSummary!]!
   billingTransferStatus: String
   bol: String
   businessUnitId: ID!
   cancelReason: String!
   canceledAt: Timestamp
   canceledById: ID
+  """Every allocation on the shipment, across freight and accessorials."""
+  chargeAllocations: [ChargeAllocation!]!
   commodities: [ShipmentCommodity!]!
   consolidationGroupId: ID
   createdAt: Timestamp!
@@ -12751,6 +13255,7 @@ type Shipment {
   formulaTemplate: ShipmentFormulaTemplate
   formulaTemplateId: ID!
   freightChargeAmount: Decimal!
+  freightTerms: FreightTerms!
   fuelSurchargeLocked: Boolean!
   id: ID!
   markedReadyToBillAt: Timestamp
@@ -12829,10 +13334,11 @@ type ShipmentAdditionalCharge {
   amount: Decimal!
   businessUnitId: ID!
   createdAt: Timestamp!
-  detentionOccurrenceId: ID
+  detentionOccurrenceId: ID @deprecated(reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead.")
   fuelSurchargeDetail: JSON
   fuelSurchargeProgramId: ID
   id: ID
+  isDetention: Boolean!
   isSystemGenerated: Boolean!
   method: String!
   organizationId: ID!
@@ -12844,8 +13350,13 @@ type ShipmentAdditionalCharge {
 
 input ShipmentAdditionalChargeInput {
   accessorialChargeId: ID!
+  """
+  How this charge is divided among payers. Omit to leave the split untouched;
+  send an empty list to bill the whole charge to the shipment's payer.
+  """
+  allocations: [ChargeAllocationInput!]
   amount: Decimal = "0"
-  detentionOccurrenceId: ID
+  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
   fuelSurchargeProgramId: ID
   id: ID
   isSystemGenerated: Boolean = false
@@ -12960,14 +13471,34 @@ type ShipmentAxleWeight {
   weight: Int!
 }
 
+"""One payer's standing on a shipment."""
+type ShipmentBillingPayerReadiness {
+  creditHold: Boolean!
+  creditStatus: String!
+  isPrimary: Boolean!
+  payerCode: String!
+  payerId: ID!
+  payerName: String!
+  shareAmount: Decimal!
+  shouldAutoApproveBilling: Boolean!
+}
+
 type ShipmentBillingReadiness {
   canMarkReadyToInvoice: Boolean!
   missingRequirements: [ShipmentBillingRequirement!]!
+  """
+  Every payer with a share of the shipment, the shipment's own payer first.
+  """
+  payers: [ShipmentBillingPayerReadiness!]!
   policy: ShipmentBillingReadinessPolicy!
   requirements: [ShipmentBillingRequirement!]!
   serviceFailureContext: ShipmentServiceFailureBillingContext!
   shipmentId: String!
   shipmentStatus: ShipmentStatus!
+  """
+  Whether every payer's profile lets this clean freight skip billing review.
+  """
+  shouldAutoApproveBilling: Boolean!
   shouldAutoMarkReadyToInvoice: Boolean!
   shouldAutoTransferToBilling: Boolean!
   validationFailures: [ShipmentBillingValidation!]!
@@ -12990,6 +13521,22 @@ type ShipmentBillingRequirement {
   documentTypeId: String!
   documentTypeName: String!
   satisfied: Boolean!
+}
+
+"""What one payer owes on a shipment once every allocation is applied."""
+type ShipmentBillingSplitSummary {
+  accessorialAmount: Decimal!
+  freightAmount: Decimal!
+  """
+  The shipment's own payer: its bill-to, or its customer when none is set.
+  """
+  isPrimary: Boolean!
+  """Whether any charge on the shipment is shared or redirected."""
+  isSplit: Boolean!
+  payerCode: String!
+  payerId: ID!
+  payerName: String!
+  totalAmount: Decimal!
 }
 
 type ShipmentBillingTransferCandidateIds {
@@ -13069,8 +13616,10 @@ type ShipmentBulkTransferToBillingResponse {
 }
 
 type ShipmentBulkTransferToBillingResult {
-  """The queue item the shipment became, when it transferred."""
+  """The primary payer's queue item, when the shipment transferred."""
   billingQueueItem: BillingQueueItem
+  """Every queue item the transfer created, one per payer."""
+  billingQueueItems: [BillingQueueItem!]!
   error: String
   failureCode: ShipmentBillingTransferFailureCode
   """
@@ -13708,6 +14257,8 @@ input ShipmentInput {
   actualShipDate: Timestamp
   additionalCharges: [ShipmentAdditionalChargeInput!] = []
   baseRate: Decimal = "0"
+  """Null bills the shipment to its customer."""
+  billToCustomerId: ID
   billedAt: Timestamp
   billingTransferStatus: String
   bol: String
@@ -13720,7 +14271,15 @@ input ShipmentInput {
   enteredById: ID
   entryMethod: ShipmentEntryMethod = Manual
   formulaTemplateId: ID!
+  """
+  How the freight charge is divided among payers. Omit to leave the split
+  untouched; an empty list bills all of it to the shipment's payer. When this
+  or any charge's allocations is sent, the save replaces every allocation on
+  the shipment, so send the whole picture.
+  """
+  freightAllocations: [ChargeAllocationInput!]
   freightChargeAmount: Decimal = "0"
+  freightTerms: FreightTerms = Prepaid
   fuelSurchargeLocked: Boolean = false
   markedReadyToBillAt: Timestamp
   moves: [ShipmentMoveInput!] = []
@@ -14321,6 +14880,11 @@ input ShipmentTransferOwnershipInput {
 input ShipmentTransferToBillingInput {
   billType: BillType = Invoice
   shipmentId: ID!
+}
+
+type ShipmentTransferToBillingResult {
+  items: [BillingQueueItem!]!
+  primary: BillingQueueItem!
 }
 
 type ShipmentType {
@@ -15291,6 +15855,11 @@ input TransitionTimesheetInput {
   status: TimesheetStatus!
 }
 
+input UnapplyCreditMemoApplicationInput {
+  applicationId: ID!
+  reason: String
+}
+
 input UnassignDocumentTemplateInput {
   customerId: ID!
   kind: String!
@@ -15508,6 +16077,8 @@ input UpdateMyContactInfoInput {
 }
 
 input UpdateOrderChargeInput {
+  """Omit to leave the split untouched; an empty list removes it."""
+  allocations: [ChargeAllocationInput!]
   amount: Decimal!
   chargeId: ID!
   description: String!
@@ -15811,6 +16382,25 @@ type VehiclePosition {
   tractorId: ID!
 }
 
+input VoidInvoiceInput {
+  disposition: InvoiceVoidDisposition!
+  invoiceId: ID!
+  reason: String!
+}
+
+type VoidInvoiceResult {
+  """The full-reversal adjustment raised for a posted invoice."""
+  adjustmentId: ID
+  invoice: Invoice!
+  """
+  True when the reversal awaits an approver; the invoice is voided once it
+  executes.
+  """
+  pendingApproval: Boolean!
+  """Billing queue items released back to the queue or canceled."""
+  releasedQueueItemIds: [ID!]!
+}
+
 input VoidPayrollExportInput {
   id: ID!
   reason: String!
@@ -15820,6 +16410,11 @@ input WaiveWorkerTrainingInput {
   id: ID!
   reason: String!
   version: Int
+}
+
+input WithdrawInvoiceDisputeInput {
+  disputeId: ID!
+  notes: String
 }
 
 type Worker {

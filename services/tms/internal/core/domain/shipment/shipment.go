@@ -126,7 +126,10 @@ type Shipment struct {
 	RateLocked                bool                  `json:"rateLocked"                 bun:"rate_locked,type:BOOLEAN,notnull"`
 	AutoRated                 bool                  `json:"autoRated"                  bun:"auto_rated,type:BOOLEAN,notnull"`
 	AutoRatedAt               *int64                `json:"autoRatedAt"                bun:"auto_rated_at,type:BIGINT,nullzero"`
+	BillToCustomerID          *pulid.ID             `json:"billToCustomerId"           bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"`
+	FreightTerms              FreightTerms          `json:"freightTerms"               bun:"freight_terms,type:shipment_freight_terms_enum,notnull,default:'Prepaid'"`
 	SourceDocumentID          string                `json:"sourceDocumentId,omitempty" bun:"-"`
+	PreviousCustomerID        pulid.ID              `json:"-"                          bun:"-"`
 
 	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
@@ -139,6 +142,7 @@ type Shipment struct {
 	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty"      bun:"rel:belongs-to,join:shipment_type_id=id"`
 	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty"       bun:"rel:belongs-to,join:service_type_id=id"`
 	Customer          *customer.Customer               `json:"customer,omitempty"          bun:"rel:belongs-to,join:customer_id=id"`
+	BillToCustomer    *customer.Customer               `json:"billToCustomer,omitempty"    bun:"rel:belongs-to,join:bill_to_customer_id=id"`
 	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty"       bun:"rel:belongs-to,join:tractor_type_id=id"`
 	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"       bun:"rel:belongs-to,join:trailer_type_id=id"`
 	CanceledBy        *tenant.User                     `json:"canceledBy,omitempty"        bun:"rel:belongs-to,join:canceled_by_id=id"`
@@ -148,7 +152,61 @@ type Shipment struct {
 	Moves             []*ShipmentMove                  `json:"moves,omitempty"             bun:"rel:has-many,join:id=shipment_id"`
 	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"       bun:"rel:has-many,join:id=shipment_id"`
 	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	ChargeAllocations []*ChargeAllocation              `json:"chargeAllocations,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 	Comments          []*ShipmentComment               `json:"comments,omitempty"          bun:"rel:has-many,join:id=shipment_id"`
+}
+
+// PayerID is the customer the shipment's charges default to. An explicit
+// bill-to overrides the ordering customer; otherwise the two are the same party.
+func (s *Shipment) PayerID() pulid.ID {
+	if s == nil {
+		return pulid.Nil
+	}
+	if s.BillToCustomerID != nil && s.BillToCustomerID.IsNotNil() {
+		return *s.BillToCustomerID
+	}
+
+	return s.CustomerID
+}
+
+func (s *Shipment) HasExplicitBillTo() bool {
+	return s != nil && s.BillToCustomerID != nil && s.BillToCustomerID.IsNotNil()
+}
+
+// NormalizeBillTo folds a bill-to that names the ordering customer back to
+// "same as customer", so the two spellings never diverge in storage.
+func (s *Shipment) NormalizeBillTo() {
+	if s == nil || s.BillToCustomerID == nil {
+		return
+	}
+	if s.BillToCustomerID.IsNil() || *s.BillToCustomerID == s.CustomerID {
+		s.BillToCustomerID = nil
+	}
+}
+
+// FollowCustomerChange keeps "same as customer" meaning the new customer: a
+// bill-to that pointed at the old ordering customer was never a third party,
+// so it moves with the customer rather than pinning the old one as payer.
+func FollowCustomerChange(original, updated *Shipment) {
+	if original == nil || updated == nil || original.CustomerID == updated.CustomerID {
+		return
+	}
+	if updated.BillToCustomerID != nil && *updated.BillToCustomerID == original.CustomerID {
+		updated.BillToCustomerID = nil
+	}
+}
+
+func (s *Shipment) ApplyFreightTermsDefault(original *Shipment) {
+	if s == nil || s.FreightTerms != "" {
+		return
+	}
+
+	if original != nil && original.FreightTerms != "" {
+		s.FreightTerms = original.FreightTerms
+		return
+	}
+
+	s.FreightTerms = FreightTermsPrepaid
 }
 
 func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
@@ -179,6 +237,15 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 				EntryMethodManual,
 				EntryMethodEDI,
 			).Error("Entry method must be a valid entry method"),
+		),
+		validation.Field(
+			&s.FreightTerms,
+			validation.Required.Error("Freight terms are required"),
+			validation.In(
+				FreightTermsPrepaid,
+				FreightTermsCollect,
+				FreightTermsThirdParty,
+			).Error("Freight terms must be Prepaid, Collect or ThirdParty"),
 		),
 		validation.Field(
 			&s.RateOverrideAmount,
@@ -431,6 +498,16 @@ func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Queryable:    true,
 			},
 			{
+				Field:        "billToCustomer",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*customer.Customer)(nil),
+				TargetTable:  "customers",
+				ForeignKey:   "bill_to_customer_id",
+				ReferenceKey: "id",
+				Alias:        "bill_cus",
+				Queryable:    true,
+			},
+			{
 				Field:        "originLocation",
 				Type:         dbtype.RelationshipTypeCustom,
 				TargetEntity: (*location.Location)(nil),
@@ -582,6 +659,7 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	switch query.(type) {
 	case *bun.InsertQuery:
 		s.ApplyEntryMethodDefault(nil)
+		s.ApplyFreightTermsDefault(nil)
 		if s.ID.IsNil() {
 			s.ID = pulid.MustNew("shp_")
 		}

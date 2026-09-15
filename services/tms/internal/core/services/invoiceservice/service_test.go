@@ -196,16 +196,16 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 	assert.Equal(t, item.Number, entity.Number)
 	assert.Equal(t, "Net45", string(entity.PaymentTerm))
 	assert.Equal(t, "CAD", entity.CurrencyCode)
-	assert.Equal(t, decimal.NewFromInt(-100), entity.SubtotalAmount)
+	assert.True(t, decimal.NewFromInt(-100).Equal(entity.SubtotalAmount), "entity.SubtotalAmount")
 	assert.Equal(t, int64(-10000), entity.SubtotalAmountMinor)
-	assert.Equal(t, decimal.NewFromInt(-40), entity.OtherAmount)
+	assert.True(t, decimal.NewFromInt(-40).Equal(entity.OtherAmount), "entity.OtherAmount")
 	assert.Equal(t, int64(-4000), entity.OtherAmountMinor)
-	assert.Equal(t, decimal.NewFromInt(-140), entity.TotalAmount)
+	assert.True(t, decimal.NewFromInt(-140).Equal(entity.TotalAmount), "entity.TotalAmount")
 	assert.Equal(t, int64(-14000), entity.TotalAmountMinor)
 	assert.Len(t, entity.Lines, 2)
-	assert.Equal(t, decimal.NewFromInt(-100), entity.Lines[0].Amount)
+	assert.True(t, decimal.NewFromInt(-100).Equal(entity.Lines[0].Amount), "entity.Lines[0].Amount")
 	assert.Equal(t, int64(-10000), entity.Lines[0].AmountMinor)
-	assert.Equal(t, decimal.NewFromInt(-40), entity.Lines[1].Amount)
+	assert.True(t, decimal.NewFromInt(-40).Equal(entity.Lines[1].Amount), "entity.Lines[1].Amount")
 	assert.Equal(t, int64(-4000), entity.Lines[1].AmountMinor)
 	assert.True(t, entity.Lines[1].UnitPrice.Equal(decimal.NewFromInt(-20)))
 	assert.Equal(t, shp.ActualDeliveryDate, entity.ServiceDate)
@@ -255,7 +255,7 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 
 	require.NotNil(t, entity)
 	require.Len(t, entity.Lines, 2)
-	assert.Equal(t, decimal.NewFromInt(2_800), entity.SubtotalAmount)
+	assert.True(t, decimal.NewFromInt(2_800).Equal(entity.SubtotalAmount), "entity.SubtotalAmount")
 	assert.True(t, decimal.NewFromInt(75).Equal(entity.OtherAmount))
 	assert.True(t, decimal.NewFromInt(2_875).Equal(entity.TotalAmount))
 	assert.Equal(t, int64(7_500), entity.OtherAmountMinor)
@@ -1045,8 +1045,15 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 		Return(fakeWorkflowRun{id: "wf-invoice-pdf", runID: "run-1"}, nil).
 		Once()
 
+	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
+		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusPosted}, nil).
+		Once()
+
 	svc := &Service{
 		l:               zap.NewNop(),
+		repo:            invoiceRepo,
 		workflowStarter: workflowStarter,
 	}
 
@@ -1254,6 +1261,7 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 			ID: customerID,
 			BillingProfile: &customer.CustomerBillingProfile{
 				AutoSendInvoiceOnGeneration: true,
+				EmailInvoiceEnabled:         true,
 			},
 		}, nil).
 		Once()

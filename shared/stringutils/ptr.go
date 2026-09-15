@@ -17,3 +17,14 @@ func FromPtr(s *string) string {
 
 	return *s
 }
+
+// NilIfEmpty is Ptr for named string types such as enums: an unset value
+// becomes nil, which a database driver writes as NULL rather than "" and so
+// satisfies a CHECK that lists the valid options.
+func NilIfEmpty[T ~string](v T) *T {
+	if v == "" {
+		return nil
+	}
+
+	return &v
+}

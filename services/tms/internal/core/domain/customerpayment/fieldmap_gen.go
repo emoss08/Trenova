@@ -11,6 +11,13 @@ func (e *Application) GetStaticFieldMap() map[string]string {
 	return buncolgen.ApplicationFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CreditMemoApplication].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.CreditMemoApplicationFieldMap] instead of parsing struct tags via reflection.
+func (e *CreditMemoApplication) GetStaticFieldMap() map[string]string {
+	return buncolgen.CreditMemoApplicationFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Payment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.PaymentFieldMap] instead of parsing struct tags via reflection.

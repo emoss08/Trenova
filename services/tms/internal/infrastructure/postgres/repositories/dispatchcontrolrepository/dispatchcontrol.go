@@ -163,7 +163,7 @@ func (r *repository) ListHorizonPlanningTenants(
 		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 		Where(cols.EnableAutoAssignment.Eq(), true).
 		Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon).
-		OrderExpr("? ASC", cols.OrganizationID).
+		Order(cols.OrganizationID.OrderAsc()).
 		Scan(ctx, &rows); err != nil {
 		r.l.Error("failed to list horizon planning tenants", zap.Error(err))
 		return nil, err

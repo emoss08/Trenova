@@ -9,6 +9,7 @@ import { shipmentPanelPath } from "@/lib/shipment-utils";
 import {
   ORDER_CHARGES_GROUP_KEY,
   chargeComposition,
+  describeAllocationShare,
   describeChargeCalculation,
   groupInvoiceLinesByShipment,
   type InvoiceLineGroup,
@@ -342,9 +343,10 @@ function ChargeRow({ line, currencyCode }: { line: InvoiceLine; currencyCode: st
   const t = useT();
 
   const calculation = describeChargeCalculation(line, currencyCode, t);
-  const details = calculation
-    ? [calculation, t("Line {0}", line.lineNumber)]
-    : [t("Line {0}", line.lineNumber)];
+  const share = describeAllocationShare(line, t);
+  const details = [calculation, share, t("Line {0}", line.lineNumber)].filter(
+    (detail): detail is string => Boolean(detail),
+  );
 
   return (
     <ChargeRowLayout

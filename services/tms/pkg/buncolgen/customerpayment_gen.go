@@ -211,6 +211,233 @@ var ApplicationFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// CreditMemoApplication — table "credit_memo_applications", alias "cma"
+// ---------------------------------------------------------------------------
+
+// CreditMemoApplicationTable holds the table name, alias, and primary key columns
+// for the "credit_memo_applications" table. The alias "cma" is used in all generated
+// SQL fragments (e.g. "cma.id = ?").
+var CreditMemoApplicationTable = TableInfo{
+	Name:       "credit_memo_applications",
+	Alias:      "cma",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// CreditMemoApplicationColumns provides type-safe column references for the "credit_memo_applications" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CreditMemoApplicationColumns.ID.String())
+//	// SELECT cma.id FROM credit_memo_applications AS cma
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CreditMemoApplicationColumns.ID.Eq(), id)           // WHERE cma.id = ?
+//	q.Order(CreditMemoApplicationColumns.CreatedAt.OrderDesc())  // ORDER BY cma.created_at DESC
+var CreditMemoApplicationColumns = struct {
+	ID                  Column // "id" → qualified: "cma.id"
+	OrganizationID      Column // "organization_id" → qualified: "cma.organization_id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "cma.business_unit_id"
+	CreditMemoInvoiceID Column // "credit_memo_invoice_id" → qualified: "cma.credit_memo_invoice_id"
+	InvoiceID           Column // "invoice_id" → qualified: "cma.invoice_id"
+	AppliedAmountMinor  Column // "applied_amount_minor" → qualified: "cma.applied_amount_minor"
+	AccountingDate      Column // "accounting_date" → qualified: "cma.accounting_date"
+	LineNumber          Column // "line_number" → qualified: "cma.line_number"
+	Status              Column // "status" → qualified: "cma.status"
+	UnappliedAt         Column // "unapplied_at" → qualified: "cma.unapplied_at"
+	UnappliedByID       Column // "unapplied_by_id" → qualified: "cma.unapplied_by_id"
+	UnappliedReason     Column // "unapplied_reason" → qualified: "cma.unapplied_reason"
+	CreatedByID         Column // "created_by_id" → qualified: "cma.created_by_id"
+	CreatedAt           Column // "created_at" → qualified: "cma.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "cma.updated_at"
+}{
+	ID:                  NewColumn("id", "cma"),
+	OrganizationID:      NewColumn("organization_id", "cma"),
+	BusinessUnitID:      NewColumn("business_unit_id", "cma"),
+	CreditMemoInvoiceID: NewColumn("credit_memo_invoice_id", "cma"),
+	InvoiceID:           NewColumn("invoice_id", "cma"),
+	AppliedAmountMinor:  NewColumn("applied_amount_minor", "cma"),
+	AccountingDate:      NewColumn("accounting_date", "cma"),
+	LineNumber:          NewColumn("line_number", "cma"),
+	Status:              NewColumn("status", "cma"),
+	UnappliedAt:         NewColumn("unapplied_at", "cma"),
+	UnappliedByID:       NewColumn("unapplied_by_id", "cma"),
+	UnappliedReason:     NewColumn("unapplied_reason", "cma"),
+	CreatedByID:         NewColumn("created_by_id", "cma"),
+	CreatedAt:           NewColumn("created_at", "cma"),
+	UpdatedAt:           NewColumn("updated_at", "cma"),
+}
+
+// CreditMemoApplicationFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CreditMemoApplication.GetStaticFieldMap().
+var CreditMemoApplicationFieldMap = map[string]string{
+	"id":                  "id",
+	"organizationId":      "organization_id",
+	"businessUnitId":      "business_unit_id",
+	"creditMemoInvoiceId": "credit_memo_invoice_id",
+	"invoiceId":           "invoice_id",
+	"appliedAmountMinor":  "applied_amount_minor",
+	"accountingDate":      "accounting_date",
+	"lineNumber":          "line_number",
+	"status":              "status",
+	"unappliedAt":         "unapplied_at",
+	"unappliedById":       "unapplied_by_id",
+	"unappliedReason":     "unapplied_reason",
+	"createdById":         "created_by_id",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
+}
+
+// CreditMemoApplicationInsertableColumns lists column names suitable for INSERT statements on the "credit_memo_applications" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CreditMemoApplicationInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"credit_memo_invoice_id",
+	"invoice_id",
+	"applied_amount_minor",
+	"accounting_date",
+	"line_number",
+	"status",
+	"unapplied_at",
+	"unapplied_by_id",
+	"unapplied_reason",
+	"created_by_id",
+	"created_at",
+	"updated_at",
+}
+
+// CreditMemoApplicationRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CreditMemoApplicationRelations.CreditMemo)
+//	// Bun eager-loads the CreditMemo association via a separate query
+var CreditMemoApplicationRelations = struct {
+	CreditMemo string
+	Invoice    string
+}{
+	CreditMemo: "CreditMemo",
+	Invoice:    "Invoice",
+}
+
+// CreditMemoApplicationScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE cma.organization_id = ? AND cma.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CreditMemoApplicationScopeTenant(sq, ti).
+//		Where(buncolgen.CreditMemoApplicationColumns.ID.Eq(), id)
+func CreditMemoApplicationScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CreditMemoApplicationColumns.OrganizationID, CreditMemoApplicationColumns.BusinessUnitID, ti)
+}
+
+// CreditMemoApplicationScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CreditMemoApplicationScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CreditMemoApplicationColumns.ID.In(), bun.List(ids))
+//	})
+func CreditMemoApplicationScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CreditMemoApplicationColumns.OrganizationID, CreditMemoApplicationColumns.BusinessUnitID, ti)
+}
+
+// CreditMemoApplicationScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CreditMemoApplicationScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CreditMemoApplicationColumns.ID.Eq(), id)
+//	})
+func CreditMemoApplicationScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CreditMemoApplicationColumns.OrganizationID, CreditMemoApplicationColumns.BusinessUnitID, ti)
+}
+
+// CreditMemoApplicationApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CreditMemoApplicationApplyTenant(tenantInfo))
+func CreditMemoApplicationApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CreditMemoApplicationColumns.OrganizationID, CreditMemoApplicationColumns.BusinessUnitID, ti)
+}
+
+// CreditMemoApplicationFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "credit_memo_applications" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CreditMemoApplicationFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CreditMemoApplicationFilter = struct {
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	CreditMemoInvoiceID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditMemoInvoiceId" → DB: "credit_memo_invoice_id"
+	InvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	AppliedAmountMinor  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedAmountMinor" → DB: "applied_amount_minor"
+	AccountingDate      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountingDate" → DB: "accounting_date"
+	LineNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
+	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	UnappliedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unappliedAt" → DB: "unapplied_at"
+	UnappliedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unappliedById" → DB: "unapplied_by_id"
+	UnappliedReason     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unappliedReason" → DB: "unapplied_reason"
+	CreatedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	CreditMemoInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("creditMemoInvoiceId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	AppliedAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedAmountMinor", op, value)
+	},
+	AccountingDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accountingDate", op, value)
+	},
+	LineNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineNumber", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	UnappliedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unappliedAt", op, value)
+	},
+	UnappliedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unappliedById", op, value)
+	},
+	UnappliedReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unappliedReason", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Payment — table "customer_payments", alias "cp"
 // ---------------------------------------------------------------------------
 

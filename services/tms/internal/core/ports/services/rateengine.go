@@ -72,6 +72,9 @@ type RatedShipment struct {
 	// caller can stamp them on it without re-reading the quote.
 	AgreementID *pulid.ID `json:"agreementId,omitempty"`
 	RuleID      *pulid.ID `json:"ruleId,omitempty"`
+	// BillToCustomerID is the payer the agreement redirects invoicing to, when
+	// it names one; the shipment adopts it unless it already has its own.
+	BillToCustomerID *pulid.ID `json:"billToCustomerId,omitempty"`
 	// FormulaTemplateID is set when the rule delegated to a formula, or when
 	// the rating fell back to one because no agreement covered the lane.
 	FormulaTemplateID *pulid.ID `json:"formulaTemplateId,omitempty"`

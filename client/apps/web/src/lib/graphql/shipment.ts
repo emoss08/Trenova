@@ -52,6 +52,11 @@ import {
   type ShipmentMoveInput,
   type ShipmentPreviousRatesInput,
 } from "@trenova/graphql/generated/graphql";
+import {
+  hasAnyAllocations,
+  nestChargeAllocations,
+  toChargeAllocationInput,
+} from "@trenova/shared/lib/charge-split";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
@@ -204,7 +209,7 @@ export async function getShipmentGraphQL(
   if (!data.shipment) {
     throw new Error("Shipment not found");
   }
-  return data.shipment as Shipment;
+  return nestChargeAllocations(data.shipment as Shipment);
 }
 
 export async function getShipmentUIPolicyGraphQL() {
@@ -293,7 +298,7 @@ export async function createShipmentGraphQL(payload: ShipmentCreateInput): Promi
       input: toShipmentInput(payload),
     },
   });
-  return data.createShipment as Shipment;
+  return nestChargeAllocations(data.createShipment as Shipment);
 }
 
 export async function updateShipmentGraphQL(
@@ -308,7 +313,7 @@ export async function updateShipmentGraphQL(
       input: toShipmentInput(payload),
     },
   });
-  return data.updateShipment as Shipment;
+  return nestChargeAllocations(data.updateShipment as Shipment);
 }
 
 export async function cancelShipmentGraphQL(
@@ -323,7 +328,7 @@ export async function cancelShipmentGraphQL(
       input: { cancelReason: cancelReason ?? "" },
     },
   });
-  return data.cancelShipment as Shipment;
+  return nestChargeAllocations(data.cancelShipment as Shipment);
 }
 
 export async function uncancelShipmentGraphQL(id: Shipment["id"]): Promise<Shipment> {
@@ -332,7 +337,7 @@ export async function uncancelShipmentGraphQL(id: Shipment["id"]): Promise<Shipm
     operationName: "UncancelShipment",
     variables: { id },
   });
-  return data.uncancelShipment as Shipment;
+  return nestChargeAllocations(data.uncancelShipment as Shipment);
 }
 
 export async function duplicateShipmentGraphQL(request: DuplicateShipmentRequest) {
@@ -362,7 +367,7 @@ export async function transferShipmentOwnershipGraphQL(
       input: { ownerId },
     },
   });
-  return data.transferShipmentOwnership as Shipment;
+  return nestChargeAllocations(data.transferShipmentOwnership as Shipment);
 }
 
 export async function transferShipmentToBillingGraphQL(shipmentId: string, billType?: BillType) {
@@ -655,6 +660,7 @@ function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimi
 function toShipmentInput(
   payload: Shipment | ShipmentCreateInput | ShipmentUpdateInput,
 ): ShipmentInput {
+  const sendAllocations = hasAnyAllocations(payload);
   return {
     sourceDocumentId: payload.sourceDocumentId,
     serviceTypeId: payload.serviceTypeId,
@@ -695,8 +701,18 @@ function toShipmentInput(
     rateOverrideReason: payload.rateOverrideReason ?? undefined,
     version: "version" in payload ? payload.version : undefined,
     moves: payload.moves?.map(toShipmentMoveInput) ?? [],
-    additionalCharges: payload.additionalCharges?.map(toAdditionalChargeInput) ?? [],
+    additionalCharges:
+      payload.additionalCharges?.map((charge) =>
+        toAdditionalChargeInput(charge, sendAllocations),
+      ) ?? [],
     commodities: payload.commodities?.map(toCommodityInput) ?? [],
+    billToCustomerId: payload.billToCustomerId ?? null,
+    freightTerms: payload.freightTerms ?? "Prepaid",
+    // Allocations are sent as a whole or not at all: when any exist the server
+    // replaces every row on the shipment, and when none do it leaves them alone.
+    freightAllocations: sendAllocations
+      ? (payload.freightAllocations ?? []).map(toChargeAllocationInput)
+      : undefined,
   };
 }
 
@@ -742,8 +758,12 @@ function toShipmentMoveInput(move: Shipment["moves"][number]): ShipmentMoveInput
 
 function toAdditionalChargeInput(
   charge: Shipment["additionalCharges"][number],
+  sendAllocations: boolean,
 ): ShipmentAdditionalChargeInput {
   return {
+    allocations: sendAllocations
+      ? (charge.allocations ?? []).map(toChargeAllocationInput)
+      : undefined,
     id: charge.id,
     shipmentId: "shipmentId" in charge ? (charge.shipmentId as string | undefined) : undefined,
     accessorialChargeId: charge.accessorialChargeId,
@@ -754,10 +774,6 @@ function toAdditionalChargeInput(
     fuelSurchargeProgramId:
       "fuelSurchargeProgramId" in charge
         ? ((charge.fuelSurchargeProgramId as string | null | undefined) ?? undefined)
-        : undefined,
-    detentionOccurrenceId:
-      "detentionOccurrenceId" in charge
-        ? ((charge.detentionOccurrenceId as string | null | undefined) ?? undefined)
         : undefined,
     version: charge.version,
   };

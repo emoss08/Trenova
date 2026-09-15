@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -226,6 +227,12 @@ type APIKeyEdge struct {
 	Cursor string      `json:"cursor"`
 }
 
+type ApplyCreditMemoInput struct {
+	CreditMemoID   string                        `json:"creditMemoId"`
+	AccountingDate int                           `json:"accountingDate"`
+	Applications   []*CreditMemoApplicationInput `json:"applications"`
+}
+
 type ApplyCustomerPaymentInput struct {
 	PaymentID      string                             `json:"paymentId"`
 	AccountingDate int                                `json:"accountingDate"`
@@ -354,11 +361,16 @@ type BillingQueueAssignInput struct {
 }
 
 type BillingQueueItem struct {
-	ID                        string                            `json:"id"`
-	OrganizationID            string                            `json:"organizationId"`
-	BusinessUnitID            string                            `json:"businessUnitId"`
-	ShipmentID                *string                           `json:"shipmentId,omitempty"`
-	OrderID                   *string                           `json:"orderId,omitempty"`
+	ID             string  `json:"id"`
+	OrganizationID string  `json:"organizationId"`
+	BusinessUnitID string  `json:"businessUnitId"`
+	ShipmentID     *string `json:"shipmentId,omitempty"`
+	OrderID        *string `json:"orderId,omitempty"`
+	// The customer this item bills. A split shipment has one item per payer.
+	BillToCustomerID string `json:"billToCustomerId"`
+	// This payer's share of the shipment's charges.
+	AllocatedTotalAmount      string                            `json:"allocatedTotalAmount"`
+	BillToCustomer            *customer.Customer                `json:"billToCustomer,omitempty"`
 	AssignedBillerID          *string                           `json:"assignedBillerId,omitempty"`
 	Number                    string                            `json:"number"`
 	Status                    billingqueue.Status               `json:"status"`
@@ -537,6 +549,16 @@ type CategoryCostLine struct {
 	EffectiveSource EffectiveRateSource `json:"effectiveSource"`
 }
 
+type ChargeAllocationInput struct {
+	ID               *string                         `json:"id,omitempty"`
+	BillToCustomerID string                          `json:"billToCustomerId"`
+	Method           shipment.ChargeAllocationMethod `json:"method"`
+	Percent          *string                         `json:"percent,omitempty"`
+	Amount           *string                         `json:"amount,omitempty"`
+	Sequence         *int                            `json:"sequence,omitempty"`
+	Version          *int                            `json:"version,omitempty"`
+}
+
 type ClockInput struct {
 	WorkerID string `json:"workerId"`
 	// Any instant; defaults to now. A punch cannot be dated in the future.
@@ -675,6 +697,21 @@ type CreateFuelPurchaseImportInput struct {
 	Mapping           map[string]any            `json:"mapping,omitempty"`
 }
 
+type CreateMemoInput struct {
+	CustomerID string `json:"customerId"`
+	// CreditMemo or DebitMemo.
+	BillType           billingqueue.BillType `json:"billType"`
+	Lines              []*MemoLineInput      `json:"lines"`
+	ReferenceInvoiceID *string               `json:"referenceInvoiceId,omitempty"`
+	Reason             string                `json:"reason"`
+	// Defaults to today.
+	InvoiceDate *int              `json:"invoiceDate,omitempty"`
+	Memo        *string           `json:"memo,omitempty"`
+	MemoKind    *invoice.MemoKind `json:"memoKind,omitempty"`
+	// Post the memo in the same request.
+	AutoPost *bool `json:"autoPost,omitempty"`
+}
+
 type CreateMyLoadCommentInput struct {
 	ShipmentID string `json:"shipmentId"`
 	Comment    string `json:"comment"`
@@ -775,6 +812,11 @@ type CreateWorkerPTOInput struct {
 	StartDate int            `json:"startDate"`
 	EndDate   int            `json:"endDate"`
 	Reason    string         `json:"reason"`
+}
+
+type CreditMemoApplicationInput struct {
+	InvoiceID          string `json:"invoiceId"`
+	AppliedAmountMinor int    `json:"appliedAmountMinor"`
 }
 
 type CustomFieldDefinitionConnection struct {
@@ -3086,6 +3128,13 @@ type JurisdictionRuleOverrideEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type LateChargeAssessmentInput struct {
+	// Limit the run to these customers; empty means every customer.
+	CustomerIds []string `json:"customerIds,omitempty"`
+	// Defaults to now.
+	AsOfDate *int `json:"asOfDate,omitempty"`
+}
+
 type LocateTractorInput struct {
 	TractorID     string `json:"tractorId"`
 	NewLocationID string `json:"newLocationId"`
@@ -3163,6 +3212,15 @@ type MatchRoutingGuideInput struct {
 	DestinationState      *string `json:"destinationState,omitempty"`
 }
 
+type MemoLineInput struct {
+	Description string `json:"description"`
+	Amount      string `json:"amount"`
+	// Defaults to 1.
+	Quantity *string `json:"quantity,omitempty"`
+	// Names the accessorial this line corrects, so the memo reads like the charge.
+	AccessorialChargeID *string `json:"accessorialChargeId,omitempty"`
+}
+
 type Mutation struct {
 }
 
@@ -3195,6 +3253,14 @@ type OpenEscrowAccountInput struct {
 	CurrencyCode       *string `json:"currencyCode,omitempty"`
 }
 
+type OpenInvoiceDisputeInput struct {
+	InvoiceID  string                    `json:"invoiceId"`
+	ReasonCode invoice.DisputeReasonCode `json:"reasonCode"`
+	// At most the invoice's open balance.
+	DisputedAmount string  `json:"disputedAmount"`
+	Notes          *string `json:"notes,omitempty"`
+}
+
 type OpenLeaveCaseInput struct {
 	WorkerID               string                 `json:"workerId"`
 	LeaveType              *worker.LeaveType      `json:"leaveType,omitempty"`
@@ -3216,13 +3282,18 @@ type OpeningPTOBalanceInput struct {
 }
 
 type OrderCharge struct {
-	ID          string  `json:"id"`
-	OrderID     string  `json:"orderId"`
-	Description string  `json:"description"`
-	Amount      string  `json:"amount"`
-	InvoiceID   *string `json:"invoiceId,omitempty"`
-	Version     int     `json:"version"`
-	CreatedAt   int     `json:"createdAt"`
+	ID          string `json:"id"`
+	OrderID     string `json:"orderId"`
+	Description string `json:"description"`
+	Amount      string `json:"amount"`
+	// The first invoice that carried any of this charge.
+	InvoiceID *string `json:"invoiceId,omitempty"`
+	// Set once every payer's share of the charge has been invoiced.
+	InvoicedAt *int `json:"invoicedAt,omitempty"`
+	Version    int  `json:"version"`
+	CreatedAt  int  `json:"createdAt"`
+	// How the charge is divided among payers; empty bills it to the order's payer.
+	Allocations []*shipment.ChargeAllocation `json:"allocations"`
 }
 
 type OrderConnection struct {
@@ -4368,6 +4439,14 @@ type RescindDisciplinaryActionInput struct {
 	Version *int   `json:"version,omitempty"`
 }
 
+type ResolveInvoiceDisputeInput struct {
+	DisputeID  string                    `json:"disputeId"`
+	Resolution invoice.DisputeResolution `json:"resolution"`
+	// Required for CreditIssued and WrittenOff: the executed adjustment on this invoice.
+	ResolutionAdjustmentID *string `json:"resolutionAdjustmentId,omitempty"`
+	ResolutionNotes        *string `json:"resolutionNotes,omitempty"`
+}
+
 type ResolveSettlementDisputeInput struct {
 	DisputeID      string `json:"disputeId"`
 	Approve        bool   `json:"approve"`
@@ -4698,6 +4777,12 @@ type SetMyAvailabilityInput struct {
 	Note       *string                       `json:"note,omitempty"`
 }
 
+type SetOrderChargeAllocationsInput struct {
+	OrderID     string                   `json:"orderId"`
+	ChargeID    string                   `json:"chargeId"`
+	Allocations []*ChargeAllocationInput `json:"allocations"`
+}
+
 type SettlementBatchConnection struct {
 	Edges      []*SettlementBatchEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -4733,13 +4818,16 @@ type ShiftTemplateInput struct {
 }
 
 type Shipment struct {
-	ID                     string                         `json:"id"`
-	BusinessUnitID         string                         `json:"businessUnitId"`
-	OrganizationID         string                         `json:"organizationId"`
-	SourceDocumentID       *string                        `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID          string                         `json:"serviceTypeId"`
-	ShipmentTypeID         string                         `json:"shipmentTypeId"`
-	CustomerID             string                         `json:"customerId"`
+	ID               string  `json:"id"`
+	BusinessUnitID   string  `json:"businessUnitId"`
+	OrganizationID   string  `json:"organizationId"`
+	SourceDocumentID *string `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID    string  `json:"serviceTypeId"`
+	ShipmentTypeID   string  `json:"shipmentTypeId"`
+	CustomerID       string  `json:"customerId"`
+	// The customer billed by default. Null means the shipment's customer pays.
+	BillToCustomerID       *string                        `json:"billToCustomerId,omitempty"`
+	FreightTerms           shipment.FreightTerms          `json:"freightTerms"`
 	TractorTypeID          *string                        `json:"tractorTypeId,omitempty"`
 	TrailerTypeID          *string                        `json:"trailerTypeId,omitempty"`
 	OwnerID                *string                        `json:"ownerId,omitempty"`
@@ -4797,8 +4885,14 @@ type Shipment struct {
 	AdditionalCharges []*ShipmentAdditionalCharge `json:"additionalCharges"`
 	Commodities       []*ShipmentCommodity        `json:"commodities"`
 	Customer          *ShipmentCustomer           `json:"customer,omitempty"`
+	BillToCustomer    *ShipmentCustomer           `json:"billToCustomer,omitempty"`
 	Owner             *tenant.User                `json:"owner,omitempty"`
 	FormulaTemplate   *ShipmentFormulaTemplate    `json:"formulaTemplate,omitempty"`
+	// Every allocation on the shipment, across freight and accessorials.
+	ChargeAllocations []*shipment.ChargeAllocation `json:"chargeAllocations"`
+	// What each payer owes. Populated when the shipment is read with its charges;
+	// a list row carries none.
+	BillingSplitSummary []*ShipmentBillingSplitSummary `json:"billingSplitSummary"`
 }
 
 type ShipmentAccessorialCharge struct {
@@ -4842,6 +4936,7 @@ type ShipmentAdditionalCharge struct {
 	Unit                   int                        `json:"unit"`
 	FuelSurchargeProgramID *string                    `json:"fuelSurchargeProgramId,omitempty"`
 	FuelSurchargeDetail    map[string]any             `json:"fuelSurchargeDetail,omitempty"`
+	IsDetention            bool                       `json:"isDetention"`
 	DetentionOccurrenceID  *string                    `json:"detentionOccurrenceId,omitempty"`
 	Version                int                        `json:"version"`
 	CreatedAt              int                        `json:"createdAt"`
@@ -4860,6 +4955,9 @@ type ShipmentAdditionalChargeInput struct {
 	FuelSurchargeProgramID *string `json:"fuelSurchargeProgramId,omitempty"`
 	DetentionOccurrenceID  *string `json:"detentionOccurrenceId,omitempty"`
 	Version                *int    `json:"version,omitempty"`
+	// How this charge is divided among payers. Omit to leave the split untouched;
+	// send an empty list to bill the whole charge to the shipment's payer.
+	Allocations []*ChargeAllocationInput `json:"allocations,omitempty"`
 }
 
 type ShipmentAnalytics struct {
@@ -4987,6 +5085,18 @@ type ShipmentAxleWeight struct {
 	Compliant  bool    `json:"compliant"`
 }
 
+// One payer's standing on a shipment.
+type ShipmentBillingPayerReadiness struct {
+	PayerID                  string `json:"payerId"`
+	PayerName                string `json:"payerName"`
+	PayerCode                string `json:"payerCode"`
+	IsPrimary                bool   `json:"isPrimary"`
+	ShareAmount              string `json:"shareAmount"`
+	CreditStatus             string `json:"creditStatus"`
+	CreditHold               bool   `json:"creditHold"`
+	ShouldAutoApproveBilling bool   `json:"shouldAutoApproveBilling"`
+}
+
 type ShipmentBillingReadiness struct {
 	ShipmentID                   string                                `json:"shipmentId"`
 	ShipmentStatus               ShipmentStatus                        `json:"shipmentStatus"`
@@ -4999,6 +5109,10 @@ type ShipmentBillingReadiness struct {
 	CanMarkReadyToInvoice        bool                                  `json:"canMarkReadyToInvoice"`
 	ShouldAutoMarkReadyToInvoice bool                                  `json:"shouldAutoMarkReadyToInvoice"`
 	ShouldAutoTransferToBilling  bool                                  `json:"shouldAutoTransferToBilling"`
+	// Whether every payer's profile lets this clean freight skip billing review.
+	ShouldAutoApproveBilling bool `json:"shouldAutoApproveBilling"`
+	// Every payer with a share of the shipment, the shipment's own payer first.
+	Payers []*ShipmentBillingPayerReadiness `json:"payers"`
 }
 
 type ShipmentBillingReadinessPolicy struct {
@@ -5017,6 +5131,20 @@ type ShipmentBillingRequirement struct {
 	Satisfied        bool     `json:"satisfied"`
 	DocumentCount    int      `json:"documentCount"`
 	DocumentIds      []string `json:"documentIds"`
+}
+
+// What one payer owes on a shipment once every allocation is applied.
+type ShipmentBillingSplitSummary struct {
+	PayerID   string `json:"payerId"`
+	PayerName string `json:"payerName"`
+	PayerCode string `json:"payerCode"`
+	// The shipment's own payer: its bill-to, or its customer when none is set.
+	IsPrimary         bool   `json:"isPrimary"`
+	FreightAmount     string `json:"freightAmount"`
+	AccessorialAmount string `json:"accessorialAmount"`
+	TotalAmount       string `json:"totalAmount"`
+	// Whether any charge on the shipment is shared or redirected.
+	IsSplit bool `json:"isSplit"`
 }
 
 type ShipmentBillingTransferCandidateIds struct {
@@ -5077,10 +5205,12 @@ type ShipmentBulkTransferToBillingResult struct {
 	Success    bool    `json:"success"`
 	// The shipment was Completed and this transfer marked it Ready to Invoice.
 	MarkedReadyToInvoice bool `json:"markedReadyToInvoice"`
-	// The queue item the shipment became, when it transferred.
-	BillingQueueItem *BillingQueueItem                    `json:"billingQueueItem,omitempty"`
-	FailureCode      *services.BillingTransferFailureCode `json:"failureCode,omitempty"`
-	Error            *string                              `json:"error,omitempty"`
+	// The primary payer's queue item, when the shipment transferred.
+	BillingQueueItem *BillingQueueItem `json:"billingQueueItem,omitempty"`
+	// Every queue item the transfer created, one per payer.
+	BillingQueueItems []*BillingQueueItem          `json:"billingQueueItems"`
+	FailureCode       *billingtransfer.FailureCode `json:"failureCode,omitempty"`
+	Error             *string                      `json:"error,omitempty"`
 	// Required documents the readiness check found missing, whether or not they blocked the transfer.
 	MissingRequirements []*ShipmentBillingRequirement `json:"missingRequirements"`
 	// Readiness validation failures, whether or not they blocked the transfer.
@@ -5617,41 +5747,44 @@ func (this ShipmentHoldEvent) GetActor() *tenant.User                       { re
 func (this ShipmentHoldEvent) GetShipment() *ShipmentEventShipmentReference { return this.Shipment }
 
 type ShipmentInput struct {
-	SourceDocumentID       *string               `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID          string                `json:"serviceTypeId"`
-	ShipmentTypeID         string                `json:"shipmentTypeId"`
-	CustomerID             string                `json:"customerId"`
-	TractorTypeID          *string               `json:"tractorTypeId,omitempty"`
-	TrailerTypeID          *string               `json:"trailerTypeId,omitempty"`
-	OwnerID                *string               `json:"ownerId,omitempty"`
-	EnteredByID            *string               `json:"enteredById,omitempty"`
-	CanceledByID           *string               `json:"canceledById,omitempty"`
-	FormulaTemplateID      string                `json:"formulaTemplateId"`
-	ConsolidationGroupID   *string               `json:"consolidationGroupId,omitempty"`
-	OrderID                *string               `json:"orderId,omitempty"`
-	Status                 *ShipmentStatus       `json:"status,omitempty"`
-	TenderStatus           *ShipmentTenderStatus `json:"tenderStatus,omitempty"`
-	EntryMethod            *ShipmentEntryMethod  `json:"entryMethod,omitempty"`
-	ProNumber              *string               `json:"proNumber,omitempty"`
-	BOL                    *string               `json:"bol,omitempty"`
-	CancelReason           *string               `json:"cancelReason,omitempty"`
-	OtherChargeAmount      *string               `json:"otherChargeAmount,omitempty"`
-	FreightChargeAmount    *string               `json:"freightChargeAmount,omitempty"`
-	BaseRate               *string               `json:"baseRate,omitempty"`
-	TotalChargeAmount      *string               `json:"totalChargeAmount,omitempty"`
-	Pieces                 *int                  `json:"pieces,omitempty"`
-	Weight                 *int                  `json:"weight,omitempty"`
-	TemperatureMin         *int                  `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int                  `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int                  `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int                  `json:"actualShipDate,omitempty"`
-	CanceledAt             *int                  `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string               `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int                  `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int                  `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int                  `json:"billedAt,omitempty"`
-	RatingUnit             *int                  `json:"ratingUnit,omitempty"`
-	FuelSurchargeLocked    *bool                 `json:"fuelSurchargeLocked,omitempty"`
+	SourceDocumentID *string `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID    string  `json:"serviceTypeId"`
+	ShipmentTypeID   string  `json:"shipmentTypeId"`
+	CustomerID       string  `json:"customerId"`
+	// Null bills the shipment to its customer.
+	BillToCustomerID       *string                `json:"billToCustomerId,omitempty"`
+	FreightTerms           *shipment.FreightTerms `json:"freightTerms,omitempty"`
+	TractorTypeID          *string                `json:"tractorTypeId,omitempty"`
+	TrailerTypeID          *string                `json:"trailerTypeId,omitempty"`
+	OwnerID                *string                `json:"ownerId,omitempty"`
+	EnteredByID            *string                `json:"enteredById,omitempty"`
+	CanceledByID           *string                `json:"canceledById,omitempty"`
+	FormulaTemplateID      string                 `json:"formulaTemplateId"`
+	ConsolidationGroupID   *string                `json:"consolidationGroupId,omitempty"`
+	OrderID                *string                `json:"orderId,omitempty"`
+	Status                 *ShipmentStatus        `json:"status,omitempty"`
+	TenderStatus           *ShipmentTenderStatus  `json:"tenderStatus,omitempty"`
+	EntryMethod            *ShipmentEntryMethod   `json:"entryMethod,omitempty"`
+	ProNumber              *string                `json:"proNumber,omitempty"`
+	BOL                    *string                `json:"bol,omitempty"`
+	CancelReason           *string                `json:"cancelReason,omitempty"`
+	OtherChargeAmount      *string                `json:"otherChargeAmount,omitempty"`
+	FreightChargeAmount    *string                `json:"freightChargeAmount,omitempty"`
+	BaseRate               *string                `json:"baseRate,omitempty"`
+	TotalChargeAmount      *string                `json:"totalChargeAmount,omitempty"`
+	Pieces                 *int                   `json:"pieces,omitempty"`
+	Weight                 *int                   `json:"weight,omitempty"`
+	TemperatureMin         *int                   `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                   `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                   `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                   `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                   `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string                `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                   `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                   `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                   `json:"billedAt,omitempty"`
+	RatingUnit             *int                   `json:"ratingUnit,omitempty"`
+	FuelSurchargeLocked    *bool                  `json:"fuelSurchargeLocked,omitempty"`
 	// Why this shipment is billed at something other than its contract rate. It is
 	// the only rating field a caller may write: everything else the rater owns is
 	// an ordinary field, and everything else the system owns is restored on save.
@@ -5660,6 +5793,11 @@ type ShipmentInput struct {
 	Moves              []*ShipmentMoveInput             `json:"moves,omitempty"`
 	AdditionalCharges  []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
 	Commodities        []*ShipmentCommodityInput        `json:"commodities,omitempty"`
+	// How the freight charge is divided among payers. Omit to leave the split
+	// untouched; an empty list bills all of it to the shipment's payer. When this
+	// or any charge's allocations is sent, the save replaces every allocation on
+	// the shipment, so send the whole picture.
+	FreightAllocations []*ChargeAllocationInput `json:"freightAllocations,omitempty"`
 }
 
 type ShipmentLaneHeatmap struct {
@@ -6246,6 +6384,11 @@ type ShipmentTransferToBillingInput struct {
 	BillType   *billingqueue.BillType `json:"billType,omitempty"`
 }
 
+type ShipmentTransferToBillingResult struct {
+	Items   []*BillingQueueItem `json:"items"`
+	Primary *BillingQueueItem   `json:"primary"`
+}
+
 type ShipmentTypeConnection struct {
 	Edges      []*ShipmentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -6745,6 +6888,11 @@ type TransitionTimesheetInput struct {
 	Note   *string                `json:"note,omitempty"`
 }
 
+type UnapplyCreditMemoApplicationInput struct {
+	ApplicationID string  `json:"applicationId"`
+	Reason        *string `json:"reason,omitempty"`
+}
+
 type UnassignDocumentTemplateInput struct {
 	Kind       string `json:"kind"`
 	CustomerID string `json:"customerId"`
@@ -6946,6 +7094,8 @@ type UpdateOrderChargeInput struct {
 	Description string `json:"description"`
 	Amount      string `json:"amount"`
 	Version     int    `json:"version"`
+	// Omit to leave the split untouched; an empty list removes it.
+	Allocations []*ChargeAllocationInput `json:"allocations,omitempty"`
 }
 
 type UpdatePayCodeInput struct {
@@ -7212,6 +7362,12 @@ type VehiclePosition struct {
 	PrimaryWorkerName *string  `json:"primaryWorkerName,omitempty"`
 }
 
+type VoidInvoiceInput struct {
+	InvoiceID   string                  `json:"invoiceId"`
+	Reason      string                  `json:"reason"`
+	Disposition invoice.VoidDisposition `json:"disposition"`
+}
+
 type VoidPayrollExportInput struct {
 	ID     string `json:"id"`
 	Reason string `json:"reason"`
@@ -7221,6 +7377,11 @@ type WaiveWorkerTrainingInput struct {
 	ID      string `json:"id"`
 	Reason  string `json:"reason"`
 	Version *int   `json:"version,omitempty"`
+}
+
+type WithdrawInvoiceDisputeInput struct {
+	DisputeID string  `json:"disputeId"`
+	Notes     *string `json:"notes,omitempty"`
 }
 
 type WorkerChecklistItemActionInput struct {

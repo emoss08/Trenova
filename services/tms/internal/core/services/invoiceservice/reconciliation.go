@@ -60,7 +60,7 @@ func reconciliationExpectedTotal(
 ) decimal.Decimal {
 	legTotal := decimal.Zero
 	for _, shp := range legs {
-		legTotal = legTotal.Add(shp.TotalChargeAmount.Decimal)
+		legTotal = legTotal.Add(reconciliationLegTotal(entity, shp))
 	}
 
 	expected := invoicelines.SignedAmount(entity.BillType, legTotal)
@@ -76,4 +76,26 @@ func reconciliationExpectedTotal(
 	}
 
 	return expected
+}
+
+// reconciliationLegTotal is what one leg should have contributed: the whole
+// shipment on an ordinary invoice, the payer's share on a split one. Legs are
+// loaded with their allocations, so no second read is needed.
+func reconciliationLegTotal(entity *invoice.Invoice, shp *shipment.Shipment) decimal.Decimal {
+	if shp == nil {
+		return decimal.Zero
+	}
+	if !entity.IsSplitBill {
+		return shp.TotalChargeAmount.Decimal
+	}
+
+	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	if err != nil {
+		return shp.TotalChargeAmount.Decimal
+	}
+	if share := resolution.ShareFor(entity.CustomerID); share != nil {
+		return share.TotalAmount
+	}
+
+	return decimal.Zero
 }

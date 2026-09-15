@@ -170,6 +170,17 @@ func shipmentFromInput(
 		FuelSurchargeLocked:    boolValue(input.FuelSurchargeLocked),
 		RateOverrideReason:     stringValue(input.RateOverrideReason),
 		SourceDocumentID:       stringValue(input.SourceDocumentID),
+		FreightTerms:           shipmentdomain.FreightTermsPrepaid,
+	}
+	if input.FreightTerms != nil {
+		entity.FreightTerms = *input.FreightTerms
+	}
+	billToCustomerID, err := optionalScopedID("billToCustomerId", input.BillToCustomerID)
+	if err != nil {
+		return nil, err
+	}
+	if billToCustomerID.IsNotNil() {
+		entity.BillToCustomerID = &billToCustomerID
 	}
 	if entity.RatingUnit == 0 {
 		entity.RatingUnit = 1
@@ -194,9 +205,14 @@ func shipmentFromInput(
 	if err != nil {
 		return nil, err
 	}
+	allocations, err := shipmentChargeAllocationsFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
 	entity.Moves = moves
 	entity.AdditionalCharges = additionalCharges
 	entity.Commodities = commodities
+	entity.ChargeAllocations = allocations
 
 	return entity, nil
 }
@@ -370,13 +386,6 @@ func shipmentAdditionalChargesFromInput(
 		if err != nil {
 			return nil, err
 		}
-		detentionOccurrenceID, err := optionalScopedID(
-			path+".detentionOccurrenceId",
-			input.DetentionOccurrenceID,
-		)
-		if err != nil {
-			return nil, err
-		}
 		charge := &shipmentdomain.AdditionalCharge{
 			ID:                  id,
 			BusinessUnitID:      authCtx.BusinessUnitID,
@@ -390,9 +399,6 @@ func shipmentAdditionalChargesFromInput(
 		}
 		if !fuelSurchargeProgramID.IsNil() {
 			charge.FuelSurchargeProgramID = &fuelSurchargeProgramID
-		}
-		if !detentionOccurrenceID.IsNil() {
-			charge.DetentionOccurrenceID = &detentionOccurrenceID
 		}
 		if input.Version != nil {
 			charge.Version = int64(*input.Version)
@@ -562,10 +568,27 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		AdditionalCharges:      additionalCharges,
 		Commodities:            commodities,
 		Customer:               shipmentCustomerToModel(entity.Customer),
+		BillToCustomer:         shipmentCustomerToModel(entity.BillToCustomer),
+		BillToCustomerID:       idPtrFromPtr(entity.BillToCustomerID),
+		FreightTerms:           entity.FreightTerms,
 		Owner:                  entity.Owner,
 		FormulaTemplate:        shipmentFormulaTemplateToModel(entity.FormulaTemplate),
+		ChargeAllocations:      chargeAllocationsOrEmpty(entity.ChargeAllocations),
+		BillingSplitSummary:    billingSplitSummaryToModel(entity),
+	}
+	if model.FreightTerms == "" {
+		model.FreightTerms = shipmentdomain.FreightTermsPrepaid
 	}
 	return model, nil
+}
+
+func chargeAllocationsOrEmpty(
+	rows []*shipmentdomain.ChargeAllocation,
+) []*shipmentdomain.ChargeAllocation {
+	if rows == nil {
+		return []*shipmentdomain.ChargeAllocation{}
+	}
+	return rows
 }
 
 func shipmentMovesToModel(
@@ -696,7 +719,7 @@ func shipmentAdditionalChargeToModel(
 		Unit:                   int(entity.Unit),
 		FuelSurchargeProgramID: idPtrFromPulidPtr(entity.FuelSurchargeProgramID),
 		FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
-		DetentionOccurrenceID:  idPtrFromPulidPtr(entity.DetentionOccurrenceID),
+		IsDetention:            entity.IsDetention,
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),

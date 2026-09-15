@@ -1,5 +1,6 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { ChargePayerChip } from "@/components/billing/charge-payer-chip";
 import { EmptyState } from "@/components/empty-state";
 import { queries } from "@/lib/queries";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
@@ -9,6 +10,7 @@ import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import {
   BoxesIcon,
@@ -31,8 +33,60 @@ import {
 import { FuelSurchargeAuditPopover } from "./fuel-surcharge-audit-popover";
 import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
 
-function detentionOccurrenceId(charge: Shipment["additionalCharges"][number] | undefined) {
-  return charge?.isSystemGenerated ? (charge.detentionOccurrenceId ?? null) : null;
+const NO_OCCURRENCES: DetentionOccurrence[] = [];
+
+function isDetentionCharge(charge: Shipment["additionalCharges"][number] | undefined) {
+  return !!charge?.isSystemGenerated && !!charge?.isDetention;
+}
+
+/**
+ * Flattens react-hook-form's error tree for one charge into the messages the
+ * row tooltip lists. A split that does not add up is reported on the
+ * allocation array itself (`allocations.root`), and a row missing its payer on
+ * that row, so both nested shapes are walked rather than only the top level.
+ */
+export function collectChargeErrorMessages(chargeErrors: Record<string, unknown>): string[] {
+  const messages: string[] = [];
+  const visit = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    const record = node as Record<string, unknown>;
+    if (typeof record.message === "string" && record.message) {
+      messages.push(record.message);
+      return;
+    }
+    for (const [key, value] of Object.entries(record)) {
+      if (key === "ref") continue;
+      visit(value);
+    }
+  };
+  for (const [key, value] of Object.entries(chargeErrors)) {
+    if (key === "ref") continue;
+    visit(value);
+  }
+  return messages.length > 0 ? messages : ["Invalid"];
+}
+
+/**
+ * One detention charge bills every detained stop on the shipment, so the
+ * occurrences are grouped by the charge they point at, in the order the truck
+ * reached the stops.
+ */
+function groupOccurrencesByCharge(occurrences: DetentionOccurrence[] | undefined) {
+  const byCharge = new Map<string, DetentionOccurrence[]>();
+  for (const occurrence of occurrences ?? []) {
+    if (!occurrence.additionalChargeId) continue;
+    const list = byCharge.get(occurrence.additionalChargeId) ?? [];
+    list.push(occurrence);
+    byCharge.set(occurrence.additionalChargeId, list);
+  }
+  for (const list of byCharge.values()) {
+    list.sort((a, b) => (a.arrivedAt ?? 0) - (b.arrivedAt ?? 0));
+  }
+  return byCharge;
 }
 
 export default function AdditionalChargesSection() {
@@ -57,7 +111,7 @@ export default function AdditionalChargesSection() {
   const [claimFileId, setClaimFileId] = useState<string | null>(null);
   const charges = useWatch({ control, name: "additionalCharges" }) ?? [];
 
-  const hasDetentionCharges = charges.some((charge) => detentionOccurrenceId(charge));
+  const hasDetentionCharges = charges.some(isDetentionCharge);
 
   const { data: occurrences, refetch: refetchOccurrences } = useQuery({
     ...queries.detention.byShipment(shipmentId as string),
@@ -77,10 +131,7 @@ export default function AdditionalChargesSection() {
     if (hasDetentionCharges) void refetchOccurrences();
   }, [shipmentVersion, hasDetentionCharges, refetchOccurrences]);
 
-  const occurrenceById = useMemo(
-    () => new Map((occurrences ?? []).map((occurrence) => [occurrence.id, occurrence])),
-    [occurrences],
-  );
+  const occurrencesByChargeId = useMemo(() => groupOccurrencesByCharge(occurrences), [occurrences]);
 
   function handleAdd() {
     const newIndex = fields.length;
@@ -90,6 +141,7 @@ export default function AdditionalChargesSection() {
       method: "Flat",
       amount: 0,
       unit: 1,
+      allocations: [],
     });
     setEditingIndex(newIndex);
     setIsEditing(false);
@@ -147,24 +199,23 @@ export default function AdditionalChargesSection() {
                   | undefined;
                 const isFuelSurcharge =
                   !!charge?.isSystemGenerated && !!charge?.fuelSurchargeProgramId;
-                const occurrenceId = detentionOccurrenceId(charge);
-                const occurrence = occurrenceId ? occurrenceById.get(occurrenceId) : undefined;
+                const isDetention = isDetentionCharge(charge);
+                const chargeOccurrences =
+                  isDetention && charge?.id
+                    ? (occurrencesByChargeId.get(charge.id) ?? NO_OCCURRENCES)
+                    : NO_OCCURRENCES;
                 const displayName = isFuelSurcharge
                   ? (chargeObj?.code ??
                     charge?.fuelSurchargeDetail?.programCode ??
                     "Fuel Surcharge")
                   : (chargeObj?.code ??
                     chargeObj?.description ??
-                    (occurrenceId ? "Detention" : "—"));
+                    (isDetention ? "Detention" : "—"));
                 const amt = Number(charge?.amount) || 0;
 
                 const chargeErrors = errors.additionalCharges?.[index];
                 const hasErrors = !!(chargeErrors && Object.keys(chargeErrors).length > 0);
-                const errorMessages = hasErrors
-                  ? Object.entries(chargeErrors as Record<string, { message?: string }>)
-                      .filter(([key]) => key !== "ref" && key !== "root")
-                      .map(([, err]) => err?.message ?? "Invalid")
-                  : [];
+                const errorMessages = hasErrors ? collectChargeErrorMessages(chargeErrors) : [];
 
                 return (
                   <div
@@ -176,11 +227,12 @@ export default function AdditionalChargesSection() {
                   >
                     <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
                       {isFuelSurcharge && <FuelIcon className="text-primary size-3 shrink-0" />}
-                      {occurrenceId ? (
-                        <DetentionChargeLabel code={displayName} occurrence={occurrence} />
+                      {isDetention ? (
+                        <DetentionChargeLabel code={displayName} occurrences={chargeOccurrences} />
                       ) : (
                         displayName
                       )}
+                      <ChargePayerChip allocations={charge?.allocations} />
                       {isFuelSurcharge && !fuelSurchargeLocked && (
                         <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
                           {t("Auto")}
@@ -211,8 +263,11 @@ export default function AdditionalChargesSection() {
                       )}
                     </span>
                     <span className="text-muted-foreground col-span-2 text-xs">
-                      {occurrenceId ? (
-                        <DetentionChargeUnit unit={charge?.unit ?? 1} occurrence={occurrence} />
+                      {isDetention ? (
+                        <DetentionChargeUnit
+                          unit={charge?.unit ?? 1}
+                          occurrences={chargeOccurrences}
+                        />
                       ) : (
                         (charge?.unit ?? 1)
                       )}
@@ -223,10 +278,10 @@ export default function AdditionalChargesSection() {
                     <div className="col-span-2 flex items-center justify-end gap-1">
                       {isFuelSurcharge && charge?.fuelSurchargeDetail ? (
                         <FuelSurchargeAuditPopover detail={charge.fuelSurchargeDetail} />
-                      ) : occurrenceId ? (
+                      ) : isDetention ? (
                         <DetentionChargeAction
-                          occurrence={occurrence}
-                          onOpenClaimFile={() => setClaimFileId(occurrenceId)}
+                          occurrences={chargeOccurrences}
+                          onOpenClaimFile={setClaimFileId}
                         />
                       ) : (
                         <>

@@ -27,6 +27,7 @@ type billingTransferAttempt struct {
 	entity      *shipment.Shipment
 	readiness   *services.ShipmentBillingReadiness
 	item        *billingqueue.BillingQueueItem
+	items       []*billingqueue.BillingQueueItem
 	markedReady bool
 	failure     services.BillingTransferFailureCode
 	err         error
@@ -202,11 +203,12 @@ func (s *service) attemptBillingTransfer(
 		billType = billingqueue.BillTypeInvoice
 	}
 
-	item, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
-		ShipmentID:  entity.ID,
-		BillType:    billType,
-		AutoApprove: readiness.ShouldAutoApproveBilling,
-		TenantInfo:  tenantInfo,
+	transferred, err := s.billingQueueService.TransferToBillingItems(ctx, &services.TransferToBillingRequest{
+		ShipmentID:          entity.ID,
+		BillType:            billType,
+		AutoApprove:         readiness.ShouldAutoApproveBilling,
+		AutoApprovePayerIDs: autoApprovePayerIDs(readiness),
+		TenantInfo:          tenantInfo,
 	}, p.Actor)
 	if err != nil {
 		if errortypes.IsConflictError(err) {
@@ -215,9 +217,27 @@ func (s *service) attemptBillingTransfer(
 		log.Error("failed to transfer shipment to billing", zap.Error(err))
 		return attempt.fail(services.BillingTransferFailureUnexpected, err)
 	}
-	attempt.item = item
+	attempt.item = transferred.Primary
+	attempt.items = transferred.Items
 
 	return attempt
+}
+
+// autoApprovePayerIDs lists the payers whose own profile clears clean freight
+// through the queue, so a split shipment can auto-approve one payer's item while
+// another payer's waits for a biller.
+func autoApprovePayerIDs(readiness *services.ShipmentBillingReadiness) []pulid.ID {
+	if readiness == nil {
+		return nil
+	}
+	ids := make([]pulid.ID, 0, len(readiness.Payers))
+	for _, payer := range readiness.Payers {
+		if payer.ShouldAutoApproveBilling {
+			ids = append(ids, payer.PayerID)
+		}
+	}
+
+	return ids
 }
 
 func newBulkTransferResult(
@@ -228,6 +248,7 @@ func newBulkTransferResult(
 		ShipmentID:           shipmentID,
 		MarkedReadyToInvoice: attempt.markedReady,
 		Item:                 attempt.item,
+		Items:                attempt.items,
 		MissingRequirements:  []services.ShipmentBillingRequirement{},
 		ValidationFailures:   []services.ShipmentBillingValidation{},
 	}

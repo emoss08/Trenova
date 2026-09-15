@@ -20,6 +20,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *customerPaymentResolver) Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error) {
@@ -106,6 +107,54 @@ func (r *mutationResolver) ReverseCustomerPayment(ctx context.Context, input gql
 	}
 
 	return r.customerPaymentService.Reverse(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceCustomerPayment,
+		permission.OpCreate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := applyCreditMemoRequestFromInput(&input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.customerPaymentService.ApplyCreditMemo(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceCustomerPayment,
+		permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	applicationID, err := pulid.MustParse(input.ApplicationID)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"applicationId",
+			errortypes.ErrInvalid,
+			"Invalid credit memo application",
+		)
+	}
+
+	return r.customerPaymentService.UnapplyCreditMemoApplication(
+		ctx,
+		&serviceports.UnapplyCreditMemoApplicationRequest{
+			ApplicationID: applicationID,
+			Reason:        stringutils.FromPtr(input.Reason),
+			TenantInfo:    tenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 }
 
 func (r *queryResolver) CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error) {

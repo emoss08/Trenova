@@ -27,6 +27,7 @@ import {
   timezoneChoices,
 } from "@/lib/choices";
 import { BillingSchedulePreview } from "./billing-schedule-preview";
+import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import type { Customer } from "@trenova/shared/types/customer";
 import {
   BanknoteIcon,
@@ -75,6 +76,8 @@ export function CustomerBillingProfileForm() {
     control,
     name: "billingProfile.creditStatus",
   });
+  const customerId = useWatch({ control, name: "id" });
+  const ediPartner = useWatch({ control, name: "ediPartner" });
   const invoiceNumberFormat = useWatch({
     control,
     name: "billingProfile.invoiceNumberFormat",
@@ -296,6 +299,47 @@ export function CustomerBillingProfileForm() {
             )}
           />
         </FormControl>
+        <FormControl cols="full">
+          <div className="flex flex-col gap-2 rounded-md border p-3">
+            <p className="text-xs font-medium">{t("Invoice Delivery")}</p>
+            <SwitchField
+              control={control}
+              name="billingProfile.emailInvoiceEnabled"
+              label={t("Email invoices")}
+              description={t(
+                "Invoices may be emailed to this customer. Auto-send after posting needs this on.",
+              )}
+            />
+            <SwitchField
+              control={control}
+              name="billingProfile.ediInvoiceEnabled"
+              label={t("EDI invoices (210)")}
+              description={
+                ediPartner
+                  ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
+                  : t(
+                      "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
+                    )
+              }
+            />
+          </div>
+        </FormControl>
+        {customerId ? (
+          <FormControl cols="full">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3">
+              <div>
+                <p className="text-xs font-medium">{t("Memos")}</p>
+                <p className="text-muted-foreground text-2xs">
+                  {t("Raise a credit or debit memo for this customer with no shipment behind it.")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <MemoEntryButton customerId={customerId} billType="CreditMemo" />
+                <MemoEntryButton customerId={customerId} billType="DebitMemo" />
+              </div>
+            </div>
+          </FormControl>
+        ) : null}
         <FormControl>
           <GLAccountAutocompleteField
             control={control}

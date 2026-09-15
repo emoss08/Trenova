@@ -95,4 +95,10 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req ListEDIPartnersByCustomerIDsRequest,
 	) ([]*edi.EDIPartner, error)
+	// ListOutboundPartnersByCustomerIDs returns every active partner enabled
+	// for outbound documents, of any kind, oldest first per customer.
+	ListOutboundPartnersByCustomerIDs(
+		ctx context.Context,
+		req ListEDIPartnersByCustomerIDsRequest,
+	) ([]*edi.EDIPartner, error)
 }

@@ -48,8 +48,26 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		}).
 		Return(entity, nil).
 		Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, &repositories.GetShipmentByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		}).
+		Return(entity, nil).
+		Once()
 
 	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
+				req.IncludeBillingProfile
+		})).
+		Return(nil, nil).
+		Once()
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
@@ -126,9 +144,16 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(entity, nil).
-		Once()
+		Twice()
 
 	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
+				req.IncludeBillingProfile
+		})).
+		Return(nil, nil).
+		Once()
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
 		Return(&customer.Customer{
@@ -198,6 +223,13 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 	}
 
 	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
+				req.IncludeBillingProfile
+		})).
+		Return(nil, nil).
+		Once()
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
 		Return(&customer.Customer{

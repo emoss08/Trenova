@@ -467,7 +467,9 @@ func (r *repository) RemoveCharge(
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			return buncolgen.OrderChargeScopeTenantDelete(dq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.ChargeID).
-				Where(cols.OrderID.Eq(), req.OrderID)
+				Where(cols.OrderID.Eq(), req.OrderID).
+				Where(cols.InvoiceID.IsNull()).
+				Where(noInvoicedShareExpr)
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -498,6 +500,7 @@ func (r *repository) UpdateCharge(
 		Where(cols.Version.Eq(), ov).
 		Where(cols.OrderID.Eq(), entity.OrderID).
 		Where(cols.InvoiceID.IsNull()).
+		Where(noInvoicedShareExpr).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -555,6 +558,141 @@ func (r *repository) ListUninvoicedCharges(
 	}
 
 	return charges, nil
+}
+
+// noInvoicedShareExpr guards a charge edit: once any payer's share of a charge is
+// on an invoice the charge is frozen, exactly as an unallocated invoiced charge is.
+const noInvoicedShareExpr = `NOT EXISTS (
+	SELECT 1 FROM charge_allocations AS chal
+	WHERE chal.order_charge_id = ordchg.id
+	  AND chal.organization_id = ordchg.organization_id
+	  AND chal.business_unit_id = ordchg.business_unit_id
+	  AND chal.invoice_id IS NOT NULL
+)`
+
+func (r *repository) ListUninvoicedChargeSharesForPayer(
+	ctx context.Context,
+	req *repositories.ListUninvoicedChargeSharesRequest,
+) ([]*order.OrderCharge, error) {
+	if req == nil {
+		return nil, ErrOrderChargeRequestNil
+	}
+	charges := make([]*order.OrderCharge, 0)
+
+	cols := buncolgen.OrderChargeColumns
+	chal := buncolgen.ChargeAllocationColumns
+	err := r.db.DBForContext(ctx).NewSelect().
+		Model(&charges).
+		RelationWithOpts(buncolgen.OrderChargeRelations.Allocations, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(chal.Sequence.OrderAsc(), chal.ID.OrderAsc())
+			},
+		}).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.OrderChargeScopeTenant(sq, req.TenantInfo).
+				Where(cols.OrderID.Eq(), req.OrderID).
+				Where(cols.InvoicedAt.IsNull()).
+				WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+					return inner.
+						WhereGroup(" AND ", func(unallocated *bun.SelectQuery) *bun.SelectQuery {
+							return unallocated.
+								Where(cols.InvoiceID.IsNull()).
+								Where(`NOT EXISTS (
+									SELECT 1 FROM charge_allocations AS chal
+									WHERE chal.order_charge_id = ordchg.id
+									  AND chal.organization_id = ordchg.organization_id
+									  AND chal.business_unit_id = ordchg.business_unit_id
+								)`)
+						}).
+						WhereOr(`EXISTS (
+							SELECT 1 FROM charge_allocations AS chal
+							WHERE chal.order_charge_id = ordchg.id
+							  AND chal.organization_id = ordchg.organization_id
+							  AND chal.business_unit_id = ordchg.business_unit_id
+							  AND chal.bill_to_customer_id = ?
+							  AND chal.invoice_id IS NULL
+						)`, req.PayerID)
+				})
+		}).
+		Order(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list uninvoiced order charge shares", zap.Error(err))
+		return nil, err
+	}
+
+	return charges, nil
+}
+
+// ClearChargesInvoice releases the charges a voided invoice carried. Charges
+// whose shares are split across payers lose only this invoice's claim through
+// the allocation rows; the charge itself reopens once no share is invoiced.
+func (r *repository) ClearChargesInvoice(
+	ctx context.Context,
+	req *repositories.ClearOrderChargesInvoiceRequest,
+) (int64, error) {
+	if req == nil || req.InvoiceID.IsNil() {
+		return 0, nil
+	}
+
+	cols := buncolgen.OrderChargeColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*order.OrderCharge)(nil)).
+		Set(cols.InvoiceID.SetNull()).
+		Set(cols.InvoicedAt.SetNull()).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.InvoiceID.Eq(), req.InvoiceID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to clear order charges invoice", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (r *repository) MarkChargesFullyInvoicedWhereComplete(
+	ctx context.Context,
+	req *repositories.MarkChargesFullyInvoicedRequest,
+) (int64, error) {
+	if req == nil {
+		return 0, ErrOrderChargeRequestEmpty
+	}
+
+	cols := buncolgen.OrderChargeColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*order.OrderCharge)(nil)).
+		Set(cols.InvoicedAt.Set(), req.InvoicedAt).
+		Set(cols.InvoiceID.SetExpr("COALESCE({}, ?)"), req.InvoiceID).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.OrderID.Eq(), req.OrderID).
+				Where(cols.InvoicedAt.IsNull()).
+				Where(`EXISTS (
+					SELECT 1 FROM charge_allocations AS chal
+					WHERE chal.order_charge_id = ordchg.id
+					  AND chal.organization_id = ordchg.organization_id
+					  AND chal.business_unit_id = ordchg.business_unit_id
+				)`).
+				Where(`NOT EXISTS (
+					SELECT 1 FROM charge_allocations AS chal
+					WHERE chal.order_charge_id = ordchg.id
+					  AND chal.organization_id = ordchg.organization_id
+					  AND chal.business_unit_id = ordchg.business_unit_id
+					  AND chal.invoice_id IS NULL
+				)`)
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to mark order charges fully invoiced", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
 }
 
 func (r *repository) MarkChargesInvoiced(

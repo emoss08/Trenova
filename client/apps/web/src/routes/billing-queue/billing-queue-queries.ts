@@ -10,6 +10,7 @@ import { billingQueueItemSchema } from "@trenova/shared/types/billing-queue";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export const BILLING_QUEUE_LIST_KEY = "billing-queue-list";
+export const BILLING_QUEUE_BY_SHIPMENT_KEY = "billing-queue-by-shipment";
 export const BILLING_QUEUE_FILTER_PRESETS_KEY = "billing-queue-filter-presets";
 export const BILLING_TRANSFER_CANDIDATES_KEY = "billing-transfer-candidates";
 
@@ -23,6 +24,7 @@ export type BillingQueueListFilters = {
   status: string | null;
   billers: string[];
   billType: string | null;
+  payer?: string | null;
   search: string;
   includePosted: boolean;
 };
@@ -49,6 +51,7 @@ export function billingQueueListQuery({
   status,
   billers,
   billType,
+  payer = null,
   search,
   includePosted,
 }: BillingQueueListFilters) {
@@ -61,6 +64,7 @@ export function billingQueueListQuery({
       billType,
       search,
       includePosted,
+      payer,
     ] as const,
     queryFn: async () => {
       const params = new URLSearchParams({ limit: "100" });
@@ -76,6 +80,9 @@ export function billingQueueListQuery({
       if (billType) {
         filters.push({ field: "billType", operator: "eq", value: billType });
       }
+      if (payer) {
+        filters.push({ field: "billToCustomerId", operator: "eq", value: payer });
+      }
       if (search.trim()) {
         params.set("query", search.trim());
       }
@@ -87,6 +94,25 @@ export function billingQueueListQuery({
       }
       const response = await api.get(`/billing-queue/?${params.toString()}`);
       return safeParse(billingQueueListSchema, response, "BillingQueueList");
+    },
+  };
+}
+
+/**
+ * Every queue item a shipment has produced, posted ones included: a split
+ * shipment carries one per payer, and each is tracked on its own.
+ */
+export function billingQueueItemsByShipmentQuery(shipmentId: string) {
+  return {
+    queryKey: [BILLING_QUEUE_BY_SHIPMENT_KEY, shipmentId] as const,
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: "20", includePosted: "true" });
+      params.set(
+        "fieldFilters",
+        JSON.stringify([{ field: "shipmentId", operator: "eq", value: shipmentId }]),
+      );
+      const response = await api.get(`/billing-queue/?${params.toString()}`);
+      return safeParse(billingQueueListSchema, response, "BillingQueueByShipment");
     },
   };
 }

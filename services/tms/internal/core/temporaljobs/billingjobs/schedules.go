@@ -38,5 +38,20 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "consolidated-invoicing",
 			},
 		},
+		{
+			ID: "late-charge-assessment",
+			Description: "Assess late charges on overdue invoices for tenants " +
+				"with assessment enabled",
+			// Once a night, after the day's cash has been applied, so an invoice
+			// paid yesterday is not charged for a period it no longer owes. The
+			// unique (invoice, period) key makes a rerun harmless.
+			Spec:          schedule.Cron("30 2 * * *").WithJitter(10 * time.Minute),
+			Workflow:      LateChargeAssessmentWorkflow,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			TaskQueue:     temporaltype.TaskQueueBilling.String(),
+			Memo: map[string]any{
+				"purpose": "late-charge-assessment",
+			},
+		},
 	}
 }

@@ -39,6 +39,7 @@ type ResolverRoot interface {
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
 	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
+	ChargeAllocation() ChargeAllocationResolver
 	Commodity() CommodityResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
 	CustomerPayment() CustomerPaymentResolver
@@ -83,11 +84,14 @@ type ResolverRoot interface {
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
 	Invoice() InvoiceResolver
+	InvoiceDispute() InvoiceDisputeResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
 	JournalEntry() JournalEntryResolver
 	JournalEntryLine() JournalEntryLineResolver
 	JurisdictionRule() JurisdictionRuleResolver
+	LateChargeAssessment() LateChargeAssessmentResolver
+	LateChargeLine() LateChargeLineResolver
 	LeaveControl() LeaveControlResolver
 	LeaveEntitlement() LeaveEntitlementResolver
 	LocationCategory() LocationCategoryResolver
@@ -236,16 +240,19 @@ type ComplexityRoot struct {
 	}
 
 	ARCollectionsWorklistItem struct {
-		CustomerID      func(childComplexity int) int
-		CustomerName    func(childComplexity int) int
-		DaysPastDue     func(childComplexity int) int
-		DueDate         func(childComplexity int) int
-		HasShortPay     func(childComplexity int) int
-		InvoiceID       func(childComplexity int) int
-		InvoiceNumber   func(childComplexity int) int
-		IsDisputed      func(childComplexity int) int
-		OpenAmountMinor func(childComplexity int) int
-		Severity        func(childComplexity int) int
+		CustomerID            func(childComplexity int) int
+		CustomerName          func(childComplexity int) int
+		DaysPastDue           func(childComplexity int) int
+		DisputeOpenedAt       func(childComplexity int) int
+		DisputedAmountMinor   func(childComplexity int) int
+		DueDate               func(childComplexity int) int
+		HasShortPay           func(childComplexity int) int
+		InvoiceID             func(childComplexity int) int
+		InvoiceNumber         func(childComplexity int) int
+		IsDisputed            func(childComplexity int) int
+		OpenAmountMinor       func(childComplexity int) int
+		OpenDisputeReasonCode func(childComplexity int) int
+		Severity              func(childComplexity int) int
 	}
 
 	ARCustomerAgingRow struct {
@@ -700,8 +707,11 @@ type ComplexityRoot struct {
 
 	BillingQueueItem struct {
 		AdjustmentContext         func(childComplexity int) int
+		AllocatedTotalAmount      func(childComplexity int) int
 		AssignedBiller            func(childComplexity int) int
 		AssignedBillerID          func(childComplexity int) int
+		BillToCustomer            func(childComplexity int) int
+		BillToCustomerID          func(childComplexity int) int
 		BillType                  func(childComplexity int) int
 		BusinessUnitID            func(childComplexity int) int
 		CancelReason              func(childComplexity int) int
@@ -1167,6 +1177,27 @@ type ComplexityRoot struct {
 		RatePerMile     func(childComplexity int) int
 	}
 
+	ChargeAllocation struct {
+		AdditionalChargeID func(childComplexity int) int
+		Amount             func(childComplexity int) int
+		BillToCustomer     func(childComplexity int) int
+		BillToCustomerID   func(childComplexity int) int
+		BusinessUnitID     func(childComplexity int) int
+		ChargeKind         func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		InvoiceID          func(childComplexity int) int
+		InvoicedAt         func(childComplexity int) int
+		Method             func(childComplexity int) int
+		OrderChargeID      func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		Percent            func(childComplexity int) int
+		Sequence           func(childComplexity int) int
+		ShipmentID         func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
 	Commodity struct {
 		BusinessUnit           func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
@@ -1242,6 +1273,11 @@ type ComplexityRoot struct {
 		Version              func(childComplexity int) int
 	}
 
+	CreateInvoicesResult struct {
+		Invoices func(childComplexity int) int
+		Primary  func(childComplexity int) int
+	}
+
 	CredentialExpiryForecast struct {
 		ExpiredCount  func(childComplexity int) int
 		ExpiringCount func(childComplexity int) int
@@ -1253,6 +1289,26 @@ type ComplexityRoot struct {
 		Credential      func(childComplexity int) int
 		DaysUntilExpiry func(childComplexity int) int
 		Health          func(childComplexity int) int
+	}
+
+	CreditMemoApplication struct {
+		AccountingDate      func(childComplexity int) int
+		AppliedAmountMinor  func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		CreatedByID         func(childComplexity int) int
+		CreditMemo          func(childComplexity int) int
+		CreditMemoInvoiceID func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		Invoice             func(childComplexity int) int
+		InvoiceID           func(childComplexity int) int
+		LineNumber          func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		Status              func(childComplexity int) int
+		UnappliedAt         func(childComplexity int) int
+		UnappliedByID       func(childComplexity int) int
+		UnappliedReason     func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
 	}
 
 	CustomFieldDefinition struct {
@@ -1371,6 +1427,8 @@ type ComplexityRoot struct {
 		CustomerInvoicePrefix                     func(childComplexity int) int
 		DefaultBillerID                           func(childComplexity int) int
 		DocumentTypes                             func(childComplexity int) int
+		EDIInvoiceEnabled                         func(childComplexity int) int
+		EmailInvoiceEnabled                       func(childComplexity int) int
 		EnforceCreditLimit                        func(childComplexity int) int
 		EnforceCustomerBillingReq                 func(childComplexity int) int
 		FuelSurchargeMode                         func(childComplexity int) int
@@ -1485,6 +1543,7 @@ type ComplexityRoot struct {
 		InvoiceID           func(childComplexity int) int
 		LineNumber          func(childComplexity int) int
 		OrganizationID      func(childComplexity int) int
+		Payment             func(childComplexity int) int
 		ShortPayAmountMinor func(childComplexity int) int
 		UpdatedAt           func(childComplexity int) int
 	}
@@ -4254,48 +4313,82 @@ type ComplexityRoot struct {
 	}
 
 	Invoice struct {
-		AppliedAmount        func(childComplexity int) int
-		BillToName           func(childComplexity int) int
-		BillType             func(childComplexity int) int
-		BillingQueueItemID   func(childComplexity int) int
-		BusinessUnitID       func(childComplexity int) int
-		CreatedAt            func(childComplexity int) int
-		CurrencyCode         func(childComplexity int) int
-		Customer             func(childComplexity int) int
-		CustomerID           func(childComplexity int) int
-		Detail               func(childComplexity int) int
-		DisputeStatus        func(childComplexity int) int
-		DueDate              func(childComplexity int) int
-		ID                   func(childComplexity int) int
-		InvoiceDate          func(childComplexity int) int
-		IsAdjustmentArtifact func(childComplexity int) int
-		Lines                func(childComplexity int) int
-		Number               func(childComplexity int) int
-		OffCycleReason       func(childComplexity int) int
-		Order                func(childComplexity int) int
-		OrderID              func(childComplexity int) int
-		OrderNumber          func(childComplexity int) int
-		OrganizationID       func(childComplexity int) int
-		OtherAmount          func(childComplexity int) int
-		PaymentTerm          func(childComplexity int) int
-		PeriodEnd            func(childComplexity int) int
-		PeriodStart          func(childComplexity int) int
-		PostedAt             func(childComplexity int) int
-		Scope                func(childComplexity int) int
-		SectionBy            func(childComplexity int) int
-		SendStatus           func(childComplexity int) int
-		SentAt               func(childComplexity int) int
-		ServiceDate          func(childComplexity int) int
-		SettlementStatus     func(childComplexity int) int
-		ShipmentBOL          func(childComplexity int) int
-		ShipmentCount        func(childComplexity int) int
-		ShipmentID           func(childComplexity int) int
-		ShipmentProNumber    func(childComplexity int) int
-		Status               func(childComplexity int) int
-		SubtotalAmount       func(childComplexity int) int
-		TotalAmount          func(childComplexity int) int
-		UpdatedAt            func(childComplexity int) int
-		Version              func(childComplexity int) int
+		AppliedAmount         func(childComplexity int) int
+		BalanceDueMinor       func(childComplexity int) int
+		BillToAddressLine1    func(childComplexity int) int
+		BillToAddressLine2    func(childComplexity int) int
+		BillToCity            func(childComplexity int) int
+		BillToCode            func(childComplexity int) int
+		BillToCountry         func(childComplexity int) int
+		BillToName            func(childComplexity int) int
+		BillToPostalCode      func(childComplexity int) int
+		BillToState           func(childComplexity int) int
+		BillType              func(childComplexity int) int
+		BillingQueueItemID    func(childComplexity int) int
+		BusinessUnitID        func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		CreditApplications    func(childComplexity int) int
+		CreditRemaining       func(childComplexity int) int
+		CurrencyCode          func(childComplexity int) int
+		Customer              func(childComplexity int) int
+		CustomerID            func(childComplexity int) int
+		DaysPastDue           func(childComplexity int) int
+		Detail                func(childComplexity int) int
+		DisputeStatus         func(childComplexity int) int
+		Disputes              func(childComplexity int) int
+		DueDate               func(childComplexity int) int
+		EDISendPlan           func(childComplexity int) int
+		EDISendStatus         func(childComplexity int) int
+		EDISentAt             func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		InvoiceDate           func(childComplexity int) int
+		IsAdjustmentArtifact  func(childComplexity int) int
+		IsSplitBill           func(childComplexity int) int
+		LastEDIError          func(childComplexity int) int
+		LastEDIMessageID      func(childComplexity int) int
+		LateChargeAssessments func(childComplexity int) int
+		Lines                 func(childComplexity int) int
+		MemoKind              func(childComplexity int) int
+		MemoReason            func(childComplexity int) int
+		Number                func(childComplexity int) int
+		OffCycleReason        func(childComplexity int) int
+		OpenBalance           func(childComplexity int) int
+		OpenDispute           func(childComplexity int) int
+		Order                 func(childComplexity int) int
+		OrderID               func(childComplexity int) int
+		OrderNumber           func(childComplexity int) int
+		OrganizationID        func(childComplexity int) int
+		OtherAmount           func(childComplexity int) int
+		PaymentApplications   func(childComplexity int) int
+		PaymentTerm           func(childComplexity int) int
+		PeriodEnd             func(childComplexity int) int
+		PeriodStart           func(childComplexity int) int
+		PostedAt              func(childComplexity int) int
+		ReferenceInvoice      func(childComplexity int) int
+		ReferenceInvoiceID    func(childComplexity int) int
+		RelatedInvoices       func(childComplexity int) int
+		Scope                 func(childComplexity int) int
+		SectionBy             func(childComplexity int) int
+		SendStatus            func(childComplexity int) int
+		SentAt                func(childComplexity int) int
+		ServiceDate           func(childComplexity int) int
+		SettlementStatus      func(childComplexity int) int
+		ShipmentBOL           func(childComplexity int) int
+		ShipmentCount         func(childComplexity int) int
+		ShipmentID            func(childComplexity int) int
+		ShipmentProNumber     func(childComplexity int) int
+		ShipperCustomer       func(childComplexity int) int
+		ShipperCustomerID     func(childComplexity int) int
+		Status                func(childComplexity int) int
+		SubtotalAmount        func(childComplexity int) int
+		TotalAmount           func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		Version               func(childComplexity int) int
+		VoidDisposition       func(childComplexity int) int
+		VoidReason            func(childComplexity int) int
+		VoidedAt              func(childComplexity int) int
+		VoidedByAdjustmentID  func(childComplexity int) int
+		VoidedByID            func(childComplexity int) int
 	}
 
 	InvoiceConnection struct {
@@ -4304,27 +4397,80 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	InvoiceDispute struct {
+		BusinessUnitID         func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		Customer               func(childComplexity int) int
+		CustomerID             func(childComplexity int) int
+		DisputedAmount         func(childComplexity int) int
+		DisputedAmountMinor    func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		Invoice                func(childComplexity int) int
+		InvoiceID              func(childComplexity int) int
+		Notes                  func(childComplexity int) int
+		OpenedAt               func(childComplexity int) int
+		OpenedByID             func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		ReasonCode             func(childComplexity int) int
+		Resolution             func(childComplexity int) int
+		ResolutionAdjustmentID func(childComplexity int) int
+		ResolutionNotes        func(childComplexity int) int
+		ResolvedAt             func(childComplexity int) int
+		ResolvedByID           func(childComplexity int) int
+		Status                 func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		Version                func(childComplexity int) int
+	}
+
+	InvoiceEDISendPlan struct {
+		AutoSend            func(childComplexity int) int
+		Blockers            func(childComplexity int) int
+		CommunicationMethod func(childComplexity int) int
+		DocumentProfileID   func(childComplexity int) int
+		Enabled             func(childComplexity int) int
+		InvoiceID           func(childComplexity int) int
+		LastError           func(childComplexity int) int
+		LastMessageID       func(childComplexity int) int
+		PartnerID           func(childComplexity int) int
+		PartnerName         func(childComplexity int) int
+		SentAt              func(childComplexity int) int
+		Status              func(childComplexity int) int
+	}
+
+	InvoiceEDISendResult struct {
+		InvoiceID     func(childComplexity int) int
+		Status        func(childComplexity int) int
+		WorkflowID    func(childComplexity int) int
+		WorkflowRunID func(childComplexity int) int
+	}
+
 	InvoiceEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
 
 	InvoiceLine struct {
-		Amount            func(childComplexity int) int
-		BusinessUnitID    func(childComplexity int) int
-		CreatedAt         func(childComplexity int) int
-		Description       func(childComplexity int) int
-		ID                func(childComplexity int) int
-		InvoiceID         func(childComplexity int) int
-		LineNumber        func(childComplexity int) int
-		OrganizationID    func(childComplexity int) int
-		Quantity          func(childComplexity int) int
-		ShipmentBOL       func(childComplexity int) int
-		ShipmentID        func(childComplexity int) int
-		ShipmentProNumber func(childComplexity int) int
-		Type              func(childComplexity int) int
-		UnitPrice         func(childComplexity int) int
-		UpdatedAt         func(childComplexity int) int
+		AccessorialChargeID func(childComplexity int) int
+		AllocationPercent   func(childComplexity int) int
+		Amount              func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		ChargeAllocationID  func(childComplexity int) int
+		ChargeCode          func(childComplexity int) int
+		ChargeMethod        func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Description         func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		InvoiceID           func(childComplexity int) int
+		LineNumber          func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		Quantity            func(childComplexity int) int
+		Rate                func(childComplexity int) int
+		ShipmentBOL         func(childComplexity int) int
+		ShipmentID          func(childComplexity int) int
+		ShipmentProNumber   func(childComplexity int) int
+		Type                func(childComplexity int) int
+		UnitPrice           func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
 	}
 
 	IssueDisciplinaryActionPayload struct {
@@ -4523,6 +4669,63 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	LateChargeAssessment struct {
+		AsOfDate              func(childComplexity int) int
+		BasisOpenBalanceMinor func(childComplexity int) int
+		BusinessUnitID        func(childComplexity int) int
+		ChargeMinor           func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		CustomerID            func(childComplexity int) int
+		DebitMemo             func(childComplexity int) int
+		DebitMemoInvoiceID    func(childComplexity int) int
+		DebitMemoLineID       func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		OrganizationID        func(childComplexity int) int
+		PeriodEnd             func(childComplexity int) int
+		PeriodIndex           func(childComplexity int) int
+		PeriodStart           func(childComplexity int) int
+		RatePercent           func(childComplexity int) int
+		RunKey                func(childComplexity int) int
+		SourceInvoice         func(childComplexity int) int
+		SourceInvoiceID       func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+	}
+
+	LateChargeAssessmentResult struct {
+		AsOfDate         func(childComplexity int) int
+		Customers        func(childComplexity int) int
+		CustomersSkipped func(childComplexity int) int
+		MemosCreated     func(childComplexity int) int
+		MemosPosted      func(childComplexity int) int
+		Mode             func(childComplexity int) int
+		Preview          func(childComplexity int) int
+		TotalChargeMinor func(childComplexity int) int
+	}
+
+	LateChargeCustomerResult struct {
+		CurrencyCode     func(childComplexity int) int
+		CustomerID       func(childComplexity int) int
+		CustomerName     func(childComplexity int) int
+		DebitMemoID      func(childComplexity int) int
+		DebitMemoNumber  func(childComplexity int) int
+		Lines            func(childComplexity int) int
+		Posted           func(childComplexity int) int
+		SkipReason       func(childComplexity int) int
+		Skipped          func(childComplexity int) int
+		TotalChargeMinor func(childComplexity int) int
+	}
+
+	LateChargeLine struct {
+		BasisOpenBalanceMinor func(childComplexity int) int
+		ChargeMinor           func(childComplexity int) int
+		InvoiceID             func(childComplexity int) int
+		InvoiceNumber         func(childComplexity int) int
+		PeriodEnd             func(childComplexity int) int
+		PeriodIndex           func(childComplexity int) int
+		PeriodStart           func(childComplexity int) int
+		RatePercent           func(childComplexity int) int
+	}
+
 	LeaveControl struct {
 		CertificationDueDays   func(childComplexity int) int
 		EligibilityHours       func(childComplexity int) int
@@ -4686,11 +4889,12 @@ type ComplexityRoot struct {
 		AddCarrierSettlementAdjustment        func(childComplexity int, input gqlmodel.AddCarrierSettlementAdjustmentInput) int
 		AddDriverSettlementAdjustment         func(childComplexity int, input gqlmodel.AddSettlementAdjustmentInput) int
 		AddFuelIndexPrice                     func(childComplexity int, input gqlmodel.FuelIndexPriceInput) int
-		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string) int
+		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string, allocations []*gqlmodel.ChargeAllocationInput) int
 		AdjustEscrowAccount                   func(childComplexity int, input gqlmodel.AdjustEscrowAccountInput) int
 		AdjustWorkerPTOBalance                func(childComplexity int, input gqlmodel.AdjustWorkerPTOBalanceInput) int
 		AmendIFTAReturn                       func(childComplexity int, id string, reason string) int
 		AmendWorkerEmploymentEvent            func(childComplexity int, input gqlmodel.AmendWorkerEmploymentEventInput) int
+		ApplyCreditMemo                       func(childComplexity int, input gqlmodel.ApplyCreditMemoInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
@@ -4703,6 +4907,7 @@ type ComplexityRoot struct {
 		ArchiveWorkerChecklistTemplate        func(childComplexity int, id string, version *int) int
 		ArchiveWorkerCredential               func(childComplexity int, input gqlmodel.ArchiveWorkerCredentialInput) int
 		ArchiveWorkerCredentialType           func(childComplexity int, id string, version *int) int
+		AssessLateCharges                     func(childComplexity int, input *gqlmodel.LateChargeAssessmentInput) int
 		AssignBillingQueueBiller              func(childComplexity int, id string, input gqlmodel.BillingQueueAssignInput) int
 		AssignDocumentTemplate                func(childComplexity int, input gqlmodel.AssignDocumentTemplateInput) int
 		AssignFuelCard                        func(childComplexity int, input gqlmodel.AssignFuelCardInput) int
@@ -4772,7 +4977,10 @@ type ComplexityRoot struct {
 		CreateIFTAMileageEntry                func(childComplexity int, input gqlmodel.IFTAMileageEntryInput) int
 		CreateInvoiceFromOrder                func(childComplexity int, orderID string, offCycleReason *string) int
 		CreateInvoiceFromShipments            func(childComplexity int, shipmentIds []string, offCycleReason *string) int
+		CreateInvoicesFromOrder               func(childComplexity int, orderID string, offCycleReason *string) int
+		CreateInvoicesFromShipments           func(childComplexity int, shipmentIds []string, offCycleReason *string) int
 		CreateJobPosition                     func(childComplexity int, input gqlmodel.JobPositionInput) int
+		CreateMemo                            func(childComplexity int, input gqlmodel.CreateMemoInput) int
 		CreateMyLoadComment                   func(childComplexity int, input gqlmodel.CreateMyLoadCommentInput) int
 		CreateOrder                           func(childComplexity int, input gqlmodel.OrderInput) int
 		CreateOrgHoliday                      func(childComplexity int, input gqlmodel.OrgHolidayInput) int
@@ -4878,6 +5086,7 @@ type ComplexityRoot struct {
 		MarkNotificationsUnread               func(childComplexity int, ids []string) int
 		MarkWorkerChecklistItemNotApplicable  func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		OpenEscrowAccount                     func(childComplexity int, input gqlmodel.OpenEscrowAccountInput) int
+		OpenInvoiceDispute                    func(childComplexity int, input gqlmodel.OpenInvoiceDisputeInput) int
 		OpenLeaveCase                         func(childComplexity int, input gqlmodel.OpenLeaveCaseInput) int
 		PatchEquipmentManufacturer            func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerPatchInput) int
 		PatchEquipmentType                    func(childComplexity int, id string, input gqlmodel.EquipmentTypePatchInput) int
@@ -4931,6 +5140,7 @@ type ComplexityRoot struct {
 		ResetHomeLayout                       func(childComplexity int) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
 		ResolveFuelPurchaseImportRows         func(childComplexity int, id string, version int) int
+		ResolveInvoiceDispute                 func(childComplexity int, input gqlmodel.ResolveInvoiceDisputeInput) int
 		ResolveSettlementDispute              func(childComplexity int, input gqlmodel.ResolveSettlementDisputeInput) int
 		ResolveShipmentComment                func(childComplexity int, shipmentID string, commentID string) int
 		RespondToMyAssignment                 func(childComplexity int, input gqlmodel.RespondToMyAssignmentInput) int
@@ -4954,9 +5164,11 @@ type ComplexityRoot struct {
 		SaveOshaSummary                       func(childComplexity int, input gqlmodel.SaveOSHASummaryInput) int
 		SaveTelematicsFormMapping             func(childComplexity int, input gqlmodel.SaveTelematicsFormMappingInput) int
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
+		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
+		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
@@ -4971,8 +5183,10 @@ type ComplexityRoot struct {
 		SyncFuelCardFeed                      func(childComplexity int, provider fuelpurchase.CardProvider) int
 		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
+		TransferShipmentToBillingItems        func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
 		TransitionShiftSwap                   func(childComplexity int, input gqlmodel.TransitionShiftSwapInput) int
 		TransitionTimesheet                   func(childComplexity int, input gqlmodel.TransitionTimesheetInput) int
+		UnapplyCreditMemoApplication          func(childComplexity int, input gqlmodel.UnapplyCreditMemoApplicationInput) int
 		UnassignDocumentTemplate              func(childComplexity int, input gqlmodel.UnassignDocumentTemplateInput) int
 		UncancelShipment                      func(childComplexity int, id string) int
 		UncertifyOshaSummary                  func(childComplexity int, year int) int
@@ -5044,9 +5258,11 @@ type ComplexityRoot struct {
 		VerifyWorkerCredential                func(childComplexity int, id string, version *int) int
 		VoidCarrierSettlement                 func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		VoidDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		VoidInvoice                           func(childComplexity int, input gqlmodel.VoidInvoiceInput) int
 		VoidPayrollExport                     func(childComplexity int, input gqlmodel.VoidPayrollExportInput) int
 		WaiveDetentionOccurrence              func(childComplexity int, input gqlmodel.DetentionWaiveInput) int
 		WaiveWorkerTraining                   func(childComplexity int, input gqlmodel.WaiveWorkerTrainingInput) int
+		WithdrawInvoiceDispute                func(childComplexity int, input gqlmodel.WithdrawInvoiceDisputeInput) int
 		WithdrawMyProfileChange               func(childComplexity int, id string) int
 		WithdrawSettlementDispute             func(childComplexity int, id string) int
 		WriteOffPayAdvance                    func(childComplexity int, input gqlmodel.WriteOffPayAdvanceInput) int
@@ -5180,11 +5396,13 @@ type ComplexityRoot struct {
 	}
 
 	OrderCharge struct {
+		Allocations func(childComplexity int) int
 		Amount      func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		InvoiceID   func(childComplexity int) int
+		InvoicedAt  func(childComplexity int) int
 		OrderID     func(childComplexity int) int
 		Version     func(childComplexity int) int
 	}
@@ -6057,6 +6275,7 @@ type ComplexityRoot struct {
 		IFTAReturns                         func(childComplexity int, input gqlmodel.IFTAReturnsInput) int
 		IFTATaxRates                        func(childComplexity int, input gqlmodel.IFTATaxRatesInput) int
 		Invoice                             func(childComplexity int, id string) int
+		InvoiceDisputes                     func(childComplexity int, invoiceID string) int
 		Invoices                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JobPosition                         func(childComplexity int, id string) int
 		JobPositionHolders                  func(childComplexity int, id string) int
@@ -6069,6 +6288,7 @@ type ComplexityRoot struct {
 		JurisdictionRule                    func(childComplexity int, id string) int
 		JurisdictionRuleOverrides           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JurisdictionRules                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		LateChargePreview                   func(childComplexity int, input *gqlmodel.LateChargeAssessmentInput) int
 		LeaveCertificationsOutstanding      func(childComplexity int) int
 		LeaveControl                        func(childComplexity int) int
 		LiveTenderByMove                    func(childComplexity int, moveID string) int
@@ -7311,12 +7531,16 @@ type ComplexityRoot struct {
 		AutoRatedAt            func(childComplexity int) int
 		BOL                    func(childComplexity int) int
 		BaseRate               func(childComplexity int) int
+		BillToCustomer         func(childComplexity int) int
+		BillToCustomerID       func(childComplexity int) int
 		BilledAt               func(childComplexity int) int
+		BillingSplitSummary    func(childComplexity int) int
 		BillingTransferStatus  func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
 		CancelReason           func(childComplexity int) int
 		CanceledAt             func(childComplexity int) int
 		CanceledByID           func(childComplexity int) int
+		ChargeAllocations      func(childComplexity int) int
 		Commodities            func(childComplexity int) int
 		ConsolidationGroupID   func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
@@ -7327,6 +7551,7 @@ type ComplexityRoot struct {
 		FormulaTemplate        func(childComplexity int) int
 		FormulaTemplateID      func(childComplexity int) int
 		FreightChargeAmount    func(childComplexity int) int
+		FreightTerms           func(childComplexity int) int
 		FuelSurchargeLocked    func(childComplexity int) int
 		ID                     func(childComplexity int) int
 		MarkedReadyToBillAt    func(childComplexity int) int
@@ -7405,6 +7630,7 @@ type ComplexityRoot struct {
 		FuelSurchargeDetail    func(childComplexity int) int
 		FuelSurchargeProgramID func(childComplexity int) int
 		ID                     func(childComplexity int) int
+		IsDetention            func(childComplexity int) int
 		IsSystemGenerated      func(childComplexity int) int
 		Method                 func(childComplexity int) int
 		OrganizationID         func(childComplexity int) int
@@ -7497,14 +7723,27 @@ type ComplexityRoot struct {
 		Weight     func(childComplexity int) int
 	}
 
+	ShipmentBillingPayerReadiness struct {
+		CreditHold               func(childComplexity int) int
+		CreditStatus             func(childComplexity int) int
+		IsPrimary                func(childComplexity int) int
+		PayerCode                func(childComplexity int) int
+		PayerID                  func(childComplexity int) int
+		PayerName                func(childComplexity int) int
+		ShareAmount              func(childComplexity int) int
+		ShouldAutoApproveBilling func(childComplexity int) int
+	}
+
 	ShipmentBillingReadiness struct {
 		CanMarkReadyToInvoice        func(childComplexity int) int
 		MissingRequirements          func(childComplexity int) int
+		Payers                       func(childComplexity int) int
 		Policy                       func(childComplexity int) int
 		Requirements                 func(childComplexity int) int
 		ServiceFailureContext        func(childComplexity int) int
 		ShipmentID                   func(childComplexity int) int
 		ShipmentStatus               func(childComplexity int) int
+		ShouldAutoApproveBilling     func(childComplexity int) int
 		ShouldAutoMarkReadyToInvoice func(childComplexity int) int
 		ShouldAutoTransferToBilling  func(childComplexity int) int
 		ValidationFailures           func(childComplexity int) int
@@ -7527,6 +7766,17 @@ type ComplexityRoot struct {
 		DocumentTypeID   func(childComplexity int) int
 		DocumentTypeName func(childComplexity int) int
 		Satisfied        func(childComplexity int) int
+	}
+
+	ShipmentBillingSplitSummary struct {
+		AccessorialAmount func(childComplexity int) int
+		FreightAmount     func(childComplexity int) int
+		IsPrimary         func(childComplexity int) int
+		IsSplit           func(childComplexity int) int
+		PayerCode         func(childComplexity int) int
+		PayerID           func(childComplexity int) int
+		PayerName         func(childComplexity int) int
+		TotalAmount       func(childComplexity int) int
 	}
 
 	ShipmentBillingTransferCandidateIds struct {
@@ -7567,6 +7817,7 @@ type ComplexityRoot struct {
 
 	ShipmentBulkTransferToBillingResult struct {
 		BillingQueueItem     func(childComplexity int) int
+		BillingQueueItems    func(childComplexity int) int
 		Error                func(childComplexity int) int
 		FailureCode          func(childComplexity int) int
 		MarkedReadyToInvoice func(childComplexity int) int
@@ -8330,6 +8581,11 @@ type ComplexityRoot struct {
 		TotalChargeAmount   func(childComplexity int) int
 	}
 
+	ShipmentTransferToBillingResult struct {
+		Items   func(childComplexity int) int
+		Primary func(childComplexity int) int
+	}
+
 	ShipmentType struct {
 		BusinessUnit   func(childComplexity int) int
 		BusinessUnitID func(childComplexity int) int
@@ -8935,6 +9191,13 @@ type ComplexityRoot struct {
 		SpeedMph          func(childComplexity int) int
 		TractorCode       func(childComplexity int) int
 		TractorID         func(childComplexity int) int
+	}
+
+	VoidInvoiceResult struct {
+		AdjustmentID         func(childComplexity int) int
+		Invoice              func(childComplexity int) int
+		PendingApproval      func(childComplexity int) int
+		ReleasedQueueItemIDs func(childComplexity int) int
 	}
 
 	Worker struct {
@@ -10280,6 +10543,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ARCollectionsWorklistItem.DaysPastDue(childComplexity), true
+	case "ARCollectionsWorklistItem.disputeOpenedAt":
+		if e.ComplexityRoot.ARCollectionsWorklistItem.DisputeOpenedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ARCollectionsWorklistItem.DisputeOpenedAt(childComplexity), true
+	case "ARCollectionsWorklistItem.disputedAmountMinor":
+		if e.ComplexityRoot.ARCollectionsWorklistItem.DisputedAmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ARCollectionsWorklistItem.DisputedAmountMinor(childComplexity), true
 	case "ARCollectionsWorklistItem.dueDate":
 		if e.ComplexityRoot.ARCollectionsWorklistItem.DueDate == nil {
 			break
@@ -10316,6 +10591,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ARCollectionsWorklistItem.OpenAmountMinor(childComplexity), true
+	case "ARCollectionsWorklistItem.openDisputeReasonCode":
+		if e.ComplexityRoot.ARCollectionsWorklistItem.OpenDisputeReasonCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ARCollectionsWorklistItem.OpenDisputeReasonCode(childComplexity), true
 	case "ARCollectionsWorklistItem.severity":
 		if e.ComplexityRoot.ARCollectionsWorklistItem.Severity == nil {
 			break
@@ -12315,6 +12596,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BillingQueueItem.AdjustmentContext(childComplexity), true
+	case "BillingQueueItem.allocatedTotalAmount":
+		if e.ComplexityRoot.BillingQueueItem.AllocatedTotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingQueueItem.AllocatedTotalAmount(childComplexity), true
 	case "BillingQueueItem.assignedBiller":
 		if e.ComplexityRoot.BillingQueueItem.AssignedBiller == nil {
 			break
@@ -12327,6 +12614,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BillingQueueItem.AssignedBillerID(childComplexity), true
+	case "BillingQueueItem.billToCustomer":
+		if e.ComplexityRoot.BillingQueueItem.BillToCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingQueueItem.BillToCustomer(childComplexity), true
+	case "BillingQueueItem.billToCustomerId":
+		if e.ComplexityRoot.BillingQueueItem.BillToCustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingQueueItem.BillToCustomerID(childComplexity), true
 	case "BillingQueueItem.billType":
 		if e.ComplexityRoot.BillingQueueItem.BillType == nil {
 			break
@@ -14562,6 +14861,115 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CategoryCostLine.RatePerMile(childComplexity), true
 
+	case "ChargeAllocation.additionalChargeId":
+		if e.ComplexityRoot.ChargeAllocation.AdditionalChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.AdditionalChargeID(childComplexity), true
+	case "ChargeAllocation.amount":
+		if e.ComplexityRoot.ChargeAllocation.Amount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.Amount(childComplexity), true
+	case "ChargeAllocation.billToCustomer":
+		if e.ComplexityRoot.ChargeAllocation.BillToCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.BillToCustomer(childComplexity), true
+	case "ChargeAllocation.billToCustomerId":
+		if e.ComplexityRoot.ChargeAllocation.BillToCustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.BillToCustomerID(childComplexity), true
+	case "ChargeAllocation.businessUnitId":
+		if e.ComplexityRoot.ChargeAllocation.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.BusinessUnitID(childComplexity), true
+	case "ChargeAllocation.chargeKind":
+		if e.ComplexityRoot.ChargeAllocation.ChargeKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.ChargeKind(childComplexity), true
+	case "ChargeAllocation.createdAt":
+		if e.ComplexityRoot.ChargeAllocation.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.CreatedAt(childComplexity), true
+	case "ChargeAllocation.id":
+		if e.ComplexityRoot.ChargeAllocation.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.ID(childComplexity), true
+	case "ChargeAllocation.invoiceId":
+		if e.ComplexityRoot.ChargeAllocation.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.InvoiceID(childComplexity), true
+	case "ChargeAllocation.invoicedAt":
+		if e.ComplexityRoot.ChargeAllocation.InvoicedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.InvoicedAt(childComplexity), true
+	case "ChargeAllocation.method":
+		if e.ComplexityRoot.ChargeAllocation.Method == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.Method(childComplexity), true
+	case "ChargeAllocation.orderChargeId":
+		if e.ComplexityRoot.ChargeAllocation.OrderChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.OrderChargeID(childComplexity), true
+	case "ChargeAllocation.organizationId":
+		if e.ComplexityRoot.ChargeAllocation.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.OrganizationID(childComplexity), true
+	case "ChargeAllocation.percent":
+		if e.ComplexityRoot.ChargeAllocation.Percent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.Percent(childComplexity), true
+	case "ChargeAllocation.sequence":
+		if e.ComplexityRoot.ChargeAllocation.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.Sequence(childComplexity), true
+	case "ChargeAllocation.shipmentId":
+		if e.ComplexityRoot.ChargeAllocation.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.ShipmentID(childComplexity), true
+	case "ChargeAllocation.updatedAt":
+		if e.ComplexityRoot.ChargeAllocation.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.UpdatedAt(childComplexity), true
+	case "ChargeAllocation.version":
+		if e.ComplexityRoot.ChargeAllocation.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ChargeAllocation.Version(childComplexity), true
+
 	case "Commodity.businessUnit":
 		if e.ComplexityRoot.Commodity.BusinessUnit == nil {
 			break
@@ -14910,6 +15318,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CostingControl.Version(childComplexity), true
 
+	case "CreateInvoicesResult.invoices":
+		if e.ComplexityRoot.CreateInvoicesResult.Invoices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreateInvoicesResult.Invoices(childComplexity), true
+	case "CreateInvoicesResult.primary":
+		if e.ComplexityRoot.CreateInvoicesResult.Primary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreateInvoicesResult.Primary(childComplexity), true
+
 	case "CredentialExpiryForecast.expiredCount":
 		if e.ComplexityRoot.CredentialExpiryForecast.ExpiredCount == nil {
 			break
@@ -14953,6 +15374,109 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CredentialExpiryForecastItem.Health(childComplexity), true
+
+	case "CreditMemoApplication.accountingDate":
+		if e.ComplexityRoot.CreditMemoApplication.AccountingDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.AccountingDate(childComplexity), true
+	case "CreditMemoApplication.appliedAmountMinor":
+		if e.ComplexityRoot.CreditMemoApplication.AppliedAmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.AppliedAmountMinor(childComplexity), true
+	case "CreditMemoApplication.businessUnitId":
+		if e.ComplexityRoot.CreditMemoApplication.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.BusinessUnitID(childComplexity), true
+	case "CreditMemoApplication.createdAt":
+		if e.ComplexityRoot.CreditMemoApplication.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.CreatedAt(childComplexity), true
+	case "CreditMemoApplication.createdById":
+		if e.ComplexityRoot.CreditMemoApplication.CreatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.CreatedByID(childComplexity), true
+	case "CreditMemoApplication.creditMemo":
+		if e.ComplexityRoot.CreditMemoApplication.CreditMemo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.CreditMemo(childComplexity), true
+	case "CreditMemoApplication.creditMemoInvoiceId":
+		if e.ComplexityRoot.CreditMemoApplication.CreditMemoInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.CreditMemoInvoiceID(childComplexity), true
+	case "CreditMemoApplication.id":
+		if e.ComplexityRoot.CreditMemoApplication.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.ID(childComplexity), true
+	case "CreditMemoApplication.invoice":
+		if e.ComplexityRoot.CreditMemoApplication.Invoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.Invoice(childComplexity), true
+	case "CreditMemoApplication.invoiceId":
+		if e.ComplexityRoot.CreditMemoApplication.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.InvoiceID(childComplexity), true
+	case "CreditMemoApplication.lineNumber":
+		if e.ComplexityRoot.CreditMemoApplication.LineNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.LineNumber(childComplexity), true
+	case "CreditMemoApplication.organizationId":
+		if e.ComplexityRoot.CreditMemoApplication.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.OrganizationID(childComplexity), true
+	case "CreditMemoApplication.status":
+		if e.ComplexityRoot.CreditMemoApplication.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.Status(childComplexity), true
+	case "CreditMemoApplication.unappliedAt":
+		if e.ComplexityRoot.CreditMemoApplication.UnappliedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.UnappliedAt(childComplexity), true
+	case "CreditMemoApplication.unappliedById":
+		if e.ComplexityRoot.CreditMemoApplication.UnappliedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.UnappliedByID(childComplexity), true
+	case "CreditMemoApplication.unappliedReason":
+		if e.ComplexityRoot.CreditMemoApplication.UnappliedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.UnappliedReason(childComplexity), true
+	case "CreditMemoApplication.updatedAt":
+		if e.ComplexityRoot.CreditMemoApplication.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CreditMemoApplication.UpdatedAt(childComplexity), true
 
 	case "CustomFieldDefinition.businessUnitId":
 		if e.ComplexityRoot.CustomFieldDefinition.BusinessUnitID == nil {
@@ -15525,6 +16049,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerBillingProfile.DocumentTypes(childComplexity), true
+	case "CustomerBillingProfile.ediInvoiceEnabled":
+		if e.ComplexityRoot.CustomerBillingProfile.EDIInvoiceEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.EDIInvoiceEnabled(childComplexity), true
+	case "CustomerBillingProfile.emailInvoiceEnabled":
+		if e.ComplexityRoot.CustomerBillingProfile.EmailInvoiceEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerBillingProfile.EmailInvoiceEnabled(childComplexity), true
 	case "CustomerBillingProfile.enforceCreditLimit":
 		if e.ComplexityRoot.CustomerBillingProfile.EnforceCreditLimit == nil {
 			break
@@ -16107,6 +16643,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerPaymentApplication.OrganizationID(childComplexity), true
+	case "CustomerPaymentApplication.payment":
+		if e.ComplexityRoot.CustomerPaymentApplication.Payment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerPaymentApplication.Payment(childComplexity), true
 	case "CustomerPaymentApplication.shortPayAmountMinor":
 		if e.ComplexityRoot.CustomerPaymentApplication.ShortPayAmountMinor == nil {
 			break
@@ -28907,12 +29449,60 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.AppliedAmount(childComplexity), true
+	case "Invoice.balanceDueMinor":
+		if e.ComplexityRoot.Invoice.BalanceDueMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BalanceDueMinor(childComplexity), true
+	case "Invoice.billToAddressLine1":
+		if e.ComplexityRoot.Invoice.BillToAddressLine1 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToAddressLine1(childComplexity), true
+	case "Invoice.billToAddressLine2":
+		if e.ComplexityRoot.Invoice.BillToAddressLine2 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToAddressLine2(childComplexity), true
+	case "Invoice.billToCity":
+		if e.ComplexityRoot.Invoice.BillToCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToCity(childComplexity), true
+	case "Invoice.billToCode":
+		if e.ComplexityRoot.Invoice.BillToCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToCode(childComplexity), true
+	case "Invoice.billToCountry":
+		if e.ComplexityRoot.Invoice.BillToCountry == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToCountry(childComplexity), true
 	case "Invoice.billToName":
 		if e.ComplexityRoot.Invoice.BillToName == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Invoice.BillToName(childComplexity), true
+	case "Invoice.billToPostalCode":
+		if e.ComplexityRoot.Invoice.BillToPostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToPostalCode(childComplexity), true
+	case "Invoice.billToState":
+		if e.ComplexityRoot.Invoice.BillToState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.BillToState(childComplexity), true
 	case "Invoice.billType":
 		if e.ComplexityRoot.Invoice.BillType == nil {
 			break
@@ -28937,6 +29527,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.CreatedAt(childComplexity), true
+	case "Invoice.creditApplications":
+		if e.ComplexityRoot.Invoice.CreditApplications == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.CreditApplications(childComplexity), true
+	case "Invoice.creditRemaining":
+		if e.ComplexityRoot.Invoice.CreditRemaining == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.CreditRemaining(childComplexity), true
 	case "Invoice.currencyCode":
 		if e.ComplexityRoot.Invoice.CurrencyCode == nil {
 			break
@@ -28955,6 +29557,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.CustomerID(childComplexity), true
+	case "Invoice.daysPastDue":
+		if e.ComplexityRoot.Invoice.DaysPastDue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.DaysPastDue(childComplexity), true
 	case "Invoice.detail":
 		if e.ComplexityRoot.Invoice.Detail == nil {
 			break
@@ -28967,12 +29575,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.DisputeStatus(childComplexity), true
+	case "Invoice.disputes":
+		if e.ComplexityRoot.Invoice.Disputes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.Disputes(childComplexity), true
 	case "Invoice.dueDate":
 		if e.ComplexityRoot.Invoice.DueDate == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Invoice.DueDate(childComplexity), true
+	case "Invoice.ediSendPlan":
+		if e.ComplexityRoot.Invoice.EDISendPlan == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.EDISendPlan(childComplexity), true
+	case "Invoice.ediSendStatus":
+		if e.ComplexityRoot.Invoice.EDISendStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.EDISendStatus(childComplexity), true
+	case "Invoice.ediSentAt":
+		if e.ComplexityRoot.Invoice.EDISentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.EDISentAt(childComplexity), true
 	case "Invoice.id":
 		if e.ComplexityRoot.Invoice.ID == nil {
 			break
@@ -28991,12 +29623,48 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.IsAdjustmentArtifact(childComplexity), true
+	case "Invoice.isSplitBill":
+		if e.ComplexityRoot.Invoice.IsSplitBill == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.IsSplitBill(childComplexity), true
+	case "Invoice.lastEdiError":
+		if e.ComplexityRoot.Invoice.LastEDIError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.LastEDIError(childComplexity), true
+	case "Invoice.lastEdiMessageId":
+		if e.ComplexityRoot.Invoice.LastEDIMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.LastEDIMessageID(childComplexity), true
+	case "Invoice.lateChargeAssessments":
+		if e.ComplexityRoot.Invoice.LateChargeAssessments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.LateChargeAssessments(childComplexity), true
 	case "Invoice.lines":
 		if e.ComplexityRoot.Invoice.Lines == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Invoice.Lines(childComplexity), true
+	case "Invoice.memoKind":
+		if e.ComplexityRoot.Invoice.MemoKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.MemoKind(childComplexity), true
+	case "Invoice.memoReason":
+		if e.ComplexityRoot.Invoice.MemoReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.MemoReason(childComplexity), true
 	case "Invoice.number":
 		if e.ComplexityRoot.Invoice.Number == nil {
 			break
@@ -29009,6 +29677,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.OffCycleReason(childComplexity), true
+	case "Invoice.openBalance":
+		if e.ComplexityRoot.Invoice.OpenBalance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.OpenBalance(childComplexity), true
+	case "Invoice.openDispute":
+		if e.ComplexityRoot.Invoice.OpenDispute == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.OpenDispute(childComplexity), true
 	case "Invoice.order":
 		if e.ComplexityRoot.Invoice.Order == nil {
 			break
@@ -29039,6 +29719,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.OtherAmount(childComplexity), true
+	case "Invoice.paymentApplications":
+		if e.ComplexityRoot.Invoice.PaymentApplications == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.PaymentApplications(childComplexity), true
 	case "Invoice.paymentTerm":
 		if e.ComplexityRoot.Invoice.PaymentTerm == nil {
 			break
@@ -29063,6 +29749,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.PostedAt(childComplexity), true
+	case "Invoice.referenceInvoice":
+		if e.ComplexityRoot.Invoice.ReferenceInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ReferenceInvoice(childComplexity), true
+	case "Invoice.referenceInvoiceId":
+		if e.ComplexityRoot.Invoice.ReferenceInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ReferenceInvoiceID(childComplexity), true
+	case "Invoice.relatedInvoices":
+		if e.ComplexityRoot.Invoice.RelatedInvoices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.RelatedInvoices(childComplexity), true
 	case "Invoice.scope":
 		if e.ComplexityRoot.Invoice.Scope == nil {
 			break
@@ -29123,6 +29827,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.ShipmentProNumber(childComplexity), true
+	case "Invoice.shipperCustomer":
+		if e.ComplexityRoot.Invoice.ShipperCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ShipperCustomer(childComplexity), true
+	case "Invoice.shipperCustomerId":
+		if e.ComplexityRoot.Invoice.ShipperCustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ShipperCustomerID(childComplexity), true
 	case "Invoice.status":
 		if e.ComplexityRoot.Invoice.Status == nil {
 			break
@@ -29153,6 +29869,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.Version(childComplexity), true
+	case "Invoice.voidDisposition":
+		if e.ComplexityRoot.Invoice.VoidDisposition == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.VoidDisposition(childComplexity), true
+	case "Invoice.voidReason":
+		if e.ComplexityRoot.Invoice.VoidReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.VoidReason(childComplexity), true
+	case "Invoice.voidedAt":
+		if e.ComplexityRoot.Invoice.VoidedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.VoidedAt(childComplexity), true
+	case "Invoice.voidedByAdjustmentId":
+		if e.ComplexityRoot.Invoice.VoidedByAdjustmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.VoidedByAdjustmentID(childComplexity), true
+	case "Invoice.voidedById":
+		if e.ComplexityRoot.Invoice.VoidedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.VoidedByID(childComplexity), true
 
 	case "InvoiceConnection.edges":
 		if e.ComplexityRoot.InvoiceConnection.Edges == nil {
@@ -29173,6 +29919,237 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.InvoiceConnection.TotalCount(childComplexity), true
 
+	case "InvoiceDispute.businessUnitId":
+		if e.ComplexityRoot.InvoiceDispute.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.BusinessUnitID(childComplexity), true
+	case "InvoiceDispute.createdAt":
+		if e.ComplexityRoot.InvoiceDispute.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.CreatedAt(childComplexity), true
+	case "InvoiceDispute.customer":
+		if e.ComplexityRoot.InvoiceDispute.Customer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Customer(childComplexity), true
+	case "InvoiceDispute.customerId":
+		if e.ComplexityRoot.InvoiceDispute.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.CustomerID(childComplexity), true
+	case "InvoiceDispute.disputedAmount":
+		if e.ComplexityRoot.InvoiceDispute.DisputedAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.DisputedAmount(childComplexity), true
+	case "InvoiceDispute.disputedAmountMinor":
+		if e.ComplexityRoot.InvoiceDispute.DisputedAmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.DisputedAmountMinor(childComplexity), true
+	case "InvoiceDispute.id":
+		if e.ComplexityRoot.InvoiceDispute.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ID(childComplexity), true
+	case "InvoiceDispute.invoice":
+		if e.ComplexityRoot.InvoiceDispute.Invoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Invoice(childComplexity), true
+	case "InvoiceDispute.invoiceId":
+		if e.ComplexityRoot.InvoiceDispute.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.InvoiceID(childComplexity), true
+	case "InvoiceDispute.notes":
+		if e.ComplexityRoot.InvoiceDispute.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Notes(childComplexity), true
+	case "InvoiceDispute.openedAt":
+		if e.ComplexityRoot.InvoiceDispute.OpenedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.OpenedAt(childComplexity), true
+	case "InvoiceDispute.openedById":
+		if e.ComplexityRoot.InvoiceDispute.OpenedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.OpenedByID(childComplexity), true
+	case "InvoiceDispute.organizationId":
+		if e.ComplexityRoot.InvoiceDispute.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.OrganizationID(childComplexity), true
+	case "InvoiceDispute.reasonCode":
+		if e.ComplexityRoot.InvoiceDispute.ReasonCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ReasonCode(childComplexity), true
+	case "InvoiceDispute.resolution":
+		if e.ComplexityRoot.InvoiceDispute.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Resolution(childComplexity), true
+	case "InvoiceDispute.resolutionAdjustmentId":
+		if e.ComplexityRoot.InvoiceDispute.ResolutionAdjustmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ResolutionAdjustmentID(childComplexity), true
+	case "InvoiceDispute.resolutionNotes":
+		if e.ComplexityRoot.InvoiceDispute.ResolutionNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ResolutionNotes(childComplexity), true
+	case "InvoiceDispute.resolvedAt":
+		if e.ComplexityRoot.InvoiceDispute.ResolvedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ResolvedAt(childComplexity), true
+	case "InvoiceDispute.resolvedById":
+		if e.ComplexityRoot.InvoiceDispute.ResolvedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.ResolvedByID(childComplexity), true
+	case "InvoiceDispute.status":
+		if e.ComplexityRoot.InvoiceDispute.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Status(childComplexity), true
+	case "InvoiceDispute.updatedAt":
+		if e.ComplexityRoot.InvoiceDispute.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.UpdatedAt(childComplexity), true
+	case "InvoiceDispute.version":
+		if e.ComplexityRoot.InvoiceDispute.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceDispute.Version(childComplexity), true
+
+	case "InvoiceEDISendPlan.autoSend":
+		if e.ComplexityRoot.InvoiceEDISendPlan.AutoSend == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.AutoSend(childComplexity), true
+	case "InvoiceEDISendPlan.blockers":
+		if e.ComplexityRoot.InvoiceEDISendPlan.Blockers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.Blockers(childComplexity), true
+	case "InvoiceEDISendPlan.communicationMethod":
+		if e.ComplexityRoot.InvoiceEDISendPlan.CommunicationMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.CommunicationMethod(childComplexity), true
+	case "InvoiceEDISendPlan.documentProfileId":
+		if e.ComplexityRoot.InvoiceEDISendPlan.DocumentProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.DocumentProfileID(childComplexity), true
+	case "InvoiceEDISendPlan.enabled":
+		if e.ComplexityRoot.InvoiceEDISendPlan.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.Enabled(childComplexity), true
+	case "InvoiceEDISendPlan.invoiceId":
+		if e.ComplexityRoot.InvoiceEDISendPlan.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.InvoiceID(childComplexity), true
+	case "InvoiceEDISendPlan.lastError":
+		if e.ComplexityRoot.InvoiceEDISendPlan.LastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.LastError(childComplexity), true
+	case "InvoiceEDISendPlan.lastMessageId":
+		if e.ComplexityRoot.InvoiceEDISendPlan.LastMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.LastMessageID(childComplexity), true
+	case "InvoiceEDISendPlan.partnerId":
+		if e.ComplexityRoot.InvoiceEDISendPlan.PartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.PartnerID(childComplexity), true
+	case "InvoiceEDISendPlan.partnerName":
+		if e.ComplexityRoot.InvoiceEDISendPlan.PartnerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.PartnerName(childComplexity), true
+	case "InvoiceEDISendPlan.sentAt":
+		if e.ComplexityRoot.InvoiceEDISendPlan.SentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.SentAt(childComplexity), true
+	case "InvoiceEDISendPlan.status":
+		if e.ComplexityRoot.InvoiceEDISendPlan.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendPlan.Status(childComplexity), true
+
+	case "InvoiceEDISendResult.invoiceId":
+		if e.ComplexityRoot.InvoiceEDISendResult.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendResult.InvoiceID(childComplexity), true
+	case "InvoiceEDISendResult.status":
+		if e.ComplexityRoot.InvoiceEDISendResult.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendResult.Status(childComplexity), true
+	case "InvoiceEDISendResult.workflowId":
+		if e.ComplexityRoot.InvoiceEDISendResult.WorkflowID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendResult.WorkflowID(childComplexity), true
+	case "InvoiceEDISendResult.workflowRunId":
+		if e.ComplexityRoot.InvoiceEDISendResult.WorkflowRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceEDISendResult.WorkflowRunID(childComplexity), true
+
 	case "InvoiceEdge.cursor":
 		if e.ComplexityRoot.InvoiceEdge.Cursor == nil {
 			break
@@ -29186,6 +30163,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.InvoiceEdge.Node(childComplexity), true
 
+	case "InvoiceLine.accessorialChargeId":
+		if e.ComplexityRoot.InvoiceLine.AccessorialChargeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.AccessorialChargeID(childComplexity), true
+	case "InvoiceLine.allocationPercent":
+		if e.ComplexityRoot.InvoiceLine.AllocationPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.AllocationPercent(childComplexity), true
 	case "InvoiceLine.amount":
 		if e.ComplexityRoot.InvoiceLine.Amount == nil {
 			break
@@ -29198,6 +30187,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.InvoiceLine.BusinessUnitID(childComplexity), true
+	case "InvoiceLine.chargeAllocationId":
+		if e.ComplexityRoot.InvoiceLine.ChargeAllocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.ChargeAllocationID(childComplexity), true
+	case "InvoiceLine.chargeCode":
+		if e.ComplexityRoot.InvoiceLine.ChargeCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.ChargeCode(childComplexity), true
+	case "InvoiceLine.chargeMethod":
+		if e.ComplexityRoot.InvoiceLine.ChargeMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.ChargeMethod(childComplexity), true
 	case "InvoiceLine.createdAt":
 		if e.ComplexityRoot.InvoiceLine.CreatedAt == nil {
 			break
@@ -29240,6 +30247,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.InvoiceLine.Quantity(childComplexity), true
+	case "InvoiceLine.rate":
+		if e.ComplexityRoot.InvoiceLine.Rate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceLine.Rate(childComplexity), true
 	case "InvoiceLine.shipmentBol":
 		if e.ComplexityRoot.InvoiceLine.ShipmentBOL == nil {
 			break
@@ -30181,6 +31194,280 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.JurisdictionRuleOverrideEdge.Node(childComplexity), true
 
+	case "LateChargeAssessment.asOfDate":
+		if e.ComplexityRoot.LateChargeAssessment.AsOfDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.AsOfDate(childComplexity), true
+	case "LateChargeAssessment.basisOpenBalanceMinor":
+		if e.ComplexityRoot.LateChargeAssessment.BasisOpenBalanceMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.BasisOpenBalanceMinor(childComplexity), true
+	case "LateChargeAssessment.businessUnitId":
+		if e.ComplexityRoot.LateChargeAssessment.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.BusinessUnitID(childComplexity), true
+	case "LateChargeAssessment.chargeMinor":
+		if e.ComplexityRoot.LateChargeAssessment.ChargeMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.ChargeMinor(childComplexity), true
+	case "LateChargeAssessment.createdAt":
+		if e.ComplexityRoot.LateChargeAssessment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.CreatedAt(childComplexity), true
+	case "LateChargeAssessment.customerId":
+		if e.ComplexityRoot.LateChargeAssessment.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.CustomerID(childComplexity), true
+	case "LateChargeAssessment.debitMemo":
+		if e.ComplexityRoot.LateChargeAssessment.DebitMemo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.DebitMemo(childComplexity), true
+	case "LateChargeAssessment.debitMemoInvoiceId":
+		if e.ComplexityRoot.LateChargeAssessment.DebitMemoInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.DebitMemoInvoiceID(childComplexity), true
+	case "LateChargeAssessment.debitMemoLineId":
+		if e.ComplexityRoot.LateChargeAssessment.DebitMemoLineID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.DebitMemoLineID(childComplexity), true
+	case "LateChargeAssessment.id":
+		if e.ComplexityRoot.LateChargeAssessment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.ID(childComplexity), true
+	case "LateChargeAssessment.organizationId":
+		if e.ComplexityRoot.LateChargeAssessment.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.OrganizationID(childComplexity), true
+	case "LateChargeAssessment.periodEnd":
+		if e.ComplexityRoot.LateChargeAssessment.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.PeriodEnd(childComplexity), true
+	case "LateChargeAssessment.periodIndex":
+		if e.ComplexityRoot.LateChargeAssessment.PeriodIndex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.PeriodIndex(childComplexity), true
+	case "LateChargeAssessment.periodStart":
+		if e.ComplexityRoot.LateChargeAssessment.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.PeriodStart(childComplexity), true
+	case "LateChargeAssessment.ratePercent":
+		if e.ComplexityRoot.LateChargeAssessment.RatePercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.RatePercent(childComplexity), true
+	case "LateChargeAssessment.runKey":
+		if e.ComplexityRoot.LateChargeAssessment.RunKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.RunKey(childComplexity), true
+	case "LateChargeAssessment.sourceInvoice":
+		if e.ComplexityRoot.LateChargeAssessment.SourceInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.SourceInvoice(childComplexity), true
+	case "LateChargeAssessment.sourceInvoiceId":
+		if e.ComplexityRoot.LateChargeAssessment.SourceInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.SourceInvoiceID(childComplexity), true
+	case "LateChargeAssessment.updatedAt":
+		if e.ComplexityRoot.LateChargeAssessment.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessment.UpdatedAt(childComplexity), true
+
+	case "LateChargeAssessmentResult.asOfDate":
+		if e.ComplexityRoot.LateChargeAssessmentResult.AsOfDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.AsOfDate(childComplexity), true
+	case "LateChargeAssessmentResult.customers":
+		if e.ComplexityRoot.LateChargeAssessmentResult.Customers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.Customers(childComplexity), true
+	case "LateChargeAssessmentResult.customersSkipped":
+		if e.ComplexityRoot.LateChargeAssessmentResult.CustomersSkipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.CustomersSkipped(childComplexity), true
+	case "LateChargeAssessmentResult.memosCreated":
+		if e.ComplexityRoot.LateChargeAssessmentResult.MemosCreated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.MemosCreated(childComplexity), true
+	case "LateChargeAssessmentResult.memosPosted":
+		if e.ComplexityRoot.LateChargeAssessmentResult.MemosPosted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.MemosPosted(childComplexity), true
+	case "LateChargeAssessmentResult.mode":
+		if e.ComplexityRoot.LateChargeAssessmentResult.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.Mode(childComplexity), true
+	case "LateChargeAssessmentResult.preview":
+		if e.ComplexityRoot.LateChargeAssessmentResult.Preview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.Preview(childComplexity), true
+	case "LateChargeAssessmentResult.totalChargeMinor":
+		if e.ComplexityRoot.LateChargeAssessmentResult.TotalChargeMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeAssessmentResult.TotalChargeMinor(childComplexity), true
+
+	case "LateChargeCustomerResult.currencyCode":
+		if e.ComplexityRoot.LateChargeCustomerResult.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.CurrencyCode(childComplexity), true
+	case "LateChargeCustomerResult.customerId":
+		if e.ComplexityRoot.LateChargeCustomerResult.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.CustomerID(childComplexity), true
+	case "LateChargeCustomerResult.customerName":
+		if e.ComplexityRoot.LateChargeCustomerResult.CustomerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.CustomerName(childComplexity), true
+	case "LateChargeCustomerResult.debitMemoId":
+		if e.ComplexityRoot.LateChargeCustomerResult.DebitMemoID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.DebitMemoID(childComplexity), true
+	case "LateChargeCustomerResult.debitMemoNumber":
+		if e.ComplexityRoot.LateChargeCustomerResult.DebitMemoNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.DebitMemoNumber(childComplexity), true
+	case "LateChargeCustomerResult.lines":
+		if e.ComplexityRoot.LateChargeCustomerResult.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.Lines(childComplexity), true
+	case "LateChargeCustomerResult.posted":
+		if e.ComplexityRoot.LateChargeCustomerResult.Posted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.Posted(childComplexity), true
+	case "LateChargeCustomerResult.skipReason":
+		if e.ComplexityRoot.LateChargeCustomerResult.SkipReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.SkipReason(childComplexity), true
+	case "LateChargeCustomerResult.skipped":
+		if e.ComplexityRoot.LateChargeCustomerResult.Skipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.Skipped(childComplexity), true
+	case "LateChargeCustomerResult.totalChargeMinor":
+		if e.ComplexityRoot.LateChargeCustomerResult.TotalChargeMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeCustomerResult.TotalChargeMinor(childComplexity), true
+
+	case "LateChargeLine.basisOpenBalanceMinor":
+		if e.ComplexityRoot.LateChargeLine.BasisOpenBalanceMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.BasisOpenBalanceMinor(childComplexity), true
+	case "LateChargeLine.chargeMinor":
+		if e.ComplexityRoot.LateChargeLine.ChargeMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.ChargeMinor(childComplexity), true
+	case "LateChargeLine.invoiceId":
+		if e.ComplexityRoot.LateChargeLine.InvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.InvoiceID(childComplexity), true
+	case "LateChargeLine.invoiceNumber":
+		if e.ComplexityRoot.LateChargeLine.InvoiceNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.InvoiceNumber(childComplexity), true
+	case "LateChargeLine.periodEnd":
+		if e.ComplexityRoot.LateChargeLine.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.PeriodEnd(childComplexity), true
+	case "LateChargeLine.periodIndex":
+		if e.ComplexityRoot.LateChargeLine.PeriodIndex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.PeriodIndex(childComplexity), true
+	case "LateChargeLine.periodStart":
+		if e.ComplexityRoot.LateChargeLine.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.PeriodStart(childComplexity), true
+	case "LateChargeLine.ratePercent":
+		if e.ComplexityRoot.LateChargeLine.RatePercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.LateChargeLine.RatePercent(childComplexity), true
+
 	case "LeaveControl.certificationDueDays":
 		if e.ComplexityRoot.LeaveControl.CertificationDueDays == nil {
 			break
@@ -30992,7 +32279,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddOrderCharge(childComplexity, args["orderId"].(string), args["description"].(string), args["amount"].(string)), true
+		return e.ComplexityRoot.Mutation.AddOrderCharge(childComplexity, args["orderId"].(string), args["description"].(string), args["amount"].(string), args["allocations"].([]*gqlmodel.ChargeAllocationInput)), true
 	case "Mutation.adjustEscrowAccount":
 		if e.ComplexityRoot.Mutation.AdjustEscrowAccount == nil {
 			break
@@ -31037,6 +32324,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AmendWorkerEmploymentEvent(childComplexity, args["input"].(gqlmodel.AmendWorkerEmploymentEventInput)), true
+	case "Mutation.applyCreditMemo":
+		if e.ComplexityRoot.Mutation.ApplyCreditMemo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_applyCreditMemo_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApplyCreditMemo(childComplexity, args["input"].(gqlmodel.ApplyCreditMemoInput)), true
 	case "Mutation.applyUnappliedCustomerPayment":
 		if e.ComplexityRoot.Mutation.ApplyUnappliedCustomerPayment == nil {
 			break
@@ -31169,6 +32467,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ArchiveWorkerCredentialType(childComplexity, args["id"].(string), args["version"].(*int)), true
+	case "Mutation.assessLateCharges":
+		if e.ComplexityRoot.Mutation.AssessLateCharges == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assessLateCharges_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AssessLateCharges(childComplexity, args["input"].(*gqlmodel.LateChargeAssessmentInput)), true
 	case "Mutation.assignBillingQueueBiller":
 		if e.ComplexityRoot.Mutation.AssignBillingQueueBiller == nil {
 			break
@@ -31928,6 +33237,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateInvoiceFromShipments(childComplexity, args["shipmentIds"].([]string), args["offCycleReason"].(*string)), true
+	case "Mutation.createInvoicesFromOrder":
+		if e.ComplexityRoot.Mutation.CreateInvoicesFromOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createInvoicesFromOrder_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateInvoicesFromOrder(childComplexity, args["orderId"].(string), args["offCycleReason"].(*string)), true
+	case "Mutation.createInvoicesFromShipments":
+		if e.ComplexityRoot.Mutation.CreateInvoicesFromShipments == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createInvoicesFromShipments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateInvoicesFromShipments(childComplexity, args["shipmentIds"].([]string), args["offCycleReason"].(*string)), true
 	case "Mutation.createJobPosition":
 		if e.ComplexityRoot.Mutation.CreateJobPosition == nil {
 			break
@@ -31939,6 +33270,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateJobPosition(childComplexity, args["input"].(gqlmodel.JobPositionInput)), true
+	case "Mutation.createMemo":
+		if e.ComplexityRoot.Mutation.CreateMemo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createMemo_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateMemo(childComplexity, args["input"].(gqlmodel.CreateMemoInput)), true
 	case "Mutation.createMyLoadComment":
 		if e.ComplexityRoot.Mutation.CreateMyLoadComment == nil {
 			break
@@ -33084,6 +34426,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.OpenEscrowAccount(childComplexity, args["input"].(gqlmodel.OpenEscrowAccountInput)), true
+	case "Mutation.openInvoiceDispute":
+		if e.ComplexityRoot.Mutation.OpenInvoiceDispute == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_openInvoiceDispute_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.OpenInvoiceDispute(childComplexity, args["input"].(gqlmodel.OpenInvoiceDisputeInput)), true
 	case "Mutation.openLeaveCase":
 		if e.ComplexityRoot.Mutation.OpenLeaveCase == nil {
 			break
@@ -33662,6 +35015,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResolveFuelPurchaseImportRows(childComplexity, args["id"].(string), args["version"].(int)), true
+	case "Mutation.resolveInvoiceDispute":
+		if e.ComplexityRoot.Mutation.ResolveInvoiceDispute == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveInvoiceDispute_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResolveInvoiceDispute(childComplexity, args["input"].(gqlmodel.ResolveInvoiceDisputeInput)), true
 	case "Mutation.resolveSettlementDispute":
 		if e.ComplexityRoot.Mutation.ResolveSettlementDispute == nil {
 			break
@@ -33915,6 +35279,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendDetentionNotice(childComplexity, args["occurrenceId"].(string)), true
+	case "Mutation.sendInvoiceEdi":
+		if e.ComplexityRoot.Mutation.SendInvoiceEDI == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendInvoiceEdi_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SendInvoiceEDI(childComplexity, args["invoiceId"].(string), args["force"].(*bool)), true
 	case "Mutation.sendTestMessageTemplate":
 		if e.ComplexityRoot.Mutation.SendTestMessageTemplate == nil {
 			break
@@ -33948,6 +35323,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetMyAvailability(childComplexity, args["input"].(gqlmodel.SetMyAvailabilityInput)), true
+	case "Mutation.setOrderChargeAllocations":
+		if e.ComplexityRoot.Mutation.SetOrderChargeAllocations == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setOrderChargeAllocations_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetOrderChargeAllocations(childComplexity, args["input"].(gqlmodel.SetOrderChargeAllocationsInput)), true
 	case "Mutation.setOrgDefaultTableConfiguration":
 		if e.ComplexityRoot.Mutation.SetOrgDefaultTableConfiguration == nil {
 			break
@@ -34102,6 +35488,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TransferShipmentToBilling(childComplexity, args["input"].(gqlmodel.ShipmentTransferToBillingInput)), true
+	case "Mutation.transferShipmentToBillingItems":
+		if e.ComplexityRoot.Mutation.TransferShipmentToBillingItems == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_transferShipmentToBillingItems_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.TransferShipmentToBillingItems(childComplexity, args["input"].(gqlmodel.ShipmentTransferToBillingInput)), true
 	case "Mutation.transitionShiftSwap":
 		if e.ComplexityRoot.Mutation.TransitionShiftSwap == nil {
 			break
@@ -34124,6 +35521,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TransitionTimesheet(childComplexity, args["input"].(gqlmodel.TransitionTimesheetInput)), true
+	case "Mutation.unapplyCreditMemoApplication":
+		if e.ComplexityRoot.Mutation.UnapplyCreditMemoApplication == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unapplyCreditMemoApplication_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UnapplyCreditMemoApplication(childComplexity, args["input"].(gqlmodel.UnapplyCreditMemoApplicationInput)), true
 	case "Mutation.unassignDocumentTemplate":
 		if e.ComplexityRoot.Mutation.UnassignDocumentTemplate == nil {
 			break
@@ -34905,6 +36313,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.VoidDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.voidInvoice":
+		if e.ComplexityRoot.Mutation.VoidInvoice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_voidInvoice_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.VoidInvoice(childComplexity, args["input"].(gqlmodel.VoidInvoiceInput)), true
 	case "Mutation.voidPayrollExport":
 		if e.ComplexityRoot.Mutation.VoidPayrollExport == nil {
 			break
@@ -34938,6 +36357,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.WaiveWorkerTraining(childComplexity, args["input"].(gqlmodel.WaiveWorkerTrainingInput)), true
+	case "Mutation.withdrawInvoiceDispute":
+		if e.ComplexityRoot.Mutation.WithdrawInvoiceDispute == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_withdrawInvoiceDispute_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.WithdrawInvoiceDispute(childComplexity, args["input"].(gqlmodel.WithdrawInvoiceDisputeInput)), true
 	case "Mutation.withdrawMyProfileChange":
 		if e.ComplexityRoot.Mutation.WithdrawMyProfileChange == nil {
 			break
@@ -35581,6 +37011,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Order.Version(childComplexity), true
 
+	case "OrderCharge.allocations":
+		if e.ComplexityRoot.OrderCharge.Allocations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrderCharge.Allocations(childComplexity), true
 	case "OrderCharge.amount":
 		if e.ComplexityRoot.OrderCharge.Amount == nil {
 			break
@@ -35611,6 +37047,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.OrderCharge.InvoiceID(childComplexity), true
+	case "OrderCharge.invoicedAt":
+		if e.ComplexityRoot.OrderCharge.InvoicedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrderCharge.InvoicedAt(childComplexity), true
 	case "OrderCharge.orderId":
 		if e.ComplexityRoot.OrderCharge.OrderID == nil {
 			break
@@ -40567,6 +42009,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Invoice(childComplexity, args["id"].(string)), true
+	case "Query.invoiceDisputes":
+		if e.ComplexityRoot.Query.InvoiceDisputes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_invoiceDisputes_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InvoiceDisputes(childComplexity, args["invoiceId"].(string)), true
 	case "Query.invoices":
 		if e.ComplexityRoot.Query.Invoices == nil {
 			break
@@ -40699,6 +42152,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.JurisdictionRules(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.lateChargePreview":
+		if e.ComplexityRoot.Query.LateChargePreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_lateChargePreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.LateChargePreview(childComplexity, args["input"].(*gqlmodel.LateChargeAssessmentInput)), true
 	case "Query.leaveCertificationsOutstanding":
 		if e.ComplexityRoot.Query.LeaveCertificationsOutstanding == nil {
 			break
@@ -47611,12 +49075,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Shipment.BaseRate(childComplexity), true
+	case "Shipment.billToCustomer":
+		if e.ComplexityRoot.Shipment.BillToCustomer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Shipment.BillToCustomer(childComplexity), true
+	case "Shipment.billToCustomerId":
+		if e.ComplexityRoot.Shipment.BillToCustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Shipment.BillToCustomerID(childComplexity), true
 	case "Shipment.billedAt":
 		if e.ComplexityRoot.Shipment.BilledAt == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Shipment.BilledAt(childComplexity), true
+	case "Shipment.billingSplitSummary":
+		if e.ComplexityRoot.Shipment.BillingSplitSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Shipment.BillingSplitSummary(childComplexity), true
 	case "Shipment.billingTransferStatus":
 		if e.ComplexityRoot.Shipment.BillingTransferStatus == nil {
 			break
@@ -47647,6 +49129,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Shipment.CanceledByID(childComplexity), true
+	case "Shipment.chargeAllocations":
+		if e.ComplexityRoot.Shipment.ChargeAllocations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Shipment.ChargeAllocations(childComplexity), true
 	case "Shipment.commodities":
 		if e.ComplexityRoot.Shipment.Commodities == nil {
 			break
@@ -47707,6 +49195,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Shipment.FreightChargeAmount(childComplexity), true
+	case "Shipment.freightTerms":
+		if e.ComplexityRoot.Shipment.FreightTerms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Shipment.FreightTerms(childComplexity), true
 	case "Shipment.fuelSurchargeLocked":
 		if e.ComplexityRoot.Shipment.FuelSurchargeLocked == nil {
 			break
@@ -48107,6 +49601,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentAdditionalCharge.ID(childComplexity), true
+	case "ShipmentAdditionalCharge.isDetention":
+		if e.ComplexityRoot.ShipmentAdditionalCharge.IsDetention == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentAdditionalCharge.IsDetention(childComplexity), true
 	case "ShipmentAdditionalCharge.isSystemGenerated":
 		if e.ComplexityRoot.ShipmentAdditionalCharge.IsSystemGenerated == nil {
 			break
@@ -48546,6 +50046,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentAxleWeight.Weight(childComplexity), true
 
+	case "ShipmentBillingPayerReadiness.creditHold":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.CreditHold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.CreditHold(childComplexity), true
+	case "ShipmentBillingPayerReadiness.creditStatus":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.CreditStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.CreditStatus(childComplexity), true
+	case "ShipmentBillingPayerReadiness.isPrimary":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.IsPrimary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.IsPrimary(childComplexity), true
+	case "ShipmentBillingPayerReadiness.payerCode":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerCode(childComplexity), true
+	case "ShipmentBillingPayerReadiness.payerId":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerID(childComplexity), true
+	case "ShipmentBillingPayerReadiness.payerName":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.PayerName(childComplexity), true
+	case "ShipmentBillingPayerReadiness.shareAmount":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.ShareAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.ShareAmount(childComplexity), true
+	case "ShipmentBillingPayerReadiness.shouldAutoApproveBilling":
+		if e.ComplexityRoot.ShipmentBillingPayerReadiness.ShouldAutoApproveBilling == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingPayerReadiness.ShouldAutoApproveBilling(childComplexity), true
+
 	case "ShipmentBillingReadiness.canMarkReadyToInvoice":
 		if e.ComplexityRoot.ShipmentBillingReadiness.CanMarkReadyToInvoice == nil {
 			break
@@ -48558,6 +50107,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentBillingReadiness.MissingRequirements(childComplexity), true
+	case "ShipmentBillingReadiness.payers":
+		if e.ComplexityRoot.ShipmentBillingReadiness.Payers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingReadiness.Payers(childComplexity), true
 	case "ShipmentBillingReadiness.policy":
 		if e.ComplexityRoot.ShipmentBillingReadiness.Policy == nil {
 			break
@@ -48588,6 +50143,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentBillingReadiness.ShipmentStatus(childComplexity), true
+	case "ShipmentBillingReadiness.shouldAutoApproveBilling":
+		if e.ComplexityRoot.ShipmentBillingReadiness.ShouldAutoApproveBilling == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingReadiness.ShouldAutoApproveBilling(childComplexity), true
 	case "ShipmentBillingReadiness.shouldAutoMarkReadyToInvoice":
 		if e.ComplexityRoot.ShipmentBillingReadiness.ShouldAutoMarkReadyToInvoice == nil {
 			break
@@ -48686,6 +50247,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentBillingRequirement.Satisfied(childComplexity), true
+
+	case "ShipmentBillingSplitSummary.accessorialAmount":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.AccessorialAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.AccessorialAmount(childComplexity), true
+	case "ShipmentBillingSplitSummary.freightAmount":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.FreightAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.FreightAmount(childComplexity), true
+	case "ShipmentBillingSplitSummary.isPrimary":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.IsPrimary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.IsPrimary(childComplexity), true
+	case "ShipmentBillingSplitSummary.isSplit":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.IsSplit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.IsSplit(childComplexity), true
+	case "ShipmentBillingSplitSummary.payerCode":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.PayerCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.PayerCode(childComplexity), true
+	case "ShipmentBillingSplitSummary.payerId":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.PayerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.PayerID(childComplexity), true
+	case "ShipmentBillingSplitSummary.payerName":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.PayerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.PayerName(childComplexity), true
+	case "ShipmentBillingSplitSummary.totalAmount":
+		if e.ComplexityRoot.ShipmentBillingSplitSummary.TotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBillingSplitSummary.TotalAmount(childComplexity), true
 
 	case "ShipmentBillingTransferCandidateIds.ids":
 		if e.ComplexityRoot.ShipmentBillingTransferCandidateIds.Ids == nil {
@@ -48824,6 +50434,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.BillingQueueItem(childComplexity), true
+	case "ShipmentBulkTransferToBillingResult.billingQueueItems":
+		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.BillingQueueItems == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentBulkTransferToBillingResult.BillingQueueItems(childComplexity), true
 	case "ShipmentBulkTransferToBillingResult.error":
 		if e.ComplexityRoot.ShipmentBulkTransferToBillingResult.Error == nil {
 			break
@@ -52371,6 +53987,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentTotalsResponse.TotalChargeAmount(childComplexity), true
 
+	case "ShipmentTransferToBillingResult.items":
+		if e.ComplexityRoot.ShipmentTransferToBillingResult.Items == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentTransferToBillingResult.Items(childComplexity), true
+	case "ShipmentTransferToBillingResult.primary":
+		if e.ComplexityRoot.ShipmentTransferToBillingResult.Primary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentTransferToBillingResult.Primary(childComplexity), true
+
 	case "ShipmentType.businessUnit":
 		if e.ComplexityRoot.ShipmentType.BusinessUnit == nil {
 			break
@@ -55162,6 +56791,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.VehiclePosition.TractorID(childComplexity), true
+
+	case "VoidInvoiceResult.adjustmentId":
+		if e.ComplexityRoot.VoidInvoiceResult.AdjustmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VoidInvoiceResult.AdjustmentID(childComplexity), true
+	case "VoidInvoiceResult.invoice":
+		if e.ComplexityRoot.VoidInvoiceResult.Invoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VoidInvoiceResult.Invoice(childComplexity), true
+	case "VoidInvoiceResult.pendingApproval":
+		if e.ComplexityRoot.VoidInvoiceResult.PendingApproval == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VoidInvoiceResult.PendingApproval(childComplexity), true
+	case "VoidInvoiceResult.releasedQueueItemIds":
+		if e.ComplexityRoot.VoidInvoiceResult.ReleasedQueueItemIDs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.VoidInvoiceResult.ReleasedQueueItemIDs(childComplexity), true
 
 	case "Worker.addressLine1":
 		if e.ComplexityRoot.Worker.AddressLine1 == nil {
@@ -60413,6 +62067,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentExceptionResolveInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
+		ec.unmarshalInputApplyCreditMemoInput,
 		ec.unmarshalInputApplyCustomerPaymentInput,
 		ec.unmarshalInputArchiveWorkerCredentialInput,
 		ec.unmarshalInputAssignDocumentTemplateInput,
@@ -60440,6 +62095,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCancelWorkerTrainingInput,
 		ec.unmarshalInputCarrierInvoiceMatchActionInput,
 		ec.unmarshalInputCarrierSettlementActionInput,
+		ec.unmarshalInputChargeAllocationInput,
 		ec.unmarshalInputClockInput,
 		ec.unmarshalInputCompleteClearinghouseQueryInput,
 		ec.unmarshalInputCompleteWorkerTrainingInput,
@@ -60448,6 +62104,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateCarrierInvoiceMatchInput,
 		ec.unmarshalInputCreateDocumentTemplateVersionInput,
 		ec.unmarshalInputCreateFuelPurchaseImportInput,
+		ec.unmarshalInputCreateMemoInput,
 		ec.unmarshalInputCreateMyLoadCommentInput,
 		ec.unmarshalInputCreatePayCodeInput,
 		ec.unmarshalInputCreatePayProfileInput,
@@ -60458,6 +62115,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateReportViewInput,
 		ec.unmarshalInputCreateSettlementDisputeInput,
 		ec.unmarshalInputCreateWorkerPTOInput,
+		ec.unmarshalInputCreditMemoApplicationInput,
 		ec.unmarshalInputCustomerPaymentApplicationInput,
 		ec.unmarshalInputDOTRandomPoolInput,
 		ec.unmarshalInputDOTRandomPoolsInput,
@@ -60529,14 +62187,17 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIssueDisciplinaryActionInput,
 		ec.unmarshalInputIssuePayAdvanceInput,
 		ec.unmarshalInputJobPositionInput,
+		ec.unmarshalInputLateChargeAssessmentInput,
 		ec.unmarshalInputLocateTractorInput,
 		ec.unmarshalInputLocateTrailerInput,
 		ec.unmarshalInputMarkCarrierSettlementPaidInput,
 		ec.unmarshalInputMarkDriverSettlementPaidInput,
 		ec.unmarshalInputMarkIFTAReturnFiledInput,
 		ec.unmarshalInputMatchRoutingGuideInput,
+		ec.unmarshalInputMemoLineInput,
 		ec.unmarshalInputNotificationFilterInput,
 		ec.unmarshalInputOpenEscrowAccountInput,
+		ec.unmarshalInputOpenInvoiceDisputeInput,
 		ec.unmarshalInputOpenLeaveCaseInput,
 		ec.unmarshalInputOpeningPTOBalanceInput,
 		ec.unmarshalInputOrderInput,
@@ -60597,6 +62258,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReportTransformInput,
 		ec.unmarshalInputRequestMyPtoInput,
 		ec.unmarshalInputRescindDisciplinaryActionInput,
+		ec.unmarshalInputResolveInvoiceDisputeInput,
 		ec.unmarshalInputResolveSettlementDisputeInput,
 		ec.unmarshalInputRespondToMyAssignmentInput,
 		ec.unmarshalInputRespondToMyShiftSwapInput,
@@ -60619,6 +62281,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSendTestMessageTemplateInput,
 		ec.unmarshalInputSetAvailabilityPreferenceInput,
 		ec.unmarshalInputSetMyAvailabilityInput,
+		ec.unmarshalInputSetOrderChargeAllocationsInput,
 		ec.unmarshalInputShiftTemplateInput,
 		ec.unmarshalInputShipmentAdditionalChargeInput,
 		ec.unmarshalInputShipmentAnalyticsInput,
@@ -60662,6 +62325,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTrainingCoursesInput,
 		ec.unmarshalInputTransitionShiftSwapInput,
 		ec.unmarshalInputTransitionTimesheetInput,
+		ec.unmarshalInputUnapplyCreditMemoApplicationInput,
 		ec.unmarshalInputUnassignDocumentTemplateInput,
 		ec.unmarshalInputUpcomingWorkerPTOInput,
 		ec.unmarshalInputUpdateBenefitPlanInput,
@@ -60694,8 +62358,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateWorkerInjuryInput,
 		ec.unmarshalInputUpdateWorkerPTOInput,
 		ec.unmarshalInputUpdateWorkerSafetyEventInput,
+		ec.unmarshalInputVoidInvoiceInput,
 		ec.unmarshalInputVoidPayrollExportInput,
 		ec.unmarshalInputWaiveWorkerTrainingInput,
+		ec.unmarshalInputWithdrawInvoiceDisputeInput,
 		ec.unmarshalInputWorkerChecklistItemActionInput,
 		ec.unmarshalInputWorkerChecklistTemplateInput,
 		ec.unmarshalInputWorkerChecklistTemplateItemInput,
@@ -61041,6 +62707,10 @@ type ARCollectionsWorklistItem {
   isDisputed: Boolean!
   hasShortPay: Boolean!
   severity: String!
+  "Reason code of the open dispute case, empty when there is none."
+  openDisputeReasonCode: String!
+  disputedAmountMinor: Int!
+  disputeOpenedAt: Timestamp
 }
 
 type ARMonthlyCollectionPoint {
@@ -62781,6 +64451,10 @@ type CustomerBillingProfile {
   invoiceMethod: CustomerInvoiceMethod!
     @deprecated(reason: "Split into invoiceDelivery (how many invoices) and invoiceDetail (how verbose). Removed in a later release.")
   autoSendInvoiceOnGeneration: Boolean!
+  "Whether invoices may be emailed to this customer."
+  emailInvoiceEnabled: Boolean!
+  "Whether invoices are sent to this customer's EDI partner as an 210."
+  ediInvoiceEnabled: Boolean!
   allowInvoiceConsolidation: Boolean!
     @deprecated(reason: "Replaced by invoiceDelivery. Removed in a later release.")
   consolidationPeriodDays: Int!
@@ -62917,6 +64591,33 @@ type CustomerPaymentApplication {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   invoice: Invoice
+  payment: CustomerPayment
+}
+
+enum CreditMemoApplicationStatus {
+  Applied
+  Unapplied
+}
+
+"Part of a posted credit memo used to settle an invoice."
+type CreditMemoApplication {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  creditMemoInvoiceId: ID!
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+  accountingDate: Timestamp!
+  lineNumber: Int!
+  status: CreditMemoApplicationStatus!
+  unappliedAt: Timestamp
+  unappliedById: ID
+  unappliedReason: String!
+  createdById: ID!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  creditMemo: Invoice
+  invoice: Invoice
 }
 
 type CustomerPayment {
@@ -62983,6 +64684,22 @@ input ApplyCustomerPaymentInput {
   applications: [CustomerPaymentApplicationInput!]!
 }
 
+input CreditMemoApplicationInput {
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+}
+
+input ApplyCreditMemoInput {
+  creditMemoId: ID!
+  accountingDate: Timestamp!
+  applications: [CreditMemoApplicationInput!]!
+}
+
+input UnapplyCreditMemoApplicationInput {
+  applicationId: ID!
+  reason: String
+}
+
 input ReverseCustomerPaymentInput {
   paymentId: ID!
   accountingDate: Timestamp!
@@ -62998,6 +64715,10 @@ extend type Mutation {
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+  "Settles open invoices of the same customer with a posted credit memo."
+  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
+  "Takes one credit memo application back."
+  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
 }
 `, BuiltIn: false},
 	{Name: "../schema/detention.graphqls", Input: `enum DetentionPolicyStatus {
@@ -69594,6 +71315,36 @@ extend type Mutation {
 	{Name: "../schema/invoice.graphqls", Input: `enum InvoiceStatus {
   Draft
   Posted
+  """
+  Taken out of circulation. The number and lines stay readable for the audit
+  trail; the open balance is zero and nothing is delivered.
+  """
+  Voided
+}
+
+"What happens to the freight a voided invoice billed."
+enum InvoiceVoidDisposition {
+  "The billing queue items go back to Approved with a fresh number, ready to bill again."
+  Rebill
+  "The billing queue items are canceled and the shipments settle as completed."
+  DoNotRebill
+}
+
+enum InvoiceMemoKind {
+  Manual
+  LateCharge
+}
+
+"Where the outbound EDI 210 for an invoice stands, separately from email."
+enum InvoiceEDISendStatus {
+  NotSent
+  NotConfigured
+  Queued
+  Generated
+  Sending
+  Sent
+  Failed
+  DeadLettered
 }
 
 enum InvoicePaymentTerm {
@@ -69638,6 +71389,8 @@ enum InvoiceScope {
   Consolidated
   """A credit memo, rebill or reversal in a correction chain."""
   Adjustment
+  """A standalone credit or debit memo with no shipment behind it."""
+  Memo
 }
 
 type Invoice {
@@ -69680,6 +71433,23 @@ type Invoice {
   shipmentBol: String!
   serviceDate: Timestamp
   billToName: String!
+  billToCode: String
+  billToAddressLine1: String
+  billToAddressLine2: String
+  billToCity: String
+  billToState: String
+  billToPostalCode: String
+  billToCountry: String
+  """
+  The customer who ordered the freight, when it is not the customer billed.
+  Null on an ordinary invoice and on consolidated ones, whose lines carry it.
+  """
+  shipperCustomerId: ID
+  shipperCustomer: Customer
+  "Whether this invoice bills only part of what its shipments charged."
+  isSplitBill: Boolean!
+  "Other invoices that bill any shipment on this one, split-bill siblings first."
+  relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
   totalAmount: Decimal!
@@ -69689,6 +71459,38 @@ type Invoice {
   sendStatus: InvoiceSendStatus!
   sentAt: Timestamp
   isAdjustmentArtifact: Boolean!
+  voidedAt: Timestamp
+  voidedById: ID
+  voidReason: String!
+  voidDisposition: InvoiceVoidDisposition
+  "The full-reversal adjustment that voided a posted invoice."
+  voidedByAdjustmentId: ID
+  "The invoice a memo corrects, when it corrects one."
+  referenceInvoiceId: ID
+  referenceInvoice: Invoice
+  memoReason: String!
+  memoKind: InvoiceMemoKind
+  "What is still owed on an open invoice or debit memo; zero on anything else."
+  openBalance: Decimal!
+  "Open balance in minor units, kept by the database for filtering and sorting."
+  balanceDueMinor: Int!
+  "How much of a posted credit memo has not yet been applied to an invoice."
+  creditRemaining: Decimal!
+  "Days past the due date for an open invoice; null when nothing is owed or overdue."
+  daysPastDue: Int
+  "Cash applied against this invoice, newest first, reversed payments included."
+  paymentApplications: [CustomerPaymentApplication!]!
+  """
+  Credit memo applications touching this invoice: the credits that settled it,
+  or, on a credit memo, the invoices it settled.
+  """
+  creditApplications: [CreditMemoApplication!]!
+  ediSendStatus: InvoiceEDISendStatus!
+  lastEdiMessageId: ID
+  ediSentAt: Timestamp
+  lastEdiError: String!
+  "Whether and where this invoice's outbound EDI 210 can go."
+  ediSendPlan: InvoiceEDISendPlan!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -69700,6 +71502,8 @@ type Invoice {
 enum InvoiceLineType {
   Freight
   Accessorial
+  "A memo line; counts toward the total and nothing else."
+  Memo
 }
 
 type InvoiceLine {
@@ -69716,8 +71520,91 @@ type InvoiceLine {
   quantity: Decimal!
   unitPrice: Decimal!
   amount: Decimal!
+  accessorialChargeId: ID
+  chargeCode: String
+  chargeMethod: String
+  rate: Decimal
+  "The share of the charge this line bills, when it is less than all of it."
+  allocationPercent: Decimal
+  chargeAllocationId: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"Every invoice a billing action produced; a split shipment yields one per payer."
+type CreateInvoicesResult {
+  invoices: [Invoice!]!
+  "The shipment's own payer's invoice."
+  primary: Invoice!
+}
+
+"Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands."
+type InvoiceEDISendPlan {
+  invoiceId: ID!
+  "The customer's EDI invoicing switch."
+  enabled: Boolean!
+  "Whether posting queues the 210 without a hand on it."
+  autoSend: Boolean!
+  partnerId: ID
+  partnerName: String!
+  documentProfileId: ID
+  communicationMethod: String!
+  status: InvoiceEDISendStatus!
+  lastMessageId: ID
+  lastError: String!
+  sentAt: Timestamp
+  "Why a send cannot happen right now; empty when it can."
+  blockers: [String!]!
+}
+
+type InvoiceEDISendResult {
+  invoiceId: ID!
+  status: InvoiceEDISendStatus!
+  workflowId: String!
+  workflowRunId: String!
+}
+
+type VoidInvoiceResult {
+  invoice: Invoice!
+  "The full-reversal adjustment raised for a posted invoice."
+  adjustmentId: ID
+  """
+  True when the reversal awaits an approver; the invoice is voided once it
+  executes.
+  """
+  pendingApproval: Boolean!
+  "Billing queue items released back to the queue or canceled."
+  releasedQueueItemIds: [ID!]!
+}
+
+input VoidInvoiceInput {
+  invoiceId: ID!
+  reason: String!
+  disposition: InvoiceVoidDisposition!
+}
+
+input MemoLineInput {
+  description: String!
+  amount: Decimal!
+  "Defaults to 1."
+  quantity: Decimal
+  "Names the accessorial this line corrects, so the memo reads like the charge."
+  accessorialChargeId: ID
+}
+
+input CreateMemoInput {
+  customerId: ID!
+  "CreditMemo or DebitMemo."
+  billType: BillType!
+  lines: [MemoLineInput!]!
+  referenceInvoiceId: ID
+  reason: String!
+  "Defaults to today."
+  invoiceDate: Timestamp
+  memo: String
+  memoKind: InvoiceMemoKind
+  "Post the memo in the same request."
+  autoPost: Boolean
 }
 
 type InvoiceEdge {
@@ -69744,7 +71631,121 @@ extend type Mutation {
   ` + "`" + `offCycleReason` + "`" + ` so the client can ask for one.
   """
   createInvoiceFromShipments(shipmentIds: [ID!]!, offCycleReason: String): Invoice!
+    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromShipments.")
   createInvoiceFromOrder(orderId: ID!, offCycleReason: String): Invoice!
+    @deprecated(reason: "Returns only the primary payer's invoice; use createInvoicesFromOrder.")
+  "Bills the shipments, producing one invoice per payer of a split shipment."
+  createInvoicesFromShipments(shipmentIds: [ID!]!, offCycleReason: String): CreateInvoicesResult!
+  createInvoicesFromOrder(orderId: ID!, offCycleReason: String): CreateInvoicesResult!
+  """
+  Voids an invoice. A draft is voided at once. A posted invoice with nothing
+  applied is voided through a full-reversal adjustment, which may wait for an
+  approver; one with payments or credits applied is refused until they are
+  unapplied.
+  """
+  voidInvoice(input: VoidInvoiceInput!): VoidInvoiceResult!
+  "Raises a standalone credit or debit memo against a customer."
+  createMemo(input: CreateMemoInput!): Invoice!
+  """
+  Queues the outbound EDI 210 for a posted invoice. force resends one that
+  already went out.
+  """
+  sendInvoiceEdi(invoiceId: ID!, force: Boolean): InvoiceEDISendResult!
+}
+`, BuiltIn: false},
+	{Name: "../schema/invoice_dispute.graphqls", Input: `"Where a dispute case stands. An invoice is Disputed while it has an Open case."
+enum InvoiceDisputeCaseStatus {
+  Open
+  Resolved
+  Withdrawn
+}
+
+enum InvoiceDisputeReasonCode {
+  RateDiscrepancy
+  AccessorialDisputed
+  ServiceFailure
+  DuplicateBilling
+  WrongBillTo
+  MissingDocumentation
+  Other
+}
+
+enum InvoiceDisputeResolution {
+  "A credit memo settled the disputed amount; names the executed adjustment."
+  CreditIssued
+  "The invoice stands as billed."
+  InvoiceUpheld
+  "The invoice was credited and rebilled."
+  Rebilled
+  "The disputed amount was written off; names the executed adjustment."
+  WrittenOff
+  "The customer dropped the dispute."
+  CustomerWithdrew
+}
+
+"One dispute case raised against a posted invoice."
+type InvoiceDispute {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  customerId: ID!
+  status: InvoiceDisputeCaseStatus!
+  reasonCode: InvoiceDisputeReasonCode!
+  disputedAmount: Decimal!
+  disputedAmountMinor: Int!
+  notes: String!
+  openedById: ID!
+  openedAt: Timestamp!
+  resolvedById: ID
+  resolvedAt: Timestamp
+  resolution: InvoiceDisputeResolution
+  resolutionAdjustmentId: ID
+  resolutionNotes: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  invoice: Invoice
+  customer: Customer
+}
+
+input OpenInvoiceDisputeInput {
+  invoiceId: ID!
+  reasonCode: InvoiceDisputeReasonCode!
+  "At most the invoice's open balance."
+  disputedAmount: Decimal!
+  notes: String
+}
+
+input ResolveInvoiceDisputeInput {
+  disputeId: ID!
+  resolution: InvoiceDisputeResolution!
+  "Required for CreditIssued and WrittenOff: the executed adjustment on this invoice."
+  resolutionAdjustmentId: ID
+  resolutionNotes: String
+}
+
+input WithdrawInvoiceDisputeInput {
+  disputeId: ID!
+  notes: String
+}
+
+extend type Invoice {
+  "Every dispute case on this invoice, newest first."
+  disputes: [InvoiceDispute!]!
+  "The open case, when the invoice is disputed."
+  openDispute: InvoiceDispute
+}
+
+extend type Query {
+  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+}
+
+extend type Mutation {
+  "Opens a dispute on a posted invoice; the invoice reads Disputed until it closes."
+  openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
+  resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
+  withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
 }
 `, BuiltIn: false},
 	{Name: "../schema/journal_entry.graphqls", Input: `type JournalEntryLineAccount {
@@ -69993,6 +71994,96 @@ extend type Query {
   jurisdictionRuleOverrides(
     input: DataTableConnectionInput!
   ): JurisdictionRuleOverrideConnection!
+}
+`, BuiltIn: false},
+	{Name: "../schema/late_charge.graphqls", Input: `"What the nightly late-charge run may do for an organization."
+enum LateChargeAssessmentMode {
+  Disabled
+  "Compute what would be charged and write nothing."
+  Preview
+  "Raise a debit memo per customer, posted when invoice posting is automatic."
+  Automatic
+}
+
+"One period of one invoice in a late-charge run."
+type LateChargeLine {
+  invoiceId: ID!
+  invoiceNumber: String!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  basisOpenBalanceMinor: Int!
+  ratePercent: Decimal!
+  chargeMinor: Int!
+}
+
+type LateChargeCustomerResult {
+  customerId: ID!
+  customerName: String!
+  currencyCode: String!
+  lines: [LateChargeLine!]!
+  totalChargeMinor: Int!
+  debitMemoId: ID
+  debitMemoNumber: String!
+  posted: Boolean!
+  skipped: Boolean!
+  skipReason: String!
+}
+
+type LateChargeAssessmentResult {
+  asOfDate: Timestamp!
+  preview: Boolean!
+  mode: LateChargeAssessmentMode!
+  customers: [LateChargeCustomerResult!]!
+  memosCreated: Int!
+  memosPosted: Int!
+  customersSkipped: Int!
+  totalChargeMinor: Int!
+}
+
+"A late charge recorded on one invoice for one period."
+type LateChargeAssessment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  customerId: ID!
+  sourceInvoiceId: ID!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  asOfDate: Timestamp!
+  basisOpenBalanceMinor: Int!
+  ratePercent: Decimal!
+  chargeMinor: Int!
+  debitMemoInvoiceId: ID
+  debitMemoLineId: ID
+  runKey: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  sourceInvoice: Invoice
+  debitMemo: Invoice
+}
+
+input LateChargeAssessmentInput {
+  "Limit the run to these customers; empty means every customer."
+  customerIds: [ID!]
+  "Defaults to now."
+  asOfDate: Timestamp
+}
+
+extend type Invoice {
+  "Late charges assessed on this invoice, newest first."
+  lateChargeAssessments: [LateChargeAssessment!]!
+}
+
+extend type Query {
+  "What a late-charge run would raise as of the date, without writing anything."
+  lateChargePreview(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
+}
+
+extend type Mutation {
+  "Runs the late-charge assessment now and raises the debit memos."
+  assessLateCharges(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/location.graphqls", Input: `enum LocationGeofenceType {
@@ -70284,9 +72375,14 @@ type OrderCharge {
   orderId: ID!
   description: String!
   amount: Decimal!
+  "The first invoice that carried any of this charge."
   invoiceId: ID
+  "Set once every payer's share of the charge has been invoiced."
+  invoicedAt: Timestamp
   version: Int!
   createdAt: Timestamp!
+  "How the charge is divided among payers; empty bills it to the order's payer."
+  allocations: [ChargeAllocation!]!
 }
 
 input UpdateOrderChargeInput {
@@ -70295,6 +72391,14 @@ input UpdateOrderChargeInput {
   description: String!
   amount: Decimal!
   version: Int!
+  "Omit to leave the split untouched; an empty list removes it."
+  allocations: [ChargeAllocationInput!]
+}
+
+input SetOrderChargeAllocationsInput {
+  orderId: ID!
+  chargeId: ID!
+  allocations: [ChargeAllocationInput!]!
 }
 
 type OrderLeg {
@@ -70353,8 +72457,9 @@ extend type Mutation {
   updateOrder(id: ID!, input: OrderInput!): Order!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
-  addOrderCharge(orderId: ID!, description: String!, amount: Decimal!): Order!
+  addOrderCharge(orderId: ID!, description: String!, amount: Decimal!, allocations: [ChargeAllocationInput!]): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
+  setOrderChargeAllocations(input: SetOrderChargeAllocationsInput!): Order!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   closeOrder(id: ID!): Order!
   cancelOrder(id: ID!, cancelReason: String!): Order!
@@ -73127,6 +75232,65 @@ type ShipmentConnection {
   totalCount: Int
 }
 
+"Who is expected to pay the carrier, as printed on the bill of lading."
+enum FreightTerms {
+  Prepaid
+  Collect
+  ThirdParty
+}
+
+enum ChargeAllocationKind {
+  Freight
+  Accessorial
+  OrderCharge
+}
+
+enum ChargeAllocationMethod {
+  Percent
+  Amount
+}
+
+"""
+One payer's share of one charge. A charge with no allocations is billed in
+full to the shipment's payer, so rows exist only where billing departs from
+that. Percent rows for a charge total 100; amount rows total the charge.
+"""
+type ChargeAllocation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID
+  additionalChargeId: ID
+  orderChargeId: ID
+  chargeKind: ChargeAllocationKind!
+  billToCustomerId: ID!
+  method: ChargeAllocationMethod!
+  percent: Decimal
+  amount: Decimal
+  sequence: Int!
+  "The invoice this share was billed on, once it has been."
+  invoiceId: ID
+  invoicedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  billToCustomer: Customer
+}
+
+"What one payer owes on a shipment once every allocation is applied."
+type ShipmentBillingSplitSummary {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  "The shipment's own payer: its bill-to, or its customer when none is set."
+  isPrimary: Boolean!
+  freightAmount: Decimal!
+  accessorialAmount: Decimal!
+  totalAmount: Decimal!
+  "Whether any charge on the shipment is shared or redirected."
+  isSplit: Boolean!
+}
+
 type Shipment {
   id: ID!
   businessUnitId: ID!
@@ -73135,6 +75299,9 @@ type Shipment {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   customerId: ID!
+  "The customer billed by default. Null means the shipment's customer pays."
+  billToCustomerId: ID
+  freightTerms: FreightTerms!
   tractorTypeId: ID
   trailerTypeId: ID
   ownerId: ID
@@ -73194,8 +75361,16 @@ type Shipment {
   additionalCharges: [ShipmentAdditionalCharge!]!
   commodities: [ShipmentCommodity!]!
   customer: ShipmentCustomer
+  billToCustomer: ShipmentCustomer
   owner: User
   formulaTemplate: ShipmentFormulaTemplate
+  "Every allocation on the shipment, across freight and accessorials."
+  chargeAllocations: [ChargeAllocation!]!
+  """
+  What each payer owes. Populated when the shipment is read with its charges;
+  a list row carries none.
+  """
+  billingSplitSummary: [ShipmentBillingSplitSummary!]!
 }
 
 "One line of the arithmetic that produced the rate, in the order it was applied."
@@ -73535,7 +75710,11 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
+  isDetention: Boolean!
   detentionOccurrenceId: ID
+    @deprecated(
+      reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead."
+    )
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -73661,6 +75840,18 @@ type ShipmentBillingRequirement {
   documentIds: [String!]!
 }
 
+"One payer's standing on a shipment."
+type ShipmentBillingPayerReadiness {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  isPrimary: Boolean!
+  shareAmount: Decimal!
+  creditStatus: String!
+  creditHold: Boolean!
+  shouldAutoApproveBilling: Boolean!
+}
+
 type ShipmentBillingReadiness {
   shipmentId: String!
   shipmentStatus: ShipmentStatus!
@@ -73673,6 +75864,10 @@ type ShipmentBillingReadiness {
   canMarkReadyToInvoice: Boolean!
   shouldAutoMarkReadyToInvoice: Boolean!
   shouldAutoTransferToBilling: Boolean!
+  "Whether every payer's profile lets this clean freight skip billing review."
+  shouldAutoApproveBilling: Boolean!
+  "Every payer with a share of the shipment, the shipment's own payer first."
+  payers: [ShipmentBillingPayerReadiness!]!
 }
 
 type ShipmentTotalsResponse {
@@ -73760,14 +75955,21 @@ type ShipmentBulkTransferToBillingResult {
   success: Boolean!
   "The shipment was Completed and this transfer marked it Ready to Invoice."
   markedReadyToInvoice: Boolean!
-  "The queue item the shipment became, when it transferred."
+  "The primary payer's queue item, when the shipment transferred."
   billingQueueItem: BillingQueueItem
+  "Every queue item the transfer created, one per payer."
+  billingQueueItems: [BillingQueueItem!]!
   failureCode: ShipmentBillingTransferFailureCode
   error: String
   "Required documents the readiness check found missing, whether or not they blocked the transfer."
   missingRequirements: [ShipmentBillingRequirement!]!
   "Readiness validation failures, whether or not they blocked the transfer."
   validationFailures: [ShipmentBillingValidation!]!
+}
+
+type ShipmentTransferToBillingResult {
+  items: [BillingQueueItem!]!
+  primary: BillingQueueItem!
 }
 
 type ShipmentBillingTransferCandidateIds {
@@ -73790,6 +75992,11 @@ type BillingQueueItem {
   businessUnitId: ID!
   shipmentId: ID
   orderId: ID
+  "The customer this item bills. A split shipment has one item per payer."
+  billToCustomerId: ID!
+  "This payer's share of the shipment's charges."
+  allocatedTotalAmount: Decimal!
+  billToCustomer: Customer
   assignedBillerId: ID
   number: String!
   status: BillingQueueStatus!
@@ -74481,6 +76688,9 @@ input ShipmentInput {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   customerId: ID!
+  "Null bills the shipment to its customer."
+  billToCustomerId: ID
+  freightTerms: FreightTerms = Prepaid
   tractorTypeId: ID
   trailerTypeId: ID
   ownerId: ID
@@ -74522,6 +76732,13 @@ input ShipmentInput {
   moves: [ShipmentMoveInput!] = []
   additionalCharges: [ShipmentAdditionalChargeInput!] = []
   commodities: [ShipmentCommodityInput!] = []
+  """
+  How the freight charge is divided among payers. Omit to leave the split
+  untouched; an empty list bills all of it to the shipment's payer. When this
+  or any charge's allocations is sent, the save replaces every allocation on
+  the shipment, so send the whole picture.
+  """
+  freightAllocations: [ChargeAllocationInput!]
 }
 
 input ShipmentMoveInput {
@@ -74572,7 +76789,22 @@ input ShipmentAdditionalChargeInput {
   amount: Decimal = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
-  detentionOccurrenceId: ID
+  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
+  version: Int
+  """
+  How this charge is divided among payers. Omit to leave the split untouched;
+  send an empty list to bill the whole charge to the shipment's payer.
+  """
+  allocations: [ChargeAllocationInput!]
+}
+
+input ChargeAllocationInput {
+  id: ID
+  billToCustomerId: ID!
+  method: ChargeAllocationMethod!
+  percent: Decimal
+  amount: Decimal
+  sequence: Int = 0
   version: Int
 }
 
@@ -74755,6 +76987,9 @@ extend type Mutation {
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+    @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
+  "Queues the shipment for billing, one item per payer."
+  transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
   """
@@ -79019,6 +81254,12 @@ func (ec *executionContext) childFields_ARCollectionsWorklistItem(ctx context.Co
 		return ec.fieldContext_ARCollectionsWorklistItem_hasShortPay(ctx, field)
 	case "severity":
 		return ec.fieldContext_ARCollectionsWorklistItem_severity(ctx, field)
+	case "openDisputeReasonCode":
+		return ec.fieldContext_ARCollectionsWorklistItem_openDisputeReasonCode(ctx, field)
+	case "disputedAmountMinor":
+		return ec.fieldContext_ARCollectionsWorklistItem_disputedAmountMinor(ctx, field)
+	case "disputeOpenedAt":
+		return ec.fieldContext_ARCollectionsWorklistItem_disputeOpenedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ARCollectionsWorklistItem", field.Name)
 }
@@ -79935,6 +82176,12 @@ func (ec *executionContext) childFields_BillingQueueItem(ctx context.Context, fi
 		return ec.fieldContext_BillingQueueItem_shipmentId(ctx, field)
 	case "orderId":
 		return ec.fieldContext_BillingQueueItem_orderId(ctx, field)
+	case "billToCustomerId":
+		return ec.fieldContext_BillingQueueItem_billToCustomerId(ctx, field)
+	case "allocatedTotalAmount":
+		return ec.fieldContext_BillingQueueItem_allocatedTotalAmount(ctx, field)
+	case "billToCustomer":
+		return ec.fieldContext_BillingQueueItem_billToCustomer(ctx, field)
 	case "assignedBillerId":
 		return ec.fieldContext_BillingQueueItem_assignedBillerId(ctx, field)
 	case "number":
@@ -80861,6 +83108,48 @@ func (ec *executionContext) childFields_CategoryCostLine(ctx context.Context, fi
 	return nil, fmt.Errorf("no field named %q was found under type CategoryCostLine", field.Name)
 }
 
+func (ec *executionContext) childFields_ChargeAllocation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ChargeAllocation_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_ChargeAllocation_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_ChargeAllocation_businessUnitId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_ChargeAllocation_shipmentId(ctx, field)
+	case "additionalChargeId":
+		return ec.fieldContext_ChargeAllocation_additionalChargeId(ctx, field)
+	case "orderChargeId":
+		return ec.fieldContext_ChargeAllocation_orderChargeId(ctx, field)
+	case "chargeKind":
+		return ec.fieldContext_ChargeAllocation_chargeKind(ctx, field)
+	case "billToCustomerId":
+		return ec.fieldContext_ChargeAllocation_billToCustomerId(ctx, field)
+	case "method":
+		return ec.fieldContext_ChargeAllocation_method(ctx, field)
+	case "percent":
+		return ec.fieldContext_ChargeAllocation_percent(ctx, field)
+	case "amount":
+		return ec.fieldContext_ChargeAllocation_amount(ctx, field)
+	case "sequence":
+		return ec.fieldContext_ChargeAllocation_sequence(ctx, field)
+	case "invoiceId":
+		return ec.fieldContext_ChargeAllocation_invoiceId(ctx, field)
+	case "invoicedAt":
+		return ec.fieldContext_ChargeAllocation_invoicedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_ChargeAllocation_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_ChargeAllocation_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ChargeAllocation_updatedAt(ctx, field)
+	case "billToCustomer":
+		return ec.fieldContext_ChargeAllocation_billToCustomer(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ChargeAllocation", field.Name)
+}
+
 func (ec *executionContext) childFields_Commodity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -81011,6 +83300,16 @@ func (ec *executionContext) childFields_CostingControl(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type CostingControl", field.Name)
 }
 
+func (ec *executionContext) childFields_CreateInvoicesResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "invoices":
+		return ec.fieldContext_CreateInvoicesResult_invoices(ctx, field)
+	case "primary":
+		return ec.fieldContext_CreateInvoicesResult_primary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CreateInvoicesResult", field.Name)
+}
+
 func (ec *executionContext) childFields_CredentialExpiryForecast(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "horizonDays":
@@ -81035,6 +83334,46 @@ func (ec *executionContext) childFields_CredentialExpiryForecastItem(ctx context
 		return ec.fieldContext_CredentialExpiryForecastItem_daysUntilExpiry(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CredentialExpiryForecastItem", field.Name)
+}
+
+func (ec *executionContext) childFields_CreditMemoApplication(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CreditMemoApplication_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CreditMemoApplication_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CreditMemoApplication_businessUnitId(ctx, field)
+	case "creditMemoInvoiceId":
+		return ec.fieldContext_CreditMemoApplication_creditMemoInvoiceId(ctx, field)
+	case "invoiceId":
+		return ec.fieldContext_CreditMemoApplication_invoiceId(ctx, field)
+	case "appliedAmountMinor":
+		return ec.fieldContext_CreditMemoApplication_appliedAmountMinor(ctx, field)
+	case "accountingDate":
+		return ec.fieldContext_CreditMemoApplication_accountingDate(ctx, field)
+	case "lineNumber":
+		return ec.fieldContext_CreditMemoApplication_lineNumber(ctx, field)
+	case "status":
+		return ec.fieldContext_CreditMemoApplication_status(ctx, field)
+	case "unappliedAt":
+		return ec.fieldContext_CreditMemoApplication_unappliedAt(ctx, field)
+	case "unappliedById":
+		return ec.fieldContext_CreditMemoApplication_unappliedById(ctx, field)
+	case "unappliedReason":
+		return ec.fieldContext_CreditMemoApplication_unappliedReason(ctx, field)
+	case "createdById":
+		return ec.fieldContext_CreditMemoApplication_createdById(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CreditMemoApplication_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CreditMemoApplication_updatedAt(ctx, field)
+	case "creditMemo":
+		return ec.fieldContext_CreditMemoApplication_creditMemo(ctx, field)
+	case "invoice":
+		return ec.fieldContext_CreditMemoApplication_invoice(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CreditMemoApplication", field.Name)
 }
 
 func (ec *executionContext) childFields_CustomFieldDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -81261,6 +83600,10 @@ func (ec *executionContext) childFields_CustomerBillingProfile(ctx context.Conte
 		return ec.fieldContext_CustomerBillingProfile_invoiceMethod(ctx, field)
 	case "autoSendInvoiceOnGeneration":
 		return ec.fieldContext_CustomerBillingProfile_autoSendInvoiceOnGeneration(ctx, field)
+	case "emailInvoiceEnabled":
+		return ec.fieldContext_CustomerBillingProfile_emailInvoiceEnabled(ctx, field)
+	case "ediInvoiceEnabled":
+		return ec.fieldContext_CustomerBillingProfile_ediInvoiceEnabled(ctx, field)
 	case "allowInvoiceConsolidation":
 		return ec.fieldContext_CustomerBillingProfile_allowInvoiceConsolidation(ctx, field)
 	case "consolidationPeriodDays":
@@ -81501,6 +83844,8 @@ func (ec *executionContext) childFields_CustomerPaymentApplication(ctx context.C
 		return ec.fieldContext_CustomerPaymentApplication_updatedAt(ctx, field)
 	case "invoice":
 		return ec.fieldContext_CustomerPaymentApplication_invoice(ctx, field)
+	case "payment":
+		return ec.fieldContext_CustomerPaymentApplication_payment(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CustomerPaymentApplication", field.Name)
 }
@@ -87089,6 +89434,28 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_serviceDate(ctx, field)
 	case "billToName":
 		return ec.fieldContext_Invoice_billToName(ctx, field)
+	case "billToCode":
+		return ec.fieldContext_Invoice_billToCode(ctx, field)
+	case "billToAddressLine1":
+		return ec.fieldContext_Invoice_billToAddressLine1(ctx, field)
+	case "billToAddressLine2":
+		return ec.fieldContext_Invoice_billToAddressLine2(ctx, field)
+	case "billToCity":
+		return ec.fieldContext_Invoice_billToCity(ctx, field)
+	case "billToState":
+		return ec.fieldContext_Invoice_billToState(ctx, field)
+	case "billToPostalCode":
+		return ec.fieldContext_Invoice_billToPostalCode(ctx, field)
+	case "billToCountry":
+		return ec.fieldContext_Invoice_billToCountry(ctx, field)
+	case "shipperCustomerId":
+		return ec.fieldContext_Invoice_shipperCustomerId(ctx, field)
+	case "shipperCustomer":
+		return ec.fieldContext_Invoice_shipperCustomer(ctx, field)
+	case "isSplitBill":
+		return ec.fieldContext_Invoice_isSplitBill(ctx, field)
+	case "relatedInvoices":
+		return ec.fieldContext_Invoice_relatedInvoices(ctx, field)
 	case "subtotalAmount":
 		return ec.fieldContext_Invoice_subtotalAmount(ctx, field)
 	case "otherAmount":
@@ -87107,6 +89474,46 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_sentAt(ctx, field)
 	case "isAdjustmentArtifact":
 		return ec.fieldContext_Invoice_isAdjustmentArtifact(ctx, field)
+	case "voidedAt":
+		return ec.fieldContext_Invoice_voidedAt(ctx, field)
+	case "voidedById":
+		return ec.fieldContext_Invoice_voidedById(ctx, field)
+	case "voidReason":
+		return ec.fieldContext_Invoice_voidReason(ctx, field)
+	case "voidDisposition":
+		return ec.fieldContext_Invoice_voidDisposition(ctx, field)
+	case "voidedByAdjustmentId":
+		return ec.fieldContext_Invoice_voidedByAdjustmentId(ctx, field)
+	case "referenceInvoiceId":
+		return ec.fieldContext_Invoice_referenceInvoiceId(ctx, field)
+	case "referenceInvoice":
+		return ec.fieldContext_Invoice_referenceInvoice(ctx, field)
+	case "memoReason":
+		return ec.fieldContext_Invoice_memoReason(ctx, field)
+	case "memoKind":
+		return ec.fieldContext_Invoice_memoKind(ctx, field)
+	case "openBalance":
+		return ec.fieldContext_Invoice_openBalance(ctx, field)
+	case "balanceDueMinor":
+		return ec.fieldContext_Invoice_balanceDueMinor(ctx, field)
+	case "creditRemaining":
+		return ec.fieldContext_Invoice_creditRemaining(ctx, field)
+	case "daysPastDue":
+		return ec.fieldContext_Invoice_daysPastDue(ctx, field)
+	case "paymentApplications":
+		return ec.fieldContext_Invoice_paymentApplications(ctx, field)
+	case "creditApplications":
+		return ec.fieldContext_Invoice_creditApplications(ctx, field)
+	case "ediSendStatus":
+		return ec.fieldContext_Invoice_ediSendStatus(ctx, field)
+	case "lastEdiMessageId":
+		return ec.fieldContext_Invoice_lastEdiMessageId(ctx, field)
+	case "ediSentAt":
+		return ec.fieldContext_Invoice_ediSentAt(ctx, field)
+	case "lastEdiError":
+		return ec.fieldContext_Invoice_lastEdiError(ctx, field)
+	case "ediSendPlan":
+		return ec.fieldContext_Invoice_ediSendPlan(ctx, field)
 	case "version":
 		return ec.fieldContext_Invoice_version(ctx, field)
 	case "createdAt":
@@ -87119,6 +89526,12 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_order(ctx, field)
 	case "lines":
 		return ec.fieldContext_Invoice_lines(ctx, field)
+	case "disputes":
+		return ec.fieldContext_Invoice_disputes(ctx, field)
+	case "openDispute":
+		return ec.fieldContext_Invoice_openDispute(ctx, field)
+	case "lateChargeAssessments":
+		return ec.fieldContext_Invoice_lateChargeAssessments(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
 }
@@ -87133,6 +89546,100 @@ func (ec *executionContext) childFields_InvoiceConnection(ctx context.Context, f
 		return ec.fieldContext_InvoiceConnection_totalCount(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type InvoiceConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceDispute(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InvoiceDispute_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_InvoiceDispute_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_InvoiceDispute_businessUnitId(ctx, field)
+	case "invoiceId":
+		return ec.fieldContext_InvoiceDispute_invoiceId(ctx, field)
+	case "customerId":
+		return ec.fieldContext_InvoiceDispute_customerId(ctx, field)
+	case "status":
+		return ec.fieldContext_InvoiceDispute_status(ctx, field)
+	case "reasonCode":
+		return ec.fieldContext_InvoiceDispute_reasonCode(ctx, field)
+	case "disputedAmount":
+		return ec.fieldContext_InvoiceDispute_disputedAmount(ctx, field)
+	case "disputedAmountMinor":
+		return ec.fieldContext_InvoiceDispute_disputedAmountMinor(ctx, field)
+	case "notes":
+		return ec.fieldContext_InvoiceDispute_notes(ctx, field)
+	case "openedById":
+		return ec.fieldContext_InvoiceDispute_openedById(ctx, field)
+	case "openedAt":
+		return ec.fieldContext_InvoiceDispute_openedAt(ctx, field)
+	case "resolvedById":
+		return ec.fieldContext_InvoiceDispute_resolvedById(ctx, field)
+	case "resolvedAt":
+		return ec.fieldContext_InvoiceDispute_resolvedAt(ctx, field)
+	case "resolution":
+		return ec.fieldContext_InvoiceDispute_resolution(ctx, field)
+	case "resolutionAdjustmentId":
+		return ec.fieldContext_InvoiceDispute_resolutionAdjustmentId(ctx, field)
+	case "resolutionNotes":
+		return ec.fieldContext_InvoiceDispute_resolutionNotes(ctx, field)
+	case "version":
+		return ec.fieldContext_InvoiceDispute_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InvoiceDispute_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InvoiceDispute_updatedAt(ctx, field)
+	case "invoice":
+		return ec.fieldContext_InvoiceDispute_invoice(ctx, field)
+	case "customer":
+		return ec.fieldContext_InvoiceDispute_customer(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceDispute", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceEDISendPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "invoiceId":
+		return ec.fieldContext_InvoiceEDISendPlan_invoiceId(ctx, field)
+	case "enabled":
+		return ec.fieldContext_InvoiceEDISendPlan_enabled(ctx, field)
+	case "autoSend":
+		return ec.fieldContext_InvoiceEDISendPlan_autoSend(ctx, field)
+	case "partnerId":
+		return ec.fieldContext_InvoiceEDISendPlan_partnerId(ctx, field)
+	case "partnerName":
+		return ec.fieldContext_InvoiceEDISendPlan_partnerName(ctx, field)
+	case "documentProfileId":
+		return ec.fieldContext_InvoiceEDISendPlan_documentProfileId(ctx, field)
+	case "communicationMethod":
+		return ec.fieldContext_InvoiceEDISendPlan_communicationMethod(ctx, field)
+	case "status":
+		return ec.fieldContext_InvoiceEDISendPlan_status(ctx, field)
+	case "lastMessageId":
+		return ec.fieldContext_InvoiceEDISendPlan_lastMessageId(ctx, field)
+	case "lastError":
+		return ec.fieldContext_InvoiceEDISendPlan_lastError(ctx, field)
+	case "sentAt":
+		return ec.fieldContext_InvoiceEDISendPlan_sentAt(ctx, field)
+	case "blockers":
+		return ec.fieldContext_InvoiceEDISendPlan_blockers(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceEDISendPlan", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceEDISendResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "invoiceId":
+		return ec.fieldContext_InvoiceEDISendResult_invoiceId(ctx, field)
+	case "status":
+		return ec.fieldContext_InvoiceEDISendResult_status(ctx, field)
+	case "workflowId":
+		return ec.fieldContext_InvoiceEDISendResult_workflowId(ctx, field)
+	case "workflowRunId":
+		return ec.fieldContext_InvoiceEDISendResult_workflowRunId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceEDISendResult", field.Name)
 }
 
 func (ec *executionContext) childFields_InvoiceEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -87173,6 +89680,18 @@ func (ec *executionContext) childFields_InvoiceLine(ctx context.Context, field g
 		return ec.fieldContext_InvoiceLine_unitPrice(ctx, field)
 	case "amount":
 		return ec.fieldContext_InvoiceLine_amount(ctx, field)
+	case "accessorialChargeId":
+		return ec.fieldContext_InvoiceLine_accessorialChargeId(ctx, field)
+	case "chargeCode":
+		return ec.fieldContext_InvoiceLine_chargeCode(ctx, field)
+	case "chargeMethod":
+		return ec.fieldContext_InvoiceLine_chargeMethod(ctx, field)
+	case "rate":
+		return ec.fieldContext_InvoiceLine_rate(ctx, field)
+	case "allocationPercent":
+		return ec.fieldContext_InvoiceLine_allocationPercent(ctx, field)
+	case "chargeAllocationId":
+		return ec.fieldContext_InvoiceLine_chargeAllocationId(ctx, field)
 	case "createdAt":
 		return ec.fieldContext_InvoiceLine_createdAt(ctx, field)
 	case "updatedAt":
@@ -87571,6 +90090,120 @@ func (ec *executionContext) childFields_JurisdictionRuleOverrideEdge(ctx context
 		return ec.fieldContext_JurisdictionRuleOverrideEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleOverrideEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_LateChargeAssessment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_LateChargeAssessment_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_LateChargeAssessment_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_LateChargeAssessment_businessUnitId(ctx, field)
+	case "customerId":
+		return ec.fieldContext_LateChargeAssessment_customerId(ctx, field)
+	case "sourceInvoiceId":
+		return ec.fieldContext_LateChargeAssessment_sourceInvoiceId(ctx, field)
+	case "periodIndex":
+		return ec.fieldContext_LateChargeAssessment_periodIndex(ctx, field)
+	case "periodStart":
+		return ec.fieldContext_LateChargeAssessment_periodStart(ctx, field)
+	case "periodEnd":
+		return ec.fieldContext_LateChargeAssessment_periodEnd(ctx, field)
+	case "asOfDate":
+		return ec.fieldContext_LateChargeAssessment_asOfDate(ctx, field)
+	case "basisOpenBalanceMinor":
+		return ec.fieldContext_LateChargeAssessment_basisOpenBalanceMinor(ctx, field)
+	case "ratePercent":
+		return ec.fieldContext_LateChargeAssessment_ratePercent(ctx, field)
+	case "chargeMinor":
+		return ec.fieldContext_LateChargeAssessment_chargeMinor(ctx, field)
+	case "debitMemoInvoiceId":
+		return ec.fieldContext_LateChargeAssessment_debitMemoInvoiceId(ctx, field)
+	case "debitMemoLineId":
+		return ec.fieldContext_LateChargeAssessment_debitMemoLineId(ctx, field)
+	case "runKey":
+		return ec.fieldContext_LateChargeAssessment_runKey(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_LateChargeAssessment_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_LateChargeAssessment_updatedAt(ctx, field)
+	case "sourceInvoice":
+		return ec.fieldContext_LateChargeAssessment_sourceInvoice(ctx, field)
+	case "debitMemo":
+		return ec.fieldContext_LateChargeAssessment_debitMemo(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LateChargeAssessment", field.Name)
+}
+
+func (ec *executionContext) childFields_LateChargeAssessmentResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "asOfDate":
+		return ec.fieldContext_LateChargeAssessmentResult_asOfDate(ctx, field)
+	case "preview":
+		return ec.fieldContext_LateChargeAssessmentResult_preview(ctx, field)
+	case "mode":
+		return ec.fieldContext_LateChargeAssessmentResult_mode(ctx, field)
+	case "customers":
+		return ec.fieldContext_LateChargeAssessmentResult_customers(ctx, field)
+	case "memosCreated":
+		return ec.fieldContext_LateChargeAssessmentResult_memosCreated(ctx, field)
+	case "memosPosted":
+		return ec.fieldContext_LateChargeAssessmentResult_memosPosted(ctx, field)
+	case "customersSkipped":
+		return ec.fieldContext_LateChargeAssessmentResult_customersSkipped(ctx, field)
+	case "totalChargeMinor":
+		return ec.fieldContext_LateChargeAssessmentResult_totalChargeMinor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LateChargeAssessmentResult", field.Name)
+}
+
+func (ec *executionContext) childFields_LateChargeCustomerResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "customerId":
+		return ec.fieldContext_LateChargeCustomerResult_customerId(ctx, field)
+	case "customerName":
+		return ec.fieldContext_LateChargeCustomerResult_customerName(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_LateChargeCustomerResult_currencyCode(ctx, field)
+	case "lines":
+		return ec.fieldContext_LateChargeCustomerResult_lines(ctx, field)
+	case "totalChargeMinor":
+		return ec.fieldContext_LateChargeCustomerResult_totalChargeMinor(ctx, field)
+	case "debitMemoId":
+		return ec.fieldContext_LateChargeCustomerResult_debitMemoId(ctx, field)
+	case "debitMemoNumber":
+		return ec.fieldContext_LateChargeCustomerResult_debitMemoNumber(ctx, field)
+	case "posted":
+		return ec.fieldContext_LateChargeCustomerResult_posted(ctx, field)
+	case "skipped":
+		return ec.fieldContext_LateChargeCustomerResult_skipped(ctx, field)
+	case "skipReason":
+		return ec.fieldContext_LateChargeCustomerResult_skipReason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LateChargeCustomerResult", field.Name)
+}
+
+func (ec *executionContext) childFields_LateChargeLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "invoiceId":
+		return ec.fieldContext_LateChargeLine_invoiceId(ctx, field)
+	case "invoiceNumber":
+		return ec.fieldContext_LateChargeLine_invoiceNumber(ctx, field)
+	case "periodIndex":
+		return ec.fieldContext_LateChargeLine_periodIndex(ctx, field)
+	case "periodStart":
+		return ec.fieldContext_LateChargeLine_periodStart(ctx, field)
+	case "periodEnd":
+		return ec.fieldContext_LateChargeLine_periodEnd(ctx, field)
+	case "basisOpenBalanceMinor":
+		return ec.fieldContext_LateChargeLine_basisOpenBalanceMinor(ctx, field)
+	case "ratePercent":
+		return ec.fieldContext_LateChargeLine_ratePercent(ctx, field)
+	case "chargeMinor":
+		return ec.fieldContext_LateChargeLine_chargeMinor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type LateChargeLine", field.Name)
 }
 
 func (ec *executionContext) childFields_LeaveControl(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -88143,10 +90776,14 @@ func (ec *executionContext) childFields_OrderCharge(ctx context.Context, field g
 		return ec.fieldContext_OrderCharge_amount(ctx, field)
 	case "invoiceId":
 		return ec.fieldContext_OrderCharge_invoiceId(ctx, field)
+	case "invoicedAt":
+		return ec.fieldContext_OrderCharge_invoicedAt(ctx, field)
 	case "version":
 		return ec.fieldContext_OrderCharge_version(ctx, field)
 	case "createdAt":
 		return ec.fieldContext_OrderCharge_createdAt(ctx, field)
+	case "allocations":
+		return ec.fieldContext_OrderCharge_allocations(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type OrderCharge", field.Name)
 }
@@ -91533,6 +94170,10 @@ func (ec *executionContext) childFields_Shipment(ctx context.Context, field grap
 		return ec.fieldContext_Shipment_shipmentTypeId(ctx, field)
 	case "customerId":
 		return ec.fieldContext_Shipment_customerId(ctx, field)
+	case "billToCustomerId":
+		return ec.fieldContext_Shipment_billToCustomerId(ctx, field)
+	case "freightTerms":
+		return ec.fieldContext_Shipment_freightTerms(ctx, field)
 	case "tractorTypeId":
 		return ec.fieldContext_Shipment_tractorTypeId(ctx, field)
 	case "trailerTypeId":
@@ -91635,10 +94276,16 @@ func (ec *executionContext) childFields_Shipment(ctx context.Context, field grap
 		return ec.fieldContext_Shipment_commodities(ctx, field)
 	case "customer":
 		return ec.fieldContext_Shipment_customer(ctx, field)
+	case "billToCustomer":
+		return ec.fieldContext_Shipment_billToCustomer(ctx, field)
 	case "owner":
 		return ec.fieldContext_Shipment_owner(ctx, field)
 	case "formulaTemplate":
 		return ec.fieldContext_Shipment_formulaTemplate(ctx, field)
+	case "chargeAllocations":
+		return ec.fieldContext_Shipment_chargeAllocations(ctx, field)
+	case "billingSplitSummary":
+		return ec.fieldContext_Shipment_billingSplitSummary(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Shipment", field.Name)
 }
@@ -91725,6 +94372,8 @@ func (ec *executionContext) childFields_ShipmentAdditionalCharge(ctx context.Con
 		return ec.fieldContext_ShipmentAdditionalCharge_fuelSurchargeProgramId(ctx, field)
 	case "fuelSurchargeDetail":
 		return ec.fieldContext_ShipmentAdditionalCharge_fuelSurchargeDetail(ctx, field)
+	case "isDetention":
+		return ec.fieldContext_ShipmentAdditionalCharge_isDetention(ctx, field)
 	case "detentionOccurrenceId":
 		return ec.fieldContext_ShipmentAdditionalCharge_detentionOccurrenceId(ctx, field)
 	case "version":
@@ -91855,6 +94504,28 @@ func (ec *executionContext) childFields_ShipmentAxleWeight(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentAxleWeight", field.Name)
 }
 
+func (ec *executionContext) childFields_ShipmentBillingPayerReadiness(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "payerId":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_payerId(ctx, field)
+	case "payerName":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_payerName(ctx, field)
+	case "payerCode":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_payerCode(ctx, field)
+	case "isPrimary":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_isPrimary(ctx, field)
+	case "shareAmount":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_shareAmount(ctx, field)
+	case "creditStatus":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_creditStatus(ctx, field)
+	case "creditHold":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_creditHold(ctx, field)
+	case "shouldAutoApproveBilling":
+		return ec.fieldContext_ShipmentBillingPayerReadiness_shouldAutoApproveBilling(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingPayerReadiness", field.Name)
+}
+
 func (ec *executionContext) childFields_ShipmentBillingReadiness(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "shipmentId":
@@ -91879,6 +94550,10 @@ func (ec *executionContext) childFields_ShipmentBillingReadiness(ctx context.Con
 		return ec.fieldContext_ShipmentBillingReadiness_shouldAutoMarkReadyToInvoice(ctx, field)
 	case "shouldAutoTransferToBilling":
 		return ec.fieldContext_ShipmentBillingReadiness_shouldAutoTransferToBilling(ctx, field)
+	case "shouldAutoApproveBilling":
+		return ec.fieldContext_ShipmentBillingReadiness_shouldAutoApproveBilling(ctx, field)
+	case "payers":
+		return ec.fieldContext_ShipmentBillingReadiness_payers(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingReadiness", field.Name)
 }
@@ -91917,6 +94592,28 @@ func (ec *executionContext) childFields_ShipmentBillingRequirement(ctx context.C
 		return ec.fieldContext_ShipmentBillingRequirement_documentIds(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingRequirement", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentBillingSplitSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "payerId":
+		return ec.fieldContext_ShipmentBillingSplitSummary_payerId(ctx, field)
+	case "payerName":
+		return ec.fieldContext_ShipmentBillingSplitSummary_payerName(ctx, field)
+	case "payerCode":
+		return ec.fieldContext_ShipmentBillingSplitSummary_payerCode(ctx, field)
+	case "isPrimary":
+		return ec.fieldContext_ShipmentBillingSplitSummary_isPrimary(ctx, field)
+	case "freightAmount":
+		return ec.fieldContext_ShipmentBillingSplitSummary_freightAmount(ctx, field)
+	case "accessorialAmount":
+		return ec.fieldContext_ShipmentBillingSplitSummary_accessorialAmount(ctx, field)
+	case "totalAmount":
+		return ec.fieldContext_ShipmentBillingSplitSummary_totalAmount(ctx, field)
+	case "isSplit":
+		return ec.fieldContext_ShipmentBillingSplitSummary_isSplit(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentBillingSplitSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_ShipmentBillingTransferCandidateIds(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -92003,6 +94700,8 @@ func (ec *executionContext) childFields_ShipmentBulkTransferToBillingResult(ctx 
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_markedReadyToInvoice(ctx, field)
 	case "billingQueueItem":
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_billingQueueItem(ctx, field)
+	case "billingQueueItems":
+		return ec.fieldContext_ShipmentBulkTransferToBillingResult_billingQueueItems(ctx, field)
 	case "failureCode":
 		return ec.fieldContext_ShipmentBulkTransferToBillingResult_failureCode(ctx, field)
 	case "error":
@@ -93187,6 +95886,16 @@ func (ec *executionContext) childFields_ShipmentTotalsResponse(ctx context.Conte
 		return ec.fieldContext_ShipmentTotalsResponse_fuelSurcharge(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentTotalsResponse", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentTransferToBillingResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "items":
+		return ec.fieldContext_ShipmentTransferToBillingResult_items(ctx, field)
+	case "primary":
+		return ec.fieldContext_ShipmentTransferToBillingResult_primary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentTransferToBillingResult", field.Name)
 }
 
 func (ec *executionContext) childFields_ShipmentType(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -94401,6 +97110,20 @@ func (ec *executionContext) childFields_VehiclePosition(ctx context.Context, fie
 		return ec.fieldContext_VehiclePosition_primaryWorkerName(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type VehiclePosition", field.Name)
+}
+
+func (ec *executionContext) childFields_VoidInvoiceResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "invoice":
+		return ec.fieldContext_VoidInvoiceResult_invoice(ctx, field)
+	case "adjustmentId":
+		return ec.fieldContext_VoidInvoiceResult_adjustmentId(ctx, field)
+	case "pendingApproval":
+		return ec.fieldContext_VoidInvoiceResult_pendingApproval(ctx, field)
+	case "releasedQueueItemIds":
+		return ec.fieldContext_VoidInvoiceResult_releasedQueueItemIds(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type VoidInvoiceResult", field.Name)
 }
 
 func (ec *executionContext) childFields_Worker(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

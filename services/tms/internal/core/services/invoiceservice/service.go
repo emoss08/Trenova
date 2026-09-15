@@ -42,69 +42,83 @@ import (
 type Params struct {
 	fx.In
 
-	Logger              *zap.Logger
-	DB                  ports.DBConnection
-	Repo                repositories.InvoiceRepository
-	BillingQueueRepo    repositories.BillingQueueRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	OrderRepo           repositories.OrderRepository
-	CustomerRepo        repositories.CustomerRepository
-	OrganizationRepo    repositories.OrganizationRepository
-	DocumentTypeRepo    repositories.DocumentTypeRepository
-	CustomerLedgerRepo  repositories.CustomerLedgerProjectionRepository
-	BillingRepo         repositories.BillingControlRepository
-	AccountingRepo      repositories.AccountingControlRepository
-	JournalRepo         repositories.JournalPostingRepository
-	AdjustmentRepo      repositories.InvoiceAdjustmentRepository
-	NotificationService *notificationservice.Service
-	AccessorialRepo     repositories.AccessorialChargeRepository
-	EmailRepo           repositories.EmailRepository
-	Validator           *Validator
-	AuditService        servicesports.AuditService
-	DocumentService     servicesports.InvoiceDocumentService `optional:"true"`
-	EmailService        servicesports.EmailService
-	Templates           servicesports.DocumentTemplateResolver
-	ContextBuilder      *ContextBuilder
-	Realtime            servicesports.RealtimeService
-	WorkflowStarter     servicesports.WorkflowStarter
-	SequenceGenerator   seqgen.Generator
-	SequenceProvider    seqgen.FormatProvider
-	OrderDerivation     servicesports.OrderDerivationService
-	AccountingPolicy    *accountingcontrolpolicyservice.Service
-	BillingPolicy       *billingcontrolpolicyservice.Service
+	Logger               *zap.Logger
+	DB                   ports.DBConnection
+	Repo                 repositories.InvoiceRepository
+	BillingQueueRepo     repositories.BillingQueueRepository
+	ShipmentRepo         repositories.ShipmentRepository
+	OrderRepo            repositories.OrderRepository
+	CustomerRepo         repositories.CustomerRepository
+	OrganizationRepo     repositories.OrganizationRepository
+	DocumentTypeRepo     repositories.DocumentTypeRepository
+	CustomerLedgerRepo   repositories.CustomerLedgerProjectionRepository
+	BillingRepo          repositories.BillingControlRepository
+	AccountingRepo       repositories.AccountingControlRepository
+	JournalRepo          repositories.JournalPostingRepository
+	AdjustmentRepo       repositories.InvoiceAdjustmentRepository
+	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	AdjustmentService    servicesports.InvoiceAdjustmentService `optional:"true"`
+	NotificationService  *notificationservice.Service
+	AccessorialRepo      repositories.AccessorialChargeRepository
+	EmailRepo            repositories.EmailRepository
+	Validator            *Validator
+	AuditService         servicesports.AuditService
+	DocumentService      servicesports.InvoiceDocumentService `optional:"true"`
+	EmailService         servicesports.EmailService
+	Templates            servicesports.DocumentTemplateResolver
+	ContextBuilder       *ContextBuilder
+	Realtime             servicesports.RealtimeService
+	WorkflowStarter      servicesports.WorkflowStarter
+	SequenceGenerator    seqgen.Generator
+	SequenceProvider     seqgen.FormatProvider
+	OrderDerivation      servicesports.OrderDerivationService
+	AccountingPolicy     *accountingcontrolpolicyservice.Service
+	BillingPolicy        *billingcontrolpolicyservice.Service
+
+	EDIPartnerRepo              repositories.EDIPartnerRepository                `optional:"true"`
+	EDIDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository `optional:"true"`
+	EDICommunicationProfileRepo repositories.EDICommunicationProfileRepository   `optional:"true"`
+	LateChargeRepo              repositories.LateChargeRepository                `optional:"true"`
 }
 
 type Service struct {
-	l                   *zap.Logger
-	db                  ports.DBConnection
-	repo                repositories.InvoiceRepository
-	billingQueueRepo    repositories.BillingQueueRepository
-	shipmentRepo        repositories.ShipmentRepository
-	orderRepo           repositories.OrderRepository
-	customerRepo        repositories.CustomerRepository
-	organizationRepo    repositories.OrganizationRepository
-	documentTypeRepo    repositories.DocumentTypeRepository
-	customerLedgerRepo  repositories.CustomerLedgerProjectionRepository
-	billingRepo         repositories.BillingControlRepository
-	accountingRepo      repositories.AccountingControlRepository
-	journalRepo         repositories.JournalPostingRepository
-	adjustmentRepo      repositories.InvoiceAdjustmentRepository
-	notificationService *notificationservice.Service
-	accessorialRepo     repositories.AccessorialChargeRepository
-	emailRepo           repositories.EmailRepository
-	validator           *Validator
-	auditService        servicesports.AuditService
-	documentService     servicesports.InvoiceDocumentService
-	emailService        servicesports.EmailService
-	templates           servicesports.DocumentTemplateResolver
-	contextBuilder      *ContextBuilder
-	realtime            servicesports.RealtimeService
-	workflowStarter     servicesports.WorkflowStarter
-	sequenceGenerator   seqgen.Generator
-	sequenceProvider    seqgen.FormatProvider
-	orderDerivation     servicesports.OrderDerivationService
-	accountingPolicy    *accountingcontrolpolicyservice.Service
-	billingPolicy       *billingcontrolpolicyservice.Service
+	l                    *zap.Logger
+	db                   ports.DBConnection
+	repo                 repositories.InvoiceRepository
+	billingQueueRepo     repositories.BillingQueueRepository
+	shipmentRepo         repositories.ShipmentRepository
+	orderRepo            repositories.OrderRepository
+	customerRepo         repositories.CustomerRepository
+	organizationRepo     repositories.OrganizationRepository
+	documentTypeRepo     repositories.DocumentTypeRepository
+	customerLedgerRepo   repositories.CustomerLedgerProjectionRepository
+	billingRepo          repositories.BillingControlRepository
+	accountingRepo       repositories.AccountingControlRepository
+	journalRepo          repositories.JournalPostingRepository
+	adjustmentRepo       repositories.InvoiceAdjustmentRepository
+	chargeAllocationRepo repositories.ChargeAllocationRepository
+	adjustmentService    servicesports.InvoiceAdjustmentService
+	notificationService  *notificationservice.Service
+	accessorialRepo      repositories.AccessorialChargeRepository
+	emailRepo            repositories.EmailRepository
+	validator            *Validator
+	auditService         servicesports.AuditService
+	documentService      servicesports.InvoiceDocumentService
+	emailService         servicesports.EmailService
+	templates            servicesports.DocumentTemplateResolver
+	contextBuilder       *ContextBuilder
+	realtime             servicesports.RealtimeService
+	workflowStarter      servicesports.WorkflowStarter
+	sequenceGenerator    seqgen.Generator
+	sequenceProvider     seqgen.FormatProvider
+	orderDerivation      servicesports.OrderDerivationService
+	accountingPolicy     *accountingcontrolpolicyservice.Service
+	billingPolicy        *billingcontrolpolicyservice.Service
+
+	ediPartnerRepo              repositories.EDIPartnerRepository
+	ediDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository
+	ediCommunicationProfileRepo repositories.EDICommunicationProfileRepository
+	lateChargeRepo              repositories.LateChargeRepository
 }
 
 type existingInvoiceLookupResult struct {
@@ -117,6 +131,11 @@ type invoiceDependencies struct {
 	Order          *order.Order
 	Customer       *customer.Customer
 	BillingControl *tenant.BillingControl
+	// Share is the payer's slice of the shipment's charges; Shipper is the
+	// ordering customer when it is not the payer.
+	Share       *shipment.PayerShare
+	Shipper     *customer.Customer
+	IsSplitBill bool
 }
 
 type postedBillingQueueResult struct {
@@ -135,36 +154,42 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 // provides this and derives the port from it rather than building twice.
 func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 	return &Service{
-		l:                   p.Logger.Named("service.invoice"),
-		db:                  p.DB,
-		repo:                p.Repo,
-		billingQueueRepo:    p.BillingQueueRepo,
-		shipmentRepo:        p.ShipmentRepo,
-		orderRepo:           p.OrderRepo,
-		customerRepo:        p.CustomerRepo,
-		organizationRepo:    p.OrganizationRepo,
-		documentTypeRepo:    p.DocumentTypeRepo,
-		customerLedgerRepo:  p.CustomerLedgerRepo,
-		billingRepo:         p.BillingRepo,
-		accountingRepo:      p.AccountingRepo,
-		journalRepo:         p.JournalRepo,
-		adjustmentRepo:      p.AdjustmentRepo,
-		notificationService: p.NotificationService,
-		accessorialRepo:     p.AccessorialRepo,
-		emailRepo:           p.EmailRepo,
-		validator:           p.Validator,
-		auditService:        p.AuditService,
-		documentService:     p.DocumentService,
-		emailService:        p.EmailService,
-		templates:           p.Templates,
-		contextBuilder:      p.ContextBuilder,
-		realtime:            p.Realtime,
-		workflowStarter:     p.WorkflowStarter,
-		sequenceGenerator:   p.SequenceGenerator,
-		sequenceProvider:    p.SequenceProvider,
-		orderDerivation:     p.OrderDerivation,
-		accountingPolicy:    p.AccountingPolicy,
-		billingPolicy:       p.BillingPolicy,
+		l:                           p.Logger.Named("service.invoice"),
+		db:                          p.DB,
+		repo:                        p.Repo,
+		billingQueueRepo:            p.BillingQueueRepo,
+		shipmentRepo:                p.ShipmentRepo,
+		orderRepo:                   p.OrderRepo,
+		customerRepo:                p.CustomerRepo,
+		organizationRepo:            p.OrganizationRepo,
+		documentTypeRepo:            p.DocumentTypeRepo,
+		customerLedgerRepo:          p.CustomerLedgerRepo,
+		billingRepo:                 p.BillingRepo,
+		accountingRepo:              p.AccountingRepo,
+		journalRepo:                 p.JournalRepo,
+		adjustmentRepo:              p.AdjustmentRepo,
+		chargeAllocationRepo:        p.ChargeAllocationRepo,
+		adjustmentService:           p.AdjustmentService,
+		notificationService:         p.NotificationService,
+		accessorialRepo:             p.AccessorialRepo,
+		emailRepo:                   p.EmailRepo,
+		validator:                   p.Validator,
+		auditService:                p.AuditService,
+		documentService:             p.DocumentService,
+		emailService:                p.EmailService,
+		templates:                   p.Templates,
+		contextBuilder:              p.ContextBuilder,
+		realtime:                    p.Realtime,
+		workflowStarter:             p.WorkflowStarter,
+		sequenceGenerator:           p.SequenceGenerator,
+		sequenceProvider:            p.SequenceProvider,
+		orderDerivation:             p.OrderDerivation,
+		accountingPolicy:            p.AccountingPolicy,
+		billingPolicy:               p.BillingPolicy,
+		ediPartnerRepo:              p.EDIPartnerRepo,
+		ediDocumentProfileRepo:      p.EDIDocumentProfileRepo,
+		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
+		lateChargeRepo:              p.LateChargeRepo,
 	}
 }
 
@@ -253,6 +278,9 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		Legs:           legsFromShipment(dependencies.Shipment),
 		Order:          dependencies.Order,
 		OffCycleReason: offCycleReasonFor(dependencies.Customer, req.OffCycleReason),
+		Shipper:        dependencies.Shipper,
+		Shares:         sharesForLeg(dependencies.Shipment, dependencies.Share),
+		IsSplitBill:    dependencies.IsSplitBill,
 	})
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -378,6 +406,14 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 		auditActor := actor.AuditActor()
 
+		if entity.Status == invoice.StatusVoided {
+			return errortypes.NewValidationError(
+				"invoiceId",
+				errortypes.ErrInvalidOperation,
+				"Voided invoices cannot be posted",
+			)
+		}
+
 		if entity.Status == invoice.StatusPosted {
 			queueUpdate, err := s.markBillingQueueItemPosted(txCtx, entity, req.TenantInfo)
 			if err != nil {
@@ -451,6 +487,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	if err != nil {
 		return nil, err
 	}
+	s.enqueueEDIAfterPost(ctx, posted, req.TenantInfo, actor)
 
 	return posted, nil
 }
@@ -538,6 +575,10 @@ func (s *Service) recomputeOrdersForLegs(
 // single-shipment invoice that is one leg; for a grouped (order) invoice it is the set
 // of legs carried on the invoice lines. It returns the legs for downstream
 // reconciliation notification.
+//
+// A split-billed leg is invoiced only once every payer's share has posted: while
+// another payer's item is still open the leg keeps its status and only records
+// that it has been billed.
 func (s *Service) markInvoicedLegs(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -549,15 +590,65 @@ func (s *Service) markInvoicedLegs(
 		return nil, err
 	}
 
+	stillOpen, err := s.legsWithOpenSiblingItems(ctx, entity, legs, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, shp := range legs {
-		shp.Status = shipment.StatusInvoiced
 		shp.BilledAt = &now
+		if _, open := stillOpen[shp.ID]; !open {
+			shp.Status = shipment.StatusInvoiced
+		}
 		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 			return nil, err
 		}
 	}
 
 	return legs, nil
+}
+
+// legsWithOpenSiblingItems reports which legs still have an invoice item that
+// belongs to another payer and has not posted. Items this invoice bills are not
+// siblings: they post in the same transaction, a moment after this runs.
+func (s *Service) legsWithOpenSiblingItems(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	legs []*shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) (map[pulid.ID]struct{}, error) {
+	open := make(map[pulid.ID]struct{})
+	if len(legs) == 0 {
+		return open, nil
+	}
+
+	legIDs := make([]pulid.ID, 0, len(legs))
+	for _, shp := range legs {
+		legIDs = append(legIDs, shp.ID)
+	}
+	active, err := s.billingQueueRepo.ListActiveInvoiceItemsByShipmentIDs(
+		ctx,
+		&repositories.ListActiveInvoiceItemsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: legIDs,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for shipmentID, items := range active {
+		for _, item := range items {
+			if item == nil || item.ID == entity.BillingQueueItemID ||
+				item.InvoiceID == entity.ID {
+				continue
+			}
+			open[shipmentID] = struct{}{}
+			break
+		}
+	}
+
+	return open, nil
 }
 
 func (s *Service) markBillingQueueItemPosted(
@@ -598,6 +689,7 @@ func (s *Service) markBillingQueueItemPosted(
 			InvoiceID:   entity.ID,
 			OrderID:     entity.OrderID,
 			ShipmentIDs: entity.LegShipmentIDs(),
+			PayerID:     entity.CustomerID,
 		},
 	); sweepErr != nil {
 		return nil, sweepErr
@@ -678,7 +770,15 @@ func (s *Service) resolveDependencyShipment(
 				return nil, pulid.Nil, err
 			}
 		}
-		return shp, shp.CustomerID, nil
+		if item.BillToCustomerID.IsNotNil() {
+			return shp, item.BillToCustomerID, nil
+		}
+		return shp, shp.PayerID(), nil
+	}
+
+	if item.BillToCustomerID.IsNotNil() &&
+		(item.SourceInvoiceID == nil || item.SourceInvoiceID.IsNil()) {
+		return nil, item.BillToCustomerID, nil
 	}
 
 	if item.SourceInvoiceID == nil || item.SourceInvoiceID.IsNil() {
@@ -743,12 +843,42 @@ func (s *Service) getInvoiceDependencies(
 		}
 	}
 
-	return &invoiceDependencies{
+	deps := &invoiceDependencies{
 		Shipment:       shp,
 		Order:          ord,
 		Customer:       cus,
 		BillingControl: control,
-	}, nil
+	}
+	if shp == nil {
+		return deps, nil
+	}
+
+	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	if err != nil {
+		return nil, err
+	}
+	deps.Share = resolution.ShareFor(cus.ID)
+	if deps.Share == nil {
+		return nil, errortypes.NewValidationError(
+			"billingQueueItemId",
+			errortypes.ErrInvalidOperation,
+			"{0} no longer has a share of shipment {1}",
+			cus.Name,
+			shp.ProNumber,
+		)
+	}
+	deps.IsSplitBill = resolution.IsSplit
+	if shp.CustomerID != cus.ID {
+		deps.Shipper, err = s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			ID:         shp.CustomerID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return deps, nil
 }
 
 func (s *Service) EnqueueAutoPost(
@@ -824,6 +954,13 @@ type buildInvoiceParams struct {
 	// OffCycleReason is set only when this invoice takes freight off a customer's
 	// periodic statement.
 	OffCycleReason string
+	// Shipper is the ordering customer when the payer is somebody else. Shares
+	// are each leg's slice for the payer; a leg with no entry is billed in full.
+	// OrderChargeShare is the payer's slice of the order's own charges.
+	Shipper          *customer.Customer
+	Shares           map[pulid.ID]*shipment.PayerShare
+	OrderChargeShare *shipment.PayerShare
+	IsSplitBill      bool
 }
 
 // buildInvoiceEntity builds every shape of invoice from its legs.
@@ -868,7 +1005,12 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 	lines := make([]*invoice.InvoiceLine, 0, len(p.Legs))
 	nextLineNumber := 1
 	for _, leg := range p.Legs {
-		legLines := invoicelines.ForShipment(p.Anchor.BillType, leg, nextLineNumber)
+		legLines := invoicelines.ForShipmentShare(
+			p.Anchor.BillType,
+			leg,
+			p.Shares[leg.ID],
+			nextLineNumber,
+		)
 		lines = append(lines, legLines...)
 		nextLineNumber += len(legLines)
 	}
@@ -876,20 +1018,35 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 	// Order-level charges (customs brokerage, an order-wide fuel surcharge) carry
 	// no leg attribution, which is what puts them in the trailing section when the
 	// invoice is rendered.
-	for _, charge := range p.OrderCharges {
-		if charge == nil {
-			continue
+	switch {
+	case p.OrderChargeShare != nil:
+		for _, charge := range p.OrderChargeShare.Charges {
+			if charge.Kind != shipment.ChargeAllocationKindOrderCharge {
+				continue
+			}
+			lines = append(lines, invoicelines.ForOrderChargeShare(
+				p.Anchor.BillType,
+				charge,
+				nextLineNumber,
+			))
+			nextLineNumber++
 		}
-		amount := invoicelines.SignedAmount(p.Anchor.BillType, charge.Amount)
-		lines = append(lines, &invoice.InvoiceLine{
-			LineNumber:  nextLineNumber,
-			Type:        invoice.InvoiceLineTypeAccessorial,
-			Description: charge.Description,
-			Quantity:    decimal.NewFromInt(1),
-			UnitPrice:   amount,
-			Amount:      amount,
-		})
-		nextLineNumber++
+	default:
+		for _, charge := range p.OrderCharges {
+			if charge == nil {
+				continue
+			}
+			amount := invoicelines.SignedAmount(p.Anchor.BillType, charge.Amount)
+			lines = append(lines, &invoice.InvoiceLine{
+				LineNumber:  nextLineNumber,
+				Type:        invoice.InvoiceLineTypeAccessorial,
+				Description: charge.Description,
+				Quantity:    decimal.NewFromInt(1),
+				UnitPrice:   amount,
+				Amount:      amount,
+			})
+			nextLineNumber++
+		}
 	}
 
 	entity := &invoice.Invoice{
@@ -916,11 +1073,13 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
 		OffCycleReason:     p.OffCycleReason,
+		IsSplitBill:        p.IsSplitBill,
 		Lines:              lines,
 	}
 
 	applyInvoiceDetail(entity, p.Customer)
 	applyInvoiceScopeHeader(entity, p)
+	applyShipper(entity, p)
 
 	if p.Customer.State != nil {
 		entity.BillToState = p.Customer.State.Abbreviation
@@ -956,6 +1115,28 @@ func applyInvoiceScopeHeader(entity *invoice.Invoice, p *buildInvoiceParams) {
 		entity.PeriodEnd = p.PeriodEnd
 	case invoice.ScopeAdjustment:
 	}
+}
+
+// applyShipper records on whose behalf a single-shipment or order invoice bills
+// when the payer is not the ordering customer. A consolidated invoice spans
+// shippers, so its lines carry that attribution instead of the header.
+func applyShipper(entity *invoice.Invoice, p *buildInvoiceParams) {
+	if p.Shipper == nil || p.Shipper.ID == entity.CustomerID {
+		return
+	}
+	switch p.Scope {
+	case invoice.ScopeShipment, invoice.ScopeOrder:
+		entity.ShipperCustomerID = p.Shipper.ID
+	case invoice.ScopeConsolidated, invoice.ScopeAdjustment:
+	}
+}
+
+func sharesForLeg(shp *shipment.Shipment, share *shipment.PayerShare) map[pulid.ID]*shipment.PayerShare {
+	if shp == nil || share == nil {
+		return nil
+	}
+
+	return map[pulid.ID]*shipment.PayerShare{shp.ID: share}
 }
 
 func legsFromShipment(shp *shipment.Shipment) []*shipment.Shipment {
@@ -1083,6 +1264,15 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		entity.ShipmentProNumber = shp.ProNumber
 		entity.ShipmentBOL = shp.BOL
 		entity.ServiceDate = serviceDateFromShipment(shp)
+		if shp.CustomerID != cus.ID {
+			entity.ShipperCustomerID = shp.CustomerID
+		}
+	}
+	for _, line := range lines {
+		if line != nil && line.IsPartialShare() {
+			entity.IsSplitBill = true
+			break
+		}
 	}
 	if cus.State != nil {
 		entity.BillToState = cus.State.Abbreviation

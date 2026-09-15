@@ -5,7 +5,26 @@ type Status string
 const (
 	StatusDraft  = Status("Draft")
 	StatusPosted = Status("Posted")
+	StatusVoided = Status("Voided")
 )
+
+// VoidDisposition says what happens to the freight behind a voided invoice:
+// back to the queue to be billed again, or canceled so it never is.
+type VoidDisposition string
+
+const (
+	VoidDispositionRebill      = VoidDisposition("Rebill")
+	VoidDispositionDoNotRebill = VoidDisposition("DoNotRebill")
+)
+
+func (d VoidDisposition) IsValid() bool {
+	switch d {
+	case VoidDispositionRebill, VoidDispositionDoNotRebill:
+		return true
+	default:
+		return false
+	}
+}
 
 type Scope string
 
@@ -14,6 +33,9 @@ const (
 	ScopeOrder        = Scope("Order")
 	ScopeConsolidated = Scope("Consolidated")
 	ScopeAdjustment   = Scope("Adjustment")
+	// ScopeMemo is a credit or debit memo raised against a customer on its own,
+	// with no shipment behind it.
+	ScopeMemo = Scope("Memo")
 )
 
 type InvoiceLineType string
@@ -21,7 +43,52 @@ type InvoiceLineType string
 const (
 	InvoiceLineTypeFreight     = InvoiceLineType("Freight")
 	InvoiceLineTypeAccessorial = InvoiceLineType("Accessorial")
+	// InvoiceLineTypeMemo is a free-form memo line; it counts toward the total
+	// but neither the freight subtotal nor the accessorial figure.
+	InvoiceLineTypeMemo = InvoiceLineType("Memo")
 )
+
+// MemoKind records why a standalone memo exists.
+type MemoKind string
+
+const (
+	MemoKindManual     = MemoKind("Manual")
+	MemoKindLateCharge = MemoKind("LateCharge")
+)
+
+func (k MemoKind) IsValid() bool {
+	switch k {
+	case MemoKindManual, MemoKindLateCharge:
+		return true
+	default:
+		return false
+	}
+}
+
+// EDISendStatus tracks the outbound 210 for an invoice separately from email.
+type EDISendStatus string
+
+const (
+	EDISendStatusNotSent       = EDISendStatus("NotSent")
+	EDISendStatusNotConfigured = EDISendStatus("NotConfigured")
+	EDISendStatusQueued        = EDISendStatus("Queued")
+	EDISendStatusGenerated     = EDISendStatus("Generated")
+	EDISendStatusSending       = EDISendStatus("Sending")
+	EDISendStatusSent          = EDISendStatus("Sent")
+	EDISendStatusFailed        = EDISendStatus("Failed")
+	EDISendStatusDeadLettered  = EDISendStatus("DeadLettered")
+)
+
+func (s EDISendStatus) IsValid() bool {
+	switch s {
+	case EDISendStatusNotSent, EDISendStatusNotConfigured, EDISendStatusQueued,
+		EDISendStatusGenerated, EDISendStatusSending, EDISendStatusSent,
+		EDISendStatusFailed, EDISendStatusDeadLettered:
+		return true
+	default:
+		return false
+	}
+}
 
 type PaymentTerm string
 
@@ -71,7 +138,7 @@ const (
 
 func (s Status) IsValid() bool {
 	switch s {
-	case StatusDraft, StatusPosted:
+	case StatusDraft, StatusPosted, StatusVoided:
 		return true
 	default:
 		return false
@@ -80,7 +147,7 @@ func (s Status) IsValid() bool {
 
 func (s Scope) IsValid() bool {
 	switch s {
-	case ScopeShipment, ScopeOrder, ScopeConsolidated, ScopeAdjustment:
+	case ScopeShipment, ScopeOrder, ScopeConsolidated, ScopeAdjustment, ScopeMemo:
 		return true
 	default:
 		return false
@@ -89,7 +156,7 @@ func (s Scope) IsValid() bool {
 
 func (t InvoiceLineType) IsValid() bool {
 	switch t {
-	case InvoiceLineTypeFreight, InvoiceLineTypeAccessorial:
+	case InvoiceLineTypeFreight, InvoiceLineTypeAccessorial, InvoiceLineTypeMemo:
 		return true
 	default:
 		return false

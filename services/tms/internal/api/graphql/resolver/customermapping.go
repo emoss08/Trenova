@@ -46,7 +46,6 @@ func customerConnectionToModel(
 	}, nil
 }
 
-
 // legacyBillingCycleType renders the new delivery mode and cadence back into the
 // single enum the old API exposed, for clients still reading the deprecated
 // field. SemiMonthly has no legacy member and reports as BiWeekly, the closest

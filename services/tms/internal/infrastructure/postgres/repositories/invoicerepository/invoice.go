@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -169,6 +170,7 @@ func (r *repository) GetByID(
 		Where("inv.organization_id = ?", req.TenantInfo.OrgID).
 		Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
 		Relation("Customer").
+		Relation("ShipperCustomer").
 		Relation("Shipment").
 		Relation("BillingQueueItem").
 		Relation("PDFDocument").
@@ -198,6 +200,7 @@ func (r *repository) GetByIDs(
 				Where(buncolgen.InvoiceColumns.ID.In(), bun.List(req.InvoiceIDs))
 		}).
 		Relation(rel.Customer).
+		Relation(rel.ShipperCustomer).
 		Relation(rel.Shipment).
 		Relation(rel.BillingQueueItem).
 		Relation(rel.PDFDocument).
@@ -214,6 +217,143 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+// ListByShipmentIDs finds every invoice carrying any of the shipments, keyed by
+// shipment. An invoice that bills a shipment through its lines counts as much as
+// one that names it in the header, so grouped and consolidated invoices appear.
+func (r *repository) ListByShipmentIDs(
+	ctx context.Context,
+	req repositories.ListInvoicesByShipmentIDsRequest,
+) (map[pulid.ID][]*invoice.Invoice, error) {
+	result := make(map[pulid.ID][]*invoice.Invoice, len(req.ShipmentIDs))
+	if len(req.ShipmentIDs) == 0 {
+		return result, nil
+	}
+
+	inv := buncolgen.InvoiceColumns
+	invl := buncolgen.InvoiceLineColumns
+	var pairs []struct {
+		ShipmentID pulid.ID `bun:"shipment_id"`
+		InvoiceID  pulid.ID `bun:"invoice_id"`
+	}
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*invoice.InvoiceLine)(nil)).
+		DistinctOn(invl.ShipmentID.Qualified()+", "+invl.InvoiceID.Qualified()).
+		Column(invl.ShipmentID.Bare(), invl.InvoiceID.Bare()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				Where(invl.ShipmentID.In(), bun.List(req.ShipmentIDs))
+		}).
+		UnionAll(r.db.DBForContext(ctx).NewSelect().
+			Model((*invoice.Invoice)(nil)).
+			Column(inv.ShipmentID.Bare()).
+			ColumnExpr(inv.ID.As("invoice_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.InvoiceScopeTenant(sq, req.TenantInfo).
+					Where(inv.ShipmentID.In(), bun.List(req.ShipmentIDs))
+			})).
+		Scan(ctx, &pairs); err != nil {
+		r.l.Error("failed to list invoice ids by shipment", zap.Error(err))
+		return nil, fmt.Errorf("list invoices by shipment: %w", err)
+	}
+	if len(pairs) == 0 {
+		return result, nil
+	}
+
+	invoiceIDs := make([]pulid.ID, 0, len(pairs))
+	seen := make(map[pulid.ID]struct{}, len(pairs))
+	for _, pair := range pairs {
+		if _, ok := seen[pair.InvoiceID]; ok {
+			continue
+		}
+		seen[pair.InvoiceID] = struct{}{}
+		invoiceIDs = append(invoiceIDs, pair.InvoiceID)
+	}
+
+	invoices, err := r.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		TenantInfo: req.TenantInfo,
+		InvoiceIDs: invoiceIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	byID := make(map[pulid.ID]*invoice.Invoice, len(invoices))
+	for _, entity := range invoices {
+		byID[entity.ID] = entity
+	}
+
+	linked := make(map[pulid.ID]map[pulid.ID]struct{}, len(req.ShipmentIDs))
+	for _, pair := range pairs {
+		entity, ok := byID[pair.InvoiceID]
+		if !ok {
+			continue
+		}
+		if linked[pair.ShipmentID] == nil {
+			linked[pair.ShipmentID] = make(map[pulid.ID]struct{})
+		}
+		if _, dup := linked[pair.ShipmentID][pair.InvoiceID]; dup {
+			continue
+		}
+		linked[pair.ShipmentID][pair.InvoiceID] = struct{}{}
+		result[pair.ShipmentID] = append(result[pair.ShipmentID], entity)
+	}
+
+	return result, nil
+}
+
+// LockForUpdate reads the invoice and its lines under a row lock, so a void or
+// an application sees the balance nobody else is changing.
+func (r *repository) LockForUpdate(
+	ctx context.Context,
+	req repositories.GetInvoiceByIDRequest,
+) (*invoice.Invoice, error) {
+	entity := new(invoice.Invoice)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("inv.id = ?", req.ID).
+		Where("inv.organization_id = ?", req.TenantInfo.OrgID).
+		Where("inv.business_unit_id = ?", req.TenantInfo.BuID).
+		Relation("Lines", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("invl.line_number ASC")
+		}).
+		For("UPDATE OF inv").
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Invoice")
+	}
+
+	return entity, nil
+}
+
+// UpdateEDISendStatus records where the outbound 210 stands without bumping the
+// version: delivery reports arrive from the EDI pipeline, not from a user edit.
+func (r *repository) UpdateEDISendStatus(
+	ctx context.Context,
+	req repositories.UpdateInvoiceEDISendStatusRequest,
+) error {
+	inv := buncolgen.InvoiceColumns
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*invoice.Invoice)(nil)).
+		Set(inv.EDISendStatus.Set(), req.Status).
+		Set(inv.LastEDIError.Set(), req.Error).
+		Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+				Where(inv.ID.Eq(), req.InvoiceID)
+		})
+	if req.MessageID.IsNotNil() {
+		q = q.Set(inv.LastEDIMessageID.Set(), req.MessageID)
+	}
+	if req.SentAt != nil {
+		q = q.Set(inv.EDISentAt.Set(), req.SentAt)
+	}
+	if _, err := q.Exec(ctx); err != nil {
+		return fmt.Errorf("update invoice edi send status: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) GetByBillingQueueItemID(
 	ctx context.Context,
 	req repositories.GetInvoiceByBillingQueueItemIDRequest,
@@ -225,7 +365,8 @@ func (r *repository) GetByBillingQueueItemID(
 		r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entity).
-			Where(inv.BillingQueueItemID.Eq(), req.BillingQueueItemID),
+			Where(inv.BillingQueueItemID.Eq(), req.BillingQueueItemID).
+			Where(inv.Status.Ne(), invoice.StatusVoided),
 		req.TenantInfo,
 	).Scan(ctx)
 	if err != nil {
@@ -255,6 +396,15 @@ func (r *repository) CountPostedReconciliationDiscrepancies(
 			`ABS(
 				inv.total_amount - (
 					CASE WHEN inv.bill_type = ? THEN -1 ELSE 1 END * COALESCE(
+						(
+							SELECT SUM(bqi.allocated_total_amount)
+							FROM billing_queue_items bqi
+							WHERE bqi.organization_id = inv.organization_id
+								AND bqi.business_unit_id = inv.business_unit_id
+								AND bqi.bill_to_customer_id = inv.customer_id
+								AND (bqi.invoice_id = inv.id OR bqi.id = inv.billing_queue_item_id)
+								AND inv.is_split_bill
+						),
 						(
 							SELECT SUM(leg.total_charge_amount)
 							FROM shipments leg
@@ -375,6 +525,18 @@ func (r *repository) Update(
 		Set("superseded_by_invoice_id = ?", entity.SupersededByInvoiceID).
 		Set("source_invoice_adjustment_id = ?", entity.SourceInvoiceAdjustmentID).
 		Set("is_adjustment_artifact = ?", entity.IsAdjustmentArtifact).
+		Set("voided_at = ?", entity.VoidedAt).
+		Set("voided_by_id = ?", entity.VoidedByID).
+		Set("void_reason = ?", entity.VoidReason).
+		Set("void_disposition = ?", stringutils.NilIfEmpty(entity.VoidDisposition)).
+		Set("voided_by_adjustment_id = ?", entity.VoidedByAdjustmentID).
+		Set("reference_invoice_id = ?", entity.ReferenceInvoiceID).
+		Set("memo_reason = ?", entity.MemoReason).
+		Set("memo_kind = ?", stringutils.NilIfEmpty(entity.MemoKind)).
+		Set("edi_send_status = ?", ediSendStatusOrDefault(entity.EDISendStatus)).
+		Set("last_edi_message_id = ?", entity.LastEDIMessageID).
+		Set("edi_sent_at = ?", entity.EDISentAt).
+		Set("last_edi_error = ?", entity.LastEDIError).
 		Set("version = version + 1").
 		Exec(ctx)
 	if err != nil {
@@ -773,4 +935,14 @@ func tenantInfo(entity *invoice.Invoice) pagination.TenantInfo {
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
+}
+
+// ediSendStatusOrDefault keeps the NOT NULL column satisfied for an entity
+// built before the status was ever set.
+func ediSendStatusOrDefault(status invoice.EDISendStatus) invoice.EDISendStatus {
+	if status == "" {
+		return invoice.EDISendStatusNotSent
+	}
+
+	return status
 }

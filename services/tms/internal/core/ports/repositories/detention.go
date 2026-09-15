@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 )
 
 type ListDetentionPoliciesRequest struct {
@@ -144,6 +145,12 @@ type GetDayAccrualRequest struct {
 	DayKeys       []string
 }
 
+type LinkOccurrenceChargesRequest struct {
+	TenantInfo        pagination.TenantInfo
+	ShipmentID        pulid.ID
+	ChargeOccurrences map[pulid.ID][]pulid.ID
+}
+
 type DetentionOccurrenceRepository interface {
 	List(
 		ctx context.Context,
@@ -189,6 +196,12 @@ type DetentionOccurrenceRepository interface {
 		ctx context.Context,
 		req *GetOccurrencesByShipmentRequest,
 	) (decimal.Decimal, error)
+
+	LinkCharges(
+		ctx context.Context,
+		tx bun.IDB,
+		req *LinkOccurrenceChargesRequest,
+	) error
 }
 
 type ListNoticesDueRequest struct {

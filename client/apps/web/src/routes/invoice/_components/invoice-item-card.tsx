@@ -1,7 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
 import {
+  PlainInvoiceDisputeBadge,
   PlainInvoiceScopeBadge,
+  PlainInvoiceSplitBadge,
   PlainInvoiceStatusBadge,
   PlainSettlementStatusBadge,
 } from "@trenova/shared/components/status-badge";
@@ -56,6 +58,7 @@ export function InvoiceItemCard({
           auxiliary={
             <span className="flex items-center gap-1.5">
               <PlainInvoiceScopeBadge scope={invoice.scope} />
+              <PlainInvoiceSplitBadge isSplitBill={invoice.isSplitBill} />
               <span className="text-muted-foreground font-mono text-[10px]">
                 {invoice.billType}
               </span>
@@ -73,7 +76,10 @@ export function InvoiceItemCard({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <PlainInvoiceStatusBadge status={invoice.status} />
-                  <PlainSettlementStatusBadge status={invoice.settlementStatus} />
+                  {invoice.status === "Voided" ? null : (
+                    <PlainSettlementStatusBadge status={invoice.settlementStatus} />
+                  )}
+                  <PlainInvoiceDisputeBadge disputeStatus={invoice.disputeStatus} />
                 </div>
                 <Tooltip>
                   <TooltipTrigger
@@ -122,7 +128,7 @@ export function InvoiceItemCard({
             {t("View Billing Queue Item")}
           </ContextMenuItem>
         ) : null}
-        <ContextMenuItem onClick={onPost} disabled={invoice.status === "Posted"}>
+        <ContextMenuItem onClick={onPost} disabled={invoice.status !== "Draft"}>
           <SendIcon className="size-3.5" />
           {t("Post Invoice")}
         </ContextMenuItem>

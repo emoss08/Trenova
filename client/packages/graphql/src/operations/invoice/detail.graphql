@@ -1,0 +1,189 @@
+fragment InvoiceRelatedFields on Invoice {
+  id
+  number
+  billType
+  status
+  scope
+  currencyCode
+  totalAmount
+  settlementStatus
+  billToName
+  customerId
+  isSplitBill
+}
+
+query InvoiceArContext($id: ID!) {
+  invoice(id: $id) {
+    id
+    customerId
+    shipperCustomerId
+    isSplitBill
+    billToCode
+    billToAddressLine1
+    billToAddressLine2
+    billToCity
+    billToState
+    billToPostalCode
+    billToCountry
+    shipperCustomer {
+      id
+      name
+      code
+    }
+    relatedInvoices {
+      ...InvoiceRelatedFields
+    }
+    ...InvoiceArFields
+  }
+}
+
+fragment InvoiceDisputeFields on InvoiceDispute {
+  id
+  invoiceId
+  customerId
+  status
+  reasonCode
+  disputedAmount
+  disputedAmountMinor
+  notes
+  openedById
+  openedAt
+  resolvedById
+  resolvedAt
+  resolution
+  resolutionAdjustmentId
+  resolutionNotes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CreditMemoApplicationFields on CreditMemoApplication {
+  id
+  creditMemoInvoiceId
+  invoiceId
+  appliedAmountMinor
+  accountingDate
+  lineNumber
+  status
+  unappliedAt
+  unappliedById
+  unappliedReason
+  createdById
+  createdAt
+  updatedAt
+  creditMemo {
+    id
+    number
+    billType
+    status
+  }
+  invoice {
+    id
+    number
+    billType
+    status
+  }
+}
+
+fragment InvoiceEdiSendPlanFields on InvoiceEDISendPlan {
+  invoiceId
+  enabled
+  autoSend
+  partnerId
+  partnerName
+  documentProfileId
+  communicationMethod
+  status
+  lastMessageId
+  lastError
+  sentAt
+  blockers
+}
+
+# The AR side of an invoice: what is still owed, what settled it, the disputes
+# and late charges on it, and where its EDI 210 stands. Read beside the REST
+# detail; none of it is on the REST shape.
+fragment InvoiceArFields on Invoice {
+  id
+  number
+  status
+  billType
+  currencyCode
+  appliedAmount
+  openBalance
+  balanceDueMinor
+  creditRemaining
+  daysPastDue
+  voidedAt
+  voidedById
+  voidReason
+  voidDisposition
+  voidedByAdjustmentId
+  referenceInvoiceId
+  memoReason
+  memoKind
+  referenceInvoice {
+    ...InvoiceRelatedFields
+  }
+  paymentApplications {
+    id
+    customerPaymentId
+    invoiceId
+    appliedAmountMinor
+    shortPayAmountMinor
+    lineNumber
+    createdAt
+    payment {
+      id
+      paymentDate
+      amountMinor
+      status
+      paymentMethod
+      referenceNumber
+    }
+  }
+  creditApplications {
+    ...CreditMemoApplicationFields
+  }
+  disputes {
+    ...InvoiceDisputeFields
+  }
+  openDispute {
+    ...InvoiceDisputeFields
+  }
+  lateChargeAssessments {
+    id
+    sourceInvoiceId
+    periodIndex
+    periodStart
+    periodEnd
+    asOfDate
+    basisOpenBalanceMinor
+    ratePercent
+    chargeMinor
+    debitMemoInvoiceId
+    debitMemo {
+      id
+      number
+      status
+    }
+  }
+  ediSendStatus
+  lastEdiMessageId
+  ediSentAt
+  lastEdiError
+  ediSendPlan {
+    ...InvoiceEdiSendPlanFields
+  }
+}
+
+query ShipmentInvoices($input: DataTableConnectionInput!) {
+  invoices(input: $input) {
+    edges {
+      node {
+        ...InvoiceRelatedFields
+      }
+    }
+  }
+}

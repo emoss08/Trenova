@@ -45,6 +45,9 @@ export const invoicePostingModeSchema = z.enum([
 ]);
 export type InvoicePostingMode = z.infer<typeof invoicePostingModeSchema>;
 
+export const lateChargeAssessmentModeSchema = z.enum(["Disabled", "Preview", "Automatic"]);
+export type LateChargeAssessmentMode = z.infer<typeof lateChargeAssessmentModeSchema>;
+
 export const rateVarianceAutoResolutionModeSchema = z.enum([
   "Disabled",
   "BypassReviewWithinTolerance",
@@ -94,6 +97,9 @@ export const billingControlSchema = z.object({
   fallbackFormulaTemplateId: z.string().nullish(),
   requireRateOverrideReason: z.boolean(),
   enforceMarginFloor: z.boolean(),
+
+  lateChargeAssessmentMode: lateChargeAssessmentModeSchema.default("Disabled"),
+  lateChargeMinimumAmount: decimalNumberSchema.default(0),
 });
 
 export type BillingControl = z.infer<typeof billingControlSchema>;

@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -92,11 +94,35 @@ type invoiceTemplateResult struct {
 	Unknown []string
 }
 
+// CreateFromShipments bills the shipments and returns the primary payer's
+// invoice. A split-billed shipment produces one invoice per payer; callers that
+// need every invoice use CreateInvoicesFromShipments.
 func (s *Service) CreateFromShipments(
 	ctx context.Context,
 	req *servicesports.CreateInvoiceFromShipmentsRequest,
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
+	result, err := s.CreateInvoicesFromShipments(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Primary, nil
+}
+
+// payerPlan is one payer's part of a shipment, resolved before the transaction
+// so every number is minted and every guard checked before anything is written.
+type payerPlan struct {
+	Share    *shipment.PayerShare
+	Customer *customer.Customer
+	Number   string
+}
+
+func (s *Service) CreateInvoicesFromShipments(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromShipmentsRequest,
+	actor *servicesports.RequestActor,
+) (*servicesports.CreateInvoicesResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -119,7 +145,7 @@ func (s *Service) CreateFromShipments(
 		)
 	}
 	if len(req.ShipmentIDs) > 1 {
-		return s.groupedInvoiceFromShipments(ctx, req, actor)
+		return s.groupedInvoicesFromShipments(ctx, req, actor)
 	}
 
 	shp, err := s.shipmentRepo.GetByID(
@@ -137,10 +163,44 @@ func (s *Service) CreateFromShipments(
 		)
 	}
 
-	exists, err := s.billingQueueRepo.ExistsByShipmentAndType(
+	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	if err != nil {
+		return nil, err
+	}
+
+	plans := make([]*payerPlan, 0, len(resolution.Shares))
+	for _, share := range resolution.Shares {
+		plan, planErr := s.planPayer(ctx, req.TenantInfo, shp, share, req.OffCycleReason)
+		if planErr != nil {
+			return nil, planErr
+		}
+		plans = append(plans, plan)
+	}
+
+	return s.createSingleShipmentInvoices(
 		ctx,
 		req.TenantInfo,
+		shp,
+		plans,
+		req.OffCycleReason,
+		actor,
+	)
+}
+
+// planPayer checks one payer's guards and mints their invoice number before the
+// transaction opens, so a split shipment never half-bills.
+func (s *Service) planPayer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shp *shipment.Shipment,
+	share *shipment.PayerShare,
+	offCycleReason string,
+) (*payerPlan, error) {
+	exists, err := s.billingQueueRepo.ExistsByShipmentPayerAndType(
+		ctx,
+		tenantInfo,
 		shp.ID,
+		share.PayerID,
 		billingqueue.BillTypeInvoice,
 	)
 	if err != nil {
@@ -148,13 +208,13 @@ func (s *Service) CreateFromShipments(
 	}
 	if exists {
 		return nil, errortypes.NewConflictError(
-			"A billing queue item already exists for this shipment",
+			"A billing queue item already exists for this shipment and payer",
 		)
 	}
 
 	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID:         shp.CustomerID,
-		TenantInfo: req.TenantInfo,
+		ID:         share.PayerID,
+		TenantInfo: tenantInfo,
 		CustomerFilterOptions: repositories.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
@@ -163,69 +223,75 @@ func (s *Service) CreateFromShipments(
 		return nil, err
 	}
 
-	if err = guardStatementCadence(cus, req.OffCycleReason); err != nil {
+	if err = guardStatementCadence(cus, offCycleReason); err != nil {
 		return nil, err
 	}
 
-	number, err := s.generateInvoiceNumber(ctx, req.TenantInfo, billingProfileOf(cus))
+	number, err := s.generateInvoiceNumber(ctx, tenantInfo, billingProfileOf(cus))
 	if err != nil {
 		return nil, err
 	}
 
-	return s.createSingleShipmentInvoice(
-		ctx,
-		req.TenantInfo,
-		shp,
-		number,
-		offCycleReasonFor(cus, req.OffCycleReason),
-		actor,
-	)
+	return &payerPlan{Share: share, Customer: cus, Number: number}, nil
 }
 
-func (s *Service) createSingleShipmentInvoice(
+// createSingleShipmentInvoices bills every payer of one shipment in a single
+// transaction: one approved queue item and one invoice per payer, all or none.
+func (s *Service) createSingleShipmentInvoices(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shp *shipment.Shipment,
-	number string,
+	plans []*payerPlan,
 	offCycleReason string,
 	actor *servicesports.RequestActor,
-) (*invoice.Invoice, error) {
-	var created *invoice.Invoice
+) (*servicesports.CreateInvoicesResult, error) {
+	result := &servicesports.CreateInvoicesResult{
+		Invoices: make([]*invoice.Invoice, 0, len(plans)),
+	}
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		queueItem, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			ShipmentID:     shp.ID,
-			OrderID:        shp.OrderID,
-			Status:         billingqueue.StatusApproved,
-			BillType:       billingqueue.BillTypeInvoice,
-			Number:         number,
-		})
-		if txErr != nil {
-			return txErr
-		}
+		for _, plan := range plans {
+			queueItem, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
+				OrganizationID:       tenantInfo.OrgID,
+				BusinessUnitID:       tenantInfo.BuID,
+				ShipmentID:           shp.ID,
+				OrderID:              shp.OrderID,
+				BillToCustomerID:     plan.Share.PayerID,
+				AllocatedTotalAmount: plan.Share.TotalAmount,
+				Status:               billingqueue.StatusApproved,
+				BillType:             billingqueue.BillTypeInvoice,
+				Number:               plan.Number,
+			})
+			if txErr != nil {
+				return txErr
+			}
 
-		result, txErr := s.CreateFromApprovedBillingQueueItem(
-			txCtx,
-			&servicesports.CreateInvoiceFromBillingQueueRequest{
-				BillingQueueItemID: queueItem.ID,
-				TenantInfo:         tenantInfo,
-				OffCycleReason:     offCycleReason,
-			},
-			actor,
-		)
-		if txErr != nil {
-			return txErr
+			created, txErr := s.CreateFromApprovedBillingQueueItem(
+				txCtx,
+				&servicesports.CreateInvoiceFromBillingQueueRequest{
+					BillingQueueItemID: queueItem.ID,
+					TenantInfo:         tenantInfo,
+					OffCycleReason:     offCycleReasonFor(plan.Customer, offCycleReason),
+				},
+				actor,
+			)
+			if txErr != nil {
+				return txErr
+			}
+			result.Invoices = append(result.Invoices, created.Invoice)
+			if plan.Share.PayerID == shp.PayerID() {
+				result.Primary = created.Invoice
+			}
 		}
-
-		created = result.Invoice
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
+	if result.Primary == nil && len(result.Invoices) > 0 {
+		result.Primary = result.Invoices[0]
+	}
 
-	return created, nil
+	return result, nil
 }
 
 // collectBillableLegs gathers the shipments of an order that are ready to invoice,
@@ -274,21 +340,6 @@ func (s *Service) collectBillableLegs(
 			)
 		}
 
-		exists, err := s.billingQueueRepo.ExistsByShipmentAndType(
-			ctx,
-			tenantInfo,
-			leg.ID,
-			billingqueue.BillTypeInvoice,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			return nil, errortypes.NewConflictError(
-				"A billing queue item already exists for a leg of this order",
-			)
-		}
-
 		full, err := s.shipmentRepo.GetByID(
 			ctx,
 			expandedShipmentByIDRequest(leg.ID, tenantInfo),
@@ -310,13 +361,14 @@ func (s *Service) collectBillableLegs(
 	return legs, nil
 }
 
-// groupedInvoiceFromShipments resolves the single order shared by the given legs and
-// delegates to CreateFromOrder. It rejects legs that are not all under one order.
-func (s *Service) groupedInvoiceFromShipments(
+// groupedInvoicesFromShipments resolves the single order shared by the given legs
+// and delegates to CreateInvoicesFromOrder. It rejects legs that are not all
+// under one order.
+func (s *Service) groupedInvoicesFromShipments(
 	ctx context.Context,
 	req *servicesports.CreateInvoiceFromShipmentsRequest,
 	actor *servicesports.RequestActor,
-) (*invoice.Invoice, error) {
+) (*servicesports.CreateInvoicesResult, error) {
 	var orderID pulid.ID
 	for _, shipmentID := range req.ShipmentIDs {
 		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
@@ -344,7 +396,7 @@ func (s *Service) groupedInvoiceFromShipments(
 		}
 	}
 
-	return s.CreateFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
+	return s.CreateInvoicesFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
 		OrderID:        orderID,
 		ShipmentIDs:    req.ShipmentIDs,
 		TenantInfo:     req.TenantInfo,
@@ -352,15 +404,29 @@ func (s *Service) groupedInvoiceFromShipments(
 	}, actor)
 }
 
-// CreateFromOrder issues a single grouped invoice covering every billable leg of an
-// order. Each billable leg gets its own approved billing-queue item (all carrying the
-// order id); the first is the anchor whose id backs the invoice header's single-valued
-// FK and idempotency lookup.
+// CreateFromOrder issues the grouped invoices covering every billable leg of an
+// order and returns the primary payer's. Each billable leg gets one approved
+// billing-queue item per payer (all carrying the order id); the first of each
+// payer's items is the anchor whose id backs that invoice's single-valued FK and
+// idempotency lookup.
 func (s *Service) CreateFromOrder(
 	ctx context.Context,
 	req *servicesports.CreateInvoiceFromOrderRequest,
 	actor *servicesports.RequestActor,
 ) (*invoice.Invoice, error) {
+	result, err := s.CreateInvoicesFromOrder(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Primary, nil
+}
+
+func (s *Service) CreateInvoicesFromOrder(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromOrderRequest,
+	actor *servicesports.RequestActor,
+) (*servicesports.CreateInvoicesResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -411,25 +477,81 @@ func (s *Service) CreateFromOrder(
 		return nil, err
 	}
 
-	var created *invoice.Invoice
+	result := &servicesports.CreateInvoicesResult{}
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
-		created, txErr = s.createOrderInvoiceTx(txCtx, req, number, actor)
+		result, txErr = s.createOrderInvoicesTx(txCtx, req, orderCustomer, number, actor)
 		return txErr
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return created, nil
+	return result, nil
 }
 
-func (s *Service) createOrderInvoiceTx(
+// orderPayerBucket is everything one payer is billed for on an order: the legs
+// they have a share in, and that share per leg.
+type orderPayerBucket struct {
+	PayerID pulid.ID
+	Legs    []*shipment.Shipment
+	Shares  map[pulid.ID]*shipment.PayerShare
+	IsSplit bool
+}
+
+// bucketLegsByPayer resolves every leg's shares and groups them by payer. The
+// primary payer leads: the order's customer when they have a share, otherwise
+// the first payer in a stable order.
+func bucketLegsByPayer(
+	ord *order.Order,
+	legs []*shipment.Shipment,
+) ([]*orderPayerBucket, error) {
+	byPayer := make(map[pulid.ID]*orderPayerBucket, 2)
+	for _, leg := range legs {
+		resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+		if err != nil {
+			return nil, err
+		}
+		for _, share := range resolution.Shares {
+			bucket, ok := byPayer[share.PayerID]
+			if !ok {
+				bucket = &orderPayerBucket{
+					PayerID: share.PayerID,
+					Shares:  make(map[pulid.ID]*shipment.PayerShare, len(legs)),
+				}
+				byPayer[share.PayerID] = bucket
+			}
+			bucket.Legs = append(bucket.Legs, leg)
+			bucket.Shares[leg.ID] = share
+			bucket.IsSplit = bucket.IsSplit || resolution.IsSplit
+		}
+	}
+
+	ordered := make([]*orderPayerBucket, 0, len(byPayer))
+	if primary, ok := byPayer[ord.CustomerID]; ok {
+		ordered = append(ordered, primary)
+	}
+	rest := make([]pulid.ID, 0, len(byPayer))
+	for payerID := range byPayer {
+		if payerID != ord.CustomerID {
+			rest = append(rest, payerID)
+		}
+	}
+	slices.Sort(rest)
+	for _, payerID := range rest {
+		ordered = append(ordered, byPayer[payerID])
+	}
+
+	return ordered, nil
+}
+
+func (s *Service) createOrderInvoicesTx(
 	txCtx context.Context,
 	req *servicesports.CreateInvoiceFromOrderRequest,
+	orderCustomer *customer.Customer,
 	number string,
 	actor *servicesports.RequestActor,
-) (*invoice.Invoice, error) {
+) (*servicesports.CreateInvoicesResult, error) {
 	ord, txErr := s.orderRepo.GetByID(txCtx, repositories.GetOrderByIDRequest{
 		ID:              req.OrderID,
 		TenantInfo:      req.TenantInfo,
@@ -459,22 +581,28 @@ func (s *Service) createOrderInvoiceTx(
 		)
 	}
 
-	queueItems, txErr := s.createLegQueueItems(txCtx, req.TenantInfo, legs, number)
+	buckets, txErr := bucketLegsByPayer(ord, legs)
 	if txErr != nil {
 		return nil, txErr
 	}
-	anchor := queueItems.Anchor
-
-	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
-		ID:         ord.CustomerID,
-		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
-			IncludeBillingProfile: true,
-			IncludeState:          true,
-		},
-	})
-	if txErr != nil {
-		return nil, txErr
+	for _, bucket := range buckets {
+		for _, leg := range bucket.Legs {
+			exists, err := s.billingQueueRepo.ExistsByShipmentPayerAndType(
+				txCtx,
+				req.TenantInfo,
+				leg.ID,
+				bucket.PayerID,
+				billingqueue.BillTypeInvoice,
+			)
+			if err != nil {
+				return nil, err
+			}
+			if exists {
+				return nil, errortypes.NewConflictError(
+					"A billing queue item already exists for a leg of this order",
+				)
+			}
+		}
 	}
 
 	control, txErr := s.billingRepo.GetByOrgID(txCtx, req.TenantInfo.OrgID)
@@ -482,59 +610,179 @@ func (s *Service) createOrderInvoiceTx(
 		return nil, txErr
 	}
 
-	// Order charges are billed exactly once: only charges not yet carried on an
-	// invoice make it onto this one, and they are stamped inside the same
-	// transaction so a later pass over the remaining legs cannot re-bill them.
-	charges, txErr := s.orderRepo.ListUninvoicedCharges(txCtx, req.TenantInfo, ord.ID)
-	if txErr != nil {
-		return nil, txErr
+	// Order charges nobody allocated belong to the primary payer, so a shipper
+	// who passed every leg to a third party still carries the customs brokerage
+	// they ordered, and nothing on the order goes unbilled.
+	defaultOrderPayer := buckets[0].PayerID
+
+	result := &servicesports.CreateInvoicesResult{
+		Invoices: make([]*invoice.Invoice, 0, len(buckets)),
+	}
+	for i, bucket := range buckets {
+		cus, err := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
+			ID:         bucket.PayerID,
+			TenantInfo: req.TenantInfo,
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+				IncludeState:          true,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if err = guardStatementCadence(cus, req.OffCycleReason); err != nil {
+			return nil, err
+		}
+
+		invoiceNumber := number
+		if i > 0 {
+			invoiceNumber, err = s.generateInvoiceNumber(
+				txCtx,
+				req.TenantInfo,
+				billingProfileOf(cus),
+			)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		queueItems, err := s.createLegQueueItems(
+			txCtx,
+			req.TenantInfo,
+			bucket,
+			invoiceNumber,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Order charges are billed exactly once per payer share: only shares not
+		// yet carried on an invoice make it onto this one, and they are stamped
+		// inside the same transaction so a later pass cannot re-bill them.
+		charges, err := s.orderRepo.ListUninvoicedChargeSharesForPayer(
+			txCtx,
+			&repositories.ListUninvoicedChargeSharesRequest{
+				TenantInfo: req.TenantInfo,
+				OrderID:    ord.ID,
+				PayerID:    bucket.PayerID,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		chargeShare, chargeSplit, err := orderChargeShareFor(charges, defaultOrderPayer, bucket.PayerID)
+		if err != nil {
+			return nil, err
+		}
+
+		var shipper *customer.Customer
+		if bucket.PayerID != ord.CustomerID {
+			shipper = orderCustomer
+		}
+
+		entity := s.buildInvoiceEntity(&buildInvoiceParams{
+			Anchor:           queueItems.Anchor,
+			Scope:            invoice.ScopeOrder,
+			Customer:         cus,
+			Control:          control,
+			Legs:             bucket.Legs,
+			Order:            ord,
+			OrderChargeShare: chargeShare,
+			OffCycleReason:   offCycleReasonFor(cus, req.OffCycleReason),
+			Shipper:          shipper,
+			Shares:           bucket.Shares,
+			IsSplitBill:      bucket.IsSplit || chargeSplit,
+		})
+		if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
+			return nil, multiErr
+		}
+
+		created, err := s.repo.Create(txCtx, entity)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = s.markOrderChargeSharesInvoiced(
+			txCtx,
+			req.TenantInfo,
+			ord.ID,
+			chargeShare,
+			created,
+		); err != nil {
+			return nil, err
+		}
+
+		auditActor := actor.AuditActor()
+		s.logAction(
+			created,
+			auditActor,
+			permission.OpCreate,
+			nil,
+			created,
+			"Grouped invoice created from order",
+		)
+		s.publishInvalidation(txCtx, created, auditActor, "created", created)
+
+		result.Invoices = append(result.Invoices, created)
+		if i == 0 {
+			result.Primary = created
+		}
 	}
 
-	if txErr = guardStatementCadence(cus, req.OffCycleReason); txErr != nil {
-		return nil, txErr
+	return result, nil
+}
+
+// orderChargeShareFor resolves the payer's slice of the order charges still owed
+// to them. Charges with no allocation go whole to the default payer, so they
+// appear only on that payer's invoice.
+func orderChargeShareFor(
+	charges []*order.OrderCharge,
+	defaultPayerID pulid.ID,
+	payerID pulid.ID,
+) (*shipment.PayerShare, bool, error) {
+	if len(charges) == 0 {
+		return nil, false, nil
 	}
 
-	entity := s.buildInvoiceEntity(&buildInvoiceParams{
-		Anchor:         anchor,
-		Scope:          invoice.ScopeOrder,
-		Customer:       cus,
-		Control:        control,
-		Legs:           legs,
-		Order:          ord,
-		OrderCharges:   charges,
-		OffCycleReason: offCycleReasonFor(cus, req.OffCycleReason),
-	})
-	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {
-		return nil, multiErr
+	refs := make([]shipment.OrderChargeRef, 0, len(charges))
+	allocations := make([]*shipment.ChargeAllocation, 0, len(charges))
+	for _, charge := range charges {
+		if charge == nil {
+			continue
+		}
+		refs = append(refs, shipment.OrderChargeRef{
+			ID:          charge.ID,
+			Description: charge.Description,
+			Amount:      charge.Amount,
+		})
+		allocations = append(allocations, charge.Allocations...)
 	}
 
-	created, txErr := s.repo.Create(txCtx, entity)
-	if txErr != nil {
-		return nil, txErr
+	resolution, err := shipment.ResolveOrderChargeShares(refs, allocations, defaultPayerID)
+	if err != nil {
+		return nil, false, err
 	}
 
-	if txErr = s.markOrderChargesInvoiced(
-		txCtx,
-		req.TenantInfo,
-		ord.ID,
-		charges,
-		created,
-	); txErr != nil {
-		return nil, txErr
+	share := resolution.ShareFor(payerID)
+	if share == nil || len(share.Charges) == 0 {
+		return nil, resolution.IsSplit, nil
 	}
 
-	auditActor := actor.AuditActor()
-	s.logAction(
-		created,
-		auditActor,
-		permission.OpCreate,
-		nil,
-		created,
-		"Grouped invoice created from order",
-	)
-	s.publishInvalidation(txCtx, created, auditActor, "created", created)
+	// A share for the default payer also carries the implicit rows of charges
+	// allocated wholly to somebody else with a zero amount; drop them.
+	kept := make([]shipment.AllocatedCharge, 0, len(share.Charges))
+	for _, charge := range share.Charges {
+		if charge.Amount.IsZero() && charge.AllocationID.IsNil() && charge.Partial {
+			continue
+		}
+		kept = append(kept, charge)
+	}
+	share.Charges = kept
+	if len(kept) == 0 {
+		return nil, resolution.IsSplit, nil
+	}
 
-	return created, nil
+	return share, resolution.IsSplit, nil
 }
 
 // legQueueItems is the queue items an invoice will bill: the anchor whose id backs
@@ -545,7 +793,8 @@ type legQueueItems struct {
 	ItemIDs []pulid.ID
 }
 
-// createLegQueueItems creates one approved billing-queue item per billable leg.
+// createLegQueueItems creates one approved billing-queue item per billable leg
+// for one payer.
 //
 // Only the anchor carries the invoice number; siblings leave it null, because the
 // billing-queue number is tenant-unique. Each item takes its order from its own
@@ -554,25 +803,31 @@ type legQueueItems struct {
 func (s *Service) createLegQueueItems(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	legs []*shipment.Shipment,
+	bucket *orderPayerBucket,
 	number string,
 ) (*legQueueItems, error) {
-	result := &legQueueItems{ItemIDs: make([]pulid.ID, 0, len(legs))}
+	result := &legQueueItems{ItemIDs: make([]pulid.ID, 0, len(bucket.Legs))}
 
-	for _, leg := range legs {
+	for _, leg := range bucket.Legs {
 		itemNumber := ""
 		if result.Anchor == nil {
 			itemNumber = number
 		}
+		allocated := decimal.Zero
+		if share := bucket.Shares[leg.ID]; share != nil {
+			allocated = share.TotalAmount
+		}
 
 		item, err := s.billingQueueRepo.Create(ctx, &billingqueue.BillingQueueItem{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			ShipmentID:     leg.ID,
-			OrderID:        leg.OrderID,
-			Status:         billingqueue.StatusApproved,
-			BillType:       billingqueue.BillTypeInvoice,
-			Number:         itemNumber,
+			OrganizationID:       tenantInfo.OrgID,
+			BusinessUnitID:       tenantInfo.BuID,
+			ShipmentID:           leg.ID,
+			OrderID:              leg.OrderID,
+			BillToCustomerID:     bucket.PayerID,
+			AllocatedTotalAmount: allocated,
+			Status:               billingqueue.StatusApproved,
+			BillType:             billingqueue.BillTypeInvoice,
+			Number:               itemNumber,
 		})
 		if err != nil {
 			return nil, err
@@ -586,26 +841,57 @@ func (s *Service) createLegQueueItems(
 	return result, nil
 }
 
-func (s *Service) markOrderChargesInvoiced(
+// markOrderChargeSharesInvoiced stamps what this invoice billed: unallocated
+// charges on the charge itself, allocated ones on their share, and the charge as
+// a whole once its last share is gone.
+func (s *Service) markOrderChargeSharesInvoiced(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
-	charges []*order.OrderCharge,
+	share *shipment.PayerShare,
 	created *invoice.Invoice,
 ) error {
-	if len(charges) == 0 {
+	if share == nil || len(share.Charges) == 0 {
 		return nil
 	}
 
-	chargeIDs := make([]pulid.ID, 0, len(charges))
-	for _, charge := range charges {
-		chargeIDs = append(chargeIDs, charge.ID)
+	chargeIDs := make([]pulid.ID, 0, len(share.Charges))
+	allocationIDs := make([]pulid.ID, 0, len(share.Charges))
+	for _, charge := range share.Charges {
+		switch {
+		case charge.AllocationID.IsNotNil():
+			allocationIDs = append(allocationIDs, charge.AllocationID)
+		case charge.OrderChargeID.IsNotNil():
+			chargeIDs = append(chargeIDs, charge.OrderChargeID)
+		}
 	}
 
-	_, err := s.orderRepo.MarkChargesInvoiced(ctx, &repositories.MarkOrderChargesInvoicedRequest{
+	if len(chargeIDs) > 0 {
+		if _, err := s.orderRepo.MarkChargesInvoiced(ctx, &repositories.MarkOrderChargesInvoicedRequest{
+			TenantInfo: tenantInfo,
+			OrderID:    orderID,
+			ChargeIDs:  chargeIDs,
+			InvoiceID:  created.ID,
+			InvoicedAt: created.InvoiceDate,
+		}); err != nil {
+			return err
+		}
+	}
+	if len(allocationIDs) == 0 {
+		return nil
+	}
+
+	if _, err := s.chargeAllocationRepo.MarkInvoiced(ctx, &repositories.MarkChargeAllocationsInvoicedRequest{
+		TenantInfo:    tenantInfo,
+		AllocationIDs: allocationIDs,
+		InvoiceID:     created.ID,
+		InvoicedAt:    created.InvoiceDate,
+	}); err != nil {
+		return err
+	}
+	_, err := s.orderRepo.MarkChargesFullyInvoicedWhereComplete(ctx, &repositories.MarkChargesFullyInvoicedRequest{
 		TenantInfo: tenantInfo,
 		OrderID:    orderID,
-		ChargeIDs:  chargeIDs,
 		InvoiceID:  created.ID,
 		InvoicedAt: created.InvoiceDate,
 	})
@@ -704,6 +990,9 @@ func (s *Service) RenderPreview(
 	if err != nil {
 		return nil, err
 	}
+	if err = refuseVoidedInvoice(entity, "rendered"); err != nil {
+		return nil, err
+	}
 	deliveryProfile, err := s.resolveDeliveryProfile(ctx, resolveDeliveryProfileParams{
 		Entity:                 entity,
 		TenantInfo:             req.TenantInfo,
@@ -752,6 +1041,17 @@ func (s *Service) GeneratePDF(
 			errortypes.ErrRequired,
 			"User ID is required to generate invoice PDFs",
 		)
+	}
+
+	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		ID:         req.InvoiceID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = refuseVoidedInvoice(entity, "rendered"); err != nil {
+		return nil, err
 	}
 
 	workflowID := fmt.Sprintf(
@@ -824,6 +1124,9 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	if err != nil {
 		return nil, err
 	}
+	if err = refuseVoidedInvoice(entity, "sent"); err != nil {
+		return nil, err
+	}
 
 	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 		ID:         entity.CustomerID,
@@ -835,7 +1138,8 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	if err != nil {
 		return nil, err
 	}
-	if cus.BillingProfile == nil || !cus.BillingProfile.AutoSendInvoiceOnGeneration {
+	if cus.BillingProfile == nil || !cus.BillingProfile.AutoSendInvoiceOnGeneration ||
+		!cus.BillingProfile.EmailInvoiceEnabled {
 		return nil, nil
 	}
 
@@ -914,6 +1218,9 @@ func (s *Service) PlanSend(
 	if err != nil {
 		return nil, err
 	}
+	if err = refuseVoidedInvoice(entity, "sent"); err != nil {
+		return nil, err
+	}
 	deliveryProfile, err := s.resolveDeliveryProfile(ctx, resolveDeliveryProfileParams{
 		Entity:                      entity,
 		TenantInfo:                  req.TenantInfo,
@@ -954,6 +1261,7 @@ func (s *Service) PlanSend(
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
 	plan := &servicesports.InvoiceSendPlan{
+		EDI:                s.ediPlanFor(ctx, entity, req.TenantInfo),
 		InvoiceID:          entity.ID,
 		ProviderLimitBytes: providerLimit(profile),
 		EstimatedBodyBytes: int64(
@@ -2558,4 +2866,46 @@ func signedDocumentURL(baseURL, token string) string {
 	return baseURL + "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(
 		token,
 	) + "/download/"
+}
+
+// refuseVoidedInvoice keeps a voided document out of the customer's hands: it
+// is still readable inside Trenova, but it is never rendered or delivered.
+func refuseVoidedInvoice(entity *invoice.Invoice, action string) error {
+	if entity == nil || entity.Status != invoice.StatusVoided {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"invoiceId",
+		errortypes.ErrInvalidOperation,
+		"Invoice {0} has been voided and cannot be {1}",
+		entity.Number,
+		action,
+	)
+}
+
+// ediPlanFor is the EDI half of a send plan. A failure to resolve it must not
+// stop the email plan, so it degrades to an unconfigured plan with the error.
+func (s *Service) ediPlanFor(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+) *servicesports.InvoiceEDISendPlan {
+	plans, err := s.ResolveEDISendPlans(ctx, &servicesports.ResolveInvoiceEDISendPlansRequest{
+		TenantInfo: tenantInfo,
+		Invoices:   []*invoice.Invoice{entity},
+	})
+	if err != nil {
+		s.l.Warn("failed to resolve invoice EDI plan", zap.Error(err))
+		return &servicesports.InvoiceEDISendPlan{
+			InvoiceID: entity.ID,
+			Status:    entity.EDISendStatus,
+			Blockers:  []string{"EDI configuration could not be read: " + err.Error()},
+		}
+	}
+	if plan := plans[entity.ID]; plan != nil {
+		return plan
+	}
+
+	return &servicesports.InvoiceEDISendPlan{InvoiceID: entity.ID, Status: entity.EDISendStatus}
 }

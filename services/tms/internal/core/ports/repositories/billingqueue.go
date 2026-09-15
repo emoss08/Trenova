@@ -34,6 +34,32 @@ type MarkPostedForInvoiceRequest struct {
 	InvoiceID   pulid.ID              `json:"-"`
 	OrderID     pulid.ID              `json:"-"`
 	ShipmentIDs []pulid.ID            `json:"-"`
+	// PayerID narrows the fallback sweep to the invoice's own payer, so posting
+	// one payer's invoice never settles another payer's item on the same legs.
+	PayerID pulid.ID `json:"-"`
+}
+
+// ReleaseForInvoiceRequest hands the items behind a voided invoice back. With
+// Rebill they return to Approved with a fresh number and no invoice link, ready
+// for the next invoice; with DoNotRebill they are canceled.
+type ReleaseForInvoiceRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	InvoiceID    pulid.ID              `json:"-"`
+	AnchorItemID pulid.ID              `json:"-"`
+	Rebill       bool                  `json:"-"`
+	CanceledByID *pulid.ID             `json:"-"`
+	CanceledAt   int64                 `json:"-"`
+	CancelReason string                `json:"-"`
+	// RenumberFn mints a fresh billing number for each released item, since the
+	// voided invoice keeps the old one.
+	RenumberFn func(ctx context.Context, billType billingqueue.BillType) (string, error) `json:"-"`
+}
+
+// ListActiveInvoiceItemsRequest asks which shipments still have an invoice item
+// that has not posted or been canceled, keyed by shipment.
+type ListActiveInvoiceItemsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
 }
 
 // AttachInvoiceRequest links every billing-queue item an invoice bills back to it, so
@@ -61,6 +87,10 @@ type ListConsolidationCandidatesRequest struct {
 // ConsolidationCandidate is one approved billing-queue item flattened with every
 // key a split rule can group on, so grouping needs one query rather than one per
 // shipment.
+//
+// CustomerID is the item's payer and TotalChargeAmount is that payer's share of
+// the shipment: a split-billed shipment yields one candidate per payer, each on
+// its own payer's statement.
 type ConsolidationCandidate struct {
 	BillingQueueItemID pulid.ID            `bun:"billing_queue_item_id"`
 	ShipmentID         pulid.ID            `bun:"shipment_id"`
@@ -131,12 +161,21 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		entity *billingqueue.BillingQueueItem,
 	) (*billingqueue.BillingQueueItem, error)
-	ExistsByShipmentAndType(
+	ExistsByShipmentPayerAndType(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
+		payerID pulid.ID,
 		billType billingqueue.BillType,
 	) (bool, error)
+	ListActiveInvoiceItemsByShipmentIDs(
+		ctx context.Context,
+		req *ListActiveInvoiceItemsRequest,
+	) (map[pulid.ID][]*billingqueue.BillingQueueItem, error)
+	ReleaseForInvoice(
+		ctx context.Context,
+		req *ReleaseForInvoiceRequest,
+	) ([]*billingqueue.BillingQueueItem, error)
 	MarkPostedForInvoice(
 		ctx context.Context,
 		req *MarkPostedForInvoiceRequest,

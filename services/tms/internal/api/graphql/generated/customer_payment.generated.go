@@ -35,6 +35,415 @@ type CustomerPaymentApplicationResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _CreditMemoApplication_id(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_organizationId(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_creditMemoInvoiceId(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_creditMemoInvoiceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreditMemoInvoiceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_creditMemoInvoiceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_invoiceId(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_invoiceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InvoiceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_invoiceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_appliedAmountMinor(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_appliedAmountMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppliedAmountMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_appliedAmountMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_accountingDate(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_accountingDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AccountingDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_accountingDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_lineNumber(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_lineNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LineNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_lineNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_status(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v customerpayment.CreditApplicationStatus) graphql.Marshaler {
+			return ec.marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type CreditMemoApplicationStatus does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_unappliedAt(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_unappliedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnappliedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_unappliedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_unappliedById(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_unappliedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnappliedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_unappliedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_unappliedReason(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_unappliedReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnappliedReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_unappliedReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_createdById(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_createdById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_createdById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_createdAt(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_updatedAt(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CreditMemoApplication", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CreditMemoApplication_creditMemo(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_creditMemo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreditMemo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+			return ec.marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_creditMemo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreditMemoApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Invoice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreditMemoApplication_invoice(ctx context.Context, field graphql.CollectedField, obj *customerpayment.CreditMemoApplication) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CreditMemoApplication_invoice(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Invoice, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+			return ec.marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CreditMemoApplication_invoice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreditMemoApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Invoice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CustomerPayment_id(ctx context.Context, field graphql.CollectedField, obj *customerpayment.Payment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -913,6 +1322,38 @@ func (ec *executionContext) fieldContext_CustomerPaymentApplication_invoice(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _CustomerPaymentApplication_payment(ctx context.Context, field graphql.CollectedField, obj *customerpayment.Application) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerPaymentApplication_payment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Payment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
+			return ec.marshalOCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerPaymentApplication_payment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomerPaymentApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CustomerPayment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CustomerPaymentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CustomerPaymentConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1059,6 +1500,50 @@ func (ec *executionContext) fieldContext_CustomerPaymentEdge_cursor(_ context.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputApplyCreditMemoInput(ctx context.Context, obj any) (gqlmodel.ApplyCreditMemoInput, error) {
+	var it gqlmodel.ApplyCreditMemoInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"creditMemoId", "accountingDate", "applications"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "creditMemoId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditMemoId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditMemoID = data
+		case "accountingDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountingDate"))
+			data, err := ec.unmarshalNTimestamp2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccountingDate = data
+		case "applications":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applications"))
+			data, err := ec.unmarshalNCreditMemoApplicationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreditMemoApplicationInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Applications = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputApplyCustomerPaymentInput(ctx context.Context, obj any) (gqlmodel.ApplyCustomerPaymentInput, error) {
 	var it gqlmodel.ApplyCustomerPaymentInput
 	if obj == nil {
@@ -1098,6 +1583,43 @@ func (ec *executionContext) unmarshalInputApplyCustomerPaymentInput(ctx context.
 				return it, err
 			}
 			it.Applications = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreditMemoApplicationInput(ctx context.Context, obj any) (gqlmodel.CreditMemoApplicationInput, error) {
+	var it gqlmodel.CreditMemoApplicationInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"invoiceId", "appliedAmountMinor"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "invoiceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceID = data
+		case "appliedAmountMinor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appliedAmountMinor"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AppliedAmountMinor = data
 		}
 	}
 	return it, nil
@@ -1277,6 +1799,43 @@ func (ec *executionContext) unmarshalInputReverseCustomerPaymentInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUnapplyCreditMemoApplicationInput(ctx context.Context, obj any) (gqlmodel.UnapplyCreditMemoApplicationInput, error) {
+	var it gqlmodel.UnapplyCreditMemoApplicationInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"applicationId", "reason"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "applicationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applicationId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplicationID = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		}
+	}
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -1284,6 +1843,124 @@ func (ec *executionContext) unmarshalInputReverseCustomerPaymentInput(ctx contex
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var creditMemoApplicationImplementors = []string{"CreditMemoApplication"}
+
+func (ec *executionContext) _CreditMemoApplication(ctx context.Context, sel ast.SelectionSet, obj *customerpayment.CreditMemoApplication) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, creditMemoApplicationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreditMemoApplication")
+		case "id":
+			out.Values[i] = ec._CreditMemoApplication_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._CreditMemoApplication_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._CreditMemoApplication_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "creditMemoInvoiceId":
+			out.Values[i] = ec._CreditMemoApplication_creditMemoInvoiceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "invoiceId":
+			out.Values[i] = ec._CreditMemoApplication_invoiceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "appliedAmountMinor":
+			out.Values[i] = ec._CreditMemoApplication_appliedAmountMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "accountingDate":
+			out.Values[i] = ec._CreditMemoApplication_accountingDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lineNumber":
+			out.Values[i] = ec._CreditMemoApplication_lineNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._CreditMemoApplication_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unappliedAt":
+			out.Values[i] = ec._CreditMemoApplication_unappliedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "unappliedById":
+			out.Values[i] = ec._CreditMemoApplication_unappliedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "unappliedReason":
+			out.Values[i] = ec._CreditMemoApplication_unappliedReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdById":
+			out.Values[i] = ec._CreditMemoApplication_createdById(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CreditMemoApplication_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CreditMemoApplication_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "creditMemo":
+			out.Values[i] = ec._CreditMemoApplication_creditMemo(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "invoice":
+			out.Values[i] = ec._CreditMemoApplication_invoice(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
 
 var customerPaymentImplementors = []string{"CustomerPayment"}
 
@@ -1581,6 +2258,11 @@ func (ec *executionContext) _CustomerPaymentApplication(ctx context.Context, sel
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "payment":
+			out.Values[i] = ec._CustomerPaymentApplication_payment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1697,9 +2379,76 @@ func (ec *executionContext) _CustomerPaymentEdge(ctx context.Context, sel ast.Se
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNApplyCreditMemoInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApplyCreditMemoInput(ctx context.Context, v any) (gqlmodel.ApplyCreditMemoInput, error) {
+	res, err := ec.unmarshalInputApplyCreditMemoInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNApplyCustomerPaymentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApplyCustomerPaymentInput(ctx context.Context, v any) (gqlmodel.ApplyCustomerPaymentInput, error) {
 	res, err := ec.unmarshalInputApplyCustomerPaymentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx context.Context, sel ast.SelectionSet, v *customerpayment.CreditMemoApplication) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreditMemoApplication(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreditMemoApplicationInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreditMemoApplicationInputᚄ(ctx context.Context, v any) ([]*gqlmodel.CreditMemoApplicationInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*gqlmodel.CreditMemoApplicationInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCreditMemoApplicationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreditMemoApplicationInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNCreditMemoApplicationInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreditMemoApplicationInput(ctx context.Context, v any) (*gqlmodel.CreditMemoApplicationInput, error) {
+	res, err := ec.unmarshalInputCreditMemoApplicationInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus(ctx context.Context, v any) (customerpayment.CreditApplicationStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customerpayment.CreditApplicationStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreditMemoApplicationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐCreditApplicationStatus(ctx context.Context, sel ast.SelectionSet, v customerpayment.CreditApplicationStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐPayment(ctx context.Context, sel ast.SelectionSet, v *customerpayment.Payment) graphql.Marshaler {
@@ -1710,6 +2459,22 @@ func (ec *executionContext) marshalNCustomerPayment2ᚖgithubᚗcomᚋemoss08ᚋ
 		return graphql.Null
 	}
 	return ec._CustomerPayment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*customerpayment.Application) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplication(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerpaymentᚐApplication(ctx context.Context, sel ast.SelectionSet, v *customerpayment.Application) graphql.Marshaler {
@@ -1818,6 +2583,11 @@ func (ec *executionContext) unmarshalNPostCustomerPaymentInput2githubᚗcomᚋem
 
 func (ec *executionContext) unmarshalNReverseCustomerPaymentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReverseCustomerPaymentInput(ctx context.Context, v any) (gqlmodel.ReverseCustomerPaymentInput, error) {
 	res, err := ec.unmarshalInputReverseCustomerPaymentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUnapplyCreditMemoApplicationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUnapplyCreditMemoApplicationInput(ctx context.Context, v any) (gqlmodel.UnapplyCreditMemoApplicationInput, error) {
+	res, err := ec.unmarshalInputUnapplyCreditMemoApplicationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

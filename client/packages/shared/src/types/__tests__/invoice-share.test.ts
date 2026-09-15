@@ -62,7 +62,7 @@ describe("invoice share schemas", () => {
 
   it("rejects a tab or email status the server does not define", () => {
     expect(() =>
-      invoiceShareListSchema.parse({ shares: [{ ...share, tab: "payments" }] }),
+      invoiceShareListSchema.parse({ shares: [{ ...share, tab: "nope" }] }),
     ).toThrow();
     expect(() =>
       shareInvoiceResultSchema.parse({

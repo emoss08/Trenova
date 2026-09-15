@@ -27,57 +27,147 @@ func SignedAmount(billType billingqueue.BillType, amount decimal.Decimal) decima
 	return amount
 }
 
+// ForShipment emits the lines that bill a shipment in full to one payer.
 func ForShipment(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
-	lines := make([]*invoice.InvoiceLine, 0, 1+len(shp.AdditionalCharges))
-	freight := shp.FreightChargeAmount.Decimal
-	freightAmount := SignedAmount(billType, freight)
+	return ForShipmentShare(billType, shp, nil, startLineNumber)
+}
 
-	freightLine := &invoice.InvoiceLine{
+// ForShipmentShare emits only the lines one payer is billed for. A nil share
+// bills the whole shipment, which is what every single-payer invoice is. A
+// partial share carries the percent it bills on the line and in its description,
+// so the invoice reads correctly on its own.
+func ForShipmentShare(
+	billType billingqueue.BillType,
+	shp *shipment.Shipment,
+	share *shipment.PayerShare,
+	startLineNumber int,
+) []*invoice.InvoiceLine {
+	if shp == nil {
+		return nil
+	}
+	if share == nil {
+		resolution, err := shipment.ResolveShares(shp, nil)
+		if err != nil || resolution == nil || len(resolution.Shares) == 0 {
+			return nil
+		}
+		share = resolution.Shares[0]
+	}
+
+	lines := make([]*invoice.InvoiceLine, 0, len(share.Charges))
+	freight := shp.FreightChargeAmount.Decimal
+	lineNumber := startLineNumber
+
+	for _, charge := range share.Charges {
+		switch charge.Kind {
+		case shipment.ChargeAllocationKindFreight:
+			lines = append(lines, freightLine(billType, shp, charge, lineNumber))
+		case shipment.ChargeAllocationKindAccessorial:
+			if charge.Charge == nil {
+				continue
+			}
+			lines = append(lines, accessorialLine(billType, shp, charge, freight, lineNumber))
+		case shipment.ChargeAllocationKindOrderCharge:
+			continue
+		}
+		lineNumber++
+	}
+
+	return lines
+}
+
+// ForOrderChargeShare emits the line for one payer's share of an order-level
+// charge. Order charges carry no leg attribution, which is what puts them in the
+// trailing section when the invoice is rendered.
+func ForOrderChargeShare(
+	billType billingqueue.BillType,
+	charge shipment.AllocatedCharge,
+	lineNumber int,
+) *invoice.InvoiceLine {
+	amount := SignedAmount(billType, charge.Amount)
+	line := &invoice.InvoiceLine{
+		LineNumber:  lineNumber,
+		Type:        invoice.InvoiceLineTypeAccessorial,
+		Description: ShareDescription(charge.Description, charge),
+		Quantity:    decimal.NewFromInt(1),
+		UnitPrice:   amount,
+		Amount:      amount,
+	}
+	stampShare(line, charge)
+
+	return line
+}
+
+// ShareDescription appends the billed share to a description when the line
+// bills less than the whole charge.
+func ShareDescription(base string, charge shipment.AllocatedCharge) string {
+	if !charge.Partial {
+		return base
+	}
+	if charge.Percent.Valid {
+		percent := strings.TrimRight(
+			strings.TrimRight(charge.Percent.Decimal.StringFixed(2), "0"),
+			".",
+		)
+		return base + " (" + percent + "% share)"
+	}
+
+	return base + " (partial share)"
+}
+
+func stampShare(line *invoice.InvoiceLine, charge shipment.AllocatedCharge) {
+	if !charge.Partial {
+		return
+	}
+	line.AllocationPercent = charge.Percent
+	line.ChargeAllocationID = charge.AllocationID
+}
+
+func freightLine(
+	billType billingqueue.BillType,
+	shp *shipment.Shipment,
+	charge shipment.AllocatedCharge,
+	lineNumber int,
+) *invoice.InvoiceLine {
+	freightAmount := SignedAmount(billType, charge.Amount)
+
+	line := &invoice.InvoiceLine{
 		ShipmentID:          shp.ID,
 		ShipmentProNumber:   shp.ProNumber,
 		ShipmentBOL:         shp.BOL,
-		LineNumber:          startLineNumber,
+		LineNumber:          lineNumber,
 		Type:                invoice.InvoiceLineTypeFreight,
-		Description:         FreightDescription,
+		Description:         ShareDescription(FreightDescription, charge),
 		Quantity:            decimal.NewFromInt(1),
 		UnitPrice:           freightAmount,
 		Amount:              freightAmount,
 		FormulaTemplateName: formulaTemplateName(shp),
 	}
 	if shp.BaseRate.Valid && !shp.BaseRate.Decimal.IsZero() {
-		freightLine.Rate = decimal.NewNullDecimal(shp.BaseRate.Decimal)
+		line.Rate = decimal.NewNullDecimal(shp.BaseRate.Decimal)
 	}
-	lines = append(lines, freightLine)
+	stampShare(line, charge)
 
-	lineNumber := startLineNumber
-	for _, charge := range shp.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-		lineNumber++
-		lines = append(lines, accessorialLine(billType, shp, charge, freight, lineNumber))
-	}
-
-	return lines
+	return line
 }
 
 func accessorialLine(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-	charge *shipment.AdditionalCharge,
+	allocated shipment.AllocatedCharge,
 	freight decimal.Decimal,
 	lineNumber int,
 ) *invoice.InvoiceLine {
+	charge := allocated.Charge
 	quantity := decimal.NewFromInt(int64(charge.Unit))
 	if quantity.LessThanOrEqual(decimal.Zero) {
 		quantity = decimal.NewFromInt(1)
 	}
 
-	amount := SignedAmount(billType, charge.Total(freight))
+	amount := SignedAmount(billType, allocated.Amount)
 	unitPrice := amount.Div(quantity)
 
 	line := &invoice.InvoiceLine{
@@ -110,6 +200,9 @@ func accessorialLine(
 			line.RateUnit = definition.RateUnit
 		}
 	}
+
+	line.Description = ShareDescription(line.Description, allocated)
+	stampShare(line, allocated)
 
 	return line
 }

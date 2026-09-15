@@ -1,0 +1,103 @@
+fragment CreatedInvoiceFields on Invoice {
+  id
+  number
+  customerId
+  billToName
+  totalAmount
+  currencyCode
+  isSplitBill
+}
+
+mutation CreateInvoicesFromShipments($shipmentIds: [ID!]!, $offCycleReason: String) {
+  createInvoicesFromShipments(shipmentIds: $shipmentIds, offCycleReason: $offCycleReason) {
+    invoices {
+      ...CreatedInvoiceFields
+    }
+    primary {
+      ...CreatedInvoiceFields
+    }
+  }
+}
+
+mutation CreateInvoicesFromOrder($orderId: ID!, $offCycleReason: String) {
+  createInvoicesFromOrder(orderId: $orderId, offCycleReason: $offCycleReason) {
+    invoices {
+      ...CreatedInvoiceFields
+    }
+    primary {
+      ...CreatedInvoiceFields
+    }
+  }
+}
+
+mutation VoidInvoice($input: VoidInvoiceInput!) {
+  voidInvoice(input: $input) {
+    invoice {
+      id
+      number
+      status
+      voidedAt
+      voidReason
+      voidDisposition
+      voidedByAdjustmentId
+    }
+    adjustmentId
+    pendingApproval
+    releasedQueueItemIds
+  }
+}
+
+mutation CreateMemo($input: CreateMemoInput!) {
+  createMemo(input: $input) {
+    id
+    number
+    billType
+    status
+    scope
+    customerId
+    totalAmount
+    currencyCode
+    memoKind
+    memoReason
+    referenceInvoiceId
+  }
+}
+
+mutation SendInvoiceEdi($invoiceId: ID!, $force: Boolean) {
+  sendInvoiceEdi(invoiceId: $invoiceId, force: $force) {
+    invoiceId
+    status
+    workflowId
+    workflowRunId
+  }
+}
+
+mutation ApplyCreditMemo($input: ApplyCreditMemoInput!) {
+  applyCreditMemo(input: $input) {
+    ...CreditMemoApplicationFields
+  }
+}
+
+mutation UnapplyCreditMemoApplication($input: UnapplyCreditMemoApplicationInput!) {
+  unapplyCreditMemoApplication(input: $input) {
+    ...CreditMemoApplicationFields
+  }
+}
+
+mutation OpenInvoiceDispute($input: OpenInvoiceDisputeInput!) {
+  openInvoiceDispute(input: $input) {
+    ...InvoiceDisputeFields
+  }
+}
+
+mutation ResolveInvoiceDispute($input: ResolveInvoiceDisputeInput!) {
+  resolveInvoiceDispute(input: $input) {
+    ...InvoiceDisputeFields
+  }
+}
+
+mutation WithdrawInvoiceDispute($input: WithdrawInvoiceDisputeInput!) {
+  withdrawInvoiceDispute(input: $input) {
+    ...InvoiceDisputeFields
+  }
+}

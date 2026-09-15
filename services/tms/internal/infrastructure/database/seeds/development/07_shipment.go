@@ -25,11 +25,13 @@ type ShipmentSeed struct {
 	seedhelpers.BaseSeed
 }
 
+const shipmentSeedProPrefix = "SEED-SHP-"
+
 func NewShipmentSeed() *ShipmentSeed {
 	seed := &ShipmentSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"Shipment",
-		"1.0.0",
+		"1.1.0",
 		"Creates sample shipments with moves, stops, commodities, and charges for development",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -65,6 +67,22 @@ func (s *ShipmentSeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			if err = s.createShipments(ctx, tx, sc, org.ID, org.BusinessUnitID); err != nil {
 				return fmt.Errorf("create shipments: %w", err)
+			}
+
+			backfilled, err := backfillSeededRatingDetails(ctx, tx, seededRatingBackfill{
+				orgID:     org.ID,
+				buID:      org.BusinessUnitID,
+				proPrefix: shipmentSeedProPrefix,
+				now:       timeutils.NowUnix(),
+			})
+			if err != nil {
+				return fmt.Errorf("backfill shipment rating details: %w", err)
+			}
+			if backfilled > 0 {
+				seedhelpers.LogSuccess(
+					"Backfilled rating details on seeded shipments",
+					fmt.Sprintf("- Stamped %d shipments", backfilled),
+				)
 			}
 
 			return nil
@@ -724,6 +742,23 @@ func (s *ShipmentSeed) createShipments(
 			},
 			RatingUnit: 1,
 		},
+	}
+
+	templatesByID := map[pulid.ID]*formulatemplate.FormulaTemplate{
+		flatRateTemplate.ID: &flatRateTemplate,
+		perMileTemplate.ID:  &perMileTemplate,
+		perStopTemplate.ID:  &perStopTemplate,
+	}
+	for i := range allShipments {
+		template, ok := templatesByID[allShipments[i].FormulaTemplateID]
+		if !ok {
+			return fmt.Errorf(
+				"formula template %s for shipment %s not loaded",
+				allShipments[i].FormulaTemplateID,
+				allShipments[i].ProNumber,
+			)
+		}
+		allShipments[i].RatingDetail = seededRatingDetail(&allShipments[i], template, now)
 	}
 
 	_, err = tx.NewInsert().Model(&allShipments).Exec(ctx)

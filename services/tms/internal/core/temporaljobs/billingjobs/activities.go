@@ -34,6 +34,11 @@ type ActivitiesParams struct {
 	AuditService      services.AuditService
 	InvoiceRunSweeper services.InvoiceRunSweeper
 	Logger            *zap.Logger
+
+	LateChargeService  services.LateChargeService        `optional:"true"`
+	LateChargeRepo     repositories.LateChargeRepository `optional:"true"`
+	BillingControlRepo repositories.BillingControlRepository
+	EDIService         services.EDIService `optional:"true"`
 }
 
 type Activities struct {
@@ -46,6 +51,11 @@ type Activities struct {
 	auditService      services.AuditService
 	invoiceRunSweeper services.InvoiceRunSweeper
 	logger            *zap.Logger
+
+	lateChargeService  services.LateChargeService
+	lateChargeRepo     repositories.LateChargeRepository
+	billingControlRepo repositories.BillingControlRepository
+	ediService         services.EDIService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -58,7 +68,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 		documentTypeRepo:  p.DocumentTypeRepo,
 		auditService:      p.AuditService,
 		invoiceRunSweeper: p.InvoiceRunSweeper,
-		logger:            p.Logger.Named("billing-activities"),
+
+		lateChargeService:  p.LateChargeService,
+		lateChargeRepo:     p.LateChargeRepo,
+		billingControlRepo: p.BillingControlRepo,
+		ediService:         p.EDIService,
+		logger:             p.Logger.Named("billing-activities"),
 	}
 }
 
@@ -80,12 +95,13 @@ func (a *Activities) AutoPostInvoiceActivity(
 		return nil, err
 	}
 
-	if current.Status == invoice.StatusPosted {
+	if current.Status == invoice.StatusPosted || current.Status == invoice.StatusVoided {
 		return &AutoPostInvoiceResult{
 			InvoiceID:     current.ID,
 			PostedAt:      derefInt64(current.PostedAt),
 			CompletedAt:   timeutils.NowUnix(),
 			AlreadyPosted: true,
+			Voided:        current.Status == invoice.StatusVoided,
 		}, nil
 	}
 
@@ -163,12 +179,9 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 	if err != nil {
 		return nil, err
 	}
-	if current.ShipmentID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"shipmentId",
-			errortypes.ErrRequired,
-			"Shipment ID is required to store generated invoice PDFs as shipment documents",
-		)
+	resource, err := invoicePDFResource(current)
+	if err != nil {
+		return nil, err
 	}
 
 	preview, err := a.invoiceService.RenderPreview(ctx, &services.InvoicePreviewRequest{
@@ -194,8 +207,8 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 	session, err := a.uploadService.CreateSession(ctx, &services.CreateSessionRequest{
 		TenantInfo:     tenantInfo,
 		Actor:          actor,
-		ResourceID:     current.ShipmentID.String(),
-		ResourceType:   "shipment",
+		ResourceID:     resource.ID,
+		ResourceType:   resource.Type,
 		FileName:       preview.FileName,
 		FileSize:       preview.SizeBytes,
 		ContentType:    preview.ContentType,
@@ -329,8 +342,12 @@ func (a *Activities) invoicePDFLineageID(
 	if err != nil {
 		return "", err
 	}
-	if currentPDF.ResourceType != "shipment" ||
-		currentPDF.ResourceID != entity.ShipmentID.String() ||
+	resource, err := invoicePDFResource(entity)
+	if err != nil {
+		return "", nil //nolint:nilerr // an unanchorable invoice simply starts a new lineage
+	}
+	if currentPDF.ResourceType != resource.Type ||
+		currentPDF.ResourceID != resource.ID ||
 		!currentPDF.IsCurrentVersion {
 		return "", nil
 	}
@@ -421,6 +438,46 @@ func (a *Activities) recordGeneratedInvoicePDF(
 	); err != nil {
 		activity.GetLogger(ctx).Warn(
 			"could not record the generated invoice PDF", "error", err,
+		)
+	}
+}
+
+// invoicePDFDocumentResource is the record a generated invoice PDF is filed
+// under: the shipment for a shipment invoice, the order for an order invoice,
+// and the billed customer for statements and memos, which have no single
+// shipment to hang a document on.
+type invoicePDFDocumentResource struct {
+	Type string
+	ID   string
+}
+
+func invoicePDFResource(entity *invoice.Invoice) (invoicePDFDocumentResource, error) {
+	if entity == nil {
+		return invoicePDFDocumentResource{}, errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrRequired,
+			"Invoice is required to store generated invoice PDFs",
+		)
+	}
+	if entity.Status == invoice.StatusVoided {
+		return invoicePDFDocumentResource{}, errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Voided invoices do not generate documents",
+		)
+	}
+	switch {
+	case entity.ShipmentID.IsNotNil():
+		return invoicePDFDocumentResource{Type: "shipment", ID: entity.ShipmentID.String()}, nil
+	case entity.OrderID.IsNotNil():
+		return invoicePDFDocumentResource{Type: "order", ID: entity.OrderID.String()}, nil
+	case entity.CustomerID.IsNotNil():
+		return invoicePDFDocumentResource{Type: "customer", ID: entity.CustomerID.String()}, nil
+	default:
+		return invoicePDFDocumentResource{}, errortypes.NewValidationError(
+			"customerId",
+			errortypes.ErrRequired,
+			"Invoice has no shipment, order or customer to store generated PDFs against",
 		)
 	}
 }

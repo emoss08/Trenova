@@ -62,6 +62,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpUpdate),
 		h.reverse,
 	)
+	api.POST(
+		"/credit-memo-applications/",
+		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpCreate),
+		h.applyCreditMemo,
+	)
+	api.POST(
+		"/credit-memo-applications/:applicationID/unapply/",
+		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpUpdate),
+		h.unapplyCreditMemoApplication,
+	)
 }
 
 func (h *Handler) list(c *gin.Context) {
@@ -200,4 +210,64 @@ func (h *Handler) reverse(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+// applyCreditMemo settles open invoices with a posted credit memo.
+func (h *Handler) applyCreditMemo(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(serviceports.ApplyCreditMemoRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	applications, err := h.service.ApplyCreditMemo(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, applications)
+}
+
+// unapplyCreditMemoApplication takes one credit memo application back.
+func (h *Handler) unapplyCreditMemoApplication(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	applicationID, err := pulid.MustParse(c.Param("applicationID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(serviceports.UnapplyCreditMemoApplicationRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.ApplicationID = applicationID
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	application, err := h.service.UnapplyCreditMemoApplication(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, application)
 }

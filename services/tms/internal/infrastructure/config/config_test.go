@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemporalConfig_GetNamespace(t *testing.T) {
@@ -21,6 +23,91 @@ func TestTemporalConfig_GetNamespace(t *testing.T) {
 		c := &TemporalConfig{Namespace: "custom-ns"}
 		assert.Equal(t, "custom-ns", c.GetNamespace())
 	})
+}
+
+func TestTemporalConfig_Validation(t *testing.T) {
+	t.Parallel()
+
+	security := TemporalSecurityConfig{EncryptionKeyID: "local-dev"}
+
+	tests := []struct {
+		name    string
+		cfg     TemporalConfig
+		wantErr bool
+	}{
+		{
+			name: "host port only",
+			cfg:  TemporalConfig{HostPort: "localhost:7233", Security: security},
+		},
+		{
+			name: "profile without host port",
+			cfg:  TemporalConfig{Profile: "cloud", Security: security},
+		},
+		{
+			name:    "neither host port nor profile",
+			cfg:     TemporalConfig{Security: security},
+			wantErr: true,
+		},
+		{
+			name:    "invalid host port",
+			cfg:     TemporalConfig{HostPort: "not a host", Security: security},
+			wantErr: true,
+		},
+		{
+			name: "client certificate without key",
+			cfg: TemporalConfig{
+				HostPort: "localhost:7233",
+				TLS:      TemporalTLSConfig{ClientCertPath: "client.pem"},
+				Security: security,
+			},
+			wantErr: true,
+		},
+		{
+			name: "client certificate with key",
+			cfg: TemporalConfig{
+				HostPort: "localhost:7233",
+				TLS: TemporalTLSConfig{
+					ClientCertPath: "client.pem",
+					ClientKeyPath:  "client.key",
+				},
+				Security: security,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validator.New().Struct(tt.cfg)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestTemporalConfig_UsesProfile(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, (&TemporalConfig{}).UsesProfile())
+	assert.False(t, (&TemporalConfig{Profile: "   "}).UsesProfile())
+	assert.True(t, (&TemporalConfig{Profile: "cloud"}).UsesProfile())
+}
+
+func TestTemporalTLSConfig_IsEnabled(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, (&TemporalTLSConfig{}).IsEnabled())
+	assert.True(t, (&TemporalTLSConfig{Enabled: true}).IsEnabled())
+	assert.True(t, (&TemporalTLSConfig{ServerName: "temporal.example.com"}).IsEnabled())
+	assert.True(t, (&TemporalTLSConfig{ServerCACertPath: "ca.pem"}).IsEnabled())
+	assert.True(
+		t,
+		(&TemporalTLSConfig{ClientCertPath: "c.pem", ClientKeyPath: "c.key"}).IsEnabled(),
+	)
 }
 
 func TestTemporalConfig_GetIdentity(t *testing.T) {

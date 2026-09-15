@@ -2,6 +2,7 @@ package detentionrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -376,4 +378,56 @@ func (r *occurrenceRepository) ShipmentAccrued(
 	}
 
 	return total.Decimal, nil
+}
+
+func (r *occurrenceRepository) LinkCharges(
+	ctx context.Context,
+	tx bun.IDB,
+	req *repositories.LinkOccurrenceChargesRequest,
+) error {
+	if req == nil || req.ShipmentID.IsNil() {
+		return nil
+	}
+
+	cols := buncolgen.DetentionOccurrenceColumns
+	linked := make([]pulid.ID, 0, len(req.ChargeOccurrences)*2)
+
+	for chargeID, occurrenceIDs := range req.ChargeOccurrences {
+		if chargeID.IsNil() || len(occurrenceIDs) == 0 {
+			continue
+		}
+
+		linked = append(linked, occurrenceIDs...)
+
+		if _, err := tx.NewUpdate().
+			Model((*detention.DetentionOccurrence)(nil)).
+			Set(cols.AdditionalChargeID.Set(), chargeID).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ShipmentID.Eq(), req.ShipmentID).
+					Where(cols.ID.In(), bun.In(occurrenceIDs))
+			}).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("link detention occurrences to charge %s: %w", chargeID, err)
+		}
+	}
+
+	stale := tx.NewUpdate().
+		Model((*detention.DetentionOccurrence)(nil)).
+		Set(cols.AdditionalChargeID.SetNull()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			uq = buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ShipmentID.Eq(), req.ShipmentID).
+				Where(cols.AdditionalChargeID.IsNotNull())
+			if len(linked) > 0 {
+				uq = uq.Where(cols.ID.NotIn(), bun.In(linked))
+			}
+			return uq
+		})
+
+	if _, err := stale.Exec(ctx); err != nil {
+		return fmt.Errorf("release stale detention charge links: %w", err)
+	}
+
+	return nil
 }

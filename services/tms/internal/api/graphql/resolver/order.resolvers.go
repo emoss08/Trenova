@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -127,7 +129,7 @@ func (r *mutationResolver) DetachOrderShipment(ctx context.Context, orderID stri
 	)
 }
 
-func (r *mutationResolver) AddOrderCharge(ctx context.Context, orderID string, description string, amount string) (*order.Order, error) {
+func (r *mutationResolver) AddOrderCharge(ctx context.Context, orderID string, description string, amount string, allocations []*gqlmodel.ChargeAllocationInput) (*order.Order, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -143,12 +145,29 @@ func (r *mutationResolver) AddOrderCharge(ctx context.Context, orderID string, d
 		return nil, errortypes.NewValidationError("amount", errortypes.ErrInvalid, "Amount must be a valid number")
 	}
 
-	return r.orderService.AddCharge(
+	var rows []*shipmentdomain.ChargeAllocation
+	if allocations != nil {
+		rows, err = chargeAllocationsFromInput(
+			allocations,
+			shipmentdomain.ChargeAllocationKindOrderCharge,
+			"allocations",
+			authCtx,
+			nil,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return r.orderService.AddChargeWithAllocations(
 		ctx,
-		tenantInfo(authCtx),
-		parsedOrderID,
-		description,
-		parsedAmount,
+		&orderservice.AddChargeRequest{
+			TenantInfo:  tenantInfo(authCtx),
+			OrderID:     parsedOrderID,
+			Description: description,
+			Amount:      parsedAmount,
+			Allocations: rows,
+		},
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -172,6 +191,20 @@ func (r *mutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel
 		return nil, errortypes.NewValidationError("amount", errortypes.ErrInvalid, "Amount must be a valid number")
 	}
 
+	var rows []*shipmentdomain.ChargeAllocation
+	if input.Allocations != nil {
+		rows, err = chargeAllocationsFromInput(
+			input.Allocations,
+			shipmentdomain.ChargeAllocationKindOrderCharge,
+			"allocations",
+			authCtx,
+			nil,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return r.orderService.UpdateCharge(
 		ctx,
 		&orderservice.UpdateChargeRequest{
@@ -181,6 +214,47 @@ func (r *mutationResolver) UpdateOrderCharge(ctx context.Context, input gqlmodel
 			Description: input.Description,
 			Amount:      parsedAmount,
 			Version:     int64(input.Version),
+			Allocations: rows,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *mutationResolver) SetOrderChargeAllocations(ctx context.Context, input gqlmodel.SetOrderChargeAllocationsInput) (*order.Order, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrder, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedOrderID, err := pulid.MustParse(input.OrderID)
+	if err != nil {
+		return nil, err
+	}
+	parsedChargeID, err := pulid.MustParse(input.ChargeID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := chargeAllocationsFromInput(
+		input.Allocations,
+		shipmentdomain.ChargeAllocationKindOrderCharge,
+		"allocations",
+		authCtx,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []*shipmentdomain.ChargeAllocation{}
+	}
+
+	return r.orderService.SetChargeAllocations(
+		ctx,
+		&orderservice.SetChargeAllocationsRequest{
+			TenantInfo:  tenantInfo(authCtx),
+			OrderID:     parsedOrderID,
+			ChargeID:    parsedChargeID,
+			Allocations: rows,
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -292,14 +366,32 @@ func (r *orderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmo
 		if charge == nil {
 			continue
 		}
+		allocations := charge.Allocations
+		if allocations == nil {
+			allocations = []*shipmentdomain.ChargeAllocation{}
+			if l, ok := loaders.FromContext(ctx); ok && l != nil {
+				loaded, loadErr := l.ChargeAllocationsByOrderChargeID.Load(ctx, charge.ID.String())
+				if loadErr != nil {
+					return nil, loadErr
+				}
+				allocations = loaded
+			}
+		}
+		var invoicedAt *int
+		if charge.InvoicedAt != 0 {
+			at := int(charge.InvoicedAt)
+			invoicedAt = &at
+		}
 		charges = append(charges, &gqlmodel.OrderCharge{
 			ID:          charge.ID.String(),
 			OrderID:     charge.OrderID.String(),
 			Description: charge.Description,
 			Amount:      charge.Amount.String(),
 			InvoiceID:   idPtr(charge.InvoiceID),
+			InvoicedAt:  invoicedAt,
 			Version:     int(charge.Version),
 			CreatedAt:   int(charge.CreatedAt),
+			Allocations: allocations,
 		})
 	}
 	return charges, nil

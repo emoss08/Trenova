@@ -4,6 +4,7 @@ import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
 import {
   PlainInvoiceScopeBadge,
+  PlainInvoiceSplitBadge,
   PlainInvoiceStatusBadge,
   PlainSettlementStatusBadge,
 } from "@trenova/shared/components/status-badge";
@@ -21,8 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
+import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { formatUnixDate } from "@trenova/shared/lib/date";
+import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
 import { queries } from "@/lib/queries";
 import { formatCurrency } from "@trenova/shared/lib/utils";
@@ -48,9 +50,13 @@ import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
+import { InvoiceActionsMenu } from "./invoice-actions-menu";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
 import { InvoiceChargesTab } from "./invoice-charges-tab";
+import { InvoiceDisputesTab } from "./invoice-disputes-tab";
+import { InvoiceEdiDeliveryCard } from "./invoice-edi-delivery-card";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
+import { InvoicePaymentsTab } from "./invoice-payments-tab";
 import { InvoiceShareDialog } from "./invoice-share-dialog";
 import { invoiceDetailTabSearchParamsParser, isInvoiceDetailTab } from "../use-invoice-state";
 
@@ -76,6 +82,12 @@ export default function InvoiceDetailPane({
   const [{ tab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
   const { data: invoice, isLoading } = useQuery({
     ...queries.invoice.get(selectedInvoiceId ?? ""),
+    enabled: !!selectedInvoiceId,
+  });
+  // The AR side (balance, applications, disputes, EDI plan) is resolver-only
+  // and is read beside the REST detail rather than folded into it.
+  const arContextQuery = useQuery({
+    ...queries.invoice.arContext(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
   });
   const lineageQuery = useQuery({
@@ -133,6 +145,9 @@ export default function InvoiceDetailPane({
   const isCurrentVersion =
     !invoice.correctionGroupId ||
     lineageQuery.data?.correctionGroup.currentInvoiceId === invoice.id;
+  const arContext = arContextQuery.data ?? null;
+  const daysPastDue = arContext?.daysPastDue ?? null;
+  const isVoided = invoice.status === "Voided";
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 space-y-4 border-b px-4 py-4">
@@ -142,6 +157,7 @@ export default function InvoiceDetailPane({
             <PlainInvoiceScopeBadge scope={invoice.scope} />
             <PlainInvoiceStatusBadge status={invoice.status} />
             <PlainSettlementStatusBadge status={invoice.settlementStatus} />
+            <PlainInvoiceSplitBadge isSplitBill={invoice.isSplitBill} />
           </div>
           <div className="flex items-center gap-2">
             {invoice.status === "Posted" ? (
@@ -149,16 +165,19 @@ export default function InvoiceDetailPane({
                 <CheckIcon className="size-3.5 text-green-600" />
                 {t("Posted")}
               </span>
-            ) : (
+            ) : isVoided ? null : (
               <Button size="sm" onClick={() => postInvoice(invoice.id)} disabled={isPosting}>
                 <SendIcon className="size-3.5" />
                 {t("Post Invoice")}
               </Button>
             )}
             <InvoiceShareDialog invoice={invoice} />
-            <InvoiceAdjustmentPanel invoice={invoice} />
+            {isVoided ? null : <InvoiceAdjustmentPanel invoice={invoice} />}
+            <InvoiceActionsMenu invoice={invoice} arContext={arContext} />
           </div>
         </div>
+
+        {isVoided ? <VoidedNotice invoice={invoice} /> : null}
 
         <div className="flex items-baseline gap-3">
           <span className="text-2xl font-bold tabular-nums">
@@ -172,6 +191,9 @@ export default function InvoiceDetailPane({
           <MetadataCell label={t("Due Date")} value={formatUnixDate(invoice.dueDate)} />
           <MetadataCell label={t("Payment Terms")} value={invoice.paymentTerm} />
           <MetadataCell label={t("Bill Type")} value={invoice.billType} />
+          {daysPastDue !== null && daysPastDue > 0 ? (
+            <MetadataCell label={t("Days past due")} value={String(daysPastDue)} />
+          ) : null}
           {billingPeriod ? (
             <MetadataCell label={t("Billing Period")} value={billingPeriod} />
           ) : null}
@@ -206,6 +228,8 @@ export default function InvoiceDetailPane({
           <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
           <TabsTrigger value="delivery">{t("Delivery")}</TabsTrigger>
           <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
+          <TabsTrigger value="payments">{t("Payments")}</TabsTrigger>
+          <TabsTrigger value="disputes">{t("Disputes")}</TabsTrigger>
           <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
           <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
         </TabsList>
@@ -221,11 +245,29 @@ export default function InvoiceDetailPane({
         </TabsContent>
 
         <TabsContent value="delivery" className="mt-0 min-h-0 flex-1">
-          <InvoiceDeliveryTab invoice={invoice} />
+          <InvoiceDeliveryTab
+            invoice={invoice}
+            arContext={arContext}
+            arContextLoading={arContextQuery.isLoading}
+          />
         </TabsContent>
 
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
           <InvoiceChargesTab invoice={invoice} />
+        </TabsContent>
+        <TabsContent value="payments" className="mt-0 min-h-0 flex-1">
+          <InvoicePaymentsTab
+            invoice={invoice}
+            arContext={arContext}
+            isLoading={arContextQuery.isLoading}
+          />
+        </TabsContent>
+        <TabsContent value="disputes" className="mt-0 min-h-0 flex-1">
+          <InvoiceDisputesTab
+            invoice={invoice}
+            arContext={arContext}
+            isLoading={arContextQuery.isLoading}
+          />
         </TabsContent>
         <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
           <div className="flex h-full flex-col">
@@ -272,7 +314,39 @@ export default function InvoiceDetailPane({
   );
 }
 
-function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
+function VoidedNotice({ invoice }: { invoice: Invoice }) {
+  const t = useT();
+
+  return (
+    <div className="flex gap-3 rounded-md border border-red-300 bg-red-50/60 p-3 dark:border-red-900 dark:bg-red-950/30">
+      <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400" />
+      <div className="min-w-0 text-sm">
+        <p className="font-medium text-red-800 dark:text-red-200">
+          <span>{t("Voided {0}", formatUnixDateTime(invoice.voidedAt))}</span>
+          <span className="mx-1">·</span>
+          <span>
+            {invoice.voidDisposition === "Rebill"
+              ? t("Released for rebilling")
+              : t("Freight retired, not rebilled")}
+          </span>
+        </p>
+        {invoice.voidReason ? (
+          <p className="mt-0.5 text-red-800/80 dark:text-red-200/80">{invoice.voidReason}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceDeliveryTab({
+  invoice,
+  arContext,
+  arContextLoading,
+}: {
+  invoice: Invoice;
+  arContext: InvoiceArContext | null;
+  arContextLoading: boolean;
+}) {
   const t = useT();
 
   const queryClient = useQueryClient();
@@ -392,6 +466,12 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
               <DeliveryNotice tone="warning" message={invoice.lastSendWarning} />
             ) : null}
           </div>
+
+          <InvoiceEdiDeliveryCard
+            invoice={invoice}
+            arContext={arContext}
+            isLoading={arContextLoading}
+          />
 
           <div className="border-border rounded-md border p-4">
             <h3 className="text-sm font-semibold">{t("Send Plan")}</h3>
@@ -803,6 +883,9 @@ function getInvoiceSendDisabledReason(
   sendPlan: InvoiceSendPlan | undefined,
   sendPlanLoading: boolean,
 ): string | null {
+  if (invoice.status === "Voided") {
+    return "A voided invoice is never sent.";
+  }
   if (sendPlanLoading) {
     return "Checking invoice email configuration.";
   }

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,6 +57,7 @@ func (r *repository) filterQuery(
 
 	q = q.Relation(buncolgen.BillingQueueItemRelations.Shipment).
 		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.Customer)).
+		Relation(buncolgen.BillingQueueItemRelations.BillToCustomer).
 		Relation(buncolgen.BillingQueueItemRelations.AssignedBiller).
 		Relation(buncolgen.BillingQueueItemRelations.CanceledBy)
 
@@ -106,6 +108,8 @@ func (r *repository) GetByID(
 		Relation(buncolgen.BillingQueueItemRelations.Shipment).
 		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.Customer)).
 		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.AdditionalCharges)).
+		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.ChargeAllocations)).
+		Relation(buncolgen.BillingQueueItemRelations.BillToCustomer).
 		Relation(buncolgen.BillingQueueItemRelations.AssignedBiller).
 		Relation(buncolgen.BillingQueueItemRelations.CanceledBy).
 		Scan(ctx); err != nil {
@@ -252,6 +256,9 @@ func (r *repository) MarkPostedForInvoice(
 		if len(req.ShipmentIDs) > 0 {
 			q = q.Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs))
 		}
+		if req.PayerID.IsNotNil() {
+			q = q.Where(bqi.BillToCustomerID.Eq(), req.PayerID)
+		}
 		return q
 	})
 }
@@ -285,9 +292,13 @@ func (r *repository) markPosted(
 }
 
 // syncShipmentTransferState copies each shipment's billing-queue state onto the
-// shipment from its latest invoice item, inside the caller's transaction. Every write
-// to a billing queue item goes through this repository, so this is the only writer of
-// the shipment's billing_transfer_status and transferred_to_billing_at columns.
+// shipment inside the caller's transaction. Every write to a billing queue item
+// goes through this repository, so this is the only writer of the shipment's
+// billing_transfer_status and transferred_to_billing_at columns.
+//
+// A split-billed shipment carries one invoice item per payer, and the shipment
+// reflects the least advanced of them: it is not posted until every payer's item
+// is, and a payer's item still in review keeps it in review.
 func (r *repository) syncShipmentTransferState(
 	ctx context.Context,
 	ti pagination.TenantInfo,
@@ -308,7 +319,9 @@ func (r *repository) syncShipmentTransferState(
 		Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
 		Where(bqi.ShipmentID.In(), bun.List(shipmentIDs)).
 		Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
-		Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderDesc(), bqi.ID.OrderDesc())
+		OrderExpr(bqi.ShipmentID.OrderAsc()).
+		OrderExpr(bqi.Status.Expr(transferStatusRankExpr)+" ASC").
+		Order(bqi.CreatedAt.OrderDesc(), bqi.ID.OrderDesc())
 
 	if _, err := db.NewUpdate().
 		Model((*shipment.Shipment)(nil)).
@@ -326,10 +339,108 @@ func (r *repository) syncShipmentTransferState(
 	return nil
 }
 
-func (r *repository) ExistsByShipmentAndType(
+// ReleaseForInvoice hands back every item a voided invoice billed. The anchor
+// is found by id because a draft never wrote the back-link; the rest by the
+// link. Released items get a fresh number: the voided invoice keeps the old one.
+func (r *repository) ReleaseForInvoice(
+	ctx context.Context,
+	req *repositories.ReleaseForInvoiceRequest,
+) ([]*billingqueue.BillingQueueItem, error) {
+	if req == nil || req.InvoiceID.IsNil() {
+		return nil, nil
+	}
+
+	bqi := buncolgen.BillingQueueItemColumns
+	db := r.db.DBForContext(ctx)
+
+	items := make([]*billingqueue.BillingQueueItem, 0, 1)
+	if err := db.NewSelect().
+		Model(&items).
+		Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+				inner = inner.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
+				if req.AnchorItemID.IsNotNil() {
+					inner = inner.WhereOr(bqi.ID.Eq(), req.AnchorItemID)
+				}
+				return inner
+			})
+		}).
+		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
+		For("UPDATE").
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("load billing queue items for release: %w", err)
+	}
+
+	released := make([]*billingqueue.BillingQueueItem, 0, len(items))
+	shipmentIDs := make([]pulid.ID, 0, len(items))
+	for _, item := range items {
+		target := billingqueue.StatusCanceled
+		if req.Rebill {
+			target = billingqueue.StatusApproved
+		}
+		if !billingqueue.IsAllowedVoidReleaseTransition(item.Status, target) {
+			return nil, errortypes.NewValidationError(
+				"invoiceId",
+				errortypes.ErrInvalidOperation,
+				"Billing queue item {0} cannot be released from {1}",
+				item.Number,
+				string(item.Status),
+			)
+		}
+
+		update := db.NewUpdate().
+			Model((*billingqueue.BillingQueueItem)(nil)).
+			Where(bqi.ID.Eq(), item.ID).
+			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
+			}).
+			Set(bqi.Status.Set(), target).
+			Set(bqi.InvoiceID.SetNull()).
+			Set(bqi.Version.Inc(1))
+		item.Status = target
+		item.InvoiceID = pulid.Nil
+
+		if req.Rebill {
+			if req.RenumberFn != nil {
+				number, err := req.RenumberFn(ctx, item.BillType)
+				if err != nil {
+					return nil, err
+				}
+				update = update.Set(bqi.Number.Set(), number)
+				item.Number = number
+			}
+		} else {
+			update = update.
+				Set(bqi.CanceledByID.Set(), req.CanceledByID).
+				Set(bqi.CanceledAt.Set(), req.CanceledAt).
+				Set(bqi.CancelReason.Set(), req.CancelReason)
+			item.CanceledByID = req.CanceledByID
+			at := req.CanceledAt
+			item.CanceledAt = &at
+			item.CancelReason = req.CancelReason
+		}
+		if _, err := update.Exec(ctx); err != nil {
+			return nil, fmt.Errorf("release billing queue item %s: %w", item.ID, err)
+		}
+		released = append(released, item)
+		if item.ShipmentID.IsNotNil() {
+			shipmentIDs = append(shipmentIDs, item.ShipmentID)
+		}
+	}
+
+	if err := r.syncShipmentTransferState(ctx, req.TenantInfo, shipmentIDs); err != nil {
+		return nil, err
+	}
+
+	return released, nil
+}
+
+func (r *repository) ExistsByShipmentPayerAndType(
 	ctx context.Context,
 	ti pagination.TenantInfo,
 	shipmentID pulid.ID,
+	payerID pulid.ID,
 	billType billingqueue.BillType,
 ) (bool, error) {
 	bqi := buncolgen.BillingQueueItemColumns
@@ -338,10 +449,46 @@ func (r *repository) ExistsByShipmentAndType(
 	return db.NewSelect().
 		Model((*billingqueue.BillingQueueItem)(nil)).
 		Where(bqi.ShipmentID.Eq(), shipmentID).
+		Where(bqi.BillToCustomerID.Eq(), payerID).
 		Where(bqi.BillType.Eq(), billType).
 		Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
 		Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
 		Exists(ctx)
+}
+
+// ListActiveInvoiceItemsByShipmentIDs returns, per shipment, the invoice items
+// that are neither posted nor canceled. Posting reads it to decide whether the
+// shipment is fully invoiced or another payer's share is still open.
+func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
+	ctx context.Context,
+	req *repositories.ListActiveInvoiceItemsRequest,
+) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
+	result := make(map[pulid.ID][]*billingqueue.BillingQueueItem, len(req.ShipmentIDs))
+	if len(req.ShipmentIDs) == 0 {
+		return result, nil
+	}
+
+	bqi := buncolgen.BillingQueueItemColumns
+	items := make([]*billingqueue.BillingQueueItem, 0, len(req.ShipmentIDs))
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model(&items).
+		Where(bqi.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+		Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
+		Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
+			billingqueue.StatusPosted,
+			billingqueue.StatusCanceled,
+		})).
+		Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
+		Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderAsc()).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list active billing queue items: %w", err)
+	}
+
+	for _, item := range items {
+		result[item.ShipmentID] = append(result[item.ShipmentID], item)
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetStatusCounts(
@@ -380,3 +527,16 @@ func tenantInfo(entity *billingqueue.BillingQueueItem) pagination.TenantInfo {
 		BuID:  entity.BusinessUnitID,
 	}
 }
+
+// transferStatusRankExpr orders billing-queue statuses from least to most
+// advanced, so the shipment's transfer state follows the payer furthest behind.
+const transferStatusRankExpr = `CASE {}
+	WHEN 'SentBackToOps' THEN 0
+	WHEN 'Exception' THEN 1
+	WHEN 'OnHold' THEN 1
+	WHEN 'ReadyForReview' THEN 2
+	WHEN 'InReview' THEN 3
+	WHEN 'Approved' THEN 5
+	WHEN 'Canceled' THEN 8
+	WHEN 'Posted' THEN 9
+	ELSE 4 END`

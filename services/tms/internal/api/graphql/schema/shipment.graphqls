@@ -136,6 +136,65 @@ type ShipmentConnection {
   totalCount: Int
 }
 
+"Who is expected to pay the carrier, as printed on the bill of lading."
+enum FreightTerms {
+  Prepaid
+  Collect
+  ThirdParty
+}
+
+enum ChargeAllocationKind {
+  Freight
+  Accessorial
+  OrderCharge
+}
+
+enum ChargeAllocationMethod {
+  Percent
+  Amount
+}
+
+"""
+One payer's share of one charge. A charge with no allocations is billed in
+full to the shipment's payer, so rows exist only where billing departs from
+that. Percent rows for a charge total 100; amount rows total the charge.
+"""
+type ChargeAllocation {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID
+  additionalChargeId: ID
+  orderChargeId: ID
+  chargeKind: ChargeAllocationKind!
+  billToCustomerId: ID!
+  method: ChargeAllocationMethod!
+  percent: Decimal
+  amount: Decimal
+  sequence: Int!
+  "The invoice this share was billed on, once it has been."
+  invoiceId: ID
+  invoicedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  billToCustomer: Customer
+}
+
+"What one payer owes on a shipment once every allocation is applied."
+type ShipmentBillingSplitSummary {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  "The shipment's own payer: its bill-to, or its customer when none is set."
+  isPrimary: Boolean!
+  freightAmount: Decimal!
+  accessorialAmount: Decimal!
+  totalAmount: Decimal!
+  "Whether any charge on the shipment is shared or redirected."
+  isSplit: Boolean!
+}
+
 type Shipment {
   id: ID!
   businessUnitId: ID!
@@ -144,6 +203,9 @@ type Shipment {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   customerId: ID!
+  "The customer billed by default. Null means the shipment's customer pays."
+  billToCustomerId: ID
+  freightTerms: FreightTerms!
   tractorTypeId: ID
   trailerTypeId: ID
   ownerId: ID
@@ -203,8 +265,16 @@ type Shipment {
   additionalCharges: [ShipmentAdditionalCharge!]!
   commodities: [ShipmentCommodity!]!
   customer: ShipmentCustomer
+  billToCustomer: ShipmentCustomer
   owner: User
   formulaTemplate: ShipmentFormulaTemplate
+  "Every allocation on the shipment, across freight and accessorials."
+  chargeAllocations: [ChargeAllocation!]!
+  """
+  What each payer owes. Populated when the shipment is read with its charges;
+  a list row carries none.
+  """
+  billingSplitSummary: [ShipmentBillingSplitSummary!]!
 }
 
 "One line of the arithmetic that produced the rate, in the order it was applied."
@@ -544,7 +614,11 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
+  isDetention: Boolean!
   detentionOccurrenceId: ID
+    @deprecated(
+      reason: "A detention charge bills every detained stop on the shipment; read the occurrences' additionalChargeId instead."
+    )
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -670,6 +744,18 @@ type ShipmentBillingRequirement {
   documentIds: [String!]!
 }
 
+"One payer's standing on a shipment."
+type ShipmentBillingPayerReadiness {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  isPrimary: Boolean!
+  shareAmount: Decimal!
+  creditStatus: String!
+  creditHold: Boolean!
+  shouldAutoApproveBilling: Boolean!
+}
+
 type ShipmentBillingReadiness {
   shipmentId: String!
   shipmentStatus: ShipmentStatus!
@@ -682,6 +768,10 @@ type ShipmentBillingReadiness {
   canMarkReadyToInvoice: Boolean!
   shouldAutoMarkReadyToInvoice: Boolean!
   shouldAutoTransferToBilling: Boolean!
+  "Whether every payer's profile lets this clean freight skip billing review."
+  shouldAutoApproveBilling: Boolean!
+  "Every payer with a share of the shipment, the shipment's own payer first."
+  payers: [ShipmentBillingPayerReadiness!]!
 }
 
 type ShipmentTotalsResponse {
@@ -769,14 +859,21 @@ type ShipmentBulkTransferToBillingResult {
   success: Boolean!
   "The shipment was Completed and this transfer marked it Ready to Invoice."
   markedReadyToInvoice: Boolean!
-  "The queue item the shipment became, when it transferred."
+  "The primary payer's queue item, when the shipment transferred."
   billingQueueItem: BillingQueueItem
+  "Every queue item the transfer created, one per payer."
+  billingQueueItems: [BillingQueueItem!]!
   failureCode: ShipmentBillingTransferFailureCode
   error: String
   "Required documents the readiness check found missing, whether or not they blocked the transfer."
   missingRequirements: [ShipmentBillingRequirement!]!
   "Readiness validation failures, whether or not they blocked the transfer."
   validationFailures: [ShipmentBillingValidation!]!
+}
+
+type ShipmentTransferToBillingResult {
+  items: [BillingQueueItem!]!
+  primary: BillingQueueItem!
 }
 
 type ShipmentBillingTransferCandidateIds {
@@ -799,6 +896,11 @@ type BillingQueueItem {
   businessUnitId: ID!
   shipmentId: ID
   orderId: ID
+  "The customer this item bills. A split shipment has one item per payer."
+  billToCustomerId: ID!
+  "This payer's share of the shipment's charges."
+  allocatedTotalAmount: Decimal!
+  billToCustomer: Customer
   assignedBillerId: ID
   number: String!
   status: BillingQueueStatus!
@@ -1490,6 +1592,9 @@ input ShipmentInput {
   serviceTypeId: ID!
   shipmentTypeId: ID!
   customerId: ID!
+  "Null bills the shipment to its customer."
+  billToCustomerId: ID
+  freightTerms: FreightTerms = Prepaid
   tractorTypeId: ID
   trailerTypeId: ID
   ownerId: ID
@@ -1531,6 +1636,13 @@ input ShipmentInput {
   moves: [ShipmentMoveInput!] = []
   additionalCharges: [ShipmentAdditionalChargeInput!] = []
   commodities: [ShipmentCommodityInput!] = []
+  """
+  How the freight charge is divided among payers. Omit to leave the split
+  untouched; an empty list bills all of it to the shipment's payer. When this
+  or any charge's allocations is sent, the save replaces every allocation on
+  the shipment, so send the whole picture.
+  """
+  freightAllocations: [ChargeAllocationInput!]
 }
 
 input ShipmentMoveInput {
@@ -1581,7 +1693,22 @@ input ShipmentAdditionalChargeInput {
   amount: Decimal = "0"
   unit: Int = 1
   fuelSurchargeProgramId: ID
-  detentionOccurrenceId: ID
+  detentionOccurrenceId: ID @deprecated(reason: "Ignored; the detention engine owns the link.")
+  version: Int
+  """
+  How this charge is divided among payers. Omit to leave the split untouched;
+  send an empty list to bill the whole charge to the shipment's payer.
+  """
+  allocations: [ChargeAllocationInput!]
+}
+
+input ChargeAllocationInput {
+  id: ID
+  billToCustomerId: ID!
+  method: ChargeAllocationMethod!
+  percent: Decimal
+  amount: Decimal
+  sequence: Int = 0
   version: Int
 }
 
@@ -1764,6 +1891,9 @@ extend type Mutation {
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+    @deprecated(reason: "Returns only the primary payer's item; use transferShipmentToBillingItems.")
+  "Queues the shipment for billing, one item per payer."
+  transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
   """

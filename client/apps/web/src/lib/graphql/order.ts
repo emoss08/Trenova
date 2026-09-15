@@ -3,26 +3,30 @@ import {
   AttachOrderShipmentsDocument,
   CancelOrderDocument,
   CloseOrderDocument,
-  CreateInvoiceFromOrderDocument,
-  CreateInvoiceFromShipmentsDocument,
   CreateOrderDocument,
   DetachOrderShipmentDocument,
   OrderDetailDocument,
   RemoveOrderChargeDocument,
+  SetOrderChargeAllocationsDocument,
   UpdateOrderChargeDocument,
   UpdateOrderDocument,
   type AddOrderChargeMutation,
   type AttachOrderShipmentsMutation,
   type CancelOrderMutation,
   type CloseOrderMutation,
-  type CreateInvoiceFromOrderMutation,
-  type CreateInvoiceFromShipmentsMutation,
   type DetachOrderShipmentMutation,
   type OrderDetailQuery,
   type OrderInput,
   type RemoveOrderChargeMutation,
+  type SetOrderChargeAllocationsMutation,
   type UpdateOrderChargeMutation,
+  type ChargeAllocationInput,
 } from "@trenova/graphql/generated/graphql";
+import {
+  createInvoicesFromOrder,
+  createInvoicesFromShipments,
+  type CreatedInvoice,
+} from "@/lib/graphql/invoice";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { OrderFormValues } from "@trenova/shared/types/order";
 
@@ -122,47 +126,37 @@ export async function detachOrderShipment(
 }
 
 /**
- * `offCycleReason` is only read for a customer on a periodic statement, where
- * invoicing freight on its own takes it off that statement. Omitting it there
- * fails with a validation error on `offCycleReason`, which is the signal to ask
- * the biller for one.
+ * Bills the order and returns the primary payer's invoice. A split-billed order
+ * produces one invoice per payer; use createInvoicesFromOrder for all of them.
+ * `offCycleReason` is required only when the customer is on a statement.
  */
 export async function createInvoiceFromOrder(
   orderId: string,
   offCycleReason?: string,
-): Promise<CreateInvoiceFromOrderMutation["createInvoiceFromOrder"]> {
-  const data = await requestGraphQL({
-    document: CreateInvoiceFromOrderDocument,
-    operationName: "CreateInvoiceFromOrder",
-    variables: { orderId, offCycleReason },
-  });
-
-  return data.createInvoiceFromOrder;
+): Promise<CreatedInvoice> {
+  const result = await createInvoicesFromOrder(orderId, offCycleReason);
+  return result.primary;
 }
 
 /** See createInvoiceFromOrder for what `offCycleReason` means. */
 export async function createInvoiceFromShipments(
   shipmentIds: string[],
   offCycleReason?: string,
-): Promise<CreateInvoiceFromShipmentsMutation["createInvoiceFromShipments"]> {
-  const data = await requestGraphQL({
-    document: CreateInvoiceFromShipmentsDocument,
-    operationName: "CreateInvoiceFromShipments",
-    variables: { shipmentIds, offCycleReason },
-  });
-
-  return data.createInvoiceFromShipments;
+): Promise<CreatedInvoice> {
+  const result = await createInvoicesFromShipments(shipmentIds, offCycleReason);
+  return result.primary;
 }
 
 export async function addOrderCharge(
   orderId: string,
   description: string,
   amount: string,
+  allocations?: ChargeAllocationInput[] | null,
 ): Promise<AddOrderChargeMutation["addOrderCharge"]> {
   const data = await requestGraphQL({
     document: AddOrderChargeDocument,
     operationName: "AddOrderCharge",
-    variables: { orderId, description, amount },
+    variables: { orderId, description, amount, allocations: allocations ?? undefined },
   });
 
   return data.addOrderCharge;
@@ -174,14 +168,29 @@ export async function updateOrderCharge(input: {
   description: string;
   amount: string;
   version: number;
+  allocations?: ChargeAllocationInput[] | null;
 }): Promise<UpdateOrderChargeMutation["updateOrderCharge"]> {
   const data = await requestGraphQL({
     document: UpdateOrderChargeDocument,
     operationName: "UpdateOrderCharge",
-    variables: { input },
+    variables: { input: { ...input, allocations: input.allocations ?? undefined } },
   });
 
   return data.updateOrderCharge;
+}
+
+export async function setOrderChargeAllocations(input: {
+  orderId: string;
+  chargeId: string;
+  allocations: ChargeAllocationInput[];
+}): Promise<SetOrderChargeAllocationsMutation["setOrderChargeAllocations"]> {
+  const data = await requestGraphQL({
+    document: SetOrderChargeAllocationsDocument,
+    operationName: "SetOrderChargeAllocations",
+    variables: { input },
+  });
+
+  return data.setOrderChargeAllocations;
 }
 
 export async function removeOrderCharge(

@@ -55,6 +55,10 @@ func TestGetByID_ExpandedDetailsPreloadsCommodityHazmat(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_id", "accessorial_charge_id", "method", "amount", "unit",
 		}))
+	dbMock.ExpectQuery(`(?s)SELECT .* FROM "charge_allocations" AS "chal".*"shipment_id" IN`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_id", "charge_kind", "bill_to_customer_id", "method", "sequence",
+		}))
 	dbMock.ExpectQuery(`(?s)SELECT .* FROM "shipment_commodities" AS "sc".*"shipment_id" IN`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_id", "commodity_id", "weight", "pieces",

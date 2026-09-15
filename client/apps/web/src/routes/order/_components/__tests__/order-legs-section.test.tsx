@@ -10,17 +10,32 @@ import { OrderLegsSection } from "../order-legs-section";
 
 const mocks = vi.hoisted(() => ({
   fetchOrderDetail: vi.fn(),
-  createInvoiceFromShipments: vi.fn(),
-  createInvoiceFromOrder: vi.fn(),
+  createInvoicesFromShipments: vi.fn(),
   detachOrderShipment: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/order", () => ({
   fetchOrderDetail: mocks.fetchOrderDetail,
-  createInvoiceFromShipments: mocks.createInvoiceFromShipments,
-  createInvoiceFromOrder: mocks.createInvoiceFromOrder,
   detachOrderShipment: mocks.detachOrderShipment,
 }));
+// Invoicing legs goes through the per-payer mutation: a split shipment yields
+// one invoice per payer, so the result is a list with the primary called out.
+vi.mock("@/lib/graphql/invoice", () => ({
+  createInvoicesFromShipments: mocks.createInvoicesFromShipments,
+}));
+
+function invoiceResult(...numbers: string[]) {
+  const invoices = numbers.map((number, index) => ({
+    id: `inv_${index + 1}`,
+    number,
+    customerId: `cus_${index + 1}`,
+    billToName: `Payer ${index + 1}`,
+    totalAmount: "100.00",
+    currencyCode: "USD",
+    isSplitBill: numbers.length > 1,
+  }));
+  return { invoices, primary: invoices[0] };
+}
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("../add-leg-dialog", () => ({ AddLegDialog: () => null }));
 vi.mock("../use-order-invalidation", () => ({
@@ -58,7 +73,7 @@ function renderSection(ui: ReactElement) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.createInvoiceFromShipments.mockResolvedValue({ id: "inv_1", number: "INV-1" });
+  mocks.createInvoicesFromShipments.mockResolvedValue(invoiceResult("INV-1"));
 });
 
 afterEach(cleanup);
@@ -86,9 +101,8 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(button);
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_3"], undefined),
+      expect(mocks.createInvoicesFromShipments).toHaveBeenCalledWith(["shp_1", "shp_3"], undefined),
     );
-    expect(mocks.createInvoiceFromOrder).not.toHaveBeenCalled();
   });
 
   it("uses the shipments path even when every leg is selected", async () => {
@@ -106,9 +120,8 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1", "shp_2"], undefined),
+      expect(mocks.createInvoicesFromShipments).toHaveBeenCalledWith(["shp_1", "shp_2"], undefined),
     );
-    expect(mocks.createInvoiceFromOrder).not.toHaveBeenCalled();
   });
 
   it("disables selection for a leg that cannot be invoiced and skips it in select-all", async () => {
@@ -134,7 +147,7 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
+      expect(mocks.createInvoicesFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
     );
   });
 
@@ -153,11 +166,11 @@ describe("OrderLegsSection leg selection", () => {
     await user.click(screen.getByRole("button", { name: /Create invoice from 1 leg/ }));
 
     expect(screen.getByText("Bill this leg on its own invoice?")).toBeInTheDocument();
-    expect(mocks.createInvoiceFromShipments).not.toHaveBeenCalled();
+    expect(mocks.createInvoicesFromShipments).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Create invoice" }));
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
+      expect(mocks.createInvoicesFromShipments).toHaveBeenCalledWith(["shp_1"], undefined),
     );
   });
 
@@ -201,7 +214,7 @@ describe("OrderLegsSection statement cadence guard", () => {
   // than surface as an error toast the biller can only give up on.
   it("asks for a reason instead of failing when the customer is on a statement", async () => {
     const user = userEvent.setup();
-    mocks.createInvoiceFromShipments.mockRejectedValueOnce(cadenceRefusal());
+    mocks.createInvoicesFromShipments.mockRejectedValueOnce(cadenceRefusal());
 
     renderSection(<Harness />);
     await screen.findByText("PRO-1");
@@ -218,9 +231,9 @@ describe("OrderLegsSection statement cadence guard", () => {
 
   it("retries with the reason the biller typed", async () => {
     const user = userEvent.setup();
-    mocks.createInvoiceFromShipments
+    mocks.createInvoicesFromShipments
       .mockRejectedValueOnce(cadenceRefusal())
-      .mockResolvedValueOnce({ id: "inv_1", number: "INV-1" });
+      .mockResolvedValueOnce(invoiceResult("INV-1"));
 
     renderSection(<Harness />);
     await screen.findByText("PRO-1");
@@ -237,7 +250,7 @@ describe("OrderLegsSection statement cadence guard", () => {
     await user.click(screen.getByRole("button", { name: /invoice anyway/i }));
 
     await waitFor(() =>
-      expect(mocks.createInvoiceFromShipments).toHaveBeenLastCalledWith(
+      expect(mocks.createInvoicesFromShipments).toHaveBeenLastCalledWith(
         ["shp_1", "shp_2"],
         "Billing to the broker",
       ),
@@ -248,7 +261,7 @@ describe("OrderLegsSection statement cadence guard", () => {
   // problem no reason can fix.
   it("still reports an ordinary failure as an error", async () => {
     const user = userEvent.setup();
-    mocks.createInvoiceFromShipments.mockRejectedValueOnce(new Error("network down"));
+    mocks.createInvoicesFromShipments.mockRejectedValueOnce(new Error("network down"));
 
     renderSection(<Harness />);
     await screen.findByText("PRO-1");
@@ -261,5 +274,22 @@ describe("OrderLegsSection statement cadence guard", () => {
     expect(
       screen.queryByLabelText(/reason for invoicing outside the statement/i),
     ).not.toBeInTheDocument();
+  });
+  it("names every invoice when a split shipment bills more than one payer", async () => {
+    const user = userEvent.setup();
+    mocks.createInvoicesFromShipments.mockResolvedValueOnce(invoiceResult("INV-1", "INV-2"));
+
+    renderSection(<Harness />);
+    await screen.findByText("PRO-1");
+
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-1" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select leg PRO-2" }));
+    await user.click(screen.getByRole("button", { name: /Create invoice from 2 legs/ }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(toast.success).toHaveBeenCalledWith(
+      "2 invoices created",
+      expect.objectContaining({ description: expect.stringContaining("INV-1, INV-2") }),
+    );
   });
 });

@@ -24,6 +24,33 @@ type CustomerPaymentApplication {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   invoice: Invoice
+  payment: CustomerPayment
+}
+
+enum CreditMemoApplicationStatus {
+  Applied
+  Unapplied
+}
+
+"Part of a posted credit memo used to settle an invoice."
+type CreditMemoApplication {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  creditMemoInvoiceId: ID!
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+  accountingDate: Timestamp!
+  lineNumber: Int!
+  status: CreditMemoApplicationStatus!
+  unappliedAt: Timestamp
+  unappliedById: ID
+  unappliedReason: String!
+  createdById: ID!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  creditMemo: Invoice
+  invoice: Invoice
 }
 
 type CustomerPayment {
@@ -90,6 +117,22 @@ input ApplyCustomerPaymentInput {
   applications: [CustomerPaymentApplicationInput!]!
 }
 
+input CreditMemoApplicationInput {
+  invoiceId: ID!
+  appliedAmountMinor: Int!
+}
+
+input ApplyCreditMemoInput {
+  creditMemoId: ID!
+  accountingDate: Timestamp!
+  applications: [CreditMemoApplicationInput!]!
+}
+
+input UnapplyCreditMemoApplicationInput {
+  applicationId: ID!
+  reason: String
+}
+
 input ReverseCustomerPaymentInput {
   paymentId: ID!
   accountingDate: Timestamp!
@@ -105,4 +148,8 @@ extend type Mutation {
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
+  "Settles open invoices of the same customer with a posted credit memo."
+  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
+  "Takes one credit memo application back."
+  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
 }

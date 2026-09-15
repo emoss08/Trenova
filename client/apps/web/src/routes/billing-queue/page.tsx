@@ -53,7 +53,8 @@ const EMPTY_STATEMENTS: OpenStatement[] = [];
 // with nothing but the URL to go on, so the loader can reproduce their keys exactly.
 // The sidebar's search box is deferred, which on first render is the URL value too.
 export const prefetch: RoutePrefetch = ({ request }) => {
-  const { view, item, status, query, billType, billers, includePosted } = loadQueueSearch(request);
+  const { view, item, status, query, billType, billers, payer, includePosted } =
+    loadQueueSearch(request);
 
   // The switch shows the statement count in both views, so the list is warmed
   // either way; only the statements view pays for the rest.
@@ -66,7 +67,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   list.push(
     queries.billingQueue.stats(),
     billingQueueFilterPresetsQuery(),
-    billingQueueListQuery({ status, billers, billType, search: query, includePosted }),
+    billingQueueListQuery({ status, billers, billType, payer, search: query, includePosted }),
   );
   if (item) {
     list.push(queries.billingQueue.get(item));

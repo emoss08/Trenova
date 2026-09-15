@@ -104,7 +104,16 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
             ) : (
               <span className="text-muted-foreground text-[11px]">{t("not yet due")}</span>
             )}
-            {item.isDisputed ? <Badge variant="orange">{t("Disputed")}</Badge> : null}
+            {item.isDisputed ? (
+              <Badge variant="orange">
+                {item.openDisputeReasonCode
+                  ? t("Disputed · {0}", item.openDisputeReasonCode)
+                  : t("Disputed")}
+                {item.disputedAmountMinor > 0
+                  ? ` ${formatCurrency(item.disputedAmountMinor / 100)}`
+                  : ""}
+              </Badge>
+            ) : null}
             {item.hasShortPay ? <Badge variant="inactive">{t("Short-paid")}</Badge> : null}
           </div>
         </div>

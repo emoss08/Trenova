@@ -1,6 +1,8 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
+import { Label } from "@trenova/shared/components/ui/label";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   Select,
@@ -47,11 +49,11 @@ export function InvoiceSidebar({
   const t = useT();
 
   const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
-  const { status, query, billType, scope } = searchParams;
+  const { status, query, billType, scope, dispute } = searchParams;
   const deferredSearch = useDeferredValue(query);
-  const hasActiveFilters = Boolean(status || billType || scope || query);
+  const hasActiveFilters = Boolean(status || billType || scope || query || dispute);
   const clearFilters = () =>
-    void setSearchParams({ status: null, billType: null, scope: null, query: "" });
+    void setSearchParams({ status: null, billType: null, scope: null, query: "", dispute: null });
   const observerTarget = useRef<HTMLDivElement>(null);
   const { mutate: postInvoice } = usePostInvoice();
 
@@ -66,8 +68,8 @@ export function InvoiceSidebar({
   const scopeOptions = useMemo(() => withAllOption(t("All Scopes"), invoiceScopeChoices, t), [t]);
 
   const queryKey = useMemo(
-    () => ["invoice-list", status, billType, scope, deferredSearch],
-    [status, billType, scope, deferredSearch],
+    () => ["invoice-list", status, billType, scope, dispute, deferredSearch],
+    [status, billType, scope, dispute, deferredSearch],
   );
 
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -83,6 +85,9 @@ export function InvoiceSidebar({
       }
       if (scope) {
         fieldFilters.push({ field: "scope", operator: "eq", value: scope });
+      }
+      if (dispute) {
+        fieldFilters.push({ field: "disputeStatus", operator: "eq", value: "Disputed" });
       }
 
       return requestGraphQL<InvoiceTablePage, InvoiceTableQueryVariables>({
@@ -161,8 +166,20 @@ export function InvoiceSidebar({
             value={scope}
             options={scopeOptions}
             onChange={(value) => void setSearchParams({ scope: value })}
-            className="col-span-2"
           />
+          <div className="flex h-7 items-center gap-2 px-1 text-xs">
+            <Checkbox
+              id="invoice-filter-disputed"
+              checked={dispute}
+              onCheckedChange={(checked) =>
+                void setSearchParams({ dispute: checked === true ? true : null })
+              }
+              aria-label={t("Disputed only")}
+            />
+            <Label htmlFor="invoice-filter-disputed" className="text-xs font-normal">
+              {t("Disputed only")}
+            </Label>
+          </div>
         </div>
       </div>
 

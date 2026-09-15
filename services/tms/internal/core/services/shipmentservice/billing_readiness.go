@@ -272,18 +272,45 @@ func (s *service) evaluateBillingReadiness(
 		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
 	}
 
-	customerEntity, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID: entity.CustomerID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
+	tenantInfo := pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
+
+	resolution, err := s.resolvePayerShares(ctx, entity, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	payers, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		TenantInfo:  tenantInfo,
+		CustomerIDs: resolution.PayerIDs(),
 		CustomerFilterOptions: repositories.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
 	if err != nil {
 		return nil, err
+	}
+	payersByID := make(map[pulid.ID]*customer.Customer, len(payers))
+	for _, payer := range payers {
+		if payer != nil {
+			payersByID[payer.ID] = payer
+		}
+	}
+	customerEntity, ok := payersByID[resolution.DefaultPayerID]
+	if !ok {
+		customerEntity, err = s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			ID:         resolution.DefaultPayerID,
+			TenantInfo: tenantInfo,
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		payersByID[customerEntity.ID] = customerEntity
 	}
 
 	billingControl, err := s.billingRepo.GetByOrgID(ctx, entity.OrganizationID)
@@ -313,6 +340,7 @@ func (s *service) evaluateBillingReadiness(
 		billingControl,
 		docs,
 	)
+	applyPayerReadiness(readiness, entity, resolution, payersByID, docs)
 	if err = s.applyServiceFailureBillingContext(ctx, entity, readiness); err != nil {
 		s.l.Warn("failed to apply service failure billing context",
 			zap.String("shipmentId", entity.ID.String()),
@@ -384,6 +412,153 @@ func (s *service) applyServiceFailureBillingContext(
 		},
 	})
 	return nil
+}
+
+// resolvePayerShares divides the shipment among its payers, reloading it with
+// charges and allocations when the caller handed over a bare header.
+func (s *service) resolvePayerShares(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.ShareResolution, error) {
+	source := entity
+	if (entity.AdditionalCharges == nil || entity.ChargeAllocations == nil) &&
+		s.repo != nil && entity.ID.IsNotNil() {
+		full, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: tenantInfo,
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: true,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		source = full
+	}
+
+	resolution, err := shipment.ResolveShares(source, source.ChargeAllocations)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolution, nil
+}
+
+// applyPayerReadiness folds every other payer into the readiness the primary
+// payer's profile produced: their document and BOL requirements join the list,
+// a payer on credit hold blocks under the same enforcement as a missing
+// document, and auto-approval needs every payer's consent.
+func applyPayerReadiness(
+	readiness *services.ShipmentBillingReadiness,
+	entity *shipment.Shipment,
+	resolution *shipment.ShareResolution,
+	payersByID map[pulid.ID]*customer.Customer,
+	docs []*document.Document,
+) {
+	if readiness == nil || resolution == nil {
+		return
+	}
+	readiness.Payers = make([]services.ShipmentBillingPayerReadiness, 0, len(resolution.Shares))
+
+	requirementIssues := hasShipmentRequirementIssues(readiness)
+	rateIssues := hasRateIssues(readiness)
+	autoApprove := true
+	known := make(map[string]struct{}, len(readiness.Requirements))
+	for _, requirement := range readiness.Requirements {
+		known[requirement.DocumentTypeID] = struct{}{}
+	}
+
+	for _, share := range resolution.Shares {
+		payer := payersByID[share.PayerID]
+		var profile *customer.CustomerBillingProfile
+		entry := services.ShipmentBillingPayerReadiness{
+			PayerID:     share.PayerID,
+			IsPrimary:   share.PayerID == resolution.DefaultPayerID,
+			ShareAmount: share.TotalAmount,
+		}
+		if payer != nil {
+			entry.PayerName = payer.Name
+			entry.PayerCode = payer.Code
+			profile = payer.BillingProfile
+		}
+		if profile != nil {
+			entry.CreditStatus = profile.CreditStatus
+			entry.CreditHold = profile.EnforceCreditLimit &&
+				(profile.CreditStatus == customer.CreditStatusHold ||
+					profile.CreditStatus == customer.CreditStatusSuspended)
+		}
+
+		if !entry.IsPrimary && profile != nil {
+			for _, requirement := range buildDocumentRequirements(profile.DocumentTypes, docs) {
+				if _, ok := known[requirement.DocumentTypeID]; ok {
+					continue
+				}
+				known[requirement.DocumentTypeID] = struct{}{}
+				readiness.Requirements = append(readiness.Requirements, requirement)
+				if !requirement.Satisfied {
+					readiness.MissingRequirements = append(readiness.MissingRequirements, requirement)
+				}
+			}
+			if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
+				profile.RequireBOLNumber && entity.BOL == "" &&
+				!hasValidationCode(readiness.ValidationFailures, "missing_bol") {
+				readiness.ValidationFailures = append(readiness.ValidationFailures,
+					services.ShipmentBillingValidation{
+						Field:   "bol",
+						Code:    "missing_bol",
+						Message: "BOL is required before the shipment can be invoiced",
+					})
+			}
+		}
+
+		if entry.CreditHold {
+			readiness.ValidationFailures = append(readiness.ValidationFailures,
+				services.ShipmentBillingValidation{
+					Field:   "billToCustomerId",
+					Code:    "credit_hold",
+					Message: entry.PayerName + " is on credit hold and cannot be billed",
+				})
+		}
+
+		readiness.Payers = append(readiness.Payers, entry)
+	}
+
+	requirementIssues = hasShipmentRequirementIssues(readiness)
+	rateIssues = hasRateIssues(readiness)
+	for i := range readiness.Payers {
+		payer := payersByID[readiness.Payers[i].PayerID]
+		var profile *customer.CustomerBillingProfile
+		if payer != nil {
+			profile = payer.BillingProfile
+		}
+		readiness.Payers[i].ShouldAutoApproveBilling = shouldAutoApproveBilling(
+			readiness.Policy,
+			profile,
+			requirementIssues,
+			rateIssues,
+		)
+		autoApprove = autoApprove && readiness.Payers[i].ShouldAutoApproveBilling
+	}
+
+	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
+		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
+	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
+		entity.Status == shipment.StatusCompleted &&
+		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
+	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
+		readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+	readiness.ShouldAutoApproveBilling = autoApprove && len(readiness.Payers) > 0
+}
+
+func hasValidationCode(failures []services.ShipmentBillingValidation, code string) bool {
+	for _, failure := range failures {
+		if failure.Code == code {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildShipmentBillingReadiness(
@@ -921,6 +1096,31 @@ func (s *service) TransferToBilling(
 	}
 
 	return attempt.item, nil
+}
+
+// TransferToBillingItems queues a shipment and returns every payer's item.
+func (s *service) TransferToBillingItems(
+	ctx context.Context,
+	req *services.TransferShipmentToBillingRequest,
+	actor *services.RequestActor,
+) (*services.TransferToBillingResult, error) {
+	if s.billingQueueService == nil {
+		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
+	}
+
+	attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
+		ShipmentID: req.ShipmentID,
+		BillType:   req.BillType,
+		Actor:      actor,
+	})
+	if attempt.err != nil {
+		return nil, attempt.err
+	}
+
+	return &services.TransferToBillingResult{
+		Items:   attempt.items,
+		Primary: attempt.item,
+	}, nil
 }
 
 func (s *service) autoTransferToBillingQueue(

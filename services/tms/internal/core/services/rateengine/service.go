@@ -351,6 +351,7 @@ func (s *Service) finish(
 		AgreementID:       fields.AgreementID,
 		RuleID:            fields.RuleID,
 		FormulaTemplateID: fields.FormulaTemplateID,
+		BillToCustomerID:  agreementBillTo(fields.Agreement),
 	}
 
 	applyLinehaulPricing(rated, trace)
@@ -455,4 +456,13 @@ func defaultString(value, fallback string) string {
 	}
 
 	return fallback
+}
+
+func agreementBillTo(agreement *rateagreement.RateAgreement) *pulid.ID {
+	if agreement == nil || agreement.BillToCustomerID == nil || agreement.BillToCustomerID.IsNil() {
+		return nil
+	}
+	id := *agreement.BillToCustomerID
+
+	return &id
 }

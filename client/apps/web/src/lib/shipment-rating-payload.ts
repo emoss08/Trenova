@@ -86,7 +86,11 @@ export function toRatingPreviewPayload(values: Shipment): Shipment {
   const additionalCharges = (values.additionalCharges ?? [])
     .filter((charge) => isFilled(charge.accessorialChargeId))
     // oxlint-disable-next-line no-unused-vars
-    .map(({ accessorialCharge, ...rest }) => rest);
+    .map(({ accessorialCharge, ...rest }) => ({
+      ...rest,
+      // oxlint-disable-next-line no-unused-vars
+      allocations: (rest.allocations ?? []).map(({ billToCustomer, ...row }) => row),
+    }));
 
   const commodities = (values.commodities ?? [])
     .filter((line) => isFilled(line.commodityId))

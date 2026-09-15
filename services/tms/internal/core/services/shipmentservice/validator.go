@@ -215,6 +215,7 @@ func (v *Validator) ValidateCreateWithAdvisories(
 	entity *shipment.Shipment,
 ) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
 	entity.ApplyEntryMethodDefault(nil)
+	entity.ApplyFreightTermsDefault(nil)
 
 	base := v.validator.ValidateCreate(ctx, entity)
 	timeline := validateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, true)
@@ -227,6 +228,7 @@ func (v *Validator) ValidateUpdate(
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
 	entity.ApplyEntryMethodDefault(nil)
+	entity.ApplyFreightTermsDefault(nil)
 
 	return errortypes.MergeMultiErrors(
 		v.validator.ValidateUpdate(ctx, entity),
@@ -249,6 +251,7 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 	entity *shipment.Shipment,
 ) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
 	entity.ApplyEntryMethodDefault(original)
+	entity.ApplyFreightTermsDefault(original)
 
 	base := v.validator.ValidateUpdate(ctx, entity)
 	timeline := validateResourceActualTimeline(ctx, v.assignmentRepo, original, entity, false)

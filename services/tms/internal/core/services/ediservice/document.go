@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -472,6 +473,7 @@ func (s *Service) GenerateDocument(
 		TemplateVersionID:        resolved.templateVersion.ID,
 		ShipmentID:               documentShipmentID(resolved.payload),
 		TransferID:               req.TransferID,
+		InvoiceID:                req.InvoiceID,
 		Direction:                resolved.profile.Direction,
 		Standard:                 resolved.profile.Standard,
 		TransactionSet:           resolved.profile.TransactionSet,
@@ -846,6 +848,14 @@ func (s *Service) resolvePayload(
 		})
 		if err != nil {
 			return edi.DocumentPayload{}, err
+		}
+		if invoiceEntity.Status == invoice.StatusVoided {
+			return edi.DocumentPayload{}, errortypes.NewValidationError(
+				"invoiceId",
+				errortypes.ErrInvalidOperation,
+				"Invoice {0} has been voided and cannot be sent as a freight invoice",
+				invoiceEntity.Number,
+			)
 		}
 		return buildFreightInvoicePayload(invoiceEntity), nil
 	}

@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/workflow"
 )
+
+var workflowContextType = reflect.TypeFor[workflow.Context]()
 
 type Schedule struct {
 	ID            string
@@ -107,6 +110,43 @@ func (s *Schedule) Validate() error {
 	if !s.Spec.IsInterval() && !s.Spec.IsCron() {
 		return ErrInvalidScheduleSpec
 	}
+	return s.validateArgs()
+}
+
+func (s *Schedule) validateArgs() error {
+	fnType := reflect.TypeOf(s.Workflow)
+	if fnType.Kind() != reflect.Func {
+		return nil
+	}
+
+	params := fnType.NumIn()
+	if params > 0 && fnType.In(0) == workflowContextType {
+		params--
+	}
+
+	if fnType.IsVariadic() {
+		if len(s.Args) < params-1 {
+			return fmt.Errorf(
+				"%w: %s expects at least %d args, got %d",
+				ErrWorkflowArgsInvalid,
+				s.GetWorkflowName(),
+				params-1,
+				len(s.Args),
+			)
+		}
+		return nil
+	}
+
+	if len(s.Args) != params {
+		return fmt.Errorf(
+			"%w: %s expects %d args, got %d",
+			ErrWorkflowArgsInvalid,
+			s.GetWorkflowName(),
+			params,
+			len(s.Args),
+		)
+	}
+
 	return nil
 }
 

@@ -1,13 +1,13 @@
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import InvoiceDetailPane from "../invoice-detail-pane";
 
-const mocks = vi.hoisted(() => ({ getById: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getById: vi.fn(), fetchInvoiceArContext: vi.fn() }));
 
 vi.mock("@/hooks/use-post-invoice", () => ({
   usePostInvoice: () => ({ mutate: vi.fn(), isPending: false }),
@@ -21,6 +21,17 @@ vi.mock("../../../billing-queue/_components/billing-queue-documents-tab", () => 
 vi.mock("../invoice-adjustment-panel", () => ({ InvoiceAdjustmentPanel: () => null }));
 vi.mock("../invoice-overview-tab", () => ({ InvoiceOverviewTab: () => <p>Overview content</p> }));
 vi.mock("../invoice-charges-tab", () => ({ InvoiceChargesTab: () => <p>Charges content</p> }));
+vi.mock("../invoice-payments-tab", () => ({
+  InvoicePaymentsTab: () => <p>Payments content</p>,
+}));
+vi.mock("../invoice-disputes-tab", () => ({
+  InvoiceDisputesTab: () => <p>Disputes content</p>,
+}));
+vi.mock("../invoice-actions-menu", () => ({ InvoiceActionsMenu: () => null }));
+vi.mock("@/lib/graphql/invoice", () => ({
+  fetchInvoiceArContext: mocks.fetchInvoiceArContext,
+  fetchInvoicesByShipment: vi.fn(),
+}));
 
 const invoice = {
   id: "inv_1",
@@ -94,9 +105,36 @@ function lastSearchParams(onUrlUpdate: ReturnType<typeof vi.fn>) {
 
 beforeEach(() => {
   mocks.getById.mockResolvedValue(invoice);
+  mocks.fetchInvoiceArContext.mockResolvedValue({
+    id: "inv_1",
+    openBalance: "5000.00",
+    daysPastDue: 12,
+    paymentApplications: [],
+    creditApplications: [],
+    disputes: [],
+    openDispute: null,
+    lateChargeAssessments: [],
+    relatedInvoices: [],
+    referenceInvoice: null,
+    ediSendPlan: {
+      invoiceId: "inv_1",
+      enabled: false,
+      autoSend: false,
+      partnerId: null,
+      partnerName: "",
+      documentProfileId: null,
+      communicationMethod: "",
+      status: "NotConfigured",
+      lastMessageId: null,
+      lastError: "",
+      sentAt: null,
+      blockers: [],
+    },
+  });
 });
 
 afterEach(() => {
+  cleanup();
   vi.clearAllMocks();
 });
 
@@ -123,7 +161,7 @@ describe("invoice detail tabs in the URL", () => {
   });
 
   it("falls back to the overview for a tab that does not exist", async () => {
-    renderPane("?item=inv_1&tab=payments");
+    renderPane("?item=inv_1&tab=nope");
 
     expect(await screen.findByRole("tab", { name: "Overview" })).toHaveAttribute(
       "aria-selected",
@@ -144,6 +182,45 @@ describe("invoice detail tabs in the URL", () => {
     expect(params.get("item")).toBe("inv_1");
     expect(screen.getByRole("tab", { name: "Activity" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Audit trail")).toBeInTheDocument();
+  });
+
+  it("opens the payments and disputes tabs the URL names", async () => {
+    renderPane("?item=inv_1&tab=payments");
+    expect(await screen.findByRole("tab", { name: "Payments" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Payments content")).toBeInTheDocument();
+    cleanup();
+
+    renderPane("?item=inv_1&tab=disputes");
+    expect(await screen.findByRole("tab", { name: "Disputes" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Disputes content")).toBeInTheDocument();
+  });
+
+  it("shows how many days past due an open invoice is", async () => {
+    renderPane("?item=inv_1");
+
+    expect(await screen.findByText("Days past due")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+  });
+
+  it("hides posting and explains the void on a voided invoice", async () => {
+    mocks.getById.mockResolvedValue({
+      ...invoice,
+      status: "Voided",
+      voidedAt: 1_789_400_000,
+      voidReason: "Billed the wrong customer",
+      voidDisposition: "Rebill",
+    });
+    renderPane("?item=inv_1");
+
+    expect(await screen.findByText("Billed the wrong customer")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Post Invoice" })).toBeNull();
+    expect(screen.getByText("Released for rebilling")).toBeInTheDocument();
   });
 
   it("offers to share the open invoice from its header", async () => {

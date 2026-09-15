@@ -1339,6 +1339,52 @@ func (ec *executionContext) fieldContext_CustomerBillingProfile_autoSendInvoiceO
 	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _CustomerBillingProfile_emailInvoiceEnabled(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_emailInvoiceEnabled(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EmailInvoiceEnabled, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_emailInvoiceEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerBillingProfile_ediInvoiceEnabled(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerBillingProfile_ediInvoiceEnabled(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIInvoiceEnabled, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerBillingProfile_ediInvoiceEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _CustomerBillingProfile_allowInvoiceConsolidation(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3195,6 +3241,16 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "autoSendInvoiceOnGeneration":
 			out.Values[i] = ec._CustomerBillingProfile_autoSendInvoiceOnGeneration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "emailInvoiceEnabled":
+			out.Values[i] = ec._CustomerBillingProfile_emailInvoiceEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ediInvoiceEnabled":
+			out.Values[i] = ec._CustomerBillingProfile_ediInvoiceEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

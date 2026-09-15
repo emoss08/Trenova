@@ -171,6 +171,29 @@ fragment ShipmentCarrierAssignmentFields on CarrierAssignment {
   }
 }
 
+fragment ChargeAllocationFields on ChargeAllocation {
+  id
+  organizationId
+  businessUnitId
+  shipmentId
+  additionalChargeId
+  orderChargeId
+  chargeKind
+  billToCustomerId
+  method
+  percent
+  amount
+  sequence
+  invoiceId
+  invoicedAt
+  version
+  billToCustomer {
+    id
+    name
+    code
+  }
+}
+
 fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   id
   businessUnitId
@@ -183,7 +206,7 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   unit
   fuelSurchargeProgramId
   fuelSurchargeDetail
-  detentionOccurrenceId
+  isDetention
   version
   createdAt
   updatedAt
@@ -278,6 +301,8 @@ fragment ShipmentFields on Shipment {
   serviceTypeId
   shipmentTypeId
   customerId
+  billToCustomerId
+  freightTerms
   tractorTypeId
   trailerTypeId
   ownerId
@@ -348,6 +373,19 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
+  chargeAllocations {
+    ...ChargeAllocationFields
+  }
+  billingSplitSummary {
+    payerId
+    payerName
+    payerCode
+    isPrimary
+    freightAmount
+    accessorialAmount
+    totalAmount
+    isSplit
+  }
   customer {
     id
     businessUnitId
@@ -376,6 +414,30 @@ fragment ShipmentFields on Shipment {
       name
       code
     }
+  }
+  billToCustomer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
   }
   owner {
     ...ShipmentUserFields
@@ -907,6 +969,17 @@ query ShipmentBillingReadiness($shipmentId: ID!) {
     canMarkReadyToInvoice
     shouldAutoMarkReadyToInvoice
     shouldAutoTransferToBilling
+    shouldAutoApproveBilling
+    payers {
+      payerId
+      payerName
+      payerCode
+      isPrimary
+      shareAmount
+      creditStatus
+      creditHold
+      shouldAutoApproveBilling
+    }
   }
 }
 
@@ -981,12 +1054,25 @@ mutation TransferShipmentOwnership($id: ID!, $input: ShipmentTransferOwnershipIn
   }
 }
 
+mutation TransferShipmentToBillingItems($input: ShipmentTransferToBillingInput!) {
+  transferShipmentToBillingItems(input: $input) {
+    items {
+      ...BillingQueueActionFields
+    }
+    primary {
+      ...BillingQueueActionFields
+    }
+  }
+}
+
 mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {
     id
     organizationId
     businessUnitId
     shipmentId
+    billToCustomerId
+    allocatedTotalAmount
     assignedBillerId
     number
     status
@@ -1027,6 +1113,18 @@ mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInp
         id
         number
         status
+      }
+      billingQueueItems {
+        id
+        number
+        status
+        billToCustomerId
+        allocatedTotalAmount
+        billToCustomer {
+          id
+          name
+          code
+        }
       }
       missingRequirements {
         documentTypeId

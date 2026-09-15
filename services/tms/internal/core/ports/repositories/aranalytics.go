@@ -116,6 +116,11 @@ type ARCollectionsWorklistItem struct {
 	IsDisputed      bool     `json:"isDisputed"`
 	HasShortPay     bool     `json:"hasShortPay"`
 	Severity        string   `json:"severity"`
+	// OpenDisputeReasonCode, DisputedAmountMinor and DisputeOpenedAt describe
+	// the open dispute case when there is one; empty otherwise.
+	OpenDisputeReasonCode string `json:"openDisputeReasonCode"`
+	DisputedAmountMinor   int64  `json:"disputedAmountMinor"`
+	DisputeOpenedAt       *int64 `json:"disputeOpenedAt"`
 }
 
 type ARMonthlyCollectionPoint struct {

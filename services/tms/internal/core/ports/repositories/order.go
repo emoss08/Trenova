@@ -58,6 +58,24 @@ type MarkOrderChargesInvoicedRequest struct {
 	InvoicedAt int64                 `json:"-"`
 }
 
+type ListUninvoicedChargeSharesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	OrderID    pulid.ID              `json:"-"`
+	PayerID    pulid.ID              `json:"-"`
+}
+
+type ClearOrderChargesInvoiceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+}
+
+type MarkChargesFullyInvoicedRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	OrderID    pulid.ID              `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	InvoicedAt int64                 `json:"-"`
+}
+
 type UpdateOrderStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	OrderID    pulid.ID              `json:"-"`
@@ -173,6 +191,25 @@ type OrderRepository interface {
 	MarkChargesInvoiced(
 		ctx context.Context,
 		req *MarkOrderChargesInvoicedRequest,
+	) (int64, error)
+	// ListUninvoicedChargeSharesForPayer returns the order's charges that still owe
+	// the payer a share: unallocated charges with no invoice, and allocated charges
+	// whose row for this payer has not been invoiced. Allocations are loaded.
+	ListUninvoicedChargeSharesForPayer(
+		ctx context.Context,
+		req *ListUninvoicedChargeSharesRequest,
+	) ([]*order.OrderCharge, error)
+	// MarkChargesFullyInvoicedWhereComplete stamps invoiced_at on every allocated
+	// charge of the order whose last unbilled share has just been invoiced.
+	MarkChargesFullyInvoicedWhereComplete(
+		ctx context.Context,
+		req *MarkChargesFullyInvoicedRequest,
+	) (int64, error)
+	// ClearChargesInvoice releases the charges a voided invoice carried, so they
+	// can be billed again.
+	ClearChargesInvoice(
+		ctx context.Context,
+		req *ClearOrderChargesInvoiceRequest,
 	) (int64, error)
 	// RecalculateTotal recomputes an order's total_amount as the sum of its leg charges
 	// plus its order-level charges (invariant #1 — money rolls up).

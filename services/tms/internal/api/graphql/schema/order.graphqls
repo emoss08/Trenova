@@ -28,9 +28,14 @@ type OrderCharge {
   orderId: ID!
   description: String!
   amount: Decimal!
+  "The first invoice that carried any of this charge."
   invoiceId: ID
+  "Set once every payer's share of the charge has been invoiced."
+  invoicedAt: Timestamp
   version: Int!
   createdAt: Timestamp!
+  "How the charge is divided among payers; empty bills it to the order's payer."
+  allocations: [ChargeAllocation!]!
 }
 
 input UpdateOrderChargeInput {
@@ -39,6 +44,14 @@ input UpdateOrderChargeInput {
   description: String!
   amount: Decimal!
   version: Int!
+  "Omit to leave the split untouched; an empty list removes it."
+  allocations: [ChargeAllocationInput!]
+}
+
+input SetOrderChargeAllocationsInput {
+  orderId: ID!
+  chargeId: ID!
+  allocations: [ChargeAllocationInput!]!
 }
 
 type OrderLeg {
@@ -97,8 +110,9 @@ extend type Mutation {
   updateOrder(id: ID!, input: OrderInput!): Order!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   detachOrderShipment(orderId: ID!, shipmentId: ID!): Order!
-  addOrderCharge(orderId: ID!, description: String!, amount: Decimal!): Order!
+  addOrderCharge(orderId: ID!, description: String!, amount: Decimal!, allocations: [ChargeAllocationInput!]): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
+  setOrderChargeAllocations(input: SetOrderChargeAllocationsInput!): Order!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   closeOrder(id: ID!): Order!
   cancelOrder(id: ID!, cancelReason: String!): Order!

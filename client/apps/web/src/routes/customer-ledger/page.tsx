@@ -12,6 +12,7 @@ import { DownloadIcon, FileTextIcon, HandCoinsIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
+import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import { CustomerSnapshotHeader } from "./_components/customer-snapshot-header";
 import { LedgerTable } from "./_components/ledger-table";
 
@@ -116,6 +117,8 @@ export function CustomerLedgerPage() {
               <FileTextIcon className="size-4" />
               {t("Statement")}
             </Button>
+            <MemoEntryButton customerId={customerId} billType="CreditMemo" />
+            <MemoEntryButton customerId={customerId} billType="DebitMemo" />
             {canRecordPayment ? (
               <Button
                 size="sm"

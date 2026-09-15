@@ -344,6 +344,7 @@ func headerPDFRows(entity *invoice.Invoice, org *tenant.Organization) []invoiceP
 		{Label: "SCAC", Value: organizationSCAC(org)},
 		{Label: "Payment Terms", Value: string(entity.PaymentTerm)},
 		{Label: "PRO", Value: entity.ShipmentProNumber},
+		{Label: "Billed on behalf of", Value: shipperPDFLabel(entity)},
 	}
 	result := make([]invoicePDFKeyValue, 0, len(rows))
 	for _, row := range rows {
@@ -677,4 +678,21 @@ func positiveInt64PDFString(value int64) string {
 		return ""
 	}
 	return intutils.FormatWithCommas(value)
+}
+
+// shipperPDFLabel names the customer who ordered the freight when somebody else
+// is being billed for it, so a third-party invoice says whose shipment it is.
+func shipperPDFLabel(entity *invoice.Invoice) string {
+	if entity == nil || entity.ShipperCustomerID.IsNil() ||
+		entity.ShipperCustomerID == entity.CustomerID {
+		return ""
+	}
+	if entity.ShipperCustomer == nil || entity.ShipperCustomer.ID != entity.ShipperCustomerID {
+		return ""
+	}
+	if code := strings.TrimSpace(entity.ShipperCustomer.Code); code != "" {
+		return entity.ShipperCustomer.Name + " (" + code + ")"
+	}
+
+	return entity.ShipperCustomer.Name
 }

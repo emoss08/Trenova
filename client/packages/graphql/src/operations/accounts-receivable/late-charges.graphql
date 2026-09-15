@@ -1,0 +1,42 @@
+fragment LateChargeAssessmentResultFields on LateChargeAssessmentResult {
+  asOfDate
+  preview
+  mode
+  memosCreated
+  memosPosted
+  customersSkipped
+  totalChargeMinor
+  customers {
+    customerId
+    customerName
+    currencyCode
+    totalChargeMinor
+    debitMemoId
+    debitMemoNumber
+    posted
+    skipped
+    skipReason
+    lines {
+      invoiceId
+      invoiceNumber
+      periodIndex
+      periodStart
+      periodEnd
+      basisOpenBalanceMinor
+      ratePercent
+      chargeMinor
+    }
+  }
+}
+
+query LateChargePreview($input: LateChargeAssessmentInput) {
+  lateChargePreview(input: $input) {
+    ...LateChargeAssessmentResultFields
+  }
+}
+
+mutation AssessLateCharges($input: LateChargeAssessmentInput) {
+  assessLateCharges(input: $input) {
+    ...LateChargeAssessmentResultFields
+  }
+}

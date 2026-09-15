@@ -42,7 +42,8 @@ const (
 	layoverAccessorial   = "LAY"
 
 	detentionFirstPro   = "SEED-DET-001"
-	detentionProPattern = "SEED-DET-%"
+	detentionProPrefix  = "SEED-DET-"
+	detentionProPattern = detentionProPrefix + "%"
 
 	detentionMinute = int64(60)
 	detentionDay    = int64(86400)
@@ -66,7 +67,7 @@ func NewDetentionSeed() *DetentionSeed {
 	seed := &DetentionSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"Detention",
-		"1.0.0",
+		"1.1.0",
 		"Creates detention policies, notice recipients, and worked detention occurrences with evidence chains",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -96,7 +97,7 @@ type detentionRefs struct {
 	tractors      map[string]pulid.ID
 	trailers      map[string]pulid.ID
 	commodityID   pulid.ID
-	formulaID     pulid.ID
+	formula       formulatemplate.FormulaTemplate
 	recipients    map[string][]string
 }
 
@@ -137,6 +138,22 @@ func (s *DetentionSeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			if err = s.createDetentionBook(ctx, tx, sc, refs, policies); err != nil {
 				return fmt.Errorf("create detention book: %w", err)
+			}
+
+			backfilled, err := backfillSeededRatingDetails(ctx, tx, seededRatingBackfill{
+				orgID:     refs.orgID,
+				buID:      refs.buID,
+				proPrefix: detentionProPrefix,
+				now:       timeutils.NowUnix(),
+			})
+			if err != nil {
+				return fmt.Errorf("backfill detention shipment rating details: %w", err)
+			}
+			if backfilled > 0 {
+				seedhelpers.LogSuccess(
+					"Backfilled rating details on seeded detention shipments",
+					fmt.Sprintf("- Stamped %d shipments", backfilled),
+				)
 			}
 
 			return nil
@@ -275,14 +292,12 @@ func (s *DetentionSeed) loadRefs(
 	}
 	refs.commodityID = freight.ID
 
-	var template formulatemplate.FormulaTemplate
-	if err := tx.NewSelect().Model(&template).Column("id").
+	if err := tx.NewSelect().Model(&refs.formula).Column("id", "name", "expression").
 		Where("organization_id = ?", refs.orgID).Where("business_unit_id = ?", refs.buID).
 		Where("name = ?", "Flat Rate").Limit(1).
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("get flat rate formula template: %w", err)
 	}
-	refs.formulaID = template.ID
 
 	return refs, nil
 }
@@ -1236,7 +1251,7 @@ func (s *DetentionSeed) createDetentionShipment(
 		CustomerID:          cust.ID,
 		ServiceTypeID:       serviceTypeID,
 		ShipmentTypeID:      shipmentTypeID,
-		FormulaTemplateID:   refs.formulaID,
+		FormulaTemplateID:   refs.formula.ID,
 		Status:              def.status,
 		ProNumber:           def.pro,
 		BOL:                 def.bol,
@@ -1252,6 +1267,7 @@ func (s *DetentionSeed) createDetentionShipment(
 	if last.ActualDeparture != nil {
 		shp.ActualDeliveryDate = new(*last.ActualDeparture)
 	}
+	shp.RatingDetail = seededRatingDetail(shp, &refs.formula, now)
 	if _, err := tx.NewInsert().Model(shp).Exec(ctx); err != nil {
 		return 0, fmt.Errorf("insert shipment: %w", err)
 	}
@@ -1691,36 +1707,65 @@ func (s *DetentionSeed) persistOccurrence(
 }
 
 // createDetentionCharge posts the billed detention onto the shipment so the
-// invoice and the occurrence agree on one number.
+// invoice and the occurrence agree on one number. A shipment carries one
+// detention charge per accessorial, so a second billed stop adds to the row
+// the first one created.
 func (s *DetentionSeed) createDetentionCharge(
 	ctx context.Context,
 	tx bun.Tx,
 	sc *seedhelpers.SeedContext,
 	p persistOccurrenceParams,
 ) (*shipment.AdditionalCharge, error) {
-	charge := &shipment.AdditionalCharge{
-		ID:                    pulid.MustNew("adc_"),
-		BusinessUnitID:        p.refs.buID,
-		OrganizationID:        p.refs.orgID,
-		ShipmentID:            p.shipment.ID,
-		AccessorialChargeID:   p.policy.AccessorialChargeID,
-		IsSystemGenerated:     true,
-		Method:                accessorialcharge.MethodFlat,
-		Amount:                p.occurrence.BillableAmount,
-		Unit:                  1,
-		DetentionOccurrenceID: &p.occurrence.ID,
-	}
-	if _, err := tx.NewInsert().Model(charge).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("insert detention additional charge: %w", err)
-	}
-	if err := sc.TrackCreated(ctx, "additional_charges", charge.ID, s.Name()); err != nil {
-		return nil, fmt.Errorf("track additional charge: %w", err)
+	existing := new(shipment.AdditionalCharge)
+	err := tx.NewSelect().
+		Model(existing).
+		Where("shipment_id = ?", p.shipment.ID).
+		Where("organization_id = ?", p.refs.orgID).
+		Where("business_unit_id = ?", p.refs.buID).
+		Where("accessorial_charge_id = ?", p.policy.AccessorialChargeID).
+		Where("is_detention").
+		Order("created_at ASC", "id ASC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("find detention additional charge: %w", err)
 	}
 
-	_, err := tx.NewUpdate().
+	charge := existing
+	if err == nil {
+		charge.Amount = charge.Amount.Add(p.occurrence.BillableAmount)
+		if _, err = tx.NewUpdate().
+			Model(charge).
+			Column("amount").
+			WherePK().
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("extend detention additional charge: %w", err)
+		}
+	} else {
+		charge = &shipment.AdditionalCharge{
+			ID:                  pulid.MustNew("adc_"),
+			BusinessUnitID:      p.refs.buID,
+			OrganizationID:      p.refs.orgID,
+			ShipmentID:          p.shipment.ID,
+			AccessorialChargeID: p.policy.AccessorialChargeID,
+			IsSystemGenerated:   true,
+			IsDetention:         true,
+			Method:              accessorialcharge.MethodFlat,
+			Amount:              p.occurrence.BillableAmount,
+			Unit:                1,
+		}
+		if _, err = tx.NewInsert().Model(charge).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("insert detention additional charge: %w", err)
+		}
+		if err = sc.TrackCreated(ctx, "additional_charges", charge.ID, s.Name()); err != nil {
+			return nil, fmt.Errorf("track additional charge: %w", err)
+		}
+	}
+
+	_, err = tx.NewUpdate().
 		Model((*shipment.Shipment)(nil)).
-		Set("other_charge_amount = COALESCE(other_charge_amount, 0) + ?", charge.Amount).
-		Set("total_charge_amount = COALESCE(total_charge_amount, 0) + ?", charge.Amount).
+		Set("other_charge_amount = COALESCE(other_charge_amount, 0) + ?", p.occurrence.BillableAmount).
+		Set("total_charge_amount = COALESCE(total_charge_amount, 0) + ?", p.occurrence.BillableAmount).
 		Where("id = ?", p.shipment.ID).
 		Where("organization_id = ?", p.refs.orgID).
 		Where("business_unit_id = ?", p.refs.buID).

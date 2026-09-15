@@ -997,6 +997,21 @@ var InvoiceColumns = struct {
 	SupersededByInvoiceID     Column // "superseded_by_invoice_id" → qualified: "inv.superseded_by_invoice_id"
 	SourceInvoiceAdjustmentID Column // "source_invoice_adjustment_id" → qualified: "inv.source_invoice_adjustment_id"
 	IsAdjustmentArtifact      Column // "is_adjustment_artifact" → qualified: "inv.is_adjustment_artifact"
+	ShipperCustomerID         Column // "shipper_customer_id" → qualified: "inv.shipper_customer_id"
+	IsSplitBill               Column // "is_split_bill" → qualified: "inv.is_split_bill"
+	VoidedAt                  Column // "voided_at" → qualified: "inv.voided_at"
+	VoidedByID                Column // "voided_by_id" → qualified: "inv.voided_by_id"
+	VoidReason                Column // "void_reason" → qualified: "inv.void_reason"
+	VoidDisposition           Column // "void_disposition" → qualified: "inv.void_disposition"
+	VoidedByAdjustmentID      Column // "voided_by_adjustment_id" → qualified: "inv.voided_by_adjustment_id"
+	ReferenceInvoiceID        Column // "reference_invoice_id" → qualified: "inv.reference_invoice_id"
+	MemoReason                Column // "memo_reason" → qualified: "inv.memo_reason"
+	MemoKind                  Column // "memo_kind" → qualified: "inv.memo_kind"
+	EDISendStatus             Column // "edi_send_status" → qualified: "inv.edi_send_status"
+	LastEDIMessageID          Column // "last_edi_message_id" → qualified: "inv.last_edi_message_id"
+	EDISentAt                 Column // "edi_sent_at" → qualified: "inv.edi_sent_at"
+	LastEDIError              Column // "last_edi_error" → qualified: "inv.last_edi_error"
+	BalanceDueMinor           Column // "balance_due_minor" → qualified: "inv.balance_due_minor"
 	Version                   Column // "version" → qualified: "inv.version"
 	CreatedAt                 Column // "created_at" → qualified: "inv.created_at"
 	UpdatedAt                 Column // "updated_at" → qualified: "inv.updated_at"
@@ -1064,6 +1079,21 @@ var InvoiceColumns = struct {
 	SupersededByInvoiceID:     NewColumn("superseded_by_invoice_id", "inv"),
 	SourceInvoiceAdjustmentID: NewColumn("source_invoice_adjustment_id", "inv"),
 	IsAdjustmentArtifact:      NewColumn("is_adjustment_artifact", "inv"),
+	ShipperCustomerID:         NewColumn("shipper_customer_id", "inv"),
+	IsSplitBill:               NewColumn("is_split_bill", "inv"),
+	VoidedAt:                  NewColumn("voided_at", "inv"),
+	VoidedByID:                NewColumn("voided_by_id", "inv"),
+	VoidReason:                NewColumn("void_reason", "inv"),
+	VoidDisposition:           NewColumn("void_disposition", "inv"),
+	VoidedByAdjustmentID:      NewColumn("voided_by_adjustment_id", "inv"),
+	ReferenceInvoiceID:        NewColumn("reference_invoice_id", "inv"),
+	MemoReason:                NewColumn("memo_reason", "inv"),
+	MemoKind:                  NewColumn("memo_kind", "inv"),
+	EDISendStatus:             NewColumn("edi_send_status", "inv"),
+	LastEDIMessageID:          NewColumn("last_edi_message_id", "inv"),
+	EDISentAt:                 NewColumn("edi_sent_at", "inv"),
+	LastEDIError:              NewColumn("last_edi_error", "inv"),
+	BalanceDueMinor:           NewColumn("balance_due_minor", "inv"),
 	Version:                   NewColumn("version", "inv"),
 	CreatedAt:                 NewColumn("created_at", "inv"),
 	UpdatedAt:                 NewColumn("updated_at", "inv"),
@@ -1137,6 +1167,21 @@ var InvoiceFieldMap = map[string]string{
 	"supersededByInvoiceId":     "superseded_by_invoice_id",
 	"sourceInvoiceAdjustmentId": "source_invoice_adjustment_id",
 	"isAdjustmentArtifact":      "is_adjustment_artifact",
+	"shipperCustomerId":         "shipper_customer_id",
+	"isSplitBill":               "is_split_bill",
+	"voidedAt":                  "voided_at",
+	"voidedById":                "voided_by_id",
+	"voidReason":                "void_reason",
+	"voidDisposition":           "void_disposition",
+	"voidedByAdjustmentId":      "voided_by_adjustment_id",
+	"referenceInvoiceId":        "reference_invoice_id",
+	"memoReason":                "memo_reason",
+	"memoKind":                  "memo_kind",
+	"ediSendStatus":             "edi_send_status",
+	"lastEdiMessageId":          "last_edi_message_id",
+	"ediSentAt":                 "edi_sent_at",
+	"lastEdiError":              "last_edi_error",
+	"balanceDueMinor":           "balance_due_minor",
 	"version":                   "version",
 	"createdAt":                 "created_at",
 	"updatedAt":                 "updated_at",
@@ -1208,6 +1253,20 @@ var InvoiceInsertableColumns = []string{
 	"superseded_by_invoice_id",
 	"source_invoice_adjustment_id",
 	"is_adjustment_artifact",
+	"shipper_customer_id",
+	"is_split_bill",
+	"voided_at",
+	"voided_by_id",
+	"void_reason",
+	"void_disposition",
+	"voided_by_adjustment_id",
+	"reference_invoice_id",
+	"memo_reason",
+	"memo_kind",
+	"edi_send_status",
+	"last_edi_message_id",
+	"edi_sent_at",
+	"last_edi_error",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1223,6 +1282,8 @@ var InvoiceRelations = struct {
 	Shipment         string
 	Order            string
 	Customer         string
+	ShipperCustomer  string
+	ReferenceInvoice string
 	PDFDocument      string
 	Lines            string
 	Attachments      string
@@ -1232,6 +1293,8 @@ var InvoiceRelations = struct {
 	Shipment:         "Shipment",
 	Order:            "Order",
 	Customer:         "Customer",
+	ShipperCustomer:  "ShipperCustomer",
+	ReferenceInvoice: "ReferenceInvoice",
 	PDFDocument:      "PDFDocument",
 	Lines:            "Lines",
 	Attachments:      "Attachments",
@@ -1351,6 +1414,20 @@ var InvoiceFilter = struct {
 	SupersededByInvoiceID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededByInvoiceId" → DB: "superseded_by_invoice_id"
 	SourceInvoiceAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceAdjustmentId" → DB: "source_invoice_adjustment_id"
 	IsAdjustmentArtifact      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentArtifact" → DB: "is_adjustment_artifact"
+	ShipperCustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipperCustomerId" → DB: "shipper_customer_id"
+	IsSplitBill               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSplitBill" → DB: "is_split_bill"
+	VoidedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
+	VoidedByID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
+	VoidReason                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
+	VoidDisposition           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidDisposition" → DB: "void_disposition"
+	VoidedByAdjustmentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedByAdjustmentId" → DB: "voided_by_adjustment_id"
+	ReferenceInvoiceID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceInvoiceId" → DB: "reference_invoice_id"
+	MemoReason                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memoReason" → DB: "memo_reason"
+	MemoKind                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memoKind" → DB: "memo_kind"
+	EDISendStatus             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediSendStatus" → DB: "edi_send_status"
+	LastEDIMessageID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastEdiMessageId" → DB: "last_edi_message_id"
+	EDISentAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediSentAt" → DB: "edi_sent_at"
+	LastEDIError              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastEdiError" → DB: "last_edi_error"
 	Version                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1544,6 +1621,315 @@ var InvoiceFilter = struct {
 	IsAdjustmentArtifact: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isAdjustmentArtifact", op, value)
 	},
+	ShipperCustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipperCustomerId", op, value)
+	},
+	IsSplitBill: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isSplitBill", op, value)
+	},
+	VoidedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("voidedAt", op, value)
+	},
+	VoidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("voidedById", op, value)
+	},
+	VoidReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("voidReason", op, value)
+	},
+	VoidDisposition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("voidDisposition", op, value)
+	},
+	VoidedByAdjustmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("voidedByAdjustmentId", op, value)
+	},
+	ReferenceInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("referenceInvoiceId", op, value)
+	},
+	MemoReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("memoReason", op, value)
+	},
+	MemoKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("memoKind", op, value)
+	},
+	EDISendStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediSendStatus", op, value)
+	},
+	LastEDIMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastEdiMessageId", op, value)
+	},
+	EDISentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediSentAt", op, value)
+	},
+	LastEDIError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastEdiError", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// InvoiceDispute — table "invoice_disputes", alias "idsp"
+// ---------------------------------------------------------------------------
+
+// InvoiceDisputeTable holds the table name, alias, and primary key columns
+// for the "invoice_disputes" table. The alias "idsp" is used in all generated
+// SQL fragments (e.g. "idsp.id = ?").
+var InvoiceDisputeTable = TableInfo{
+	Name:       "invoice_disputes",
+	Alias:      "idsp",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// InvoiceDisputeColumns provides type-safe column references for the "invoice_disputes" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(InvoiceDisputeColumns.ID.String())
+//	// SELECT idsp.id FROM invoice_disputes AS idsp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(InvoiceDisputeColumns.ID.Eq(), id)           // WHERE idsp.id = ?
+//	q.Order(InvoiceDisputeColumns.CreatedAt.OrderDesc())  // ORDER BY idsp.created_at DESC
+var InvoiceDisputeColumns = struct {
+	ID                     Column // "id" → qualified: "idsp.id"
+	OrganizationID         Column // "organization_id" → qualified: "idsp.organization_id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "idsp.business_unit_id"
+	InvoiceID              Column // "invoice_id" → qualified: "idsp.invoice_id"
+	CustomerID             Column // "customer_id" → qualified: "idsp.customer_id"
+	Status                 Column // "status" → qualified: "idsp.status"
+	ReasonCode             Column // "reason_code" → qualified: "idsp.reason_code"
+	DisputedAmount         Column // "disputed_amount" → qualified: "idsp.disputed_amount"
+	DisputedAmountMinor    Column // "disputed_amount_minor" → qualified: "idsp.disputed_amount_minor"
+	Notes                  Column // "notes" → qualified: "idsp.notes"
+	OpenedByID             Column // "opened_by_id" → qualified: "idsp.opened_by_id"
+	OpenedAt               Column // "opened_at" → qualified: "idsp.opened_at"
+	ResolvedByID           Column // "resolved_by_id" → qualified: "idsp.resolved_by_id"
+	ResolvedAt             Column // "resolved_at" → qualified: "idsp.resolved_at"
+	Resolution             Column // "resolution" → qualified: "idsp.resolution"
+	ResolutionAdjustmentID Column // "resolution_adjustment_id" → qualified: "idsp.resolution_adjustment_id"
+	ResolutionNotes        Column // "resolution_notes" → qualified: "idsp.resolution_notes"
+	Version                Column // "version" → qualified: "idsp.version"
+	CreatedAt              Column // "created_at" → qualified: "idsp.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "idsp.updated_at"
+}{
+	ID:                     NewColumn("id", "idsp"),
+	OrganizationID:         NewColumn("organization_id", "idsp"),
+	BusinessUnitID:         NewColumn("business_unit_id", "idsp"),
+	InvoiceID:              NewColumn("invoice_id", "idsp"),
+	CustomerID:             NewColumn("customer_id", "idsp"),
+	Status:                 NewColumn("status", "idsp"),
+	ReasonCode:             NewColumn("reason_code", "idsp"),
+	DisputedAmount:         NewColumn("disputed_amount", "idsp"),
+	DisputedAmountMinor:    NewColumn("disputed_amount_minor", "idsp"),
+	Notes:                  NewColumn("notes", "idsp"),
+	OpenedByID:             NewColumn("opened_by_id", "idsp"),
+	OpenedAt:               NewColumn("opened_at", "idsp"),
+	ResolvedByID:           NewColumn("resolved_by_id", "idsp"),
+	ResolvedAt:             NewColumn("resolved_at", "idsp"),
+	Resolution:             NewColumn("resolution", "idsp"),
+	ResolutionAdjustmentID: NewColumn("resolution_adjustment_id", "idsp"),
+	ResolutionNotes:        NewColumn("resolution_notes", "idsp"),
+	Version:                NewColumn("version", "idsp"),
+	CreatedAt:              NewColumn("created_at", "idsp"),
+	UpdatedAt:              NewColumn("updated_at", "idsp"),
+}
+
+// InvoiceDisputeFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by InvoiceDispute.GetStaticFieldMap().
+var InvoiceDisputeFieldMap = map[string]string{
+	"id":                     "id",
+	"organizationId":         "organization_id",
+	"businessUnitId":         "business_unit_id",
+	"invoiceId":              "invoice_id",
+	"customerId":             "customer_id",
+	"status":                 "status",
+	"reasonCode":             "reason_code",
+	"disputedAmount":         "disputed_amount",
+	"disputedAmountMinor":    "disputed_amount_minor",
+	"notes":                  "notes",
+	"openedById":             "opened_by_id",
+	"openedAt":               "opened_at",
+	"resolvedById":           "resolved_by_id",
+	"resolvedAt":             "resolved_at",
+	"resolution":             "resolution",
+	"resolutionAdjustmentId": "resolution_adjustment_id",
+	"resolutionNotes":        "resolution_notes",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
+}
+
+// InvoiceDisputeInsertableColumns lists column names suitable for INSERT statements on the "invoice_disputes" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var InvoiceDisputeInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"invoice_id",
+	"customer_id",
+	"status",
+	"reason_code",
+	"disputed_amount",
+	"disputed_amount_minor",
+	"notes",
+	"opened_by_id",
+	"opened_at",
+	"resolved_by_id",
+	"resolved_at",
+	"resolution",
+	"resolution_adjustment_id",
+	"resolution_notes",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// InvoiceDisputeRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(InvoiceDisputeRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var InvoiceDisputeRelations = struct {
+	Invoice  string
+	Customer string
+}{
+	Invoice:  "Invoice",
+	Customer: "Customer",
+}
+
+// InvoiceDisputeScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE idsp.organization_id = ? AND idsp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.InvoiceDisputeScopeTenant(sq, ti).
+//		Where(buncolgen.InvoiceDisputeColumns.ID.Eq(), id)
+func InvoiceDisputeScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, InvoiceDisputeColumns.OrganizationID, InvoiceDisputeColumns.BusinessUnitID, ti)
+}
+
+// InvoiceDisputeScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.InvoiceDisputeScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.InvoiceDisputeColumns.ID.In(), bun.List(ids))
+//	})
+func InvoiceDisputeScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, InvoiceDisputeColumns.OrganizationID, InvoiceDisputeColumns.BusinessUnitID, ti)
+}
+
+// InvoiceDisputeScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.InvoiceDisputeScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.InvoiceDisputeColumns.ID.Eq(), id)
+//	})
+func InvoiceDisputeScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, InvoiceDisputeColumns.OrganizationID, InvoiceDisputeColumns.BusinessUnitID, ti)
+}
+
+// InvoiceDisputeApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.InvoiceDisputeApplyTenant(tenantInfo))
+func InvoiceDisputeApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(InvoiceDisputeColumns.OrganizationID, InvoiceDisputeColumns.BusinessUnitID, ti)
+}
+
+// InvoiceDisputeFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_disputes" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	InvoiceDisputeFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var InvoiceDisputeFilter = struct {
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	CustomerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ReasonCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasonCode" → DB: "reason_code"
+	DisputedAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disputedAmount" → DB: "disputed_amount"
+	DisputedAmountMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disputedAmountMinor" → DB: "disputed_amount_minor"
+	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	OpenedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "openedById" → DB: "opened_by_id"
+	OpenedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "openedAt" → DB: "opened_at"
+	ResolvedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
+	ResolvedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
+	Resolution             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolution" → DB: "resolution"
+	ResolutionAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionAdjustmentId" → DB: "resolution_adjustment_id"
+	ResolutionNotes        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionNotes" → DB: "resolution_notes"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("customerId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	ReasonCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reasonCode", op, value)
+	},
+	DisputedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disputedAmount", op, value)
+	},
+	DisputedAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disputedAmountMinor", op, value)
+	},
+	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("notes", op, value)
+	},
+	OpenedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("openedById", op, value)
+	},
+	OpenedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("openedAt", op, value)
+	},
+	ResolvedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedById", op, value)
+	},
+	ResolvedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedAt", op, value)
+	},
+	Resolution: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolution", op, value)
+	},
+	ResolutionAdjustmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolutionAdjustmentId", op, value)
+	},
+	ResolutionNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolutionNotes", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
 	},
@@ -1602,6 +1988,8 @@ var InvoiceLineColumns = struct {
 	Rate                Column // "rate" → qualified: "invl.rate"
 	RateBasisAmount     Column // "rate_basis_amount" → qualified: "invl.rate_basis_amount"
 	FormulaTemplateName Column // "formula_template_name" → qualified: "invl.formula_template_name"
+	AllocationPercent   Column // "allocation_percent" → qualified: "invl.allocation_percent"
+	ChargeAllocationID  Column // "charge_allocation_id" → qualified: "invl.charge_allocation_id"
 	Version             Column // "version" → qualified: "invl.version"
 	CreatedAt           Column // "created_at" → qualified: "invl.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "invl.updated_at"
@@ -1627,6 +2015,8 @@ var InvoiceLineColumns = struct {
 	Rate:                NewColumn("rate", "invl"),
 	RateBasisAmount:     NewColumn("rate_basis_amount", "invl"),
 	FormulaTemplateName: NewColumn("formula_template_name", "invl"),
+	AllocationPercent:   NewColumn("allocation_percent", "invl"),
+	ChargeAllocationID:  NewColumn("charge_allocation_id", "invl"),
 	Version:             NewColumn("version", "invl"),
 	CreatedAt:           NewColumn("created_at", "invl"),
 	UpdatedAt:           NewColumn("updated_at", "invl"),
@@ -1658,6 +2048,8 @@ var InvoiceLineFieldMap = map[string]string{
 	"rate":                "rate",
 	"rateBasisAmount":     "rate_basis_amount",
 	"formulaTemplateName": "formula_template_name",
+	"allocationPercent":   "allocation_percent",
+	"chargeAllocationId":  "charge_allocation_id",
 	"version":             "version",
 	"createdAt":           "created_at",
 	"updatedAt":           "updated_at",
@@ -1687,6 +2079,8 @@ var InvoiceLineInsertableColumns = []string{
 	"rate",
 	"rate_basis_amount",
 	"formula_template_name",
+	"allocation_percent",
+	"charge_allocation_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1774,6 +2168,8 @@ var InvoiceLineFilter = struct {
 	Rate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
 	RateBasisAmount     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateBasisAmount" → DB: "rate_basis_amount"
 	FormulaTemplateName func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateName" → DB: "formula_template_name"
+	AllocationPercent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allocationPercent" → DB: "allocation_percent"
+	ChargeAllocationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargeAllocationId" → DB: "charge_allocation_id"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1840,6 +2236,12 @@ var InvoiceLineFilter = struct {
 	},
 	FormulaTemplateName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("formulaTemplateName", op, value)
+	},
+	AllocationPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allocationPercent", op, value)
+	},
+	ChargeAllocationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("chargeAllocationId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -318,32 +318,140 @@ func (c *APITokenConfig) GetUsageMaxPending() int {
 	return c.UsageMaxPending
 }
 
+type RateLimitScope string
+
+const (
+	RateLimitScopeAnonymous   RateLimitScope = "anonymous"
+	RateLimitScopeUser        RateLimitScope = "user"
+	RateLimitScopeAPIKey      RateLimitScope = "apiKey"
+	RateLimitScopeTenant      RateLimitScope = "tenant"
+	RateLimitScopePublicToken RateLimitScope = "publicToken"
+)
+
+const (
+	RateLimitStoreRedis  = "redis"
+	RateLimitStoreMemory = "memory"
+
+	RateLimitFailureModeLocal = "local"
+	RateLimitFailureModeAllow = "allow"
+	RateLimitFailureModeDeny  = "deny"
+
+	defaultRateLimitRequestsPerMinute = 60
+	defaultRateLimitBurstSize         = 10
+	defaultRateLimitCleanupInterval   = time.Minute
+	defaultRateLimitStoreTimeout      = 250 * time.Millisecond
+	defaultRateLimitKeyPrefix         = "ratelimit:v1"
+)
+
+type RateLimitScopeConfig struct {
+	Disabled          bool `mapstructure:"disabled"`
+	RequestsPerMinute int  `mapstructure:"requestsPerMinute" validate:"omitempty,min=1,max=1000000"`
+	BurstSize         int  `mapstructure:"burstSize"         validate:"omitempty,min=1,max=100000"`
+}
+
 type RateLimitConfig struct {
-	Enabled           bool          `mapstructure:"enabled"`
-	RequestsPerMinute int           `mapstructure:"requestsPerMinute" validate:"min=1,max=10000"`
-	BurstSize         int           `mapstructure:"burstSize"         validate:"min=1,max=1000"`
-	CleanupInterval   time.Duration `mapstructure:"cleanupInterval"`
+	Enabled            bool                 `mapstructure:"enabled"`
+	Store              string               `mapstructure:"store"              validate:"omitempty,oneof=redis memory"`
+	FailureMode        string               `mapstructure:"failureMode"        validate:"omitempty,oneof=local allow deny"`
+	KeyPrefix          string               `mapstructure:"keyPrefix"`
+	StoreTimeout       time.Duration        `mapstructure:"storeTimeout"`
+	RequestsPerMinute  int                  `mapstructure:"requestsPerMinute"  validate:"min=1,max=10000"`
+	BurstSize          int                  `mapstructure:"burstSize"          validate:"min=1,max=1000"`
+	CleanupInterval    time.Duration        `mapstructure:"cleanupInterval"`
+	ExemptPathPrefixes []string             `mapstructure:"exemptPathPrefixes"`
+	Anonymous          RateLimitScopeConfig `mapstructure:"anonymous"`
+	User               RateLimitScopeConfig `mapstructure:"user"`
+	APIKey             RateLimitScopeConfig `mapstructure:"apiKey"`
+	Tenant             RateLimitScopeConfig `mapstructure:"tenant"`
+	PublicToken        RateLimitScopeConfig `mapstructure:"publicToken"`
+}
+
+type RateLimitScopePolicy struct {
+	Enabled           bool
+	RequestsPerMinute int
+	BurstSize         int
+}
+
+type rateLimitScopeDefaults struct {
+	requestsPerMinute int
+	burstSize         int
+}
+
+var rateLimitScopeDefaultTable = map[RateLimitScope]rateLimitScopeDefaults{
+	RateLimitScopeUser:        {requestsPerMinute: 600, burstSize: 60},
+	RateLimitScopeAPIKey:      {requestsPerMinute: 300, burstSize: 30},
+	RateLimitScopeTenant:      {requestsPerMinute: 6000, burstSize: 600},
+	RateLimitScopePublicToken: {requestsPerMinute: 10, burstSize: 5},
 }
 
 func (c *RateLimitConfig) GetRequestsPerMinute() int {
-	if c.RequestsPerMinute == 0 {
-		return 60
-	}
-	return c.RequestsPerMinute
+	return intutils.WithDefault(c.RequestsPerMinute, defaultRateLimitRequestsPerMinute)
 }
 
 func (c *RateLimitConfig) GetBurstSize() int {
-	if c.BurstSize == 0 {
-		return 10
-	}
-	return c.BurstSize
+	return intutils.WithDefault(c.BurstSize, defaultRateLimitBurstSize)
 }
 
 func (c *RateLimitConfig) GetCleanupInterval() time.Duration {
-	if c.CleanupInterval == 0 {
-		return time.Minute
+	return timeutils.WithDefaultDuration(c.CleanupInterval, defaultRateLimitCleanupInterval)
+}
+
+func (c *RateLimitConfig) GetStore() string {
+	if c.Store == "" {
+		return RateLimitStoreRedis
 	}
-	return c.CleanupInterval
+	return c.Store
+}
+
+func (c *RateLimitConfig) GetFailureMode() string {
+	if c.FailureMode == "" {
+		return RateLimitFailureModeLocal
+	}
+	return c.FailureMode
+}
+
+func (c *RateLimitConfig) GetKeyPrefix() string {
+	if c.KeyPrefix == "" {
+		return defaultRateLimitKeyPrefix
+	}
+	return c.KeyPrefix
+}
+
+func (c *RateLimitConfig) GetStoreTimeout() time.Duration {
+	return timeutils.WithDefaultDuration(c.StoreTimeout, defaultRateLimitStoreTimeout)
+}
+
+func (c *RateLimitConfig) ScopePolicy(scope RateLimitScope) RateLimitScopePolicy {
+	var scopeCfg RateLimitScopeConfig
+	defaults := rateLimitScopeDefaults{
+		requestsPerMinute: c.GetRequestsPerMinute(),
+		burstSize:         c.GetBurstSize(),
+	}
+
+	switch scope {
+	case RateLimitScopeAnonymous:
+		scopeCfg = c.Anonymous
+	case RateLimitScopeUser:
+		scopeCfg = c.User
+	case RateLimitScopeAPIKey:
+		scopeCfg = c.APIKey
+	case RateLimitScopeTenant:
+		scopeCfg = c.Tenant
+	case RateLimitScopePublicToken:
+		scopeCfg = c.PublicToken
+	default:
+		return RateLimitScopePolicy{}
+	}
+
+	if d, ok := rateLimitScopeDefaultTable[scope]; ok {
+		defaults = d
+	}
+
+	return RateLimitScopePolicy{
+		Enabled:           c.Enabled && !scopeCfg.Disabled,
+		RequestsPerMinute: intutils.WithDefault(scopeCfg.RequestsPerMinute, defaults.requestsPerMinute),
+		BurstSize:         intutils.WithDefault(scopeCfg.BurstSize, defaults.burstSize),
+	}
 }
 
 type CSRFConfig struct {
@@ -670,9 +778,13 @@ type MeilisearchIndexConfig struct {
 }
 
 type TemporalConfig struct {
-	HostPort     string                    `mapstructure:"hostPort"     validate:"required,hostname_port"`
+	HostPort     string                    `mapstructure:"hostPort"     validate:"required_without=Profile,omitempty,hostname_port"`
 	Namespace    string                    `mapstructure:"namespace"`
 	Identity     string                    `mapstructure:"identity"`
+	Profile      string                    `mapstructure:"profile"      validate:"omitempty,max=128"`
+	ConfigFile   string                    `mapstructure:"configFile"`
+	APIKey       string                    `mapstructure:"apiKey"       validate:"omitempty,max=8192"`
+	TLS          TemporalTLSConfig         `mapstructure:"tls"`
 	Security     TemporalSecurityConfig    `mapstructure:"security"     validate:"required"`
 	Interceptors TemporalInterceptorConfig `mapstructure:"interceptors"`
 	Schedule     TemporalScheduleConfig    `mapstructure:"schedule"`
@@ -693,6 +805,26 @@ func (c *TemporalConfig) GetIdentity() string {
 	}
 
 	return c.Identity
+}
+
+func (c *TemporalConfig) UsesProfile() bool {
+	return strings.TrimSpace(c.Profile) != ""
+}
+
+type TemporalTLSConfig struct {
+	Enabled          bool   `mapstructure:"enabled"`
+	ServerName       string `mapstructure:"serverName"`
+	ServerCACertPath string `mapstructure:"serverCACertPath"`
+	ClientCertPath   string `mapstructure:"clientCertPath"   validate:"required_with=ClientKeyPath"`
+	ClientKeyPath    string `mapstructure:"clientKeyPath"    validate:"required_with=ClientCertPath"`
+}
+
+func (c *TemporalTLSConfig) IsEnabled() bool {
+	return c.Enabled ||
+		c.ServerName != "" ||
+		c.ServerCACertPath != "" ||
+		c.ClientCertPath != "" ||
+		c.ClientKeyPath != ""
 }
 
 type TemporalSecurityConfig struct {

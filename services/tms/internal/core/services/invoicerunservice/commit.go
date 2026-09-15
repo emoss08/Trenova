@@ -128,7 +128,7 @@ func (s *Service) commitGroup(
 		return s.skipGroup(ctx, group, &outcome, reason)
 	}
 
-	legs, queueItems, reason, err := s.resolveGroupLegs(ctx, tenantInfo, included)
+	legs, queueItems, reason, err := s.resolveGroupLegs(ctx, tenantInfo, group, included)
 	if err != nil {
 		return s.failGroup(ctx, group, &outcome, err)
 	}
@@ -142,6 +142,7 @@ func (s *Service) commitGroup(
 			TenantInfo:  tenantInfo,
 			Legs:        legs,
 			QueueItems:  queueItems,
+			PayerID:     group.CustomerID,
 			RunID:       run.ID,
 			InvoiceDate: run.InvoiceDate,
 			PeriodStart: run.PeriodStart,
@@ -178,6 +179,7 @@ func (s *Service) commitGroup(
 func (s *Service) resolveGroupLegs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	group *invoicerun.InvoiceRunGroup,
 	items []*invoicerun.InvoiceRunGroupItem,
 ) ([]*shipment.Shipment, []*billingqueue.BillingQueueItem, string, error) {
 	legs := make([]*shipment.Shipment, 0, len(items))
@@ -199,6 +201,9 @@ func (s *Service) resolveGroupLegs(
 		}
 		if queueItem.Status != billingqueue.StatusApproved {
 			return nil, nil, "Some shipments are no longer approved for billing", nil
+		}
+		if queueItem.BillToCustomerID != group.CustomerID {
+			return nil, nil, "Some shipments were re-allocated to another payer after this run was built", nil
 		}
 
 		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{

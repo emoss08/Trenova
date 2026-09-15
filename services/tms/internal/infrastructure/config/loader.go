@@ -155,6 +155,15 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.requestTimeout", "55s")
 	l.viper.SetDefault("server.trustedProxies", DefaultTrustedProxies)
 
+	l.viper.SetDefault("temporal.profile", "")
+	l.viper.SetDefault("temporal.configFile", "")
+	l.viper.SetDefault("temporal.apiKey", "")
+	l.viper.SetDefault("temporal.tls.enabled", false)
+	l.viper.SetDefault("temporal.tls.serverName", "")
+	l.viper.SetDefault("temporal.tls.serverCACertPath", "")
+	l.viper.SetDefault("temporal.tls.clientCertPath", "")
+	l.viper.SetDefault("temporal.tls.clientKeyPath", "")
+
 	// Database defaults
 	l.viper.SetDefault("database.driver", "postgres")
 	l.viper.SetDefault("database.sslMode", "prefer")
@@ -199,6 +208,23 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("security.rateLimit.requestsPerMinute", 60)
 	l.viper.SetDefault("security.rateLimit.burstSize", 10)
 	l.viper.SetDefault("security.rateLimit.cleanupInterval", "1m")
+	l.viper.SetDefault("security.rateLimit.store", RateLimitStoreRedis)
+	l.viper.SetDefault("security.rateLimit.failureMode", RateLimitFailureModeLocal)
+	l.viper.SetDefault("security.rateLimit.keyPrefix", defaultRateLimitKeyPrefix)
+	l.viper.SetDefault("security.rateLimit.storeTimeout", "250ms")
+	l.viper.SetDefault("security.rateLimit.exemptPathPrefixes", []string{})
+	for _, scope := range []RateLimitScope{
+		RateLimitScopeAnonymous,
+		RateLimitScopeUser,
+		RateLimitScopeAPIKey,
+		RateLimitScopeTenant,
+		RateLimitScopePublicToken,
+	} {
+		prefix := "security.rateLimit." + string(scope)
+		l.viper.SetDefault(prefix+".disabled", false)
+		l.viper.SetDefault(prefix+".requestsPerMinute", 0)
+		l.viper.SetDefault(prefix+".burstSize", 0)
+	}
 
 	// Logging defaults
 	l.viper.SetDefault("logging.level", "info")

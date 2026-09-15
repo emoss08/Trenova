@@ -3,10 +3,12 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type CreateInvoiceFromBillingQueueRequest struct {
@@ -41,6 +43,50 @@ type PostInvoiceRequest struct {
 	InvoiceID   pulid.ID
 	TenantInfo  pagination.TenantInfo
 	TriggeredBy string
+}
+
+// VoidInvoiceRequest takes an invoice out of circulation. A draft is voided in
+// place; a posted invoice goes through a full-reversal adjustment so the ledger
+// reverses before the invoice is marked. Disposition decides whether the freight
+// behind it goes back to the queue or is canceled.
+type VoidInvoiceRequest struct {
+	InvoiceID   pulid.ID
+	TenantInfo  pagination.TenantInfo
+	Reason      string
+	Disposition invoice.VoidDisposition
+}
+
+type VoidInvoiceResult struct {
+	Invoice *invoice.Invoice `json:"invoice"`
+	// AdjustmentID is the full reversal a posted void went through.
+	AdjustmentID pulid.ID `json:"adjustmentId"`
+	// PendingApproval means the reversal is waiting on an approver; the invoice
+	// voids the moment it executes.
+	PendingApproval      bool       `json:"pendingApproval"`
+	ReleasedQueueItemIDs []pulid.ID `json:"releasedQueueItemIds"`
+}
+
+type CreateMemoLineInput struct {
+	Description         string          `json:"description"`
+	Amount              decimal.Decimal `json:"amount"`
+	Quantity            decimal.Decimal `json:"quantity"`
+	AccessorialChargeID pulid.ID        `json:"accessorialChargeId"`
+}
+
+// CreateMemoRequest raises a credit or debit memo against a customer with no
+// shipment behind it: a goodwill credit, a returned-check fee, a late charge.
+type CreateMemoRequest struct {
+	ID                 pulid.ID
+	TenantInfo         pagination.TenantInfo
+	CustomerID         pulid.ID
+	BillType           billingqueue.BillType
+	Lines              []*CreateMemoLineInput
+	ReferenceInvoiceID pulid.ID
+	Reason             string
+	InvoiceDate        int64
+	Memo               string
+	MemoKind           invoice.MemoKind
+	AutoPost           bool
 }
 
 type CreateInvoiceFromShipmentsRequest struct {
@@ -137,6 +183,9 @@ type InvoiceSendPlan struct {
 	Body                 string                 `json:"body"`
 	InvoicePDFDocumentID pulid.ID               `json:"invoicePdfDocumentId"`
 
+	// EDI is where the invoice's outbound 210 stands and what blocks it.
+	EDI *InvoiceEDISendPlan `json:"edi"`
+
 	// BodyHTML is the organization's template output. It is empty when the
 	// subject and body came from an operator's draft or the customer's email
 	// profile, because those are free text and the send path wraps them itself.
@@ -202,7 +251,24 @@ type DownloadInvoiceDocumentResult struct {
 	Body               []byte `json:"-"`
 }
 
+// CreateInvoicesResult is every invoice a billing action produced. A split-billed
+// shipment yields one per payer; Primary is the shipment's own payer's invoice,
+// which is what single-invoice callers are shown.
+type CreateInvoicesResult struct {
+	Invoices []*invoice.Invoice `json:"invoices"`
+	Primary  *invoice.Invoice   `json:"primary"`
+}
+
 type InvoiceService interface {
+	ResolveEDISendPlans(
+		ctx context.Context,
+		req *ResolveInvoiceEDISendPlansRequest,
+	) (map[pulid.ID]*InvoiceEDISendPlan, error)
+	SendEDI(
+		ctx context.Context,
+		req *SendInvoiceEDIRequest,
+		actor *RequestActor,
+	) (*InvoiceEDISendResult, error)
 	List(
 		ctx context.Context,
 		req *repositories.ListInvoicesRequest,
@@ -232,6 +298,26 @@ type InvoiceService interface {
 	CreateFromOrder(
 		ctx context.Context,
 		req *CreateInvoiceFromOrderRequest,
+		actor *RequestActor,
+	) (*invoice.Invoice, error)
+	CreateInvoicesFromShipments(
+		ctx context.Context,
+		req *CreateInvoiceFromShipmentsRequest,
+		actor *RequestActor,
+	) (*CreateInvoicesResult, error)
+	CreateInvoicesFromOrder(
+		ctx context.Context,
+		req *CreateInvoiceFromOrderRequest,
+		actor *RequestActor,
+	) (*CreateInvoicesResult, error)
+	VoidInvoice(
+		ctx context.Context,
+		req *VoidInvoiceRequest,
+		actor *RequestActor,
+	) (*VoidInvoiceResult, error)
+	CreateMemo(
+		ctx context.Context,
+		req *CreateMemoRequest,
 		actor *RequestActor,
 	) (*invoice.Invoice, error)
 	UpdateDraft(
@@ -285,4 +371,42 @@ type InvoiceService interface {
 		entity *invoice.Invoice,
 		actor *RequestActor,
 	) error
+}
+
+// InvoiceEDISendPlan is whether an invoice's outbound 210 can go, where it
+// would go, and where the last attempt stands.
+type InvoiceEDISendPlan struct {
+	InvoiceID pulid.ID `json:"invoiceId"`
+	// Enabled is the customer's EDI invoicing switch; Blockers say why a send
+	// still cannot happen when it is on.
+	Enabled             bool                  `json:"enabled"`
+	AutoSend            bool                  `json:"autoSend"`
+	PartnerID           pulid.ID              `json:"partnerId"`
+	PartnerName         string                `json:"partnerName"`
+	DocumentProfileID   pulid.ID              `json:"documentProfileId"`
+	CommunicationMethod string                `json:"communicationMethod"`
+	Status              invoice.EDISendStatus `json:"status"`
+	LastMessageID       pulid.ID              `json:"lastMessageId"`
+	LastError           string                `json:"lastError"`
+	SentAt              *int64                `json:"sentAt"`
+	Blockers            []string              `json:"blockers"`
+}
+
+type ResolveInvoiceEDISendPlansRequest struct {
+	TenantInfo pagination.TenantInfo
+	Invoices   []*invoice.Invoice
+}
+
+type SendInvoiceEDIRequest struct {
+	InvoiceID  pulid.ID              `json:"invoiceId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+	// Force resends an invoice that already went out.
+	Force bool `json:"force"`
+}
+
+type InvoiceEDISendResult struct {
+	InvoiceID     pulid.ID              `json:"invoiceId"`
+	Status        invoice.EDISendStatus `json:"status"`
+	WorkflowID    string                `json:"workflowId"`
+	WorkflowRunID string                `json:"workflowRunId"`
 }

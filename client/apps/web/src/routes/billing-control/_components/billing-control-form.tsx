@@ -20,6 +20,7 @@ import {
   enforcementLevelChoices,
   invoiceDraftCreationModeChoices,
   invoicePostingModeChoices,
+  lateChargeAssessmentModeChoices,
   paymentTermChoices,
   rateVarianceAutoResolutionModeChoices,
   readyToBillAssignmentModeChoices,
@@ -78,6 +79,7 @@ export default function BillingControlForm() {
           <AutomationCard />
           <ExceptionPolicyCard />
           <RatingPolicyCard />
+          <LateChargesCard />
           <FormSaveDock saveButtonContent={t("Save Changes")} />
         </div>
       </Form>
@@ -380,6 +382,71 @@ function ExceptionPolicyCard() {
               )}
               options={rateVarianceAutoResolutionModeChoices}
               rules={{ required: true }}
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Whether the nightly late-charge run previews or raises debit memos. The
+ * rate and grace period stay on each customer's billing profile; this card
+ * only decides what the run is allowed to do with them.
+ */
+export function LateChargesCard() {
+  const t = useT();
+
+  const { control } = useFormContext<BillingControl>();
+  const mode = useWatch({ control, name: "lateChargeAssessmentMode" });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Late Charges")}</CardTitle>
+        <CardDescription>
+          {t(
+            "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="lateChargeAssessmentMode"
+              label={t("Assessment Mode")}
+              description={
+                mode === "Preview"
+                  ? t(
+                      "The nightly run computes what it would raise and writes nothing; use the Late Charges page to raise memos by hand.",
+                    )
+                  : mode === "Automatic"
+                    ? t(
+                        "The nightly run raises the debit memos, posting them when invoice posting is automatic.",
+                      )
+                    : t(
+                        "No late charges are assessed; the Late Charges page can still preview them.",
+                      )
+              }
+              options={lateChargeAssessmentModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <NumberField
+              control={control}
+              name="lateChargeMinimumAmount"
+              label={t("Minimum late charge")}
+              aria-label={t("Minimum late charge")}
+              description={t(
+                "A customer whose late charges for a run add up to less than this is skipped.",
+              )}
+              decimalScale={2}
+              fixedDecimalScale
+              min={0}
             />
           </FormControl>
         </FormGroup>

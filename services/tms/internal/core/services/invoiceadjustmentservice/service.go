@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/core/services/invoicevoid"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -63,6 +66,9 @@ type Params struct {
 	JournalRepo        repositories.JournalPostingRepository
 	FiscalPeriodRepo   repositories.FiscalPeriodRepository
 	DocumentRepo       repositories.DocumentRepository
+	OrderRepo          repositories.OrderRepository            `optional:"true"`
+	ChargeAllocRepo    repositories.ChargeAllocationRepository `optional:"true"`
+	OrderDerivation    servicesports.OrderDerivationService    `optional:"true"`
 	Validator          *Validator
 	AuditService       servicesports.AuditService
 	WorkflowStarter    servicesports.WorkflowStarter
@@ -87,6 +93,9 @@ type Service struct {
 	journalRepo        repositories.JournalPostingRepository
 	fiscalPeriodRepo   repositories.FiscalPeriodRepository
 	documentRepo       repositories.DocumentRepository
+	orderRepo          repositories.OrderRepository
+	chargeAllocRepo    repositories.ChargeAllocationRepository
+	orderDerivation    servicesports.OrderDerivationService
 	validator          *Validator
 	auditService       servicesports.AuditService
 	workflowStarter    servicesports.WorkflowStarter
@@ -145,6 +154,9 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		journalRepo:        p.JournalRepo,
 		fiscalPeriodRepo:   p.FiscalPeriodRepo,
 		documentRepo:       p.DocumentRepo,
+		orderRepo:          p.OrderRepo,
+		chargeAllocRepo:    p.ChargeAllocRepo,
+		orderDerivation:    p.OrderDerivation,
 		validator:          p.Validator,
 		auditService:       p.AuditService,
 		workflowStarter:    p.WorkflowStarter,
@@ -964,6 +976,13 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 
 	if entity.Status != invoice.StatusPosted {
 		appendPreviewError(preview, "invoiceId", "Only posted invoices may be adjusted")
+	}
+	if req.Kind == invoiceadjustment.KindFullReversal && entity.AppliedAmountMinor > 0 {
+		appendPreviewError(
+			preview,
+			"invoiceId",
+			"Unapply the customer payments and credit memos on this invoice before reversing it in full",
+		)
 	}
 
 	attachmentResolution, err := s.resolveSupportingDocumentRequirement(
@@ -1832,10 +1851,29 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}
 
-		legLines := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, nextLineNumber)
+		resolution, legErr := shipment.ResolveShares(shp, shp.ChargeAllocations)
+		if legErr != nil {
+			return nil, decimal.Zero, decimal.Zero, legErr
+		}
+		share := resolution.ShareFor(entity.CustomerID)
+		if share == nil {
+			return nil, decimal.Zero, decimal.Zero, errortypes.NewValidationError(
+				"invoiceId",
+				errortypes.ErrInvalidOperation,
+				"This payer no longer has a share of shipment {0}",
+				shp.ProNumber,
+			)
+		}
+
+		legLines := invoicelines.ForShipmentShare(
+			billingqueue.BillTypeInvoice,
+			shp,
+			share,
+			nextLineNumber,
+		)
 		lines = append(lines, legLines...)
 		nextLineNumber += len(legLines)
-		total = total.Add(shp.TotalChargeAmount.Decimal)
+		total = total.Add(share.TotalAmount)
 	}
 
 	// Anything wider than one shipment can carry unattributed lines, and dropping
@@ -2129,6 +2167,12 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		return nil, fmt.Errorf("create execution snapshot: %w", err)
 	}
 
+	if adjustment.Kind == invoiceadjustment.KindFullReversal {
+		if err = s.voidReversedInvoice(ctx, adjustment, lockedInvoice, actor, now); err != nil {
+			return nil, err
+		}
+	}
+
 	adjustment.Status = invoiceadjustment.StatusExecuted
 	adjustment.ExecutionError = ""
 	adjustment.ReplacementReviewStatus = replacementReviewStatus(
@@ -2174,6 +2218,9 @@ func (s *Service) createCreditMemoQueueItem(
 		BusinessUnitID:            adjustment.BusinessUnitID,
 		ShipmentID:                sourceInvoice.ShipmentID,
 		OrderID:                   sourceInvoice.OrderID,
+		BillToCustomerID:          sourceInvoice.CustomerID,
+		AllocatedTotalAmount:      sourceInvoice.TotalAmount.Abs(),
+		AllocatedTotalAmountMinor: absMinor(sourceInvoice.TotalAmountMinor),
 		Number:                    number,
 		Status:                    billingqueue.StatusPosted,
 		BillType:                  billingqueue.BillTypeCreditMemo,
@@ -2239,6 +2286,8 @@ func (s *Service) createCreditMemoInvoice(
 		BillToState:               sourceInvoice.BillToState,
 		BillToPostalCode:          sourceInvoice.BillToPostalCode,
 		BillToCountry:             sourceInvoice.BillToCountry,
+		ShipperCustomerID:         sourceInvoice.ShipperCustomerID,
+		IsSplitBill:               sourceInvoice.IsSplitBill,
 		SubtotalAmount:            subtotal,
 		OtherAmount:               other,
 		TotalAmount:               preview.CreditTotalAmount.Neg(),
@@ -2278,6 +2327,9 @@ func (s *Service) createReplacementQueueItem(
 		BusinessUnitID:            adjustment.BusinessUnitID,
 		ShipmentID:                sourceInvoice.ShipmentID,
 		OrderID:                   sourceInvoice.OrderID,
+		BillToCustomerID:          sourceInvoice.CustomerID,
+		AllocatedTotalAmount:      preview.RebillTotalAmount.Abs(),
+		AllocatedTotalAmountMinor: money.MinorUnits(preview.RebillTotalAmount.Abs()),
 		Number:                    number,
 		Status:                    replacementQueueStatus(preview.RequiresReplacementInvoiceReview),
 		BillType:                  billingqueue.BillTypeInvoice,
@@ -2516,4 +2568,105 @@ func maxInt64(a, b int64) int64 {
 		return a
 	}
 	return b
+}
+
+func absMinor(minor int64) int64 {
+	if minor < 0 {
+		return -minor
+	}
+
+	return minor
+}
+
+// voidReversedInvoice retires the original once a full reversal has credited
+// it. The invoice keeps its number and lines for the audit trail, its open
+// balance drops to zero, and its freight is released according to the
+// disposition recorded when the void was requested (DoNotRebill unless the
+// requester asked otherwise).
+func (s *Service) voidReversedInvoice(
+	ctx context.Context,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+	original *invoice.Invoice,
+	actor *servicesports.RequestActor,
+	now int64,
+) error {
+	if original.Status == invoice.StatusVoided {
+		return nil
+	}
+	if !invoice.IsAllowedTransition(original.Status, invoice.StatusVoided) {
+		return errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"Invoice cannot be voided from its current status",
+		)
+	}
+
+	disposition := original.VoidDisposition
+	if !disposition.IsValid() {
+		disposition = invoice.VoidDispositionDoNotRebill
+	}
+	reason := strings.TrimSpace(original.VoidReason)
+	if reason == "" {
+		reason = strings.TrimSpace(adjustment.Reason)
+	}
+	if reason == "" {
+		reason = "Reversed in full by adjustment " + adjustment.ID.String()
+	}
+
+	original.Status = invoice.StatusVoided
+	original.VoidedAt = &now
+	original.VoidedByID = actor.UserID
+	original.VoidReason = reason
+	original.VoidDisposition = disposition
+	original.VoidedByAdjustmentID = adjustment.ID
+	updated, err := s.invoiceRepo.Update(ctx, original)
+	if err != nil {
+		return err
+	}
+
+	_, err = invoicevoid.Release(ctx, invoicevoid.Deps{
+		BillingQueueRepo:     s.billingQueueRepo,
+		OrderRepo:            s.orderRepo,
+		ChargeAllocationRepo: s.chargeAllocRepo,
+		ShipmentRepo:         s.shipmentRepo,
+		InvoiceRepo:          s.invoiceRepo,
+		OrderDerivation:      s.orderDerivation,
+		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
+			return s.renumberReleasedItem(ctx, adjustment, billType)
+		},
+	}, invoicevoid.Params{
+		Invoice:     updated,
+		Disposition: disposition,
+		ActorUserID: actor.UserID,
+		Reason:      reason,
+		WasPosted:   true,
+		Now:         now,
+	})
+	if err != nil {
+		return err
+	}
+	*original = *updated
+
+	return nil
+}
+
+func (s *Service) renumberReleasedItem(
+	ctx context.Context,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+	billType billingqueue.BillType,
+) (string, error) {
+	switch billType {
+	case billingqueue.BillTypeCreditMemo:
+		return s.sequenceGenerator.GenerateCreditMemoNumber(
+			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
+		)
+	case billingqueue.BillTypeDebitMemo:
+		return s.sequenceGenerator.GenerateDebitMemoNumber(
+			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
+		)
+	default:
+		return s.sequenceGenerator.GenerateInvoiceNumber(
+			ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "",
+		)
+	}
 }

@@ -1290,6 +1290,75 @@ func (ec *executionContext) fieldContext_ARCollectionsWorklistItem_severity(_ co
 	return graphql.NewScalarFieldContext("ARCollectionsWorklistItem", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ARCollectionsWorklistItem_openDisputeReasonCode(ctx context.Context, field graphql.CollectedField, obj *repositories.ARCollectionsWorklistItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ARCollectionsWorklistItem_openDisputeReasonCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenDisputeReasonCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ARCollectionsWorklistItem_openDisputeReasonCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ARCollectionsWorklistItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ARCollectionsWorklistItem_disputedAmountMinor(ctx context.Context, field graphql.CollectedField, obj *repositories.ARCollectionsWorklistItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ARCollectionsWorklistItem_disputedAmountMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputedAmountMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ARCollectionsWorklistItem_disputedAmountMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ARCollectionsWorklistItem", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ARCollectionsWorklistItem_disputeOpenedAt(ctx context.Context, field graphql.CollectedField, obj *repositories.ARCollectionsWorklistItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ARCollectionsWorklistItem_disputeOpenedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisputeOpenedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ARCollectionsWorklistItem_disputeOpenedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ARCollectionsWorklistItem", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _ARCustomerAgingRow_customerId(ctx context.Context, field graphql.CollectedField, obj *repositories.ARCustomerAgingRow) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4065,6 +4134,21 @@ func (ec *executionContext) _ARCollectionsWorklistItem(ctx context.Context, sel 
 		case "severity":
 			out.Values[i] = ec._ARCollectionsWorklistItem_severity(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "openDisputeReasonCode":
+			out.Values[i] = ec._ARCollectionsWorklistItem_openDisputeReasonCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputedAmountMinor":
+			out.Values[i] = ec._ARCollectionsWorklistItem_disputedAmountMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "disputeOpenedAt":
+			out.Values[i] = ec._ARCollectionsWorklistItem_disputeOpenedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:

@@ -192,3 +192,12 @@ func Keep[T interface{ GetID() ID }](children []T) []ID {
 
 	return ids
 }
+
+// ClonePointer copies an optional id so two structs never share one address.
+func ClonePointer(id *ID) *ID {
+	if id == nil {
+		return nil
+	}
+	copied := *id
+	return &copied
+}

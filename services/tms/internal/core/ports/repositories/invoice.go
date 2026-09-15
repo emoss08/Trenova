@@ -28,6 +28,23 @@ type GetInvoicesByIDsRequest struct {
 	InvoiceIDs []pulid.ID            `json:"invoiceIds"`
 }
 
+// ListInvoicesByShipmentIDsRequest asks for every invoice that bills any of the
+// shipments, whether as its header shipment or through a line: that is how a
+// split bill's sibling invoices find each other.
+type ListInvoicesByShipmentIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
+type UpdateInvoiceEDISendStatusRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceID  pulid.ID              `json:"-"`
+	MessageID  pulid.ID              `json:"-"`
+	Status     invoice.EDISendStatus `json:"-"`
+	Error      string                `json:"-"`
+	SentAt     *int64                `json:"-"`
+}
+
 type GetInvoiceByBillingQueueItemIDRequest struct {
 	BillingQueueItemID pulid.ID              `json:"billingQueueItemId"`
 	TenantInfo         pagination.TenantInfo `json:"tenantInfo"`
@@ -80,6 +97,20 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		req GetInvoiceByBillingQueueItemIDRequest,
 	) (*invoice.Invoice, error)
+	ListByShipmentIDs(
+		ctx context.Context,
+		req ListInvoicesByShipmentIDsRequest,
+	) (map[pulid.ID][]*invoice.Invoice, error)
+	// LockForUpdate reads the invoice and its lines under a row lock inside the
+	// caller's transaction.
+	LockForUpdate(
+		ctx context.Context,
+		req GetInvoiceByIDRequest,
+	) (*invoice.Invoice, error)
+	UpdateEDISendStatus(
+		ctx context.Context,
+		req UpdateInvoiceEDISendStatusRequest,
+	) error
 	CountPostedReconciliationDiscrepancies(
 		ctx context.Context,
 		req CountPostedInvoiceReconciliationDiscrepanciesRequest,

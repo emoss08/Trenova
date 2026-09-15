@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
 )
 
@@ -158,14 +159,22 @@ func (r *Reconciler) createSchedule(ctx context.Context, sched *Schedule) error 
 
 	_, err := sc.Create(ctx, opts)
 	if err != nil {
-		var alreadyExists *serviceerror.AlreadyExists
-		if errors.As(err, &alreadyExists) {
+		if isScheduleAlreadyExists(err) {
 			r.logger.Debug("schedule already exists, updating instead", zap.String("id", sched.ID))
 			return r.updateSchedule(ctx, sched)
 		}
 		return err
 	}
 	return nil
+}
+
+func isScheduleAlreadyExists(err error) bool {
+	if errors.Is(err, temporal.ErrScheduleAlreadyRunning) {
+		return true
+	}
+
+	var alreadyExists *serviceerror.AlreadyExists
+	return errors.As(err, &alreadyExists)
 }
 
 func (r *Reconciler) updateSchedule(ctx context.Context, sched *Schedule) error {

@@ -28,6 +28,7 @@ type Params struct {
 	Generator                  seqgen.Generator
 	MoveRepository             repositories.ShipmentMoveRepository
 	AdditionalChargeRepository repositories.ShipmentAdditionalChargeRepository
+	ChargeAllocationRepository repositories.ChargeAllocationRepository
 	CommodityRepository        repositories.ShipmentCommodityRepository
 	OrderRepository            repositories.OrderRepository
 }
@@ -38,6 +39,7 @@ type repository struct {
 	generator                  seqgen.Generator
 	moveRepository             repositories.ShipmentMoveRepository
 	additionalChargeRepository repositories.ShipmentAdditionalChargeRepository
+	chargeAllocationRepository repositories.ChargeAllocationRepository
 	commodityRepository        repositories.ShipmentCommodityRepository
 	orderRepository            repositories.OrderRepository
 }
@@ -50,6 +52,7 @@ func New(p Params) repositories.ShipmentRepository {
 		generator:                  p.Generator,
 		moveRepository:             p.MoveRepository,
 		additionalChargeRepository: p.AdditionalChargeRepository,
+		chargeAllocationRepository: p.ChargeAllocationRepository,
 		commodityRepository:        p.CommodityRepository,
 		orderRepository:            p.OrderRepository,
 	}
@@ -434,6 +437,10 @@ func (r *repository) Create(
 			return err
 		}
 
+		if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
+			return err
+		}
+
 		return r.commodityRepository.SyncForShipment(c, tx, entity)
 	})
 	if err != nil {
@@ -518,6 +525,10 @@ func (r *repository) Update(
 		}
 
 		if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+			return err
+		}
+
+		if err = r.chargeAllocationRepository.SyncForShipment(c, tx, entity); err != nil {
 			return err
 		}
 
@@ -625,7 +636,11 @@ func (r *repository) UpdateDerivedState(
 			return err
 		}
 
-		return r.additionalChargeRepository.SyncForShipment(c, tx, entity)
+		if err = r.additionalChargeRepository.SyncForShipment(c, tx, entity); err != nil {
+			return err
+		}
+
+		return r.chargeAllocationRepository.SyncForShipment(c, tx, entity)
 	})
 	if err != nil {
 		return nil, dberror.MapRetryableTransactionError(
@@ -917,6 +932,16 @@ func (r *repository) BulkDuplicate(
 			if _, insertErr := tx.
 				NewInsert().
 				Model(&graph.additionalCharges).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
+				return insertErr
+			}
+		}
+
+		if len(graph.chargeAllocations) > 0 {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.chargeAllocations).
 				Returning("NULL").
 				Exec(c); insertErr != nil {
 				return insertErr

@@ -48,6 +48,14 @@ func (r *carrierAssignmentAccessorialResolver) Amount(ctx context.Context, obj *
 	return obj.Amount.String(), nil
 }
 
+func (r *chargeAllocationResolver) Percent(ctx context.Context, obj *shipmentdomain.ChargeAllocation) (*string, error) {
+	return nullDecimalStringPtr(obj.Percent), nil
+}
+
+func (r *chargeAllocationResolver) Amount(ctx context.Context, obj *shipmentdomain.ChargeAllocation) (*string, error) {
+	return nullDecimalStringPtr(obj.Amount), nil
+}
+
 func (r *mutationResolver) CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpCreate)
 	if err != nil {
@@ -242,6 +250,27 @@ func (r *mutationResolver) TransferShipmentToBilling(ctx context.Context, input 
 	}
 
 	return requiredBillingQueueItemToModel(item)
+}
+
+func (r *mutationResolver) TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := pulid.MustParse(input.ShipmentID)
+	if err != nil {
+		return nil, err
+	}
+	transferred, err := r.shipmentService.TransferToBillingItems(ctx, &services.TransferShipmentToBillingRequest{
+		ShipmentID: shipmentID,
+		BillType:   parseBillType(input.BillType),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return transferToBillingResultToModel(transferred)
 }
 
 func (r *mutationResolver) BulkTransferShipmentsToBilling(ctx context.Context, input gqlmodel.ShipmentBulkTransferToBillingInput) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error) {
@@ -1114,6 +1143,10 @@ func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAcc
 	return &carrierAssignmentAccessorialResolver{r}
 }
 
+func (r *Resolver) ChargeAllocation() generated.ChargeAllocationResolver {
+	return &chargeAllocationResolver{r}
+}
+
 func (r *Resolver) Shipment() generated.ShipmentResolver { return &shipmentResolver{r} }
 
 func (r *Resolver) ShipmentCustomer() generated.ShipmentCustomerResolver {
@@ -1129,6 +1162,7 @@ func (r *Resolver) ShipmentMoveJurisdictionMile() generated.ShipmentMoveJurisdic
 type (
 	carrierAssignmentResolver            struct{ *Resolver }
 	carrierAssignmentAccessorialResolver struct{ *Resolver }
+	chargeAllocationResolver             struct{ *Resolver }
 	shipmentResolver                     struct{ *Resolver }
 	shipmentCustomerResolver             struct{ *Resolver }
 	shipmentMoveResolver                 struct{ *Resolver }

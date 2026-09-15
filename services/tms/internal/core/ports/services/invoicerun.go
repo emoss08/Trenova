@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/shopspring/decimal"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 // PreviewInvoiceRunRequest builds a proposal for a period. CustomerIDs empty

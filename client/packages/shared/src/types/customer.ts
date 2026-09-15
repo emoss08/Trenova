@@ -101,6 +101,8 @@ export const customerBillingProfileSchema = z
     autoCreditHold: z.boolean().default(false),
     creditHoldReason: z.string().default(""),
     autoSendInvoiceOnGeneration: z.boolean().default(true),
+    emailInvoiceEnabled: z.boolean().default(true),
+    ediInvoiceEnabled: z.boolean().default(false),
     splitBy: invoiceSplitKeySchema.default("Customer"),
     sectionBy: invoiceSectionKeySchema.default("Shipment"),
     invoiceDetail: invoiceDetailSchema.default("Detailed"),
@@ -176,6 +178,18 @@ export const customerEdiPartnerSchema = z.object({
 });
 
 export type CustomerEdiPartner = z.infer<typeof customerEdiPartnerSchema>;
+
+/**
+ * The payer as billing surfaces carry it: enough to name and link a customer
+ * without the address and profile a full record has. GraphQL fragments select
+ * exactly this; a full REST customer satisfies it too.
+ */
+export const customerReferenceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string().nullish(),
+});
+export type CustomerReference = z.infer<typeof customerReferenceSchema>;
 
 export const customerSchema = z
   .object({

@@ -1,14 +1,14 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
-import type React from "react";
+import { queryClient } from "@/lib/query-client";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
-import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
+import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { queryClient } from "@/lib/query-client";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
+import type React from "react";
 
 // The transport cannot reach the router or the auth store, so the expiry path is wired
 // here instead. clearAuth performs the same teardown protectedLoader's 401 branch does;
@@ -119,7 +119,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               buttonPosition="bottom-left"
               initialIsOpen={false}
             />*/}
-            <Toaster position="top-center" />
+            <Toaster position="bottom-right" />
           </ThemeProvider>
         </NuqsAdapter>
       </QueryClientProvider>

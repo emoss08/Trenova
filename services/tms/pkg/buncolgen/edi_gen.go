@@ -2088,6 +2088,7 @@ var EDIMessageColumns = struct {
 	TemplateID               Column // "template_id" → qualified: "emsg.template_id"
 	TemplateVersionID        Column // "template_version_id" → qualified: "emsg.template_version_id"
 	ShipmentID               Column // "shipment_id" → qualified: "emsg.shipment_id"
+	InvoiceID                Column // "invoice_id" → qualified: "emsg.invoice_id"
 	TransferID               Column // "transfer_id" → qualified: "emsg.transfer_id"
 	InboundFileID            Column // "inbound_file_id" → qualified: "emsg.inbound_file_id"
 	Direction                Column // "direction" → qualified: "emsg.direction"
@@ -2131,6 +2132,7 @@ var EDIMessageColumns = struct {
 	TemplateID:               NewColumn("template_id", "emsg"),
 	TemplateVersionID:        NewColumn("template_version_id", "emsg"),
 	ShipmentID:               NewColumn("shipment_id", "emsg"),
+	InvoiceID:                NewColumn("invoice_id", "emsg"),
 	TransferID:               NewColumn("transfer_id", "emsg"),
 	InboundFileID:            NewColumn("inbound_file_id", "emsg"),
 	Direction:                NewColumn("direction", "emsg"),
@@ -2180,6 +2182,7 @@ var EDIMessageFieldMap = map[string]string{
 	"templateId":               "template_id",
 	"templateVersionId":        "template_version_id",
 	"shipmentId":               "shipment_id",
+	"invoiceId":                "invoice_id",
 	"transferId":               "transfer_id",
 	"inboundFileId":            "inbound_file_id",
 	"direction":                "direction",
@@ -2227,6 +2230,7 @@ var EDIMessageInsertableColumns = []string{
 	"template_id",
 	"template_version_id",
 	"shipment_id",
+	"invoice_id",
 	"transfer_id",
 	"inbound_file_id",
 	"direction",
@@ -2341,6 +2345,7 @@ var EDIMessageFilter = struct {
 	TemplateID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
 	TemplateVersionID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
 	ShipmentID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	InvoiceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
 	TransferID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transferId" → DB: "transfer_id"
 	InboundFileID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundFileId" → DB: "inbound_file_id"
 	Direction                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
@@ -2400,6 +2405,9 @@ var EDIMessageFilter = struct {
 	},
 	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shipmentId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
 	},
 	TransferID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("transferId", op, value)

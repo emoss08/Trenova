@@ -164,6 +164,10 @@ type ARCollectionsWorklistItem {
   isDisputed: Boolean!
   hasShortPay: Boolean!
   severity: String!
+  "Reason code of the open dispute case, empty when there is none."
+  openDisputeReasonCode: String!
+  disputedAmountMinor: Int!
+  disputeOpenedAt: Timestamp
 }
 
 type ARMonthlyCollectionPoint {

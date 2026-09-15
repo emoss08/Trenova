@@ -20,7 +20,6 @@ func TestDropSystemGeneratedAdditionalChargesForCreate(t *testing.T) {
 
 	accessorialID := pulid.MustNew("racc_")
 	programID := pulid.MustNew("fsp_")
-	occurrenceID := pulid.MustNew("dtno_")
 	tarpID := pulid.MustNew("acc_")
 	lumperID := pulid.MustNew("acc_")
 
@@ -41,11 +40,11 @@ func TestDropSystemGeneratedAdditionalChargesForCreate(t *testing.T) {
 				FuelSurchargeProgramID: &programID,
 			},
 			{
-				AccessorialChargeID:   pulid.MustNew("acc_"),
-				IsSystemGenerated:     true,
-				Amount:                decimal.NewFromInt(50),
-				Unit:                  2,
-				DetentionOccurrenceID: &occurrenceID,
+				AccessorialChargeID: pulid.MustNew("acc_"),
+				IsSystemGenerated:   true,
+				Amount:              decimal.NewFromInt(50),
+				Unit:                2,
+				IsDetention:         true,
 			},
 			nil,
 			{
@@ -72,7 +71,6 @@ func TestDropSystemGeneratedAdditionalChargesForCreate_ClearsForgedOwnership(t *
 
 	accessorialID := pulid.MustNew("racc_")
 	programID := pulid.MustNew("fsp_")
-	occurrenceID := pulid.MustNew("dtno_")
 
 	entity := &shipment.Shipment{
 		AdditionalCharges: []*shipment.AdditionalCharge{
@@ -83,7 +81,7 @@ func TestDropSystemGeneratedAdditionalChargesForCreate_ClearsForgedOwnership(t *
 				Unit:                       1,
 				RateAgreementAccessorialID: &accessorialID,
 				FuelSurchargeProgramID:     &programID,
-				DetentionOccurrenceID:      &occurrenceID,
+				IsDetention:                true,
 			},
 		},
 	}
@@ -94,7 +92,7 @@ func TestDropSystemGeneratedAdditionalChargesForCreate_ClearsForgedOwnership(t *
 	charge := entity.AdditionalCharges[0]
 	assert.Nil(t, charge.RateAgreementAccessorialID)
 	assert.Nil(t, charge.FuelSurchargeProgramID)
-	assert.Nil(t, charge.DetentionOccurrenceID)
+	assert.False(t, charge.IsDetention)
 	assert.Equal(t, shipment.SystemOwnerNone, charge.Owner())
 }
 

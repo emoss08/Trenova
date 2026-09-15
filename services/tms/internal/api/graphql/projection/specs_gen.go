@@ -56,11 +56,15 @@ var CarrierSettlementControlSpec TypeSpec
 
 var CarrierSettlementLineSpec TypeSpec
 
+var ChargeAllocationSpec TypeSpec
+
 var CommoditySpec TypeSpec
 
 var CostCategorySpec TypeSpec
 
 var CostingControlSpec TypeSpec
+
+var CreditMemoApplicationSpec TypeSpec
 
 var CustomFieldDefinitionSpec TypeSpec
 
@@ -200,6 +204,8 @@ var IFTATaxRateSpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
+var InvoiceDisputeSpec TypeSpec
+
 var InvoiceLineSpec TypeSpec
 
 var JobPositionSpec TypeSpec
@@ -213,6 +219,8 @@ var JournalSourceInfoSpec TypeSpec
 var JurisdictionRuleSpec TypeSpec
 
 var JurisdictionRuleOverrideSpec TypeSpec
+
+var LateChargeAssessmentSpec TypeSpec
 
 var LeaveControlSpec TypeSpec
 
@@ -1337,6 +1345,18 @@ func init() {
 			{
 				Name:        "orderId",
 				FieldMapKey: "orderId",
+			},
+			{
+				Name:        "billToCustomerId",
+				FieldMapKey: "billToCustomerId",
+			},
+			{
+				Name:        "allocatedTotalAmount",
+				FieldMapKey: "allocatedTotalAmount",
+			},
+			{
+				Name:    "billToCustomer",
+				Special: "billToCustomer",
 			},
 			{
 				Name:        "assignedBillerId",
@@ -2715,6 +2735,92 @@ func init() {
 		},
 	}
 
+	ChargeAllocationSpec = TypeSpec{
+		TypeName: "ChargeAllocation",
+		FieldMap: buncolgen.ChargeAllocationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "additionalChargeId",
+				FieldMapKey: "additionalChargeId",
+			},
+			{
+				Name:        "orderChargeId",
+				FieldMapKey: "orderChargeId",
+			},
+			{
+				Name:        "chargeKind",
+				FieldMapKey: "chargeKind",
+			},
+			{
+				Name:        "billToCustomerId",
+				FieldMapKey: "billToCustomerId",
+			},
+			{
+				Name:        "method",
+				FieldMapKey: "method",
+			},
+			{
+				Name:        "percent",
+				FieldMapKey: "percent",
+			},
+			{
+				Name:        "amount",
+				FieldMapKey: "amount",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "invoicedAt",
+				FieldMapKey: "invoicedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "billToCustomer",
+				FieldMapKey: "billToCustomerId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+		},
+	}
+
 	CommoditySpec = TypeSpec{
 		TypeName: "Commodity",
 		FieldMap: buncolgen.CommodityFieldMap,
@@ -2947,6 +3053,85 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CostCategorySpec,
 				},
+			},
+		},
+	}
+
+	CreditMemoApplicationSpec = TypeSpec{
+		TypeName: "CreditMemoApplication",
+		FieldMap: buncolgen.CreditMemoApplicationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "creditMemoInvoiceId",
+				FieldMapKey: "creditMemoInvoiceId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "appliedAmountMinor",
+				FieldMapKey: "appliedAmountMinor",
+			},
+			{
+				Name:        "accountingDate",
+				FieldMapKey: "accountingDate",
+			},
+			{
+				Name:        "lineNumber",
+				FieldMapKey: "lineNumber",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "unappliedAt",
+				FieldMapKey: "unappliedAt",
+			},
+			{
+				Name:        "unappliedById",
+				FieldMapKey: "unappliedById",
+			},
+			{
+				Name:        "unappliedReason",
+				FieldMapKey: "unappliedReason",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "creditMemo",
+				Special: "creditMemo",
+			},
+			{
+				Name:    "invoice",
+				Special: "invoice",
 			},
 		},
 	}
@@ -3285,6 +3470,14 @@ func init() {
 			{
 				Name:        "autoSendInvoiceOnGeneration",
 				FieldMapKey: "autoSendInvoiceOnGeneration",
+			},
+			{
+				Name:        "emailInvoiceEnabled",
+				FieldMapKey: "emailInvoiceEnabled",
+			},
+			{
+				Name:        "ediInvoiceEnabled",
+				FieldMapKey: "ediInvoiceEnabled",
 			},
 			{
 				Name:    "allowInvoiceConsolidation",
@@ -3668,6 +3861,10 @@ func init() {
 			{
 				Name:    "invoice",
 				Special: "invoice",
+			},
+			{
+				Name:    "payment",
+				Special: "payment",
 			},
 		},
 	}
@@ -9424,6 +9621,50 @@ func init() {
 				FieldMapKey: "billToName",
 			},
 			{
+				Name:        "billToCode",
+				FieldMapKey: "billToCode",
+			},
+			{
+				Name:        "billToAddressLine1",
+				FieldMapKey: "billToAddressLine1",
+			},
+			{
+				Name:        "billToAddressLine2",
+				FieldMapKey: "billToAddressLine2",
+			},
+			{
+				Name:        "billToCity",
+				FieldMapKey: "billToCity",
+			},
+			{
+				Name:        "billToState",
+				FieldMapKey: "billToState",
+			},
+			{
+				Name:        "billToPostalCode",
+				FieldMapKey: "billToPostalCode",
+			},
+			{
+				Name:        "billToCountry",
+				FieldMapKey: "billToCountry",
+			},
+			{
+				Name:        "shipperCustomerId",
+				FieldMapKey: "shipperCustomerId",
+			},
+			{
+				Name:    "shipperCustomer",
+				Special: "shipperCustomer",
+			},
+			{
+				Name:        "isSplitBill",
+				FieldMapKey: "isSplitBill",
+			},
+			{
+				Name:    "relatedInvoices",
+				Special: "relatedInvoices",
+			},
+			{
 				Name:        "subtotalAmount",
 				FieldMapKey: "subtotalAmount",
 			},
@@ -9460,6 +9701,86 @@ func init() {
 				FieldMapKey: "isAdjustmentArtifact",
 			},
 			{
+				Name:        "voidedAt",
+				FieldMapKey: "voidedAt",
+			},
+			{
+				Name:        "voidedById",
+				FieldMapKey: "voidedById",
+			},
+			{
+				Name:        "voidReason",
+				FieldMapKey: "voidReason",
+			},
+			{
+				Name:        "voidDisposition",
+				FieldMapKey: "voidDisposition",
+			},
+			{
+				Name:        "voidedByAdjustmentId",
+				FieldMapKey: "voidedByAdjustmentId",
+			},
+			{
+				Name:        "referenceInvoiceId",
+				FieldMapKey: "referenceInvoiceId",
+			},
+			{
+				Name:    "referenceInvoice",
+				Special: "referenceInvoice",
+			},
+			{
+				Name:        "memoReason",
+				FieldMapKey: "memoReason",
+			},
+			{
+				Name:        "memoKind",
+				FieldMapKey: "memoKind",
+			},
+			{
+				Name:    "openBalance",
+				Special: "openBalance",
+			},
+			{
+				Name:        "balanceDueMinor",
+				FieldMapKey: "balanceDueMinor",
+			},
+			{
+				Name:    "creditRemaining",
+				Special: "creditRemaining",
+			},
+			{
+				Name:    "daysPastDue",
+				Special: "daysPastDue",
+			},
+			{
+				Name:    "paymentApplications",
+				Special: "paymentApplications",
+			},
+			{
+				Name:    "creditApplications",
+				Special: "creditApplications",
+			},
+			{
+				Name:        "ediSendStatus",
+				FieldMapKey: "ediSendStatus",
+			},
+			{
+				Name:        "lastEdiMessageId",
+				FieldMapKey: "lastEdiMessageId",
+			},
+			{
+				Name:        "ediSentAt",
+				FieldMapKey: "ediSentAt",
+			},
+			{
+				Name:        "lastEdiError",
+				FieldMapKey: "lastEdiError",
+			},
+			{
+				Name:    "ediSendPlan",
+				Special: "ediSendPlan",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -9490,6 +9811,117 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &InvoiceLineSpec,
 				},
+			},
+			{
+				Name:    "disputes",
+				Special: "disputes",
+			},
+			{
+				Name:    "openDispute",
+				Special: "openDispute",
+			},
+			{
+				Name:    "lateChargeAssessments",
+				Special: "lateChargeAssessments",
+			},
+		},
+	}
+
+	InvoiceDisputeSpec = TypeSpec{
+		TypeName: "InvoiceDispute",
+		FieldMap: buncolgen.InvoiceDisputeFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "reasonCode",
+				FieldMapKey: "reasonCode",
+			},
+			{
+				Name:        "disputedAmount",
+				FieldMapKey: "disputedAmount",
+			},
+			{
+				Name:        "disputedAmountMinor",
+				FieldMapKey: "disputedAmountMinor",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "openedById",
+				FieldMapKey: "openedById",
+			},
+			{
+				Name:        "openedAt",
+				FieldMapKey: "openedAt",
+			},
+			{
+				Name:        "resolvedById",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "resolutionAdjustmentId",
+				FieldMapKey: "resolutionAdjustmentId",
+			},
+			{
+				Name:        "resolutionNotes",
+				FieldMapKey: "resolutionNotes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "invoice",
+				Special: "invoice",
+			},
+			{
+				Name:    "customer",
+				Special: "customer",
 			},
 		},
 	}
@@ -9553,6 +9985,30 @@ func init() {
 			{
 				Name:        "amount",
 				FieldMapKey: "amount",
+			},
+			{
+				Name:        "accessorialChargeId",
+				FieldMapKey: "accessorialChargeId",
+			},
+			{
+				Name:        "chargeCode",
+				FieldMapKey: "chargeCode",
+			},
+			{
+				Name:        "chargeMethod",
+				FieldMapKey: "chargeMethod",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "allocationPercent",
+				FieldMapKey: "allocationPercent",
+			},
+			{
+				Name:        "chargeAllocationId",
+				FieldMapKey: "chargeAllocationId",
 			},
 			{
 				Name:        "createdAt",
@@ -10008,6 +10464,93 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
+			},
+		},
+	}
+
+	LateChargeAssessmentSpec = TypeSpec{
+		TypeName: "LateChargeAssessment",
+		FieldMap: buncolgen.LateChargeAssessmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "sourceInvoiceId",
+				FieldMapKey: "sourceInvoiceId",
+			},
+			{
+				Name:        "periodIndex",
+				FieldMapKey: "periodIndex",
+			},
+			{
+				Name:        "periodStart",
+				FieldMapKey: "periodStart",
+			},
+			{
+				Name:        "periodEnd",
+				FieldMapKey: "periodEnd",
+			},
+			{
+				Name:        "asOfDate",
+				FieldMapKey: "asOfDate",
+			},
+			{
+				Name:        "basisOpenBalanceMinor",
+				FieldMapKey: "basisOpenBalanceMinor",
+			},
+			{
+				Name:        "ratePercent",
+				FieldMapKey: "ratePercent",
+			},
+			{
+				Name:        "chargeMinor",
+				FieldMapKey: "chargeMinor",
+			},
+			{
+				Name:        "debitMemoInvoiceId",
+				FieldMapKey: "debitMemoInvoiceId",
+			},
+			{
+				Name:        "debitMemoLineId",
+				FieldMapKey: "debitMemoLineId",
+			},
+			{
+				Name:        "runKey",
+				FieldMapKey: "runKey",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "sourceInvoice",
+				Special: "sourceInvoice",
+			},
+			{
+				Name:    "debitMemo",
+				Special: "debitMemo",
 			},
 		},
 	}
@@ -10723,12 +11266,20 @@ func init() {
 				FieldMapKey: "invoiceId",
 			},
 			{
+				Name:        "invoicedAt",
+				FieldMapKey: "invoicedAt",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+			{
+				Name:    "allocations",
+				Special: "allocations",
 			},
 		},
 	}
@@ -14099,6 +14650,14 @@ func init() {
 				FieldMapKey: "customerId",
 			},
 			{
+				Name:        "billToCustomerId",
+				FieldMapKey: "billToCustomerId",
+			},
+			{
+				Name:        "freightTerms",
+				FieldMapKey: "freightTerms",
+			},
+			{
 				Name:        "tractorTypeId",
 				FieldMapKey: "tractorTypeId",
 			},
@@ -14309,6 +14868,10 @@ func init() {
 				Special: "customer",
 			},
 			{
+				Name:    "billToCustomer",
+				Special: "billToCustomer",
+			},
+			{
 				Name:        "owner",
 				FieldMapKey: "ownerId",
 				Relation: &RelationSpec{
@@ -14318,6 +14881,16 @@ func init() {
 			{
 				Name:    "formulaTemplate",
 				Special: "formulaTemplate",
+			},
+			{
+				Name: "chargeAllocations",
+				Relation: &RelationSpec{
+					Target: &ChargeAllocationSpec,
+				},
+			},
+			{
+				Name:    "billingSplitSummary",
+				Special: "billingSplitSummary",
 			},
 		},
 	}
@@ -14434,8 +15007,12 @@ func init() {
 				FieldMapKey: "fuelSurchargeDetail",
 			},
 			{
-				Name:        "detentionOccurrenceId",
-				FieldMapKey: "detentionOccurrenceId",
+				Name:        "isDetention",
+				FieldMapKey: "isDetention",
+			},
+			{
+				Name:    "detentionOccurrenceId",
+				Special: "detentionOccurrenceId",
 			},
 			{
 				Name:        "version",

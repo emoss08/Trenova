@@ -180,6 +180,7 @@ func TestUpdateDerivedState_UpdatesShipmentAndSyncsAdditionalCharges(t *testing.
 	shipmentID := pulid.MustNew("shp_")
 
 	repo.additionalChargeRepository = &mockShipmentAdditionalChargeRepository{}
+	repo.chargeAllocationRepository = &mockChargeAllocationRepository{}
 
 	entity := &shipment.Shipment{
 		ID:                  shipmentID,
@@ -232,6 +233,18 @@ func TestAutoDelayShipments_UpdatesEligibleShipments(t *testing.T) {
 }
 
 type mockShipmentAdditionalChargeRepository struct{}
+
+type mockChargeAllocationRepository struct {
+	repositories.ChargeAllocationRepository
+}
+
+func (m *mockChargeAllocationRepository) SyncForShipment(
+	_ context.Context,
+	_ bun.IDB,
+	_ *shipment.Shipment,
+) error {
+	return nil
+}
 
 func (m *mockShipmentAdditionalChargeRepository) SyncForShipment(
 	_ context.Context,

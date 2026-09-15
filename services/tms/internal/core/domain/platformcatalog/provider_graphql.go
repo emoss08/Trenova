@@ -46,6 +46,8 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"formula_template.graphqls",
 		"fuel_surcharge.graphqls",
 		"invoice.graphqls",
+		"invoice_dispute.graphqls",
+		"late_charge.graphqls",
 		"rate.graphqls",
 	},
 	FeatureAccounting: {

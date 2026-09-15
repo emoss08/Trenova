@@ -92,12 +92,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
+	"github.com/emoss08/trenova/internal/core/services/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
+	"github.com/emoss08/trenova/internal/core/services/latechargeservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -415,6 +417,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	invoiceservice.NewService,
 	func(s *invoiceservice.Service) services.InvoiceService { return s },
 	invoicerunservice.New,
+	invoicedisputeservice.New,
+	latechargeservice.New,
 	// The billing job takes the sweeper interface rather than the concrete
 	// service, because the job package is imported by the invoice service the
 	// run service itself depends on.

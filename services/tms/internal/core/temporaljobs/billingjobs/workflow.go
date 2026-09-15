@@ -72,6 +72,18 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Generate an invoice PDF through the document upload lifecycle",
 		},
+		{
+			Name:        SendInvoiceEDIWorkflowName,
+			Fn:          SendInvoiceEDIWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Generate and deliver the outbound EDI 210 for a posted invoice",
+		},
+		{
+			Name:        LateChargeAssessmentWorkflowName,
+			Fn:          LateChargeAssessmentWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Assess late charges on overdue invoices for every tenant that opted in",
+		},
 	}
 }
 

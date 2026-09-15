@@ -193,7 +193,8 @@ func (r *repository) ListBalanceSeries(
 				FROM invoices inv
 				WHERE inv.organization_id = ?
 				  AND inv.business_unit_id = ?
-				  AND inv.status = 'Posted'
+				  AND inv.posted_at IS NOT NULL
+				  AND (inv.voided_at IS NULL OR inv.voided_at > p.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.invoice_date > p.period_end - ?::BIGINT
 				  AND inv.invoice_date <= p.period_end
@@ -410,7 +411,8 @@ const collectionTotalsSQL = `
 				FROM bounds, invoices inv
 				WHERE inv.organization_id = ?
 				  AND inv.business_unit_id = ?
-				  AND inv.status = 'Posted'
+				  AND inv.posted_at IS NOT NULL
+				  AND (inv.voided_at IS NULL OR inv.voided_at > bounds.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.invoice_date > bounds.period_start
 				  AND inv.invoice_date <= bounds.period_end
@@ -491,7 +493,8 @@ const collectionTotalsSQL = `
 				FROM bounds, invoices inv
 				WHERE inv.organization_id = ?
 				  AND inv.business_unit_id = ?
-				  AND inv.status = 'Posted'
+				  AND inv.posted_at IS NOT NULL
+				  AND (inv.voided_at IS NULL OR inv.voided_at > bounds.period_end)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.invoice_date > bounds.period_start
 				  AND inv.invoice_date <= bounds.period_end
@@ -591,15 +594,18 @@ func (r *repository) ListTopOverdueCustomers(
 }
 
 type worklistRecord struct {
-	InvoiceID       string `bun:"invoice_id"`
-	CustomerID      string `bun:"customer_id"`
-	CustomerName    string `bun:"customer_name"`
-	InvoiceNumber   string `bun:"invoice_number"`
-	DueDate         int64  `bun:"due_date"`
-	OpenAmountMinor int64  `bun:"open_amount_minor"`
-	DaysPastDue     int    `bun:"days_past_due"`
-	IsDisputed      bool   `bun:"is_disputed"`
-	HasShortPay     bool   `bun:"has_short_pay"`
+	InvoiceID             string `bun:"invoice_id"`
+	CustomerID            string `bun:"customer_id"`
+	CustomerName          string `bun:"customer_name"`
+	InvoiceNumber         string `bun:"invoice_number"`
+	DueDate               int64  `bun:"due_date"`
+	OpenAmountMinor       int64  `bun:"open_amount_minor"`
+	DaysPastDue           int    `bun:"days_past_due"`
+	IsDisputed            bool   `bun:"is_disputed"`
+	HasShortPay           bool   `bun:"has_short_pay"`
+	OpenDisputeReasonCode string `bun:"open_dispute_reason_code"`
+	DisputedAmountMinor   int64  `bun:"disputed_amount_minor"`
+	DisputeOpenedAt       *int64 `bun:"dispute_opened_at"`
 }
 
 func (r *repository) ListCollectionsWorklist(
@@ -621,7 +627,10 @@ func (r *repository) ListCollectionsWorklist(
 					WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN 0
 					ELSE GREATEST(((? - inv.due_date) / 86400)::INT, 0)
 				END AS days_past_due,
-				(inv.dispute_status = 'Disputed') AS is_disputed,
+				(inv.dispute_status = 'Disputed' OR od.id IS NOT NULL) AS is_disputed,
+				COALESCE(od.reason_code, '') AS open_dispute_reason_code,
+				COALESCE(od.disputed_amount_minor, 0) AS disputed_amount_minor,
+				od.opened_at AS dispute_opened_at,
 				EXISTS (
 					SELECT 1
 					FROM customer_payment_applications cpa
@@ -636,6 +645,16 @@ func (r *repository) ListCollectionsWorklist(
 					  AND cpa.short_pay_amount_minor > 0
 				) AS has_short_pay
 			FROM invoices inv
+			LEFT JOIN LATERAL (
+				SELECT idsp.id, idsp.reason_code, idsp.disputed_amount_minor, idsp.opened_at
+				FROM invoice_disputes idsp
+				WHERE idsp.invoice_id = inv.id
+				  AND idsp.organization_id = inv.organization_id
+				  AND idsp.business_unit_id = inv.business_unit_id
+				  AND idsp.status = 'Open'
+				ORDER BY idsp.opened_at DESC
+				LIMIT 1
+			) od ON TRUE
 			WHERE inv.organization_id = ?
 			  AND inv.business_unit_id = ?`+openInvoicePredicate+`
 		) items
@@ -664,6 +683,10 @@ func (r *repository) ListCollectionsWorklist(
 			DaysPastDue:     rec.DaysPastDue,
 			IsDisputed:      rec.IsDisputed,
 			HasShortPay:     rec.HasShortPay,
+
+			OpenDisputeReasonCode: rec.OpenDisputeReasonCode,
+			DisputedAmountMinor:   rec.DisputedAmountMinor,
+			DisputeOpenedAt:       rec.DisputeOpenedAt,
 		})
 	}
 	return items, nil
@@ -778,7 +801,8 @@ const customerSnapshotSQL = `
 				WHERE inv.organization_id = cus.organization_id
 				  AND inv.business_unit_id = cus.business_unit_id
 				  AND inv.customer_id = cus.id
-				  AND inv.status = 'Posted'
+				  AND inv.posted_at IS NOT NULL
+				  AND (inv.voided_at IS NULL OR inv.voided_at > ?)
 				  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 				  AND inv.invoice_date > ? - ?::BIGINT
 				  AND inv.invoice_date <= ?
@@ -814,7 +838,7 @@ func (r *repository) GetCustomerSnapshot(
 	err = r.db.DBForContext(ctx).NewRaw(customerSnapshotSQL,
 		req.AsOfDate, req.AsOfDate,
 		req.AsOfDate, trailingYearWindow,
-		req.AsOfDate, trailingDSOWindow, req.AsOfDate,
+		req.AsOfDate, trailingDSOWindow, req.AsOfDate, req.AsOfDate,
 		req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
 	).Scan(ctx, rec)
 	if err != nil {

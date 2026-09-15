@@ -28,10 +28,15 @@ import (
 // RunID, when set, is the invoice run that proposed this group; the invoice
 // carries it so a committed statement can be traced back to the proposal an
 // operator actually approved.
+//
+// PayerID is the customer the invoice bills. Every queue item must belong to
+// that payer; each leg contributes only that payer's share of its charges. When
+// unset it is taken from the first queue item.
 type ConsolidatedInvoiceParams struct {
 	TenantInfo  pagination.TenantInfo
 	Legs        []*shipment.Shipment
 	QueueItems  []*billingqueue.BillingQueueItem
+	PayerID     pulid.ID
 	RunID       pulid.ID
 	Number      string
 	InvoiceDate int64
@@ -65,18 +70,21 @@ func (s *Service) CreateConsolidated(
 		)
 	}
 
-	customerID := params.Legs[0].CustomerID
-	for _, leg := range params.Legs {
-		if leg.CustomerID != customerID {
+	if err := validateConsolidatedQueueItems(params.Legs, params.QueueItems); err != nil {
+		return nil, err
+	}
+	customerID := params.PayerID
+	if customerID.IsNil() {
+		customerID = params.QueueItems[0].BillToCustomerID
+	}
+	for _, item := range params.QueueItems {
+		if item.BillToCustomerID != customerID {
 			return nil, errortypes.NewValidationError(
 				"shipmentIds",
 				errortypes.ErrInvalid,
-				"All shipments on one invoice must share the billing customer",
+				"All shipments on one invoice must bill the same payer",
 			)
 		}
-	}
-	if err := validateConsolidatedQueueItems(params.Legs, params.QueueItems); err != nil {
-		return nil, err
 	}
 
 	number := params.Number
@@ -154,6 +162,11 @@ func (s *Service) createConsolidatedTx(
 		return nil, txErr
 	}
 
+	shares, isSplit, txErr := payerSharesForLegs(params.Legs, customerID)
+	if txErr != nil {
+		return nil, txErr
+	}
+
 	periodStart := params.PeriodStart
 	periodEnd := params.PeriodEnd
 	entity := s.buildInvoiceEntity(&buildInvoiceParams{
@@ -167,6 +180,8 @@ func (s *Service) createConsolidatedTx(
 		PeriodEnd:   &periodEnd,
 		InvoiceDate: params.InvoiceDate,
 		Number:      number,
+		Shares:      shares,
+		IsSplitBill: isSplit,
 	})
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -223,6 +238,39 @@ func (s *Service) createConsolidatedTx(
 	s.publishInvalidation(txCtx, created, auditActor, "created", created)
 
 	return created, nil
+}
+
+// payerSharesForLegs resolves what each leg owes the payer. A leg the payer has
+// no share of cannot sit on their invoice, so it is refused here rather than
+// silently billed at zero.
+func payerSharesForLegs(
+	legs []*shipment.Shipment,
+	payerID pulid.ID,
+) (map[pulid.ID]*shipment.PayerShare, bool, error) {
+	shares := make(map[pulid.ID]*shipment.PayerShare, len(legs))
+	isSplit := false
+	for _, leg := range legs {
+		if leg == nil {
+			continue
+		}
+		resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+		if err != nil {
+			return nil, false, err
+		}
+		share := resolution.ShareFor(payerID)
+		if share == nil {
+			return nil, false, errortypes.NewValidationError(
+				"shipmentIds",
+				errortypes.ErrInvalidOperation,
+				"Shipment {0} owes nothing to this payer",
+				leg.ProNumber,
+			)
+		}
+		shares[leg.ID] = share
+		isSplit = isSplit || resolution.IsSplit
+	}
+
+	return shares, isSplit, nil
 }
 
 // validateConsolidatedQueueItems checks that the queue items are exactly the

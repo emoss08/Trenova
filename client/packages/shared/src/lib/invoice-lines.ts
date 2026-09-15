@@ -1,5 +1,6 @@
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { toMinorUnits } from "@trenova/shared/lib/charge-split";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { InvoiceLine } from "@trenova/shared/types/invoice";
@@ -77,10 +78,6 @@ export function groupInvoiceLinesByShipment(lines: readonly InvoiceLine[]): Invo
   }
 
   return ordered;
-}
-
-function toMinorUnits(value: number): number {
-  return Math.round(value * 100);
 }
 
 /**
@@ -181,4 +178,15 @@ export function describeChargeCalculation(
     formatQuantity(quantity),
     formatCurrency(line.unitPrice ?? 0, currencyCode),
   );
+}
+
+/**
+ * The share a line bills when a charge was divided between payers: "60% share".
+ * Nothing for a line that bills the whole charge, which is every line on an
+ * ordinary invoice.
+ */
+export function describeAllocationShare(line: InvoiceLine, t: TranslateFn): string | null {
+  const percent = line.allocationPercent;
+  if (percent == null || !Number.isFinite(percent) || percent >= 100 || percent <= 0) return null;
+  return t("{0}% share", formatQuantity(percent));
 }

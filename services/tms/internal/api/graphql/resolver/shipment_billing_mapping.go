@@ -2,11 +2,13 @@ package resolver
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -56,7 +58,52 @@ func shipmentBillingReadinessToModel(
 		CanMarkReadyToInvoice:        readiness.CanMarkReadyToInvoice,
 		ShouldAutoMarkReadyToInvoice: readiness.ShouldAutoMarkReadyToInvoice,
 		ShouldAutoTransferToBilling:  readiness.ShouldAutoTransferToBilling,
+		ShouldAutoApproveBilling:     readiness.ShouldAutoApproveBilling,
+		Payers:                       shipmentBillingPayersToModel(readiness.Payers),
 	}
+}
+
+func shipmentBillingPayersToModel(
+	payers []services.ShipmentBillingPayerReadiness,
+) []*gqlmodel.ShipmentBillingPayerReadiness {
+	out := make([]*gqlmodel.ShipmentBillingPayerReadiness, 0, len(payers))
+	for _, payer := range payers {
+		out = append(out, &gqlmodel.ShipmentBillingPayerReadiness{
+			PayerID:                  payer.PayerID.String(),
+			PayerName:                payer.PayerName,
+			PayerCode:                payer.PayerCode,
+			IsPrimary:                payer.IsPrimary,
+			ShareAmount:              payer.ShareAmount.StringFixed(2),
+			CreditStatus:             string(payer.CreditStatus),
+			CreditHold:               payer.CreditHold,
+			ShouldAutoApproveBilling: payer.ShouldAutoApproveBilling,
+		})
+	}
+	return out
+}
+
+func transferToBillingResultToModel(
+	result *services.TransferToBillingResult,
+) (*gqlmodel.ShipmentTransferToBillingResult, error) {
+	if result == nil {
+		return nil, errortypes.NewDatabaseError("Billing queue transfer did not return a result").
+			WithInternal(errors.New("shipment service returned nil transfer result"))
+	}
+	primary, err := requiredBillingQueueItemToModel(result.Primary)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*gqlmodel.BillingQueueItem, 0, len(result.Items))
+	for _, item := range result.Items {
+		model, itemErr := billingQueueItemToModel(item)
+		if itemErr != nil {
+			return nil, itemErr
+		}
+		if model != nil {
+			items = append(items, model)
+		}
+	}
+	return &gqlmodel.ShipmentTransferToBillingResult{Items: items, Primary: primary}, nil
 }
 
 func shipmentBillingWarningContextToModel(
@@ -130,6 +177,16 @@ func bulkTransferToBillingToModel(
 		if err != nil {
 			return nil, err
 		}
+		queueItems := make([]*gqlmodel.BillingQueueItem, 0, len(item.Items))
+		for _, created := range item.Items {
+			model, itemErr := billingQueueItemToModel(created)
+			if itemErr != nil {
+				return nil, itemErr
+			}
+			if model != nil {
+				queueItems = append(queueItems, model)
+			}
+		}
 
 		result := &gqlmodel.ShipmentBulkTransferToBillingResult{
 			ShipmentID:           item.ShipmentID.String(),
@@ -137,6 +194,7 @@ func bulkTransferToBillingToModel(
 			Success:              item.Success,
 			MarkedReadyToInvoice: item.MarkedReadyToInvoice,
 			BillingQueueItem:     queueItem,
+			BillingQueueItems:    queueItems,
 			MissingRequirements:  shipmentBillingRequirementsToModel(item.MissingRequirements),
 			ValidationFailures:   shipmentBillingValidationsToModel(item.ValidationFailures),
 		}

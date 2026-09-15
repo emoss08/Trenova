@@ -16,11 +16,20 @@ func standardShipmentFilter(
 	opts repositories.ShipmentOptions,
 ) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
-		q = q.Relation(buncolgen.ShipmentRelations.Customer)
+		q = q.Relation(buncolgen.ShipmentRelations.Customer).
+			Relation(buncolgen.ShipmentRelations.BillToCustomer)
 
 		q = q.RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
+			},
+		})
+
+		q = q.RelationWithOpts(buncolgen.ShipmentRelations.ChargeAllocations, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				cols := buncolgen.ChargeAllocationColumns
+				return sq.Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
+					Order(cols.Sequence.OrderAsc(), cols.ID.OrderAsc())
 			},
 		})
 
@@ -41,7 +50,8 @@ func standardShipmentFilter(
 			Relation(buncolgen.ShipmentRelations.CanceledBy).
 			Relation(buncolgen.ShipmentRelations.Owner)
 	} else if opts.IncludeCustomer {
-		q = q.Relation(buncolgen.ShipmentRelations.Customer)
+		q = q.Relation(buncolgen.ShipmentRelations.Customer).
+			Relation(buncolgen.ShipmentRelations.BillToCustomer)
 	}
 
 	return q

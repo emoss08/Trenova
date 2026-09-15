@@ -213,3 +213,66 @@ describe("invoiceLineSchema charge detail", () => {
     expect(() => invoiceLineSchema.parse({ ...base, chargeMethod: "Tiered" })).toThrow();
   });
 });
+
+/**
+ * `domain/invoice/invoice.go` stores the void disposition and memo kind as
+ * plain string enums, so an invoice that was never voided and is not a memo
+ * arrives over REST with `""` in both, not null. The parse boundary must read
+ * that as "unset" or every ordinary invoice fails to load.
+ */
+describe("invoiceSchema optional enums", () => {
+  const base = {
+    id: "inv_1",
+    organizationId: "org_1",
+    businessUnitId: "bu_1",
+    billingQueueItemId: "bqi_1",
+    customerId: "cus_1",
+    number: "INV-1",
+    billType: "Invoice",
+    status: "Posted",
+    paymentTerm: "Net30",
+    currencyCode: "USD",
+    invoiceDate: 1_788_000_000,
+    billToName: "GlobalTrade Imports",
+    subtotalAmount: "5000",
+    otherAmount: "0",
+    totalAmount: "5000",
+    appliedAmount: "0",
+    settlementStatus: "Unpaid",
+    disputeStatus: "None",
+    version: 1,
+    createdAt: 1_788_000_000,
+    updatedAt: 1_788_000_000,
+  };
+
+  it("reads the Go zero value of voidDisposition and memoKind as unset", () => {
+    const parsed = invoiceSchema.parse({
+      ...base,
+      voidDisposition: "",
+      memoKind: "",
+      voidedById: "",
+      voidedByAdjustmentId: "",
+      referenceInvoiceId: "",
+      lastEdiMessageId: "",
+      ediSendStatus: "NotSent",
+    });
+
+    expect(parsed.voidDisposition ?? null).toBeNull();
+    expect(parsed.memoKind ?? null).toBeNull();
+    expect(parsed.voidedById ?? null).toBeNull();
+    expect(parsed.ediSendStatus).toBe("NotSent");
+  });
+
+  it("keeps a real disposition and memo kind", () => {
+    const parsed = invoiceSchema.parse({
+      ...base,
+      status: "Voided",
+      voidDisposition: "Rebill",
+      scope: "Memo",
+      memoKind: "LateCharge",
+    });
+
+    expect(parsed.voidDisposition).toBe("Rebill");
+    expect(parsed.memoKind).toBe("LateCharge");
+  });
+});

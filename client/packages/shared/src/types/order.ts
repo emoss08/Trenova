@@ -5,6 +5,7 @@ import {
   tenantInfoSchema,
   versionSchema,
 } from "./helpers";
+import { chargeAllocationSchema, chargeAllocationsRefinement } from "./shipment";
 
 export const orderStatusSchema = z.enum([
   "Draft",
@@ -45,11 +46,16 @@ export type Order = z.infer<typeof orderSchema>;
 // Raw form values (before zod transforms) — amounts may still be strings here.
 export type OrderFormValues = z.input<typeof orderSchema>;
 
-export const orderChargeFormSchema = z.object({
-  description: z.string().trim().min(1, { error: "Description is required" }),
-  amount: z
-    .number({ error: "Amount is required" })
-    .positive({ error: "Amount must be greater than zero" }),
-});
+export const orderChargeFormSchema = z
+  .object({
+    description: z.string().trim().min(1, { error: "Description is required" }),
+    amount: z
+      .number({ error: "Amount is required" })
+      .positive({ error: "Amount must be greater than zero" }),
+    allocations: z.array(chargeAllocationSchema).default([]),
+  })
+  .superRefine((charge, ctx) => {
+    chargeAllocationsRefinement(ctx, charge.allocations, charge.amount, ["allocations"]);
+  });
 
 export type OrderChargeFormValues = z.infer<typeof orderChargeFormSchema>;

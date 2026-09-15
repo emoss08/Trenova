@@ -47,6 +47,27 @@ type ApplyCustomerPaymentRequest struct {
 	TenantInfo     pagination.TenantInfo              `json:"tenantInfo"`
 }
 
+type CreditMemoApplicationInput struct {
+	InvoiceID          pulid.ID `json:"invoiceId"`
+	AppliedAmountMinor int64    `json:"appliedAmountMinor"`
+}
+
+// ApplyCreditMemoRequest uses a posted credit memo to settle open invoices of
+// the same customer.
+type ApplyCreditMemoRequest struct {
+	CreditMemoID   pulid.ID                      `json:"creditMemoId"`
+	AccountingDate int64                         `json:"accountingDate"`
+	Applications   []*CreditMemoApplicationInput `json:"applications"`
+	TenantInfo     pagination.TenantInfo         `json:"tenantInfo"`
+}
+
+type UnapplyCreditMemoApplicationRequest struct {
+	ApplicationID  pulid.ID              `json:"applicationId"`
+	AccountingDate int64                 `json:"accountingDate"`
+	Reason         string                `json:"reason"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type CustomerPaymentService interface {
 	List(
 		ctx context.Context,
@@ -68,4 +89,14 @@ type CustomerPaymentService interface {
 		req *ReverseCustomerPaymentRequest,
 		actor *RequestActor,
 	) (*customerpayment.Payment, error)
+	ApplyCreditMemo(
+		ctx context.Context,
+		req *ApplyCreditMemoRequest,
+		actor *RequestActor,
+	) ([]*customerpayment.CreditMemoApplication, error)
+	UnapplyCreditMemoApplication(
+		ctx context.Context,
+		req *UnapplyCreditMemoApplicationRequest,
+		actor *RequestActor,
+	) (*customerpayment.CreditMemoApplication, error)
 }

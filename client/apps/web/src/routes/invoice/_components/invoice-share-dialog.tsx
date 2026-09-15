@@ -241,7 +241,7 @@ function InviteForm({ invoice, tab }: { invoice: Invoice; tab: InvoiceDetailTab 
               aria-label={t("Note")}
               placeholder={t("Add a note for {0} (optional)", selected.name)}
               maxLength={MAX_INVOICE_SHARE_NOTE_LENGTH}
-              rows={2}
+              minRows={4}
               className="bg-background rounded-lg text-sm"
               aria-invalid={noteError ? true : undefined}
             />

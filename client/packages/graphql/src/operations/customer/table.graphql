@@ -17,6 +17,8 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   autoCreditHold
   creditHoldReason
   autoSendInvoiceOnGeneration
+  emailInvoiceEnabled
+  ediInvoiceEnabled
   splitBy
   sectionBy
   invoiceDetail

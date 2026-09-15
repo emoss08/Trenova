@@ -19,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Nightly PTO accrual, carryover cap, and expiry posting",
 			Spec:          schedule.Cron("15 2 * * *"),
 			Workflow:      PTOAccrualWorkflow,
+			Args:          []any{PTOAccrualWorkflowInput{}},
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{

@@ -6,6 +6,8 @@ export const INVOICE_DETAIL_TABS = [
   "overview",
   "delivery",
   "charges",
+  "payments",
+  "disputes",
   "documents",
   "activity",
 ] as const;

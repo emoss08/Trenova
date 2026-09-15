@@ -1,0 +1,26 @@
+fragment InvoiceRegisterRowFields on Invoice {
+  ...InvoiceTableRowFields
+  billToCode
+  openBalance
+  daysPastDue
+  ediSendStatus
+  shipperCustomer {
+    id
+    name
+    code
+  }
+}
+
+query InvoiceRegister($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  invoices(input: $input) {
+    edges {
+      node {
+        ...InvoiceRegisterRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

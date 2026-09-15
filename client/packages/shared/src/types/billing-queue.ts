@@ -2,6 +2,7 @@ import { z } from "zod";
 import { billTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
 import { decimalStringSchema, nullableStringSchema, optionalStringSchema } from "./helpers";
+import { customerReferenceSchema } from "./customer";
 import { shipmentSchema } from "./shipment";
 import { userSchema } from "./user";
 
@@ -27,6 +28,10 @@ export const billingQueueItemSchema = z.object({
   organizationId: z.string(),
   businessUnitId: z.string(),
   shipmentId: z.string(),
+  /** The customer this item bills. A split shipment has one item per payer. */
+  billToCustomerId: nullableStringSchema,
+  /** This payer's share of the shipment's charges. */
+  allocatedTotalAmount: decimalStringSchema.nullish(),
   assignedBillerId: nullableStringSchema,
   number: z.string().optional(),
   status: billingQueueStatusSchema,
@@ -52,6 +57,7 @@ export const billingQueueItemSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   shipment: shipmentSchema.optional(),
+  billToCustomer: customerReferenceSchema.optional().nullable(),
   assignedBiller: userSchema.optional().nullable(),
   canceledBy: userSchema.optional().nullable(),
 });

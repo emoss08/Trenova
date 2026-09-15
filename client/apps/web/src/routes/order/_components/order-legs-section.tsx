@@ -16,11 +16,8 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import {
-  createInvoiceFromShipments,
-  detachOrderShipment,
-  fetchOrderDetail,
-} from "@/lib/graphql/order";
+import { createInvoicesFromShipments } from "@/lib/graphql/invoice";
+import { detachOrderShipment, fetchOrderDetail } from "@/lib/graphql/order";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Order } from "@trenova/shared/types/order";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -78,14 +75,25 @@ export function OrderLegsSection() {
 
   const { mutate: createInvoice, isPending: isCreatingInvoice } = useMutation({
     mutationFn: ({ shipmentIds, reason }: { shipmentIds: string[]; reason?: string }) =>
-      createInvoiceFromShipments(shipmentIds, reason),
-    onSuccess: (invoice) => {
+      createInvoicesFromShipments(shipmentIds, reason),
+    onSuccess: (result) => {
       setOffCycleWarning(null);
       invalidateInvoices();
       invalidateOrders();
       setCheckedLegIds(new Set());
+      // A split shipment bills every payer at once, so the toast has to name
+      // each invoice or the biller goes looking for the ones it did not mention.
+      if (result.invoices.length > 1) {
+        toast.success(t("{0} invoices created", result.invoices.length), {
+          description: t(
+            "Invoices {0} were created from this order, one per payer.",
+            result.invoices.map((invoice) => invoice.number).join(", "),
+          ),
+        });
+        return;
+      }
       toast.success(t("Invoice created"), {
-        description: `Invoice ${invoice.number} was created from this order.`,
+        description: `Invoice ${result.primary.number} was created from this order.`,
       });
     },
     onError: (error) => {

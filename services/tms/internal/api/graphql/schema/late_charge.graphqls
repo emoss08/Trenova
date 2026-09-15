@@ -1,0 +1,89 @@
+"What the nightly late-charge run may do for an organization."
+enum LateChargeAssessmentMode {
+  Disabled
+  "Compute what would be charged and write nothing."
+  Preview
+  "Raise a debit memo per customer, posted when invoice posting is automatic."
+  Automatic
+}
+
+"One period of one invoice in a late-charge run."
+type LateChargeLine {
+  invoiceId: ID!
+  invoiceNumber: String!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  basisOpenBalanceMinor: Int!
+  ratePercent: Decimal!
+  chargeMinor: Int!
+}
+
+type LateChargeCustomerResult {
+  customerId: ID!
+  customerName: String!
+  currencyCode: String!
+  lines: [LateChargeLine!]!
+  totalChargeMinor: Int!
+  debitMemoId: ID
+  debitMemoNumber: String!
+  posted: Boolean!
+  skipped: Boolean!
+  skipReason: String!
+}
+
+type LateChargeAssessmentResult {
+  asOfDate: Timestamp!
+  preview: Boolean!
+  mode: LateChargeAssessmentMode!
+  customers: [LateChargeCustomerResult!]!
+  memosCreated: Int!
+  memosPosted: Int!
+  customersSkipped: Int!
+  totalChargeMinor: Int!
+}
+
+"A late charge recorded on one invoice for one period."
+type LateChargeAssessment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  customerId: ID!
+  sourceInvoiceId: ID!
+  periodIndex: Int!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  asOfDate: Timestamp!
+  basisOpenBalanceMinor: Int!
+  ratePercent: Decimal!
+  chargeMinor: Int!
+  debitMemoInvoiceId: ID
+  debitMemoLineId: ID
+  runKey: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  sourceInvoice: Invoice
+  debitMemo: Invoice
+}
+
+input LateChargeAssessmentInput {
+  "Limit the run to these customers; empty means every customer."
+  customerIds: [ID!]
+  "Defaults to now."
+  asOfDate: Timestamp
+}
+
+extend type Invoice {
+  "Late charges assessed on this invoice, newest first."
+  lateChargeAssessments: [LateChargeAssessment!]!
+}
+
+extend type Query {
+  "What a late-charge run would raise as of the date, without writing anything."
+  lateChargePreview(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
+}
+
+extend type Mutation {
+  "Runs the late-charge assessment now and raises the debit memos."
+  assessLateCharges(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
+}

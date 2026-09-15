@@ -12,6 +12,11 @@ import {
   ArOpenItemsDocument,
   ArPaymentStatsDocument,
   ArTopOverdueCustomersDocument,
+  AssessLateChargesDocument,
+  LateChargeAssessmentResultFieldsFragmentDoc,
+  LateChargePreviewDocument,
+  type LateChargeAssessmentInput,
+  type LateChargeAssessmentResultFieldsFragment,
   type ArAgingSummaryQuery,
   type ArAgingTrendQuery,
   type ArCashFlowForecastQuery,
@@ -26,6 +31,7 @@ import {
   type ArPaymentStatsQuery,
   type ArTopOverdueCustomersQuery,
 } from "@trenova/graphql/generated/graphql";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type ARAgingSummary = ArAgingSummaryQuery["arAgingSummary"];
@@ -212,4 +218,34 @@ export async function fetchArCustomerProfile(
     signal: options?.signal,
   });
   return data.arCustomerProfile;
+}
+
+export type LateChargeAssessmentResult = LateChargeAssessmentResultFieldsFragment;
+export type LateChargeCustomerResult = LateChargeAssessmentResult["customers"][number];
+export type LateChargeLine = LateChargeCustomerResult["lines"][number];
+
+/** What a late-charge run would raise as of the date, without writing anything. */
+export async function fetchLateChargePreview(
+  input: LateChargeAssessmentInput | undefined,
+  options?: { signal?: AbortSignal },
+): Promise<LateChargeAssessmentResult> {
+  const data = await requestGraphQL({
+    document: LateChargePreviewDocument,
+    operationName: "LateChargePreview",
+    variables: { input },
+    signal: options?.signal,
+  });
+  return getFragmentData(LateChargeAssessmentResultFieldsFragmentDoc, data.lateChargePreview);
+}
+
+/** Runs the assessment now and raises the debit memos. */
+export async function assessLateCharges(
+  input: LateChargeAssessmentInput | undefined,
+): Promise<LateChargeAssessmentResult> {
+  const data = await requestGraphQL({
+    document: AssessLateChargesDocument,
+    operationName: "AssessLateCharges",
+    variables: { input },
+  });
+  return getFragmentData(LateChargeAssessmentResultFieldsFragmentDoc, data.assessLateCharges);
 }

@@ -3,12 +3,14 @@ package billingqueue
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -30,6 +32,9 @@ type BillingQueueItem struct {
 	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
+	BillToCustomerID          pulid.ID             `json:"billToCustomerId"          bun:"bill_to_customer_id,type:VARCHAR(100),notnull"`
+	AllocatedTotalAmount      decimal.Decimal      `json:"allocatedTotalAmount"      bun:"allocated_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	AllocatedTotalAmountMinor int64                `json:"allocatedTotalAmountMinor" bun:"allocated_total_amount_minor,type:BIGINT,notnull"`
 	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
 	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero"`
 	Status                    Status               `json:"status"                    bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
@@ -57,6 +62,7 @@ type BillingQueueItem struct {
 	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id"`
 	CanceledBy     *tenant.User       `json:"canceledBy,omitempty"     bun:"rel:belongs-to,join:canceled_by_id=id"`
 }
@@ -72,18 +78,28 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 			&b.BusinessUnitID,
 			validation.Required.Error("Business unit ID is required"),
 		),
+		validation.Field(
+			&b.BillToCustomerID,
+			validation.Required.Error("Bill-to customer is required"),
+		),
 	))
 
 	// A correction of a consolidated invoice has neither a single shipment nor a
-	// single order to point at; the invoice it corrects is what identifies it.
+	// single order to point at; the invoice it corrects is what identifies it. A
+	// standalone memo has none of those and is identified by its bill-to alone.
 	if b.ShipmentID.IsNil() && b.OrderID.IsNil() &&
-		(b.SourceInvoiceID == nil || b.SourceInvoiceID.IsNil()) {
+		(b.SourceInvoiceID == nil || b.SourceInvoiceID.IsNil()) &&
+		b.BillToCustomerID.IsNil() {
 		multiErr.Add(
 			"shipmentId",
 			errortypes.ErrRequired,
-			"A billing queue item must be attached to a shipment, an order or a source invoice",
+			"A billing queue item must be attached to a shipment, an order, a source invoice or a bill-to customer",
 		)
 	}
+}
+
+func (b *BillingQueueItem) SyncAllocatedMinor() {
+	b.AllocatedTotalAmountMinor = money.MinorUnits(b.AllocatedTotalAmount)
 }
 
 func (b *BillingQueueItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -149,6 +165,16 @@ func (b *BillingQueueItem) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 				ForeignKey:   "shipment_id",
 				ReferenceKey: "id",
 				Alias:        "sp",
+				Queryable:    true,
+			},
+			{
+				Field:        "bill_to_customer",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*customer.Customer)(nil),
+				TargetTable:  "customers",
+				ForeignKey:   "bill_to_customer_id",
+				ReferenceKey: "id",
+				Alias:        "bill_cus",
 				Queryable:    true,
 			},
 			{

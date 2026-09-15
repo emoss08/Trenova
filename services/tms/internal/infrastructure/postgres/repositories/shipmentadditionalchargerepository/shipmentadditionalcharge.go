@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -21,19 +22,22 @@ import (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB                   *postgres.Connection
+	Logger               *zap.Logger
+	OccurrenceRepository repositories.DetentionOccurrenceRepository
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db             *postgres.Connection
+	l              *zap.Logger
+	occurrenceRepo repositories.DetentionOccurrenceRepository
 }
 
 func New(p Params) repositories.ShipmentAdditionalChargeRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.shipment-additional-charge-repository"),
+		db:             p.DB,
+		l:              p.Logger.Named("postgres.shipment-additional-charge-repository"),
+		occurrenceRepo: p.OccurrenceRepository,
 	}
 }
 
@@ -77,7 +81,8 @@ func (r *repository) SyncForShipment(
 	}
 
 	deleteIDs := make([]pulid.ID, 0, len(existingCharges))
-	for id := range existingCharges {
+	deletedDetention := false
+	for id, existing := range existingCharges {
 		if _, ok := updatedChargeIDs[id]; ok {
 			continue
 		}
@@ -85,6 +90,7 @@ func (r *repository) SyncForShipment(
 			continue
 		}
 		deleteIDs = append(deleteIDs, id)
+		deletedDetention = deletedDetention || existing.Owner() == shipment.SystemOwnerDetention
 	}
 
 	if len(deleteIDs) > 0 {
@@ -99,7 +105,48 @@ func (r *repository) SyncForShipment(
 		}
 	}
 
+	if err = r.linkDetentionOccurrences(ctx, tx, entity, deletedDetention); err != nil {
+		return err
+	}
+
 	return r.reconcileHeaderTotals(ctx, tx, entity)
+}
+
+func (r *repository) linkDetentionOccurrences(
+	ctx context.Context,
+	tx bun.IDB,
+	entity *shipment.Shipment,
+	deletedDetention bool,
+) error {
+	if r.occurrenceRepo == nil {
+		return nil
+	}
+
+	links := make(map[pulid.ID][]pulid.ID, 1)
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil || charge.Owner() != shipment.SystemOwnerDetention ||
+			len(charge.DetentionOccurrenceIDs) == 0 {
+			continue
+		}
+		links[charge.ID] = charge.DetentionOccurrenceIDs
+	}
+
+	if len(links) == 0 && !deletedDetention {
+		return nil
+	}
+
+	if err := r.occurrenceRepo.LinkCharges(ctx, tx, &repositories.LinkOccurrenceChargesRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		ShipmentID:        entity.ID,
+		ChargeOccurrences: links,
+	}); err != nil {
+		return fmt.Errorf("link detention occurrences: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) reconcileHeaderTotals(
@@ -186,15 +233,13 @@ func (r *repository) updateCharge(
 	charge.Version = ov + 1
 	charge.UpdatedAt = timeutils.NowUnix()
 
-	// detention_occurrence_id is deliberately absent: the link is written once
-	// when the engine creates the charge and released only by deleting the row,
-	// so a payload that never carried it cannot orphan the occurrence.
 	cols := buncolgen.AdditionalChargeColumns
 	results, err := tx.NewUpdate().
 		Model(charge).
 		Column(
 			cols.AccessorialChargeID.Bare(),
 			cols.IsSystemGenerated.Bare(),
+			cols.IsDetention.Bare(),
 			cols.Method.Bare(),
 			cols.Amount.Bare(),
 			cols.Unit.Bare(),

@@ -1908,6 +1908,20 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInvoiceDispute.String(),
+		DisplayName: "Invoice Dispute",
+		Description: "Dispute cases raised against posted invoices",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View invoice disputes"},
+			{Operation: OpCreate, DisplayName: "Open", Description: "Open a dispute on an invoice"},
+			{Operation: OpApprove, DisplayName: "Resolve", Description: "Resolve an open dispute"},
+			{Operation: OpCancel, DisplayName: "Withdraw", Description: "Withdraw an open dispute"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceInvoice.String(),
 		DisplayName: "Invoice",
 		Description: "Invoice management",
@@ -1924,6 +1938,7 @@ func (r *Registry) registerBillingResources() {
 				DisplayName: "Submit",
 				Description: "Submit invoices for approval",
 			},
+			{Operation: OpCancel, DisplayName: "Void", Description: "Void invoices"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{

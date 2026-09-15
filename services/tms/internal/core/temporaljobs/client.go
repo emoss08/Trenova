@@ -2,7 +2,9 @@ package temporaljobs
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/connection"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/client"
@@ -24,15 +26,15 @@ type TemporalClientResult struct {
 	Client client.Client
 }
 
-func NewTemporalClient(p TemporalClientParams) TemporalClientResult {
+func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 	log := p.Logger.Named("temporal-client")
 	cfg := p.Config.GetTemporalConfig()
 
-	clientOptions := client.Options{
-		HostPort:  cfg.HostPort,
-		Namespace: cfg.GetNamespace(),
-		Identity:  cfg.GetIdentity(),
+	clientOptions, summary, err := connection.BuildOptions(cfg)
+	if err != nil {
+		return TemporalClientResult{}, fmt.Errorf("configure temporal client: %w", err)
 	}
+	connectionFields := summary.Fields()
 
 	if cfg.Security.EnableEncryption || cfg.Security.EnableCompression {
 		log.Info("configuring Temporal data converter with security features",
@@ -59,19 +61,21 @@ func NewTemporalClient(p TemporalClientParams) TemporalClientResult {
 
 	c, err := client.Dial(clientOptions)
 	if err != nil {
-		log.Warn("failed to connect to temporal - workflows will be disabled",
-			zap.Error(err),
-			zap.String("hostPort", cfg.HostPort),
+		log.Warn(
+			"failed to connect to temporal - workflows will be disabled",
+			append(connectionFields, zap.Error(err))...,
 		)
-		return TemporalClientResult{Client: nil}
+		return TemporalClientResult{Client: nil}, nil
 	}
 
-	log.Info("temporal client connected",
-		zap.String("hostPort", cfg.HostPort),
-		zap.String("namespace", cfg.GetNamespace()),
-		zap.String("identity", cfg.GetIdentity()),
-		zap.Bool("encryptionEnabled", cfg.Security.EnableEncryption),
-		zap.Bool("compressionEnabled", cfg.Security.EnableCompression),
+	log.Info(
+		"temporal client connected",
+		append(
+			connectionFields,
+			zap.String("identity", clientOptions.Identity),
+			zap.Bool("encryptionEnabled", cfg.Security.EnableEncryption),
+			zap.Bool("compressionEnabled", cfg.Security.EnableCompression),
+		)...,
 	)
 
 	p.LC.Append(fx.Hook{
@@ -82,5 +86,5 @@ func NewTemporalClient(p TemporalClientParams) TemporalClientResult {
 		},
 	})
 
-	return TemporalClientResult{Client: c}
+	return TemporalClientResult{Client: c}, nil
 }

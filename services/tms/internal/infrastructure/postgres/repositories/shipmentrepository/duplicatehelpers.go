@@ -33,6 +33,7 @@ type duplicatedShipmentGraph struct {
 	moves             []*shipment.ShipmentMove
 	stops             []*shipment.Stop
 	additionalCharges []*shipment.AdditionalCharge
+	chargeAllocations []*shipment.ChargeAllocation
 	commodities       []*shipment.ShipmentCommodity
 }
 
@@ -78,6 +79,7 @@ func buildDuplicatedShipmentGraph(
 			graph.stops = append(graph.stops, move.Stops...)
 		}
 		graph.additionalCharges = append(graph.additionalCharges, duplicated.AdditionalCharges...)
+		graph.chargeAllocations = append(graph.chargeAllocations, duplicated.ChargeAllocations...)
 		graph.commodities = append(graph.commodities, duplicated.Commodities...)
 	}
 
@@ -95,6 +97,8 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		ServiceTypeID:       source.ServiceTypeID,
 		ShipmentTypeID:      source.ShipmentTypeID,
 		CustomerID:          source.CustomerID,
+		BillToCustomerID:    pulid.ClonePointer(source.BillToCustomerID),
+		FreightTerms:        source.FreightTerms,
 		TractorTypeID:       source.TractorTypeID,
 		TrailerTypeID:       source.TrailerTypeID,
 		FormulaTemplateID:   source.FormulaTemplateID,
@@ -118,9 +122,70 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		source.AdditionalCharges,
 		duplicated.ID,
 	)
+	duplicated.ChargeAllocations = duplicateChargeAllocations(
+		source,
+		duplicated,
+	)
 	duplicated.Commodities = duplicateShipmentCommodities(source.Commodities, duplicated.ID)
 
 	return duplicated
+}
+
+// duplicateChargeAllocations carries the payer split onto the copy. Freight
+// rows re-point at the new shipment; accessorial rows re-point at the copied
+// charge that sits at the same position as the one they split. Invoice links
+// are not copied: the copy has not been billed.
+func duplicateChargeAllocations(
+	source *shipment.Shipment,
+	duplicated *shipment.Shipment,
+) []*shipment.ChargeAllocation {
+	if len(source.ChargeAllocations) == 0 {
+		return nil
+	}
+
+	copiedChargeBySource := make(map[pulid.ID]pulid.ID, len(source.AdditionalCharges))
+	position := 0
+	for _, sourceCharge := range source.AdditionalCharges {
+		if sourceCharge == nil {
+			continue
+		}
+		if position < len(duplicated.AdditionalCharges) && duplicated.AdditionalCharges[position] != nil {
+			copiedChargeBySource[sourceCharge.ID] = duplicated.AdditionalCharges[position].ID
+		}
+		position++
+	}
+
+	rows := make([]*shipment.ChargeAllocation, 0, len(source.ChargeAllocations))
+	for _, allocation := range source.ChargeAllocations {
+		if allocation == nil || allocation.ChargeKind == shipment.ChargeAllocationKindOrderCharge {
+			continue
+		}
+		row := &shipment.ChargeAllocation{
+			ID:               pulid.MustNew("chal_"),
+			BusinessUnitID:   allocation.BusinessUnitID,
+			OrganizationID:   allocation.OrganizationID,
+			ShipmentID:       &duplicated.ID,
+			ChargeKind:       allocation.ChargeKind,
+			BillToCustomerID: allocation.BillToCustomerID,
+			Method:           allocation.Method,
+			Percent:          allocation.Percent,
+			Amount:           allocation.Amount,
+			Sequence:         allocation.Sequence,
+		}
+		if allocation.ChargeKind == shipment.ChargeAllocationKindAccessorial {
+			if allocation.AdditionalChargeID == nil {
+				continue
+			}
+			copied, ok := copiedChargeBySource[*allocation.AdditionalChargeID]
+			if !ok {
+				continue
+			}
+			row.AdditionalChargeID = &copied
+		}
+		rows = append(rows, row)
+	}
+
+	return rows
 }
 
 // BuildAutoOrder wraps a copied shipment in its own single-leg commercial
@@ -171,6 +236,7 @@ func LoadShipmentGraphSource(
 			},
 		}).
 		Relation(buncolgen.ShipmentRelations.AdditionalCharges).
+		Relation(buncolgen.ShipmentRelations.ChargeAllocations).
 		Relation(buncolgen.ShipmentRelations.Commodities).
 		Scan(ctx)
 	if err != nil {

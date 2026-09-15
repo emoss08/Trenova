@@ -729,6 +729,8 @@ var BillingControlColumns = struct {
 	FallbackFormulaTemplateID             Column // "fallback_formula_template_id" → qualified: "bc.fallback_formula_template_id"
 	RequireRateOverrideReason             Column // "require_rate_override_reason" → qualified: "bc.require_rate_override_reason"
 	EnforceMarginFloor                    Column // "enforce_margin_floor" → qualified: "bc.enforce_margin_floor"
+	LateChargeAssessmentMode              Column // "late_charge_assessment_mode" → qualified: "bc.late_charge_assessment_mode"
+	LateChargeMinimumAmount               Column // "late_charge_minimum_amount" → qualified: "bc.late_charge_minimum_amount"
 	Version                               Column // "version" → qualified: "bc.version"
 	CreatedAt                             Column // "created_at" → qualified: "bc.created_at"
 	UpdatedAt                             Column // "updated_at" → qualified: "bc.updated_at"
@@ -759,6 +761,8 @@ var BillingControlColumns = struct {
 	FallbackFormulaTemplateID:             NewColumn("fallback_formula_template_id", "bc"),
 	RequireRateOverrideReason:             NewColumn("require_rate_override_reason", "bc"),
 	EnforceMarginFloor:                    NewColumn("enforce_margin_floor", "bc"),
+	LateChargeAssessmentMode:              NewColumn("late_charge_assessment_mode", "bc"),
+	LateChargeMinimumAmount:               NewColumn("late_charge_minimum_amount", "bc"),
 	Version:                               NewColumn("version", "bc"),
 	CreatedAt:                             NewColumn("created_at", "bc"),
 	UpdatedAt:                             NewColumn("updated_at", "bc"),
@@ -795,6 +799,8 @@ var BillingControlFieldMap = map[string]string{
 	"fallbackFormulaTemplateId":             "fallback_formula_template_id",
 	"requireRateOverrideReason":             "require_rate_override_reason",
 	"enforceMarginFloor":                    "enforce_margin_floor",
+	"lateChargeAssessmentMode":              "late_charge_assessment_mode",
+	"lateChargeMinimumAmount":               "late_charge_minimum_amount",
 	"version":                               "version",
 	"createdAt":                             "created_at",
 	"updatedAt":                             "updated_at",
@@ -829,6 +835,8 @@ var BillingControlInsertableColumns = []string{
 	"fallback_formula_template_id",
 	"require_rate_override_reason",
 	"enforce_margin_floor",
+	"late_charge_assessment_mode",
+	"late_charge_minimum_amount",
 	"version",
 	"created_at",
 	"updated_at",
@@ -923,6 +931,8 @@ var BillingControlFilter = struct {
 	FallbackFormulaTemplateID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fallbackFormulaTemplateId" → DB: "fallback_formula_template_id"
 	RequireRateOverrideReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireRateOverrideReason" → DB: "require_rate_override_reason"
 	EnforceMarginFloor                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceMarginFloor" → DB: "enforce_margin_floor"
+	LateChargeAssessmentMode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeAssessmentMode" → DB: "late_charge_assessment_mode"
+	LateChargeMinimumAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeMinimumAmount" → DB: "late_charge_minimum_amount"
 	Version                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1004,6 +1014,12 @@ var BillingControlFilter = struct {
 	},
 	EnforceMarginFloor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enforceMarginFloor", op, value)
+	},
+	LateChargeAssessmentMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lateChargeAssessmentMode", op, value)
+	},
+	LateChargeMinimumAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lateChargeMinimumAmount", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -101,6 +101,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpUpdate),
 		h.post,
 	)
+	api.POST(
+		"/:invoiceID/void/",
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCancel),
+		h.void,
+	)
+	api.POST(
+		"/memos/",
+		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpCreate),
+		h.createMemo,
+	)
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
@@ -487,4 +497,63 @@ func baseURL(c *gin.Context) string {
 		host = c.Request.Host
 	}
 	return scheme + "://" + host
+}
+
+type voidInvoiceRequest struct {
+	Reason      string                  `json:"reason"`
+	Disposition invoice.VoidDisposition `json:"disposition"`
+}
+
+// void takes an invoice out of circulation. A draft is voided at once; a
+// posted invoice goes through a full-reversal adjustment and the response says
+// whether that reversal still awaits an approver.
+func (h *Handler) void(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	var req voidInvoiceRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.VoidInvoice(
+		c.Request.Context(),
+		&services.VoidInvoiceRequest{
+			InvoiceID:   invoiceID,
+			TenantInfo:  tenantInfo(authCtx),
+			Reason:      req.Reason,
+			Disposition: req.Disposition,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// createMemo raises a standalone credit or debit memo for a customer.
+func (h *Handler) createMemo(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(services.CreateMemoRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.ID = pulid.Nil
+	req.TenantInfo = tenantInfo(authCtx)
+
+	entity, err := h.service.CreateMemo(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, entity)
 }

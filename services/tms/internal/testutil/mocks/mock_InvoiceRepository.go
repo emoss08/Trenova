@@ -725,6 +725,74 @@ func (_c *MockInvoiceRepository_ListAttachments_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// ListByShipmentIDs provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) ListByShipmentIDs(ctx context.Context, req repositories.ListInvoicesByShipmentIDsRequest) (map[pulid.ID][]*invoice.Invoice, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListByShipmentIDs")
+	}
+
+	var r0 map[pulid.ID][]*invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoicesByShipmentIDsRequest) (map[pulid.ID][]*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoicesByShipmentIDsRequest) map[pulid.ID][]*invoice.Invoice); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID][]*invoice.Invoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListInvoicesByShipmentIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_ListByShipmentIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListByShipmentIDs'
+type MockInvoiceRepository_ListByShipmentIDs_Call struct {
+	*mock.Call
+}
+
+// ListByShipmentIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListInvoicesByShipmentIDsRequest
+func (_e *MockInvoiceRepository_Expecter) ListByShipmentIDs(ctx any, req any) *MockInvoiceRepository_ListByShipmentIDs_Call {
+	return &MockInvoiceRepository_ListByShipmentIDs_Call{Call: _e.mock.On("ListByShipmentIDs", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_ListByShipmentIDs_Call) Run(run func(ctx context.Context, req repositories.ListInvoicesByShipmentIDsRequest)) *MockInvoiceRepository_ListByShipmentIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListInvoicesByShipmentIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListInvoicesByShipmentIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListByShipmentIDs_Call) Return(v0 map[pulid.ID][]*invoice.Invoice, err error) *MockInvoiceRepository_ListByShipmentIDs_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListByShipmentIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListInvoicesByShipmentIDsRequest) (map[pulid.ID][]*invoice.Invoice, error)) *MockInvoiceRepository_ListByShipmentIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListConnection provides a mock function for the type MockInvoiceRepository
 func (_mock *MockInvoiceRepository) ListConnection(ctx context.Context, req *repositories.ListInvoiceConnectionRequest) (*pagination.CursorListResult[*invoice.Invoice], error) {
 	ret := _mock.Called(ctx, req)
@@ -857,6 +925,134 @@ func (_c *MockInvoiceRepository_ListEmailAttempts_Call) Return(listResult *pagin
 }
 
 func (_c *MockInvoiceRepository_ListEmailAttempts_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) (*pagination.ListResult[*invoice.EmailAttempt], error)) *MockInvoiceRepository_ListEmailAttempts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// LockForUpdate provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) LockForUpdate(ctx context.Context, req repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LockForUpdate")
+	}
+
+	var r0 *invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceByIDRequest) *invoice.Invoice); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.Invoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetInvoiceByIDRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_LockForUpdate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LockForUpdate'
+type MockInvoiceRepository_LockForUpdate_Call struct {
+	*mock.Call
+}
+
+// LockForUpdate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetInvoiceByIDRequest
+func (_e *MockInvoiceRepository_Expecter) LockForUpdate(ctx any, req any) *MockInvoiceRepository_LockForUpdate_Call {
+	return &MockInvoiceRepository_LockForUpdate_Call{Call: _e.mock.On("LockForUpdate", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_LockForUpdate_Call) Run(run func(ctx context.Context, req repositories.GetInvoiceByIDRequest)) *MockInvoiceRepository_LockForUpdate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetInvoiceByIDRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetInvoiceByIDRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_LockForUpdate_Call) Return(v0 *invoice.Invoice, err error) *MockInvoiceRepository_LockForUpdate_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_LockForUpdate_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error)) *MockInvoiceRepository_LockForUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateEDISendStatus provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) UpdateEDISendStatus(ctx context.Context, req repositories.UpdateInvoiceEDISendStatusRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateEDISendStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.UpdateInvoiceEDISendStatusRequest) error); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.UpdateInvoiceEDISendStatusRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockInvoiceRepository_UpdateEDISendStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateEDISendStatus'
+type MockInvoiceRepository_UpdateEDISendStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateEDISendStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.UpdateInvoiceEDISendStatusRequest
+func (_e *MockInvoiceRepository_Expecter) UpdateEDISendStatus(ctx any, req any) *MockInvoiceRepository_UpdateEDISendStatus_Call {
+	return &MockInvoiceRepository_UpdateEDISendStatus_Call{Call: _e.mock.On("UpdateEDISendStatus", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_UpdateEDISendStatus_Call) Run(run func(ctx context.Context, req repositories.UpdateInvoiceEDISendStatusRequest)) *MockInvoiceRepository_UpdateEDISendStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.UpdateInvoiceEDISendStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.UpdateInvoiceEDISendStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpdateEDISendStatus_Call) Return(err error) *MockInvoiceRepository_UpdateEDISendStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpdateEDISendStatus_Call) RunAndReturn(run func(ctx context.Context, req repositories.UpdateInvoiceEDISendStatusRequest) error) *MockInvoiceRepository_UpdateEDISendStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

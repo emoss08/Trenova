@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -401,6 +402,302 @@ func (_c *MockInvoiceService_DownloadSharedDocument_Call) Return(downloadInvoice
 }
 
 func (_c *MockInvoiceService_DownloadSharedDocument_Call) RunAndReturn(run func(ctx context.Context, req *services.DownloadInvoiceDocumentRequest) (*services.DownloadInvoiceDocumentResult, error)) *MockInvoiceService_DownloadSharedDocument_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateInvoicesFromOrder provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) CreateInvoicesFromOrder(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor) (*services.CreateInvoicesResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateInvoicesFromOrder")
+	}
+
+	var r0 *services.CreateInvoicesResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) (*services.CreateInvoicesResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) *services.CreateInvoicesResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CreateInvoicesResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateInvoiceFromOrderRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_CreateInvoicesFromOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInvoicesFromOrder'
+type MockInvoiceService_CreateInvoicesFromOrder_Call struct {
+	*mock.Call
+}
+
+// CreateInvoicesFromOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateInvoiceFromOrderRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) CreateInvoicesFromOrder(ctx any, req any, actor any) *MockInvoiceService_CreateInvoicesFromOrder_Call {
+	return &MockInvoiceService_CreateInvoicesFromOrder_Call{Call: _e.mock.On("CreateInvoicesFromOrder", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromOrder_Call) Run(run func(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor)) *MockInvoiceService_CreateInvoicesFromOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateInvoiceFromOrderRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateInvoiceFromOrderRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromOrder_Call) Return(v0 *services.CreateInvoicesResult, err error) *MockInvoiceService_CreateInvoicesFromOrder_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromOrder_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateInvoiceFromOrderRequest, actor *services.RequestActor) (*services.CreateInvoicesResult, error)) *MockInvoiceService_CreateInvoicesFromOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateInvoicesFromShipments provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) CreateInvoicesFromShipments(ctx context.Context, req *services.CreateInvoiceFromShipmentsRequest, actor *services.RequestActor) (*services.CreateInvoicesResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateInvoicesFromShipments")
+	}
+
+	var r0 *services.CreateInvoicesResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromShipmentsRequest, *services.RequestActor) (*services.CreateInvoicesResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateInvoiceFromShipmentsRequest, *services.RequestActor) *services.CreateInvoicesResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CreateInvoicesResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateInvoiceFromShipmentsRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_CreateInvoicesFromShipments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInvoicesFromShipments'
+type MockInvoiceService_CreateInvoicesFromShipments_Call struct {
+	*mock.Call
+}
+
+// CreateInvoicesFromShipments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateInvoiceFromShipmentsRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) CreateInvoicesFromShipments(ctx any, req any, actor any) *MockInvoiceService_CreateInvoicesFromShipments_Call {
+	return &MockInvoiceService_CreateInvoicesFromShipments_Call{Call: _e.mock.On("CreateInvoicesFromShipments", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromShipments_Call) Run(run func(ctx context.Context, req *services.CreateInvoiceFromShipmentsRequest, actor *services.RequestActor)) *MockInvoiceService_CreateInvoicesFromShipments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateInvoiceFromShipmentsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateInvoiceFromShipmentsRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromShipments_Call) Return(v0 *services.CreateInvoicesResult, err error) *MockInvoiceService_CreateInvoicesFromShipments_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateInvoicesFromShipments_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateInvoiceFromShipmentsRequest, actor *services.RequestActor) (*services.CreateInvoicesResult, error)) *MockInvoiceService_CreateInvoicesFromShipments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateMemo provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) CreateMemo(ctx context.Context, req *services.CreateMemoRequest, actor *services.RequestActor) (*invoice.Invoice, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateMemo")
+	}
+
+	var r0 *invoice.Invoice
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateMemoRequest, *services.RequestActor) (*invoice.Invoice, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateMemoRequest, *services.RequestActor) *invoice.Invoice); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.Invoice)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateMemoRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_CreateMemo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateMemo'
+type MockInvoiceService_CreateMemo_Call struct {
+	*mock.Call
+}
+
+// CreateMemo is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateMemoRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) CreateMemo(ctx any, req any, actor any) *MockInvoiceService_CreateMemo_Call {
+	return &MockInvoiceService_CreateMemo_Call{Call: _e.mock.On("CreateMemo", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_CreateMemo_Call) Run(run func(ctx context.Context, req *services.CreateMemoRequest, actor *services.RequestActor)) *MockInvoiceService_CreateMemo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateMemoRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateMemoRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateMemo_Call) Return(v0 *invoice.Invoice, err error) *MockInvoiceService_CreateMemo_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_CreateMemo_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateMemoRequest, actor *services.RequestActor) (*invoice.Invoice, error)) *MockInvoiceService_CreateMemo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VoidInvoice provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) VoidInvoice(ctx context.Context, req *services.VoidInvoiceRequest, actor *services.RequestActor) (*services.VoidInvoiceResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VoidInvoice")
+	}
+
+	var r0 *services.VoidInvoiceResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.VoidInvoiceRequest, *services.RequestActor) (*services.VoidInvoiceResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.VoidInvoiceRequest, *services.RequestActor) *services.VoidInvoiceResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.VoidInvoiceResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.VoidInvoiceRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_VoidInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VoidInvoice'
+type MockInvoiceService_VoidInvoice_Call struct {
+	*mock.Call
+}
+
+// VoidInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.VoidInvoiceRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) VoidInvoice(ctx any, req any, actor any) *MockInvoiceService_VoidInvoice_Call {
+	return &MockInvoiceService_VoidInvoice_Call{Call: _e.mock.On("VoidInvoice", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_VoidInvoice_Call) Run(run func(ctx context.Context, req *services.VoidInvoiceRequest, actor *services.RequestActor)) *MockInvoiceService_VoidInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.VoidInvoiceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.VoidInvoiceRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_VoidInvoice_Call) Return(v0 *services.VoidInvoiceResult, err error) *MockInvoiceService_VoidInvoice_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_VoidInvoice_Call) RunAndReturn(run func(ctx context.Context, req *services.VoidInvoiceRequest, actor *services.RequestActor) (*services.VoidInvoiceResult, error)) *MockInvoiceService_VoidInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1162,6 +1459,148 @@ func (_c *MockInvoiceService_Send_Call) Return(invoiceSendResult *services.Invoi
 }
 
 func (_c *MockInvoiceService_Send_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceSendRequest, actor *services.RequestActor) (*services.InvoiceSendResult, error)) *MockInvoiceService_Send_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResolveEDISendPlans provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) ResolveEDISendPlans(ctx context.Context, req *services.ResolveInvoiceEDISendPlansRequest) (map[pulid.ID]*services.InvoiceEDISendPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResolveEDISendPlans")
+	}
+
+	var r0 map[pulid.ID]*services.InvoiceEDISendPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ResolveInvoiceEDISendPlansRequest) (map[pulid.ID]*services.InvoiceEDISendPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ResolveInvoiceEDISendPlansRequest) map[pulid.ID]*services.InvoiceEDISendPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]*services.InvoiceEDISendPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ResolveInvoiceEDISendPlansRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_ResolveEDISendPlans_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResolveEDISendPlans'
+type MockInvoiceService_ResolveEDISendPlans_Call struct {
+	*mock.Call
+}
+
+// ResolveEDISendPlans is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ResolveInvoiceEDISendPlansRequest
+func (_e *MockInvoiceService_Expecter) ResolveEDISendPlans(ctx any, req any) *MockInvoiceService_ResolveEDISendPlans_Call {
+	return &MockInvoiceService_ResolveEDISendPlans_Call{Call: _e.mock.On("ResolveEDISendPlans", ctx, req)}
+}
+
+func (_c *MockInvoiceService_ResolveEDISendPlans_Call) Run(run func(ctx context.Context, req *services.ResolveInvoiceEDISendPlansRequest)) *MockInvoiceService_ResolveEDISendPlans_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ResolveInvoiceEDISendPlansRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ResolveInvoiceEDISendPlansRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_ResolveEDISendPlans_Call) Return(v0 map[pulid.ID]*services.InvoiceEDISendPlan, err error) *MockInvoiceService_ResolveEDISendPlans_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_ResolveEDISendPlans_Call) RunAndReturn(run func(ctx context.Context, req *services.ResolveInvoiceEDISendPlansRequest) (map[pulid.ID]*services.InvoiceEDISendPlan, error)) *MockInvoiceService_ResolveEDISendPlans_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SendEDI provides a mock function for the type MockInvoiceService
+func (_mock *MockInvoiceService) SendEDI(ctx context.Context, req *services.SendInvoiceEDIRequest, actor *services.RequestActor) (*services.InvoiceEDISendResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendEDI")
+	}
+
+	var r0 *services.InvoiceEDISendResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SendInvoiceEDIRequest, *services.RequestActor) (*services.InvoiceEDISendResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SendInvoiceEDIRequest, *services.RequestActor) *services.InvoiceEDISendResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceEDISendResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.SendInvoiceEDIRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceService_SendEDI_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendEDI'
+type MockInvoiceService_SendEDI_Call struct {
+	*mock.Call
+}
+
+// SendEDI is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.SendInvoiceEDIRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceService_Expecter) SendEDI(ctx any, req any, actor any) *MockInvoiceService_SendEDI_Call {
+	return &MockInvoiceService_SendEDI_Call{Call: _e.mock.On("SendEDI", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceService_SendEDI_Call) Run(run func(ctx context.Context, req *services.SendInvoiceEDIRequest, actor *services.RequestActor)) *MockInvoiceService_SendEDI_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.SendInvoiceEDIRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.SendInvoiceEDIRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceService_SendEDI_Call) Return(v0 *services.InvoiceEDISendResult, err error) *MockInvoiceService_SendEDI_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceService_SendEDI_Call) RunAndReturn(run func(ctx context.Context, req *services.SendInvoiceEDIRequest, actor *services.RequestActor) (*services.InvoiceEDISendResult, error)) *MockInvoiceService_SendEDI_Call {
 	_c.Call.Return(run)
 	return _c
 }

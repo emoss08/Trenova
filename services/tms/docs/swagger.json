@@ -253,10 +253,22 @@
                     "additionalProperties": {},
                     "type": "object"
                 },
+                "allocatedTotalAmount": {
+                    "type": "number"
+                },
+                "allocatedTotalAmountMinor": {
+                    "type": "integer"
+                },
                 "assignedBiller": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
                 },
                 "assignedBillerId": {
+                    "type": "string"
+                },
+                "billToCustomer": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.Customer"
+                },
+                "billToCustomerId": {
                     "type": "string"
                 },
                 "billType": {
@@ -1191,6 +1203,13 @@
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_documenttype.DocumentType"
                     },
                     "type": "array"
+                },
+                "ediInvoiceEnabled": {
+                    "type": "boolean"
+                },
+                "emailInvoiceEnabled": {
+                    "description": "EmailInvoiceEnabled and EDIInvoiceEnabled are the delivery channels an\ninvoice may leave through. Auto-send after posting honours both.",
+                    "type": "boolean"
                 },
                 "enforceCreditLimit": {
                     "type": "boolean"
@@ -6089,6 +6108,29 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.EDISendStatus": {
+            "enum": [
+                "NotSent",
+                "NotConfigured",
+                "Queued",
+                "Generated",
+                "Sending",
+                "Sent",
+                "Failed",
+                "DeadLettered"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "EDISendStatusNotSent",
+                "EDISendStatusNotConfigured",
+                "EDISendStatusQueued",
+                "EDISendStatusGenerated",
+                "EDISendStatusSending",
+                "EDISendStatusSent",
+                "EDISendStatusFailed",
+                "EDISendStatusDeadLettered"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttempt": {
             "properties": {
                 "attachments": {
@@ -6248,6 +6290,9 @@
                     },
                     "type": "array"
                 },
+                "balanceDueMinor": {
+                    "type": "integer"
+                },
                 "billToAddressLine1": {
                     "type": "string"
                 },
@@ -6313,6 +6358,12 @@
                 "dueDate": {
                     "type": "integer"
                 },
+                "ediSendStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.EDISendStatus"
+                },
+                "ediSentAt": {
+                    "type": "integer"
+                },
                 "emailAttempts": {
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttempt"
@@ -6355,6 +6406,15 @@
                 "isAdjustmentArtifact": {
                     "type": "boolean"
                 },
+                "isSplitBill": {
+                    "type": "boolean"
+                },
+                "lastEdiError": {
+                    "type": "string"
+                },
+                "lastEdiMessageId": {
+                    "type": "string"
+                },
                 "lastSendError": {
                     "type": "string"
                 },
@@ -6368,6 +6428,12 @@
                     "type": "array"
                 },
                 "memo": {
+                    "type": "string"
+                },
+                "memoKind": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.MemoKind"
+                },
+                "memoReason": {
                     "type": "string"
                 },
                 "number": {
@@ -6413,6 +6479,12 @@
                 "postedAt": {
                     "type": "integer"
                 },
+                "referenceInvoice": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Invoice"
+                },
+                "referenceInvoiceId": {
+                    "type": "string"
+                },
                 "remittanceInstructions": {
                     "type": "string"
                 },
@@ -6452,6 +6524,12 @@
                 "shipmentProNumber": {
                     "type": "string"
                 },
+                "shipperCustomer": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.Customer"
+                },
+                "shipperCustomerId": {
+                    "type": "string"
+                },
                 "sourceInvoiceAdjustmentId": {
                     "type": "string"
                 },
@@ -6481,6 +6559,21 @@
                 },
                 "version": {
                     "type": "integer"
+                },
+                "voidDisposition": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.VoidDisposition"
+                },
+                "voidReason": {
+                    "type": "string"
+                },
+                "voidedAt": {
+                    "type": "integer"
+                },
+                "voidedByAdjustmentId": {
+                    "type": "string"
+                },
+                "voidedById": {
+                    "type": "string"
                 }
             },
             "type": "object"
@@ -6490,6 +6583,9 @@
                 "accessorialChargeId": {
                     "type": "string"
                 },
+                "allocationPercent": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
                 "amount": {
                     "type": "number"
                 },
@@ -6497,6 +6593,9 @@
                     "type": "integer"
                 },
                 "businessUnitId": {
+                    "type": "string"
+                },
+                "chargeAllocationId": {
                     "type": "string"
                 },
                 "chargeCode": {
@@ -6565,12 +6664,25 @@
         "github_com_emoss08_trenova_internal_core_domain_invoice.InvoiceLineType": {
             "enum": [
                 "Freight",
-                "Accessorial"
+                "Accessorial",
+                "Memo"
             ],
             "type": "string",
             "x-enum-varnames": [
                 "InvoiceLineTypeFreight",
-                "InvoiceLineTypeAccessorial"
+                "InvoiceLineTypeAccessorial",
+                "InvoiceLineTypeMemo"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.MemoKind": {
+            "enum": [
+                "Manual",
+                "LateCharge"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "MemoKindManual",
+                "MemoKindLateCharge"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.PaymentTerm": {
@@ -6599,14 +6711,16 @@
                 "Shipment",
                 "Order",
                 "Consolidated",
-                "Adjustment"
+                "Adjustment",
+                "Memo"
             ],
             "type": "string",
             "x-enum-varnames": [
                 "ScopeShipment",
                 "ScopeOrder",
                 "ScopeConsolidated",
-                "ScopeAdjustment"
+                "ScopeAdjustment",
+                "ScopeMemo"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus": {
@@ -6642,12 +6756,25 @@
         "github_com_emoss08_trenova_internal_core_domain_invoice.Status": {
             "enum": [
                 "Draft",
-                "Posted"
+                "Posted",
+                "Voided"
             ],
             "type": "string",
             "x-enum-varnames": [
                 "StatusDraft",
-                "StatusPosted"
+                "StatusPosted",
+                "StatusVoided"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.VoidDisposition": {
+            "enum": [
+                "Rebill",
+                "DoNotRebill"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "VoidDispositionRebill",
+                "VoidDispositionDoNotRebill"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoicerun.GroupStatus": {
@@ -7847,6 +7974,12 @@
         },
         "github_com_emoss08_trenova_internal_core_domain_order.OrderCharge": {
             "properties": {
+                "allocations": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocation"
+                    },
+                    "type": "array"
+                },
                 "amount": {
                     "type": "number"
                 },
@@ -10676,9 +10809,6 @@
                 "createdAt": {
                     "type": "integer"
                 },
-                "detentionOccurrenceId": {
-                    "type": "string"
-                },
                 "fuelSurchargeDetail": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.FuelSurchargeDetail"
                 },
@@ -10687,6 +10817,9 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "isDetention": {
+                    "type": "boolean"
                 },
                 "isSystemGenerated": {
                     "type": "boolean"
@@ -11007,6 +11140,99 @@
                 "CarrierRateMethodPerMile"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocation": {
+            "properties": {
+                "additionalChargeId": {
+                    "type": "string"
+                },
+                "additionalChargeIndex": {
+                    "description": "AdditionalChargeIndex points at a charge in the same payload that has no\nid yet, so a new charge and its split can arrive in one save.",
+                    "type": "integer"
+                },
+                "amount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "billToCustomer": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.Customer"
+                },
+                "billToCustomerId": {
+                    "type": "string"
+                },
+                "businessUnit": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "chargeKind": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationKind"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "invoicedAt": {
+                    "type": "integer"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationMethod"
+                },
+                "orderChargeId": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "percent": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "sequence": {
+                    "type": "integer"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationKind": {
+            "enum": [
+                "Freight",
+                "Accessorial",
+                "OrderCharge"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ChargeAllocationKindFreight",
+                "ChargeAllocationKindAccessorial",
+                "ChargeAllocationKindOrderCharge"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationMethod": {
+            "enum": [
+                "Percent",
+                "Amount"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ChargeAllocationMethodPercent",
+                "ChargeAllocationMethodAmount"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_shipment.CommentAttachment": {
             "properties": {
                 "createdAt": {
@@ -11123,6 +11349,19 @@
             "x-enum-varnames": [
                 "EntryMethodManual",
                 "EntryMethodEDI"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.FreightTerms": {
+            "enum": [
+                "Prepaid",
+                "Collect",
+                "ThirdParty"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "FreightTermsPrepaid",
+                "FreightTermsCollect",
+                "FreightTermsThirdParty"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_shipment.FuelSurchargeDetail": {
@@ -11434,6 +11673,12 @@
                 "baseRate": {
                     "$ref": "#/definitions/decimal.NullDecimal"
                 },
+                "billToCustomer": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.Customer"
+                },
+                "billToCustomerId": {
+                    "type": "string"
+                },
                 "billedAt": {
                     "type": "integer"
                 },
@@ -11460,6 +11705,12 @@
                 },
                 "canceledById": {
                     "type": "string"
+                },
+                "chargeAllocations": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocation"
+                    },
+                    "type": "array"
                 },
                 "comments": {
                     "items": {
@@ -11514,6 +11765,9 @@
                 },
                 "freightChargeAmount": {
                     "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "freightTerms": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.FreightTerms"
                 },
                 "fuelSurchargeLocked": {
                     "type": "boolean"
@@ -12697,6 +12951,18 @@
                 "invoicePostingMode": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.InvoicePostingMode"
                 },
+                "lateChargeAssessmentMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.LateChargeAssessmentMode"
+                        }
+                    ],
+                    "description": "LateChargeAssessmentMode says whether the nightly run previews or raises\nlate-charge debit memos; the rate and grace live on each customer."
+                },
+                "lateChargeMinimumAmount": {
+                    "description": "LateChargeMinimumAmount is the smallest total a run will bill a customer.",
+                    "type": "number"
+                },
                 "notifyOnAutoInvoiceCreation": {
                     "type": "boolean"
                 },
@@ -12944,6 +13210,19 @@
                 "JournalSourceEventCarrierSettlementPosted",
                 "JournalSourceEventCarrierSettlementVoided",
                 "JournalSourceEventCarrierSettlementPaid"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_tenant.LateChargeAssessmentMode": {
+            "enum": [
+                "Disabled",
+                "Preview",
+                "Automatic"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "LateChargeAssessmentModeDisabled",
+                "LateChargeAssessmentModePreview",
+                "LateChargeAssessmentModeAutomatic"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_tenant.LocationCodeCasing": {
@@ -16391,6 +16670,35 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingPayerReadiness": {
+            "properties": {
+                "creditHold": {
+                    "type": "boolean"
+                },
+                "creditStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.CreditStatus"
+                },
+                "isPrimary": {
+                    "type": "boolean"
+                },
+                "payerCode": {
+                    "type": "string"
+                },
+                "payerId": {
+                    "type": "string"
+                },
+                "payerName": {
+                    "type": "string"
+                },
+                "shareAmount": {
+                    "type": "number"
+                },
+                "shouldAutoApproveBilling": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness": {
             "properties": {
                 "canMarkReadyToInvoice": {
@@ -16399,6 +16707,13 @@
                 "missingRequirements": {
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement"
+                    },
+                    "type": "array"
+                },
+                "payers": {
+                    "description": "Payers is every customer with a share of this shipment, the shipment's own\npayer first. Requirements above are the union of theirs.",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingPayerReadiness"
                     },
                     "type": "array"
                 },
@@ -16421,7 +16736,7 @@
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Status"
                 },
                 "shouldAutoApproveBilling": {
-                    "description": "ShouldAutoApproveBilling means this shipment may clear the billing queue\nwithout a biller looking at it, because it has no requirement or rate issue\nand its customer asked for clean freight to pass straight through.",
+                    "description": "ShouldAutoApproveBilling means this shipment may clear the billing queue\nwithout a biller looking at it, because it has no requirement or rate issue\nand every payer asked for clean freight to pass straight through.",
                     "type": "boolean"
                 },
                 "shouldAutoMarkReadyToInvoice": {
@@ -20899,6 +21214,10 @@
                         }
                     ],
                     "description": "BaseRate is the per-unit rate the template was priced with — the lane\nrate on the rule, or the value in the matrix cell that matched.\n\nIt is what lets a contract's answer be seated on a shipment as its own\nrating method plus its own base rate, rather than as a total nobody can\nre-derive. A rule that binds no rate leaves this unset, and the\nshipment's existing base rate stands."
+                },
+                "billToCustomerId": {
+                    "description": "BillToCustomerID is the payer the agreement redirects invoicing to, when\nit names one; the shipment adopts it unless it already has its own.",
+                    "type": "string"
                 },
                 "currency": {
                     "type": "string"

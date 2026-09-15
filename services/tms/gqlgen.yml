@@ -1263,6 +1263,26 @@ models:
   BillType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.BillType
+  FreightTerms:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.FreightTerms
+  ChargeAllocationKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.ChargeAllocationKind
+  ChargeAllocationMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.ChargeAllocationMethod
+  ChargeAllocation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.ChargeAllocation
+    fields:
+      percent:
+        resolver: true
+      amount:
+        resolver: true
+  CreateInvoicesResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.CreateInvoicesResult
   ShipmentBillingTransferFailureCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingtransfer.FailureCode
@@ -1287,6 +1307,68 @@ models:
   InvoiceSendStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.SendStatus
+  InvoiceVoidDisposition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.VoidDisposition
+  InvoiceMemoKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.MemoKind
+  InvoiceEDISendStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.EDISendStatus
+  VoidInvoiceResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.VoidInvoiceResult
+  InvoiceDisputeCaseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.DisputeCaseStatus
+  InvoiceDisputeReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.DisputeReasonCode
+  InvoiceDisputeResolution:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.DisputeResolution
+  InvoiceDispute:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoice.InvoiceDispute
+    fields:
+      disputedAmount:
+        resolver: true
+      resolution:
+        resolver: true
+  LateChargeAssessmentMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.LateChargeAssessmentMode
+  LateChargeLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeLine
+    fields:
+      ratePercent:
+        resolver: true
+  LateChargeCustomerResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeCustomerResult
+  LateChargeAssessmentResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeAssessmentResult
+  LateChargeAssessment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/latecharge.LateChargeAssessment
+    fields:
+      ratePercent:
+        resolver: true
+  InvoiceEDISendPlan:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.InvoiceEDISendPlan
+  InvoiceEDISendResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.InvoiceEDISendResult
+  CreditMemoApplicationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.CreditApplicationStatus
+  CreditMemoApplication:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/customerpayment.CreditMemoApplication
   Invoice:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.Invoice
@@ -1299,6 +1381,34 @@ models:
         resolver: true
       appliedAmount:
         resolver: true
+      shipperCustomer:
+        resolver: true
+      relatedInvoices:
+        resolver: true
+      voidDisposition:
+        resolver: true
+      memoKind:
+        resolver: true
+      referenceInvoice:
+        resolver: true
+      openBalance:
+        resolver: true
+      creditRemaining:
+        resolver: true
+      daysPastDue:
+        resolver: true
+      paymentApplications:
+        resolver: true
+      creditApplications:
+        resolver: true
+      disputes:
+        resolver: true
+      openDispute:
+        resolver: true
+      lateChargeAssessments:
+        resolver: true
+      ediSendPlan:
+        resolver: true
   InvoiceLine:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.InvoiceLine
@@ -1308,6 +1418,12 @@ models:
       unitPrice:
         resolver: true
       amount:
+        resolver: true
+      chargeMethod:
+        resolver: true
+      rate:
+        resolver: true
+      allocationPercent:
         resolver: true
   InvoiceLineType:
     model:

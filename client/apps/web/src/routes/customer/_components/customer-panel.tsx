@@ -44,6 +44,8 @@ const DEFAULT_VALUES: Customer = {
     creditHoldReason: "",
     hasBillingControlOverrides: false,
     autoSendInvoiceOnGeneration: true,
+    emailInvoiceEnabled: true,
+    ediInvoiceEnabled: false,
     splitBy: "Customer",
     sectionBy: "Shipment",
     invoiceDetail: "Detailed",

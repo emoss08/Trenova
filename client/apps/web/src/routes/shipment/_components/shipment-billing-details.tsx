@@ -5,7 +5,11 @@ import {
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
+import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { freightTermsChoices } from "@/lib/choices";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
@@ -36,15 +40,18 @@ import {
   ShieldAlertIcon,
   ShieldIcon,
   SparklesIcon,
+  SplitIcon,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ReceiptView } from "@/components/formula-editor/receipt-view";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
+import { FreightSplitDialog } from "./additional-charges/freight-split-dialog";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { AutoRateDialog } from "./auto-rate-dialog";
+import { BillingByPayerCard } from "./billing-by-payer-card";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
 import { WhyThisRate } from "./why-this-rate";
@@ -109,7 +116,7 @@ const CREDIT_STATUS_CONFIG: Record<
   },
 };
 
-function CreditHoldAlert({ customerId }: { customerId: string }) {
+function CreditHoldAlert({ customerId, payerName }: { customerId: string; payerName?: string }) {
   const t = useT();
 
   const { data: billingProfile } = useQuery({
@@ -125,9 +132,9 @@ function CreditHoldAlert({ customerId }: { customerId: string }) {
   const Icon = config.icon;
 
   return (
-    <Alert variant={config.variant} className="mb-3">
+    <Alert variant={config.variant} className="mb-3" data-testid={`credit-alert-${customerId}`}>
       <Icon className="size-4" />
-      <AlertTitle>{t(config.label)}</AlertTitle>
+      <AlertTitle>{payerName ? `${t(config.label)} — ${payerName}` : t(config.label)}</AlertTitle>
       <AlertDescription>
         {billingProfile.creditHoldReason ||
           (billingProfile.creditStatus === "Warning"
@@ -144,21 +151,96 @@ function CreditHoldAlert({ customerId }: { customerId: string }) {
   );
 }
 
+/**
+ * Everyone a save would invoice: the shipment's payer plus every customer named
+ * on a freight or accessorial split. Each gets their own credit check, since a
+ * hold on any of them stops that payer's invoice.
+ */
+export function collectPayerIds(shipment: {
+  customerId?: string | null;
+  billToCustomerId?: string | null;
+  freightAllocations?: readonly { billToCustomerId?: string | null }[] | null;
+  additionalCharges?:
+    | readonly ({ allocations?: readonly { billToCustomerId?: string | null }[] | null } | null)[]
+    | null;
+}): string[] {
+  const ids: string[] = [];
+  const push = (id: string | null | undefined) => {
+    if (id && !ids.includes(id)) ids.push(id);
+  };
+  push(shipment.billToCustomerId || shipment.customerId);
+  for (const row of shipment.freightAllocations ?? []) push(row?.billToCustomerId);
+  for (const charge of shipment.additionalCharges ?? []) {
+    for (const row of charge?.allocations ?? []) push(row?.billToCustomerId);
+  }
+  return ids;
+}
+
+function CreditHoldAlerts() {
+  const { control } = useFormContext<Shipment>();
+  const customerId = useWatch({ control, name: "customerId" });
+  const billToCustomerId = useWatch({ control, name: "billToCustomerId" });
+  const freightAllocations = useWatch({ control, name: "freightAllocations" });
+  const additionalCharges = useWatch({ control, name: "additionalCharges" });
+  const customer = useWatch({ control, name: "customer" });
+  const billToCustomer = useWatch({ control, name: "billToCustomer" });
+
+  const payerIds = collectPayerIds({
+    customerId,
+    billToCustomerId,
+    freightAllocations,
+    additionalCharges,
+  });
+  if (payerIds.length === 0) return null;
+
+  const nameFor = (id: string) => {
+    if (id === customer?.id) return customer.name;
+    if (id === billToCustomer?.id) return billToCustomer.name;
+    for (const row of freightAllocations ?? []) {
+      if (row?.billToCustomer?.id === id) return row.billToCustomer.name;
+    }
+    for (const charge of additionalCharges ?? []) {
+      for (const row of charge?.allocations ?? []) {
+        if (row?.billToCustomer?.id === id) return row.billToCustomer.name;
+      }
+    }
+    return undefined;
+  };
+
+  return (
+    <>
+      {payerIds.map((id) => (
+        <CreditHoldAlert
+          key={id}
+          customerId={id}
+          payerName={payerIds.length > 1 ? nameFor(id) : undefined}
+        />
+      ))}
+    </>
+  );
+}
+
 function ChargeSummaryRow({
   label,
   value,
   bold,
+  action,
 }: {
   label: string;
   value: number | null | undefined;
   bold?: boolean;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between">
       <span
-        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
+        className={cn(
+          "flex items-center gap-1.5 text-sm",
+          bold ? "text-foreground font-medium" : "text-muted-foreground",
+        )}
       >
         {label}
+        {action}
       </span>
       <span
         className={cn(
@@ -179,6 +261,11 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   const otherChargeAmount = useWatch({ control, name: "otherChargeAmount" });
   const totalChargeAmount = useWatch({ control, name: "totalChargeAmount" });
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
+  const freightAllocations = useWatch({ control, name: "freightAllocations" });
+  const [splitOpen, setSplitOpen] = useState(false);
+  const freightSplitCount = (freightAllocations ?? []).filter(
+    (row) => row?.billToCustomerId,
+  ).length;
 
   return (
     <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
@@ -206,13 +293,70 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
         </p>
       </div>
       <div className="space-y-2">
-        <ChargeSummaryRow label={t("Freight Charges")} value={freightChargeAmount} />
+        <ChargeSummaryRow
+          label={t("Freight Charges")}
+          value={freightChargeAmount}
+          action={
+            <Button
+              type="button"
+              variant="ghost"
+              size="xxs"
+              className="text-2xs h-5"
+              onClick={() => setSplitOpen(true)}
+              data-testid="freight-split-action"
+            >
+              <SplitIcon className="size-3" />
+              {freightSplitCount > 1
+                ? t("Split {0} ways", freightSplitCount)
+                : freightSplitCount === 1
+                  ? t("Billed to another payer")
+                  : t("Split")}
+            </Button>
+          }
+        />
         <ChargeSummaryRow label={t("Other Charges")} value={otherChargeAmount} />
         <Separator className="my-2" />
         <ChargeSummaryRow label={t("Total")} value={totalChargeAmount} bold />
       </div>
+      {splitOpen && <FreightSplitDialog open={splitOpen} onOpenChange={setSplitOpen} />}
     </div>
   );
+}
+
+/**
+ * Keeps the bill-to customer honest when the ordering customer changes. A
+ * bill-to chosen for one customer means nothing for another, so it is cleared
+ * along with the splits that named it; a bill-to seeded by a rate agreement
+ * arrives with the agreement and is left alone.
+ */
+function useBillToFollowsCustomer() {
+  const { control, setValue, getValues } = useFormContext<Shipment>();
+  const customerId = useWatch({ control, name: "customerId" });
+  const previous = useRef<string | null | undefined>(customerId);
+
+  useEffect(() => {
+    if (previous.current === customerId) return;
+    const hadCustomer = Boolean(previous.current);
+    previous.current = customerId;
+    if (!hadCustomer) return;
+
+    const opts = { shouldDirty: true, shouldValidate: false };
+    if (getValues("billToCustomerId")) {
+      setValue("billToCustomerId", null, opts);
+      setValue("billToCustomer", null as never, opts);
+    }
+    if ((getValues("freightAllocations") ?? []).length > 0) {
+      setValue("freightAllocations", [], opts);
+    }
+    const charges = getValues("additionalCharges") ?? [];
+    if (charges.some((charge) => (charge?.allocations ?? []).length > 0)) {
+      setValue(
+        "additionalCharges",
+        charges.map((charge) => ({ ...charge, allocations: [] })),
+        opts,
+      );
+    }
+  }, [customerId, getValues, setValue]);
 }
 
 /**
@@ -429,8 +573,9 @@ function RatingBreakdownCard() {
 export default function ShipmentBillingDetails() {
   const t = useT();
 
-  const { control, getValues } = useFormContext<Shipment>();
+  const { control, getValues, setValue } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
+  const customer = useWatch({ control, name: "customer" });
   const shipmentId = getValues("id");
   const {
     isCalculating,
@@ -444,8 +589,19 @@ export default function ShipmentBillingDetails() {
   // one already carries a rate somebody may have negotiated, and replacing it
   // on open is exactly what this design exists to stop.
   const { appliedRate, dismissAppliedRate } = useShipmentAutoRate({ enabled: !shipmentId });
+  useBillToFollowsCustomer();
 
   const profile = getProfile(shipmentUIPolicy);
+
+  const handleBillToSelected = (option: GraphQLSelectOption | null) => {
+    setValue(
+      "billToCustomer",
+      (option
+        ? { id: option.id, name: option.label, code: selectOptionMetaString(option, "code") }
+        : null) as never,
+      { shouldDirty: true },
+    );
+  };
 
   const descriptors: FieldDescriptor[] = [
     {
@@ -474,6 +630,40 @@ export default function ShipmentBillingDetails() {
           label={t("Customer")}
           placeholder={t("Select Customer")}
           description={t("Choose the customer who requested this shipment.")}
+        />
+      ),
+    },
+    {
+      name: "billToCustomerId",
+      render: () => (
+        <CustomerAutocompleteField
+          control={control}
+          name="billToCustomerId"
+          label={t("Bill To")}
+          clearable
+          disabled={!customerId}
+          placeholder={
+            customer?.name ? t("Same as customer ({0})", customer.name) : t("Same as customer")
+          }
+          description={t(
+            "The customer invoiced for this shipment when it is not the one who ordered it. Leave blank to bill the customer.",
+          )}
+          onOptionChange={handleBillToSelected}
+        />
+      ),
+    },
+    {
+      name: "freightTerms",
+      render: () => (
+        <SelectField
+          control={control}
+          name="freightTerms"
+          label={t("Freight Terms")}
+          options={freightTermsChoices}
+          placeholder={t("Select Freight Terms")}
+          description={t(
+            "Who is responsible for the freight charges: prepaid by the shipper, collect from the consignee, or a third party.",
+          )}
         />
       ),
     },
@@ -523,11 +713,12 @@ export default function ShipmentBillingDetails() {
       {appliedRate && (
         <ContractRateAppliedAlert rate={appliedRate} onDismiss={dismissAppliedRate} />
       )}
-      {customerId && <CreditHoldAlert customerId={customerId} />}
+      <CreditHoldAlerts />
       {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
       <CapabilityFields descriptors={descriptors} profile={profile} />
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
+      <BillingByPayerCard />
       <RatingBreakdownCard />
       <RateDepartureReason />
     </Inner>

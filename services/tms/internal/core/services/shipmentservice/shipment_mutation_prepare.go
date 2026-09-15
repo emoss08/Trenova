@@ -40,7 +40,7 @@ func (s *service) dropSystemGeneratedAdditionalChargesForCreate(
 			continue
 		}
 
-		charge.DetentionOccurrenceID = nil
+		charge.IsDetention = false
 		charge.RateAgreementAccessorialID = nil
 		charge.FuelSurchargeProgramID = nil
 

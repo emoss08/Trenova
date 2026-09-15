@@ -353,6 +353,24 @@ const (
 	)
 )
 
+// LateChargeAssessmentMode says what the nightly late-charge run may do.
+type LateChargeAssessmentMode string
+
+const (
+	LateChargeAssessmentModeDisabled  = LateChargeAssessmentMode("Disabled")
+	LateChargeAssessmentModePreview   = LateChargeAssessmentMode("Preview")
+	LateChargeAssessmentModeAutomatic = LateChargeAssessmentMode("Automatic")
+)
+
+func (m LateChargeAssessmentMode) IsValid() bool {
+	switch m {
+	case LateChargeAssessmentModeDisabled, LateChargeAssessmentModePreview, LateChargeAssessmentModeAutomatic:
+		return true
+	default:
+		return false
+	}
+}
+
 type RateVarianceAutoResolutionMode string
 
 const (

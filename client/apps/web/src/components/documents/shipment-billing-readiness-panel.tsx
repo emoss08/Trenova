@@ -14,6 +14,7 @@ import {
   ExternalLinkIcon,
   UploadIcon,
 } from "lucide-react";
+import { ShipmentBillingPayerRows } from "@/routes/shipment/_components/shipment-billing-payer-rows";
 import { ShipmentBillingQueueBadge } from "@/routes/shipment/_components/shipment-billing-queue-status";
 
 interface ShipmentBillingReadinessPanelProps {
@@ -150,6 +151,10 @@ export function ShipmentBillingReadinessPanel({
               : t("No documents required")}
           </p>
         </div>
+
+        {(readiness.payers ?? []).length > 1 && shipment?.id ? (
+          <ShipmentBillingPayerRows shipmentId={shipment.id} payers={readiness.payers} />
+        ) : null}
       </div>
 
       {/* Body */}
