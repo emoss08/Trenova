@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -161,14 +162,19 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 		},
 	}
 
-	limiter := middleware.NewRateLimiter(cfg, helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
+	limiter := middleware.NewRateLimiter(middleware.RateLimiterParams{
 		Config: cfg,
-	}))
+		Store:  ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
+			Logger: zap.NewNop(),
+			Config: cfg,
+		}),
+		Logger: zap.NewNop(),
+	})
 
 	router := gin.New()
 	require.NoError(t, configureClientIPResolution(router, cfg))
-	router.GET("/probe", limiter.Middleware(), func(c *gin.Context) {
+	router.GET("/probe", limiter.ByClientIP(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 

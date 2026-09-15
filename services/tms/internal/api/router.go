@@ -144,6 +144,7 @@ type RouterParams struct {
 
 	AuthMiddleware                  *middleware.AuthMiddleware
 	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
+	RateLimiter                     *middleware.RateLimiter
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
 	DocsHandler                     *docshandler.Handler
@@ -270,6 +271,7 @@ type Router struct {
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
 	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
+	rateLimiter                     *middleware.RateLimiter
 	permissionMiddleware            *middleware.PermissionMiddleware
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
@@ -400,6 +402,7 @@ func NewRouter(p RouterParams) *Router {
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
 		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
+		rateLimiter:                     p.RateLimiter,
 		permissionMiddleware:            p.PermissionMiddleware,
 		errorHandler:                    p.ErrorHandler,
 		docsHandler:                     p.DocsHandler,
@@ -571,7 +574,6 @@ func (r *Router) setupMiddleware() {
 	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())
-	r.s.router.Use(middleware.NewRateLimiter(r.cfg, r.errorHandler).Middleware())
 }
 
 func (r *Router) setupRoutes() {
@@ -583,13 +585,15 @@ func (r *Router) setupRoutes() {
 }
 
 func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
-	r.graphQLHandler.RegisterPlaygroundRoutes(rg)
+	r.graphQLHandler.RegisterPlaygroundRoutes(r.publicGroup(rg))
 
 	protected := r.protectedGroup(rg)
 	r.graphQLHandler.RegisterRoutes(protected)
 }
 
-func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
+func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
+	rg := r.publicGroup(parent)
+
 	r.docsHandler.RegisterRoutes(rg)
 	r.authHandler.RegisterRoutes(rg)
 	r.driverPortalHandler.RegisterRoutes(rg)
@@ -720,6 +724,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(r.rateLimiter.ByPrincipal())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
 	// After RequireAuth, which is what puts the flag in the context, and before any
@@ -728,4 +733,10 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
 	return protected
+}
+
+func (r *Router) publicGroup(rg *gin.RouterGroup) *gin.RouterGroup {
+	public := rg.Group("")
+	public.Use(r.rateLimiter.ByClientIP())
+	return public
 }

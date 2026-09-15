@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type ServerConfig struct {
@@ -164,10 +166,10 @@ type PasswordResetConfig struct {
 	// https://app.example.com. The server cannot infer it from the request without
 	// trusting a Host header an attacker controls, which is how reset links end up
 	// pointing at somebody else's domain.
-	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
+	BaseURL string `mapstructure:"baseUrl"            validate:"omitempty,url"`
 	// TokenTTL is how long a link stays redeemable. Short by default: a reset link is
 	// a bearer credential sitting in a mailbox.
-	TokenTTL time.Duration `mapstructure:"tokenTtl" validate:"omitempty,min=0"`
+	TokenTTL time.Duration `mapstructure:"tokenTtl"           validate:"omitempty,min=0"`
 	// MaxRequestsPerHour caps how many links one account can be sent in an hour, so
 	// the endpoint cannot be used to flood somebody's inbox.
 	MaxRequestsPerHour int `mapstructure:"maxRequestsPerHour" validate:"omitempty,min=1"`
@@ -448,9 +450,12 @@ func (c *RateLimitConfig) ScopePolicy(scope RateLimitScope) RateLimitScopePolicy
 	}
 
 	return RateLimitScopePolicy{
-		Enabled:           c.Enabled && !scopeCfg.Disabled,
-		RequestsPerMinute: intutils.WithDefault(scopeCfg.RequestsPerMinute, defaults.requestsPerMinute),
-		BurstSize:         intutils.WithDefault(scopeCfg.BurstSize, defaults.burstSize),
+		Enabled: c.Enabled && !scopeCfg.Disabled,
+		RequestsPerMinute: intutils.WithDefault(
+			scopeCfg.RequestsPerMinute,
+			defaults.requestsPerMinute,
+		),
+		BurstSize: intutils.WithDefault(scopeCfg.BurstSize, defaults.burstSize),
 	}
 }
 

@@ -213,15 +213,34 @@ credits AP.
 | No tax on invoices | Invoice has Subtotal, Other, and Total only; no tax code, rate, jurisdiction, or line | Blocks Canada GST/HST and any taxable accessorial |
 | Native MFA unimplemented | `iam.MFAAuthenticator` models TOTP and WebAuthn; only `ListMFAAuthenticators` exists. `authservice/service.go:883` only reads `amr` claims from an IdP | A customer without SSO cannot enforce 2FA; SOC2 blocker |
 | SAML modeled but disabled | `iamservice/service.go:124` — "SAML providers cannot be managed until SAML sign-in is available" | Large shippers and 3PLs still require SAML |
-| Rate limiting is in-process and IP-keyed | `middleware/ratelimit.go` uses `x/time/rate` on `c.ClientIP()` | Does not survive horizontal scaling; not per-tenant or per-API-key |
 | Public API is a 13-resource allowlist | `apikeyservice/policy.go`, read/create/update only | No billing, invoice, settlement, document, or EDI access via API |
 | US-only geography | `domain/usstate/` is the only jurisdiction entity; no provinces | Cross-border Canada is impossible; no PARS/PAPS, ACE eManifest, in-bond, or customs broker |
 | Telematics is Samsara-only | `domain/integration/telematics.go:9` returns true only for Samsara; Motive is a commented-out enum member | The 12-method provider interface is ready; implementations are not |
 | Realtime hard-coupled to one vendor | `realtimeservice` mints JWTs for Foony (`wss://realtime.foony.io`); no self-hosted WebSocket or SSE fallback | A vendor outage means no realtime and no degraded mode |
-| Deployment is single-node | `deploy/` is a Caddyfile, three Dockerfiles, and Prometheus/Grafana. No Kubernetes, Helm, or Terraform | Corroborated by the in-process rate limiter — multi-replica was not designed for |
+| Deployment is single-node | `deploy/` is a Caddyfile, three Dockerfiles, and Prometheus/Grafana. No Kubernetes, Helm, or Terraform | Nothing in the repository describes running more than one API replica |
 | Web app is desktop-only | Four responsive utility classes across roughly 600 `.tsx` files | Operations managers cannot work from a phone |
 
 ### Closed Since This Analysis
+
+**Rate limiting is distributed and principal-scoped.** `middleware/ratelimit.go`
+no longer keeps `x/time/rate` buckets in a process-local map keyed by
+`c.ClientIP()`. Buckets are GCRA cells in Redis, evaluated by one Lua script per
+request so every API replica shares the same counters and a batch of scopes is
+admitted or refused atomically (a tenant refusal never burns the principal's
+token). The limiter now has five scopes, each with its own policy under
+`security.rateLimit`: `anonymous` (client IP, applied only to unauthenticated
+routes), `user` (organization + user), `apiKey` (API key id), `tenant` (a ceiling
+shared by every principal in one organization), and `publicToken` (token-addressed
+public pages, keyed by a hash of the token). Authenticated traffic is keyed after
+`RequireAuth` runs, so an office NAT no longer shares one bucket and a forged
+client address cannot reach a verified principal's bucket. Responses carry
+`X-RateLimit-Limit`, `-Remaining`, `-Reset` and `-Policy`; a `429` adds
+`Retry-After` and `X-RateLimit-Scope`. When Redis is unreachable `failureMode`
+decides between an in-process bucket (`local`, the default), admitting everything
+(`allow`) or refusing (`deny`), and `exemptPathPrefixes` keeps inbound integration
+webhooks out of the limiter entirely. The two public token handlers dropped their
+private visitor maps for the shared `publicToken` scope, so the same guarantees
+apply there. Prometheus counts decisions per scope and store failures per mode.
 
 **Fiscal close now does accounting.** `fiscalcloseservice` computes the year-end
 position from `gl_account_balances_by_period`, posts a `Closing` entry that empties
@@ -407,7 +426,7 @@ A carrier can be fined or fail an audit without these.
 ### P1 — Commercial Blockers
 
 6. Customer portal (track, POD, invoice, quote) plus live ETA
-7. Outbound webhooks, a widened public API, and distributed rate limiting
+7. Outbound webhooks and a widened public API (~~distributed rate limiting~~ — done)
 8. Safety module: accidents, incidents, cargo claims and OS&D, roadside
    inspections
 9. Consolidated invoicing and invoice tax

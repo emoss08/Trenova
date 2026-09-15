@@ -93,13 +93,17 @@ Hardening already in place:
   before logging and tracing run, replacing both the `:token` path parameter
   and any `token` query value with `REDACTED`. Access logs and spans therefore
   never carry a usable credential.
-- **Per-token rate limiting.** Each handler throttles per token — 10 requests
-  per minute, burst 5 — on top of the coarse global per-IP limiter, so one
-  leaked link cannot be hammered from many addresses. Over the limit the
-  response is `429` with `Retry-After: 60`. Idle buckets are evicted after 30
-  minutes and the bucket table is hard-capped at 10,000 entries with
-  oldest-first eviction, so the limiter cannot itself be used to exhaust
-  memory.
+- **Per-token rate limiting.** Both route groups sit behind the shared rate
+  limiter's `publicToken` scope (`security.rateLimit.publicToken`, default 10
+  requests per minute with a burst of 5), keyed by a SHA-256 of the token
+  rather than the token itself, so one leaked link cannot be hammered from
+  many addresses and the raw credential never lands in Redis. Buckets live in
+  Redis and are shared by every API replica; if Redis is unreachable the
+  limiter falls back to an in-process bucket (`failureMode: local`) so the
+  throttle degrades rather than disappears. Over the limit the response is
+  `429` with `Retry-After` set to the seconds until the next token and
+  `X-RateLimit-Scope: publicToken`. Buckets expire on their own once they
+  refill, so the limiter holds no per-token state beyond the refill window.
 - **One vague error for every invalid-token mode.** Missing, malformed,
   expired, already used, revoked, and (for rate confirmations) voided all
   return the same `422` and the same message. Nothing about the token space is

@@ -8,11 +8,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -79,14 +81,34 @@ func newTestHandler(repo *tokenRepo) *Handler {
 		DB:     testDB{},
 		Repo:   repo,
 	})
+	cfg := &config.Config{
+		Security: config.SecurityConfig{
+			RateLimit: config.RateLimitConfig{
+				Enabled: true,
+				PublicToken: config.RateLimitScopeConfig{
+					RequestsPerMinute: 10,
+					BurstSize:         throttleBurst,
+				},
+			},
+		},
+	}
+	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
+		Logger: zap.NewNop(),
+		Config: cfg,
+	})
 	return New(Params{
-		Service: service,
-		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: &config.Config{},
+		Service:      service,
+		ErrorHandler: errorHandler,
+		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
+			Config:       cfg,
+			Store:        ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+			ErrorHandler: errorHandler,
+			Logger:       zap.NewNop(),
 		}),
 	})
 }
+
+const throttleBurst = 5
 
 func newTestRouter(handler *Handler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
@@ -183,7 +205,8 @@ func TestPerTokenThrottleCapsBursts(t *testing.T) {
 	}
 
 	require.Equal(t, http.StatusTooManyRequests, lastCode)
-	assert.Equal(t, "60", lastRec.Header().Get("Retry-After"))
+	assert.NotEmpty(t, lastRec.Header().Get("Retry-After"))
+	assert.Equal(t, "publicToken", lastRec.Header().Get("X-RateLimit-Scope"))
 
 	otherReq := httptest.NewRequest(
 		http.MethodGet, "/api/v1/rate-confirmation-links/other-token/", nil,

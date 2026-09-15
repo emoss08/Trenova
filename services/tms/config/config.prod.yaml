@@ -58,7 +58,26 @@ security:
     path: /
     domain: ""
   rateLimit:
+    enabled: true
+    store: redis
+    failureMode: local
     requestsPerMinute: 30
+    burstSize: 10
+    anonymous:
+      requestsPerMinute: 30
+      burstSize: 10
+    user:
+      requestsPerMinute: 600
+      burstSize: 60
+    apiKey:
+      requestsPerMinute: 300
+      burstSize: 30
+    tenant:
+      requestsPerMinute: 6000
+      burstSize: 600
+    publicToken:
+      requestsPerMinute: 10
+      burstSize: 5
   passwordReset:
     baseUrl: https://app.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.

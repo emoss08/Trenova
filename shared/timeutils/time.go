@@ -10,6 +10,17 @@ func NowUnix() int64 {
 	return time.Now().Unix()
 }
 
+func CeilSeconds(d time.Duration) int {
+	if d <= 0 {
+		return 0
+	}
+	secs := int(d / time.Second)
+	if d%time.Second != 0 {
+		secs++
+	}
+	return secs
+}
+
 func WithDefaultDuration(val, def time.Duration) time.Duration {
 	if val == 0 {
 		return def

@@ -38,6 +38,29 @@ func TestNowUnix(t *testing.T) {
 	})
 }
 
+func TestCeilSeconds(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		in   time.Duration
+		want int
+	}{
+		{name: "zero", in: 0, want: 0},
+		{name: "negative", in: -time.Second, want: 0},
+		{name: "exact", in: 3 * time.Second, want: 3},
+		{name: "fraction rounds up", in: 1500 * time.Millisecond, want: 2},
+		{name: "sub-second rounds to one", in: time.Millisecond, want: 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, timeutils.CeilSeconds(tt.in))
+		})
+	}
+}
+
 func TestWithDefaultDuration(t *testing.T) {
 	t.Parallel()
 

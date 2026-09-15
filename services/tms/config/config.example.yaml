@@ -181,7 +181,17 @@ security:
     refreshWindow: 3600 # Refresh if expires within window (seconds)
   rateLimit:
     enabled: true # Enable rate limiting
-    requestsPerMinute: 60 # Requests per minute per IP
+    store: redis # redis (shared across replicas) | memory (per process)
+    failureMode: local # When Redis is down: local (in-process bucket) | allow | deny
+    storeTimeout: 250ms # Max time a rate limit lookup may take before failureMode applies
+    requestsPerMinute: 60 # Legacy per-IP policy; default for the anonymous scope
+    burstSize: 10
+    exemptPathPrefixes: [] # e.g. ["/api/v1/webhooks/"] to never throttle inbound webhooks
+    anonymous: { requestsPerMinute: 60, burstSize: 10 } # Unauthenticated routes, keyed by client IP
+    user: { requestsPerMinute: 600, burstSize: 60 } # Sessions, keyed by organization + user
+    apiKey: { requestsPerMinute: 300, burstSize: 30 } # Bearer tokens, keyed by API key id
+    tenant: { requestsPerMinute: 6000, burstSize: 600 } # Shared ceiling for one organization
+    publicToken: { requestsPerMinute: 10, burstSize: 5 } # Token-addressed public pages, keyed by token hash
   passwordReset:
     baseUrl: https://app.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
