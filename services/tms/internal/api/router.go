@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/aiproviderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
@@ -183,6 +184,7 @@ type RouterParams struct {
 	AgentProposalHandler            *agentproposalhandler.Handler
 	AgentExceptionHandler           *agentexceptionhandler.Handler
 	AgentControlHandler             *agentcontrolhandler.Handler
+	AIProviderHandler               *aiproviderhandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
 	NetworkPulseHandler             *networkpulsehandler.Handler
@@ -322,6 +324,7 @@ type Router struct {
 	agentProposalHandler            *agentproposalhandler.Handler
 	agentExceptionHandler           *agentexceptionhandler.Handler
 	agentControlHandler             *agentcontrolhandler.Handler
+	aiProviderHandler               *aiproviderhandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
 	networkPulseHandler             *networkpulsehandler.Handler
@@ -452,6 +455,7 @@ func NewRouter(p RouterParams) *Router {
 		agentProposalHandler:            p.AgentProposalHandler,
 		agentExceptionHandler:           p.AgentExceptionHandler,
 		agentControlHandler:             p.AgentControlHandler,
+		aiProviderHandler:               p.AIProviderHandler,
 		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
 		networkPulseHandler:             p.NetworkPulseHandler,
@@ -645,6 +649,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.agentProposalHandler.RegisterRoutes(protected)
 	r.agentExceptionHandler.RegisterRoutes(protected)
 	r.agentControlHandler.RegisterRoutes(protected)
+	r.aiProviderHandler.RegisterRoutes(protected)
 	r.agentRunHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.orderHandler.RegisterRoutes(protected)

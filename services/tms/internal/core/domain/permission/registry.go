@@ -2138,6 +2138,32 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	// Configuring a provider decides which endpoint an organization's freight and
+	// billing data is sent to, and whether that endpoint may be on the local
+	// network, so it is held at the same sensitivity as credential management.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAIProvider.String(),
+		DisplayName: "AI Provider",
+		Description: "Model endpoints, including self-hosted servers, and their task routing",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View AI providers"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add an AI provider"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update an AI provider and its task routing",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove an AI provider"},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Test an AI provider connection",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceAccessorialCharge.String(),
 		DisplayName:        "Accessorial Charge",

@@ -124,6 +124,7 @@ const (
 	ResourceAgentProposal  Resource = "agent_proposal"
 	ResourceAgentException Resource = "agent_exception"
 	ResourceAgentControl   Resource = "agent_control"
+	ResourceAIProvider     Resource = "ai_provider"
 
 	// Customers
 	ResourceCustomer        Resource = "customer"

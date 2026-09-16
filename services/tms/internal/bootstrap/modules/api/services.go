@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
@@ -259,6 +260,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *documentuploadservice.Service) services.DocumentUploadService { return s },
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
+	aiproviderservice.NewProber,
+	aiproviderservice.New,
 	agentrunservice.New,
 	agentproposalservice.New,
 	agentexceptionservice.New,

@@ -96,7 +96,24 @@ func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+func (p *Provider) GetID() pulid.ID { return p.ID }
+
 func (p *Provider) GetTableName() string { return "ai_providers" }
+
+// Redacted returns a copy safe to hand to a client. The credential never leaves
+// the service layer; callers are told only whether one is set, so the UI can show
+// a configured state without the secret making the trip.
+func (p *Provider) Redacted() *Provider {
+	clone := *p
+	clone.APIKey = ""
+
+	return &clone
+}
+
+// HasAPIKey reports whether a credential is stored.
+func (p *Provider) HasAPIKey() bool {
+	return strings.TrimSpace(p.APIKey) != ""
+}
 
 func (p *Provider) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
