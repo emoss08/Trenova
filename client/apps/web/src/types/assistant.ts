@@ -23,7 +23,8 @@ export const agentDefinitionSchema = z.object({
   kind: agentKindSchema,
   /** Organization guidance. Delivered to the model as data, never as instruction. */
   focus: z.string().optional().default(""),
-  toolNames: z.array(z.string()).optional().default([]),
+  /** `[]string` with nullzero on the server: an agent that only answers arrives as null. */
+  toolNames: z.preprocess((value) => value ?? [], z.array(z.string())),
   autonomyCeiling: autonomyTierSchema,
   enabled: z.boolean().default(false),
   version: z.number().default(0),
@@ -34,7 +35,7 @@ export const agentDefinitionSchema = z.object({
 export const agentToolDescriptorSchema = z.object({
   name: z.string(),
   description: z.string(),
-  parameters: z.record(z.string(), z.unknown()).optional(),
+  parameters: z.record(z.string(), z.unknown()).nullish(),
   autonomyTier: autonomyTierSchema.optional(),
 });
 
@@ -64,7 +65,7 @@ export const saveAgentDefinitionRequestSchema = z.object({
 export const toolCallRecordSchema = z.object({
   id: z.string(),
   name: z.string(),
-  arguments: z.record(z.string(), z.unknown()).optional(),
+  arguments: z.record(z.string(), z.unknown()).nullish(),
 });
 
 export const assistantMessageSchema = z.object({
@@ -220,10 +221,7 @@ export type AssistantStreamEvent =
  * older reader; a known event with a malformed body throws, because that is a
  * contract violation rather than an extension.
  */
-export function parseAssistantStreamEvent(
-  event: string,
-  raw: string,
-): AssistantStreamEvent | null {
+export function parseAssistantStreamEvent(event: string, raw: string): AssistantStreamEvent | null {
   const data: unknown = raw === "" ? {} : JSON.parse(raw);
   switch (event) {
     case "accepted":

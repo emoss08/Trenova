@@ -39,7 +39,8 @@ export const aiProviderSchema = z.object({
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   maxTokens: z.number().default(8192),
-  tasks: z.array(aiTaskSchema).optional().default([]),
+  /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
+  tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
   priority: z.number().default(100),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
