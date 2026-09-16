@@ -95,6 +95,17 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/insights",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Insight, Operation.Read),
+            ),
+            async lazy() {
+              const { InsightsPage } = await import("@/routes/insights/page");
+              return { Component: InsightsPage };
+            },
+          },
+          {
             path: "/shipment-management/shipments",
             loader: combineLoaders(
               protectedLoader,

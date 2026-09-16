@@ -85,6 +85,11 @@ export const insightListSchema = z.object({
   results: z.array(insightSchema),
 });
 
+export const insightPageSchema = z.object({
+  results: z.array(insightSchema),
+  total: z.number().default(0),
+});
+
 export type InsightCategory = z.infer<typeof insightCategorySchema>;
 export type InsightSeverity = z.infer<typeof insightSeveritySchema>;
 export type InsightUnit = z.infer<typeof insightUnitSchema>;

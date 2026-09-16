@@ -5,6 +5,7 @@ import { AccountTypeService } from "./account-type";
 import { AIProviderService } from "./ai-provider";
 import { AgentDefinitionService, AssistantService } from "./assistant";
 import { InsightService } from "./insight";
+export type { BrowseInsightsParams } from "./insight";
 import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { AssignmentService } from "./assignment";

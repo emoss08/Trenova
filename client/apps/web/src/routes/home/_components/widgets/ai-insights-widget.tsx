@@ -54,6 +54,8 @@ export function AIInsightsWidget({ widget }: WidgetProps) {
       title={widget.title || t("Operational Insights")}
       icon={LightbulbIcon}
       badge={criticalCount > 0 ? <WidgetCount value={criticalCount} tone="danger" /> : null}
+      href="/insights"
+      hrefLabel={t("All insights")}
     >
       {insightsQuery.isLoading ? (
         <WidgetSkeleton rows={3} />

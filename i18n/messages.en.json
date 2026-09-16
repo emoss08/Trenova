@@ -11300,6 +11300,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "All insights": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "All kinds": {
     "sites": 1,
     "scope": [
@@ -15799,12 +15808,13 @@
     ]
   },
   "Area": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/insights"
     ]
   },
   "Arizona (AZ)": {
@@ -28465,7 +28475,7 @@
     ]
   },
   "Clear filters": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -28474,6 +28484,7 @@
       "packages/shared/components",
       "routes/detention-desk",
       "routes/home",
+      "routes/insights",
       "routes/my-team",
       "routes/reports",
       "routes/scheduling",
@@ -44880,7 +44891,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -44888,6 +44899,7 @@
       "apps/web/components",
       "routes/bank-receipt-queue",
       "routes/driver-settlement",
+      "routes/insights",
       "routes/journal-reversal",
       "routes/manual-journal",
       "routes/shipment"
@@ -44948,12 +44960,13 @@
     ]
   },
   "Dismissed": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/insights"
     ]
   },
   "Dismissed — the invoice does not bill this assignment.": {
@@ -56674,6 +56687,15 @@
       "domain/modeprofile"
     ]
   },
+  "Explained by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Explaining this formula...": {
     "sites": 1,
     "scope": [
@@ -60807,6 +60829,24 @@
       "service/insightservice"
     ]
   },
+  "Findings computed from your own records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Findings computed from your own records. The figures come from your data; where an explanation was written by AI, the card says so.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Findings computed from your own records: service slipping, revenue unbilled, detention unclaimed, credentials running out": {
     "sites": 1,
     "scope": [
@@ -62383,6 +62423,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Found {0} locations": {
@@ -70278,6 +70327,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Insights": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Inspect": {
@@ -82519,6 +82577,15 @@
       "service/reporting"
     ]
   },
+  "Measured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Measured on read from the days recorded against this worker's cases, inside the window the measurement method sets. Only days on a case designated as FMLA draw it down: approving a case and designating it FMLA are separate decisions, so approved leave that was not designated is recorded but counts for nothing.": {
     "sites": 1,
     "scope": [
@@ -87336,11 +87403,12 @@
     ]
   },
   "Next page": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/insights",
       "routes/shipment"
     ]
   },
@@ -89001,6 +89069,15 @@
       "apps/web/components"
     ]
   },
+  "No findings match these filters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "No fiscal period covers the invoice posting date": {
     "sites": 2,
     "scope": [
@@ -89442,6 +89519,15 @@
     ],
     "areas": [
       "routes/assistant"
+    ]
+  },
+  "No longer found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "No longer recommended": {
@@ -92805,12 +92891,13 @@
     ]
   },
   "Nothing needs your attention. Findings appear here when service, billing, or compliance moves in the wrong direction.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/home"
+      "routes/home",
+      "routes/insights"
     ]
   },
   "Nothing on file": {
@@ -93706,12 +93793,13 @@
     ]
   },
   "Numbers may be out of date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/home"
+      "routes/home",
+      "routes/insights"
     ]
   },
   "OANDA FXDS": {
@@ -98071,12 +98159,13 @@
     ]
   },
   "Operational Insights": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "domain/homelayout",
       "routes/home"
     ]
@@ -101328,6 +101417,15 @@
       "apps/web/components",
       "routes/admin",
       "routes/shipment"
+    ]
+  },
+  "Page {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Pages": {
@@ -108191,11 +108289,12 @@
     ]
   },
   "Previous page": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/insights",
       "routes/shipment"
     ]
   },
@@ -118154,6 +118253,15 @@
       "routes/cost-control"
     ]
   },
+  "Replaced by newer numbers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Replacement": {
     "sites": 2,
     "scope": [
@@ -120778,13 +120886,14 @@
     ]
   },
   "Restore": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/insights",
       "routes/pto-policy",
       "routes/review-template",
       "routes/training-course",
@@ -150831,12 +150940,13 @@
     ]
   },
   "This explanation was written by AI. The figures above were computed from your records.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/home"
+      "routes/home",
+      "routes/insights"
     ]
   },
   "This feature requires a valid Google Maps API key.": {
@@ -159225,12 +159335,13 @@
     ]
   },
   "Urgency": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/insights"
     ]
   },
   "Urgent": {
@@ -175484,6 +175595,24 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "{0} finding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
+  "{0} findings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "{0} for {1}": {
