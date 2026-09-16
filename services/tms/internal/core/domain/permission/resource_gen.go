@@ -120,9 +120,9 @@ const (
 	ResourceRateSimulation       Resource = "rate_simulation"
 
 	// Agent
-	ResourceAgentRun       Resource = "agent_run"
-	ResourceAgentProposal  Resource = "agent_proposal"
-	ResourceAgentException Resource = "agent_exception"
+	ResourceAgentRun        Resource = "agent_run"
+	ResourceAgentProposal   Resource = "agent_proposal"
+	ResourceAgentException  Resource = "agent_exception"
 	ResourceAgentControl    Resource = "agent_control"
 	ResourceAIProvider      Resource = "ai_provider"
 	ResourceAgentDefinition Resource = "agent_definition"
