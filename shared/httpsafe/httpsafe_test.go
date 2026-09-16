@@ -83,6 +83,89 @@ func TestValidateURL(t *testing.T) {
 	})
 }
 
+func TestIsBlockedIPWithPrivateNetworksAllowed(t *testing.T) {
+	t.Parallel()
+
+	policy := Policy{AllowPrivateNetworks: true}
+
+	cases := []struct {
+		name    string
+		ip      string
+		blocked bool
+	}{
+		{"loopback v4", "127.0.0.1", false},
+		{"loopback v6", "::1", false},
+		{"private 10", "10.0.0.1", false},
+		{"private 172", "172.16.5.4", false},
+		{"private 192", "192.168.1.1", false},
+		{"private v6 ula", "fd00::1", false},
+		{"carrier grade nat", "100.64.0.1", false},
+		{"public v4", "8.8.8.8", false},
+		// The opt-in is for an operator's own model host, never for the metadata
+		// service, so link-local stays blocked even here.
+		{"link local metadata", "169.254.169.254", true},
+		{"link local v6", "fe80::1", true},
+		{"unspecified v4", "0.0.0.0", true},
+		{"unspecified v6", "::", true},
+		{"multicast", "224.0.0.1", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tc.blocked, IsBlockedIPWithPolicy(net.ParseIP(tc.ip), policy))
+		})
+	}
+	require.True(t, IsBlockedIPWithPolicy(nil, policy))
+}
+
+func TestValidateURLWithPolicy(t *testing.T) {
+	t.Parallel()
+
+	policy := Policy{AllowPrivateNetworks: true}
+
+	t.Run("accepts loopback model server", func(t *testing.T) {
+		t.Parallel()
+		parsed, err := ValidateURLWithPolicy("http://127.0.0.1:11434/v1", policy)
+		require.NoError(t, err)
+		require.Equal(t, "127.0.0.1", parsed.Hostname())
+	})
+
+	t.Run("accepts private subnet model server", func(t *testing.T) {
+		t.Parallel()
+		_, err := ValidateURLWithPolicy("http://10.4.2.9:8000/v1", policy)
+		require.NoError(t, err)
+	})
+
+	t.Run("still rejects metadata endpoint", func(t *testing.T) {
+		t.Parallel()
+		_, err := ValidateURLWithPolicy("http://169.254.169.254/latest/meta-data/", policy)
+		require.ErrorIs(t, err, ErrBlockedAddress)
+	})
+
+	t.Run("still rejects non http scheme", func(t *testing.T) {
+		t.Parallel()
+		_, err := ValidateURLWithPolicy("file:///etc/passwd", policy)
+		require.ErrorIs(t, err, ErrBlockedScheme)
+	})
+}
+
+func TestNewClientWithPolicyAllowsLoopbackAtDial(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}),
+	)
+	t.Cleanup(server.Close)
+
+	client := NewClientWithPolicy(5*time.Second, Policy{AllowPrivateNetworks: true})
+	resp, err := client.Get(server.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func TestNewClientBlocksLoopbackAtDial(t *testing.T) {
 	t.Parallel()
 

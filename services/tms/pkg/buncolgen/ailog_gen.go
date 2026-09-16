@@ -56,6 +56,8 @@ var LogColumns = struct {
 	Prompt           Column // "prompt" → qualified: "ail.prompt"
 	Response         Column // "response" → qualified: "ail.response"
 	Model            Column // "model" → qualified: "ail.model"
+	ProviderKind     Column // "provider_kind" → qualified: "ail.provider_kind"
+	ProviderID       Column // "provider_id" → qualified: "ail.provider_id"
 	Operation        Column // "operation" → qualified: "ail.operation"
 	Object           Column // "object" → qualified: "ail.object"
 	ServiceTier      Column // "service_tier" → qualified: "ail.service_tier"
@@ -73,6 +75,8 @@ var LogColumns = struct {
 	Prompt:           NewColumn("prompt", "ail"),
 	Response:         NewColumn("response", "ail"),
 	Model:            NewColumn("model", "ail"),
+	ProviderKind:     NewColumn("provider_kind", "ail"),
+	ProviderID:       NewColumn("provider_id", "ail"),
 	Operation:        NewColumn("operation", "ail"),
 	Object:           NewColumn("object", "ail"),
 	ServiceTier:      NewColumn("service_tier", "ail"),
@@ -96,6 +100,8 @@ var LogFieldMap = map[string]string{
 	"prompt":           "prompt",
 	"response":         "response",
 	"model":            "model",
+	"providerKind":     "provider_kind",
+	"providerId":       "provider_id",
 	"operation":        "operation",
 	"object":           "object",
 	"serviceTier":      "service_tier",
@@ -116,6 +122,8 @@ var LogInsertableColumns = []string{
 	"prompt",
 	"response",
 	"model",
+	"provider_kind",
+	"provider_id",
 	"operation",
 	"object",
 	"service_tier",
@@ -183,6 +191,8 @@ var LogFilter = struct {
 	Prompt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "prompt" → DB: "prompt"
 	Response         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "response" → DB: "response"
 	Model            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	ProviderKind     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerKind" → DB: "provider_kind"
+	ProviderID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	Operation        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "operation" → DB: "operation"
 	Object           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "object" → DB: "object"
 	ServiceTier      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTier" → DB: "service_tier"
@@ -212,6 +222,12 @@ var LogFilter = struct {
 	},
 	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("model", op, value)
+	},
+	ProviderKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerKind", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
 	},
 	Operation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("operation", op, value)
