@@ -10,7 +10,10 @@ func (s SeedID) String() string {
 }
 
 const (
+	SeedAIProvider SeedID = "AIProvider" // from 25_ai_provider.go
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedAgentDefinition SeedID = "AgentDefinition" // from 26_agent_definition.go
+	SeedAssistantConversation SeedID = "AssistantConversation" // from 27_assistant_conversation.go
 	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
 	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
@@ -24,6 +27,7 @@ const (
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
 	SeedIFTAJurisdictions SeedID = "IFTAJurisdictions" // from 12_ifta_jurisdictions.go
+	SeedInsight SeedID = "Insight" // from 28_insight.go
 	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
@@ -51,7 +55,10 @@ const (
 )
 
 var AllSeedIDs = []SeedID{
+	SeedAIProvider,
 	SeedAdminAccount,
+	SeedAgentDefinition,
+	SeedAssistantConversation,
 	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
@@ -65,6 +72,7 @@ var AllSeedIDs = []SeedID{
 	SeedFuelSurcharge,
 	SeedGLAccount,
 	SeedIFTAJurisdictions,
+	SeedInsight,
 	SeedJurisdictionRulesBaseline,
 	SeedLocation,
 	SeedLocationCategory,
@@ -108,6 +116,9 @@ var BaseSeedIDs = []SeedID{
 }
 
 var DevelopmentSeedIDs = []SeedID{
+	SeedAIProvider,
+	SeedAgentDefinition,
+	SeedAssistantConversation,
 	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
@@ -116,6 +127,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
+	SeedInsight,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedLookupMatrix,

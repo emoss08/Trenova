@@ -48,4 +48,8 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewWorkerTrainingSeed())
 	r.MustRegister(development.NewWorkerSafetySeed())
 	r.MustRegister(development.NewFuelSpendIFTASeed())
+	r.MustRegister(development.NewAIProviderSeed())
+	r.MustRegister(development.NewAgentDefinitionSeed())
+	r.MustRegister(development.NewAssistantConversationSeed())
+	r.MustRegister(development.NewInsightSeed())
 }
