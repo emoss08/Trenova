@@ -1772,6 +1772,14 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "agents",
+                loader: createPermissionLoader(Resource.AgentDefinition, Operation.Read),
+                async lazy() {
+                  const { AgentsPage } = await import("@/routes/admin/agents/page");
+                  return { Component: AgentsPage };
+                },
+              },
+              {
                 path: "ai-providers",
                 loader: createPermissionLoader(Resource.AIProvider, Operation.Read),
                 async lazy() {

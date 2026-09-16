@@ -1408,6 +1408,15 @@
       "routes/worker"
     ]
   },
+  "A cap, not a grant. Each tool keeps its own limit if that limit is stricter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A card cannot be created already cancelled; create it and cancel it with a reason": {
     "sites": 1,
     "scope": [
@@ -2686,6 +2695,15 @@
     ],
     "areas": [
       "domain/agentdefinition"
+    ]
+  },
+  "A general assistant can look records up but cannot be given tools that change anything.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A generated document must name the render that produced it": {
@@ -7268,6 +7286,24 @@
       "routes/rate-agreement"
     ]
   },
+  "Act automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Act with approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Action": {
     "sites": 3,
     "scope": [
@@ -8743,6 +8779,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Add agent": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Add alias...": {
     "sites": 2,
     "scope": [
@@ -8777,6 +8822,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Add an agent so your team can use the assistant. Start with a read-only general assistant if you want to try it without giving it any tools.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add an email and press Enter": {
@@ -9525,6 +9579,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Add your first agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add your first provider": {
@@ -10525,6 +10588,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Agent control updated": {
     "sites": 1,
     "scope": [
@@ -10579,6 +10651,15 @@
       "service/agentdecisionservice"
     ]
   },
+  "Agent removed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Agent runs, proposals, and exception handling.": {
     "sites": 1,
     "scope": [
@@ -10597,6 +10678,15 @@
       "domain/agent"
     ]
   },
+  "Agent updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Agent {0} is disabled and cannot be used": {
     "sites": 2,
     "scope": [
@@ -10613,6 +10703,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Aggregation": {
@@ -13698,6 +13797,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Answers only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Anthropic": {
@@ -18698,6 +18806,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Autonomy ceiling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Autonomy ceiling is required": {
     "sites": 1,
     "scope": [
@@ -18705,6 +18822,15 @@
     ],
     "areas": [
       "domain/agentdefinition"
+    ]
+  },
+  "Autonomy ceiling: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Autonomy tier is required": {
@@ -19322,6 +19448,15 @@
     ],
     "areas": [
       "service/distancecalculationservice"
+    ]
+  },
+  "Background preference for this agent. It can narrow what the agent focuses on, but it cannot grant capabilities or override the assistant's rules.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Backtest": {
@@ -22303,6 +22438,15 @@
       "domain/permission"
     ]
   },
+  "Build assistants from Trenova's templates. You choose which tools each one may use and how much it may do on its own; the template decides what it is allowed to reach at all.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Build your own permission set": {
     "sites": 1,
     "scope": [
@@ -23118,7 +23262,7 @@
     ]
   },
   "Cancel": {
-    "sites": 235,
+    "sites": 237,
     "scope": [
       "ts"
     ],
@@ -31557,6 +31701,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Configured agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Configured providers": {
@@ -43028,7 +43181,7 @@
     ]
   },
   "Description": {
-    "sites": 139,
+    "sites": 140,
     "scope": [
       "go",
       "ts"
@@ -44394,7 +44547,7 @@
     ]
   },
   "Disabled": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -44402,6 +44555,15 @@
       "apps/web/lib",
       "routes/admin",
       "routes/invoice"
+    ]
+  },
+  "Disabled agents cannot be used or continued.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Disabled providers are skipped entirely.": {
@@ -50034,7 +50196,7 @@
     ]
   },
   "Edit": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -50149,6 +50311,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Edit agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Edit case": {
@@ -51831,7 +52002,7 @@
     ]
   },
   "Enabled": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -51843,6 +52014,15 @@
     ]
   },
   "Enabled Features": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Enabled agents appear in the assistant for everyone who can use it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -67648,6 +67828,15 @@
       "routes/my-team"
     ]
   },
+  "How this agent appears when someone starts a conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How this charge was calculated": {
     "sites": 2,
     "scope": [
@@ -68869,6 +69058,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "In a conversation, a tool that changes data is recorded as a proposal rather than run. Someone reviews it before anything happens.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "In force": {
@@ -85094,7 +85292,7 @@
     ]
   },
   "Name": {
-    "sites": 135,
+    "sites": 136,
     "scope": [
       "go",
       "ts"
@@ -85311,7 +85509,7 @@
     ]
   },
   "Name is required": {
-    "sites": 102,
+    "sites": 103,
     "scope": [
       "go",
       "ts"
@@ -87081,6 +87279,15 @@
       "routes/holiday"
     ]
   },
+  "Night dispatch helper": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Night movement only": {
     "sites": 1,
     "scope": [
@@ -87485,6 +87692,15 @@
     ],
     "areas": [
       "routes/assistant"
+    ]
+  },
+  "No agents configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No analysis captured.": {
@@ -96433,6 +96649,15 @@
       "service/ediservice"
     ]
   },
+  "Only the tools this template permits are listed. Leaving them all unchecked gives an agent that answers questions without changing anything.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Only the user who requested a report run can cancel it": {
     "sites": 1,
     "scope": [
@@ -98845,6 +99070,15 @@
     ]
   },
   "Organization logo updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Organization note (optional)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104820,6 +105054,15 @@
       "routes/worker"
     ]
   },
+  "Pick a template, then narrow it. A template sets the outer limit of what the agent can reach; your choices can only restrict it further.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Pick a tier": {
     "sites": 1,
     "scope": [
@@ -108925,6 +109168,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Propose only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Proposed": {
@@ -116674,6 +116926,15 @@
       "routes/driver-settlement"
     ]
   },
+  "Remove agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Remove all": {
     "sites": 1,
     "scope": [
@@ -117101,6 +117362,15 @@
     ]
   },
   "Remove {0}. Any task routed only to this provider will stop working until another one is assigned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Remove {0}. Existing conversations with this agent will remain but cannot be continued.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125058,7 +125328,7 @@
     ]
   },
   "Save changes": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -125376,7 +125646,7 @@
     ]
   },
   "Saving...": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "ts"
     ],
@@ -140821,12 +141091,13 @@
     ]
   },
   "Template": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -151594,6 +151865,15 @@
       "domain/aiprovider"
     ]
   },
+  "This template answers questions only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This template does not render yet, so there is nothing to send. {0}": {
     "sites": 1,
     "scope": [
@@ -153385,6 +153665,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Tools this agent may use": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Top N categories": {
@@ -162665,6 +162954,15 @@
       "routes/jurisdiction-rule-override"
     ]
   },
+  "We prioritise reefer loads out of Laredo.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.": {
     "sites": 1,
     "scope": [
@@ -163817,6 +164115,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "What this agent is for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "What this agreement covers": {
@@ -167248,6 +167555,15 @@
     ],
     "areas": [
       "routes/pay-advance"
+    ]
+  },
+  "Writes always wait for a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Written Off": {
@@ -172747,6 +173063,15 @@
     ],
     "areas": [
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "this agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "this card": {
