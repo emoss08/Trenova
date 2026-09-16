@@ -5457,6 +5457,15 @@
       "apps/web/components"
     ]
   },
+  "AI Providers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "AI background extraction response did not include an ID": {
     "sites": 1,
     "scope": [
@@ -5464,15 +5473,6 @@
     ],
     "areas": [
       "service/openaidocumentservice"
-    ]
-  },
-  "AI billing exception agent is disabled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "AI document intelligence is disabled": {
@@ -5485,6 +5485,42 @@
     ]
   },
   "AI features are disabled": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "AI provider added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "AI provider removed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "AI provider updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "AI provider {0} has no API key configured": {
     "sites": 1,
     "scope": [
       "go"
@@ -5629,6 +5665,33 @@
       "go/other"
     ]
   },
+  "API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "API key (leave blank to keep the existing key)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "API key (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "API key created": {
     "sites": 1,
     "scope": [
@@ -5672,6 +5735,15 @@
     ],
     "areas": [
       "domain/apikey"
+    ]
+  },
+  "API key is required for this provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "API key revoked": {
@@ -7864,6 +7936,15 @@
       "routes/worker"
     ]
   },
+  "Add AI provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Add Additional Charge": {
     "sites": 1,
     "scope": [
@@ -8257,6 +8338,15 @@
     ],
     "areas": [
       "routes/holiday"
+    ]
+  },
+  "Add a hosted API, a gateway such as OpenRouter, or a model server running on your own hardware. AI features stay off until at least one provider is assigned to a task.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add a jurisdiction rule, visible to every organization": {
@@ -8660,6 +8750,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Add an AI provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Add an email and press Enter": {
@@ -9167,7 +9266,7 @@
     ]
   },
   "Add provider": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -9408,6 +9507,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Add your first provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Add your first widget": {
@@ -11597,6 +11705,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Allow private network access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Allow reopening if needed": {
     "sites": 1,
     "scope": [
@@ -11892,6 +12009,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Amazon Bedrock": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Amend": {
@@ -12764,6 +12890,15 @@
       "domain/integration"
     ]
   },
+  "An enabled provider must serve at least one task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "An end date is required": {
     "sites": 1,
     "scope": [
@@ -13511,13 +13646,31 @@
       "routes/worker"
     ]
   },
-  "Anthropic API key is not configured": {
-    "sites": 2,
+  "Anthropic": {
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "go/other"
+      "api/handlers"
+    ]
+  },
+  "Anthropic Messages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Anthropic's API, and any endpoint serving the same shape such as Amazon Bedrock.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Any": {
@@ -13609,6 +13762,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Any server exposing /chat/completions — vLLM, SGLang, LM Studio, OpenRouter, Groq, Together, Fireworks, DeepInfra, and others.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Any service type": {
@@ -13744,6 +13906,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Anything not routed to a more specific task.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Anything reviewers should know about this run, e.g. an off-cycle correction.": {
@@ -19548,7 +19719,7 @@
     ]
   },
   "Base URL": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -19565,6 +19736,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Base URL is required for an OpenAI-compatible provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Base Value": {
@@ -20916,6 +21096,24 @@
       "domain/customer"
     ]
   },
+  "Billing diagnosis": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Billing diagnosis proposes changes against your ledger, so it only runs on a provider marked trusted. Open-weight models vary a lot in how reliably they follow tool definitions — verify this one before trusting it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Billing distance profile is required": {
     "sites": 1,
     "scope": [
@@ -22189,12 +22387,13 @@
     ]
   },
   "Business unit is required": {
-    "sites": 101,
+    "sites": 102,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/ailog",
+      "domain/aiprovider",
       "domain/apikey",
       "domain/billingtransfer",
       "domain/costingcontrol",
@@ -22809,7 +23008,7 @@
     ]
   },
   "Cancel": {
-    "sites": 233,
+    "sites": 235,
     "scope": [
       "ts"
     ],
@@ -25040,6 +25239,15 @@
       "domain/accounttype"
     ]
   },
+  "Ceiling for a single reply.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Ceilings": {
     "sites": 1,
     "scope": [
@@ -26476,6 +26684,15 @@
     ],
     "areas": [
       "service/rateagreementservice"
+    ]
+  },
+  "Choose a preset (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose a preset or a role to preview": {
@@ -31214,6 +31431,15 @@
       "apps/web/components"
     ]
   },
+  "Configured providers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Confirm": {
     "sites": 3,
     "scope": [
@@ -31462,6 +31688,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Connect model endpoints and choose which one handles each kind of work. Hosted APIs, gateways, and models you run on your own hardware are all configured here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connect with EIA Fuel Prices": {
@@ -33868,6 +34103,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Could not reach the endpoint": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "Could not record the certification": {
@@ -39569,6 +39813,15 @@
       "routes/review-template"
     ]
   },
+  "Decide what an uploaded document is.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Decide what happens when no rate agreement covers a shipment's lane, and how manual rate overrides are governed.": {
     "sites": 1,
     "scope": [
@@ -39955,6 +40208,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "DeepInfra": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Default": {
@@ -42593,7 +42855,7 @@
     ]
   },
   "Description": {
-    "sites": 138,
+    "sites": 139,
     "scope": [
       "go",
       "ts"
@@ -43609,6 +43871,15 @@
       "packages/shared/components"
     ]
   },
+  "Diagnose a blocked billing item and propose resolutions.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Diagnose a blocked billing queue item and propose resolutions": {
     "sites": 1,
     "scope": [
@@ -43949,7 +44220,7 @@
     ]
   },
   "Disabled": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -43957,6 +44228,15 @@
       "apps/web/lib",
       "routes/admin",
       "routes/invoice"
+    ]
+  },
+  "Disabled providers are skipped entirely.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Disallow": {
@@ -45593,6 +45873,15 @@
       "domain/documenttype"
     ]
   },
+  "Document classification": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Document classification definitions": {
     "sites": 1,
     "scope": [
@@ -45696,6 +45985,15 @@
     ],
     "areas": [
       "routes/hazmat-segregation-rule"
+    ]
+  },
+  "Document extraction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Document extraction operations.": {
@@ -49544,7 +49842,7 @@
     ]
   },
   "Edit": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -49559,6 +49857,15 @@
       "routes/scheduling",
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Edit AI provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Edit Additional Charge": {
@@ -51332,7 +51639,7 @@
     ]
   },
   "Enabled": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -51647,6 +51954,15 @@
       "apps/dash/_components"
     ]
   },
+  "Endpoint": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Endpoint URL": {
     "sites": 1,
     "scope": [
@@ -51789,6 +52105,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Enforced by the server (JSON schema)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Enforcement": {
@@ -52168,6 +52493,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Enter the API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Enter the address you sign in with and we'll send you a link to choose a new password.": {
@@ -54550,6 +54884,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Exactly as the endpoint names it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Exactly one of debit or credit amount must be greater than zero": {
@@ -59576,6 +59919,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Fills in the endpoint and output settings for a known deployment. Everything stays editable.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Filter": {
     "sites": 4,
     "scope": [
@@ -60086,6 +60438,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Fireworks AI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "First 2 hours": {
@@ -61393,6 +61754,15 @@
     "areas": [
       "apps/web/config",
       "routes/formula-template"
+    ]
+  },
+  "Formula assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Formula fallback": {
@@ -63261,11 +63631,13 @@
     ]
   },
   "General": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "api/handlers",
       "apps/web/config",
       "routes/admin",
       "routes/customer",
@@ -63421,6 +63793,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Generate and explain rating formulas.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Generate archive message": {
@@ -64227,6 +64608,15 @@
       "apps/web/components"
     ]
   },
+  "Groq": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Gross": {
     "sites": 6,
     "scope": [
@@ -64846,6 +65236,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Handles these tasks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Handling": {
@@ -66706,6 +67105,15 @@
       "domain/documenttemplate"
     ]
   },
+  "How much the endpoint guarantees. Some OpenAI-compatible servers accept a schema and ignore it — test the connection to find out before relying on it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How much warning the contract requires before it ends": {
     "sites": 1,
     "scope": [
@@ -67047,6 +67455,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "How this endpoint appears when assigning work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "How this guide is referenced across dispatch": {
@@ -73806,11 +74223,12 @@
     ]
   },
   "Kind is required": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aiprovider",
       "domain/edi",
       "domain/invoiceadjustment",
       "domain/ratematrix",
@@ -73854,6 +74272,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "LM Studio (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "LOC": {
@@ -75181,6 +75608,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Leave blank to use the provider default.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Leave blank to use the template name and the period end date.": {
@@ -77917,6 +78353,15 @@
       "routes/edi"
     ]
   },
+  "Local Qwen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.": {
     "sites": 1,
     "scope": [
@@ -78626,6 +79071,15 @@
     ]
   },
   "Lower numbers evaluate first. Use gaps to leave room for future rules.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Lower runs first. Providers behind it act as fallbacks.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -79624,6 +80078,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Many self-hosted servers need no credential. Leave blank if yours does not.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Map": {
@@ -80872,6 +81335,33 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Max tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Max tokens cannot exceed 200000": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Max tokens must be at least 256": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Max use is required": {
@@ -82958,11 +83448,12 @@
     ]
   },
   "Model": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/tractor",
       "routes/trailer"
     ]
@@ -82976,22 +83467,35 @@
       "domain/shipmentimportchat"
     ]
   },
-  "Model is not one this system calls": {
+  "Model cannot be longer than 200 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ailog",
+      "domain/aiprovider"
+    ]
+  },
+  "Model endpoints, including self-hosted servers, and their task routing": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/ailog"
+      "domain/permission"
     ]
   },
   "Model is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/ailog"
+      "domain/ailog",
+      "domain/aiprovider",
+      "routes/admin"
     ]
   },
   "Model must be between 0 and 50 characters": {
@@ -84352,7 +84856,7 @@
     ]
   },
   "Name": {
-    "sites": 134,
+    "sites": 135,
     "scope": [
       "go",
       "ts"
@@ -84502,11 +85006,12 @@
     ]
   },
   "Name cannot be longer than 100 characters": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aiprovider",
       "domain/formulatemplate",
       "domain/integration",
       "domain/tenant",
@@ -84567,7 +85072,7 @@
     ]
   },
   "Name is required": {
-    "sites": 99,
+    "sites": 101,
     "scope": [
       "go",
       "ts"
@@ -84575,6 +85080,7 @@
     "areas": [
       "apps/web/types",
       "domain/accounttype",
+      "domain/aiprovider",
       "domain/apikey",
       "domain/billingqueuefilterpreset",
       "domain/carrier",
@@ -84620,6 +85126,7 @@
       "domain/worker",
       "go/other",
       "packages/shared/types",
+      "routes/admin",
       "service/ediservice",
       "service/formulatemplateservice",
       "service/iamservice",
@@ -85033,6 +85540,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Needed to reach a model server on your own network. Link-local addresses stay blocked either way.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Needing attention": {
@@ -86356,6 +86872,24 @@
       "routes/document-packet-rule",
       "routes/journal-entry",
       "routes/reports"
+    ]
+  },
+  "No AI provider is configured for {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No AI providers configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No Additional Charges": {
@@ -89757,6 +90291,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No tasks assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No teammates who can view invoices match.": {
@@ -93273,6 +93816,33 @@
       "routes/edi"
     ]
   },
+  "Ollama": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Ollama (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Ollama's native API. Used instead of its OpenAI-compatible endpoint, which ignores JSON schemas.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "On": {
     "sites": 2,
     "scope": [
@@ -95207,6 +95777,15 @@
       "service/shipmentmoveservice"
     ]
   },
+  "Only point this at a model server you operate. Trenova still refuses link-local addresses, so cloud metadata endpoints remain unreachable.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Only posted customer payments can be applied": {
     "sites": 1,
     "scope": [
@@ -96399,6 +96978,15 @@
       "routes/detention-policy"
     ]
   },
+  "OpenAI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "OpenAI API key is missing": {
     "sites": 2,
     "scope": [
@@ -96415,6 +97003,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "OpenAI Responses": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "OpenAI dashboard.": {
@@ -96442,6 +97039,33 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "OpenAI's Responses API, and endpoints serving the same shape.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "OpenAI-compatible": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "OpenRouter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "OpenText / SPS Commerce": {
@@ -97863,12 +98487,13 @@
     ]
   },
   "Organization is required": {
-    "sites": 100,
+    "sites": 101,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/ailog",
+      "domain/aiprovider",
       "domain/apikey",
       "domain/billingtransfer",
       "domain/costingcontrol",
@@ -104981,6 +105606,15 @@
       "routes/admin"
     ]
   },
+  "Point Trenova at a model endpoint and choose which work it handles. Start from a preset, or configure any OpenAI-compatible server directly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Points": {
     "sites": 1,
     "scope": [
@@ -105807,15 +106441,6 @@
       "routes/admin"
     ]
   },
-  "PostGIS spatial queries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -105984,24 +106609,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "PostgreSQL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Postgres full-text search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -107271,7 +107878,7 @@
     ]
   },
   "Priority": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -107282,6 +107889,15 @@
       "routes/rate-agreement",
       "routes/shipment",
       "routes/table-change-alert"
+    ]
+  },
+  "Priority cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Priority is 0 to 999": {
@@ -108033,6 +108649,15 @@
       "routes/formula-template"
     ]
   },
+  "Protocol": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Protocol is required": {
     "sites": 1,
     "scope": [
@@ -108303,6 +108928,15 @@
       "routes/fuel-card"
     ]
   },
+  "Provider default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Provider driver id is required": {
     "sites": 1,
     "scope": [
@@ -108362,6 +108996,15 @@
       "domain/storedmileage",
       "domain/telematics",
       "domain/tenant"
+    ]
+  },
+  "Provider kind cannot be longer than 50 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/ailog"
     ]
   },
   "Provider limit": {
@@ -108710,6 +109353,15 @@
     "areas": [
       "routes/admin",
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Pull structured fields out of a document.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Pull this move back from the carrier. The move returns to uncovered and the cancellation reason is recorded.": {
@@ -115643,6 +116295,15 @@
       "routes/worker"
     ]
   },
+  "Remove AI provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Remove File": {
     "sites": 1,
     "scope": [
@@ -115723,6 +116384,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Remove an AI provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Remove an override, returning the jurisdiction to its statutory limits": {
@@ -115979,6 +116649,15 @@
       "apps/web/components"
     ]
   },
+  "Remove provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Remove range": {
     "sites": 1,
     "scope": [
@@ -116113,6 +116792,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Remove {0}. Any task routed only to this provider will stop working until another one is assigned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Remove {0}?": {
@@ -117508,6 +118196,15 @@
       "routes/manual-journal"
     ]
   },
+  "Requested in the prompt": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Requested on": {
     "sites": 3,
     "scope": [
@@ -118067,6 +118764,15 @@
       "routes/billing-queue"
     ]
   },
+  "Required before this provider can handle tasks that change financial records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.": {
     "sites": 1,
     "scope": [
@@ -118095,6 +118801,15 @@
       "routes/worker"
     ]
   },
+  "Required for an OpenAI-compatible endpoint.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Required for driver types": {
     "sites": 2,
     "scope": [
@@ -118103,6 +118818,15 @@
     "areas": [
       "routes/training-course",
       "routes/worker-credential-type"
+    ]
+  },
+  "Required for this provider.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Required items must settle before the checklist closes.": {
@@ -119067,6 +119791,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Responded in {0}ms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Response": {
@@ -123074,15 +123807,6 @@
       "routes/edi"
     ]
   },
-  "SELECT ... FOR UPDATE row locking": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -123099,6 +123823,15 @@
     ],
     "areas": [
       "domain/integration"
+    ]
+  },
+  "SGLang (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "SHA-1 (legacy)": {
@@ -123162,15 +123895,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "SQLite": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "SSN": {
@@ -124018,7 +124742,7 @@
     ]
   },
   "Save changes": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -124336,7 +125060,7 @@
     ]
   },
   "Saving...": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -124928,6 +125652,15 @@
       "domain/formulatemplate"
     ]
   },
+  "Schema honoured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Schema is required": {
     "sites": 1,
     "scope": [
@@ -124935,6 +125668,15 @@
     ],
     "areas": [
       "domain/formulatemplate"
+    ]
+  },
+  "Schema not honoured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Schema version is required": {
@@ -135863,6 +136605,15 @@
       "packages/shared/types"
     ]
   },
+  "Start from a preset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Start from a standard": {
     "sites": 1,
     "scope": [
@@ -137354,6 +138105,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Structured output": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Structured output mode is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Structured partner settings reserved for integration-specific options and runtime overrides.": {
@@ -139274,6 +140043,15 @@
       "apps/web/lib"
     ]
   },
+  "Task is not one this system routes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "Task token is required": {
     "sites": 1,
     "scope": [
@@ -140659,11 +141437,12 @@
     ]
   },
   "Test": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/edi"
     ]
   },
@@ -140693,6 +141472,15 @@
     "areas": [
       "routes/admin",
       "routes/edi"
+    ]
+  },
+  "Test an AI provider connection": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Test email queued": {
@@ -143673,6 +144461,15 @@
       "domain/ratesimulation"
     ]
   },
+  "The endpoint replied with no content": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "The entitlement must be more than zero weeks": {
     "sites": 1,
     "scope": [
@@ -144976,6 +145773,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The model declined the test request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "The model declined this request": {
@@ -149933,6 +150739,24 @@
       "service/workerdrugalcoholservice"
     ]
   },
+  "This provider may reach your internal network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "This provider's protocol is not supported": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "This quarter": {
     "sites": 1,
     "scope": [
@@ -150413,6 +151237,24 @@
     ],
     "areas": [
       "service/workerinjuryservice"
+    ]
+  },
+  "This task can change financial records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "This task can change financial records, so it can only be served by a provider marked trusted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "This template does not render yet, so there is nothing to send. {0}": {
@@ -151850,6 +152692,15 @@
       "routes/scheduling"
     ]
   },
+  "Together AI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Toggle AI provider availability for this business unit.": {
     "sites": 1,
     "scope": [
@@ -152146,12 +152997,11 @@
     ]
   },
   "Too many requests": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/handlers",
       "api/middleware"
     ]
   },
@@ -154350,6 +155200,24 @@
     ]
   },
   "Trust federated MFA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trusted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trusted for financial work": {
     "sites": 1,
     "scope": [
       "ts"
@@ -156715,6 +157583,15 @@
       "domain/permission"
     ]
   },
+  "Update an AI provider and its task routing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Update billing queue item status": {
     "sites": 1,
     "scope": [
@@ -158282,6 +159159,15 @@
       "packages/shared/lib"
     ]
   },
+  "Valid JSON only (no schema)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Valid for": {
     "sites": 1,
     "scope": [
@@ -159163,6 +160049,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "View AI providers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "View AR ledger and aging": {
@@ -162559,6 +163454,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "What this endpoint is for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "What this home screen is for.": {
     "sites": 1,
     "scope": [
@@ -165010,6 +165914,15 @@
       "routes/my-team"
     ]
   },
+  "Work falls through providers in priority order, so a cheaper model can handle a task first and hand off when it cannot.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Work in progress": {
     "sites": 1,
     "scope": [
@@ -165017,6 +165930,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Work is offered to providers in priority order. Assign a cheap model to high-volume tasks and keep a stronger one behind it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Work item assigned": {
@@ -167624,15 +168546,6 @@
       "routes/scheduling"
     ]
   },
-  "advisory locks": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -167891,15 +168804,6 @@
       "template/report.delivery.email"
     ]
   },
-  "concurrent index creation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -167972,15 +168876,6 @@
       "go/other"
     ]
   },
-  "database session diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -168015,15 +168910,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "declarative table partitioning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "did not apply.": {
@@ -170086,15 +170972,6 @@
       "routes/reports"
     ]
   },
-  "exact decimal arithmetic": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -170129,15 +171006,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "exclusion constraints": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -170492,6 +171360,15 @@
       "routes/formula-template"
     ]
   },
+  "llama.cpp (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "loads in motion": {
     "sites": 1,
     "scope": [
@@ -170508,15 +171385,6 @@
     ],
     "areas": [
       "service/samsarasyncservice"
-    ]
-  },
-  "logical-replication change data capture": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "mapped Samsara driver is deactivated": {
@@ -170546,15 +171414,6 @@
       "routes/rate-agreement"
     ]
   },
-  "materialized views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "maximum active api keys reached": {
     "sites": 1,
     "scope": [
@@ -170580,15 +171439,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "model declined to produce a diagnosis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "more than": {
@@ -170990,6 +171840,15 @@
     ],
     "areas": [
       "service/realtimeservice"
+    ]
+  },
+  "qwen3:32b": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "rate agreement": {
@@ -171534,6 +172393,15 @@
       "apps/dash/_components"
     ]
   },
+  "this provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "to add one.": {
     "sites": 1,
     "scope": [
@@ -171669,15 +172537,6 @@
       "routes/accounting-dashboard"
     ]
   },
-  "trigram similarity search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {
     "sites": 2,
     "scope": [
@@ -171741,6 +172600,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "vLLM (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "verbal warning": {
