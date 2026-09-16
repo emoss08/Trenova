@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -93,6 +94,20 @@ func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (p *Provider) GetTableName() string { return "ai_providers" }
+
+func (p *Provider) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "aiprv",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText},
+			{Name: "model", Type: domaintypes.FieldTypeText},
+			{Name: "kind", Type: domaintypes.FieldTypeEnum},
+		},
+	}
 }
 
 // ResolvedBaseURL is the endpoint this provider actually calls.

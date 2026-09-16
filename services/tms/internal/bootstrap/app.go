@@ -48,7 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
@@ -109,7 +109,7 @@ func Options() fx.Option {
 		shipmentjobs.Module,
 		agentjobs.Module,
 		agenttoolservice.Module,
-		anthropiccompletionservice.Module,
+		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
 		carriersettlementjobs.Module,
