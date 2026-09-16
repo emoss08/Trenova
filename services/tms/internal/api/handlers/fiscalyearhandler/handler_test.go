@@ -35,7 +35,7 @@ func TestHandlerCloseBlockers(t *testing.T) {
 	fiscalYearID := pulid.MustNew("fy_")
 	fiscalYear := &fiscalyear.FiscalYear{ID: fiscalYearID, OrganizationID: sharedtestutil.TestOrgID, BusinessUnitID: sharedtestutil.TestBuID, Status: fiscalyear.StatusOpen}
 	fyRepo.EXPECT().GetByID(mock.Anything, repositories.GetFiscalYearByIDRequest{ID: fiscalYearID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).Return(fiscalYear, nil).Once()
-	fpRepo.EXPECT().GetOpenPeriodsCountByFiscalYear(mock.Anything, repositories.GetOpenPeriodsCountByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).Return(2, nil).Once()
+	fpRepo.EXPECT().CountUnclosedPeriodsByFiscalYear(mock.Anything, repositories.CountUnclosedPeriodsByFiscalYearRequest{FiscalYearID: fiscalYearID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).Return(2, nil).Once()
 	fpRepo.EXPECT().ListByFiscalYearID(mock.Anything, mock.Anything).Return([]*fiscalperiod.FiscalPeriod{}, nil).Once()
 	fyRepo.EXPECT().GetNextFiscalYear(mock.Anything, mock.Anything).Return(nil, errortypes.NewNotFoundError("FiscalYear not found")).Once()
 

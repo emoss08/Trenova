@@ -52,8 +52,6 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
   } = form;
   const kind = useWatch({ control: form.control, name: "kind" });
   const rebillStrategy = useWatch({ control: form.control, name: "rebillStrategy" });
-  const supportingDocumentsRequired =
-    preview?.supportingDocumentsRequired ?? draft?.supportingDocumentsRequired ?? false;
   const sourceLineAmounts = useMemo(
     () => new Map(invoice.lines.map((line) => [line.id, Math.abs(Number(line.amount ?? 0))])),
     [invoice.lines],
@@ -235,7 +233,6 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
               />
               <InvoiceAdjustmentSupportingDocumentsSection
                 control={form.control}
-                supportingDocumentsRequired={supportingDocumentsRequired}
                 shipmentId={invoice.shipmentId}
                 draft={draft}
               />

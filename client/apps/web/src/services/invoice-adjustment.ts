@@ -9,7 +9,6 @@ import {
   invoiceAdjustmentPreviewSchema,
   invoiceAdjustmentRequestSchema,
   invoiceAdjustmentSchema,
-  invoiceApprovalQueueItemSchema,
   invoiceReconciliationQueueItemSchema,
   updateDraftInvoiceAdjustmentRequestSchema,
   type CreateDraftInvoiceAdjustmentRequest,
@@ -20,13 +19,11 @@ import {
   type InvoiceAdjustmentOperationsSummary,
   type InvoiceAdjustmentPreview,
   type InvoiceAdjustmentRequest,
-  type InvoiceApprovalQueueItem,
   type InvoiceReconciliationQueueItem,
   type UpdateDraftInvoiceAdjustmentRequest,
 } from "@/types/invoice-adjustment";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
-const invoiceApprovalQueueListSchema = createLimitOffsetResponse(invoiceApprovalQueueItemSchema);
 const invoiceReconciliationQueueListSchema = createLimitOffsetResponse(
   invoiceReconciliationQueueItemSchema,
 );
@@ -122,16 +119,6 @@ export class InvoiceAdjustmentService {
       `/billing/invoice-adjustments/batches/${id}/`,
     );
     return safeParse(invoiceAdjustmentBatchSchema, response, "InvoiceAdjustmentBatch");
-  }
-
-  public async listApprovals(params?: Record<string, string>) {
-    const endpoint = params
-      ? `/billing/invoice-adjustments/approvals/?${new URLSearchParams(params).toString()}`
-      : "/billing/invoice-adjustments/approvals/";
-    const response = await api.get<{ results: InvoiceApprovalQueueItem[]; count: number }>(
-      endpoint,
-    );
-    return safeParse(invoiceApprovalQueueListSchema, response, "InvoiceApprovalQueueList");
   }
 
   public async listReconciliationExceptions(params?: Record<string, string>) {

@@ -159,3 +159,31 @@ func (s Status) IsValid() bool {
 		return false
 	}
 }
+
+func (s Status) CanActivate() bool {
+	return s == StatusInactive
+}
+
+func (s Status) CanLock() bool {
+	return s == StatusOpen
+}
+
+func (s Status) CanUnlock() bool {
+	return s == StatusLocked
+}
+
+func (s Status) CanClose() bool {
+	return s == StatusOpen || s == StatusLocked
+}
+
+func (s Status) CanReopen() bool {
+	return s == StatusClosed
+}
+
+func (s Status) AcceptsPostings() bool {
+	return s == StatusOpen || s == StatusLocked
+}
+
+func UnclosedStatuses() []Status {
+	return []Status{StatusOpen, StatusLocked}
+}

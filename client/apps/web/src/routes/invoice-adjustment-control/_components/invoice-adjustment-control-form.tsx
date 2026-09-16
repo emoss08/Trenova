@@ -13,7 +13,6 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
   adjustmentAccountingDatePolicyChoices,
-  adjustmentAttachmentPolicyChoices,
   adjustmentEligibilityPolicyChoices,
   approvalPolicyChoices,
   closedPeriodAdjustmentPolicyChoices,
@@ -218,18 +217,6 @@ function DocumentationCard() {
                 "Determines whether a structured reason is mandatory before an adjustment can be completed.",
               )}
               options={requirementPolicyChoices}
-              rules={{ required: true }}
-            />
-          </FormControl>
-          <FormControl className="max-w-[520px]">
-            <SelectField
-              control={control}
-              name="adjustmentAttachmentRequirement"
-              label={t("Adjustment Attachment Requirement")}
-              description={t(
-                "Defines the organization default for when supporting documents are required for invoice adjustments. Customer billing profiles may override this when they set an explicit supporting-document policy.",
-              )}
-              options={adjustmentAttachmentPolicyChoices}
               rules={{ required: true }}
             />
           </FormControl>

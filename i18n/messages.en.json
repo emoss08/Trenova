@@ -491,7 +491,7 @@
     ]
   },
   "1 issue blocks this close": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -3671,11 +3671,12 @@
     ]
   },
   "A reason for reopening is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/fiscalperiodservice",
       "service/fiscalyearservice"
     ]
   },
@@ -6133,6 +6134,15 @@
       "template/tender.offer.email"
     ]
   },
+  "Accept manual journal entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Accept or accept-with-variance carrier invoice matches": {
     "sites": 1,
     "scope": [
@@ -6140,6 +6150,33 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Accept subledger postings again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Accept subledger postings and manual journal entries again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Accept subledger postings such as invoices and vendor bills": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Accept the load:": {
@@ -7377,6 +7414,15 @@
       "routes/worker"
     ]
   },
+  "Actions for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Activate": {
     "sites": 4,
     "scope": [
@@ -7837,11 +7883,12 @@
     ]
   },
   "Actor is required": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/billingqueueservice",
       "service/invoiceservice",
       "service/latechargeservice"
     ]
@@ -8029,7 +8076,7 @@
     ]
   },
   "Add Charge": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -10103,7 +10150,7 @@
     ]
   },
   "Adjust Base Rate": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -10192,6 +10239,15 @@
       "apps/web/components"
     ]
   },
+  "Adjusting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Adjustment": {
     "sites": 7,
     "scope": [
@@ -10212,24 +10268,6 @@
     ],
     "areas": [
       "routes/invoice-adjustment-control"
-    ]
-  },
-  "Adjustment Attachment Requirement": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/invoice-adjustment-control"
-    ]
-  },
-  "Adjustment Deadline": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Adjustment Detail": {
@@ -10344,6 +10382,15 @@
       "service/carriersettlementservice",
       "service/driverpayservice",
       "service/driversettlementservice"
+    ]
+  },
+  "Adjustment did not load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-approval"
     ]
   },
   "Adjustment is required": {
@@ -10622,6 +10669,15 @@
     ],
     "areas": [
       "domain/conversation"
+    ]
+  },
+  "Agent principals cannot reassign billing charges": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Agent principals cannot transition billing queue items; a human must decide": {
@@ -11840,15 +11896,6 @@
       "routes/pto-policy"
     ]
   },
-  "Allow new transactions to be posted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Allow private network access": {
     "sites": 1,
     "scope": [
@@ -11856,15 +11903,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Allow reopening if needed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Allow shipment drafts to be generated for shipment documents.": {
@@ -11955,6 +11993,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Allow unlocking if subledger postings need to resume": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Allow users to sign in with a \"Continue with Microsoft Entra ID\" button.": {
@@ -12760,6 +12807,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An allocation in the request does not belong to this charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "An amendment must add or replace at least one rate": {
@@ -13707,15 +13763,6 @@
     ],
     "areas": [
       "routes/osha"
-    ]
-  },
-  "Annual budget in dollars (optional)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Annual interest rate must be between 0 and 100": {
@@ -14960,6 +15007,15 @@
       "routes/driver-settlement"
     ]
   },
+  "Approval queue filter is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Approval required": {
     "sites": 1,
     "scope": [
@@ -15003,6 +15059,15 @@
     ],
     "areas": [
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "Approvals did not load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-approval"
     ]
   },
   "Approve": {
@@ -15751,15 +15816,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Are you sure you want to continue?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Are you sure you want to delete the custom field \"": {
@@ -17527,6 +17583,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Attach supporting evidence for audit trail.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Attach the notice as a PDF": {
@@ -20771,6 +20836,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Bill this charge to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Bill this leg on its own invoice?": {
     "sites": 1,
     "scope": [
@@ -20809,6 +20883,15 @@
   },
   "Bill to {0}": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Bill to: {0}": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -21029,14 +21112,13 @@
       "domain/documenttemplate"
     ]
   },
-  "Billed to another payer": {
-    "sites": 3,
+  "Billed to other payers ({0})": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue",
-      "routes/shipment"
+      "routes/billing-queue"
     ]
   },
   "Billed today": {
@@ -21540,12 +21622,13 @@
     ]
   },
   "Billing queue item is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/invoicerun",
+      "service/billingqueueservice",
       "service/invoiceservice"
     ]
   },
@@ -21855,6 +21938,15 @@
       "apps/web/lib"
     ]
   },
+  "Block every posting, including manual journal entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Block matching access requests before lower-priority allow policies apply.": {
     "sites": 1,
     "scope": [
@@ -21871,6 +21963,15 @@
     ],
     "areas": [
       "domain/shipment"
+    ]
+  },
+  "Block subledger postings such as billing, receivables, and payables": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Block the Save": {
@@ -22456,24 +22557,6 @@
     ],
     "areas": [
       "service/tenantprovisioningservice"
-    ]
-  },
-  "Budget Amount": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
-  "Budget and tax reporting configuration": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Build EDI 214 Payload": {
@@ -24111,13 +24194,22 @@
       "service/fiscalperiodservice"
     ]
   },
-  "Cannot close fiscal year: {0} period(s) are still open. Close all periods first.": {
+  "Cannot close fiscal year: {0} period(s) are still open or locked. Close all periods first.": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "Cannot close period {0}: period {1} has never been opened. Close periods sequentially.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
     ]
   },
   "Cannot close period {0}: period {1} is still open. Close periods sequentially.": {
@@ -24253,6 +24345,15 @@
     ],
     "areas": [
       "service/formulatemplateservice"
+    ]
+  },
+  "Cannot open period {0}: period {1} has not been opened yet. Open periods in order.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
     ]
   },
   "Cannot remove moves that already have assignments": {
@@ -25880,7 +25981,7 @@
     ]
   },
   "Change Template": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -25924,6 +26025,15 @@
       "routes/app-layout.tsx"
     ]
   },
+  "Change payer for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Change the dates, type, or reason": {
     "sites": 1,
     "scope": [
@@ -25949,6 +26059,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Change who pays for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Changed": {
@@ -26061,6 +26180,15 @@
       "routes/worker"
     ]
   },
+  "Changes through the fiscal year actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
     "sites": 1,
     "scope": [
@@ -26163,12 +26291,13 @@
     ]
   },
   "Charge": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/edi",
       "routes/invoice",
       "routes/late-charges",
@@ -26327,6 +26456,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Charges belong to the shipment, so changing one here also changes the other payers' bills.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Charges below this amount post without review.": {
     "sites": 1,
     "scope": [
@@ -26334,6 +26472,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Charges can be reassigned only while the item is ready for review, in review or on hold": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Charges can only be edited when the item is in InReview status": {
@@ -26373,6 +26520,15 @@
     ]
   },
   "Charges updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "Charges updated and amount splits converted to percentages": {
     "sites": 1,
     "scope": [
       "ts"
@@ -27184,6 +27340,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Choose the accessorial charge to reassign": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Choose the answer that came back": {
@@ -28944,7 +29109,7 @@
     ]
   },
   "Close Year": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -28968,6 +29133,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Close check unavailable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Close escrow account": {
@@ -29257,7 +29431,7 @@
     ]
   },
   "Closed successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -30688,15 +30862,6 @@
     ],
     "areas": [
       "service/shipmentmoveservice"
-    ]
-  },
-  "Complete the period close workflow": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Complete these fields to create the shipment": {
@@ -33352,15 +33517,6 @@
       "routes/billing-control"
     ]
   },
-  "Controls whether supporting documents are required for this customer's invoice adjustments. 'Inherit Organization Default' uses the organization invoice-adjustment policy.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
-    ]
-  },
   "Controls whether this carrier appears in active lookups. Do Not Use blocks the carrier from new assignments.": {
     "sites": 1,
     "scope": [
@@ -33433,6 +33589,15 @@
       "domain/permission"
     ]
   },
+  "Convert amount splits to percentages?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Convert text to lowercase.": {
     "sites": 1,
     "scope": [
@@ -33458,6 +33623,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Convert to percentages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Converted amount is required": {
@@ -35885,15 +36059,6 @@
       "routes/auth"
     ]
   },
-  "Create an audit trail entry": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Create an external trading partner or request an internal organization connection.": {
     "sites": 1,
     "scope": [
@@ -37595,15 +37760,6 @@
       "routes/customer"
     ]
   },
-  "Current workflow status": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Current: {0}": {
     "sites": 1,
     "scope": [
@@ -37629,6 +37785,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Cursor does not belong to the approval queue": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Cursor is invalid": {
@@ -41733,15 +41898,6 @@
       "routes/shipment-control"
     ]
   },
-  "Defines the organization default for when supporting documents are required for invoice adjustments. Customer billing profiles may override this when they set an explicit supporting-document policy.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/invoice-adjustment-control"
-    ]
-  },
   "Defines the purpose of the stop — pickup, delivery, or a split operation": {
     "sites": 1,
     "scope": [
@@ -42025,7 +42181,7 @@
     ]
   },
   "Delete": {
-    "sites": 33,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -42521,6 +42677,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Delete {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Delete {0} and remove it from any purpose assignment. This action cannot be undone.": {
@@ -45849,7 +46014,25 @@
       "apps/web/lib"
     ]
   },
+  "Divide the {0} charge between the customers who pay for it. Each payer receives an invoice for their share.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Divide this charge between the customers who pay for it. Each payer receives an invoice for their share.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -50311,14 +50494,13 @@
     ]
   },
   "Edit": {
-    "sites": 24,
+    "sites": 23,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "routes/admin",
-      "routes/billing-queue",
       "routes/org-structure",
       "routes/policies",
       "routes/random-testing",
@@ -50679,6 +50861,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Edit {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Editing": {
@@ -52078,24 +52269,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Enable edits to existing entries": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
-  "Enable locking once all reconciliations are complete": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Enable these Postmark triggers:": {
@@ -59513,24 +59686,6 @@
       "service/fiscalperiodservice"
     ]
   },
-  "Failed to validate reopen order: {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/fiscalperiodservice"
-    ]
-  },
-  "Failed to validate sequential close: {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/fiscalperiodservice"
-    ]
-  },
   "Failed to verify code uniqueness": {
     "sites": 1,
     "scope": [
@@ -60573,15 +60728,6 @@
       "routes/random-testing"
     ]
   },
-  "Final date for post-close adjusting entries": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Finalise": {
     "sites": 2,
     "scope": [
@@ -60607,15 +60753,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Finalize all financial data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Finalize return": {
@@ -60692,15 +60829,6 @@
     ],
     "areas": [
       "routes/invoice-approval"
-    ]
-  },
-  "Financial Planning": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Financials": {
@@ -61055,7 +61183,7 @@
       "routes/worker"
     ]
   },
-  "First day of fiscal period": {
+  "First day of fiscal period (UTC)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -61255,6 +61383,33 @@
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "Fiscal year {0} is now closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Fiscal year {0} is now current": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Fiscal year {0} is open again and its closing entries were reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Fit": {
@@ -62653,12 +62808,14 @@
     ]
   },
   "Freight": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/billingqueue",
+      "routes/billing-queue",
       "routes/edi",
       "routes/invoice",
       "routes/order",
@@ -68372,15 +68529,6 @@
       "domain/iam"
     ]
   },
-  "IRS tax reporting year (auto-synced)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "ISA Control Number": {
     "sites": 2,
     "scope": [
@@ -69424,7 +69572,7 @@
     ]
   },
   "Inactive": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -70148,15 +70296,6 @@
     ],
     "areas": [
       "routes/pto-policy"
-    ]
-  },
-  "Inherit Organization Default": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Initial Backoff (seconds)": {
@@ -71197,6 +71336,15 @@
       "api/graphql"
     ]
   },
+  "Invalid adjustment kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid advance": {
     "sites": 2,
     "scope": [
@@ -71536,6 +71684,15 @@
       "api/graphql"
     ]
   },
+  "Invalid invoice adjustment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid invoice line type": {
     "sites": 1,
     "scope": [
@@ -71858,6 +72015,15 @@
       "api/graphql"
     ]
   },
+  "Invalid submitter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid tag: {0}": {
     "sites": 1,
     "scope": [
@@ -72082,15 +72248,6 @@
     "areas": [
       "apps/web/config",
       "routes/invoice-adjustment-control"
-    ]
-  },
-  "Invoice Adjustment Supporting Documents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/customer"
     ]
   },
   "Invoice Adjustments": {
@@ -74273,6 +74430,15 @@
       "routes/shipment"
     ]
   },
+  "Keep accepting manual journal entries for accruals and adjustments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Keep access": {
     "sites": 1,
     "scope": [
@@ -75517,7 +75683,7 @@
       "routes/worker"
     ]
   },
-  "Last day of fiscal period": {
+  "Last day of fiscal period (UTC)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -77249,7 +77415,7 @@
     ]
   },
   "Line Haul": {
-    "sites": 2,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -79374,15 +79540,6 @@
     ],
     "areas": [
       "routes/accounting-control"
-    ]
-  },
-  "Locked successfully": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Locked to the assignment being closed.": {
@@ -86712,6 +86869,24 @@
       "routes/journal-entry"
     ]
   },
+  "Net income": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Net loss": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Net margin": {
     "sites": 3,
     "scope": [
@@ -87838,6 +88013,15 @@
       "routes/invoice"
     ]
   },
+  "No accessorial charges for this payer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "No accessorials. Add lumper fees, detention, or other pass-through charges the carrier bills for this move.": {
     "sites": 1,
     "scope": [
@@ -88135,6 +88319,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "No balances to carry forward.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "No batches yet": {
@@ -89303,6 +89496,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "No income-statement activity to close.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "No indices yet": {
@@ -95490,6 +95692,15 @@
       "routes/tractor"
     ]
   },
+  "Only Inactive fiscal periods can be opened. Current status: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
+    ]
+  },
   "Only KPI tiles show a comparison value": {
     "sites": 1,
     "scope": [
@@ -95517,15 +95728,6 @@
       "service/ediservice"
     ]
   },
-  "Only Open fiscal periods can be closed. Current status: {0}": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/fiscalperiodservice"
-    ]
-  },
   "Only Open fiscal periods can be deleted": {
     "sites": 1,
     "scope": [
@@ -95551,6 +95753,15 @@
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "Only Open or Locked fiscal periods can be closed. Current status: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
     ]
   },
   "Only Prohibited bars dispatch. Follow-up testing runs after the driver is back at work and is not a bar. The next Clearinghouse query falls due twelve months after the last answered one.": {
@@ -95759,6 +95970,15 @@
     ],
     "areas": [
       "service/workerdqfservice"
+    ]
+  },
+  "Only a shipment invoice item can have its charges reassigned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Only a signed-in user can share an invoice": {
@@ -96312,6 +96532,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Only freight or an accessorial charge can be reassigned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "Only fresh assigned shipment moves can be unassigned": {
@@ -97269,6 +97498,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Open Fiscal Period": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Open Inspector": {
     "sites": 1,
     "scope": [
@@ -97299,6 +97537,15 @@
       "routes/accounting-dashboard",
       "routes/ar-open-items",
       "routes/customer-statement"
+    ]
+  },
+  "Open Period": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Open Receivables": {
@@ -97575,6 +97822,15 @@
     ],
     "areas": [
       "routes/invoice-register"
+    ]
+  },
+  "Open inactive fiscal periods": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Open invoice": {
@@ -98086,6 +98342,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Opening this period will:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Opening workspace": {
     "sites": 1,
     "scope": [
@@ -98096,11 +98361,12 @@
     ]
   },
   "Opening...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/fiscal-year",
       "routes/ifta-return"
     ]
   },
@@ -98385,7 +98651,7 @@
     ]
   },
   "Optional": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -104632,6 +104898,15 @@
       "service/accountingcontrolservice"
     ]
   },
+  "Period closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Period debit and credit cannot be negative": {
     "sites": 1,
     "scope": [
@@ -104738,6 +105013,15 @@
       "domain/worker"
     ]
   },
+  "Period locked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Period must end after it starts": {
     "sites": 1,
     "scope": [
@@ -104763,6 +105047,24 @@
     ],
     "areas": [
       "domain/fiscalperiod"
+    ]
+  },
+  "Period opened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Period reopened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "Period start date cannot be before fiscal year start date": {
@@ -104823,18 +105125,71 @@
       "domain/fiscalperiod"
     ]
   },
-  "Period {0}": {
-    "sites": 5,
+  "Period unlocked": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fiscal-year",
+      "routes/fiscal-year"
+    ]
+  },
+  "Period {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/late-charges"
     ]
   },
-  "Permanently Closed": {
+  "Period {0} belongs to fiscal year {1}, which is closed. Reopen the fiscal year first.": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
+    ]
+  },
+  "Period {0} belongs to fiscal year {1}, which is permanently closed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
+    ]
+  },
+  "Period {0} has not been opened yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Period {0} is already closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Period {0} is still open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Permanently Closed": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -104842,13 +105197,31 @@
       "apps/web/lib"
     ]
   },
-  "Permanently prevent all changes": {
+  "Permanently closed": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Permanently closed fiscal periods cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
+    ]
+  },
+  "Permanently closed fiscal years cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalyearservice"
     ]
   },
   "Permission added": {
@@ -108004,15 +108377,6 @@
       "routes/dispatch-control"
     ]
   },
-  "Prevent new transactions from being posted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Preventable": {
     "sites": 2,
     "scope": [
@@ -111027,6 +111391,15 @@
       "routes/organization"
     ]
   },
+  "Queue item {0} is {1}; move it back to review before reassigning this shipment's charges": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
+    ]
+  },
   "Queue this already-delivered document for another delivery to the partner": {
     "sites": 1,
     "scope": [
@@ -113599,7 +113972,7 @@
     ]
   },
   "Reason": {
-    "sites": 41,
+    "sites": 42,
     "scope": [
       "ts"
     ],
@@ -115593,6 +115966,15 @@
       "packages/shared/types"
     ]
   },
+  "Record who reopened it, when, and why": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Record {0}": {
     "sites": 1,
     "scope": [
@@ -115684,6 +116066,15 @@
     ]
   },
   "Recorded on the fiscal year and on every reversing entry.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "Recorded on the period for the audit trail.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -118067,7 +118458,7 @@
     ]
   },
   "Reopen Year": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -118121,7 +118512,7 @@
     ]
   },
   "Reopened successfully": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -119063,7 +119454,7 @@
     ]
   },
   "Request is required": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go"
     ],
@@ -119071,6 +119462,7 @@
       "go/other",
       "service/bankreceiptbatchservice",
       "service/bankreceiptservice",
+      "service/billingqueueservice",
       "service/customerpaymentservice",
       "service/invoicedisputeservice",
       "service/invoicerunservice",
@@ -119664,15 +120056,6 @@
       "routes/admin"
     ]
   },
-  "Require manager approval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Require password change on first login": {
     "sites": 1,
     "scope": [
@@ -119680,15 +120063,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Require reclosing before locking": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Require reconciliation to close cannot be enabled when reconciliation mode is Disabled": {
@@ -119700,16 +120074,7 @@
       "service/accountingcontrolservice"
     ]
   },
-  "Require reopening to make any changes": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
-  "Require special permission to unlock": {
+  "Require reopening, with a recorded reason, before anything can change": {
     "sites": 1,
     "scope": [
       "ts"
@@ -119764,7 +120129,7 @@
     ]
   },
   "Required": {
-    "sites": 25,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -119807,24 +120172,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Required For All": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
-  "Required For Credit Or Write-Off": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Required Stop Roles": {
@@ -121558,8 +121905,8 @@
       "routes/ifta-return"
     ]
   },
-  "Return the period to Closed status": {
-    "sites": 1,
+  "Return the period to Open": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -125262,7 +125609,7 @@
     ]
   },
   "Same as shipment": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -125271,6 +125618,15 @@
     ]
   },
   "Same as shipment ({0})": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Same as shipment payer": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125833,6 +126189,15 @@
       "routes/formula-template"
     ]
   },
+  "Save base rate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Save changes": {
     "sites": 6,
     "scope": [
@@ -125897,6 +126262,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Save payers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Save rates": {
@@ -129100,15 +129474,6 @@
       "routes/recurring-shipment"
     ]
   },
-  "Select deadline": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "Select destination facility": {
     "sites": 1,
     "scope": [
@@ -132090,7 +132455,7 @@
     ]
   },
   "Set as Current": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -134353,6 +134718,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Shipment rate before formula": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Shipment re-rated with new formula template": {
@@ -137003,7 +137377,7 @@
     ]
   },
   "Split": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -137070,7 +137444,7 @@
     ]
   },
   "Split freight charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -137142,14 +137516,31 @@
       "routes/dispatch-console"
     ]
   },
+  "Split this charge…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Split {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Split {0} ways": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Splits an oversized group across several invoices. Zero means no limit.": {
@@ -139721,7 +140112,7 @@
     ]
   },
   "Subtotal": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -140077,6 +140468,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Supporting Documents (Optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice"
     ]
   },
   "Supporting Requirements": {
@@ -141259,15 +141659,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Tax Year": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Tax due": {
@@ -142827,6 +143218,15 @@
       "apps/dash/_components"
     ]
   },
+  "That accessorial charge is not on this shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
+    ]
+  },
   "That approval is already delegated to this person for the same period": {
     "sites": 1,
     "scope": [
@@ -143458,6 +143858,15 @@
       "routes/customer-payments"
     ]
   },
+  "The approval queue could not be read. Check your connection and reload the page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-approval"
+    ]
+  },
   "The artifact format, such as XLSX or CSV.": {
     "sites": 1,
     "scope": [
@@ -143755,6 +144164,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The calendar is fixed once the fiscal year is created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "The calendar year of the quarter the rate was published for.": {
@@ -145973,6 +146391,24 @@
       "domain/detention"
     ]
   },
+  "The fiscal year is closed. Reopen the fiscal year first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "The fiscal year is permanently closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "The fleet code associated with the tractor.": {
     "sites": 1,
     "scope": [
@@ -147017,6 +147453,15 @@
       "routes/worker"
     ]
   },
+  "The name of a closed fiscal year cannot be changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalyearservice"
+    ]
+  },
   "The name of the VAN provider hosting this mailbox.": {
     "sites": 1,
     "scope": [
@@ -147583,6 +148028,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "The period could not be checked for close blockers. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "The period must end after it starts": {
@@ -150022,6 +150476,15 @@
       "domain/sidebarpreference"
     ]
   },
+  "The {0} split no longer adds up: the payer amounts total {1} but the charge is now {2}. Convert the split to percentages to keep each payer's proportion, or change the split on the shipment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
+    ]
+  },
   "Their claim, verbatim where possible — it decides which evidence matters.": {
     "sites": 1,
     "scope": [
@@ -150347,24 +150810,6 @@
       "routes/shipment"
     ]
   },
-  "This action should only be taken in exceptional circumstances with proper authorization.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
-  "This action should only be taken when adjustments are necessary.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
-    ]
-  },
   "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.": {
     "sites": 1,
     "scope": [
@@ -150372,6 +150817,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/invoice-approval"
     ]
   },
   "This allocation is already carried on a posted invoice and cannot change": {
@@ -151077,6 +151531,15 @@
       "apps/web/components"
     ]
   },
+  "This field can only be changed before the period is opened": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
+    ]
+  },
   "This field can only be changed by an administrator": {
     "sites": 1,
     "scope": [
@@ -151084,6 +151547,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "This field cannot be changed after the fiscal year is created": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalyearservice"
     ]
   },
   "This field crosses a to-many relationship and has no legal aggregations": {
@@ -151149,7 +151621,16 @@
       "service/fuelpurchaseservice"
     ]
   },
-  "This fiscal year does not end until {0} ( {1} days remaining). Closing early prevents posting transactions for the remainder of the year.": {
+  "This fiscal year does not end until {0} ({1, plural, one {# day} other {# days}} remaining). Closing early prevents posting transactions for the remainder of the year.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "This fiscal year is a draft. Set it as current to open it for posting.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151165,6 +151646,33 @@
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "This fiscal year is closed. Reopen it to post corrections.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "This fiscal year is open but is not the current fiscal year.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "This fiscal year is permanently closed and cannot change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "This fiscal year's date range overlaps with an existing fiscal year": {
@@ -151421,6 +151929,15 @@
       "routes/admin"
     ]
   },
+  "This is the current fiscal year.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "This is the first time this finding has been made, so there is nothing to compare.": {
     "sites": 1,
     "scope": [
@@ -151428,15 +151945,6 @@
     ],
     "areas": [
       "routes/insights"
-    ]
-  },
-  "This is typically done after audits are complete. Continue?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "This item is already settled. Reopen it first": {
@@ -151847,24 +152355,6 @@
       "service/invoiceadjustmentservice"
     ]
   },
-  "This payer's share: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
-  "This payer's share: {0} ({1}%)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
   "This period has closed — bill it": {
     "sites": 1,
     "scope": [
@@ -151890,6 +152380,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "This period's figures are final and cannot change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
     ]
   },
   "This place is already part of the zone": {
@@ -154321,7 +154820,7 @@
     ]
   },
   "Total": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
@@ -157220,8 +157719,8 @@
       "go"
     ],
     "areas": [
-      "service/orderservice",
-      "service/shipmentservice"
+      "service/allocationcheck",
+      "service/orderservice"
     ]
   },
   "Unable to verify invoiced allocations": {
@@ -157230,8 +157729,8 @@
       "go"
     ],
     "areas": [
-      "service/orderservice",
-      "service/shipmentservice"
+      "service/allocationcheck",
+      "service/orderservice"
     ]
   },
   "Unable to verify the referenced formula templates": {
@@ -158214,15 +158713,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Unlocked successfully": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "Unlocking this period will:": {
@@ -163712,11 +164202,12 @@
     ]
   },
   "Week": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "apps/web/types",
       "routes/admin",
       "routes/fuel-management",
@@ -166687,6 +167178,15 @@
       "routes/invoice"
     ]
   },
+  "Why is this period being reopened?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "Why is this shipment priced differently from its contract?": {
     "sites": 1,
     "scope": [
@@ -168376,12 +168876,11 @@
     ]
   },
   "Year": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "apps/web/types",
       "routes/admin",
       "routes/fiscal-year",
@@ -168580,7 +169079,7 @@
       "service/driversettlementservice"
     ]
   },
-  "You are about to close": {
+  "You are about to close {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -168598,7 +169097,7 @@
       "apps/web/components"
     ]
   },
-  "You are about to lock": {
+  "You are about to lock {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -168607,7 +169106,7 @@
       "routes/fiscal-year"
     ]
   },
-  "You are about to reopen": {
+  "You are about to open {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -168616,7 +169115,16 @@
       "routes/fiscal-year"
     ]
   },
-  "You are about to unlock": {
+  "You are about to reopen {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "You are about to unlock {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -172876,11 +173384,12 @@
     ]
   },
   "of {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/formula-template",
       "routes/my-team",
       "routes/scheduling"
@@ -174581,6 +175090,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# line} other {# lines}} into {1}{2} dated {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "{0, plural, one {# line} other {# lines}} · {1} chars": {
     "sites": 1,
     "scope": [
@@ -174723,6 +175241,24 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0, plural, one {# queue item canceled} other {# queue items canceled}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "{0, plural, one {# queue item created} other {# queue items created}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {# rate validation failure} other {# rate validation failures}}": {
@@ -176096,6 +176632,42 @@
       "service/ptopolicyservice"
     ]
   },
+  "{0} is now closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "{0} is now locked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "{0} is now open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
+  "{0} is open again": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/fiscal-year"
+    ]
+  },
   "{0} is outside the allowed range": {
     "sites": 1,
     "scope": [
@@ -176187,7 +176759,7 @@
     ]
   },
   "{0} issues block this close": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -176432,6 +177004,15 @@
       "routes/scheduling"
     ]
   },
+  "{0} moved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0} mph": {
     "sites": 1,
     "scope": [
@@ -176601,6 +177182,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "{0} of charges on shipment {1}. A payer who gains a share gets a queue item; a payer left with nothing has theirs canceled.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0} of {1, plural, one {# event} other {# events}} shown.": {
@@ -177840,15 +178430,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "{0} {1} into {2}{3} dated {4}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/fiscal-year"
     ]
   },
   "{0} {1} on {2}": {

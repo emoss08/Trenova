@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
+  AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -13,8 +14,11 @@ import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
+import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
+import type { FiscalYearAction } from "@/lib/fiscal-year-actions";
 import { apiService } from "@/services/api";
 import type {
+  FiscalYear,
   FiscalYearClosePlan,
   FiscalYearClosePlanEntry,
   FiscalYearSubledgerCheck,
@@ -25,12 +29,54 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-export type FiscalYearAction = "activate" | "close" | "reopen";
+export type FiscalYearActionRecord = Pick<FiscalYearRow, "id" | "year" | "endDate">;
 
 type DialogProps = {
-  record: FiscalYearRow;
+  record: FiscalYearActionRecord;
   onClose: () => void;
+  onCompleted?: (fiscalYear: FiscalYear) => void;
 };
+
+type FiscalYearActionDialogProps = DialogProps & {
+  action: FiscalYearAction;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+export function FiscalYearActionDialog({
+  action,
+  record,
+  open,
+  onOpenChange,
+  onClose,
+  onCompleted,
+}: FiscalYearActionDialogProps) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {action === "activate" && (
+        <FiscalYearActivateAlertDialogContent
+          record={record}
+          onClose={onClose}
+          onCompleted={onCompleted}
+        />
+      )}
+      {action === "close" && (
+        <FiscalYearCloseAlertDialogContent
+          record={record}
+          onClose={onClose}
+          onCompleted={onCompleted}
+        />
+      )}
+      {action === "reopen" && (
+        <FiscalYearReopenAlertDialogContent
+          record={record}
+          onClose={onClose}
+          onCompleted={onCompleted}
+        />
+      )}
+    </AlertDialog>
+  );
+}
 
 function useFiscalYearInvalidation() {
   const queryClient = useQueryClient();
@@ -41,25 +87,31 @@ function useFiscalYearInvalidation() {
   }, [queryClient]);
 }
 
-export function FiscalYearActivateAlertDialogContent({ record, onClose }: DialogProps) {
+export function FiscalYearActivateAlertDialogContent({
+  record,
+  onClose,
+  onCompleted,
+}: DialogProps) {
   const t = useT();
 
   const invalidate = useFiscalYearInvalidation();
 
-  const { mutateAsync, isPending } = useApiMutation({
+  const { mutate, isPending } = useApiMutation({
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.activate(id),
-    onSuccess: () => {
+    resourceName: "Fiscal Year",
+    onSuccess: (updated: FiscalYear) => {
       toast.success(t("Activated successfully"), {
-        description: `Successfully set ${record?.year} as current`,
+        description: t("Fiscal year {0} is now current", record.year),
       });
+      onCompleted?.(updated);
       invalidate();
       onClose();
     },
   });
 
   const handleFiscalYearActivate = useCallback(() => {
-    void mutateAsync(record?.id);
-  }, [mutateAsync, record?.id]);
+    mutate(record.id);
+  }, [mutate, record.id]);
 
   return (
     <AlertDialogContent>
@@ -80,7 +132,7 @@ export function FiscalYearActivateAlertDialogContent({ record, onClose }: Dialog
   );
 }
 
-export function FiscalYearCloseAlertDialogContent({ record, onClose }: DialogProps) {
+export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted }: DialogProps) {
   const t = useT();
 
   const invalidate = useFiscalYearInvalidation();
@@ -97,20 +149,22 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose }: DialogPro
     staleTime: 0,
   });
 
-  const { mutateAsync, isPending } = useApiMutation({
+  const { mutate, isPending } = useApiMutation({
     mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.close(id),
-    onSuccess: () => {
+    resourceName: "Fiscal Year",
+    onSuccess: (updated: FiscalYear) => {
       toast.success(t("Closed successfully"), {
-        description: `Successfully closed ${record?.year}`,
+        description: t("Fiscal year {0} is now closed", record.year),
       });
+      onCompleted?.(updated);
       invalidate();
       onClose();
     },
   });
 
   const handleFiscalYearClose = useCallback(() => {
-    void mutateAsync(record?.id);
-  }, [mutateAsync, record?.id]);
+    mutate(record.id);
+  }, [mutate, record.id]);
 
   const blocked = !plan?.canClose;
 
@@ -125,8 +179,8 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose }: DialogPro
             <AlertDescription>
               <p>
                 {t(
-                  "This fiscal year does not end until {0} ( {1} days remaining). Closing early prevents posting transactions for the remainder of the year.",
-                  formatUnixDate(record.endDate),
+                  "This fiscal year does not end until {0} ({1, plural, one {# day} other {# days}} remaining). Closing early prevents posting transactions for the remainder of the year.",
+                  formatUnixDate(record.endDate, { timezone: FISCAL_CALENDAR_TIMEZONE }),
                   Math.ceil((record.endDate - today) / 86400),
                 )}
               </p>
@@ -159,18 +213,23 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose }: DialogPro
   );
 }
 
-export function FiscalYearReopenAlertDialogContent({ record, onClose }: DialogProps) {
+export function FiscalYearReopenAlertDialogContent({ record, onClose, onCompleted }: DialogProps) {
   const t = useT();
 
   const invalidate = useFiscalYearInvalidation();
   const [reason, setReason] = useState("");
 
-  const { mutateAsync, isPending } = useApiMutation({
+  const { mutate, isPending } = useApiMutation({
     mutationFn: async (reopenReason: string) =>
       apiService.fiscalYearService.reopen(record.id, reopenReason),
-    onSuccess: () => {
+    resourceName: "Fiscal Year",
+    onSuccess: (updated: FiscalYear) => {
+      onCompleted?.(updated);
       toast.success(t("Reopened successfully"), {
-        description: `${record?.year} is open again and its closing entries were reversed`,
+        description: t(
+          "Fiscal year {0} is open again and its closing entries were reversed",
+          record.year,
+        ),
       });
       invalidate();
       onClose();
@@ -178,8 +237,8 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose }: DialogPr
   });
 
   const handleFiscalYearReopen = useCallback(() => {
-    void mutateAsync(reason.trim());
-  }, [mutateAsync, reason]);
+    mutate(reason.trim());
+  }, [mutate, reason]);
 
   return (
     <AlertDialogContent className="min-w-lg">
@@ -265,7 +324,7 @@ function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
         <Figure label={t("Cost of revenue")} value={formatMinor(plan.costOfRevenueMinor)} />
         <Figure label={t("Operating expense")} value={formatMinor(plan.operatingExpenseMinor)} />
         <Figure
-          label={plan.netIncomeMinor < 0 ? "Net loss" : "Net income"}
+          label={plan.netIncomeMinor < 0 ? t("Net loss") : t("Net income")}
           value={formatMinor(Math.abs(plan.netIncomeMinor))}
           emphasis
         />
@@ -280,8 +339,11 @@ function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
           : "."}
       </p>
       <div className="flex flex-col gap-2">
-        <EntrySummary entry={plan.closingEntry} fallback="No income-statement activity to close." />
-        <EntrySummary entry={plan.openingEntry} fallback="No balances to carry forward." />
+        <EntrySummary
+          entry={plan.closingEntry}
+          fallback={t("No income-statement activity to close.")}
+        />
+        <EntrySummary entry={plan.openingEntry} fallback={t("No balances to carry forward.")} />
       </div>
       <SubledgerChecks checks={plan.subledgerChecks} />
     </div>
@@ -359,12 +421,11 @@ function EntrySummary({
       </div>
       <p className="text-muted-foreground text-xs">
         {t(
-          "{0} {1} into {2}{3} dated {4}",
+          "{0, plural, one {# line} other {# lines}} into {1}{2} dated {3}",
           entry.lines.length,
-          entry.lines.length === 1 ? "line" : "lines",
           entry.fiscalPeriodName,
           entry.createsPeriod ? ` ${t("(created by this close)")}` : "",
-          formatUnixDate(entry.accountingDate),
+          formatUnixDate(entry.accountingDate, { timezone: FISCAL_CALENDAR_TIMEZONE }),
         )}
       </p>
     </div>

@@ -1,6 +1,14 @@
-import { translate } from "@trenova/shared/i18n/runtime";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
+import { usePermissionCheck } from "@/hooks/use-permission";
+import { fiscalPeriodStatusChoices, periodTypeChoices } from "@/lib/choices";
+import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
+import {
+  getFiscalPeriodActions,
+  type FiscalPeriodAction,
+  type FiscalPeriodActionBlocker,
+} from "@/lib/fiscal-period-actions";
+import type { FiscalPeriod } from "@/types/fiscal-period";
+import type { FiscalYearStatus } from "@/types/fiscal-year";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -16,36 +24,96 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { fiscalPeriodStatusChoices, periodTypeChoices } from "@/lib/choices";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import type { FiscalPeriod } from "@/types/fiscal-period";
+import { Resource } from "@trenova/shared/types/permission";
 import {
   CalendarIcon,
   LockIcon,
   MoreHorizontalIcon,
+  PlayIcon,
   RotateCcwIcon,
+  ShieldCheckIcon,
   UnlockIcon,
   XCircleIcon,
+  type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
-import { FiscalPeriodStatusActions } from "./fiscal-period-dialog-content";
+import { useCallback, useMemo, useState } from "react";
+import { FiscalPeriodActionDialog } from "./fiscal-period-dialog-content";
 
-export type FiscalPeriodAction = "close" | "reopen" | "lock" | "unlock";
+const actionIcons: Record<FiscalPeriodAction, LucideIcon> = {
+  activate: PlayIcon,
+  lock: LockIcon,
+  unlock: UnlockIcon,
+  close: XCircleIcon,
+  reopen: RotateCcwIcon,
+};
 
-export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[] }) {
+function actionLabel(action: FiscalPeriodAction, t: TranslateFn) {
+  switch (action) {
+    case "activate":
+      return t("Open Period");
+    case "lock":
+      return t("Lock Period");
+    case "unlock":
+      return t("Unlock Period");
+    case "close":
+      return t("Close Period");
+    case "reopen":
+      return t("Reopen Period");
+  }
+}
+
+function blockerMessage(blocker: FiscalPeriodActionBlocker, t: TranslateFn) {
+  switch (blocker.kind) {
+    case "fiscalYearClosed":
+      return t("The fiscal year is closed. Reopen the fiscal year first.");
+    case "fiscalYearPermanentlyClosed":
+      return t("The fiscal year is permanently closed.");
+    case "earlierPeriodNotOpened":
+      return t("Period {0} has not been opened yet", blocker.periodNumber);
+    case "earlierPeriodOpen":
+      return t("Period {0} is still open", blocker.periodNumber);
+    case "laterPeriodClosed":
+      return t("Period {0} is already closed", blocker.periodNumber);
+  }
+}
+
+type FiscalPeriodTableProps = {
+  periods: FiscalPeriod[];
+  fiscalYearStatus: FiscalYearStatus | undefined;
+  onPeriodUpdated: (period: FiscalPeriod) => void;
+};
+
+type PendingAction = { period: FiscalPeriod; action: FiscalPeriodAction };
+
+export function FiscalPeriodTable({
+  periods,
+  fiscalYearStatus,
+  onPeriodUpdated,
+}: FiscalPeriodTableProps) {
   const t = useT();
+  const { check } = usePermissionCheck();
 
+  const [pending, setPending] = useState<PendingAction | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<FiscalPeriod | null>(null);
-  const [selectedAction, setSelectedAction] = useState<FiscalPeriodAction | null>(null);
 
-  const handleAction = (period: FiscalPeriod, action: FiscalPeriodAction) => {
-    setSelectedPeriod(period);
-    setSelectedAction(action);
+  const sortedPeriods = useMemo(
+    () => [...periods].sort((a, b) => a.periodNumber - b.periodNumber),
+    [periods],
+  );
+
+  const can = useCallback(
+    (operation: Parameters<typeof check>[1]) => check(Resource.FiscalPeriod, operation),
+    [check],
+  );
+
+  const handleSelect = useCallback((period: FiscalPeriod, action: FiscalPeriodAction) => {
+    setPending({ period, action });
     setDialogOpen(true);
-  };
+  }, []);
 
-  if (!periods || periods.length === 0) {
+  if (sortedPeriods.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
         <CalendarIcon className="text-muted-foreground size-8" />
@@ -55,8 +123,6 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
       </div>
     );
   }
-
-  const sortedPeriods = [...periods].sort((a, b) => a.periodNumber - b.periodNumber);
 
   return (
     <div className="bg-card rounded-lg border">
@@ -79,7 +145,12 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
           {sortedPeriods.map((period) => {
             const statusChoice = fiscalPeriodStatusChoices.find((c) => c.value === period.status);
             const typeChoice = periodTypeChoices.find((c) => c.value === period.periodType);
-            const actions = getAvailableActions(period.status);
+            const options = getFiscalPeriodActions({
+              period,
+              periods: sortedPeriods,
+              fiscalYearStatus,
+              can,
+            });
 
             return (
               <TableRow key={period.id}>
@@ -100,39 +171,62 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
                 </TableCell>
                 <TableCell>
                   <span className="font-mono text-xs whitespace-nowrap">
-                    {formatToUserTimezone(period.startDate, {
-                      showTime: false,
-                      showDate: true,
-                    })}{" "}
+                    {formatToUserTimezone(
+                      period.startDate,
+                      { showTime: false, showDate: true },
+                      FISCAL_CALENDAR_TIMEZONE,
+                    )}{" "}
                     -{" "}
-                    {formatToUserTimezone(period.endDate, {
-                      showTime: false,
-                      showDate: true,
-                    })}
+                    {formatToUserTimezone(
+                      period.endDate,
+                      { showTime: false, showDate: true },
+                      FISCAL_CALENDAR_TIMEZONE,
+                    )}
                   </span>
                 </TableCell>
                 <TableCell>
-                  {actions.length > 0 && (
+                  {(options.length > 0 || period.status === "PermanentlyClosed") && (
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         render={
-                          <Button variant="ghost" size="icon-sm">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={t("Actions for {0}", period.name)}
+                          >
                             <MoreHorizontalIcon className="size-4" />
                           </Button>
                         }
                       />
-                      <DropdownMenuContent align="end">
-                        {actions.map((action) => (
+                      <DropdownMenuContent align="end" className="max-w-72">
+                        {period.status === "PermanentlyClosed" ? (
                           <DropdownMenuItem
-                            key={action.id}
-                            startContent={<action.icon className="size-4" />}
-                            title={t(action.label)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAction(period, action.id);
-                            }}
+                            disabled
+                            startContent={<ShieldCheckIcon className="size-4" />}
+                            title={t("Permanently closed")}
+                            description={t("This period's figures are final and cannot change.")}
+                            descriptionClassProps="whitespace-normal"
                           />
-                        ))}
+                        ) : (
+                          options.map(({ action, blocker }) => {
+                            const Icon = actionIcons[action];
+                            return (
+                              <DropdownMenuItem
+                                key={action}
+                                disabled={blocker !== null}
+                                startContent={<Icon className="size-4" />}
+                                title={actionLabel(action, t)}
+                                description={blocker ? blockerMessage(blocker, t) : undefined}
+                                descriptionClassProps="whitespace-normal"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleSelect(period, action);
+                                }}
+                              />
+                            );
+                          })
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -142,37 +236,13 @@ export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[]
           })}
         </TableBody>
       </Table>
-      <FiscalPeriodStatusActions
+      <FiscalPeriodActionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        record={selectedPeriod ?? undefined}
-        action={selectedAction || "close"}
+        period={pending?.period ?? null}
+        action={pending?.action ?? null}
+        onCompleted={onPeriodUpdated}
       />
     </div>
   );
-}
-
-function getAvailableActions(status: string) {
-  const actions: {
-    id: FiscalPeriodAction;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }[] = [];
-
-  if (status === "Open") {
-    actions.push({ id: "close", label: translate("Close Period"), icon: XCircleIcon });
-  }
-  if (status === "Closed") {
-    actions.push({
-      id: "reopen",
-      label: translate("Reopen Period"),
-      icon: RotateCcwIcon,
-    });
-    actions.push({ id: "lock", label: translate("Lock Period"), icon: LockIcon });
-  }
-  if (status === "Locked") {
-    actions.push({ id: "unlock", label: translate("Unlock Period"), icon: UnlockIcon });
-  }
-
-  return actions;
 }

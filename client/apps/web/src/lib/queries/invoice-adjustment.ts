@@ -14,10 +14,6 @@ export const invoiceAdjustment = createQueryKeys("invoice-adjustment", {
     queryKey: ["batch", batchId],
     queryFn: async () => apiService.invoiceAdjustmentService.getBatch(batchId),
   }),
-  approvals: (params: Record<string, string>) => ({
-    queryKey: ["approvals", params],
-    queryFn: async () => apiService.invoiceAdjustmentService.listApprovals(params),
-  }),
   reconciliation: (params: Record<string, string>) => ({
     queryKey: ["reconciliation", params],
     queryFn: async () => apiService.invoiceAdjustmentService.listReconciliationExceptions(params),

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -613,17 +614,120 @@ func (r *repository) UpdateBatchItem(
 
 func (r *repository) ListApprovalQueue(
 	ctx context.Context,
-	req repositories.ListApprovalQueueRequest,
-) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
-	entities := make(
-		[]*repositories.InvoiceAdjustmentApprovalQueueItem,
-		0,
-		req.Filter.Pagination.SafeLimit(),
+	req *repositories.ListApprovalQueueRequest,
+) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+	if req == nil || req.Filter == nil {
+		return nil, errortypes.NewValidationError(
+			"filter",
+			errortypes.ErrRequired,
+			"Approval queue filter is required",
+		)
+	}
+
+	after, err := approvalQueueAfter(req.Cursor)
+	if err != nil {
+		return nil, err
+	}
+
+	dba := r.db.DBForContext(ctx)
+
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, countErr := dba.
+			NewSelect().
+			TableExpr("invoice_adjustments AS ia").
+			Apply(approvalQueueFilterJoins).
+			Apply(approvalQueueConditions(req.Filter)).
+			Count(ctx)
+		if countErr != nil {
+			return nil, fmt.Errorf("count invoice adjustment approvals: %w", countErr)
+		}
+		totalCount = &total
+	}
+
+	return dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*repositories.InvoiceAdjustmentApprovalQueueItem]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(
+				items *[]*repositories.InvoiceAdjustmentApprovalQueueItem,
+			) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(items).
+					ModelTableExpr("invoice_adjustments AS ia").
+					Apply(approvalQueueColumns).
+					Apply(approvalQueueFilterJoins).
+					Apply(approvalQueueDetailJoins).
+					Apply(approvalQueueConditions(req.Filter))
+			},
+			Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+				if after != nil {
+					q = q.Where(
+						"(?, ia.id) < (?, ?)",
+						bun.Safe(approvalQueueSortExpr),
+						after.sortAt,
+						after.id,
+					)
+				}
+				req.Filter.CursorSort = approvalQueueCursorSort
+				req.Filter.CursorColumns = approvalQueueCursorColumns
+				return q.
+					OrderExpr(approvalQueueSortExpr + " DESC").
+					OrderExpr("ia.id DESC"), nil
+			},
+		},
 	)
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		ModelTableExpr("invoice_adjustments AS ia").
+}
+
+const approvalQueueSortExpr = "COALESCE(ia.submitted_at, ia.created_at)"
+
+var (
+	approvalQueueCursorSort = []pagination.CursorSortField{
+		{Field: "sortAt", Direction: "desc"},
+		{Field: "id", Direction: "desc"},
+	}
+	approvalQueueCursorColumns = []pagination.CursorValueColumn{
+		{SQLExpression: approvalQueueSortExpr, Alias: "__cursor_value_0"},
+		{SQLExpression: "ia.id", Alias: "__cursor_value_1"},
+	}
+)
+
+type approvalQueueKey struct {
+	sortAt int64
+	id     pulid.ID
+}
+
+func approvalQueueAfter(cursor pagination.CursorInfo) (*approvalQueueKey, error) {
+	if cursor.After == "" {
+		return nil, nil
+	}
+
+	invalid := errortypes.NewValidationError(
+		"after",
+		errortypes.ErrInvalid,
+		"Cursor does not belong to the approval queue",
+	)
+	if err := pagination.ValidateCursorSort(cursor.Cursor, approvalQueueCursorSort); err != nil {
+		return nil, invalid
+	}
+
+	sortAt, ok := pagination.CursorInt64Value(cursor.Cursor.Values[0])
+	if !ok {
+		return nil, invalid
+	}
+	id, ok := cursor.Cursor.Values[1].(string)
+	if !ok || id == "" {
+		return nil, invalid
+	}
+
+	return &approvalQueueKey{sortAt: sortAt, id: pulid.ID(id)}, nil
+}
+
+func approvalQueueColumns(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
 		ColumnExpr("ia.id AS adjustment_id").
 		ColumnExpr("ia.correction_group_id").
 		ColumnExpr("ia.original_invoice_id").
@@ -662,34 +766,36 @@ func (r *repository) ListApprovalQueue(
 		ColumnExpr("COALESCE(rebq.number, '') AS rebill_queue_number").
 		ColumnExpr("ia.batch_id").
 		ColumnExpr("ia.created_at").
-		ColumnExpr("ia.updated_at").
+		ColumnExpr("ia.updated_at")
+}
+
+func approvalQueueFilterJoins(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
 		Join("JOIN invoices AS orig ON orig.id = ia.original_invoice_id AND orig.organization_id = ia.organization_id AND orig.business_unit_id = ia.business_unit_id").
+		Join("LEFT JOIN users AS submitter ON submitter.id = ia.submitted_by_id")
+}
+
+func approvalQueueDetailJoins(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.
 		Join("LEFT JOIN invoices AS cm ON cm.id = ia.credit_memo_invoice_id AND cm.organization_id = ia.organization_id AND cm.business_unit_id = ia.business_unit_id").
 		Join("LEFT JOIN invoices AS repl ON repl.id = ia.replacement_invoice_id AND repl.organization_id = ia.organization_id AND repl.business_unit_id = ia.business_unit_id").
 		Join("LEFT JOIN billing_queue_items AS rebq ON rebq.id = ia.rebill_queue_item_id AND rebq.organization_id = ia.organization_id AND rebq.business_unit_id = ia.business_unit_id").
-		Join("LEFT JOIN users AS submitter ON submitter.id = ia.submitted_by_id").
 		Join("LEFT JOIN users AS approver ON approver.id = ia.approved_by_id").
-		Join("LEFT JOIN users AS rejector ON rejector.id = ia.rejected_by_id").
-		Where("ia.organization_id = ?", req.Filter.TenantInfo.OrgID).
-		Where("ia.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-		Where("ia.status = ?", invoiceadjustment.StatusPendingApproval)
+		Join("LEFT JOIN users AS rejector ON rejector.id = ia.rejected_by_id")
+}
 
-	applyAdjustmentSearch(query, req.Filter.Query)
-	applyApprovalFilters(query, req.Filter.FieldFilters)
-
-	total, err := query.
-		OrderExpr("COALESCE(ia.submitted_at, ia.created_at) DESC").
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
+func approvalQueueConditions(
+	filter *pagination.QueryOptions,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.
+			Where("ia.organization_id = ?", filter.TenantInfo.OrgID).
+			Where("ia.business_unit_id = ?", filter.TenantInfo.BuID).
+			Where("ia.status = ?", invoiceadjustment.StatusPendingApproval)
+		applyAdjustmentSearch(q, filter.Query)
+		applyApprovalFilters(q, filter.FieldFilters)
+		return q
 	}
-
-	return &pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]{
-		Items: entities,
-		Total: total,
-	}, nil
 }
 
 func (r *repository) ListReconciliationQueue(

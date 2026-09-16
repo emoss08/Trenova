@@ -77,18 +77,17 @@ type CustomerBillingProfile struct {
 	//
 	// It is reachable only on the automatic transfer path, so an organization that
 	// has not enabled automatic queue transfer cannot be auto-approving anything.
-	AutoApprove                               bool                                      `json:"autoApprove" bun:"auto_approve,type:BOOLEAN,notnull"`
-	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
-	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
-	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
-	RequirePONumber                           bool                                      `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull"`
-	RequireBOLNumber                          bool                                      `json:"requireBOLNumber"                          bun:"require_bol_number,type:BOOLEAN,notnull"`
-	RequireDeliveryNumber                     bool                                      `json:"requireDeliveryNumber"                     bun:"require_delivery_number,type:BOOLEAN,notnull"`
-	InvoiceAdjustmentSupportingDocumentPolicy InvoiceAdjustmentSupportingDocumentPolicy `json:"invoiceAdjustmentSupportingDocumentPolicy" bun:"invoice_adjustment_supporting_document_policy,type:invoice_adjustment_supporting_document_policy_enum,notnull,default:'Inherit'"`
-	DefaultBillerID                           *pulid.ID                                 `json:"defaultBillerId"                           bun:"default_biller_id,type:VARCHAR(100),nullzero"`
-	BillingNotes                              string                                    `json:"billingNotes"                              bun:"billing_notes,type:TEXT,nullzero"`
-	FuelSurchargeMode                         FuelSurchargeMode                         `json:"fuelSurchargeMode"                         bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
-	FuelSurchargeProgramID                    *pulid.ID                                 `json:"fuelSurchargeProgramId"                    bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
+	AutoApprove                     bool              `json:"autoApprove" bun:"auto_approve,type:BOOLEAN,notnull"`
+	CountLateOnlyOnAppointmentStops bool              `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
+	AutoApplyAccessorials           bool              `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull"`
+	BillingCurrency                 string            `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
+	RequirePONumber                 bool              `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull"`
+	RequireBOLNumber                bool              `json:"requireBOLNumber"                          bun:"require_bol_number,type:BOOLEAN,notnull"`
+	RequireDeliveryNumber           bool              `json:"requireDeliveryNumber"                     bun:"require_delivery_number,type:BOOLEAN,notnull"`
+	DefaultBillerID                 *pulid.ID         `json:"defaultBillerId"                           bun:"default_biller_id,type:VARCHAR(100),nullzero"`
+	BillingNotes                    string            `json:"billingNotes"                              bun:"billing_notes,type:TEXT,nullzero"`
+	FuelSurchargeMode               FuelSurchargeMode `json:"fuelSurchargeMode"                         bun:"fuel_surcharge_mode,type:customer_fuel_surcharge_mode_enum,notnull,default:'None'"`
+	FuelSurchargeProgramID          *pulid.ID         `json:"fuelSurchargeProgramId"                    bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
 	// UseFactoring                bool                 `json:"useFactoring"                bun:"use_factoring,type:BOOLEAN,notnull,default:false"`
 	// FactoringCompanyID          *pulid.ID            `json:"factoringCompanyId"          bun:"factoring_company_id,type:VARCHAR(100),nullzero"`
 
@@ -200,11 +199,6 @@ func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(currencyCodeLength, currencyCodeLength).
 				Error("Billing currency must be a three letter code"),
 		),
-		validation.Field(&b.InvoiceAdjustmentSupportingDocumentPolicy,
-			domainvalidation.ValidEnum[InvoiceAdjustmentSupportingDocumentPolicy](
-				"Supporting document policy is invalid",
-			),
-		),
 		validation.Field(&b.FuelSurchargeMode,
 			validation.Required.Error("Fuel surcharge mode is required"),
 			domainvalidation.ValidEnum[FuelSurchargeMode]("Fuel surcharge mode is invalid"),
@@ -292,7 +286,6 @@ func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBilling
 		SplitBy:                     InvoiceSplitKeyCustomer,
 		SectionBy:                   InvoiceSectionKeyShipment,
 		InvoiceDetail:               InvoiceDetailDetailed,
-		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
 }
 
@@ -310,9 +303,6 @@ func (b *CustomerBillingProfile) GetBusinessUnitID() pulid.ID {
 
 func (b *CustomerBillingProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
-	if b.InvoiceAdjustmentSupportingDocumentPolicy == "" {
-		b.InvoiceAdjustmentSupportingDocumentPolicy = InvoiceAdjustmentSupportingDocumentPolicyInherit
-	}
 	if b.FuelSurchargeMode == "" {
 		b.FuelSurchargeMode = FuelSurchargeModeNone
 	}

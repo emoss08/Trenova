@@ -28,6 +28,9 @@ vi.mock("@/routes/detention-desk/_components/occurrence-detail-sheet", () => ({
 vi.mock("../shipment-additional-charges-dialog", () => ({
   AdditionalChargeDialog: () => null,
 }));
+vi.mock("@/components/autocomplete-fields", () => ({
+  CustomerAutocompleteField: () => null,
+}));
 
 afterEach(() => {
   cleanup();
@@ -162,5 +165,51 @@ describe("AdditionalChargesSection detention rows", () => {
     );
 
     expect(screen.queryByText("Detention")).not.toBeInTheDocument();
+  });
+});
+
+describe("AdditionalChargesSection payers", () => {
+  // Detention and fuel surcharge rows cannot be edited, but who pays them can
+  // change, so every row carries the payer control, not only manual charges.
+  it("names who pays each charge, including system-generated ones", () => {
+    render(
+      <Harness
+        values={{
+          id: SHIPMENT_ID,
+          version: 2,
+          customerId: "cus_acme",
+          customer: { id: "cus_acme", name: "Acme Manufacturing", code: "ACME" } as never,
+          additionalCharges: [
+            {
+              ...detentionCharge(),
+              allocations: [
+                {
+                  billToCustomerId: "cus_peak",
+                  method: "Percent",
+                  percent: 100,
+                  amount: null,
+                  sequence: 0,
+                  billToCustomer: { id: "cus_peak", name: "Peak Distributing", code: "PEAK" },
+                },
+              ],
+            },
+            {
+              ...detentionCharge(),
+              id: "ac_manual",
+              isSystemGenerated: false,
+              isDetention: false,
+              allocations: [],
+            },
+          ] as Shipment["additionalCharges"],
+        }}
+      >
+        <AdditionalChargesSection />
+      </Harness>,
+    );
+
+    const controls = screen.getAllByTestId("charge-payer-control");
+    expect(controls).toHaveLength(2);
+    expect(controls[0]).toHaveTextContent("Bill to: PEAK – Peak Distributing");
+    expect(controls[1]).toHaveTextContent("Bill to: Same as shipment");
   });
 });

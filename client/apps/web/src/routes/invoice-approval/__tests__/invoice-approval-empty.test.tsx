@@ -12,16 +12,12 @@ const mocks = vi.hoisted(() => ({
   getSummary: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    invoiceAdjustmentService: {
-      listApprovals: mocks.listApprovals,
-      getSummary: mocks.getSummary,
-      getById: vi.fn(),
-      approve: vi.fn(),
-      reject: vi.fn(),
-    },
-  },
+vi.mock("@/lib/graphql/invoice-adjustment", () => ({
+  listInvoiceAdjustmentApprovals: mocks.listApprovals,
+  fetchInvoiceAdjustmentOperationsSummary: mocks.getSummary,
+  fetchInvoiceApprovalDetail: vi.fn(),
+  approveInvoiceAdjustment: vi.fn(),
+  rejectInvoiceAdjustment: vi.fn(),
 }));
 vi.mock("@/hooks/use-api-mutation", () => ({
   useApiMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -67,13 +63,15 @@ beforeEach(() => {
       disconnect() {}
     },
   );
-  mocks.listApprovals.mockResolvedValue({ results: [], next: null });
+  mocks.listApprovals.mockResolvedValue({
+    items: [],
+    pageInfo: { hasNextPage: false, endCursor: null },
+  });
   mocks.getSummary.mockResolvedValue({
     approvalsPending: 0,
     reconciliationPending: 0,
     writeOffPending: 0,
     failedBatchItems: 0,
-    batchesInFlight: 0,
   });
 });
 

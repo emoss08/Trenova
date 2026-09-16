@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -64,25 +63,22 @@ type InvoiceAdjustmentPreviewLine struct {
 }
 
 type InvoiceAdjustmentPreview struct {
-	InvoiceID                        pulid.ID                                           `json:"invoiceId"`
-	CorrectionGroupID                pulid.ID                                           `json:"correctionGroupId"`
-	Kind                             invoiceadjustment.Kind                             `json:"kind"`
-	RebillStrategy                   invoiceadjustment.RebillStrategy                   `json:"rebillStrategy"`
-	AccountingDate                   int64                                              `json:"accountingDate"`
-	CreditTotalAmount                decimal.Decimal                                    `json:"creditTotalAmount"`
-	RebillTotalAmount                decimal.Decimal                                    `json:"rebillTotalAmount"`
-	NetDeltaAmount                   decimal.Decimal                                    `json:"netDeltaAmount"`
-	RerateVariancePercent            decimal.Decimal                                    `json:"rerateVariancePercent"`
-	WouldCreateUnappliedCredit       bool                                               `json:"wouldCreateUnappliedCredit"`
-	RequiresApproval                 bool                                               `json:"requiresApproval"`
-	RequiresReplacementInvoiceReview bool                                               `json:"requiresReplacementInvoiceReview"`
-	RequiresReconciliationException  bool                                               `json:"requiresReconciliationException"`
-	CustomerSupportingDocumentPolicy customer.InvoiceAdjustmentSupportingDocumentPolicy `json:"customerSupportingDocumentPolicy"`
-	SupportingDocumentsRequired      bool                                               `json:"supportingDocumentsRequired"`
-	SupportingDocumentPolicySource   string                                             `json:"supportingDocumentPolicySource"`
-	Warnings                         []string                                           `json:"warnings"`
-	Errors                           map[string][]string                                `json:"errors"`
-	Lines                            []*InvoiceAdjustmentPreviewLine                    `json:"lines"`
+	InvoiceID                        pulid.ID                         `json:"invoiceId"`
+	CorrectionGroupID                pulid.ID                         `json:"correctionGroupId"`
+	Kind                             invoiceadjustment.Kind           `json:"kind"`
+	RebillStrategy                   invoiceadjustment.RebillStrategy `json:"rebillStrategy"`
+	AccountingDate                   int64                            `json:"accountingDate"`
+	CreditTotalAmount                decimal.Decimal                  `json:"creditTotalAmount"`
+	RebillTotalAmount                decimal.Decimal                  `json:"rebillTotalAmount"`
+	NetDeltaAmount                   decimal.Decimal                  `json:"netDeltaAmount"`
+	RerateVariancePercent            decimal.Decimal                  `json:"rerateVariancePercent"`
+	WouldCreateUnappliedCredit       bool                             `json:"wouldCreateUnappliedCredit"`
+	RequiresApproval                 bool                             `json:"requiresApproval"`
+	RequiresReplacementInvoiceReview bool                             `json:"requiresReplacementInvoiceReview"`
+	RequiresReconciliationException  bool                             `json:"requiresReconciliationException"`
+	Warnings                         []string                         `json:"warnings"`
+	Errors                           map[string][]string              `json:"errors"`
+	Lines                            []*InvoiceAdjustmentPreviewLine  `json:"lines"`
 }
 
 type ApproveInvoiceAdjustmentRequest struct {
@@ -197,8 +193,8 @@ type InvoiceAdjustmentService interface {
 	) (*invoiceadjustment.InvoiceAdjustmentBatch, error)
 	ListApprovals(
 		ctx context.Context,
-		filter pagination.QueryOptions,
-	) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)
+		req *repositories.ListApprovalQueueRequest,
+	) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)
 	ListReconciliationExceptions(
 		ctx context.Context,
 		filter pagination.QueryOptions,

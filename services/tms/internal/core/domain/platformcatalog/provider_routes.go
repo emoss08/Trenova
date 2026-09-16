@@ -454,6 +454,7 @@ func billingRouteRefs() []RouteRef {
 			"/api/v1/accounting/customer-payments/:paymentID/reverse/",
 			"/api/v1/accounting/customer-payments/credit-memo-applications/",
 			"/api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/",
+			"/api/v1/billing-queue/:itemID/reassign-charge/",
 			"/api/v1/billing-queue/filter-presets/",
 			"/api/v1/billing-queue/transfer/",
 			"/api/v1/billing/invoice-adjustments/:adjustmentID/approve/",

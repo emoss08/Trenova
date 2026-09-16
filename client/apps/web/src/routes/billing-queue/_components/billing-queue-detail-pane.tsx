@@ -110,7 +110,6 @@ export default function BillingQueueDetailPane({
           <span className="text-2xl font-bold tabular-nums">
             {formatCurrency(isPartial && allocated != null ? allocated : totalCharge)}
           </span>
-          <span className="text-muted-foreground text-sm">{payerName}</span>
           {isPartial ? (
             <span className="text-muted-foreground text-xs tabular-nums">
               {t("of {0} shipment total", formatCurrency(totalCharge))}
@@ -120,9 +119,7 @@ export default function BillingQueueDetailPane({
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
           {item.number ? <MetadataCell label={t("Queue #")} value={item.number} /> : null}
-          {item.billToCustomer ? (
-            <MetadataCell label={t("Bill To")} value={item.billToCustomer.name} />
-          ) : null}
+          <MetadataCell label={t("Bill To")} value={payerName} />
           {onBehalfOf ? <MetadataCell label={t("On behalf of")} value={onBehalfOf} /> : null}
           {shipment?.bol ? <MetadataCell label={t("BOL")} value={shipment.bol} /> : null}
           {item.assignedBiller ? (

@@ -95,6 +95,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpUnlock),
 		h.unlock,
 	)
+	api.PUT(
+		"/:fiscalPeriodID/activate/",
+		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpActivate),
+		h.activate,
+	)
 }
 
 // @Summary List fiscal periods
@@ -393,11 +398,17 @@ func (h *Handler) close(c *gin.Context) {
 	c.JSON(http.StatusOK, entity)
 }
 
+type reopenFiscalPeriodPayload struct {
+	ReopenReason string `json:"reopenReason"`
+}
+
 // @Summary Reopen a fiscal period
 // @ID reopenFiscalPeriod
 // @Tags Fiscal Periods
+// @Accept json
 // @Produce json
 // @Param fiscalPeriodID path string true "Fiscal period ID"
+// @Param request body reopenFiscalPeriodPayload true "Reopen payload"
 // @Success 200 {object} fiscalperiod.FiscalPeriod
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -414,6 +425,12 @@ func (h *Handler) reopen(c *gin.Context) {
 		return
 	}
 
+	payload := new(reopenFiscalPeriodPayload)
+	if err = c.ShouldBindJSON(payload); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalPeriodRequest{
 		ID: fiscalPeriodID,
 		TenantInfo: pagination.TenantInfo{
@@ -421,6 +438,7 @@ func (h *Handler) reopen(c *gin.Context) {
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
 		},
+		ReopenReason: payload.ReopenReason,
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -489,6 +507,43 @@ func (h *Handler) unlock(c *gin.Context) {
 	}
 
 	entity, err := h.service.Unlock(c.Request.Context(), repositories.UnlockFiscalPeriodRequest{
+		ID: fiscalPeriodID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	}, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
+}
+
+// @Summary Open an inactive fiscal period
+// @ID activateFiscalPeriod
+// @Tags Fiscal Periods
+// @Produce json
+// @Param fiscalPeriodID path string true "Fiscal period ID"
+// @Success 200 {object} fiscalperiod.FiscalPeriod
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /fiscal-periods/{fiscalPeriodID}/activate/ [put]
+func (h *Handler) activate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.Activate(c.Request.Context(), repositories.ActivateFiscalPeriodRequest{
 		ID: fiscalPeriodID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,

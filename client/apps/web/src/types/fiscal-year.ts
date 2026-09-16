@@ -1,10 +1,6 @@
 import { z } from "zod";
-import { fiscalPeriodSchema } from "./fiscal-period";
-import {
-  nullableIntegerSchema,
-  optionalStringSchema,
-  tenantInfoSchema,
-} from "@trenova/shared/types/helpers";
+import { closeBlockerSchema, fiscalPeriodSchema } from "./fiscal-period";
+import { optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 
 const fiscalYearStatusSchema = z.enum(["Draft", "Open", "Closed", "PermanentlyClosed"]);
 export type FiscalYearStatus = z.infer<typeof fiscalYearStatusSchema>;
@@ -17,9 +13,6 @@ export const fiscalYearSchema = z.object({
   description: optionalStringSchema,
   startDate: z.number().int(),
   endDate: z.number().int(),
-  taxYear: nullableIntegerSchema,
-  budgetAmount: nullableIntegerSchema,
-  adjustmentDeadline: nullableIntegerSchema,
   isCurrent: z.boolean().optional(),
   isCalendarYear: z.boolean().optional(),
   allowAdjustingEntries: z.boolean().optional(),
@@ -31,13 +24,6 @@ export const fiscalYearSchema = z.object({
 });
 
 export type FiscalYear = z.infer<typeof fiscalYearSchema>;
-
-const closeBlockerSchema = z.object({
-  field: z.string(),
-  code: z.string(),
-  message: z.string(),
-  category: z.string(),
-});
 
 export type FiscalYearCloseBlocker = z.infer<typeof closeBlockerSchema>;
 

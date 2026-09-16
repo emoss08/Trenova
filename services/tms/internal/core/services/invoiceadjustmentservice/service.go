@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -113,12 +112,6 @@ type previewComputation struct {
 	lines             []*invoiceadjustment.InvoiceAdjustmentLine
 	creditLineItems   []*invoice.InvoiceLine
 	replacementLines  []*invoice.InvoiceLine
-}
-
-type supportingDocumentRequirementResolution struct {
-	CustomerPolicy customer.InvoiceAdjustmentSupportingDocumentPolicy
-	Required       bool
-	Source         invoiceadjustment.SupportingDocumentPolicySource
 }
 
 type previewLineValuesRequest struct {
@@ -680,33 +673,6 @@ func (s *Service) GetDetail(
 		entity.AdjustmentDocuments = adjustmentDocs
 	}
 
-	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
-		ID:         entity.OriginalInvoiceID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	control, err := s.adjustmentCtrlRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	resolution, err := s.resolveSupportingDocumentRequirement(
-		ctx,
-		sourceInvoice,
-		entity.Kind,
-		control,
-		req.TenantInfo,
-	)
-	if err != nil {
-		return nil, err
-	}
-	entity.CustomerSupportingDocumentPolicy = resolution.CustomerPolicy
-	entity.SupportingDocumentsRequired = resolution.Required
-	entity.SupportingDocumentPolicySource = string(resolution.Source)
-
 	return entity, nil
 }
 
@@ -904,9 +870,9 @@ func (s *Service) GetBatch(
 
 func (s *Service) ListApprovals(
 	ctx context.Context,
-	filter pagination.QueryOptions, //nolint:gocritic // stable API shape
-) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
-	return s.repo.ListApprovalQueue(ctx, repositories.ListApprovalQueueRequest{Filter: filter})
+	req *repositories.ListApprovalQueueRequest,
+) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+	return s.repo.ListApprovalQueue(ctx, req)
 }
 
 func (s *Service) ListReconciliationExceptions(
@@ -936,7 +902,7 @@ func (s *Service) GetOperationsSummary(
 func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
 	req *servicesports.InvoiceAdjustmentRequest,
-	enforceAttachments bool,
+	checkAttachments bool,
 	excludeAdjustmentID pulid.ID,
 ) (*previewComputation, error) {
 	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
@@ -958,15 +924,11 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	}
 
 	preview := &servicesports.InvoiceAdjustmentPreview{
-		InvoiceID:                        entity.ID,
-		Kind:                             req.Kind,
-		RebillStrategy:                   req.RebillStrategy,
-		CustomerSupportingDocumentPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-		SupportingDocumentPolicySource: string(
-			invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-		),
-		Warnings: make([]string, 0),
-		Errors:   make(map[string][]string),
+		InvoiceID:      entity.ID,
+		Kind:           req.Kind,
+		RebillStrategy: req.RebillStrategy,
+		Warnings:       make([]string, 0),
+		Errors:         make(map[string][]string),
 		Lines: make(
 			[]*servicesports.InvoiceAdjustmentPreviewLine,
 			0,
@@ -985,28 +947,14 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		)
 	}
 
-	attachmentResolution, err := s.resolveSupportingDocumentRequirement(
-		ctx,
-		entity,
-		req.Kind,
-		control,
-		req.TenantInfo,
-	)
-	if err != nil {
-		return nil, err
-	}
-	preview.CustomerSupportingDocumentPolicy = attachmentResolution.CustomerPolicy
-	preview.SupportingDocumentsRequired = attachmentResolution.Required
-	preview.SupportingDocumentPolicySource = string(attachmentResolution.Source)
-
 	preview.AccountingDate = s.resolveAccountingDate(ctx, entity, control, preview)
 	s.validateSettlementPolicy(entity, control, preview)
 	if strings.TrimSpace(req.Reason) == "" &&
 		control.AdjustmentReasonRequirement == tenant.RequirementPolicyRequired {
 		appendPreviewError(preview, "reason", "Adjustment reason is required by policy")
 	}
-	if enforceAttachments {
-		s.validateAttachments(ctx, req, attachmentResolution.Required, preview)
+	if checkAttachments {
+		s.validateAttachments(ctx, req, preview)
 	}
 
 	switch {
@@ -1353,36 +1301,9 @@ func (s *Service) validateSettlementPolicy(
 func (s *Service) validateAttachments(
 	ctx context.Context,
 	req *servicesports.InvoiceAdjustmentRequest,
-	required bool,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) {
-	attachmentCount := len(req.AttachmentIDs)
-	if req.AdjustmentID.IsNotNil() {
-		if docs, err := s.documentRepo.GetByResourceID(
-			ctx,
-			&repositories.GetDocumentsByResourceRequest{
-				TenantInfo:          req.TenantInfo,
-				ResourceID:          req.AdjustmentID.String(),
-				ResourceType:        adjustmentDocumentResourceType,
-				IncludeDocumentType: false,
-			},
-		); err == nil {
-			for _, doc := range docs {
-				if doc != nil && doc.Status != document.StatusArchived {
-					attachmentCount++
-				}
-			}
-		}
-	}
-	fieldName := supportingDocumentFieldName(req.AdjustmentID)
-	if required && attachmentCount == 0 {
-		appendPreviewError(
-			preview,
-			fieldName,
-			"Supporting documents are required for this adjustment by policy",
-		)
-		return
-	}
+	fieldName := attachmentFieldName(req.AdjustmentID)
 	if len(req.AttachmentIDs) == 0 {
 		return
 	}
@@ -1584,62 +1505,11 @@ func (s *Service) buildDocumentReferences(
 	return refs, nil
 }
 
-func supportingDocumentFieldName(adjustmentID pulid.ID) string {
+func attachmentFieldName(adjustmentID pulid.ID) string {
 	if adjustmentID.IsNotNil() {
 		return "referencedDocumentIds"
 	}
 	return "attachmentIds"
-}
-
-func (s *Service) resolveSupportingDocumentRequirement(
-	ctx context.Context,
-	sourceInvoice *invoice.Invoice,
-	kind invoiceadjustment.Kind,
-	control *tenant.InvoiceAdjustmentControl,
-	tenantInfo pagination.TenantInfo,
-) (*supportingDocumentRequirementResolution, error) {
-	resolution := &supportingDocumentRequirementResolution{
-		CustomerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-		Required:       false,
-		Source:         invoiceadjustment.SupportingDocumentPolicySourceDefaultOptional,
-	}
-
-	entity, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID:         sourceInvoice.CustomerID,
-		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
-			IncludeBillingProfile: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if entity.BillingProfile == nil {
-		resolution.Required = organizationRequiresSupportingDocuments(kind, control)
-		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl
-		return resolution, nil
-	}
-
-	policy := entity.BillingProfile.InvoiceAdjustmentSupportingDocumentPolicy
-	if policy == "" {
-		policy = customer.InvoiceAdjustmentSupportingDocumentPolicyInherit
-	}
-	resolution.CustomerPolicy = policy
-
-	switch policy {
-	case customer.InvoiceAdjustmentSupportingDocumentPolicyRequired:
-		resolution.Required = true
-		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile
-	case customer.InvoiceAdjustmentSupportingDocumentPolicyOptional:
-		resolution.Required = false
-		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile
-	case customer.InvoiceAdjustmentSupportingDocumentPolicyInherit:
-		resolution.Required = organizationRequiresSupportingDocuments(kind, control)
-		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl
-	}
-
-	return resolution, nil
 }
 
 func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
@@ -1674,24 +1544,6 @@ func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
 	values.payload = req.input.ReplacementPayload
 
 	return values
-}
-
-func organizationRequiresSupportingDocuments(
-	kind invoiceadjustment.Kind,
-	control *tenant.InvoiceAdjustmentControl,
-) bool {
-	switch control.AdjustmentAttachmentRequirement {
-	case tenant.AdjustmentAttachmentPolicyRequiredForAll:
-		return true
-	case tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff:
-		return kind == invoiceadjustment.KindCreditOnly ||
-			kind == invoiceadjustment.KindFullReversal ||
-			kind == invoiceadjustment.KindWriteOff
-	case tenant.AdjustmentAttachmentPolicyOptional:
-		return false
-	default:
-		return false
-	}
 }
 
 func (s *Service) applyCreditBalancePolicy(

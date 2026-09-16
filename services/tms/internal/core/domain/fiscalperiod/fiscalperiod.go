@@ -188,12 +188,16 @@ func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
+func (fp *FiscalPeriod) IsAdjustingPeriod() bool {
+	return fp.IsAdjusting || fp.PeriodType == PeriodTypeAdjusting
+}
+
 // maxPeriodNumber caps the ordinal a period may take. Operating periods stop at
 // 12; adjusting periods sit above them (Period 13/14) and share the final
 // operating period's date range, which is why they are excluded from the
 // fiscal_periods no-overlap constraint.
 func (fp *FiscalPeriod) maxPeriodNumber() int {
-	if fp.IsAdjusting || fp.PeriodType == PeriodTypeAdjusting {
+	if fp.IsAdjustingPeriod() {
 		return MaxAdjustingPeriodNumber
 	}
 

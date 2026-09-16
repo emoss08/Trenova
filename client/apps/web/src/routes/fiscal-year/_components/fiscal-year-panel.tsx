@@ -1,12 +1,18 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
-import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
-import { fiscalYearSchema } from "@/types/fiscal-year";
+import { fiscalYearSchema, type FiscalYear } from "@/types/fiscal-year";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { getUTCYearBounds } from "@trenova/shared/lib/date";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { useCallback } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { FiscalYearForm } from "./fiscal-year-form";
+import {
+  FiscalYearLifecycleActions,
+  FiscalYearStatusSummary,
+} from "./fiscal-year-lifecycle-actions";
 
 export function FiscalYearPanel({
   open,
@@ -17,6 +23,7 @@ export function FiscalYearPanel({
   const t = useT();
 
   const currentYear = new Date().getFullYear();
+  const { startDate, endDate } = getUTCYearBounds(currentYear);
 
   const form = useForm({
     resolver: zodResolver(fiscalYearSchema),
@@ -25,17 +32,40 @@ export function FiscalYearPanel({
       year: currentYear,
       name: `FY ${currentYear}`,
       description: "",
-      startDate: undefined as unknown as number,
-      endDate: undefined as unknown as number,
+      startDate,
+      endDate,
       isCalendarYear: true,
-      budgetAmount: null,
-      taxYear: null,
       allowAdjustingEntries: false,
-      adjustmentDeadline: null,
       isCurrent: false,
     },
     mode: "onChange",
   });
+
+  const [id, year, yearEndDate, status, isCurrent] = useWatch({
+    control: form.control,
+    name: ["id", "year", "endDate", "status", "isCurrent"],
+  });
+
+  const { reset, formState } = form;
+  const handleFiscalYearUpdated = useCallback(
+    (updated: FiscalYear) => {
+      reset(
+        {
+          ...(formState.defaultValues as FiscalYear),
+          status: updated.status,
+          isCurrent: updated.isCurrent,
+          closedAt: updated.closedAt,
+          closedById: updated.closedById,
+          lockedAt: updated.lockedAt,
+          lockedById: updated.lockedById,
+          version: updated.version,
+          updatedAt: updated.updatedAt,
+        },
+        { keepDirtyValues: true, keepErrors: true, keepTouched: true, keepSubmitCount: true },
+      );
+    },
+    [reset, formState],
+  );
 
   if (mode === "edit") {
     return (
@@ -50,6 +80,13 @@ export function FiscalYearPanel({
         fieldKey="name"
         formComponent={<FiscalYearForm mode="edit" />}
         size="lg"
+        descriptionExtra={<FiscalYearStatusSummary status={status} isCurrent={isCurrent} />}
+        headerActions={
+          <FiscalYearLifecycleActions
+            fiscalYear={{ id, year, endDate: yearEndDate, status, isCurrent }}
+            onCompleted={handleFiscalYearUpdated}
+          />
+        }
       />
     );
   }

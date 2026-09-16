@@ -16,8 +16,10 @@ const SharePlaces = 2
 
 // AllocatedCharge is one payer's slice of one charge.
 type AllocatedCharge struct {
-	Kind          ChargeAllocationKind
-	AllocationID  pulid.ID
+	Kind         ChargeAllocationKind
+	AllocationID pulid.ID
+	// Method is how the charge was split; empty when it was billed whole.
+	Method        ChargeAllocationMethod
 	Charge        *AdditionalCharge
 	OrderChargeID pulid.ID
 	Description   string
@@ -213,6 +215,7 @@ func (b *shareBuilder) allocate(
 	for i, allocation := range sorted {
 		share := base
 		share.AllocationID = allocation.ID
+		share.Method = method
 		share.Amount = amounts[i].RoundBank(SharePlaces)
 		share.Partial = !share.Amount.Equal(base.ChargeTotal.RoundBank(SharePlaces))
 		switch method {

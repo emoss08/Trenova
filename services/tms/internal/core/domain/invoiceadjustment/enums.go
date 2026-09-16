@@ -85,20 +85,6 @@ const (
 	BatchItemStatusFailed          = BatchItemStatus("Failed")
 )
 
-type SupportingDocumentPolicySource string
-
-const (
-	SupportingDocumentPolicySourceCustomerBillingProfile = SupportingDocumentPolicySource(
-		"CustomerBillingProfile",
-	)
-	SupportingDocumentPolicySourceOrganizationControl = SupportingDocumentPolicySource(
-		"OrganizationControl",
-	)
-	SupportingDocumentPolicySourceDefaultOptional = SupportingDocumentPolicySource(
-		"DefaultOptional",
-	)
-)
-
 func (v Kind) IsValid() bool {
 	switch v {
 	case KindCreditOnly,
@@ -205,17 +191,6 @@ func (v BatchItemStatus) IsValid() bool {
 		BatchItemStatusExecuted,
 		BatchItemStatusRejected,
 		BatchItemStatusFailed:
-		return true
-	default:
-		return false
-	}
-}
-
-func (v SupportingDocumentPolicySource) IsValid() bool {
-	switch v {
-	case SupportingDocumentPolicySourceCustomerBillingProfile,
-		SupportingDocumentPolicySourceOrganizationControl,
-		SupportingDocumentPolicySourceDefaultOptional:
 		return true
 	default:
 		return false

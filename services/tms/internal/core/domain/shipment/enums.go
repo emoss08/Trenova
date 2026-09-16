@@ -119,6 +119,14 @@ const (
 	StopTypeSplitPickup   = StopType("SplitPickup")
 )
 
+func PickupStopTypes() []StopType {
+	return []StopType{StopTypePickup, StopTypeSplitPickup}
+}
+
+func DeliveryStopTypes() []StopType {
+	return []StopType{StopTypeDelivery, StopTypeSplitDelivery}
+}
+
 type StopScheduleType string
 
 const (

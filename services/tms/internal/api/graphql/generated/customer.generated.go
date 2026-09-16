@@ -42,6 +42,8 @@ type CustomerBillingProfileResolver interface {
 
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	GracePeriodDays(ctx context.Context, obj *customer.CustomerBillingProfile) (int, error)
+
+	InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -1969,18 +1971,18 @@ func (ec *executionContext) _CustomerBillingProfile_invoiceAdjustmentSupportingD
 			return ec.fieldContext_CustomerBillingProfile_invoiceAdjustmentSupportingDocumentPolicy(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.InvoiceAdjustmentSupportingDocumentPolicy, nil
+			return ec.Resolvers.CustomerBillingProfile().InvoiceAdjustmentSupportingDocumentPolicy(ctx, obj)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v customer.InvoiceAdjustmentSupportingDocumentPolicy) graphql.Marshaler {
-			return ec.marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceAdjustmentSupportingDocumentPolicy(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy) graphql.Marshaler {
+			return ec.marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceAdjustmentSupportingDocumentPolicy(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_CustomerBillingProfile_invoiceAdjustmentSupportingDocumentPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, false, false, errors.New("field of type CustomerInvoiceAdjustmentSupportingDocumentPolicy does not have child fields"))
+	return graphql.NewScalarFieldContext("CustomerBillingProfile", field, true, true, errors.New("field of type CustomerInvoiceAdjustmentSupportingDocumentPolicy does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerBillingProfile_defaultBillerId(ctx context.Context, field graphql.CollectedField, obj *customer.CustomerBillingProfile) (ret graphql.Marshaler) {
@@ -3578,10 +3580,43 @@ func (ec *executionContext) _CustomerBillingProfile(ctx context.Context, sel ast
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "invoiceAdjustmentSupportingDocumentPolicy":
-			out.Values[i] = ec._CustomerBillingProfile_invoiceAdjustmentSupportingDocumentPolicy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerBillingProfile_invoiceAdjustmentSupportingDocumentPolicy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "defaultBillerId":
 			out.Values[i] = ec._CustomerBillingProfile_defaultBillerId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -3968,21 +4003,14 @@ func (ec *executionContext) marshalNCustomerFuelSurchargeMode2githubᚗcomᚋemo
 	return res
 }
 
-func (ec *executionContext) unmarshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, v any) (customer.InvoiceAdjustmentSupportingDocumentPolicy, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := customer.InvoiceAdjustmentSupportingDocumentPolicy(tmp)
+func (ec *executionContext) unmarshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, v any) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error) {
+	var res gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, sel ast.SelectionSet, v customer.InvoiceAdjustmentSupportingDocumentPolicy) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+func (ec *executionContext) marshalNCustomerInvoiceAdjustmentSupportingDocumentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, sel ast.SelectionSet, v gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐInvoiceDelivery(ctx context.Context, v any) (customer.InvoiceDelivery, error) {

@@ -96,6 +96,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.updateStatus,
 	)
+	api.POST(
+		"/:itemID/reassign-charge/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpUpdate,
+		),
+		h.reassignCharge,
+	)
 	api.PUT(
 		"/:itemID/charges/",
 		h.pm.RequirePermission(
@@ -356,6 +364,9 @@ type updateChargesRequest struct {
 	FormulaTemplateID *string                      `json:"formulaTemplateId"`
 	BaseRate          *string                      `json:"baseRate"`
 	AdditionalCharges []*shipment.AdditionalCharge `json:"additionalCharges"`
+	// ConvertAmountSplitsToPercent retries an edit that was refused because it
+	// left an amount split that no longer adds up.
+	ConvertAmountSplitsToPercent bool `json:"convertAmountSplitsToPercent"`
 }
 
 // @Summary Update charges on a billing queue item
@@ -417,6 +428,8 @@ func (h *Handler) updateCharges(c *gin.Context) {
 			FormulaTemplateID: formulaTemplateID,
 			BaseRate:          baseRate,
 			AdditionalCharges: req.AdditionalCharges,
+
+			ConvertAmountSplitsToPercent: req.ConvertAmountSplitsToPercent,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,
@@ -679,4 +692,66 @@ func (h *Handler) deleteFilterPreset(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+type reassignChargeRequest struct {
+	ChargeKind         shipment.ChargeAllocationKind `json:"chargeKind"`
+	AdditionalChargeID pulid.ID                      `json:"additionalChargeId"`
+	// Allocations divide the charge among payers. An empty list gives it back
+	// whole to the shipment's payer.
+	Allocations []*shipment.ChargeAllocation `json:"allocations"`
+}
+
+// @Summary Reassign who pays for one charge on a billing queue item's shipment
+// @Description Moves a freight or accessorial charge, whole or split, to other payers while the shipment is in review. Payers who gain a share get a queue item and payers left with nothing have theirs canceled.
+// @ID reassignBillingQueueCharge
+// @Tags Billing Queue
+// @Accept json
+// @Produce json
+// @Param itemID path string true "Billing queue item ID"
+// @Param request body reassignChargeRequest true "Charge and its new allocations"
+// @Success 200 {object} services.ReassignChargeResult
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ValidationError
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/reassign-charge/ [post]
+func (h *Handler) reassignCharge(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req reassignChargeRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.ReassignCharge(
+		c.Request.Context(),
+		&services.ReassignChargeRequest{
+			ItemID:             itemID,
+			ChargeKind:         req.ChargeKind,
+			AdditionalChargeID: req.AdditionalChargeID,
+			Allocations:        req.Allocations,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

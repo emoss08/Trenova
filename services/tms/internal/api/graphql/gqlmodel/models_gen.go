@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -3033,6 +3034,27 @@ type InviteWorkerToPortalInput struct {
 	Email *string `json:"email,omitempty"`
 }
 
+type InvoiceAdjustmentApprovalQueueConnection struct {
+	Edges      []*InvoiceAdjustmentApprovalQueueEdge `json:"edges"`
+	PageInfo   *PageInfo                             `json:"pageInfo"`
+	TotalCount *int                                  `json:"totalCount,omitempty"`
+}
+
+type InvoiceAdjustmentApprovalQueueEdge struct {
+	Node   *repositories.InvoiceAdjustmentApprovalQueueItem `json:"node"`
+	Cursor string                                           `json:"cursor"`
+}
+
+// Pages the approval queue newest submission first. query matches the adjustment
+// id, invoice number, customer, reason, policy reason, and submitter name.
+type InvoiceAdjustmentApprovalsInput struct {
+	First         *int                    `json:"first,omitempty"`
+	After         *string                 `json:"after,omitempty"`
+	Query         *string                 `json:"query,omitempty"`
+	Kind          *invoiceadjustment.Kind `json:"kind,omitempty"`
+	SubmittedByID *string                 `json:"submittedById,omitempty"`
+}
+
 type InvoiceConnection struct {
 	Edges      []*InvoiceEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -3974,6 +3996,11 @@ type RecurringShipmentConnection struct {
 type RecurringShipmentEdge struct {
 	Node   *recurringshipment.RecurringShipment `json:"node"`
 	Cursor string                               `json:"cursor"`
+}
+
+type RejectInvoiceAdjustmentInput struct {
+	AdjustmentID string  `json:"adjustmentId"`
+	Reason       *string `json:"reason,omitempty"`
 }
 
 type RemoveCarrierSettlementAdjustmentInput struct {
@@ -8063,6 +8090,63 @@ func (e *CustomerConsolidationGroupBy) UnmarshalJSON(b []byte) error {
 }
 
 func (e CustomerConsolidationGroupBy) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CustomerInvoiceAdjustmentSupportingDocumentPolicy string
+
+const (
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit  CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Inherit"
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Required"
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional CustomerInvoiceAdjustmentSupportingDocumentPolicy = "Optional"
+)
+
+var AllCustomerInvoiceAdjustmentSupportingDocumentPolicy = []CustomerInvoiceAdjustmentSupportingDocumentPolicy{
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit,
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired,
+	CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional,
+}
+
+func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) IsValid() bool {
+	switch e {
+	case CustomerInvoiceAdjustmentSupportingDocumentPolicyInherit, CustomerInvoiceAdjustmentSupportingDocumentPolicyRequired, CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional:
+		return true
+	}
+	return false
+}
+
+func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) String() string {
+	return string(e)
+}
+
+func (e *CustomerInvoiceAdjustmentSupportingDocumentPolicy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CustomerInvoiceAdjustmentSupportingDocumentPolicy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CustomerInvoiceAdjustmentSupportingDocumentPolicy", str)
+	}
+	return nil
+}
+
+func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CustomerInvoiceAdjustmentSupportingDocumentPolicy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CustomerInvoiceAdjustmentSupportingDocumentPolicy) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

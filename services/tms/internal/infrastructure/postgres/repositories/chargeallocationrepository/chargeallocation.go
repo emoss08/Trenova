@@ -553,8 +553,9 @@ func (r *repository) LockedIDs(
 	ids := make([]pulid.ID, 0, len(allocationIDs))
 	if err := r.db.DBForContext(ctx).NewSelect().
 		Model((*shipment.ChargeAllocation)(nil)).
-		Column(cols.ID.Bare()).
-		Join("JOIN invoices AS inv ON "+inv.ID.Qualified()+" = "+cols.InvoiceID.Qualified()).
+		ColumnExpr(cols.ID.Qualified()).
+		Join("JOIN invoices AS inv").
+		JoinOn(inv.ID.Qualified()+" = "+cols.InvoiceID.Qualified()).
 		JoinOn(inv.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()).
 		JoinOn(inv.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

@@ -338,24 +338,33 @@ func cursorCreatedAtFromSortValues(sort []CursorSortField, values []any) int64 {
 			continue
 		}
 
-		switch typed := values[i].(type) {
-		case int64:
-			return typed
-		case int:
-			return int64(typed)
-		case int32:
-			return int64(typed)
-		case float64:
-			return int64(typed)
-		case string:
-			createdAt, err := strconv.ParseInt(typed, 10, 64)
-			if err == nil {
-				return createdAt
-			}
+		if createdAt, ok := CursorInt64Value(values[i]); ok {
+			return createdAt
 		}
 	}
 
 	return 0
+}
+
+func CursorInt64Value(value any) (int64, bool) {
+	switch typed := value.(type) {
+	case int64:
+		return typed, true
+	case int:
+		return int64(typed), true
+	case int32:
+		return int64(typed), true
+	case float64:
+		return int64(typed), true
+	case string:
+		parsed, err := strconv.ParseInt(typed, 10, 64)
+		if err != nil {
+			return 0, false
+		}
+		return parsed, true
+	default:
+		return 0, false
+	}
 }
 
 func cursorEntityID(item any) (pulid.ID, error) {

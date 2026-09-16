@@ -439,7 +439,8 @@ func (r *repository) GetPartnerScorecards(
 		ColumnExpr(
 			"MIN(emsg.generated_at) FILTER (WHERE " + scorecardPendingDeliveryFilter + ") AS oldest_pending_at",
 		).
-		Join("JOIN edi_partners AS ep ON ep.id = emsg.edi_partner_id").
+		Join("JOIN edi_partners AS ep").
+		JoinOn("ep.id = emsg.edi_partner_id").
 		JoinOn("ep.organization_id = emsg.organization_id").
 		JoinOn("ep.business_unit_id = emsg.business_unit_id").
 		Where("emsg.edi_partner_id IS NOT NULL").

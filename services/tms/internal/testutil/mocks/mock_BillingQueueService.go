@@ -319,6 +319,80 @@ func (_c *MockBillingQueueService_List_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// ReassignCharge provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) ReassignCharge(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor) (*services.ReassignChargeResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReassignCharge")
+	}
+
+	var r0 *services.ReassignChargeResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) (*services.ReassignChargeResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) *services.ReassignChargeResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ReassignChargeResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_ReassignCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReassignCharge'
+type MockBillingQueueService_ReassignCharge_Call struct {
+	*mock.Call
+}
+
+// ReassignCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ReassignChargeRequest
+//   - actor *services.RequestActor
+func (_e *MockBillingQueueService_Expecter) ReassignCharge(ctx any, req any, actor any) *MockBillingQueueService_ReassignCharge_Call {
+	return &MockBillingQueueService_ReassignCharge_Call{Call: _e.mock.On("ReassignCharge", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_ReassignCharge_Call) Run(run func(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor)) *MockBillingQueueService_ReassignCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ReassignChargeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ReassignChargeRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_ReassignCharge_Call) Return(v0 *services.ReassignChargeResult, err error) *MockBillingQueueService_ReassignCharge_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_ReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor) (*services.ReassignChargeResult, error)) *MockBillingQueueService_ReassignCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TransferToBilling provides a mock function for the type MockBillingQueueService
 func (_mock *MockBillingQueueService) TransferToBilling(ctx context.Context, req *services.TransferToBillingRequest, actor *services.RequestActor) (*billingqueue.BillingQueueItem, error) {
 	ret := _mock.Called(ctx, req, actor)

@@ -333,12 +333,17 @@ func (h *Handler) summary(c *gin.Context) {
 func (h *Handler) approvals(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
-			return h.service.ListApprovals(c.Request.Context(), *req)
+		func(
+			cursor pagination.CursorInfo,
+		) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+			return h.service.ListApprovals(
+				c.Request.Context(),
+				&repositories.ListApprovalQueueRequest{Filter: req, Cursor: cursor},
+			)
 		},
 	)
 }

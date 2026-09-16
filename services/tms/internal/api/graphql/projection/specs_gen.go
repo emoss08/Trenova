@@ -204,6 +204,10 @@ var IFTATaxRateSpec TypeSpec
 
 var InvoiceSpec TypeSpec
 
+var InvoiceAdjustmentSpec TypeSpec
+
+var InvoiceAdjustmentLineSpec TypeSpec
+
 var InvoiceDisputeSpec TypeSpec
 
 var InvoiceLineSpec TypeSpec
@@ -3580,8 +3584,8 @@ func init() {
 				FieldMapKey: "requireDeliveryNumber",
 			},
 			{
-				Name:        "invoiceAdjustmentSupportingDocumentPolicy",
-				FieldMapKey: "invoiceAdjustmentSupportingDocumentPolicy",
+				Name:    "invoiceAdjustmentSupportingDocumentPolicy",
+				Special: "invoiceAdjustmentSupportingDocumentPolicy",
 			},
 			{
 				Name:        "defaultBillerId",
@@ -9823,6 +9827,234 @@ func init() {
 			{
 				Name:    "lateChargeAssessments",
 				Special: "lateChargeAssessments",
+			},
+		},
+	}
+
+	InvoiceAdjustmentSpec = TypeSpec{
+		TypeName: "InvoiceAdjustment",
+		FieldMap: buncolgen.InvoiceAdjustmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "correctionGroupId",
+				FieldMapKey: "correctionGroupId",
+			},
+			{
+				Name:        "originalInvoiceId",
+				FieldMapKey: "originalInvoiceId",
+			},
+			{
+				Name:        "creditMemoInvoiceId",
+				FieldMapKey: "creditMemoInvoiceId",
+			},
+			{
+				Name:        "replacementInvoiceId",
+				FieldMapKey: "replacementInvoiceId",
+			},
+			{
+				Name:        "rebillQueueItemId",
+				FieldMapKey: "rebillQueueItemId",
+			},
+			{
+				Name:        "batchId",
+				FieldMapKey: "batchId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "approvalStatus",
+				FieldMapKey: "approvalStatus",
+			},
+			{
+				Name:        "replacementReviewStatus",
+				FieldMapKey: "replacementReviewStatus",
+			},
+			{
+				Name:        "rebillStrategy",
+				FieldMapKey: "rebillStrategy",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "policyReason",
+				FieldMapKey: "policyReason",
+			},
+			{
+				Name:        "accountingDate",
+				FieldMapKey: "accountingDate",
+			},
+			{
+				Name:        "creditTotalAmount",
+				FieldMapKey: "creditTotalAmount",
+			},
+			{
+				Name:        "rebillTotalAmount",
+				FieldMapKey: "rebillTotalAmount",
+			},
+			{
+				Name:        "netDeltaAmount",
+				FieldMapKey: "netDeltaAmount",
+			},
+			{
+				Name:        "rerateVariancePercent",
+				FieldMapKey: "rerateVariancePercent",
+			},
+			{
+				Name:        "wouldCreateUnappliedCredit",
+				FieldMapKey: "wouldCreateUnappliedCredit",
+			},
+			{
+				Name:        "requiresReconciliationException",
+				FieldMapKey: "requiresReconciliationException",
+			},
+			{
+				Name:        "approvalRequired",
+				FieldMapKey: "approvalRequired",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "rejectedById",
+				FieldMapKey: "rejectedById",
+			},
+			{
+				Name:        "rejectedAt",
+				FieldMapKey: "rejectedAt",
+			},
+			{
+				Name:        "rejectionReason",
+				FieldMapKey: "rejectionReason",
+			},
+			{
+				Name:        "executionError",
+				FieldMapKey: "executionError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &InvoiceAdjustmentLineSpec,
+				},
+			},
+		},
+	}
+
+	InvoiceAdjustmentLineSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentLine",
+		FieldMap: buncolgen.InvoiceAdjustmentLineFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "adjustmentId",
+				FieldMapKey: "adjustmentId",
+			},
+			{
+				Name:        "originalInvoiceId",
+				FieldMapKey: "originalInvoiceId",
+			},
+			{
+				Name:        "originalLineId",
+				FieldMapKey: "originalLineId",
+			},
+			{
+				Name:        "creditMemoLineId",
+				FieldMapKey: "creditMemoLineId",
+			},
+			{
+				Name:        "replacementLineId",
+				FieldMapKey: "replacementLineId",
+			},
+			{
+				Name:        "lineNumber",
+				FieldMapKey: "lineNumber",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "creditQuantity",
+				FieldMapKey: "creditQuantity",
+			},
+			{
+				Name:        "creditAmount",
+				FieldMapKey: "creditAmount",
+			},
+			{
+				Name:        "remainingEligibleAmount",
+				FieldMapKey: "remainingEligibleAmount",
+			},
+			{
+				Name:        "rebillQuantity",
+				FieldMapKey: "rebillQuantity",
+			},
+			{
+				Name:        "rebillAmount",
+				FieldMapKey: "rebillAmount",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

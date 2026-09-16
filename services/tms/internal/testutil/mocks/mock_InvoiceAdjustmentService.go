@@ -617,27 +617,27 @@ func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) RunAndReturn(r
 }
 
 // ListApprovals provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
-	ret := _mock.Called(ctx, filter)
+func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, req *repositories.ListApprovalQueueRequest) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApprovals")
 	}
 
-	var r0 *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]
+	var r0 *pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)); ok {
-		return returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApprovalQueueRequest) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]); ok {
-		r0 = returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListApprovalQueueRequest) *pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem])
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
-		r1 = returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListApprovalQueueRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -651,20 +651,20 @@ type MockInvoiceAdjustmentService_ListApprovals_Call struct {
 
 // ListApprovals is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter pagination.QueryOptions
-func (_e *MockInvoiceAdjustmentService_Expecter) ListApprovals(ctx any, filter any) *MockInvoiceAdjustmentService_ListApprovals_Call {
-	return &MockInvoiceAdjustmentService_ListApprovals_Call{Call: _e.mock.On("ListApprovals", ctx, filter)}
+//   - req *repositories.ListApprovalQueueRequest
+func (_e *MockInvoiceAdjustmentService_Expecter) ListApprovals(ctx any, req any) *MockInvoiceAdjustmentService_ListApprovals_Call {
+	return &MockInvoiceAdjustmentService_ListApprovals_Call{Call: _e.mock.On("ListApprovals", ctx, req)}
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Run(run func(ctx context.Context, filter pagination.QueryOptions)) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Run(run func(ctx context.Context, req *repositories.ListApprovalQueueRequest)) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pagination.QueryOptions
+		var arg1 *repositories.ListApprovalQueueRequest
 		if args[1] != nil {
-			arg1 = args[1].(pagination.QueryOptions)
+			arg1 = args[1].(*repositories.ListApprovalQueueRequest)
 		}
 		run(
 			arg0,
@@ -674,12 +674,12 @@ func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(listResult *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(cursorListResult *pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListApprovalQueueRequest) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Return(run)
 	return _c
 }

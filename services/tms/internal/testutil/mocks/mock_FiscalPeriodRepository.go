@@ -493,27 +493,27 @@ func (_c *MockFiscalPeriodRepository_GetByIDForUpdate_Call) RunAndReturn(run fun
 	return _c
 }
 
-// GetExpiredOpenPeriods provides a mock function for the type MockFiscalPeriodRepository
-func (_mock *MockFiscalPeriodRepository) GetExpiredOpenPeriods(ctx context.Context, req repositories.GetExpiredOpenPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error) {
+// GetExpiredUnclosedPeriods provides a mock function for the type MockFiscalPeriodRepository
+func (_mock *MockFiscalPeriodRepository) GetExpiredUnclosedPeriods(ctx context.Context, req repositories.GetExpiredUnclosedPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetExpiredOpenPeriods")
+		panic("no return value specified for GetExpiredUnclosedPeriods")
 	}
 
 	var r0 []*fiscalperiod.FiscalPeriod
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredOpenPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredUnclosedPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredOpenPeriodsRequest) []*fiscalperiod.FiscalPeriod); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetExpiredUnclosedPeriodsRequest) []*fiscalperiod.FiscalPeriod); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*fiscalperiod.FiscalPeriod)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetExpiredOpenPeriodsRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetExpiredUnclosedPeriodsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -521,27 +521,27 @@ func (_mock *MockFiscalPeriodRepository) GetExpiredOpenPeriods(ctx context.Conte
 	return r0, r1
 }
 
-// MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpiredOpenPeriods'
-type MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call struct {
+// MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExpiredUnclosedPeriods'
+type MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call struct {
 	*mock.Call
 }
 
-// GetExpiredOpenPeriods is a helper method to define mock.On call
+// GetExpiredUnclosedPeriods is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetExpiredOpenPeriodsRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetExpiredOpenPeriods(ctx any, req any) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
-	return &MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call{Call: _e.mock.On("GetExpiredOpenPeriods", ctx, req)}
+//   - req repositories.GetExpiredUnclosedPeriodsRequest
+func (_e *MockFiscalPeriodRepository_Expecter) GetExpiredUnclosedPeriods(ctx any, req any) *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call {
+	return &MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call{Call: _e.mock.On("GetExpiredUnclosedPeriods", ctx, req)}
 }
 
-func (_c *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call) Run(run func(ctx context.Context, req repositories.GetExpiredOpenPeriodsRequest)) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
+func (_c *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call) Run(run func(ctx context.Context, req repositories.GetExpiredUnclosedPeriodsRequest)) *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repositories.GetExpiredOpenPeriodsRequest
+		var arg1 repositories.GetExpiredUnclosedPeriodsRequest
 		if args[1] != nil {
-			arg1 = args[1].(repositories.GetExpiredOpenPeriodsRequest)
+			arg1 = args[1].(repositories.GetExpiredUnclosedPeriodsRequest)
 		}
 		run(
 			arg0,
@@ -551,35 +551,35 @@ func (_c *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call) Return(fiscalPeriods []*fiscalperiod.FiscalPeriod, err error) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
+func (_c *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call) Return(fiscalPeriods []*fiscalperiod.FiscalPeriod, err error) *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call {
 	_c.Call.Return(fiscalPeriods, err)
 	return _c
 }
 
-func (_c *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetExpiredOpenPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_GetExpiredOpenPeriods_Call {
+func (_c *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetExpiredUnclosedPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_GetExpiredUnclosedPeriods_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetOpenPeriodsCountByFiscalYear provides a mock function for the type MockFiscalPeriodRepository
-func (_mock *MockFiscalPeriodRepository) GetOpenPeriodsCountByFiscalYear(ctx context.Context, req repositories.GetOpenPeriodsCountByFiscalYearRequest) (int, error) {
+// CountUnclosedPeriodsByFiscalYear provides a mock function for the type MockFiscalPeriodRepository
+func (_mock *MockFiscalPeriodRepository) CountUnclosedPeriodsByFiscalYear(ctx context.Context, req repositories.CountUnclosedPeriodsByFiscalYearRequest) (int, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetOpenPeriodsCountByFiscalYear")
+		panic("no return value specified for CountUnclosedPeriodsByFiscalYear")
 	}
 
 	var r0 int
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetOpenPeriodsCountByFiscalYearRequest) (int, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.CountUnclosedPeriodsByFiscalYearRequest) (int, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetOpenPeriodsCountByFiscalYearRequest) int); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.CountUnclosedPeriodsByFiscalYearRequest) int); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetOpenPeriodsCountByFiscalYearRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.CountUnclosedPeriodsByFiscalYearRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -587,27 +587,27 @@ func (_mock *MockFiscalPeriodRepository) GetOpenPeriodsCountByFiscalYear(ctx con
 	return r0, r1
 }
 
-// MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOpenPeriodsCountByFiscalYear'
-type MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call struct {
+// MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUnclosedPeriodsByFiscalYear'
+type MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call struct {
 	*mock.Call
 }
 
-// GetOpenPeriodsCountByFiscalYear is a helper method to define mock.On call
+// CountUnclosedPeriodsByFiscalYear is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOpenPeriodsCountByFiscalYearRequest
-func (_e *MockFiscalPeriodRepository_Expecter) GetOpenPeriodsCountByFiscalYear(ctx any, req any) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
-	return &MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call{Call: _e.mock.On("GetOpenPeriodsCountByFiscalYear", ctx, req)}
+//   - req repositories.CountUnclosedPeriodsByFiscalYearRequest
+func (_e *MockFiscalPeriodRepository_Expecter) CountUnclosedPeriodsByFiscalYear(ctx any, req any) *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call {
+	return &MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call{Call: _e.mock.On("CountUnclosedPeriodsByFiscalYear", ctx, req)}
 }
 
-func (_c *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call) Run(run func(ctx context.Context, req repositories.GetOpenPeriodsCountByFiscalYearRequest)) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
+func (_c *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call) Run(run func(ctx context.Context, req repositories.CountUnclosedPeriodsByFiscalYearRequest)) *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repositories.GetOpenPeriodsCountByFiscalYearRequest
+		var arg1 repositories.CountUnclosedPeriodsByFiscalYearRequest
 		if args[1] != nil {
-			arg1 = args[1].(repositories.GetOpenPeriodsCountByFiscalYearRequest)
+			arg1 = args[1].(repositories.CountUnclosedPeriodsByFiscalYearRequest)
 		}
 		run(
 			arg0,
@@ -617,12 +617,12 @@ func (_c *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call) Run(r
 	return _c
 }
 
-func (_c *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call) Return(n int, err error) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
+func (_c *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call) Return(n int, err error) *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call {
 	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetOpenPeriodsCountByFiscalYearRequest) (int, error)) *MockFiscalPeriodRepository_GetOpenPeriodsCountByFiscalYear_Call {
+func (_c *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call) RunAndReturn(run func(ctx context.Context, req repositories.CountUnclosedPeriodsByFiscalYearRequest) (int, error)) *MockFiscalPeriodRepository_CountUnclosedPeriodsByFiscalYear_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1099,6 +1099,74 @@ func (_c *MockFiscalPeriodRepository_Reopen_Call) Return(fiscalPeriod *fiscalper
 }
 
 func (_c *MockFiscalPeriodRepository_Reopen_Call) RunAndReturn(run func(ctx context.Context, req repositories.ReopenFiscalPeriodRequest) (*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_Reopen_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Activate provides a mock function for the type MockFiscalPeriodRepository
+func (_mock *MockFiscalPeriodRepository) Activate(ctx context.Context, req repositories.ActivateFiscalPeriodRequest) (*fiscalperiod.FiscalPeriod, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Activate")
+	}
+
+	var r0 *fiscalperiod.FiscalPeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ActivateFiscalPeriodRequest) (*fiscalperiod.FiscalPeriod, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ActivateFiscalPeriodRequest) *fiscalperiod.FiscalPeriod); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*fiscalperiod.FiscalPeriod)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ActivateFiscalPeriodRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalPeriodRepository_Activate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Activate'
+type MockFiscalPeriodRepository_Activate_Call struct {
+	*mock.Call
+}
+
+// Activate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ActivateFiscalPeriodRequest
+func (_e *MockFiscalPeriodRepository_Expecter) Activate(ctx any, req any) *MockFiscalPeriodRepository_Activate_Call {
+	return &MockFiscalPeriodRepository_Activate_Call{Call: _e.mock.On("Activate", ctx, req)}
+}
+
+func (_c *MockFiscalPeriodRepository_Activate_Call) Run(run func(ctx context.Context, req repositories.ActivateFiscalPeriodRequest)) *MockFiscalPeriodRepository_Activate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ActivateFiscalPeriodRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ActivateFiscalPeriodRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_Activate_Call) Return(fiscalPeriod *fiscalperiod.FiscalPeriod, err error) *MockFiscalPeriodRepository_Activate_Call {
+	_c.Call.Return(fiscalPeriod, err)
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_Activate_Call) RunAndReturn(run func(ctx context.Context, req repositories.ActivateFiscalPeriodRequest) (*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_Activate_Call {
 	_c.Call.Return(run)
 	return _c
 }

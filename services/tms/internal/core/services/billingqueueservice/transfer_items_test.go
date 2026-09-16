@@ -250,3 +250,79 @@ func TestShouldAutoApprove(t *testing.T) {
 	assert.False(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel}}, amd))
 	assert.False(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{}, amd))
 }
+
+// A shipment whose every charge is billed to someone other than its customer
+// leaves the customer owing nothing, so no $0 queue item is created for them.
+func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
+	t.Parallel()
+
+	shp, amd, tenantInfo := transferFixture(t)
+	shipmentID := shp.ID
+	shp.ChargeAllocations = append(shp.ChargeAllocations, &shipment.ChargeAllocation{
+		ID:               pulid.MustNew("chal_"),
+		ShipmentID:       &shipmentID,
+		ChargeKind:       shipment.ChargeAllocationKindFreight,
+		BillToCustomerID: amd,
+		Method:           shipment.ChargeAllocationMethodPercent,
+		Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
+	})
+
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
+
+	repo := mocks.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingqueue.BillTypeInvoice).
+		Return(false, nil).
+		Once()
+	var created []*billingqueue.BillingQueueItem
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*billingqueue.BillingQueueItem")).
+		RunAndReturn(func(_ context.Context, item *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
+			item.ID = pulid.MustNew("bqi_")
+			created = append(created, item)
+			return item, nil
+		}).
+		Once()
+
+	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+		}).
+		Maybe()
+	audit := mocks.NewMockAuditService(t)
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	realtime := mocks.NewMockRealtimeService(t)
+	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	svc := &service{
+		l:            zap.NewNop(),
+		db:           passthroughDB{},
+		repo:         repo,
+		shipmentRepo: shipmentRepo,
+		customerRepo: customerRepo,
+		generator:    &countingGenerator{},
+		auditService: audit,
+		realtime:     realtime,
+		validator:    testValidator(),
+	}
+
+	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+		ShipmentID: shp.ID,
+		BillType:   billingqueue.BillTypeInvoice,
+		TenantInfo: tenantInfo,
+	}, &services.RequestActor{
+		PrincipalType: services.PrincipalTypeUser,
+		PrincipalID:   pulid.MustNew("usr_"),
+		UserID:        pulid.MustNew("usr_"),
+	})
+
+	require.NoError(t, err)
+	require.Len(t, created, 1)
+	assert.Equal(t, amd, created[0].BillToCustomerID)
+	assert.True(t, created[0].AllocatedTotalAmount.Equal(decimal.NewFromInt(1120)))
+	require.NotNil(t, result.Primary)
+	assert.Equal(t, amd, result.Primary.BillToCustomerID)
+}

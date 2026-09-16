@@ -183,6 +183,7 @@ type CustomerBillingProfile {
   requireBOLNumber: Boolean!
   requireDeliveryNumber: Boolean!
   invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
+    @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   defaultBillerId: ID
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!

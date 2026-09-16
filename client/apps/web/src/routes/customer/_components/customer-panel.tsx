@@ -75,7 +75,6 @@ const DEFAULT_VALUES: Customer = {
     requirePONumber: false,
     requireBOLNumber: false,
     requireDeliveryNumber: false,
-    invoiceAdjustmentSupportingDocumentPolicy: "Inherit",
     billingNotes: "",
     documentTypes: [],
   },

@@ -42,10 +42,11 @@ func TestCloseReturnsConflictWhenFiscalPeriodIsLocked(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 	svc := &Service{
-		l:            zap.NewNop(),
-		db:           conn,
-		repo:         fpRepo,
-		auditService: &mocks.NoopAuditService{},
+		l:              zap.NewNop(),
+		db:             conn,
+		repo:           fpRepo,
+		fiscalYearRepo: fyRepo,
+		auditService:   &mocks.NoopAuditService{},
 	}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -120,7 +121,7 @@ func TestCloseBlockedByApprovedManualJournalRequest(t *testing.T) {
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
 	validator := &Validator{db: conn}
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{
@@ -176,7 +177,7 @@ func TestCloseBlockedByPendingJournalSource(t *testing.T) {
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
 	validator := &Validator{db: conn}
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{
@@ -264,7 +265,7 @@ func TestGetCloseBlockersReturnsManualJournalBlocker(t *testing.T) {
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
 	validator := &Validator{db: conn}
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, Status: fiscalyear.StatusOpen, Year: 2026, Name: "FY 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(), IsCurrent: true})
@@ -288,7 +289,7 @@ func TestLockSucceedsFromOpenStatus(t *testing.T) {
 	conn := postgres.NewTestConnection(db)
 	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{
@@ -328,7 +329,7 @@ func TestCloseBlockedWhenPeriodCloseModeIsSystemScheduled(t *testing.T) {
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	validator := &Validator{db: conn, accountingRepo: accountingRepo}
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, data.Organization.ID).Return(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled, RequirePeriodCloseApproval: false}, nil)
@@ -351,7 +352,7 @@ func TestCloseBlockedWhenPeriodCloseApprovalRequired(t *testing.T) {
 	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	validator := &Validator{db: conn, accountingRepo: accountingRepo}
-	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, fiscalYearRepo: fyRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, data.Organization.ID).Return(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly, RequirePeriodCloseApproval: true}, nil)

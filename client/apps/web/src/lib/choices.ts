@@ -61,7 +61,6 @@ import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-se
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type {
   AdjustmentAccountingDatePolicy,
-  AdjustmentAttachmentPolicy,
   AdjustmentEligibilityPolicy,
   ApprovalPolicy,
   ClosedPeriodAdjustmentPolicy,
@@ -114,7 +113,6 @@ import type {
   CreditStatus,
   CustomerFuelSurchargeMode,
   CustomerPaymentTerm,
-  InvoiceAdjustmentSupportingDocumentPolicy,
   InvoiceDetail,
   InvoiceSectionKey,
   InvoiceSplitKey,
@@ -1177,15 +1175,18 @@ export const fiscalYearStatusChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<FiscalYearStatus>>;
 
 export const fiscalPeriodStatusChoices = [
+  { value: "Inactive", label: "Inactive", color: "#6b7280" },
   { value: "Open", label: "Open", color: "#16a34a" },
-  { value: "Closed", label: "Closed", color: "#dc2626" },
   { value: "Locked", label: "Locked", color: "#f59e0b" },
+  { value: "Closed", label: "Closed", color: "#dc2626" },
+  { value: "PermanentlyClosed", label: "Permanently Closed", color: "#7f1d1d" },
 ] satisfies ReadonlyArray<GenericSelectOption<FiscalPeriodStatus>>;
 
 export const periodTypeChoices = [
   { value: "Month", label: "Month", color: "#2563eb" },
   { value: "Quarter", label: "Quarter", color: "#4b0082" },
-  { value: "Year", label: "Year", color: "#16a34a" },
+  { value: "Week", label: "Week", color: "#0891b2" },
+  { value: "Adjusting", label: "Adjusting", color: "#9333ea" },
 ] satisfies ReadonlyArray<GenericSelectOption<PeriodType>>;
 
 export const documentClassificationChoices = [
@@ -1392,22 +1393,6 @@ export const requirementPolicyChoices = [
   { value: "Optional", label: "Optional", color: "#6b7280" },
   { value: "Required", label: "Required", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<RequirementPolicy>>;
-
-export const adjustmentAttachmentPolicyChoices = [
-  { value: "Optional", label: "Optional", color: "#6b7280" },
-  {
-    value: "RequiredForCreditOrWriteOff",
-    label: "Required For Credit Or Write-Off",
-    color: "#f59e0b",
-  },
-  { value: "RequiredForAll", label: "Required For All", color: "#dc2626" },
-] satisfies ReadonlyArray<GenericSelectOption<AdjustmentAttachmentPolicy>>;
-
-export const invoiceAdjustmentSupportingDocumentPolicyChoices = [
-  { value: "Inherit", label: "Inherit Organization Default", color: "#3b82f6" },
-  { value: "Required", label: "Required", color: "#dc2626" },
-  { value: "Optional", label: "Optional", color: "#6b7280" },
-] satisfies ReadonlyArray<GenericSelectOption<InvoiceAdjustmentSupportingDocumentPolicy>>;
 
 export const approvalPolicyChoices = [
   { value: "None", label: "None", color: "#6b7280" },

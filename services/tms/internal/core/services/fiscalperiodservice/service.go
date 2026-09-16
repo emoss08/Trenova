@@ -3,10 +3,12 @@ package fiscalperiodservice
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -29,33 +31,36 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           *postgres.Connection
-	Repo         repositories.FiscalPeriodRepository
-	Validator    *Validator
-	AuditService services.AuditService
-	Policy       *accountingcontrolpolicyservice.Service
+	Logger         *zap.Logger
+	DB             *postgres.Connection
+	Repo           repositories.FiscalPeriodRepository
+	FiscalYearRepo repositories.FiscalYearRepository
+	Validator      *Validator
+	AuditService   services.AuditService
+	Policy         *accountingcontrolpolicyservice.Service
 }
 
 type Service struct {
-	l            *zap.Logger
-	db           *postgres.Connection
-	repo         repositories.FiscalPeriodRepository
-	validator    *Validator
-	auditService services.AuditService
-	policy       *accountingcontrolpolicyservice.Service
+	l              *zap.Logger
+	db             *postgres.Connection
+	repo           repositories.FiscalPeriodRepository
+	fiscalYearRepo repositories.FiscalYearRepository
+	validator      *Validator
+	auditService   services.AuditService
+	policy         *accountingcontrolpolicyservice.Service
 }
 
 const fiscalPeriodLockTimeout = 250 * time.Millisecond
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.fiscalperiod"),
-		db:           p.DB,
-		repo:         p.Repo,
-		validator:    p.Validator,
-		auditService: p.AuditService,
-		policy:       p.Policy,
+		l:              p.Logger.Named("service.fiscalperiod"),
+		db:             p.DB,
+		repo:           p.Repo,
+		fiscalYearRepo: p.FiscalYearRepo,
+		validator:      p.Validator,
+		auditService:   p.AuditService,
+		policy:         p.Policy,
 	}
 }
 
@@ -164,10 +169,6 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
@@ -178,6 +179,16 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original fiscal period", zap.Error(err))
 		return nil, err
+	}
+
+	if multiErr := validateEditable(original, entity); multiErr != nil {
+		return nil, multiErr
+	}
+
+	preserveLifecycle(original, entity)
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
@@ -248,243 +259,75 @@ func (s *Service) Delete(
 	return nil
 }
 
-//nolint:nestif // existing validation flow mirrors business rule nesting
+type transitionState struct {
+	period  *fiscalperiod.FiscalPeriod
+	periods []*fiscalperiod.FiscalPeriod
+	year    *fiscalyear.FiscalYear
+}
+
+type transition struct {
+	name      string
+	operation permission.Operation
+	comment   string
+	validate  func(ctx context.Context, state transitionState) error
+	apply     func(ctx context.Context, state transitionState) (*fiscalperiod.FiscalPeriod, error)
+}
+
 func (s *Service) Close(
 	ctx context.Context,
 	req repositories.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	log := s.l.With(
-		zap.String("operation", "Close"),
-		zap.String("id", req.ID.String()),
-	)
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
+		name:      "Close",
+		operation: permission.OpClose,
+		comment:   "Fiscal period closed",
+		validate: func(ctx context.Context, state transitionState) error {
+			if multiErr := s.validateCloseWithPeriods(state.period, state.periods); multiErr != nil {
+				return multiErr
+			}
+			if err := s.validateCloseControl(ctx, state.period); err != nil {
+				return err
+			}
+			if s.validator != nil {
+				if multiErr := s.validator.ValidateClose(ctx, state.period); multiErr != nil {
+					return multiErr
+				}
+			}
 
-	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
-		if err != nil {
-			log.Error("failed to get fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if multiErr := s.validateClose(ctx, existing); multiErr != nil {
-			return nil, multiErr
-		}
-		if err = s.validateCloseControl(ctx, existing); err != nil {
-			return nil, err
-		}
-		if multiErr := s.validator.ValidateClose(ctx, existing); multiErr != nil {
-			return nil, multiErr
-		}
-
-		req.ClosedByID = userID
-		req.ClosedAt = timeutils.NowUnix()
-		closedEntity, err := s.repo.Close(ctx, req)
-		if err != nil {
-			log.Error("failed to close fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if err = s.auditService.LogAction(&services.LogActionParams{
-			Resource:       permission.ResourceFiscalPeriod,
-			ResourceID:     closedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(closedEntity),
-			PreviousState:  jsonutils.MustToJSON(existing),
-			OrganizationID: closedEntity.OrganizationID,
-			BusinessUnitID: closedEntity.BusinessUnitID,
+			return nil
 		},
-			auditservice.WithComment("Fiscal period closed"),
-			auditservice.WithDiff(existing, closedEntity),
-		); err != nil {
-			log.Error("failed to log audit action", zap.Error(err))
-		}
-
-		return closedEntity, nil
-	}
-
-	var existing *fiscalperiod.FiscalPeriod
-	var closedEntity *fiscalperiod.FiscalPeriod
-	err := s.db.WithTx(
-		ctx,
-		ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
-			var txErr error
-			existing, txErr = s.repo.GetByIDForUpdate(
-				txCtx,
-				repositories.GetFiscalPeriodByIDRequest{
-					ID:         req.ID,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			periods, txErr := s.repo.ListByFiscalYearIDForUpdate(
-				txCtx,
-				repositories.ListByFiscalYearIDRequest{
-					FiscalYearID: existing.FiscalYearID,
-					OrgID:        existing.OrganizationID,
-					BuID:         existing.BusinessUnitID,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			if multiErr := s.validateCloseWithPeriods(existing, periods); multiErr != nil {
-				return multiErr
-			}
-			if txErr = s.validateCloseControl(txCtx, existing); txErr != nil {
-				return txErr
-			}
-			if multiErr := s.validator.ValidateClose(txCtx, existing); multiErr != nil {
-				return multiErr
-			}
-
+		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
 			req.ClosedByID = userID
 			req.ClosedAt = timeutils.NowUnix()
-			closedEntity, txErr = s.repo.Close(txCtx, req)
-			return txErr
+			return s.repo.Close(ctx, req)
 		},
-	)
-	if err != nil {
-		log.Error("failed to close fiscal period", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"The fiscal period is busy. Retry the request.",
-		)
-	}
-
-	if err = s.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceFiscalPeriod,
-		ResourceID:     closedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
-		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(closedEntity),
-		PreviousState:  jsonutils.MustToJSON(existing),
-		OrganizationID: closedEntity.OrganizationID,
-		BusinessUnitID: closedEntity.BusinessUnitID,
-	},
-		auditservice.WithComment("Fiscal period closed"),
-		auditservice.WithDiff(existing, closedEntity),
-	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
-
-	return closedEntity, nil
+	})
 }
 
 func (s *Service) Reopen(
 	ctx context.Context,
-	req repositories.ReopenFiscalPeriodRequest,
+	req repositories.ReopenFiscalPeriodRequest, //nolint:gocritic // stable API shape
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	log := s.l.With(
-		zap.String("operation", "Reopen"),
-		zap.String("id", req.ID.String()),
-	)
-
-	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
-		if err != nil {
-			log.Error("failed to get fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if multiErr := s.validateReopen(ctx, existing); multiErr != nil {
-			return nil, multiErr
-		}
-
-		reopenedEntity, err := s.repo.Reopen(ctx, req)
-		if err != nil {
-			log.Error("failed to reopen fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if err = s.auditService.LogAction(&services.LogActionParams{
-			Resource:       permission.ResourceFiscalPeriod,
-			ResourceID:     reopenedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(reopenedEntity),
-			PreviousState:  jsonutils.MustToJSON(existing),
-			OrganizationID: reopenedEntity.OrganizationID,
-			BusinessUnitID: reopenedEntity.BusinessUnitID,
-		},
-			auditservice.WithComment("Fiscal period reopened"),
-			auditservice.WithDiff(existing, reopenedEntity),
-		); err != nil {
-			log.Error("failed to log audit action", zap.Error(err))
-		}
-
-		return reopenedEntity, nil
-	}
-
-	var existing *fiscalperiod.FiscalPeriod
-	var reopenedEntity *fiscalperiod.FiscalPeriod
-	err := s.db.WithTx(
-		ctx,
-		ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
-			var txErr error
-			existing, txErr = s.repo.GetByIDForUpdate(
-				txCtx,
-				repositories.GetFiscalPeriodByIDRequest(req),
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			periods, txErr := s.repo.ListByFiscalYearIDForUpdate(
-				txCtx,
-				repositories.ListByFiscalYearIDRequest{
-					FiscalYearID: existing.FiscalYearID,
-					OrgID:        existing.OrganizationID,
-					BuID:         existing.BusinessUnitID,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			if multiErr := s.validateReopenWithPeriods(existing, periods); multiErr != nil {
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
+		name:      "Reopen",
+		operation: permission.OpReopen,
+		comment:   "Fiscal period reopened",
+		validate: func(_ context.Context, state transitionState) error {
+			if multiErr := validateReopen(state, req.ReopenReason); multiErr != nil {
 				return multiErr
 			}
 
-			reopenedEntity, txErr = s.repo.Reopen(txCtx, req)
-			return txErr
+			return nil
 		},
-	)
-	if err != nil {
-		log.Error("failed to reopen fiscal period", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"The fiscal period is busy. Retry the request.",
-		)
-	}
-
-	if err = s.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceFiscalPeriod,
-		ResourceID:     reopenedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
-		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(reopenedEntity),
-		PreviousState:  jsonutils.MustToJSON(existing),
-		OrganizationID: reopenedEntity.OrganizationID,
-		BusinessUnitID: reopenedEntity.BusinessUnitID,
-	},
-		auditservice.WithComment("Fiscal period reopened"),
-		auditservice.WithDiff(existing, reopenedEntity),
-	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
-
-	return reopenedEntity, nil
+		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+			req.ReopenReason = strings.TrimSpace(req.ReopenReason)
+			req.ReopenedByID = userID
+			req.ReopenedAt = timeutils.NowUnix()
+			return s.repo.Reopen(ctx, req)
+		},
+	})
 }
 
 func (s *Service) Lock(
@@ -492,95 +335,23 @@ func (s *Service) Lock(
 	req repositories.LockFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	log := s.l.With(
-		zap.String("operation", "Lock"),
-		zap.String("id", req.ID.String()),
-	)
-
-	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
-		if err != nil {
-			log.Error("failed to get fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if multiErr := s.validateLock(existing); multiErr != nil {
-			return nil, multiErr
-		}
-
-		lockedEntity, err := s.repo.Lock(ctx, req)
-		if err != nil {
-			log.Error("failed to lock fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if err = s.auditService.LogAction(&services.LogActionParams{
-			Resource:       permission.ResourceFiscalPeriod,
-			ResourceID:     lockedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(lockedEntity),
-			PreviousState:  jsonutils.MustToJSON(existing),
-			OrganizationID: lockedEntity.OrganizationID,
-			BusinessUnitID: lockedEntity.BusinessUnitID,
-		},
-			auditservice.WithComment("Fiscal period locked"),
-			auditservice.WithDiff(existing, lockedEntity),
-		); err != nil {
-			log.Error("failed to log audit action", zap.Error(err))
-		}
-
-		return lockedEntity, nil
-	}
-
-	var existing *fiscalperiod.FiscalPeriod
-	var lockedEntity *fiscalperiod.FiscalPeriod
-	err := s.db.WithTx(
-		ctx,
-		ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
-			var txErr error
-			existing, txErr = s.repo.GetByIDForUpdate(
-				txCtx,
-				repositories.GetFiscalPeriodByIDRequest(req),
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			if multiErr := s.validateLock(existing); multiErr != nil {
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
+		name:      "Lock",
+		operation: permission.OpLock,
+		comment:   "Fiscal period locked",
+		validate: func(_ context.Context, state transitionState) error {
+			if multiErr := validateLock(state.period); multiErr != nil {
 				return multiErr
 			}
 
-			lockedEntity, txErr = s.repo.Lock(txCtx, req)
-			return txErr
+			return nil
 		},
-	)
-	if err != nil {
-		log.Error("failed to lock fiscal period", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"The fiscal period is busy. Retry the request.",
-		)
-	}
-
-	if err = s.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceFiscalPeriod,
-		ResourceID:     lockedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
-		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(lockedEntity),
-		PreviousState:  jsonutils.MustToJSON(existing),
-		OrganizationID: lockedEntity.OrganizationID,
-		BusinessUnitID: lockedEntity.BusinessUnitID,
-	},
-		auditservice.WithComment("Fiscal period locked"),
-		auditservice.WithDiff(existing, lockedEntity),
-	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
-
-	return lockedEntity, nil
+		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+			req.LockedByID = userID
+			req.LockedAt = timeutils.NowUnix()
+			return s.repo.Lock(ctx, req)
+		},
+	})
 }
 
 func (s *Service) Unlock(
@@ -588,95 +359,171 @@ func (s *Service) Unlock(
 	req repositories.UnlockFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	log := s.l.With(
-		zap.String("operation", "Unlock"),
-		zap.String("id", req.ID.String()),
-	)
-
-	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
-		if err != nil {
-			log.Error("failed to get fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if multiErr := s.validateUnlock(existing); multiErr != nil {
-			return nil, multiErr
-		}
-
-		unlockedEntity, err := s.repo.Unlock(ctx, req)
-		if err != nil {
-			log.Error("failed to unlock fiscal period", zap.Error(err))
-			return nil, err
-		}
-
-		if err = s.auditService.LogAction(&services.LogActionParams{
-			Resource:       permission.ResourceFiscalPeriod,
-			ResourceID:     unlockedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(unlockedEntity),
-			PreviousState:  jsonutils.MustToJSON(existing),
-			OrganizationID: unlockedEntity.OrganizationID,
-			BusinessUnitID: unlockedEntity.BusinessUnitID,
-		},
-			auditservice.WithComment("Fiscal period unlocked"),
-			auditservice.WithDiff(existing, unlockedEntity),
-		); err != nil {
-			log.Error("failed to log audit action", zap.Error(err))
-		}
-
-		return unlockedEntity, nil
-	}
-
-	var existing *fiscalperiod.FiscalPeriod
-	var unlockedEntity *fiscalperiod.FiscalPeriod
-	err := s.db.WithTx(
-		ctx,
-		ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-		func(txCtx context.Context, _ bun.Tx) error {
-			var txErr error
-			existing, txErr = s.repo.GetByIDForUpdate(
-				txCtx,
-				repositories.GetFiscalPeriodByIDRequest(req),
-			)
-			if txErr != nil {
-				return txErr
-			}
-
-			if multiErr := s.validateUnlock(existing); multiErr != nil {
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
+		name:      "Unlock",
+		operation: permission.OpUnlock,
+		comment:   "Fiscal period unlocked",
+		validate: func(_ context.Context, state transitionState) error {
+			if multiErr := validateUnlock(state); multiErr != nil {
 				return multiErr
 			}
 
-			unlockedEntity, txErr = s.repo.Unlock(txCtx, req)
-			return txErr
+			return nil
 		},
+		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+			return s.repo.Unlock(ctx, req)
+		},
+	})
+}
+
+func (s *Service) Activate(
+	ctx context.Context,
+	req repositories.ActivateFiscalPeriodRequest,
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
+		name:      "Activate",
+		operation: permission.OpActivate,
+		comment:   "Fiscal period opened",
+		validate: func(_ context.Context, state transitionState) error {
+			if multiErr := validateActivate(state); multiErr != nil {
+				return multiErr
+			}
+
+			return nil
+		},
+		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+			return s.repo.Activate(ctx, req)
+		},
+	})
+}
+
+func (s *Service) runTransition(
+	ctx context.Context,
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+	t transition,
+) (*fiscalperiod.FiscalPeriod, error) {
+	log := s.l.With(
+		zap.String("operation", t.name),
+		zap.String("id", id.String()),
 	)
-	if err != nil {
-		log.Error("failed to unlock fiscal period", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"The fiscal period is busy. Retry the request.",
+
+	var (
+		state   transitionState
+		updated *fiscalperiod.FiscalPeriod
+	)
+	run := func(runCtx context.Context, forUpdate bool) error {
+		var err error
+		state, err = s.loadTransitionState(runCtx, id, tenantInfo, forUpdate)
+		if err != nil {
+			return err
+		}
+
+		if err = t.validate(runCtx, state); err != nil {
+			return err
+		}
+
+		updated, err = t.apply(runCtx, state)
+		return err
+	}
+
+	var err error
+	if s.db == nil {
+		err = run(ctx, false)
+	} else {
+		err = s.db.WithTx(
+			ctx,
+			ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
+			func(txCtx context.Context, _ bun.Tx) error {
+				return run(txCtx, true)
+			},
 		)
+		if err != nil {
+			err = dberror.MapRetryableTransactionError(
+				err,
+				"The fiscal period is busy. Retry the request.",
+			)
+		}
+	}
+	if err != nil {
+		log.Error("failed to transition fiscal period", zap.Error(err))
+		return nil, err
 	}
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceFiscalPeriod,
-		ResourceID:     unlockedEntity.GetID().String(),
-		Operation:      permission.OpUpdate,
+		ResourceID:     updated.GetID().String(),
+		Operation:      t.operation,
 		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(unlockedEntity),
-		PreviousState:  jsonutils.MustToJSON(existing),
-		OrganizationID: unlockedEntity.OrganizationID,
-		BusinessUnitID: unlockedEntity.BusinessUnitID,
+		CurrentState:   jsonutils.MustToJSON(updated),
+		PreviousState:  jsonutils.MustToJSON(state.period),
+		OrganizationID: updated.OrganizationID,
+		BusinessUnitID: updated.BusinessUnitID,
 	},
-		auditservice.WithComment("Fiscal period unlocked"),
-		auditservice.WithDiff(existing, unlockedEntity),
+		auditservice.WithComment(t.comment),
+		auditservice.WithDiff(state.period, updated),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	return unlockedEntity, nil
+	return updated, nil
+}
+
+func (s *Service) loadTransitionState(
+	ctx context.Context,
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	forUpdate bool,
+) (transitionState, error) {
+	periodReq := repositories.GetFiscalPeriodByIDRequest{ID: id, TenantInfo: tenantInfo}
+
+	probe, err := s.repo.GetByID(ctx, periodReq)
+	if err != nil {
+		return transitionState{}, err
+	}
+
+	yearReq := repositories.GetFiscalYearByIDRequest{
+		ID:         probe.FiscalYearID,
+		TenantInfo: tenantInfo,
+	}
+	periodsReq := repositories.ListByFiscalYearIDRequest{
+		FiscalYearID: probe.FiscalYearID,
+		OrgID:        tenantInfo.OrgID,
+		BuID:         tenantInfo.BuID,
+	}
+
+	if !forUpdate {
+		year, yearErr := s.fiscalYearRepo.GetByID(ctx, yearReq)
+		if yearErr != nil {
+			return transitionState{}, yearErr
+		}
+
+		periods, listErr := s.repo.ListByFiscalYearID(ctx, periodsReq)
+		if listErr != nil {
+			return transitionState{}, listErr
+		}
+
+		return transitionState{period: probe, periods: periods, year: year}, nil
+	}
+
+	year, err := s.fiscalYearRepo.GetByIDForUpdate(ctx, yearReq)
+	if err != nil {
+		return transitionState{}, err
+	}
+
+	period, err := s.repo.GetByIDForUpdate(ctx, periodReq)
+	if err != nil {
+		return transitionState{}, err
+	}
+
+	periods, err := s.repo.ListByFiscalYearIDForUpdate(ctx, periodsReq)
+	if err != nil {
+		return transitionState{}, err
+	}
+
+	return transitionState{period: period, periods: periods, year: year}, nil
 }
 
 func (s *Service) validateDelete(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
@@ -693,60 +540,49 @@ func (s *Service) validateDelete(entity *fiscalperiod.FiscalPeriod) *errortypes.
 	return nil
 }
 
-func (s *Service) validateClose(
-	ctx context.Context,
-	entity *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
-	periods, err := s.repo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
-		FiscalYearID: entity.FiscalYearID,
-		OrgID:        entity.OrganizationID,
-		BuID:         entity.BusinessUnitID,
-	})
-	if err != nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"fiscalYearId",
-			errortypes.ErrSystemError,
-			"Failed to validate sequential close: {0}", err,
-		)
-		return multiErr
-	}
-
-	return s.validateCloseWithPeriods(entity, periods)
-}
-
 func (s *Service) validateCloseWithPeriods(
 	entity *fiscalperiod.FiscalPeriod,
 	periods []*fiscalperiod.FiscalPeriod,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	if entity.Status != fiscalperiod.StatusOpen {
+	if !entity.Status.CanClose() {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Only Open fiscal periods can be closed. Current status: {0}", entity.Status,
+			"Only Open or Locked fiscal periods can be closed. Current status: {0}",
+			entity.Status,
 		)
 		return multiErr
 	}
 
-	if entity.PeriodNumber > 1 {
-		for _, p := range periods {
-			if p.PeriodNumber < entity.PeriodNumber && p.Status == fiscalperiod.StatusOpen {
-				multiErr.Add(
-					"status",
-					errortypes.ErrInvalid,
-					"Cannot close period {0}: period {1} is still open. Close periods sequentially.",
-					entity.PeriodNumber,
-					p.PeriodNumber,
-				)
-				break
-			}
+	for _, p := range periods {
+		if p == nil || p.PeriodNumber >= entity.PeriodNumber {
+			continue
 		}
-	}
 
-	if multiErr.HasErrors() {
-		return multiErr
+		switch p.Status { //nolint:exhaustive // closed and locked predecessors do not block
+		case fiscalperiod.StatusOpen:
+			multiErr.Add(
+				"status",
+				errortypes.ErrInvalid,
+				"Cannot close period {0}: period {1} is still open. Close periods sequentially.",
+				entity.PeriodNumber,
+				p.PeriodNumber,
+			)
+		case fiscalperiod.StatusInactive:
+			multiErr.Add(
+				"status",
+				errortypes.ErrInvalid,
+				"Cannot close period {0}: period {1} has never been opened. Close periods sequentially.",
+				entity.PeriodNumber,
+				p.PeriodNumber,
+			)
+		}
+
+		if multiErr.HasErrors() {
+			return multiErr
+		}
 	}
 
 	return nil
@@ -780,35 +616,11 @@ func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Serv
 	)
 }
 
-func (s *Service) validateReopen(
-	ctx context.Context,
-	entity *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
-	periods, err := s.repo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
-		FiscalYearID: entity.FiscalYearID,
-		OrgID:        entity.OrganizationID,
-		BuID:         entity.BusinessUnitID,
-	})
-	if err != nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"fiscalYearId",
-			errortypes.ErrSystemError,
-			"Failed to validate reopen order: {0}", err,
-		)
-		return multiErr
-	}
-
-	return s.validateReopenWithPeriods(entity, periods)
-}
-
-func (s *Service) validateReopenWithPeriods(
-	entity *fiscalperiod.FiscalPeriod,
-	periods []*fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
+func validateReopen(state transitionState, reason string) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
+	entity := state.period
 
-	if entity.Status != fiscalperiod.StatusClosed {
+	if !entity.Status.CanReopen() {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
@@ -817,8 +629,14 @@ func (s *Service) validateReopenWithPeriods(
 		return multiErr
 	}
 
-	for _, p := range periods {
-		if p.PeriodNumber > entity.PeriodNumber &&
+	if strings.TrimSpace(reason) == "" {
+		multiErr.Add("reopenReason", errortypes.ErrRequired, "A reason for reopening is required")
+	}
+
+	addClosedYearError(multiErr, state.year, entity)
+
+	for _, p := range state.periods {
+		if p != nil && p.PeriodNumber > entity.PeriodNumber &&
 			(p.Status == fiscalperiod.StatusClosed || p.Status == fiscalperiod.StatusLocked) {
 			multiErr.Add(
 				"status",
@@ -838,15 +656,69 @@ func (s *Service) validateReopenWithPeriods(
 	return nil
 }
 
-func (s *Service) validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
+func validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
+	if entity.Status.CanLock() {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"status",
+		errortypes.ErrInvalid,
+		"Only Open fiscal periods can be locked. Current status: {0}", entity.Status,
+	)
+
+	return multiErr
+}
+
+func validateUnlock(state transitionState) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	if entity.Status != fiscalperiod.StatusOpen {
+	if !state.period.Status.CanUnlock() {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Only Open fiscal periods can be locked. Current status: {0}", entity.Status,
+			"Only Locked fiscal periods can be unlocked. Current status: {0}", state.period.Status,
 		)
+		return multiErr
+	}
+
+	addClosedYearError(multiErr, state.year, state.period)
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func validateActivate(state transitionState) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	entity := state.period
+
+	if !entity.Status.CanActivate() {
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Only Inactive fiscal periods can be opened. Current status: {0}", entity.Status,
+		)
+		return multiErr
+	}
+
+	addClosedYearError(multiErr, state.year, entity)
+
+	for _, p := range state.periods {
+		if p != nil && p.PeriodNumber < entity.PeriodNumber &&
+			p.Status == fiscalperiod.StatusInactive {
+			multiErr.Add(
+				"status",
+				errortypes.ErrInvalid,
+				"Cannot open period {0}: period {1} has not been opened yet. Open periods in order.",
+				entity.PeriodNumber,
+				p.PeriodNumber,
+			)
+			break
+		}
 	}
 
 	if multiErr.HasErrors() {
@@ -856,15 +728,68 @@ func (s *Service) validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.Mu
 	return nil
 }
 
-func (s *Service) validateUnlock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
+func addClosedYearError(
+	multiErr *errortypes.MultiError,
+	year *fiscalyear.FiscalYear,
+	period *fiscalperiod.FiscalPeriod,
+) {
+	if year == nil || !year.Status.IsClosed() {
+		return
+	}
 
-	if entity.Status != fiscalperiod.StatusLocked {
+	if year.Status == fiscalyear.StatusPermanentlyClosed {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Only Locked fiscal periods can be unlocked. Current status: {0}", entity.Status,
+			"Period {0} belongs to fiscal year {1}, which is permanently closed.",
+			period.PeriodNumber,
+			year.Name,
 		)
+		return
+	}
+
+	multiErr.Add(
+		"status",
+		errortypes.ErrInvalid,
+		"Period {0} belongs to fiscal year {1}, which is closed. Reopen the fiscal year first.",
+		period.PeriodNumber,
+		year.Name,
+	)
+}
+
+func validateEditable(
+	original *fiscalperiod.FiscalPeriod,
+	updated *fiscalperiod.FiscalPeriod,
+) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if original.Status == fiscalperiod.StatusPermanentlyClosed {
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Permanently closed fiscal periods cannot be changed",
+		)
+		return multiErr
+	}
+
+	if original.Status == fiscalperiod.StatusInactive {
+		return nil
+	}
+
+	if updated.PeriodNumber != original.PeriodNumber {
+		addStructureLocked(multiErr, "periodNumber")
+	}
+	if updated.PeriodType != original.PeriodType {
+		addStructureLocked(multiErr, "periodType")
+	}
+	if updated.IsAdjusting != original.IsAdjusting {
+		addStructureLocked(multiErr, "isAdjusting")
+	}
+	if updated.StartDate != original.StartDate {
+		addStructureLocked(multiErr, "startDate")
+	}
+	if updated.EndDate != original.EndDate {
+		addStructureLocked(multiErr, "endDate")
 	}
 
 	if multiErr.HasErrors() {
@@ -872,4 +797,25 @@ func (s *Service) validateUnlock(entity *fiscalperiod.FiscalPeriod) *errortypes.
 	}
 
 	return nil
+}
+
+func addStructureLocked(multiErr *errortypes.MultiError, field string) {
+	multiErr.Add(
+		field,
+		errortypes.ErrInvalid,
+		"This field can only be changed before the period is opened",
+	)
+}
+
+func preserveLifecycle(original, updated *fiscalperiod.FiscalPeriod) {
+	updated.FiscalYearID = original.FiscalYearID
+	updated.Status = original.Status
+	updated.LockedAt = original.LockedAt
+	updated.LockedByID = original.LockedByID
+	updated.ClosedAt = original.ClosedAt
+	updated.ClosedByID = original.ClosedByID
+	updated.ReopenedAt = original.ReopenedAt
+	updated.ReopenedByID = original.ReopenedByID
+	updated.ReopenReason = original.ReopenReason
+	updated.CreatedAt = original.CreatedAt
 }

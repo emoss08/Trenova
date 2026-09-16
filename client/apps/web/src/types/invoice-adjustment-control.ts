@@ -30,13 +30,6 @@ export type ClosedPeriodAdjustmentPolicy = z.infer<typeof closedPeriodAdjustment
 export const requirementPolicySchema = z.enum(["Optional", "Required"]);
 export type RequirementPolicy = z.infer<typeof requirementPolicySchema>;
 
-export const adjustmentAttachmentPolicySchema = z.enum([
-  "Optional",
-  "RequiredForCreditOrWriteOff",
-  "RequiredForAll",
-]);
-export type AdjustmentAttachmentPolicy = z.infer<typeof adjustmentAttachmentPolicySchema>;
-
 export const approvalPolicySchema = z.enum(["None", "Always", "AmountThreshold"]);
 export type ApprovalPolicy = z.infer<typeof approvalPolicySchema>;
 
@@ -82,7 +75,6 @@ export const invoiceAdjustmentControlSchema = z.object({
   adjustmentAccountingDatePolicy: adjustmentAccountingDatePolicySchema,
   closedPeriodAdjustmentPolicy: closedPeriodAdjustmentPolicySchema,
   adjustmentReasonRequirement: requirementPolicySchema,
-  adjustmentAttachmentRequirement: adjustmentAttachmentPolicySchema,
   standardAdjustmentApprovalPolicy: approvalPolicySchema,
   standardAdjustmentApprovalThreshold: decimalNumberSchema,
   writeOffApprovalPolicy: writeOffApprovalPolicySchema,

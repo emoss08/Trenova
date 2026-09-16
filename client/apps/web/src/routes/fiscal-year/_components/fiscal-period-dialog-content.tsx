@@ -1,4 +1,8 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import type { FiscalPeriodAction } from "@/lib/fiscal-period-actions";
+import { apiService } from "@/services/api";
+import type { FiscalPeriod } from "@/types/fiscal-period";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,290 +13,261 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
-import type { FiscalPeriod } from "@/types/fiscal-period";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangleIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-type Action = "close" | "reopen" | "lock" | "unlock";
-
-interface FiscalPeriodStatusActionsProps {
+type FiscalPeriodActionDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  record?: FiscalPeriod;
-  action: Action;
-}
+  period: FiscalPeriod | null;
+  action: FiscalPeriodAction | null;
+  onCompleted: (period: FiscalPeriod) => void;
+};
 
-export function FiscalPeriodStatusActions({
+export function FiscalPeriodActionDialog({
   open,
   onOpenChange,
-  record,
+  period,
   action,
-}: FiscalPeriodStatusActionsProps) {
-  if (!record) return null;
-
-  const content = (() => {
-    switch (action) {
-      case "close":
-        return <CloseDialog record={record} onOpenChange={onOpenChange} />;
-      case "reopen":
-        return <ReopenDialog record={record} onOpenChange={onOpenChange} />;
-      case "lock":
-        return <LockDialog record={record} onOpenChange={onOpenChange} />;
-      case "unlock":
-        return <UnlockDialog record={record} onOpenChange={onOpenChange} />;
-      default:
-        return null;
-    }
-  })();
-
+  onCompleted,
+}: FiscalPeriodActionDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      {content}
+      {period && action && (
+        <FiscalPeriodActionDialogContent
+          key={`${period.id}:${action}`}
+          period={period}
+          action={action}
+          onOpenChange={onOpenChange}
+          onCompleted={onCompleted}
+        />
+      )}
     </AlertDialog>
   );
 }
 
-function CloseDialog({
-  record,
-  onOpenChange,
-}: {
-  record: FiscalPeriod;
+type ActionCopy = {
+  title: string;
+  intro: string;
+  effectsHeading: string;
+  effects: string[];
+  confirm: string;
+  pending: string;
+  success: string;
+  successDescription: string;
+  destructive: boolean;
+};
+
+function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: TranslateFn): ActionCopy {
+  switch (action) {
+    case "activate":
+      return {
+        title: t("Open Fiscal Period"),
+        intro: t("You are about to open {0}.", period.name),
+        effectsHeading: t("Opening this period will:"),
+        effects: [
+          t("Accept subledger postings such as invoices and vendor bills"),
+          t("Accept manual journal entries"),
+        ],
+        confirm: t("Open Period"),
+        pending: t("Opening..."),
+        success: t("Period opened"),
+        successDescription: t("{0} is now open", period.name),
+        destructive: false,
+      };
+    case "lock":
+      return {
+        title: t("Lock Fiscal Period"),
+        intro: t("You are about to lock {0}.", period.name),
+        effectsHeading: t("Locking this period will:"),
+        effects: [
+          t("Block subledger postings such as billing, receivables, and payables"),
+          t("Keep accepting manual journal entries for accruals and adjustments"),
+          t("Allow unlocking if subledger postings need to resume"),
+        ],
+        confirm: t("Lock Period"),
+        pending: t("Locking..."),
+        success: t("Period locked"),
+        successDescription: t("{0} is now locked", period.name),
+        destructive: false,
+      };
+    case "unlock":
+      return {
+        title: t("Unlock Fiscal Period"),
+        intro: t("You are about to unlock {0}.", period.name),
+        effectsHeading: t("Unlocking this period will:"),
+        effects: [t("Return the period to Open"), t("Accept subledger postings again")],
+        confirm: t("Unlock Period"),
+        pending: t("Unlocking..."),
+        success: t("Period unlocked"),
+        successDescription: t("{0} is open again", period.name),
+        destructive: false,
+      };
+    case "close":
+      return {
+        title: t("Close Fiscal Period"),
+        intro: t("You are about to close {0}.", period.name),
+        effectsHeading: t("Closing this period will:"),
+        effects: [
+          t("Block every posting, including manual journal entries"),
+          t("Require reopening, with a recorded reason, before anything can change"),
+        ],
+        confirm: t("Close Period"),
+        pending: t("Closing..."),
+        success: t("Period closed"),
+        successDescription: t("{0} is now closed", period.name),
+        destructive: true,
+      };
+    case "reopen":
+      return {
+        title: t("Reopen Fiscal Period"),
+        intro: t("You are about to reopen {0}.", period.name),
+        effectsHeading: t("Reopening this period will:"),
+        effects: [
+          t("Return the period to Open"),
+          t("Accept subledger postings and manual journal entries again"),
+          t("Record who reopened it, when, and why"),
+        ],
+        confirm: t("Reopen Period"),
+        pending: t("Reopening..."),
+        success: t("Period reopened"),
+        successDescription: t("{0} is open again", period.name),
+        destructive: true,
+      };
+  }
+}
+
+function runAction(action: FiscalPeriodAction, periodId: string, reason: string) {
+  const service = apiService.fiscalPeriodService;
+  switch (action) {
+    case "activate":
+      return service.activate(periodId);
+    case "lock":
+      return service.lock(periodId);
+    case "unlock":
+      return service.unlock(periodId);
+    case "close":
+      return service.close(periodId);
+    case "reopen":
+      return service.reopen(periodId, reason.trim());
+  }
+}
+
+type FiscalPeriodActionDialogContentProps = {
+  period: FiscalPeriod;
+  action: FiscalPeriodAction;
   onOpenChange: (open: boolean) => void;
-}) {
+  onCompleted: (period: FiscalPeriod) => void;
+};
+
+function FiscalPeriodActionDialogContent({
+  period,
+  action,
+  onOpenChange,
+  onCompleted,
+}: FiscalPeriodActionDialogContentProps) {
   const t = useT();
-
   const queryClient = useQueryClient();
+  const [reason, setReason] = useState("");
 
-  const { mutateAsync, isPending } = useApiMutation({
-    mutationFn: async (id: FiscalPeriod["id"]) => apiService.fiscalPeriodService.close(id),
-    onSuccess: () => {
-      toast.success(t("Closed successfully"), {
-        description: `Successfully closed Period ${record.periodNumber}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-period-list"],
-      });
+  const copy = actionCopy(action, period, t);
+  const needsReason = action === "reopen";
+  const checksClose = action === "close";
+
+  const closeCheck = useQuery({
+    queryKey: ["fiscal-period-close-blockers", period.id],
+    queryFn: () => apiService.fiscalPeriodService.closeBlockers(period.id),
+    enabled: checksClose,
+    staleTime: 0,
+  });
+
+  const mutation = useApiMutation({
+    mutationFn: () => runAction(action, period.id, reason),
+    resourceName: "Fiscal Period",
+    onSuccess: (updated: FiscalPeriod) => {
+      toast.success(copy.success, { description: copy.successDescription });
+      onCompleted({ ...period, ...updated });
+      void queryClient.invalidateQueries({ queryKey: ["fiscal-year-list"] });
+      void queryClient.invalidateQueries({ queryKey: ["fiscal-year-close-preview"] });
       onOpenChange(false);
     },
   });
 
-  const handleClose = useCallback(() => {
-    void mutateAsync(record.id);
-  }, [mutateAsync, record.id]);
+  const closeBlocked =
+    checksClose && (closeCheck.isLoading || closeCheck.isError || !closeCheck.data?.canClose);
+  const confirmDisabled =
+    mutation.isPending || closeBlocked || (needsReason && reason.trim().length === 0);
 
   return (
     <AlertDialogContent className="min-w-md">
       <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          {t("Close Fiscal Period")}
-        </AlertDialogTitle>
-        <AlertDialogDescription className="space-y-2">
-          <p>
-            {t("You are about to close")} <strong>{t("Period {0}", record.periodNumber)}</strong>
-            {record.name && ` (${record.name})`}.
-          </p>
-          <p className="text-muted-foreground text-sm">{t("Closing this period will:")}</p>
+        <AlertDialogTitle>{copy.title}</AlertDialogTitle>
+        <AlertDialogDescription render={<div />} className="flex flex-col gap-2 text-left">
+          <p>{copy.intro}</p>
+          <p className="text-muted-foreground text-sm">{copy.effectsHeading}</p>
           <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
-            <li>{t("Prevent new transactions from being posted")}</li>
-            <li>{t("Require reopening to make any changes")}</li>
-            <li>{t("Enable locking once all reconciliations are complete")}</li>
+            {copy.effects.map((effect) => (
+              <li key={effect}>{effect}</li>
+            ))}
           </ul>
-          <p className="text-destructive font-semibold">
-            {t("Are you sure you want to continue?")}
-          </p>
         </AlertDialogDescription>
+        {checksClose && closeCheck.isLoading && <Skeleton className="h-12 w-full" />}
+        {checksClose && closeCheck.isError && (
+          <Alert variant="destructive">
+            <AlertTriangleIcon />
+            <AlertTitle>{t("Close check unavailable")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("The period could not be checked for close blockers. Try again.")}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        {checksClose && closeCheck.data && closeCheck.data.blockers.length > 0 && (
+          <Alert variant="destructive">
+            <AlertTriangleIcon />
+            <AlertTitle>
+              {closeCheck.data.blockers.length === 1
+                ? t("1 issue blocks this close")
+                : t("{0} issues block this close", closeCheck.data.blockers.length)}
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="list-inside list-disc">
+                {closeCheck.data.blockers.map((blocker) => (
+                  <li key={`${blocker.field}-${blocker.message}`}>{blocker.message}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+        {needsReason && (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="fiscal-period-reopen-reason">{t("Reason")}</Label>
+            <Textarea
+              id="fiscal-period-reopen-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder={t("Why is this period being reopened?")}
+              rows={3}
+            />
+            <p className="text-muted-foreground text-xs">
+              {t("Recorded on the period for the audit trail.")}
+            </p>
+          </div>
+        )}
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
-        <AlertDialogAction variant="destructive" onClick={handleClose} disabled={isPending}>
-          {isPending ? t("Closing...") : t("Close Period")}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  );
-}
-
-function ReopenDialog({
-  record,
-  onOpenChange,
-}: {
-  record: FiscalPeriod;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const t = useT();
-
-  const queryClient = useQueryClient();
-
-  const { mutateAsync, isPending } = useApiMutation({
-    mutationFn: async (id: FiscalPeriod["id"]) => apiService.fiscalPeriodService.reopen(id),
-    onSuccess: () => {
-      toast.success(t("Reopened successfully"), {
-        description: `Successfully reopened Period ${record.periodNumber}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-period-list"],
-      });
-      onOpenChange(false);
-    },
-  });
-
-  const handleReopen = useCallback(() => {
-    void mutateAsync(record.id);
-  }, [mutateAsync, record.id]);
-
-  return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          {t("Reopen Fiscal Period")}
-        </AlertDialogTitle>
-        <AlertDialogDescription className="space-y-2">
-          <p>
-            {t("You are about to reopen")} <strong>{t("Period {0}", record.periodNumber)}</strong>
-            {record.name && ` (${record.name})`}.
-          </p>
-          <p className="text-muted-foreground text-sm">{t("Reopening this period will:")}</p>
-          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
-            <li>{t("Allow new transactions to be posted")}</li>
-            <li>{t("Enable edits to existing entries")}</li>
-            <li>{t("Require reclosing before locking")}</li>
-          </ul>
-          <p className="font-semibold text-yellow-500">
-            {t("This action should only be taken when adjustments are necessary.")}
-          </p>
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
-        <AlertDialogAction onClick={handleReopen} disabled={isPending}>
-          {isPending ? t("Reopening...") : t("Reopen Period")}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  );
-}
-
-function LockDialog({
-  record,
-  onOpenChange,
-}: {
-  record: FiscalPeriod;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const t = useT();
-
-  const queryClient = useQueryClient();
-
-  const { mutateAsync, isPending } = useApiMutation({
-    mutationFn: async (id: FiscalPeriod["id"]) => apiService.fiscalPeriodService.lock(id),
-    onSuccess: () => {
-      toast.success(t("Locked successfully"), {
-        description: `Successfully locked Period ${record.periodNumber}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-period-list"],
-      });
-      onOpenChange(false);
-    },
-  });
-
-  const handleLock = useCallback(() => {
-    void mutateAsync(record.id);
-  }, [mutateAsync, record.id]);
-
-  return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          {t("Lock Fiscal Period")}
-        </AlertDialogTitle>
-        <AlertDialogDescription className="space-y-2">
-          <p>
-            {t("You are about to lock")} <strong>{t("Period {0}", record.periodNumber)}</strong>
-            {record.name && ` (${record.name})`}.
-          </p>
-          <p className="text-muted-foreground text-sm">{t("Locking this period will:")}</p>
-          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
-            <li>{t("Permanently prevent all changes")}</li>
-            <li>{t("Finalize all financial data")}</li>
-            <li>{t("Require special permission to unlock")}</li>
-            <li>{t("Complete the period close workflow")}</li>
-          </ul>
-          <p className="text-destructive font-semibold">
-            {t("This is typically done after audits are complete. Continue?")}
-          </p>
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
-        <AlertDialogAction onClick={handleLock} disabled={isPending}>
-          {isPending ? t("Locking...") : t("Lock Period")}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  );
-}
-
-function UnlockDialog({
-  record,
-  onOpenChange,
-}: {
-  record: FiscalPeriod;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const t = useT();
-
-  const queryClient = useQueryClient();
-
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: async (id: FiscalPeriod["id"]) => apiService.fiscalPeriodService.unlock(id),
-    onSuccess: () => {
-      toast.success(t("Unlocked successfully"), {
-        description: `Successfully unlocked Period ${record.periodNumber}`,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["fiscal-period-list"],
-      });
-      onOpenChange(false);
-    },
-  });
-
-  const handleUnlock = useCallback(() => {
-    void mutateAsync(record.id);
-  }, [mutateAsync, record.id]);
-
-  return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          {t("Unlock Fiscal Period")}
-        </AlertDialogTitle>
-        <AlertDialogDescription className="space-y-2">
-          <p>
-            {t("You are about to unlock")} <strong>{t("Period {0}", record.periodNumber)}</strong>
-            {record.name && ` (${record.name})`}.
-          </p>
-          <p className="text-muted-foreground text-sm">{t("Unlocking this period will:")}</p>
-          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
-            <li>{t("Return the period to Closed status")}</li>
-            <li>{t("Allow reopening if needed")}</li>
-            <li>{t("Require manager approval")}</li>
-            <li>{t("Create an audit trail entry")}</li>
-          </ul>
-          <p className="text-destructive font-semibold">
-            {t(
-              "This action should only be taken in exceptional circumstances with proper authorization.",
-            )}
-          </p>
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel disabled={isPending}>{t("Cancel")}</AlertDialogCancel>
-        <AlertDialogAction onClick={handleUnlock} disabled={isPending}>
-          {isPending ? t("Unlocking...") : t("Unlock Period")}
+        <AlertDialogCancel disabled={mutation.isPending}>{t("Cancel")}</AlertDialogCancel>
+        <AlertDialogAction
+          variant={copy.destructive ? "destructive" : "default"}
+          disabled={confirmDisabled}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? copy.pending : copy.confirm}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

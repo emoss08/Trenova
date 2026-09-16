@@ -65,6 +65,10 @@ type BillingQueueItem struct {
 	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id"`
 	CanceledBy     *tenant.User       `json:"canceledBy,omitempty"     bun:"rel:belongs-to,join:canceled_by_id=id"`
+
+	// PayerShare is this item's payer's part of the shipment's charges, filled
+	// when the item is read with its shipment details.
+	PayerShare *PayerShare `json:"payerShare,omitempty" bun:"-"`
 }
 
 func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
