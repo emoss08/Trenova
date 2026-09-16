@@ -8,11 +8,14 @@ import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { AssistantMessage, AssistantThread } from "@/types/assistant";
+import type { AssistantMessage, AssistantProposal, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfoIcon, SendIcon, ShieldAlertIcon, WrenchIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { classifyMessage, type MessagePresentation } from "./classify-message";
+import { ProposalCard } from "./proposal-card";
+import { groupProposalsByMessage } from "./proposal-state";
 
 export function MessageThread({ thread }: { thread: AssistantThread }) {
   const t = useT();
@@ -24,13 +27,30 @@ export function MessageThread({ thread }: { thread: AssistantThread }) {
   const messagesQuery = useQuery(queries.assistant.messages(thread.id));
   const messages = messagesQuery.data?.results ?? [];
 
+  // Proposals are fetched rather than taken from the send response: they outlive
+  // the turn that raised them, so reopening a thread has to show what is still
+  // waiting on a decision.
+  const proposalsQuery = useQuery(queries.assistant.proposals(thread.id));
+  const { byMessage: proposalsByMessage, orphans: looseProposals } = groupProposalsByMessage(
+    proposalsQuery.data?.results ?? [],
+    messages,
+  );
+
   const sendMutation = useApiMutation({
     mutationFn: (content: string) => apiService.assistantService.sendMessage(thread.id, content),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       setDraft("");
+      if (result.proposalsUnrecorded) {
+        toast.warning(t("The assistant proposed a change that could not be saved for approval"), {
+          description: t("Nothing was changed. Ask again if you still want to make the change."),
+        });
+      }
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.assistant.messages(thread.id).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.assistant.proposals(thread.id).queryKey,
         }),
         queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
       ]);
@@ -60,8 +80,21 @@ export function MessageThread({ thread }: { thread: AssistantThread }) {
               <Skeleton className="h-16" />
             </>
           ) : (
-            messages.map((message) => <MessageBubble key={message.id} message={message} />)
+            messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                proposals={proposalsByMessage.get(message.id) ?? []}
+                threadId={thread.id}
+              />
+            ))
           )}
+          {/* A proposal whose turn is no longer in the visible thread is shown
+              here rather than dropped: a pending change nobody can see is worse
+              than one shown out of position. */}
+          {looseProposals.map((proposal) => (
+            <ProposalCard key={proposal.id} proposal={proposal} threadId={thread.id} />
+          ))}
           {sendMutation.isPending && <ThinkingIndicator />}
           <div ref={bottomRef} />
         </div>
@@ -98,7 +131,15 @@ export function MessageThread({ thread }: { thread: AssistantThread }) {
   );
 }
 
-function MessageBubble({ message }: { message: AssistantMessage }) {
+function MessageBubble({
+  message,
+  proposals,
+  threadId,
+}: {
+  message: AssistantMessage;
+  proposals: AssistantProposal[];
+  threadId: string;
+}) {
   const presentation = classifyMessage(message);
 
   if (presentation === "tool") {
@@ -136,6 +177,9 @@ function MessageBubble({ message }: { message: AssistantMessage }) {
           ))}
         </div>
       )}
+      {proposals.map((proposal) => (
+        <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
+      ))}
     </div>
   );
 }

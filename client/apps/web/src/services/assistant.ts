@@ -4,12 +4,15 @@ import {
   agentDefinitionSchema,
   agentTemplateListSchema,
   assistantMessageListSchema,
+  assistantProposalListSchema,
   assistantThreadListSchema,
   assistantThreadSchema,
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
   type AgentDefinition,
+  type AssistantProposal,
   type AssistantThread,
+  type ProposalDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
@@ -48,6 +51,33 @@ export class AssistantService {
   public async sendMessage(threadId: AssistantThread["id"], content: string) {
     const response = await api.post(`/assistant/threads/${threadId}/messages/`, { content });
     return safeParse(sendMessageResultSchema, response, "Assistant Reply");
+  }
+
+  /**
+   * Proposals outlive the turn that raised them, so reopening a thread has to
+   * fetch them rather than rely on the send response.
+   */
+  public async listProposals(threadId: AssistantThread["id"]) {
+    const response = await api.get(`/assistant/threads/${threadId}/proposals/`);
+    return safeParse(assistantProposalListSchema, response, "Assistant Proposal");
+  }
+
+  /**
+   * Deciding goes through the agent proposal endpoint rather than a chat-specific
+   * one: a proposal raised in conversation is the same kind of record as one
+   * raised by the billing agent, and it is checked, executed and audited the same
+   * way. Accepting runs the tool as the approver, so this can fail on their own
+   * permissions even though the message was theirs.
+   */
+  public async decideProposal(
+    proposalId: AssistantProposal["id"],
+    decision: ProposalDecision,
+    modifications?: Record<string, unknown>,
+  ) {
+    await api.post(`/agent-proposals/${proposalId}/resolve/`, {
+      decision,
+      modifications: modifications ?? {},
+    });
   }
 }
 

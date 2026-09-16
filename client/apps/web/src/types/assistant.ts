@@ -111,10 +111,41 @@ export const assistantMessageListSchema = z.object({
   results: z.array(assistantMessageSchema),
 });
 
+export const proposalStatusSchema = z.enum([
+  "Pending",
+  "Accepted",
+  "Rejected",
+  "Modified",
+  "Expired",
+  "Superseded",
+  "Executed",
+  "ExecutionFailed",
+]);
+
+export const proposalDecisionSchema = z.enum(["Accepted", "Rejected", "Modified"]);
+
+/**
+ * A proposal is a write the assistant asked for and has not made. It is a
+ * persisted record, so it survives a refresh and is decided through the same
+ * endpoint as any other agent's proposal.
+ */
 export const assistantProposalSchema = z.object({
+  id: z.string(),
+  runId: z.string().optional().default(""),
   toolName: z.string(),
-  arguments: z.record(z.string(), z.unknown()).optional(),
+  arguments: z.record(z.string(), z.unknown()).nullish(),
   rationale: z.string().optional().default(""),
+  autonomyTier: autonomyTierSchema,
+  status: proposalStatusSchema,
+  sourceMessageId: z.string().optional().default(""),
+  /** Set once an approved proposal has actually run. */
+  executedAt: z.number().nullish(),
+  /** Why an approved proposal failed to run, shown instead of a success state. */
+  executionError: z.string().optional().default(""),
+});
+
+export const assistantProposalListSchema = z.object({
+  results: z.array(assistantProposalSchema),
 });
 
 export const sendMessageResultSchema = z.object({
@@ -123,6 +154,12 @@ export const sendMessageResultSchema = z.object({
   reply: z.string().optional().default(""),
   refused: z.boolean().default(false),
   proposals: z.array(assistantProposalSchema).nullish(),
+  /**
+   * The turn proposed a write that could not be saved for approval. Nothing ran,
+   * but there is nothing to approve either, so the client must say so rather than
+   * offer a decision the server cannot honor.
+   */
+  proposalsUnrecorded: z.boolean().default(false),
 });
 
 export type AgentKind = z.infer<typeof agentKindSchema>;
@@ -135,3 +172,5 @@ export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
 export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
+export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
+export type ProposalDecision = z.infer<typeof proposalDecisionSchema>;

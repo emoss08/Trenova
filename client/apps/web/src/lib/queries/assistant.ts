@@ -14,6 +14,10 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-messages", threadId],
     queryFn: () => apiService.assistantService.listMessages(threadId),
   }),
+  proposals: (threadId: string) => ({
+    queryKey: ["assistant-proposals", threadId],
+    queryFn: () => apiService.assistantService.listProposals(threadId),
+  }),
   agents: (enabledOnly: boolean) => ({
     queryKey: ["agent-definitions", enabledOnly],
     queryFn: () => apiService.agentDefinitionService.list(enabledOnly),

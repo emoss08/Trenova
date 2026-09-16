@@ -15099,6 +15099,15 @@
       "domain/permission"
     ]
   },
+  "Approve and run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Approve charge": {
     "sites": 1,
     "scope": [
@@ -15244,7 +15253,7 @@
     ]
   },
   "Approved": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -15255,6 +15264,7 @@
       "domain/worker",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/assistant",
       "routes/carrier-settlement",
       "routes/carrier-settlement-workspace",
       "routes/driver-expense",
@@ -15318,6 +15328,15 @@
       "apps/dash/_components"
     ]
   },
+  "Approved, but it did not run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Approved, not paid": {
     "sites": 3,
     "scope": [
@@ -15325,6 +15344,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Approved. Waiting for it to run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Approves drafts and pending settlements, applying deduction side effects.": {
@@ -46895,12 +46923,13 @@
     ]
   },
   "Done": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/assistant",
       "routes/billing-queue",
       "routes/fuel-purchase",
       "routes/home",
@@ -57857,7 +57886,7 @@
     ]
   },
   "Failed": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -57868,6 +57897,7 @@
       "domain/fuelpurchase",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/assistant",
       "routes/edi",
       "routes/formula-template",
       "routes/invoice-adjustment-batch"
@@ -86130,6 +86160,15 @@
       "routes/osha"
     ]
   },
+  "Needs your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Needs your attention": {
     "sites": 2,
     "scope": [
@@ -89240,6 +89279,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No longer available": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "No longer recommended": {
@@ -92979,6 +93027,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Nothing was changed. Ask again if you still want to make the change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Nothing was changed. Write a rate agreement for it and try again.": {
@@ -110952,6 +111009,15 @@
       "routes/fuel-feed-run"
     ]
   },
+  "Ran on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Ran {0}": {
     "sites": 2,
     "scope": [
@@ -116275,12 +116341,13 @@
     ]
   },
   "Reject": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/assistant",
       "routes/carrier-invoice-matching",
       "routes/carrier-settlement",
       "routes/driver-expense",
@@ -116496,7 +116563,7 @@
     ]
   },
   "Rejected": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -116505,6 +116572,7 @@
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/assistant",
       "routes/driver-expense",
       "routes/edi",
       "routes/formula-template",
@@ -116527,6 +116595,15 @@
     ],
     "areas": [
       "service/invoiceadjustmentservice"
+    ]
+  },
+  "Rejected. Nothing was changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Rejected{0}": {
@@ -142986,6 +143063,24 @@
       "routes/shipment"
     ]
   },
+  "The assistant is asking to make this change. Nothing has run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "The assistant proposed a change that could not be saved for approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "The authentication mode for the SFTP server.": {
     "sites": 1,
     "scope": [
@@ -143598,6 +143693,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The change was approved but could not be completed. Nothing was changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "The change you asked for on your record has been made. Check your profile in Dash to see it.": {
@@ -149936,6 +150040,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "This change has been made.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {
@@ -168088,15 +168201,6 @@
     ],
     "areas": [
       "service/reporting"
-    ]
-  },
-  "You do not have permission to approve billing queue items": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agentdecisionservice"
     ]
   },
   "You do not have permission to transfer ownership of this shipment": {
