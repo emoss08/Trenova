@@ -1053,14 +1053,27 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/agent-exceptions/",
 			"/api/v1/agent-proposals/",
 			"/api/v1/agent-runs/:runID/",
+			// Provider configuration belongs to this feature rather than to a
+			// separate one: it is the substrate agents run on, and splitting it out
+			// would create a pack an organization could hold without being able to
+			// point its agents at a model.
+			"/api/v1/ai-providers/",
+			"/api/v1/ai-providers/catalog/",
+			"/api/v1/ai-providers/:providerID/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
 			"/api/v1/agent-proposals/:proposalID/resolve/",
 			"/api/v1/agent-runs/",
+			"/api/v1/ai-providers/",
+			"/api/v1/ai-providers/:providerID/test/",
 		),
 		routeRefsFor("PUT",
 			"/api/v1/agent-controls/",
+			"/api/v1/ai-providers/:providerID/",
+		),
+		routeRefsFor("DELETE",
+			"/api/v1/ai-providers/:providerID/",
 		),
 	)
 }

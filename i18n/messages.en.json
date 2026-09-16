@@ -2679,6 +2679,15 @@
       "domain/driverpay"
     ]
   },
+  "A general assistant answers questions only and cannot be given tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "A generated document must name the render that produced it": {
     "sites": 1,
     "scope": [
@@ -5485,7 +5494,7 @@
     ]
   },
   "AI features are disabled": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -10525,6 +10534,15 @@
       "domain/permission"
     ]
   },
+  "Agent is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/conversation"
+    ]
+  },
   "Agent principals cannot transition billing queue items; a human must decide": {
     "sites": 1,
     "scope": [
@@ -12517,6 +12535,15 @@
     ],
     "areas": [
       "service/rateagreementservice"
+    ]
+  },
+  "An agent cannot be given more than 32 tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "An agreement to import into is required": {
@@ -18608,6 +18635,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Autonomy ceiling is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Autonomy tier is required": {
     "sites": 1,
     "scope": [
@@ -21031,6 +21067,15 @@
       "routes/customer"
     ]
   },
+  "Billing assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Billing by payer": {
     "sites": 1,
     "scope": [
@@ -22387,15 +22432,17 @@
     ]
   },
   "Business unit is required": {
-    "sites": 102,
+    "sites": 105,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentdefinition",
       "domain/ailog",
       "domain/aiprovider",
       "domain/apikey",
       "domain/billingtransfer",
+      "domain/conversation",
       "domain/costingcontrol",
       "domain/customer",
       "domain/customfield",
@@ -30572,6 +30619,15 @@
       "routes/shipment"
     ]
   },
+  "Compliance assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Compliance comes from the credential file and reads Non-compliant while a required credential is expired or missing. Qualified is set when the onboarding checklist closes with every required item settled.": {
     "sites": 1,
     "scope": [
@@ -37703,6 +37759,15 @@
       "domain/permission"
     ]
   },
+  "Customer assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Customer claims the driver arrived 40 minutes later than our records show": {
     "sites": 1,
     "scope": [
@@ -42974,11 +43039,12 @@
     ]
   },
   "Description cannot be longer than 500 characters": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentdefinition",
       "domain/ratematrix",
       "domain/ratesimulation",
       "domain/ratezone"
@@ -44599,6 +44665,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Dispatch assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Dispatch chat": {
@@ -61196,6 +61271,15 @@
       "apps/web/hooks"
     ]
   },
+  "Focus cannot be longer than 2000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Follow-up": {
     "sites": 1,
     "scope": [
@@ -63682,6 +63766,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "General assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "General information for the worker.": {
@@ -69670,6 +69763,15 @@
       "domain/agent"
     ]
   },
+  "Input tokens cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/conversation"
+    ]
+  },
   "Input types": {
     "sites": 1,
     "scope": [
@@ -74223,11 +74325,12 @@
     ]
   },
   "Kind is required": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentdefinition",
       "domain/aiprovider",
       "domain/edi",
       "domain/invoiceadjustment",
@@ -85006,11 +85109,12 @@
     ]
   },
   "Name cannot be longer than 100 characters": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentdefinition",
       "domain/aiprovider",
       "domain/formulatemplate",
       "domain/integration",
@@ -85072,7 +85176,7 @@
     ]
   },
   "Name is required": {
-    "sites": 101,
+    "sites": 102,
     "scope": [
       "go",
       "ts"
@@ -85080,6 +85184,7 @@
     "areas": [
       "apps/web/types",
       "domain/accounttype",
+      "domain/agentdefinition",
       "domain/aiprovider",
       "domain/apikey",
       "domain/billingqueuefilterpreset",
@@ -86875,7 +86980,7 @@
     ]
   },
   "No AI provider is configured for {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -98487,15 +98592,17 @@
     ]
   },
   "Organization is required": {
-    "sites": 101,
+    "sites": 104,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentdefinition",
       "domain/ailog",
       "domain/aiprovider",
       "domain/apikey",
       "domain/billingtransfer",
+      "domain/conversation",
       "domain/costingcontrol",
       "domain/customer",
       "domain/customfield",
@@ -99268,6 +99375,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Output tokens cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/conversation"
     ]
   },
   "Outside every band": {
@@ -118053,6 +118169,15 @@
       "routes/worker"
     ]
   },
+  "Request to classify": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentguard"
+    ]
+  },
   "Request toll reporting details in the PC*Miler response.": {
     "sites": 1,
     "scope": [
@@ -121891,11 +122016,12 @@
     ]
   },
   "Role is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/conversation",
       "domain/iam",
       "domain/permission"
     ]
@@ -130179,11 +130305,12 @@
     ]
   },
   "Sequence cannot be negative": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/conversation",
       "domain/detention",
       "domain/edi",
       "domain/shipment"
@@ -137297,7 +137424,7 @@
     ]
   },
   "Status is required": {
-    "sites": 115,
+    "sites": 116,
     "scope": [
       "go"
     ],
@@ -137307,6 +137434,7 @@
       "domain/apikey",
       "domain/billingtransfer",
       "domain/carrier",
+      "domain/conversation",
       "domain/dedicatedlane",
       "domain/detention",
       "domain/distancecalculation",
@@ -145785,7 +145913,7 @@
     ]
   },
   "The model declined this request": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -151664,6 +151792,15 @@
       "routes/reports"
     ]
   },
+  "Thread is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/conversation"
+    ]
+  },
   "Thread key cannot be longer than 120 characters": {
     "sites": 1,
     "scope": [
@@ -152480,6 +152617,15 @@
       "apps/web/types"
     ]
   },
+  "Title cannot be longer than 200 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/conversation"
+    ]
+  },
   "Title cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -153003,6 +153149,24 @@
     ],
     "areas": [
       "api/middleware"
+    ]
+  },
+  "Tool is listed more than once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "Tool name cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Tool name is required": {
@@ -158901,12 +159065,13 @@
     ]
   },
   "User is required": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/ailog",
+      "domain/conversation",
       "domain/documentaiextraction",
       "domain/homelayout",
       "domain/iam",

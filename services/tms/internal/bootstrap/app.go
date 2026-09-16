@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -109,6 +112,9 @@ func Options() fx.Option {
 		shipmentjobs.Module,
 		agentjobs.Module,
 		agenttoolservice.Module,
+		agentquerytoolservice.Module,
+		agentguard.Module,
+		fx.Provide(assistantservice.New),
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

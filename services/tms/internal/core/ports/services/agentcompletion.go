@@ -84,10 +84,39 @@ type StructuredCompletionResult struct {
 	ProviderKind aiprovider.Kind
 }
 
+// ChatCompletionRequest is one turn of a tool-using conversation. Unlike the
+// structured path it sends the whole exchange, because these APIs are stateless.
+type ChatCompletionRequest struct {
+	TenantInfo pagination.TenantInfo
+	System     string
+	Messages   []Message
+	Tools      []ToolSpec
+	MaxTokens  int
+}
+
+// ChatCompletionResult is a turn's reply, which may ask for tools, say
+// something, or both.
+type ChatCompletionResult struct {
+	Text            string
+	ToolCalls       []ToolCall
+	ModelIdentifier string
+	InputTokens     int
+	OutputTokens    int
+	ProviderID      pulid.ID
+	ProviderKind    aiprovider.Kind
+}
+
 type CompletionService interface {
 	Diagnose(ctx context.Context, req *DiagnoseRequest) (*DiagnoseResult, error)
 	CompleteStructured(
 		ctx context.Context,
 		req *StructuredCompletionRequest,
 	) (*StructuredCompletionResult, error)
+	// CompleteChat runs one conversational turn with tools. It does not loop;
+	// driving the loop is the assistant service's job, since only that layer knows
+	// which tools may run and which need a person.
+	CompleteChat(
+		ctx context.Context,
+		req *ChatCompletionRequest,
+	) (*ChatCompletionResult, error)
 }

@@ -48,6 +48,13 @@ func (s *stubCompletion) Diagnose(
 	return nil, errors.New("not used")
 }
 
+func (s *stubCompletion) CompleteChat(
+	_ context.Context,
+	_ *serviceports.ChatCompletionRequest,
+) (*serviceports.ChatCompletionResult, error) {
+	return nil, errors.New("not used")
+}
+
 func newGuard(t *testing.T, stub *stubCompletion) *agentguard.Service {
 	t.Helper()
 

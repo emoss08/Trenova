@@ -617,6 +617,7 @@ func protectedProductRoutePrefixes() []protectedProductRoutePrefix {
 		{prefix: "/api/v1/agent-exceptions/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-proposals/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-runs/", featureKey: FeatureAgentAutomation},
+		{prefix: "/api/v1/ai-providers/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/analytics/", featureKey: FeatureAnalytics},
 		{prefix: "/api/v1/api-keys/", featureKey: FeatureAPIKeys},
 		{prefix: "/api/v1/assignments/", featureKey: FeatureDispatch},
