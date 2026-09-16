@@ -2,8 +2,10 @@ package modeladapter
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 )
 
@@ -25,6 +27,7 @@ type anthropicRequest struct {
 	Messages     []anthropicMessage     `json:"messages"`
 	Tools        []anthropicTool        `json:"tools,omitempty"`
 	OutputConfig *anthropicOutputConfig `json:"output_config,omitempty"`
+	Stream       bool                   `json:"stream,omitempty"`
 }
 
 // anthropicMessage carries content as blocks rather than a string, since tool
@@ -118,6 +121,160 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         envelope.StopReason == "refusal",
+	}, nil
+}
+
+// anthropicStreamEvent is the union of every event the Messages API streams.
+// Only the fields a given type carries are set; the rest decode to their zero
+// values and are ignored.
+type anthropicStreamEvent struct {
+	Type    string `json:"type"`
+	Index   int    `json:"index"`
+	Message *struct {
+		Model string         `json:"model"`
+		Usage anthropicUsage `json:"usage"`
+	} `json:"message"`
+	ContentBlock *anthropicBlock `json:"content_block"`
+	Delta        *struct {
+		Type        string `json:"type"`
+		Text        string `json:"text"`
+		PartialJSON string `json:"partial_json"`
+		StopReason  string `json:"stop_reason"`
+	} `json:"delta"`
+	Usage *anthropicUsage `json:"usage"`
+	Error *struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+// anthropicStreamBlock accumulates one content block as its deltas arrive. Text
+// grows by text_delta; a tool_use block's input arrives as fragments of one
+// JSON document that is only parseable once the block stops.
+type anthropicStreamBlock struct {
+	block anthropicBlock
+	text  strings.Builder
+	input strings.Builder
+}
+
+func (a anthropicAdapter) Stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+) (*Response, error) {
+	body := anthropicRequest{
+		Model:     call.Provider.Model,
+		MaxTokens: call.Request.MaxTokens,
+		System:    call.Request.System,
+		Messages:  toAnthropicMessages(call.Request.Messages),
+		Tools:     toAnthropicTools(call.Request.Tools),
+		Stream:    true,
+	}
+
+	stream, err := postStream(
+		ctx,
+		call.Client,
+		call.Provider.ResolvedBaseURL()+"/v1/messages",
+		map[string]string{
+			"x-api-key":         call.APIKey,
+			"anthropic-version": anthropicVersion,
+		},
+		body,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = stream.Close() }()
+
+	var (
+		model      string
+		usage      anthropicUsage
+		stopReason string
+		blocks     = map[int]*anthropicStreamBlock{}
+		order      []int
+	)
+
+	err = readSSE(stream, func(_, data string) error {
+		var event anthropicStreamEvent
+		if err := sonic.Unmarshal([]byte(data), &event); err != nil {
+			return fmt.Errorf("decode stream event: %w", err)
+		}
+
+		switch event.Type {
+		case "message_start":
+			if event.Message != nil {
+				model = event.Message.Model
+				usage.InputTokens = event.Message.Usage.InputTokens
+			}
+		case "content_block_start":
+			if event.ContentBlock == nil {
+				return nil
+			}
+			block := &anthropicStreamBlock{block: *event.ContentBlock}
+			block.text.WriteString(event.ContentBlock.Text)
+			blocks[event.Index] = block
+			order = append(order, event.Index)
+		case "content_block_delta":
+			block, ok := blocks[event.Index]
+			if !ok || event.Delta == nil {
+				return nil
+			}
+			switch event.Delta.Type {
+			case "text_delta":
+				block.text.WriteString(event.Delta.Text)
+				if event.Delta.Text != "" {
+					sink(event.Delta.Text)
+				}
+			case "input_json_delta":
+				block.input.WriteString(event.Delta.PartialJSON)
+			}
+		case "message_delta":
+			if event.Delta != nil {
+				stopReason = firstNonEmpty(event.Delta.StopReason, stopReason)
+			}
+			if event.Usage != nil {
+				usage.OutputTokens = event.Usage.OutputTokens
+			}
+		case "error":
+			if event.Error != nil {
+				return streamError(event.Error.Type, event.Error.Message)
+			}
+			return streamError("", "")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	content := make([]anthropicBlock, 0, len(order))
+	for _, index := range order {
+		streamed := blocks[index]
+		block := streamed.block
+		switch block.Type {
+		case "text":
+			block.Text = streamed.text.String()
+		case "tool_use":
+			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
+				block.Input = decodeArguments(raw)
+			}
+			if block.Input == nil {
+				block.Input = map[string]any{}
+			}
+		}
+		content = append(content, block)
+	}
+
+	text, toolCalls := splitAnthropicContent(content)
+
+	return &Response{
+		Text:            text,
+		ToolCalls:       toolCalls,
+		ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+		InputTokens:     usage.InputTokens,
+		OutputTokens:    usage.OutputTokens,
+		Refused:         stopReason == "refusal",
 	}, nil
 }
 

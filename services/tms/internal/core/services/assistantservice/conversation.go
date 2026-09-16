@@ -106,6 +106,18 @@ func (s *Service) SendMessage(
 	req *services.SendMessageRequest,
 	actor *services.RequestActor,
 ) (*services.SendMessageResult, error) {
+	return s.SendMessageStream(ctx, req, actor, nil)
+}
+
+// SendMessageStream is SendMessage with the turn reported to emit as it
+// happens. The reply is still saved whole at the end: what the reader watched
+// arrive and what the thread shows afterwards are the same messages.
+func (s *Service) SendMessageStream(
+	ctx context.Context,
+	req *services.SendMessageRequest,
+	actor *services.RequestActor,
+	emit services.AssistantStreamEmitter,
+) (*services.SendMessageResult, error) {
 	content := strings.TrimSpace(req.Content)
 	if content == "" {
 		multiErr := errortypes.NewMultiError()
@@ -146,12 +158,12 @@ func (s *Service) SendMessage(
 		return nil, err
 	}
 
-	turn, err := s.Run(ctx, &TurnRequest{
+	turn, err := s.RunObserved(ctx, &TurnRequest{
 		Definition: definition,
 		Actor:      actor,
 		History:    history,
 		Input:      content,
-	})
+	}, emit)
 	if err != nil {
 		return nil, err
 	}

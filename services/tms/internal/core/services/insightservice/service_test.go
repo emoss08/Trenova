@@ -187,6 +187,14 @@ func (failingCompletion) CompleteChat(
 	return nil, services.ErrNoProviderConfigured
 }
 
+func (failingCompletion) StreamChat(
+	context.Context,
+	*services.ChatCompletionRequest,
+	services.ChatStreamSink,
+) (*services.ChatCompletionResult, error) {
+	return nil, services.ErrNoProviderConfigured
+}
+
 func newService(repo *stubRepo, perms *stubPermissions, ds ...detector.Detector) *Service {
 	return &Service{
 		l:           zap.NewNop(),

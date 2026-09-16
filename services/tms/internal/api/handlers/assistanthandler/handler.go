@@ -3,16 +3,19 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
@@ -21,12 +24,14 @@ type Params struct {
 	Service              serviceports.AssistantService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Logger               *zap.Logger
 }
 
 type Handler struct {
 	service serviceports.AssistantService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+	logger  *zap.Logger
 }
 
 func New(p Params) *Handler {
@@ -34,6 +39,7 @@ func New(p Params) *Handler {
 		service: p.Service,
 		eh:      p.ErrorHandler,
 		pm:      p.PermissionMiddleware,
+		logger:  p.Logger.Named("assistanthandler"),
 	}
 }
 
@@ -58,6 +64,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/threads/:threadID/messages/",
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.sendMessage,
+	)
+	api.POST(
+		"/threads/:threadID/messages/stream/",
+		h.pm.RequirePermission(resource, permission.OpCreate),
+		h.sendMessageStream,
 	)
 	// Reading a conversation's proposals needs no more than reading the
 	// conversation: they are part of what was said. Acting on one goes through the
@@ -265,4 +276,77 @@ func (h *Handler) sendMessage(c *gin.Context) {
 	// A refusal is a successful request with a declined answer, not an error: the
 	// turn was processed, recorded, and explained.
 	c.JSON(http.StatusOK, result)
+}
+
+// sendMessageStream runs the same turn as sendMessage but reports it as
+// server-sent events while it happens: the guard's decision, each piece of the
+// reply, each tool as it starts and finishes, and finally the saved result. A
+// failure after the stream has opened is reported as an error event, since the
+// status line has already been sent.
+func (h *Handler) sendMessageStream(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	threadID, err := pulid.Parse(c.Param("threadID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body sendMessageRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming is not supported"))
+		return
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	emit := func(event serviceports.StreamEvent) {
+		data, marshalErr := sonic.Marshal(event.Data)
+		if marshalErr != nil {
+			return
+		}
+		_, _ = c.Writer.WriteString("event: " + event.Event + "\n")
+		_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
+		flusher.Flush()
+	}
+
+	actor := requestActorFromAuthContext(authCtx)
+	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
+		ThreadID:   threadID,
+		Content:    body.Content,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	}, &actor, emit)
+	if err != nil {
+		emit(serviceports.StreamEvent{
+			Event: "error",
+			Data:  gin.H{"message": h.streamErrorMessage(err)},
+		})
+		return
+	}
+
+	emit(serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result})
+}
+
+// streamErrorMessage picks what the reader may see. A business or validation
+// error is written for them; anything else is an internal fault whose wording
+// belongs in the log, not on their screen.
+func (h *Handler) streamErrorMessage(err error) string {
+	if errortypes.IsBusinessError(err) || errortypes.IsMultiError(err) {
+		return err.Error()
+	}
+
+	h.logger.Error("assistant stream failed", zap.Error(err))
+
+	return "The assistant could not finish this reply. Try again in a moment."
 }

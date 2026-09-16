@@ -66,13 +66,26 @@ type PendingAction struct {
 	ToolCallID string `json:"toolCallId"`
 }
 
-// Run executes one turn.
+// Run executes one turn without an audience.
+func (s *Service) Run(ctx context.Context, req *TurnRequest) (*TurnResult, error) {
+	return s.RunObserved(ctx, req, nil)
+}
+
+// RunObserved executes one turn and reports progress to emit as it happens.
 //
 // The order matters. The request is guarded before a provider is chosen, so an
 // out-of-scope question costs one cheap classification rather than a frontier
 // model call plus a tool loop. The answer is guarded again on the way out,
 // because the layers in between are advisory.
-func (s *Service) Run(ctx context.Context, req *TurnRequest) (*TurnResult, error) {
+func (s *Service) RunObserved(
+	ctx context.Context,
+	req *TurnRequest,
+	emit serviceports.AssistantStreamEmitter,
+) (*TurnResult, error) {
+	if emit == nil {
+		emit = func(serviceports.StreamEvent) {}
+	}
+
 	tenantInfo := req.Actor.TenantInfo()
 
 	decision := s.guard.Evaluate(ctx, tenantInfo, req.Input)
@@ -86,6 +99,7 @@ func (s *Service) Run(ctx context.Context, req *TurnRequest) (*TurnResult, error
 
 	if !decision.Allowed {
 		userMessage.Refused = true
+		emit(refusedEvent(decision))
 
 		return &TurnResult{
 			Reply:    decision.Message,
@@ -104,7 +118,16 @@ func (s *Service) Run(ctx context.Context, req *TurnRequest) (*TurnResult, error
 		}, nil
 	}
 
-	return s.runLoop(ctx, req, decision, userMessage)
+	emit(serviceports.StreamEvent{
+		Event: serviceports.AssistantEventAccepted,
+		Data: serviceports.AssistantAcceptedEvent{
+			Content:       req.Input,
+			ScopeStage:    string(decision.Stage),
+			ScopeCategory: string(decision.Category),
+		},
+	})
+
+	return s.runLoop(ctx, req, decision, userMessage, emit)
 }
 
 func (s *Service) runLoop(
@@ -112,6 +135,7 @@ func (s *Service) runLoop(
 	req *TurnRequest,
 	decision agentguard.Decision,
 	userMessage conversation.Message,
+	emit serviceports.AssistantStreamEmitter,
 ) (*TurnResult, error) {
 	result := &TurnResult{
 		Decision: decision,
@@ -125,13 +149,20 @@ func (s *Service) runLoop(
 		Content: req.Input,
 	})
 
+	sink := func(delta string) {
+		emit(serviceports.StreamEvent{
+			Event: serviceports.AssistantEventDelta,
+			Data:  serviceports.AssistantDeltaEvent{Text: delta},
+		})
+	}
+
 	for iteration := range maxIterations {
-		completion, err := s.completion.CompleteChat(ctx, &serviceports.ChatCompletionRequest{
+		completion, err := s.completion.StreamChat(ctx, &serviceports.ChatCompletionRequest{
 			TenantInfo: req.Actor.TenantInfo(),
 			System:     req.Definition.BuildSystemPrompt(),
 			Messages:   messages,
 			Tools:      tools,
-		})
+		}, sink)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +171,7 @@ func (s *Service) runLoop(
 		result.Provider = completion.ProviderID
 
 		if len(completion.ToolCalls) == 0 {
-			return s.finish(result, completion)
+			return s.finish(result, completion, emit)
 		}
 
 		assistantTurn := conversation.Message{
@@ -158,12 +189,40 @@ func (s *Service) runLoop(
 			Content:   completion.Text,
 			ToolCalls: completion.ToolCalls,
 		})
+		emit(serviceports.StreamEvent{
+			Event: serviceports.AssistantEventMessage,
+			Data: serviceports.AssistantMessageEvent{
+				Content:   assistantTurn.Content,
+				ToolCalls: assistantTurn.ToolCalls,
+				Model:     assistantTurn.Model,
+			},
+		})
 
 		for _, call := range completion.ToolCalls {
+			emit(serviceports.StreamEvent{
+				Event: serviceports.AssistantEventToolStarted,
+				Data: serviceports.AssistantToolStartedEvent{
+					CallID:    call.ID,
+					Name:      call.Name,
+					Arguments: call.Arguments,
+				},
+			})
+
 			outcome := s.dispatch(ctx, req, call, completion.Text)
 			if outcome.proposal != nil {
 				result.Proposals = append(result.Proposals, *outcome.proposal)
 			}
+
+			emit(serviceports.StreamEvent{
+				Event: serviceports.AssistantEventToolFinished,
+				Data: serviceports.AssistantToolFinishedEvent{
+					CallID:   call.ID,
+					Name:     call.Name,
+					Failed:   outcome.failed,
+					Proposed: outcome.proposal != nil,
+					Content:  outcome.content,
+				},
+			})
 
 			result.Messages = append(result.Messages, conversation.Message{
 				Role:       conversation.RoleTool,
@@ -197,6 +256,10 @@ func (s *Service) runLoop(
 		Role:    conversation.RoleAssistant,
 		Content: exhausted,
 	})
+	emit(serviceports.StreamEvent{
+		Event: serviceports.AssistantEventDelta,
+		Data:  serviceports.AssistantDeltaEvent{Text: exhausted},
+	})
 
 	return result, nil
 }
@@ -204,6 +267,7 @@ func (s *Service) runLoop(
 func (s *Service) finish(
 	result *TurnResult,
 	completion *serviceports.ChatCompletionResult,
+	emit serviceports.AssistantStreamEmitter,
 ) (*TurnResult, error) {
 	outputDecision := agentguard.EvaluateOutput(completion.Text)
 	if !outputDecision.Allowed {
@@ -228,6 +292,9 @@ func (s *Service) finish(
 			InputTokens:   completion.InputTokens,
 			OutputTokens:  completion.OutputTokens,
 		})
+		// The reader has already seen the text stream in; this tells them to let
+		// go of it.
+		emit(refusedEvent(outputDecision))
 
 		return result, nil
 	}
@@ -243,6 +310,18 @@ func (s *Service) finish(
 	})
 
 	return result, nil
+}
+
+func refusedEvent(decision agentguard.Decision) serviceports.StreamEvent {
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventRefused,
+		Data: serviceports.AssistantRefusedEvent{
+			Message:  decision.Message,
+			Stage:    string(decision.Stage),
+			Category: string(decision.Category),
+			Reason:   string(decision.Reason),
+		},
+	}
 }
 
 type toolOutcome struct {

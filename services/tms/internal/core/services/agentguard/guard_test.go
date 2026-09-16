@@ -55,6 +55,14 @@ func (s *stubCompletion) CompleteChat(
 	return nil, errors.New("not used")
 }
 
+func (s *stubCompletion) StreamChat(
+	context.Context,
+	*serviceports.ChatCompletionRequest,
+	serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, error) {
+	return nil, errors.New("not used")
+}
+
 func newGuard(t *testing.T, stub *stubCompletion) *agentguard.Service {
 	t.Helper()
 

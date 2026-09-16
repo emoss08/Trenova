@@ -51,6 +51,14 @@ func (c *stubCompletion) CompleteChat(
 	return nil, errors.New("not used")
 }
 
+func (c *stubCompletion) StreamChat(
+	context.Context,
+	*services.ChatCompletionRequest,
+	services.ChatStreamSink,
+) (*services.ChatCompletionResult, error) {
+	return nil, errors.New("not used")
+}
+
 func newNarrator(completion services.CompletionService) *Service {
 	return &Service{l: zap.NewNop(), completion: completion}
 }

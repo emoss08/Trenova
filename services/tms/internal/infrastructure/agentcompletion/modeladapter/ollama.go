@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 )
 
@@ -70,9 +71,82 @@ type ollamaOptions struct {
 type ollamaResponse struct {
 	Model           string        `json:"model"`
 	Message         ollamaMessage `json:"message"`
+	Done            bool          `json:"done"`
 	DoneReason      string        `json:"done_reason"`
 	PromptEvalCount int           `json:"prompt_eval_count"`
 	EvalCount       int           `json:"eval_count"`
+	Error           string        `json:"error"`
+}
+
+func (a ollamaAdapter) Stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+) (*Response, error) {
+	body := ollamaRequest{
+		Model:    call.Provider.Model,
+		Messages: toOllamaMessages(call.Request.System, call.Request.Messages),
+		Tools:    toOllamaTools(call.Request.Tools),
+		Stream:   true,
+	}
+	if call.Request.MaxTokens > 0 {
+		body.Options = &ollamaOptions{NumPredict: call.Request.MaxTokens}
+	}
+
+	stream, err := postStream(
+		ctx,
+		call.Client,
+		call.Provider.ResolvedBaseURL()+"/api/chat",
+		map[string]string{"Authorization": bearer(call.APIKey)},
+		body,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = stream.Close() }()
+
+	var (
+		text  strings.Builder
+		final ollamaResponse
+		calls []ollamaToolCall
+	)
+
+	err = readNDJSON(stream, func(line []byte) error {
+		var chunk ollamaResponse
+		if err := sonic.Unmarshal(line, &chunk); err != nil {
+			return fmt.Errorf("decode stream chunk: %w", err)
+		}
+		if chunk.Error != "" {
+			return streamError("server_error", chunk.Error)
+		}
+
+		if chunk.Message.Content != "" {
+			text.WriteString(chunk.Message.Content)
+			sink(chunk.Message.Content)
+		}
+		// Tool calls arrive on whichever chunk the model finished deciding them,
+		// usually one of the last, and never repeat.
+		calls = append(calls, chunk.Message.ToolCalls...)
+		final.Model = firstNonEmpty(final.Model, chunk.Model)
+		if chunk.Done {
+			final.PromptEvalCount = chunk.PromptEvalCount
+			final.EvalCount = chunk.EvalCount
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &Response{
+		Text:            text.String(),
+		ToolCalls:       fromOllamaToolCalls(calls),
+		ModelIdentifier: firstNonEmpty(final.Model, call.Provider.Model),
+		InputTokens:     final.PromptEvalCount,
+		OutputTokens:    final.EvalCount,
+		Refused:         false,
+	}, nil
 }
 
 func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
