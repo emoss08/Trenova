@@ -16,15 +16,21 @@ import (
 // caller's domain types; assembling the prompt is the router's job so every
 // provider receives byte-identical instructions.
 type Request struct {
-	System      string
-	UserContent string
+	System string
+	// Messages is the conversation so far. A one-shot completion sends a single
+	// user message; a tool loop sends the whole exchange back each turn, because
+	// these APIs are stateless.
+	Messages []Message
 	// OutputSchema is the JSON Schema the reply must satisfy. Nil requests
 	// freeform text. How the schema is enforced — server-side, as a JSON-mode
 	// hint, or by prompting alone — depends on the provider's declared mode.
 	OutputSchema map[string]any
 	// SchemaName labels the schema for the protocols that require a name.
 	SchemaName string
-	MaxTokens  int
+	// Tools the model may ask for. Offering tools and demanding a JSON schema at
+	// once confuses most endpoints, so callers set one or the other.
+	Tools     []ToolSpec
+	MaxTokens int
 }
 
 // Response is a normalized reply. Text is the raw model output; the router is
@@ -35,6 +41,9 @@ type Response struct {
 	ModelIdentifier string
 	InputTokens     int
 	OutputTokens    int
+	// ToolCalls is what the model asked to run. A turn can carry both text and
+	// tool calls.
+	ToolCalls []ToolCall
 	// Refused reports that the model declined the request outright, which is a
 	// business outcome rather than a transport failure and must not be retried.
 	Refused bool

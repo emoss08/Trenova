@@ -99,7 +99,7 @@ func (p *Prober) Probe(
 				schema,
 				provider.StructuredOutputMode,
 			),
-			UserContent:  probeUserPrompt,
+			Messages:     modeladapter.UserMessage(probeUserPrompt),
 			OutputSchema: schema,
 			SchemaName:   "connection_probe",
 			MaxTokens:    probeMaxTokens,

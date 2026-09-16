@@ -241,7 +241,7 @@ func (s *Service) attempt(
 				req.Schema,
 				provider.StructuredOutputMode,
 			),
-			UserContent:  req.UserContent,
+			Messages:     modeladapter.UserMessage(req.UserContent),
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,

@@ -23,12 +23,36 @@ type anthropicRequest struct {
 	MaxTokens    int                    `json:"max_tokens"`
 	System       string                 `json:"system,omitempty"`
 	Messages     []anthropicMessage     `json:"messages"`
+	Tools        []anthropicTool        `json:"tools,omitempty"`
 	OutputConfig *anthropicOutputConfig `json:"output_config,omitempty"`
 }
 
+// anthropicMessage carries content as blocks rather than a string, since tool
+// use and tool results are block types rather than roles.
 type anthropicMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string           `json:"role"`
+	Content []anthropicBlock `json:"content"`
+}
+
+type anthropicBlock struct {
+	Type string `json:"type"`
+	Text string `json:"text,omitempty"`
+
+	// tool_use
+	ID    string         `json:"id,omitempty"`
+	Name  string         `json:"name,omitempty"`
+	Input map[string]any `json:"input,omitempty"`
+
+	// tool_result
+	ToolUseID string `json:"tool_use_id,omitempty"`
+	Content   string `json:"content,omitempty"`
+	IsError   bool   `json:"is_error,omitempty"`
+}
+
+type anthropicTool struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	InputSchema map[string]any `json:"input_schema"`
 }
 
 type anthropicOutputConfig struct {
@@ -41,15 +65,10 @@ type anthropicOutputFormat struct {
 }
 
 type anthropicResponse struct {
-	Model      string                  `json:"model"`
-	StopReason string                  `json:"stop_reason"`
-	Content    []anthropicContentBlock `json:"content"`
-	Usage      anthropicUsage          `json:"usage"`
-}
-
-type anthropicContentBlock struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
+	Model      string           `json:"model"`
+	StopReason string           `json:"stop_reason"`
+	Content    []anthropicBlock `json:"content"`
+	Usage      anthropicUsage   `json:"usage"`
 }
 
 type anthropicUsage struct {
@@ -62,12 +81,12 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		Model:     call.Provider.Model,
 		MaxTokens: call.Request.MaxTokens,
 		System:    call.Request.System,
-		Messages: []anthropicMessage{
-			{Role: "user", Content: call.Request.UserContent},
-		},
+		Messages:  toAnthropicMessages(call.Request.Messages),
+		Tools:     toAnthropicTools(call.Request.Tools),
 	}
 
 	if schema := call.Request.OutputSchema; schema != nil &&
+		len(call.Request.Tools) == 0 &&
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
 		body.OutputConfig = &anthropicOutputConfig{
 			Format: anthropicOutputFormat{Type: "json_schema", Schema: schema},
@@ -90,8 +109,11 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		return nil, err
 	}
 
+	text, toolCalls := splitAnthropicContent(envelope.Content)
+
 	return &Response{
-		Text:            firstAnthropicText(&envelope),
+		Text:            text,
+		ToolCalls:       toolCalls,
 		ModelIdentifier: envelope.Model,
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
@@ -99,12 +121,90 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	}, nil
 }
 
-func firstAnthropicText(resp *anthropicResponse) string {
-	for _, block := range resp.Content {
-		if block.Type == "text" && strings.TrimSpace(block.Text) != "" {
-			return block.Text
+func toAnthropicMessages(messages []Message) []anthropicMessage {
+	out := make([]anthropicMessage, 0, len(messages))
+
+	for _, msg := range messages {
+		switch msg.Role {
+		case RoleTool:
+			// A tool result is a user-role message carrying a tool_result block,
+			// not a role of its own.
+			out = append(out, anthropicMessage{
+				Role: "user",
+				Content: []anthropicBlock{{
+					Type:      "tool_result",
+					ToolUseID: msg.ToolCallID,
+					Content:   msg.Content,
+					IsError:   msg.IsError,
+				}},
+			})
+		case RoleAssistant:
+			blocks := make([]anthropicBlock, 0, len(msg.ToolCalls)+1)
+			if strings.TrimSpace(msg.Content) != "" {
+				blocks = append(blocks, anthropicBlock{Type: "text", Text: msg.Content})
+			}
+			for _, tc := range msg.ToolCalls {
+				blocks = append(blocks, anthropicBlock{
+					Type:  "tool_use",
+					ID:    tc.ID,
+					Name:  tc.Name,
+					Input: tc.Arguments,
+				})
+			}
+			if len(blocks) == 0 {
+				continue
+			}
+			out = append(out, anthropicMessage{Role: "assistant", Content: blocks})
+		default:
+			out = append(out, anthropicMessage{
+				Role:    "user",
+				Content: []anthropicBlock{{Type: "text", Text: msg.Content}},
+			})
 		}
 	}
 
-	return ""
+	return out
+}
+
+func toAnthropicTools(tools []ToolSpec) []anthropicTool {
+	if len(tools) == 0 {
+		return nil
+	}
+
+	out := make([]anthropicTool, 0, len(tools))
+	for _, tool := range tools {
+		out = append(out, anthropicTool{
+			Name:        tool.Name,
+			Description: tool.Description,
+			InputSchema: tool.Parameters,
+		})
+	}
+
+	return out
+}
+
+func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
+	var text string
+	toolCalls := make([]ToolCall, 0, len(blocks))
+
+	for _, block := range blocks {
+		switch block.Type {
+		case "text":
+			if text == "" && strings.TrimSpace(block.Text) != "" {
+				text = block.Text
+			}
+		case "tool_use":
+			toolCalls = append(toolCalls, ToolCall{
+				ID:        block.ID,
+				Name:      block.Name,
+				Arguments: block.Input,
+			})
+		}
+	}
+
+	if len(toolCalls) == 0 {
+		return text, nil
+	}
+
+	return text, toolCalls
 }
