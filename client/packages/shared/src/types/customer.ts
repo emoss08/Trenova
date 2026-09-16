@@ -66,15 +66,6 @@ export type InvoiceDetail = z.infer<typeof invoiceDetailSchema>;
 export const invoiceNumberFormatSchema = z.enum(["Default", "CustomPrefix", "POBased"]);
 export type InvoiceNumberFormat = z.infer<typeof invoiceNumberFormatSchema>;
 
-export const invoiceAdjustmentSupportingDocumentPolicySchema = z.enum([
-  "Inherit",
-  "Required",
-  "Optional",
-]);
-export type InvoiceAdjustmentSupportingDocumentPolicy = z.infer<
-  typeof invoiceAdjustmentSupportingDocumentPolicySchema
->;
-
 export const customerFuelSurchargeModeSchema = z.enum(["None", "Program", "FuelIncluded"]);
 export type CustomerFuelSurchargeMode = z.infer<typeof customerFuelSurchargeModeSchema>;
 
@@ -132,8 +123,6 @@ export const customerBillingProfileSchema = z
     requirePONumber: z.boolean().default(false),
     requireBOLNumber: z.boolean().default(false),
     requireDeliveryNumber: z.boolean().default(false),
-    invoiceAdjustmentSupportingDocumentPolicy:
-      invoiceAdjustmentSupportingDocumentPolicySchema.default("Inherit"),
     defaultBillerId: nullableStringSchema,
     billingNotes: z.string().default(""),
     documentTypes: z.array(z.any()).nullish(),

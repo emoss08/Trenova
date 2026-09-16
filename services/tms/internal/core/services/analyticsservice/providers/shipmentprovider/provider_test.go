@@ -38,7 +38,7 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	target := 96.5
 
-	mockDB.ExpectQuery(`(?s)WITH shipment_lanes AS .*SELECT origin_state, destination_state, COUNT\(\*\)::int AS count`).
+	mockDB.ExpectQuery(`(?s)WITH "lane_endpoints" AS .*AS origin_state.*AS destination_state.*SUM\(lp\.shipment_count\)::int AS count`).
 		WillReturnRows(sqlmock.NewRows([]string{"origin_state", "destination_state", "count"}))
 	mockDB.ExpectQuery(`(?s)SELECT COUNT\(\*\) FILTER .* AS total_active.*FROM shipments sp`).
 		WillReturnRows(sqlmock.NewRows([]string{
@@ -276,7 +276,7 @@ func TestGetLaneHeatmap_AggregatesRegions(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	mockDB.ExpectQuery(`(?s)WITH shipment_lanes AS .*SELECT origin_state, destination_state, COUNT\(\*\)::int AS count`).
+	mockDB.ExpectQuery(`(?s)WITH "lane_endpoints" AS .*AS origin_state.*AS destination_state.*SUM\(lp\.shipment_count\)::int AS count`).
 		WillReturnRows(sqlmock.NewRows([]string{"origin_state", "destination_state", "count"}).
 			AddRow("CA", "TX", 4).
 			AddRow("CA", "WA", 3).

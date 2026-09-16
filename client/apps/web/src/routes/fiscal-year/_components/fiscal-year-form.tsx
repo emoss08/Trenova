@@ -7,46 +7,58 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { fiscalYearStatusChoices } from "@/lib/choices";
-import { getEndOfYear, getStartOfYear } from "@trenova/shared/lib/date";
+import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
+import { getUTCYearBounds } from "@trenova/shared/lib/date";
+import type { FiscalPeriod } from "@/types/fiscal-period";
 import type { FiscalYear } from "@/types/fiscal-year";
-import { useEffect } from "react";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useCallback, useEffect } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { LazyLoadComponent } from "react-lazy-load-image-component";
-import FiscalPeriodTable from "./fiscal-periods-table";
+import { FiscalPeriodTable } from "./fiscal-periods-table";
+
+const NO_PERIODS: FiscalPeriod[] = [];
 
 export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
   const t = useT();
 
-  const { control, setValue } = useFormContext<FiscalYear>();
-  const { fields: periods } = useFieldArray({
-    control,
-    name: "periods",
-  });
+  const { control, setValue, getValues, getFieldState, reset, formState } =
+    useFormContext<FiscalYear>();
   const isEdit = mode === "edit";
 
   const year = useWatch({ control, name: "year" });
   const isCalendarYear = useWatch({ control, name: "isCalendarYear" });
   const status = useWatch({ control, name: "status" });
+  const periods = useWatch({ control, name: "periods" }) ?? NO_PERIODS;
 
-  const isDraft = status === "Draft";
   const isClosed = status === "Closed";
   const isPermanentlyClosed = status === "PermanentlyClosed";
 
   useEffect(() => {
-    if (!isEdit && year) {
-      setValue("taxYear", year);
-    }
-  }, [isEdit, year, setValue]);
+    if (isEdit || !year) return;
 
-  useEffect(() => {
-    if (!isEdit && isCalendarYear && year) {
-      const startOfYear = getStartOfYear();
-      const endOfYear = getEndOfYear();
-
-      setValue("startDate", startOfYear);
-      setValue("endDate", endOfYear);
+    if (!getFieldState("name").isDirty) {
+      setValue("name", `FY ${year}`);
     }
-  }, [isEdit, isCalendarYear, year, setValue]);
+
+    if (isCalendarYear) {
+      const { startDate, endDate } = getUTCYearBounds(year);
+      setValue("startDate", startDate, { shouldValidate: true });
+      setValue("endDate", endDate, { shouldValidate: true });
+    }
+  }, [isEdit, isCalendarYear, year, setValue, getFieldState]);
+
+  const handlePeriodUpdated = useCallback(
+    (updated: FiscalPeriod) => {
+      const nextPeriods = (getValues("periods") ?? []).map((existing) =>
+        existing.id === updated.id ? { ...existing, ...updated } : existing,
+      );
+      reset(
+        { ...(formState.defaultValues as FiscalYear), periods: nextPeriods },
+        { keepDirtyValues: true, keepErrors: true, keepTouched: true, keepSubmitCount: true },
+      );
+    },
+    [getValues, reset, formState],
+  );
 
   return (
     <div className="flex flex-col">
@@ -56,10 +68,10 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             control={control}
             rules={{ required: true }}
             name="status"
-            isReadOnly={!isEdit}
+            isReadOnly
             label={t("Status")}
             placeholder={t("Select status")}
-            description={t("Current workflow status")}
+            description={t("Changes through the fiscal year actions")}
             options={fiscalYearStatusChoices}
           />
         </FormControl>
@@ -74,6 +86,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             description={t("Fiscal year identifier")}
             min={new Date().getFullYear() - 1}
             max={new Date().getFullYear() + 5}
+            readOnly={isEdit}
           />
         </FormControl>
 
@@ -97,12 +110,17 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             label={t("Description")}
             placeholder={t("Optional notes about this fiscal year...")}
             description={t("Additional context or special notes")}
+            readOnly={isEdit && isPermanentlyClosed}
           />
         </FormControl>
       </FormGroup>
       <FormSection
         title={t("Date Configuration")}
-        description={t("Define the fiscal period and calendar year settings")}
+        description={
+          isEdit
+            ? t("The calendar is fixed once the fiscal year is created")
+            : t("Define the fiscal period and calendar year settings")
+        }
         className="border-b py-2"
       >
         <FormGroup cols={1}>
@@ -113,7 +131,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               label={t("Calendar Year")}
               description={t("Standard Jan 1 - Dec 31 period (automatically sets dates)")}
               position="left"
-              disabled={isEdit && !isDraft}
+              readOnly={isEdit}
               outlined
             />
           </FormControl>
@@ -127,8 +145,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               name="startDate"
               label={t("Start Date")}
               placeholder={t("Select start date")}
-              description={t("First day of fiscal period")}
-              readOnly={isEdit && !isDraft}
+              description={t("First day of fiscal period (UTC)")}
+              timezone={FISCAL_CALENDAR_TIMEZONE}
+              readOnly={isEdit || isCalendarYear}
             />
           </FormControl>
 
@@ -139,38 +158,9 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               name="endDate"
               label={t("End Date")}
               placeholder={t("Select end date")}
-              description={t("Last day of fiscal period")}
-              readOnly={isEdit && !isDraft}
-            />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
-      <FormSection
-        title={t("Financial Planning")}
-        description={t("Budget and tax reporting configuration")}
-        className="border-b py-2"
-      >
-        <FormGroup cols={2}>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="budgetAmount"
-              label={t("Budget Amount")}
-              placeholder="0"
-              description={t("Annual budget in dollars (optional)")}
-              min={0}
-              readOnly={isEdit && (isClosed || isPermanentlyClosed)}
-            />
-          </FormControl>
-
-          <FormControl>
-            <NumberField
-              control={control}
-              name="taxYear"
-              label={t("Tax Year")}
-              placeholder="2025"
-              description={t("IRS tax reporting year (auto-synced)")}
-              readOnly={!isEdit}
+              description={t("Last day of fiscal period (UTC)")}
+              timezone={FISCAL_CALENDAR_TIMEZONE}
+              readOnly={isEdit || isCalendarYear}
             />
           </FormControl>
         </FormGroup>
@@ -192,19 +182,6 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               readOnly={isEdit && isPermanentlyClosed}
             />
           </FormControl>
-
-          {isEdit && (
-            <FormControl cols="full">
-              <AutoCompleteDateField
-                control={control}
-                name="adjustmentDeadline"
-                label={t("Adjustment Deadline")}
-                placeholder={t("Select deadline")}
-                description={t("Final date for post-close adjusting entries")}
-                readOnly={isPermanentlyClosed}
-              />
-            </FormControl>
-          )}
         </FormGroup>
       </FormSection>
       {isEdit && (
@@ -224,7 +201,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
                 )}
                 position="left"
                 outlined
-                disabled
+                readOnly
               />
             </FormControl>
           </FormGroup>
@@ -238,7 +215,11 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
           className="py-2"
         >
           <LazyLoadComponent>
-            <FiscalPeriodTable periods={periods} />
+            <FiscalPeriodTable
+              periods={periods}
+              fiscalYearStatus={status}
+              onPeriodUpdated={handlePeriodUpdated}
+            />
           </LazyLoadComponent>
         </FormSection>
       )}

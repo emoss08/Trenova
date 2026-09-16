@@ -472,18 +472,6 @@ const (
 	RequirementPolicyRequired = RequirementPolicy("Required")
 )
 
-type AdjustmentAttachmentPolicy string
-
-const (
-	AdjustmentAttachmentPolicyOptional                    = AdjustmentAttachmentPolicy("Optional")
-	AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff = AdjustmentAttachmentPolicy(
-		"RequiredForCreditOrWriteOff",
-	)
-	AdjustmentAttachmentPolicyRequiredForAll = AdjustmentAttachmentPolicy(
-		"RequiredForAll",
-	)
-)
-
 type ApprovalPolicy string
 
 const (
@@ -804,17 +792,6 @@ func (v RequirementPolicy) IsValid() bool {
 	switch v {
 	case RequirementPolicyOptional,
 		RequirementPolicyRequired:
-		return true
-	default:
-		return false
-	}
-}
-
-func (v AdjustmentAttachmentPolicy) IsValid() bool {
-	switch v {
-	case AdjustmentAttachmentPolicyOptional,
-		AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
-		AdjustmentAttachmentPolicyRequiredForAll:
 		return true
 	default:
 		return false

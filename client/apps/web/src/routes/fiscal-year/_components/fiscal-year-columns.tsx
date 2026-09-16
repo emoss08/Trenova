@@ -6,6 +6,7 @@ import {
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fiscalYearStatusChoices } from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
@@ -64,15 +65,17 @@ export function getColumns(t: TranslateFn): ColumnDef<FiscalYearRow>[] {
         if (!startDate || !endDate) return "-";
         return (
           <span className="font-mono text-xs whitespace-nowrap">
-            {formatToUserTimezone(startDate, {
-              showTime: false,
-              showDate: true,
-            })}{" "}
+            {formatToUserTimezone(
+              startDate,
+              { showTime: false, showDate: true },
+              FISCAL_CALENDAR_TIMEZONE,
+            )}{" "}
             -{" "}
-            {formatToUserTimezone(endDate, {
-              showTime: false,
-              showDate: true,
-            })}
+            {formatToUserTimezone(
+              endDate,
+              { showTime: false, showDate: true },
+              FISCAL_CALENDAR_TIMEZONE,
+            )}
           </span>
         );
       },

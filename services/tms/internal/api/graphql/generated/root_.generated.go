@@ -84,6 +84,9 @@ type ResolverRoot interface {
 	IFTAReturnProblem() IFTAReturnProblemResolver
 	IFTATaxRate() IFTATaxRateResolver
 	Invoice() InvoiceResolver
+	InvoiceAdjustment() InvoiceAdjustmentResolver
+	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
+	InvoiceAdjustmentLine() InvoiceAdjustmentLineResolver
 	InvoiceDispute() InvoiceDisputeResolver
 	InvoiceLine() InvoiceLineResolver
 	JobPosition() JobPositionResolver
@@ -4391,6 +4394,140 @@ type ComplexityRoot struct {
 		VoidedByID            func(childComplexity int) int
 	}
 
+	InvoiceAdjustment struct {
+		AccountingDate                  func(childComplexity int) int
+		ApprovalRequired                func(childComplexity int) int
+		ApprovalStatus                  func(childComplexity int) int
+		ApprovedAt                      func(childComplexity int) int
+		ApprovedByID                    func(childComplexity int) int
+		BatchID                         func(childComplexity int) int
+		BusinessUnitID                  func(childComplexity int) int
+		CorrectionGroupID               func(childComplexity int) int
+		CreatedAt                       func(childComplexity int) int
+		CreditMemoInvoiceID             func(childComplexity int) int
+		CreditTotalAmount               func(childComplexity int) int
+		ExecutionError                  func(childComplexity int) int
+		ID                              func(childComplexity int) int
+		Kind                            func(childComplexity int) int
+		Lines                           func(childComplexity int) int
+		NetDeltaAmount                  func(childComplexity int) int
+		OrganizationID                  func(childComplexity int) int
+		OriginalInvoiceID               func(childComplexity int) int
+		PolicyReason                    func(childComplexity int) int
+		Reason                          func(childComplexity int) int
+		RebillQueueItemID               func(childComplexity int) int
+		RebillStrategy                  func(childComplexity int) int
+		RebillTotalAmount               func(childComplexity int) int
+		RejectedAt                      func(childComplexity int) int
+		RejectedByID                    func(childComplexity int) int
+		RejectionReason                 func(childComplexity int) int
+		ReplacementInvoiceID            func(childComplexity int) int
+		ReplacementReviewStatus         func(childComplexity int) int
+		RequiresReconciliationException func(childComplexity int) int
+		RerateVariancePercent           func(childComplexity int) int
+		Status                          func(childComplexity int) int
+		SubmittedAt                     func(childComplexity int) int
+		SubmittedByID                   func(childComplexity int) int
+		UpdatedAt                       func(childComplexity int) int
+		Version                         func(childComplexity int) int
+		WouldCreateUnappliedCredit      func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentApprovalQueueConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentApprovalQueueEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentApprovalQueueItem struct {
+		AdjustmentID                     func(childComplexity int) int
+		ApprovalStatus                   func(childComplexity int) int
+		ApprovedAt                       func(childComplexity int) int
+		ApprovedByID                     func(childComplexity int) int
+		ApprovedByName                   func(childComplexity int) int
+		BatchID                          func(childComplexity int) int
+		CorrectionGroupID                func(childComplexity int) int
+		CreatedAt                        func(childComplexity int) int
+		CreditMemoInvoiceID              func(childComplexity int) int
+		CreditMemoInvoiceNumber          func(childComplexity int) int
+		CreditTotalAmount                func(childComplexity int) int
+		CustomerName                     func(childComplexity int) int
+		Kind                             func(childComplexity int) int
+		NetDeltaAmount                   func(childComplexity int) int
+		OriginalInvoiceID                func(childComplexity int) int
+		OriginalInvoiceNumber            func(childComplexity int) int
+		OriginalInvoiceStatus            func(childComplexity int) int
+		PolicyReason                     func(childComplexity int) int
+		PolicySource                     func(childComplexity int) int
+		Reason                           func(childComplexity int) int
+		RebillQueueItemID                func(childComplexity int) int
+		RebillQueueNumber                func(childComplexity int) int
+		RebillStrategy                   func(childComplexity int) int
+		RebillTotalAmount                func(childComplexity int) int
+		RejectedAt                       func(childComplexity int) int
+		RejectedByID                     func(childComplexity int) int
+		RejectedByName                   func(childComplexity int) int
+		RejectionReason                  func(childComplexity int) int
+		ReplacementInvoiceID             func(childComplexity int) int
+		ReplacementInvoiceNumber         func(childComplexity int) int
+		RequiresReconciliationException  func(childComplexity int) int
+		RequiresReplacementInvoiceReview func(childComplexity int) int
+		RerateVariancePercent            func(childComplexity int) int
+		Status                           func(childComplexity int) int
+		SubmittedAt                      func(childComplexity int) int
+		SubmittedByID                    func(childComplexity int) int
+		SubmittedByName                  func(childComplexity int) int
+		UpdatedAt                        func(childComplexity int) int
+		WouldCreateUnappliedCredit       func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentLine struct {
+		AdjustmentID            func(childComplexity int) int
+		CreatedAt               func(childComplexity int) int
+		CreditAmount            func(childComplexity int) int
+		CreditMemoLineID        func(childComplexity int) int
+		CreditQuantity          func(childComplexity int) int
+		Description             func(childComplexity int) int
+		ID                      func(childComplexity int) int
+		LineNumber              func(childComplexity int) int
+		OriginalInvoiceID       func(childComplexity int) int
+		OriginalLineID          func(childComplexity int) int
+		RebillAmount            func(childComplexity int) int
+		RebillQuantity          func(childComplexity int) int
+		RemainingEligibleAmount func(childComplexity int) int
+		ReplacementLineID       func(childComplexity int) int
+		UpdatedAt               func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentOperationsSummary struct {
+		AdjustmentsByStatus         func(childComplexity int) int
+		ApprovalsPending            func(childComplexity int) int
+		BatchesInFlight             func(childComplexity int) int
+		FailedBatchItems            func(childComplexity int) int
+		ReasonDistribution          func(childComplexity int) int
+		ReconciliationPending       func(childComplexity int) int
+		RepeatedAdjustments         func(childComplexity int) int
+		RepeatedCustomerAdjustments func(childComplexity int) int
+		WriteOffPending             func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentRepeatedSummary struct {
+		Count      func(childComplexity int) int
+		EntityID   func(childComplexity int) int
+		EntityType func(childComplexity int) int
+		Label      func(childComplexity int) int
+	}
+
+	InvoiceAdjustmentSummaryCount struct {
+		Count func(childComplexity int) int
+		Label func(childComplexity int) int
+	}
+
 	InvoiceConnection struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
@@ -4899,6 +5036,7 @@ type ComplexityRoot struct {
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
 		ApproveDriverSettlement               func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		ApproveInvoiceAdjustment              func(childComplexity int, adjustmentID string) int
 		ApproveWorkerPTO                      func(childComplexity int, id string) int
 		ArchiveDocumentTemplateVersion        func(childComplexity int, id string) int
 		ArchivePTOPolicy                      func(childComplexity int, id string, version *int) int
@@ -5124,6 +5262,7 @@ type ComplexityRoot struct {
 		RejectCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
 		RejectCarrierSettlement               func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		RejectDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		RejectInvoiceAdjustment               func(childComplexity int, input gqlmodel.RejectInvoiceAdjustmentInput) int
 		RejectWorkerPTO                       func(childComplexity int, id string, reason string) int
 		ReleaseDriverPayEvent                 func(childComplexity int, payEventID string) int
 		RemoveCarrierSettlementAdjustment     func(childComplexity int, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) int
@@ -6275,6 +6414,9 @@ type ComplexityRoot struct {
 		IFTAReturns                         func(childComplexity int, input gqlmodel.IFTAReturnsInput) int
 		IFTATaxRates                        func(childComplexity int, input gqlmodel.IFTATaxRatesInput) int
 		Invoice                             func(childComplexity int, id string) int
+		InvoiceAdjustment                   func(childComplexity int, id string) int
+		InvoiceAdjustmentApprovals          func(childComplexity int, input gqlmodel.InvoiceAdjustmentApprovalsInput) int
+		InvoiceAdjustmentOperationsSummary  func(childComplexity int) int
 		InvoiceDisputes                     func(childComplexity int, invoiceID string) int
 		Invoices                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JobPosition                         func(childComplexity int, id string) int
@@ -29900,6 +30042,674 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Invoice.VoidedByID(childComplexity), true
 
+	case "InvoiceAdjustment.accountingDate":
+		if e.ComplexityRoot.InvoiceAdjustment.AccountingDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.AccountingDate(childComplexity), true
+	case "InvoiceAdjustment.approvalRequired":
+		if e.ComplexityRoot.InvoiceAdjustment.ApprovalRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ApprovalRequired(childComplexity), true
+	case "InvoiceAdjustment.approvalStatus":
+		if e.ComplexityRoot.InvoiceAdjustment.ApprovalStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ApprovalStatus(childComplexity), true
+	case "InvoiceAdjustment.approvedAt":
+		if e.ComplexityRoot.InvoiceAdjustment.ApprovedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ApprovedAt(childComplexity), true
+	case "InvoiceAdjustment.approvedById":
+		if e.ComplexityRoot.InvoiceAdjustment.ApprovedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ApprovedByID(childComplexity), true
+	case "InvoiceAdjustment.batchId":
+		if e.ComplexityRoot.InvoiceAdjustment.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.BatchID(childComplexity), true
+	case "InvoiceAdjustment.businessUnitId":
+		if e.ComplexityRoot.InvoiceAdjustment.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.BusinessUnitID(childComplexity), true
+	case "InvoiceAdjustment.correctionGroupId":
+		if e.ComplexityRoot.InvoiceAdjustment.CorrectionGroupID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.CorrectionGroupID(childComplexity), true
+	case "InvoiceAdjustment.createdAt":
+		if e.ComplexityRoot.InvoiceAdjustment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.CreatedAt(childComplexity), true
+	case "InvoiceAdjustment.creditMemoInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustment.CreditMemoInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.CreditMemoInvoiceID(childComplexity), true
+	case "InvoiceAdjustment.creditTotalAmount":
+		if e.ComplexityRoot.InvoiceAdjustment.CreditTotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.CreditTotalAmount(childComplexity), true
+	case "InvoiceAdjustment.executionError":
+		if e.ComplexityRoot.InvoiceAdjustment.ExecutionError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ExecutionError(childComplexity), true
+	case "InvoiceAdjustment.id":
+		if e.ComplexityRoot.InvoiceAdjustment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ID(childComplexity), true
+	case "InvoiceAdjustment.kind":
+		if e.ComplexityRoot.InvoiceAdjustment.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.Kind(childComplexity), true
+	case "InvoiceAdjustment.lines":
+		if e.ComplexityRoot.InvoiceAdjustment.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.Lines(childComplexity), true
+	case "InvoiceAdjustment.netDeltaAmount":
+		if e.ComplexityRoot.InvoiceAdjustment.NetDeltaAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.NetDeltaAmount(childComplexity), true
+	case "InvoiceAdjustment.organizationId":
+		if e.ComplexityRoot.InvoiceAdjustment.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.OrganizationID(childComplexity), true
+	case "InvoiceAdjustment.originalInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustment.OriginalInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.OriginalInvoiceID(childComplexity), true
+	case "InvoiceAdjustment.policyReason":
+		if e.ComplexityRoot.InvoiceAdjustment.PolicyReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.PolicyReason(childComplexity), true
+	case "InvoiceAdjustment.reason":
+		if e.ComplexityRoot.InvoiceAdjustment.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.Reason(childComplexity), true
+	case "InvoiceAdjustment.rebillQueueItemId":
+		if e.ComplexityRoot.InvoiceAdjustment.RebillQueueItemID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RebillQueueItemID(childComplexity), true
+	case "InvoiceAdjustment.rebillStrategy":
+		if e.ComplexityRoot.InvoiceAdjustment.RebillStrategy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RebillStrategy(childComplexity), true
+	case "InvoiceAdjustment.rebillTotalAmount":
+		if e.ComplexityRoot.InvoiceAdjustment.RebillTotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RebillTotalAmount(childComplexity), true
+	case "InvoiceAdjustment.rejectedAt":
+		if e.ComplexityRoot.InvoiceAdjustment.RejectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RejectedAt(childComplexity), true
+	case "InvoiceAdjustment.rejectedById":
+		if e.ComplexityRoot.InvoiceAdjustment.RejectedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RejectedByID(childComplexity), true
+	case "InvoiceAdjustment.rejectionReason":
+		if e.ComplexityRoot.InvoiceAdjustment.RejectionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RejectionReason(childComplexity), true
+	case "InvoiceAdjustment.replacementInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustment.ReplacementInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ReplacementInvoiceID(childComplexity), true
+	case "InvoiceAdjustment.replacementReviewStatus":
+		if e.ComplexityRoot.InvoiceAdjustment.ReplacementReviewStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.ReplacementReviewStatus(childComplexity), true
+	case "InvoiceAdjustment.requiresReconciliationException":
+		if e.ComplexityRoot.InvoiceAdjustment.RequiresReconciliationException == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RequiresReconciliationException(childComplexity), true
+	case "InvoiceAdjustment.rerateVariancePercent":
+		if e.ComplexityRoot.InvoiceAdjustment.RerateVariancePercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.RerateVariancePercent(childComplexity), true
+	case "InvoiceAdjustment.status":
+		if e.ComplexityRoot.InvoiceAdjustment.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.Status(childComplexity), true
+	case "InvoiceAdjustment.submittedAt":
+		if e.ComplexityRoot.InvoiceAdjustment.SubmittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.SubmittedAt(childComplexity), true
+	case "InvoiceAdjustment.submittedById":
+		if e.ComplexityRoot.InvoiceAdjustment.SubmittedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.SubmittedByID(childComplexity), true
+	case "InvoiceAdjustment.updatedAt":
+		if e.ComplexityRoot.InvoiceAdjustment.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.UpdatedAt(childComplexity), true
+	case "InvoiceAdjustment.version":
+		if e.ComplexityRoot.InvoiceAdjustment.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.Version(childComplexity), true
+	case "InvoiceAdjustment.wouldCreateUnappliedCredit":
+		if e.ComplexityRoot.InvoiceAdjustment.WouldCreateUnappliedCredit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustment.WouldCreateUnappliedCredit(childComplexity), true
+
+	case "InvoiceAdjustmentApprovalQueueConnection.edges":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.Edges(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueConnection.pageInfo":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.PageInfo(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueConnection.totalCount":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueConnection.TotalCount(childComplexity), true
+
+	case "InvoiceAdjustmentApprovalQueueEdge.cursor":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueEdge.Cursor(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueEdge.node":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueEdge.Node(childComplexity), true
+
+	case "InvoiceAdjustmentApprovalQueueItem.adjustmentId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.AdjustmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.AdjustmentID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.approvalStatus":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovalStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovalStatus(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.approvedAt":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedAt(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.approvedById":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedByID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.approvedByName":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedByName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ApprovedByName(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.batchId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.BatchID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.correctionGroupId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CorrectionGroupID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CorrectionGroupID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.createdAt":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreatedAt(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.creditMemoInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditMemoInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditMemoInvoiceID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.creditMemoInvoiceNumber":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditMemoInvoiceNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditMemoInvoiceNumber(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.creditTotalAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditTotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CreditTotalAmount(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.customerName":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CustomerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.CustomerName(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.kind":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Kind(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.netDeltaAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.NetDeltaAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.NetDeltaAmount(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.originalInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.originalInvoiceNumber":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceNumber(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.originalInvoiceStatus":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.OriginalInvoiceStatus(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.policyReason":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.PolicyReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.PolicyReason(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.policySource":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.PolicySource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.PolicySource(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.reason":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Reason(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rebillQueueItemId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillQueueItemID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillQueueItemID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rebillQueueNumber":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillQueueNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillQueueNumber(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rebillStrategy":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillStrategy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillStrategy(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rebillTotalAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillTotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RebillTotalAmount(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rejectedAt":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedAt(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rejectedById":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedByID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rejectedByName":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedByName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectedByName(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rejectionReason":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RejectionReason(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.replacementInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ReplacementInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ReplacementInvoiceID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.replacementInvoiceNumber":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ReplacementInvoiceNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.ReplacementInvoiceNumber(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.requiresReconciliationException":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RequiresReconciliationException == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RequiresReconciliationException(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.requiresReplacementInvoiceReview":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RequiresReplacementInvoiceReview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RequiresReplacementInvoiceReview(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.rerateVariancePercent":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RerateVariancePercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.RerateVariancePercent(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.status":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.Status(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.submittedAt":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedAt(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.submittedById":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedByID(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.submittedByName":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedByName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.SubmittedByName(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.updatedAt":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.UpdatedAt(childComplexity), true
+	case "InvoiceAdjustmentApprovalQueueItem.wouldCreateUnappliedCredit":
+		if e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.WouldCreateUnappliedCredit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentApprovalQueueItem.WouldCreateUnappliedCredit(childComplexity), true
+
+	case "InvoiceAdjustmentLine.adjustmentId":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.AdjustmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.AdjustmentID(childComplexity), true
+	case "InvoiceAdjustmentLine.createdAt":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.CreatedAt(childComplexity), true
+	case "InvoiceAdjustmentLine.creditAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.CreditAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.CreditAmount(childComplexity), true
+	case "InvoiceAdjustmentLine.creditMemoLineId":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.CreditMemoLineID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.CreditMemoLineID(childComplexity), true
+	case "InvoiceAdjustmentLine.creditQuantity":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.CreditQuantity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.CreditQuantity(childComplexity), true
+	case "InvoiceAdjustmentLine.description":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.Description(childComplexity), true
+	case "InvoiceAdjustmentLine.id":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.ID(childComplexity), true
+	case "InvoiceAdjustmentLine.lineNumber":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.LineNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.LineNumber(childComplexity), true
+	case "InvoiceAdjustmentLine.originalInvoiceId":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.OriginalInvoiceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.OriginalInvoiceID(childComplexity), true
+	case "InvoiceAdjustmentLine.originalLineId":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.OriginalLineID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.OriginalLineID(childComplexity), true
+	case "InvoiceAdjustmentLine.rebillAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.RebillAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.RebillAmount(childComplexity), true
+	case "InvoiceAdjustmentLine.rebillQuantity":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.RebillQuantity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.RebillQuantity(childComplexity), true
+	case "InvoiceAdjustmentLine.remainingEligibleAmount":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.RemainingEligibleAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.RemainingEligibleAmount(childComplexity), true
+	case "InvoiceAdjustmentLine.replacementLineId":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.ReplacementLineID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.ReplacementLineID(childComplexity), true
+	case "InvoiceAdjustmentLine.updatedAt":
+		if e.ComplexityRoot.InvoiceAdjustmentLine.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentLine.UpdatedAt(childComplexity), true
+
+	case "InvoiceAdjustmentOperationsSummary.adjustmentsByStatus":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.AdjustmentsByStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.AdjustmentsByStatus(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.approvalsPending":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ApprovalsPending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ApprovalsPending(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.batchesInFlight":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.BatchesInFlight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.BatchesInFlight(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.failedBatchItems":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.FailedBatchItems == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.FailedBatchItems(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.reasonDistribution":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ReasonDistribution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ReasonDistribution(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.reconciliationPending":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ReconciliationPending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.ReconciliationPending(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.repeatedAdjustments":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.RepeatedAdjustments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.RepeatedAdjustments(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.repeatedCustomerAdjustments":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.RepeatedCustomerAdjustments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.RepeatedCustomerAdjustments(childComplexity), true
+	case "InvoiceAdjustmentOperationsSummary.writeOffPending":
+		if e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.WriteOffPending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentOperationsSummary.WriteOffPending(childComplexity), true
+
+	case "InvoiceAdjustmentRepeatedSummary.count":
+		if e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.Count(childComplexity), true
+	case "InvoiceAdjustmentRepeatedSummary.entityId":
+		if e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.EntityID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.EntityID(childComplexity), true
+	case "InvoiceAdjustmentRepeatedSummary.entityType":
+		if e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.EntityType(childComplexity), true
+	case "InvoiceAdjustmentRepeatedSummary.label":
+		if e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentRepeatedSummary.Label(childComplexity), true
+
+	case "InvoiceAdjustmentSummaryCount.count":
+		if e.ComplexityRoot.InvoiceAdjustmentSummaryCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentSummaryCount.Count(childComplexity), true
+	case "InvoiceAdjustmentSummaryCount.label":
+		if e.ComplexityRoot.InvoiceAdjustmentSummaryCount.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvoiceAdjustmentSummaryCount.Label(childComplexity), true
+
 	case "InvoiceConnection.edges":
 		if e.ComplexityRoot.InvoiceConnection.Edges == nil {
 			break
@@ -32379,6 +33189,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ApproveDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.approveInvoiceAdjustment":
+		if e.ComplexityRoot.Mutation.ApproveInvoiceAdjustment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_approveInvoiceAdjustment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApproveInvoiceAdjustment(childComplexity, args["adjustmentId"].(string)), true
 	case "Mutation.approveWorkerPTO":
 		if e.ComplexityRoot.Mutation.ApproveWorkerPTO == nil {
 			break
@@ -34844,6 +35665,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RejectDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.rejectInvoiceAdjustment":
+		if e.ComplexityRoot.Mutation.RejectInvoiceAdjustment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rejectInvoiceAdjustment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RejectInvoiceAdjustment(childComplexity, args["input"].(gqlmodel.RejectInvoiceAdjustmentInput)), true
 	case "Mutation.rejectWorkerPTO":
 		if e.ComplexityRoot.Mutation.RejectWorkerPTO == nil {
 			break
@@ -42009,6 +42841,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Invoice(childComplexity, args["id"].(string)), true
+	case "Query.invoiceAdjustment":
+		if e.ComplexityRoot.Query.InvoiceAdjustment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_invoiceAdjustment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InvoiceAdjustment(childComplexity, args["id"].(string)), true
+	case "Query.invoiceAdjustmentApprovals":
+		if e.ComplexityRoot.Query.InvoiceAdjustmentApprovals == nil {
+			break
+		}
+
+		args, err := ec.field_Query_invoiceAdjustmentApprovals_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InvoiceAdjustmentApprovals(childComplexity, args["input"].(gqlmodel.InvoiceAdjustmentApprovalsInput)), true
+	case "Query.invoiceAdjustmentOperationsSummary":
+		if e.ComplexityRoot.Query.InvoiceAdjustmentOperationsSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.InvoiceAdjustmentOperationsSummary(childComplexity), true
 	case "Query.invoiceDisputes":
 		if e.ComplexityRoot.Query.InvoiceDisputes == nil {
 			break
@@ -62184,6 +63044,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIFTATaxRateInput,
 		ec.unmarshalInputIFTATaxRatesInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
+		ec.unmarshalInputInvoiceAdjustmentApprovalsInput,
 		ec.unmarshalInputIssueDisciplinaryActionInput,
 		ec.unmarshalInputIssuePayAdvanceInput,
 		ec.unmarshalInputJobPositionInput,
@@ -62231,6 +63092,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRecordTimeEntryInput,
 		ec.unmarshalInputRecordWorkerEmploymentEventInput,
 		ec.unmarshalInputRecordWorkerInjuryInput,
+		ec.unmarshalInputRejectInvoiceAdjustmentInput,
 		ec.unmarshalInputRemoveCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputRemoveOrderChargeInput,
 		ec.unmarshalInputRemoveSettlementAdjustmentInput,
@@ -64490,6 +65352,7 @@ type CustomerBillingProfile {
   requireBOLNumber: Boolean!
   requireDeliveryNumber: Boolean!
   invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
+    @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   defaultBillerId: ID
   billingNotes: String!
   fuelSurchargeMode: CustomerFuelSurchargeMode!
@@ -71651,6 +72514,220 @@ extend type Mutation {
   already went out.
   """
   sendInvoiceEdi(invoiceId: ID!, force: Boolean): InvoiceEDISendResult!
+}
+`, BuiltIn: false},
+	{Name: "../schema/invoice_adjustment.graphqls", Input: `"What an invoice adjustment does to the posted invoice it corrects."
+enum InvoiceAdjustmentKind {
+  CreditOnly
+  CreditAndRebill
+  FullReversal
+  WriteOff
+}
+
+enum InvoiceAdjustmentStatus {
+  Draft
+  PendingApproval
+  Approved
+  Rejected
+  Executing
+  Executed
+  ExecutionFailed
+}
+
+enum InvoiceAdjustmentApprovalStatus {
+  NotRequired
+  Pending
+  Approved
+  Rejected
+}
+
+enum InvoiceAdjustmentReplacementReviewStatus {
+  NotRequired
+  Required
+  Completed
+}
+
+"How the replacement invoice of a credit-and-rebill is produced."
+enum InvoiceAdjustmentRebillStrategy {
+  CloneExact
+  Rerate
+  Manual
+}
+
+"A credit, rebill, reversal, or write-off raised against a posted invoice."
+type InvoiceAdjustment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  correctionGroupId: ID!
+  originalInvoiceId: ID!
+  creditMemoInvoiceId: ID
+  replacementInvoiceId: ID
+  rebillQueueItemId: ID
+  batchId: ID
+  kind: InvoiceAdjustmentKind!
+  status: InvoiceAdjustmentStatus!
+  approvalStatus: InvoiceAdjustmentApprovalStatus!
+  replacementReviewStatus: InvoiceAdjustmentReplacementReviewStatus!
+  "Set only for adjustments that rebill."
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  reason: String!
+  policyReason: String!
+  accountingDate: Timestamp!
+  creditTotalAmount: Decimal!
+  rebillTotalAmount: Decimal!
+  netDeltaAmount: Decimal!
+  rerateVariancePercent: Decimal!
+  wouldCreateUnappliedCredit: Boolean!
+  requiresReconciliationException: Boolean!
+  approvalRequired: Boolean!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  rejectedById: ID
+  rejectedAt: Timestamp
+  rejectionReason: String!
+  executionError: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "The corrected invoice lines, in line order."
+  lines: [InvoiceAdjustmentLine!]!
+}
+
+"How much of one original invoice line an adjustment credits and rebills."
+type InvoiceAdjustmentLine {
+  id: ID!
+  adjustmentId: ID!
+  originalInvoiceId: ID!
+  originalLineId: ID!
+  creditMemoLineId: ID
+  replacementLineId: ID
+  lineNumber: Int!
+  description: String!
+  creditQuantity: Decimal!
+  creditAmount: Decimal!
+  remainingEligibleAmount: Decimal!
+  rebillQuantity: Decimal!
+  rebillAmount: Decimal!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+An adjustment waiting on finance approval, with the invoice, customer, people,
+and follow-on artifacts it touches resolved for review.
+"""
+type InvoiceAdjustmentApprovalQueueItem {
+  adjustmentId: ID!
+  correctionGroupId: ID!
+  originalInvoiceId: ID!
+  originalInvoiceNumber: String!
+  originalInvoiceStatus: String!
+  customerName: String!
+  kind: InvoiceAdjustmentKind!
+  status: InvoiceAdjustmentStatus!
+  approvalStatus: InvoiceAdjustmentApprovalStatus!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  reason: String!
+  policyReason: String!
+  policySource: String!
+  creditTotalAmount: Decimal!
+  rebillTotalAmount: Decimal!
+  netDeltaAmount: Decimal!
+  rerateVariancePercent: Decimal!
+  wouldCreateUnappliedCredit: Boolean!
+  requiresReconciliationException: Boolean!
+  requiresReplacementInvoiceReview: Boolean!
+  submittedById: ID
+  submittedByName: String!
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedByName: String!
+  approvedAt: Timestamp
+  rejectedById: ID
+  rejectedByName: String!
+  rejectedAt: Timestamp
+  rejectionReason: String!
+  creditMemoInvoiceId: ID
+  creditMemoInvoiceNumber: String!
+  replacementInvoiceId: ID
+  replacementInvoiceNumber: String!
+  rebillQueueItemId: ID
+  rebillQueueNumber: String!
+  batchId: ID
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InvoiceAdjustmentApprovalQueueEdge {
+  node: InvoiceAdjustmentApprovalQueueItem!
+  cursor: String!
+}
+
+type InvoiceAdjustmentApprovalQueueConnection {
+  edges: [InvoiceAdjustmentApprovalQueueEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Pages the approval queue newest submission first. query matches the adjustment
+id, invoice number, customer, reason, policy reason, and submitter name.
+"""
+input InvoiceAdjustmentApprovalsInput {
+  first: Int = 20
+  after: String
+  query: String
+  kind: InvoiceAdjustmentKind
+  submittedById: ID
+}
+
+type InvoiceAdjustmentSummaryCount {
+  label: String!
+  count: Int!
+}
+
+type InvoiceAdjustmentRepeatedSummary {
+  entityId: ID!
+  entityType: String!
+  label: String!
+  count: Int!
+}
+
+"Workload counts across the invoice adjustment queues."
+type InvoiceAdjustmentOperationsSummary {
+  adjustmentsByStatus: [InvoiceAdjustmentSummaryCount!]!
+  approvalsPending: Int!
+  reconciliationPending: Int!
+  writeOffPending: Int!
+  batchesInFlight: Int!
+  failedBatchItems: Int!
+  reasonDistribution: [InvoiceAdjustmentSummaryCount!]!
+  repeatedAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
+  repeatedCustomerAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
+}
+
+input RejectInvoiceAdjustmentInput {
+  adjustmentId: ID!
+  reason: String
+}
+
+extend type Query {
+  invoiceAdjustment(id: ID!): InvoiceAdjustment
+  "Adjustments whose policy holds them for finance approval."
+  invoiceAdjustmentApprovals(
+    input: InvoiceAdjustmentApprovalsInput!
+  ): InvoiceAdjustmentApprovalQueueConnection!
+  invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
+}
+
+extend type Mutation {
+  "Approves a pending adjustment and executes it: credit memo, rebill, and postings."
+  approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
+  "Rejects a pending adjustment; the invoice stays as posted."
+  rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice_dispute.graphqls", Input: `"Where a dispute case stands. An invoice is Disputed while it has an Open case."
@@ -89534,6 +90611,274 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_lateChargeAssessments(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InvoiceAdjustment_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_InvoiceAdjustment_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_InvoiceAdjustment_businessUnitId(ctx, field)
+	case "correctionGroupId":
+		return ec.fieldContext_InvoiceAdjustment_correctionGroupId(ctx, field)
+	case "originalInvoiceId":
+		return ec.fieldContext_InvoiceAdjustment_originalInvoiceId(ctx, field)
+	case "creditMemoInvoiceId":
+		return ec.fieldContext_InvoiceAdjustment_creditMemoInvoiceId(ctx, field)
+	case "replacementInvoiceId":
+		return ec.fieldContext_InvoiceAdjustment_replacementInvoiceId(ctx, field)
+	case "rebillQueueItemId":
+		return ec.fieldContext_InvoiceAdjustment_rebillQueueItemId(ctx, field)
+	case "batchId":
+		return ec.fieldContext_InvoiceAdjustment_batchId(ctx, field)
+	case "kind":
+		return ec.fieldContext_InvoiceAdjustment_kind(ctx, field)
+	case "status":
+		return ec.fieldContext_InvoiceAdjustment_status(ctx, field)
+	case "approvalStatus":
+		return ec.fieldContext_InvoiceAdjustment_approvalStatus(ctx, field)
+	case "replacementReviewStatus":
+		return ec.fieldContext_InvoiceAdjustment_replacementReviewStatus(ctx, field)
+	case "rebillStrategy":
+		return ec.fieldContext_InvoiceAdjustment_rebillStrategy(ctx, field)
+	case "reason":
+		return ec.fieldContext_InvoiceAdjustment_reason(ctx, field)
+	case "policyReason":
+		return ec.fieldContext_InvoiceAdjustment_policyReason(ctx, field)
+	case "accountingDate":
+		return ec.fieldContext_InvoiceAdjustment_accountingDate(ctx, field)
+	case "creditTotalAmount":
+		return ec.fieldContext_InvoiceAdjustment_creditTotalAmount(ctx, field)
+	case "rebillTotalAmount":
+		return ec.fieldContext_InvoiceAdjustment_rebillTotalAmount(ctx, field)
+	case "netDeltaAmount":
+		return ec.fieldContext_InvoiceAdjustment_netDeltaAmount(ctx, field)
+	case "rerateVariancePercent":
+		return ec.fieldContext_InvoiceAdjustment_rerateVariancePercent(ctx, field)
+	case "wouldCreateUnappliedCredit":
+		return ec.fieldContext_InvoiceAdjustment_wouldCreateUnappliedCredit(ctx, field)
+	case "requiresReconciliationException":
+		return ec.fieldContext_InvoiceAdjustment_requiresReconciliationException(ctx, field)
+	case "approvalRequired":
+		return ec.fieldContext_InvoiceAdjustment_approvalRequired(ctx, field)
+	case "submittedById":
+		return ec.fieldContext_InvoiceAdjustment_submittedById(ctx, field)
+	case "submittedAt":
+		return ec.fieldContext_InvoiceAdjustment_submittedAt(ctx, field)
+	case "approvedById":
+		return ec.fieldContext_InvoiceAdjustment_approvedById(ctx, field)
+	case "approvedAt":
+		return ec.fieldContext_InvoiceAdjustment_approvedAt(ctx, field)
+	case "rejectedById":
+		return ec.fieldContext_InvoiceAdjustment_rejectedById(ctx, field)
+	case "rejectedAt":
+		return ec.fieldContext_InvoiceAdjustment_rejectedAt(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_InvoiceAdjustment_rejectionReason(ctx, field)
+	case "executionError":
+		return ec.fieldContext_InvoiceAdjustment_executionError(ctx, field)
+	case "version":
+		return ec.fieldContext_InvoiceAdjustment_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InvoiceAdjustment_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InvoiceAdjustment_updatedAt(ctx, field)
+	case "lines":
+		return ec.fieldContext_InvoiceAdjustment_lines(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustment", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentApprovalQueueConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentApprovalQueueConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentApprovalQueueEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentApprovalQueueEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentApprovalQueueItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "adjustmentId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_adjustmentId(ctx, field)
+	case "correctionGroupId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_correctionGroupId(ctx, field)
+	case "originalInvoiceId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_originalInvoiceId(ctx, field)
+	case "originalInvoiceNumber":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_originalInvoiceNumber(ctx, field)
+	case "originalInvoiceStatus":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_originalInvoiceStatus(ctx, field)
+	case "customerName":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_customerName(ctx, field)
+	case "kind":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_kind(ctx, field)
+	case "status":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_status(ctx, field)
+	case "approvalStatus":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_approvalStatus(ctx, field)
+	case "rebillStrategy":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rebillStrategy(ctx, field)
+	case "reason":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_reason(ctx, field)
+	case "policyReason":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_policyReason(ctx, field)
+	case "policySource":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_policySource(ctx, field)
+	case "creditTotalAmount":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_creditTotalAmount(ctx, field)
+	case "rebillTotalAmount":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rebillTotalAmount(ctx, field)
+	case "netDeltaAmount":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_netDeltaAmount(ctx, field)
+	case "rerateVariancePercent":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rerateVariancePercent(ctx, field)
+	case "wouldCreateUnappliedCredit":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_wouldCreateUnappliedCredit(ctx, field)
+	case "requiresReconciliationException":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_requiresReconciliationException(ctx, field)
+	case "requiresReplacementInvoiceReview":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_requiresReplacementInvoiceReview(ctx, field)
+	case "submittedById":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_submittedById(ctx, field)
+	case "submittedByName":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_submittedByName(ctx, field)
+	case "submittedAt":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_submittedAt(ctx, field)
+	case "approvedById":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_approvedById(ctx, field)
+	case "approvedByName":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_approvedByName(ctx, field)
+	case "approvedAt":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_approvedAt(ctx, field)
+	case "rejectedById":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rejectedById(ctx, field)
+	case "rejectedByName":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rejectedByName(ctx, field)
+	case "rejectedAt":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rejectedAt(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rejectionReason(ctx, field)
+	case "creditMemoInvoiceId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_creditMemoInvoiceId(ctx, field)
+	case "creditMemoInvoiceNumber":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_creditMemoInvoiceNumber(ctx, field)
+	case "replacementInvoiceId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_replacementInvoiceId(ctx, field)
+	case "replacementInvoiceNumber":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_replacementInvoiceNumber(ctx, field)
+	case "rebillQueueItemId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rebillQueueItemId(ctx, field)
+	case "rebillQueueNumber":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_rebillQueueNumber(ctx, field)
+	case "batchId":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_batchId(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InvoiceAdjustmentApprovalQueueItem_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentApprovalQueueItem", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_InvoiceAdjustmentLine_id(ctx, field)
+	case "adjustmentId":
+		return ec.fieldContext_InvoiceAdjustmentLine_adjustmentId(ctx, field)
+	case "originalInvoiceId":
+		return ec.fieldContext_InvoiceAdjustmentLine_originalInvoiceId(ctx, field)
+	case "originalLineId":
+		return ec.fieldContext_InvoiceAdjustmentLine_originalLineId(ctx, field)
+	case "creditMemoLineId":
+		return ec.fieldContext_InvoiceAdjustmentLine_creditMemoLineId(ctx, field)
+	case "replacementLineId":
+		return ec.fieldContext_InvoiceAdjustmentLine_replacementLineId(ctx, field)
+	case "lineNumber":
+		return ec.fieldContext_InvoiceAdjustmentLine_lineNumber(ctx, field)
+	case "description":
+		return ec.fieldContext_InvoiceAdjustmentLine_description(ctx, field)
+	case "creditQuantity":
+		return ec.fieldContext_InvoiceAdjustmentLine_creditQuantity(ctx, field)
+	case "creditAmount":
+		return ec.fieldContext_InvoiceAdjustmentLine_creditAmount(ctx, field)
+	case "remainingEligibleAmount":
+		return ec.fieldContext_InvoiceAdjustmentLine_remainingEligibleAmount(ctx, field)
+	case "rebillQuantity":
+		return ec.fieldContext_InvoiceAdjustmentLine_rebillQuantity(ctx, field)
+	case "rebillAmount":
+		return ec.fieldContext_InvoiceAdjustmentLine_rebillAmount(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_InvoiceAdjustmentLine_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_InvoiceAdjustmentLine_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentLine", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentOperationsSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "adjustmentsByStatus":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_adjustmentsByStatus(ctx, field)
+	case "approvalsPending":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_approvalsPending(ctx, field)
+	case "reconciliationPending":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_reconciliationPending(ctx, field)
+	case "writeOffPending":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_writeOffPending(ctx, field)
+	case "batchesInFlight":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_batchesInFlight(ctx, field)
+	case "failedBatchItems":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_failedBatchItems(ctx, field)
+	case "reasonDistribution":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_reasonDistribution(ctx, field)
+	case "repeatedAdjustments":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_repeatedAdjustments(ctx, field)
+	case "repeatedCustomerAdjustments":
+		return ec.fieldContext_InvoiceAdjustmentOperationsSummary_repeatedCustomerAdjustments(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentOperationsSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentRepeatedSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "entityId":
+		return ec.fieldContext_InvoiceAdjustmentRepeatedSummary_entityId(ctx, field)
+	case "entityType":
+		return ec.fieldContext_InvoiceAdjustmentRepeatedSummary_entityType(ctx, field)
+	case "label":
+		return ec.fieldContext_InvoiceAdjustmentRepeatedSummary_label(ctx, field)
+	case "count":
+		return ec.fieldContext_InvoiceAdjustmentRepeatedSummary_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentRepeatedSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_InvoiceAdjustmentSummaryCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "label":
+		return ec.fieldContext_InvoiceAdjustmentSummaryCount_label(ctx, field)
+	case "count":
+		return ec.fieldContext_InvoiceAdjustmentSummaryCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvoiceAdjustmentSummaryCount", field.Name)
 }
 
 func (ec *executionContext) childFields_InvoiceConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

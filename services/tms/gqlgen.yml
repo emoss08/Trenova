@@ -1336,6 +1336,72 @@ models:
         resolver: true
       resolution:
         resolver: true
+  InvoiceAdjustmentKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.Kind
+  InvoiceAdjustmentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.Status
+  InvoiceAdjustmentApprovalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.ApprovalStatus
+  InvoiceAdjustmentReplacementReviewStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.ReplacementReviewStatus
+  InvoiceAdjustmentRebillStrategy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.RebillStrategy
+  InvoiceAdjustment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustment
+    fields:
+      rebillStrategy:
+        resolver: true
+      creditTotalAmount:
+        resolver: true
+      rebillTotalAmount:
+        resolver: true
+      netDeltaAmount:
+        resolver: true
+      rerateVariancePercent:
+        resolver: true
+  InvoiceAdjustmentLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/invoiceadjustment.InvoiceAdjustmentLine
+    fields:
+      creditQuantity:
+        resolver: true
+      creditAmount:
+        resolver: true
+      remainingEligibleAmount:
+        resolver: true
+      rebillQuantity:
+        resolver: true
+      rebillAmount:
+        resolver: true
+  InvoiceAdjustmentApprovalQueueItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentApprovalQueueItem
+    fields:
+      rebillStrategy:
+        resolver: true
+      creditTotalAmount:
+        resolver: true
+      rebillTotalAmount:
+        resolver: true
+      netDeltaAmount:
+        resolver: true
+      rerateVariancePercent:
+        resolver: true
+  InvoiceAdjustmentSummaryCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentSummaryCount
+  InvoiceAdjustmentRepeatedSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentRepeatedSummary
+  InvoiceAdjustmentOperationsSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentOperationsSummary
   LateChargeAssessmentMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.LateChargeAssessmentMode
@@ -2295,9 +2361,6 @@ models:
   InvoiceDetail:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceDetail
-  CustomerInvoiceAdjustmentSupportingDocumentPolicy:
-    model:
-      - github.com/emoss08/trenova/internal/core/domain/customer.InvoiceAdjustmentSupportingDocumentPolicy
   CustomerFuelSurchargeMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.FuelSurchargeMode
@@ -2305,6 +2368,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.CustomerBillingProfile
     fields:
+      invoiceAdjustmentSupportingDocumentPolicy:
+        resolver: true
       billingCycleType:
         resolver: true
       billingCycleDayOfWeek:

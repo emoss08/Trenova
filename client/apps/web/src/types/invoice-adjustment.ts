@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { invoiceAdjustmentSupportingDocumentPolicySchema } from "@trenova/shared/types/customer";
 import { documentSchema } from "@trenova/shared/types/document";
 import {
   decimalStringSchema,
@@ -36,14 +35,6 @@ export const reconciliationExceptionStatusSchema = z.enum(["Open", "Resolved"]);
 export type ReconciliationExceptionStatus = z.infer<typeof reconciliationExceptionStatusSchema>;
 export const rebillStrategySchema = z.enum(["CloneExact", "Rerate", "Manual"]);
 export type RebillStrategy = z.infer<typeof rebillStrategySchema>;
-
-const supportingDocumentPolicyValueSchema = z.preprocess((value) => {
-  if (typeof value !== "string" || value.length === 0) {
-    return "Inherit";
-  }
-
-  return value;
-}, invoiceAdjustmentSupportingDocumentPolicySchema.catch("Inherit"));
 
 export const invoiceAdjustmentLineInputSchema = z.object({
   originalLineId: z.string(),
@@ -85,9 +76,6 @@ export const invoiceAdjustmentPreviewSchema = z.object({
   requiresApproval: z.boolean(),
   requiresReplacementInvoiceReview: z.boolean(),
   requiresReconciliationException: z.boolean(),
-  customerSupportingDocumentPolicy: supportingDocumentPolicyValueSchema,
-  supportingDocumentsRequired: z.boolean().default(false),
-  supportingDocumentPolicySource: z.string().default("OrganizationControl"),
   warnings: z.array(z.string()).default([]),
   errors: z.record(z.string(), z.array(z.string())).default({}),
   lines: z.array(invoiceAdjustmentPreviewLineSchema).default([]),
@@ -170,9 +158,6 @@ export const invoiceAdjustmentSchema = z.object({
   rejectionReason: z.string().nullish().default(""),
   executionError: z.string().nullish().default(""),
   metadata: z.record(z.string(), z.unknown()).default({}),
-  customerSupportingDocumentPolicy: supportingDocumentPolicyValueSchema,
-  supportingDocumentsRequired: z.boolean().default(false),
-  supportingDocumentPolicySource: z.string().default("OrganizationControl"),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -226,49 +211,6 @@ export const invoiceAdjustmentLineageSchema = z.object({
   adjustments: z.array(invoiceAdjustmentSchema).default([]),
 });
 export type InvoiceAdjustmentLineage = z.infer<typeof invoiceAdjustmentLineageSchema>;
-
-export const invoiceApprovalQueueItemSchema = z.object({
-  adjustmentId: z.string(),
-  correctionGroupId: z.string(),
-  originalInvoiceId: z.string(),
-  originalInvoiceNumber: z.string(),
-  originalInvoiceStatus: z.string(),
-  customerName: z.string(),
-  kind: invoiceAdjustmentKindSchema,
-  status: invoiceAdjustmentStatusSchema,
-  approvalStatus: approvalStatusSchema,
-  rebillStrategy: rebillStrategySchema.nullish(),
-  reason: z.string().default(""),
-  policyReason: z.string().default(""),
-  policySource: z.string().default(""),
-  creditTotalAmount: decimalStringSchema,
-  rebillTotalAmount: decimalStringSchema,
-  netDeltaAmount: decimalStringSchema,
-  rerateVariancePercent: decimalStringSchema,
-  wouldCreateUnappliedCredit: z.boolean(),
-  requiresReconciliationException: z.boolean(),
-  requiresReplacementInvoiceReview: z.boolean(),
-  submittedById: nullableStringSchema,
-  submittedByName: z.string().default(""),
-  submittedAt: z.number().nullish(),
-  approvedById: nullableStringSchema,
-  approvedByName: z.string().default(""),
-  approvedAt: z.number().nullish(),
-  rejectedById: nullableStringSchema,
-  rejectedByName: z.string().default(""),
-  rejectedAt: z.number().nullish(),
-  rejectionReason: z.string().default(""),
-  creditMemoInvoiceId: nullableStringSchema,
-  creditMemoInvoiceNumber: z.string().default(""),
-  replacementInvoiceId: nullableStringSchema,
-  replacementInvoiceNumber: z.string().default(""),
-  rebillQueueItemId: nullableStringSchema,
-  rebillQueueNumber: z.string().default(""),
-  batchId: nullableStringSchema,
-  createdAt: z.number(),
-  updatedAt: z.number(),
-});
-export type InvoiceApprovalQueueItem = z.infer<typeof invoiceApprovalQueueItemSchema>;
 
 export const invoiceReconciliationQueueItemSchema = z.object({
   exceptionId: z.string(),

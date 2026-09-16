@@ -83,7 +83,8 @@ type GetBatchByIdempotencyRequest struct {
 }
 
 type ListApprovalQueueRequest struct {
-	Filter pagination.QueryOptions `json:"filter"`
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"cursor"`
 }
 
 type ListReconciliationQueueRequest struct {
@@ -95,6 +96,8 @@ type ListBatchQueueRequest struct {
 }
 
 type InvoiceAdjustmentApprovalQueueItem struct {
+	pagination.CursorValueSet `json:"-" bun:",embed"`
+
 	AdjustmentID                     pulid.ID                         `json:"adjustmentId"`
 	CorrectionGroupID                pulid.ID                         `json:"correctionGroupId"`
 	OriginalInvoiceID                pulid.ID                         `json:"originalInvoiceId"`
@@ -134,6 +137,14 @@ type InvoiceAdjustmentApprovalQueueItem struct {
 	BatchID                          pulid.ID                         `json:"batchId"`
 	CreatedAt                        int64                            `json:"createdAt"`
 	UpdatedAt                        int64                            `json:"updatedAt"`
+}
+
+func (i *InvoiceAdjustmentApprovalQueueItem) GetID() pulid.ID {
+	return i.AdjustmentID
+}
+
+func (i *InvoiceAdjustmentApprovalQueueItem) GetCreatedAt() int64 {
+	return i.CreatedAt
 }
 
 type InvoiceAdjustmentReconciliationQueueItem struct {
@@ -256,8 +267,8 @@ type InvoiceAdjustmentRepository interface {
 	) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error)
 	ListApprovalQueue(
 		ctx context.Context,
-		req ListApprovalQueueRequest,
-	) (*pagination.ListResult[*InvoiceAdjustmentApprovalQueueItem], error)
+		req *ListApprovalQueueRequest,
+	) (*pagination.CursorListResult[*InvoiceAdjustmentApprovalQueueItem], error)
 	ListReconciliationQueue(
 		ctx context.Context,
 		req ListReconciliationQueueRequest,

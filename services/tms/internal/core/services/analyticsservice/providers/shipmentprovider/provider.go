@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -1152,72 +1154,16 @@ func (p *Provider) getLaneHeatmap(
 	windowStart := now - int64(windowDays)*24*60*60
 
 	rows := make([]laneStateRow, 0)
-	err := p.db.DB().NewRaw(
-		`WITH shipment_lanes AS (
-			SELECT
-				sp.id,
-				(
-					SELECT ust_orig.abbreviation
-					FROM shipment_moves sm_orig
-					INNER JOIN stops stp_orig
-						ON stp_orig.shipment_move_id = sm_orig.id
-						AND stp_orig.organization_id = sm_orig.organization_id
-						AND stp_orig.business_unit_id = sm_orig.business_unit_id
-					INNER JOIN locations loc_orig
-						ON loc_orig.id = stp_orig.location_id
-						AND loc_orig.organization_id = stp_orig.organization_id
-						AND loc_orig.business_unit_id = stp_orig.business_unit_id
-					INNER JOIN us_states ust_orig
-						ON ust_orig.id = loc_orig.state_id
-					WHERE sm_orig.shipment_id = sp.id
-						AND sm_orig.organization_id = sp.organization_id
-						AND sm_orig.business_unit_id = sp.business_unit_id
-						AND stp_orig.type IN (?, ?)
-					ORDER BY sm_orig.sequence ASC, stp_orig.sequence ASC
-					LIMIT 1
-				) AS origin_state,
-				(
-					SELECT ust_dest.abbreviation
-					FROM shipment_moves sm_dest
-					INNER JOIN stops stp_dest
-						ON stp_dest.shipment_move_id = sm_dest.id
-						AND stp_dest.organization_id = sm_dest.organization_id
-						AND stp_dest.business_unit_id = sm_dest.business_unit_id
-					INNER JOIN locations loc_dest
-						ON loc_dest.id = stp_dest.location_id
-						AND loc_dest.organization_id = stp_dest.organization_id
-						AND loc_dest.business_unit_id = stp_dest.business_unit_id
-					INNER JOIN us_states ust_dest
-						ON ust_dest.id = loc_dest.state_id
-					WHERE sm_dest.shipment_id = sp.id
-						AND sm_dest.organization_id = sp.organization_id
-						AND sm_dest.business_unit_id = sp.business_unit_id
-						AND stp_dest.type IN (?, ?)
-					ORDER BY sm_dest.sequence DESC, stp_dest.sequence DESC
-					LIMIT 1
-				) AS destination_state
-			FROM shipments sp
-			WHERE sp.organization_id = ?
-				AND sp.business_unit_id = ?
-				AND sp.created_at >= ?
-				AND sp.created_at <= ?
-				AND sp.status != ?
-		)
-		SELECT origin_state, destination_state, COUNT(*)::int AS count
-		FROM shipment_lanes
-		WHERE origin_state IS NOT NULL
-			AND destination_state IS NOT NULL
-		GROUP BY origin_state, destination_state`,
-		shipment.StopTypePickup,
-		shipment.StopTypeSplitPickup,
-		shipment.StopTypeDelivery,
-		shipment.StopTypeSplitDelivery,
-		orgID,
-		buID,
-		windowStart,
-		now,
-		shipment.StatusCanceled,
-	).Scan(ctx, &rows)
+	cols := buncolgen.ShipmentColumns
+	err := lanequery.New(p.db.DB(), lanequery.Options{
+		Tenant: &pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		ShipmentFilter: func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(cols.CreatedAt.Gte(), windowStart).
+				Where(cols.CreatedAt.Lte(), now).
+				Where(cols.Status.Ne(), shipment.StatusCanceled)
+		},
+	}).Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
 	}

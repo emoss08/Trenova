@@ -11,6 +11,7 @@ import {
   formatUnixTimeWithSeconds,
   fromUserWallClock,
   getTodayDate,
+  getUTCYearBounds,
   getUserDatePreferences,
   resolveUserTimeFormat,
   resolveUserTimezone,
@@ -550,5 +551,16 @@ describe("formatSecondsAgo", () => {
 
   it("falls back to just now for a non-finite input", () => {
     expect(formatSecondsAgo(Number.NaN)).toBe("just now");
+  });
+});
+
+describe("getUTCYearBounds", () => {
+  it("spans Jan 1 00:00:00 UTC to Dec 31 23:59:59 UTC of the given year", () => {
+    expect(getUTCYearBounds(2026)).toEqual({ startDate: 1_767_225_600, endDate: 1_798_761_599 });
+  });
+
+  it("covers the leap day in a leap year", () => {
+    const { startDate, endDate } = getUTCYearBounds(2028);
+    expect(endDate - startDate + 1).toBe(366 * 86_400);
   });
 });

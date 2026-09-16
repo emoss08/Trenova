@@ -31,8 +31,7 @@ type InvoiceAdjustmentControl struct {
 	AdjustmentAccountingDatePolicy AdjustmentAccountingDatePolicy `json:"adjustmentAccountingDatePolicy" bun:"adjustment_accounting_date_policy,type:adjustment_accounting_date_policy_enum,notnull,default:'UseOriginalIfOpenElseNextOpen'"`
 	ClosedPeriodAdjustmentPolicy   ClosedPeriodAdjustmentPolicy   `json:"closedPeriodAdjustmentPolicy"   bun:"closed_period_adjustment_policy,type:closed_period_adjustment_policy_enum,notnull,default:'PostInNextOpenPeriodWithApproval'"`
 
-	AdjustmentReasonRequirement     RequirementPolicy          `json:"adjustmentReasonRequirement"     bun:"adjustment_reason_requirement,type:requirement_policy_enum,notnull,default:'Required'"`
-	AdjustmentAttachmentRequirement AdjustmentAttachmentPolicy `json:"adjustmentAttachmentRequirement" bun:"adjustment_attachment_requirement,type:adjustment_attachment_policy_enum,notnull,default:'RequiredForAll'"`
+	AdjustmentReasonRequirement RequirementPolicy `json:"adjustmentReasonRequirement"     bun:"adjustment_reason_requirement,type:requirement_policy_enum,notnull,default:'Required'"`
 
 	StandardAdjustmentApprovalPolicy    ApprovalPolicy         `json:"standardAdjustmentApprovalPolicy"    bun:"standard_adjustment_approval_policy,type:approval_policy_enum,notnull,default:'AmountThreshold'"`
 	StandardAdjustmentApprovalThreshold decimal.Decimal        `json:"standardAdjustmentApprovalThreshold" bun:"standard_adjustment_approval_threshold,type:NUMERIC(19,4),nullzero"`
@@ -63,7 +62,6 @@ func (iac *InvoiceAdjustmentControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&iac.AdjustmentAccountingDatePolicy, validation.Required),
 		validation.Field(&iac.ClosedPeriodAdjustmentPolicy, validation.Required),
 		validation.Field(&iac.AdjustmentReasonRequirement, validation.Required),
-		validation.Field(&iac.AdjustmentAttachmentRequirement, validation.Required),
 		validation.Field(&iac.StandardAdjustmentApprovalPolicy, validation.Required),
 		validation.Field(&iac.WriteOffApprovalPolicy, validation.Required),
 		validation.Field(&iac.ReplacementInvoiceReviewPolicy, validation.Required),

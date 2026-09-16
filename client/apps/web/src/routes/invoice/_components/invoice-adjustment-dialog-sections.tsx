@@ -204,12 +204,10 @@ export function InvoiceAdjustmentTypeSelector({
 
 export function InvoiceAdjustmentSupportingDocumentsSection({
   control,
-  supportingDocumentsRequired,
   shipmentId,
   draft,
 }: {
   control: Control<AdjustmentFormValues>;
-  supportingDocumentsRequired: boolean;
   shipmentId: Invoice["shipmentId"];
   draft: InvoiceAdjustment | null;
 }) {
@@ -229,18 +227,9 @@ export function InvoiceAdjustmentSupportingDocumentsSection({
       <DocumentMultiSelectAutocompleteField
         control={control}
         name="referencedDocumentIds"
-        label={
-          supportingDocumentsRequired
-            ? "Supporting Documents (Required)"
-            : "Supporting Documents (Optional)"
-        }
+        label={t("Supporting Documents (Optional)")}
         placeholder={t("Search shipment documents...")}
-        description={
-          supportingDocumentsRequired
-            ? "Required by policy for this adjustment type."
-            : "Attach supporting evidence for audit trail."
-        }
-        rules={{ required: supportingDocumentsRequired }}
+        description={t("Attach supporting evidence for audit trail.")}
         extraSearchParams={{
           resourceId: shipmentId ?? "",
           resourceType: "shipment",

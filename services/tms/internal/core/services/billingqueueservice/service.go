@@ -28,65 +28,68 @@ import (
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	DB              ports.DBConnection
-	Repo            repositories.BillingQueueRepository
-	ShipmentRepo    repositories.ShipmentRepository
-	ControlRepo     repositories.ShipmentControlRepository
-	CommentRepo     repositories.ShipmentCommentRepository
-	CustomerRepo    repositories.CustomerRepository
-	UserRepo        repositories.UserRepository
-	AdjustmentRepo  repositories.InvoiceAdjustmentRepository
-	InvoiceRepo     repositories.InvoiceRepository
-	InvoiceSvc      services.InvoiceService
-	Commercial      *shipmentcommercial.Calculator
-	Generator       seqgen.Generator
-	AuditService    services.AuditService
-	Realtime        services.RealtimeService
-	Validator       *Validator
-	OrderDerivation services.OrderDerivationService
+	Logger               *zap.Logger
+	DB                   ports.DBConnection
+	Repo                 repositories.BillingQueueRepository
+	ShipmentRepo         repositories.ShipmentRepository
+	ControlRepo          repositories.ShipmentControlRepository
+	CommentRepo          repositories.ShipmentCommentRepository
+	CustomerRepo         repositories.CustomerRepository
+	UserRepo             repositories.UserRepository
+	AdjustmentRepo       repositories.InvoiceAdjustmentRepository
+	InvoiceRepo          repositories.InvoiceRepository
+	InvoiceSvc           services.InvoiceService
+	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	Commercial           *shipmentcommercial.Calculator
+	Generator            seqgen.Generator
+	AuditService         services.AuditService
+	Realtime             services.RealtimeService
+	Validator            *Validator
+	OrderDerivation      services.OrderDerivationService
 }
 
 type service struct {
-	l               *zap.Logger
-	db              ports.DBConnection
-	repo            repositories.BillingQueueRepository
-	shipmentRepo    repositories.ShipmentRepository
-	controlRepo     repositories.ShipmentControlRepository
-	commentRepo     repositories.ShipmentCommentRepository
-	customerRepo    repositories.CustomerRepository
-	userRepo        repositories.UserRepository
-	adjustmentRepo  repositories.InvoiceAdjustmentRepository
-	invoiceRepo     repositories.InvoiceRepository
-	invoiceSvc      services.InvoiceService
-	commercial      *shipmentcommercial.Calculator
-	generator       seqgen.Generator
-	auditService    services.AuditService
-	realtime        services.RealtimeService
-	validator       *Validator
-	orderDerivation services.OrderDerivationService
+	l                    *zap.Logger
+	db                   ports.DBConnection
+	repo                 repositories.BillingQueueRepository
+	shipmentRepo         repositories.ShipmentRepository
+	controlRepo          repositories.ShipmentControlRepository
+	commentRepo          repositories.ShipmentCommentRepository
+	customerRepo         repositories.CustomerRepository
+	userRepo             repositories.UserRepository
+	adjustmentRepo       repositories.InvoiceAdjustmentRepository
+	invoiceRepo          repositories.InvoiceRepository
+	invoiceSvc           services.InvoiceService
+	chargeAllocationRepo repositories.ChargeAllocationRepository
+	commercial           *shipmentcommercial.Calculator
+	generator            seqgen.Generator
+	auditService         services.AuditService
+	realtime             services.RealtimeService
+	validator            *Validator
+	orderDerivation      services.OrderDerivationService
 }
 
 //nolint:gocritic // dependency injection
 func New(p Params) services.BillingQueueService {
 	return &service{
-		l:               p.Logger.Named("service.billing-queue"),
-		db:              p.DB,
-		repo:            p.Repo,
-		shipmentRepo:    p.ShipmentRepo,
-		controlRepo:     p.ControlRepo,
-		commentRepo:     p.CommentRepo,
-		customerRepo:    p.CustomerRepo,
-		userRepo:        p.UserRepo,
-		adjustmentRepo:  p.AdjustmentRepo,
-		invoiceRepo:     p.InvoiceRepo,
-		invoiceSvc:      p.InvoiceSvc,
-		commercial:      p.Commercial,
-		generator:       p.Generator,
-		auditService:    p.AuditService,
-		realtime:        p.Realtime,
-		validator:       p.Validator,
-		orderDerivation: p.OrderDerivation,
+		l:                    p.Logger.Named("service.billing-queue"),
+		db:                   p.DB,
+		repo:                 p.Repo,
+		shipmentRepo:         p.ShipmentRepo,
+		controlRepo:          p.ControlRepo,
+		commentRepo:          p.CommentRepo,
+		customerRepo:         p.CustomerRepo,
+		userRepo:             p.UserRepo,
+		adjustmentRepo:       p.AdjustmentRepo,
+		invoiceRepo:          p.InvoiceRepo,
+		invoiceSvc:           p.InvoiceSvc,
+		chargeAllocationRepo: p.ChargeAllocationRepo,
+		commercial:           p.Commercial,
+		generator:            p.Generator,
+		auditService:         p.AuditService,
+		realtime:             p.Realtime,
+		validator:            p.Validator,
+		orderDerivation:      p.OrderDerivation,
 	}
 }
 
@@ -141,6 +144,8 @@ func (s *service) expandShipmentDetails(
 	if fullShipment.CustomerID.IsNil() {
 		return nil
 	}
+
+	defer s.attachPayerShare(ctx, item, tenantInfo)
 
 	cust, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 		ID:         fullShipment.CustomerID,
@@ -268,6 +273,9 @@ func (s *service) TransferToBillingItems(
 	}
 
 	for _, share := range resolution.Shares {
+		if len(share.Charges) == 0 {
+			continue
+		}
 		exists, existsErr := s.repo.ExistsByShipmentPayerAndType(
 			ctx,
 			req.TenantInfo,
@@ -287,6 +295,9 @@ func (s *service) TransferToBillingItems(
 
 	entities := make([]*billingqueue.BillingQueueItem, 0, len(resolution.Shares))
 	for _, share := range resolution.Shares {
+		if len(share.Charges) == 0 {
+			continue
+		}
 		number, numberErr := s.generateBillingNumber(
 			ctx,
 			req.BillType,
@@ -796,6 +807,7 @@ func (s *service) UpdateCharges(
 		}
 	}
 
+	chargeNames := accessorialNames(shp.AdditionalCharges)
 	if req.AdditionalCharges != nil {
 		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
 		shp.AdditionalCharges = req.AdditionalCharges
@@ -805,6 +817,14 @@ func (s *service) UpdateCharges(
 	otherTotal := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
 	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
+
+	convertedSplits := 0
+	if stale := shipment.FindStaleAmountSplits(shp, shp.ChargeAllocations); len(stale) > 0 {
+		if !req.ConvertAmountSplitsToPercent {
+			return nil, staleAmountSplitError(stale, chargeNames)
+		}
+		convertedSplits = shipment.ConvertAmountSplitsToPercent(shp, shp.ChargeAllocations)
+	}
 
 	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		return nil, err
@@ -821,7 +841,7 @@ func (s *service) UpdateCharges(
 		permission.OpUpdate,
 		nil,
 		nil,
-		"Charges updated from billing queue",
+		chargesUpdatedComment(convertedSplits),
 	)
 	s.publishInvalidation(ctx, item, auditActor, "updated", item)
 

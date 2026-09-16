@@ -467,7 +467,6 @@ func (r *repository) saveBillingProfile(
 		Set(cbp.RequirePONumber.SetExcluded()).
 		Set(cbp.RequireBOLNumber.SetExcluded()).
 		Set(cbp.RequireDeliveryNumber.SetExcluded()).
-		Set(cbp.InvoiceAdjustmentSupportingDocumentPolicy.SetExcluded()).
 		Set(cbp.DefaultBillerID.SetExcluded()).
 		Set(cbp.BillingNotes.SetExcluded()).
 		Set(cbp.FuelSurchargeMode.SetExcluded()).

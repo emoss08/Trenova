@@ -189,3 +189,56 @@ func TestEncodeCursorFromEntityWithValues_RejectsValueCountMismatch(t *testing.T
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cursor sort values do not match cursor sort shape")
 }
+
+func TestCursorInt64Value(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		value any
+		want  int64
+		ok    bool
+	}{
+		{name: "int64 from a database scan", value: int64(1_700_000_000), want: 1_700_000_000, ok: true},
+		{name: "int", value: 42, want: 42, ok: true},
+		{name: "int32", value: int32(42), want: 42, ok: true},
+		{name: "float64 from a decoded cursor", value: float64(1_700_000_000), want: 1_700_000_000, ok: true},
+		{name: "numeric string", value: "1700000000", want: 1_700_000_000, ok: true},
+		{name: "non-numeric string", value: "yesterday", ok: false},
+		{name: "nil", value: nil, ok: false},
+		{name: "bool", value: true, ok: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, ok := CursorInt64Value(tt.value)
+			assert.Equal(t, tt.ok, ok)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestCursorInt64Value_SurvivesTheCursorCodec(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("tr_")
+	sort := []CursorSortField{
+		{Field: "sortAt", Direction: "desc"},
+		{Field: "id", Direction: "desc"},
+	}
+	encoded, err := EncodeCursor(Cursor{
+		ID:     id,
+		Sort:   sort,
+		Values: []any{int64(1_700_000_123), id.String()},
+	})
+	require.NoError(t, err)
+
+	decoded, err := DecodeCursor(encoded)
+	require.NoError(t, err)
+
+	got, ok := CursorInt64Value(decoded.Values[0])
+	require.True(t, ok)
+	assert.Equal(t, int64(1_700_000_123), got)
+}

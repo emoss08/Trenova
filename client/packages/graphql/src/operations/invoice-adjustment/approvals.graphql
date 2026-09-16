@@ -1,0 +1,78 @@
+fragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {
+  adjustmentId
+  originalInvoiceId
+  originalInvoiceNumber
+  originalInvoiceStatus
+  customerName
+  kind
+  reason
+  policyReason
+  policySource
+  creditTotalAmount
+  rebillTotalAmount
+  netDeltaAmount
+  wouldCreateUnappliedCredit
+  requiresReconciliationException
+  requiresReplacementInvoiceReview
+  submittedByName
+  submittedAt
+  creditMemoInvoiceId
+  replacementInvoiceId
+  rebillQueueItemId
+  batchId
+}
+
+query InvoiceAdjustmentApprovals($input: InvoiceAdjustmentApprovalsInput!) {
+  invoiceAdjustmentApprovals(input: $input) {
+    edges {
+      cursor
+      node {
+        ...InvoiceApprovalQueueItemFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query InvoiceAdjustmentApprovalDetail($id: ID!) {
+  invoiceAdjustment(id: $id) {
+    id
+    status
+    lines {
+      id
+      lineNumber
+      description
+      creditAmount
+      rebillAmount
+    }
+  }
+}
+
+query InvoiceAdjustmentOperationsSummary {
+  invoiceAdjustmentOperationsSummary {
+    approvalsPending
+    reconciliationPending
+    writeOffPending
+    failedBatchItems
+  }
+}
+
+mutation ApproveInvoiceAdjustment($adjustmentId: ID!) {
+  approveInvoiceAdjustment(adjustmentId: $adjustmentId) {
+    id
+    status
+    approvalStatus
+  }
+}
+
+mutation RejectInvoiceAdjustment($input: RejectInvoiceAdjustmentInput!) {
+  rejectInvoiceAdjustment(input: $input) {
+    id
+    status
+    approvalStatus
+    rejectionReason
+  }
+}

@@ -35,11 +35,21 @@ type CloseFiscalPeriodRequest struct {
 }
 
 type ReopenFiscalPeriodRequest struct {
-	ID         pulid.ID              `json:"id"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	ID           pulid.ID              `json:"id"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	ReopenReason string                `json:"reopenReason"`
+	ReopenedByID pulid.ID              `json:"reopenedById"`
+	ReopenedAt   int64                 `json:"reopenedAt"`
 }
 
 type LockFiscalPeriodRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	LockedByID pulid.ID              `json:"lockedById"`
+	LockedAt   int64                 `json:"lockedAt"`
+}
+
+type ActivateFiscalPeriodRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
@@ -49,7 +59,7 @@ type UnlockFiscalPeriodRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
-type GetOpenPeriodsCountByFiscalYearRequest struct {
+type CountUnclosedPeriodsByFiscalYearRequest struct {
 	FiscalYearID pulid.ID `json:"fiscalYearId"`
 	OrgID        pulid.ID `json:"orgId"`
 	BuID         pulid.ID `json:"buId"`
@@ -80,7 +90,7 @@ type CloseAllByFiscalYearRequest struct {
 	ClosedAt     int64    `json:"closedAt"`
 }
 
-type GetExpiredOpenPeriodsRequest struct {
+type GetExpiredUnclosedPeriodsRequest struct {
 	OrgID      pulid.ID `json:"orgId"`
 	BuID       pulid.ID `json:"buId"`
 	BeforeDate int64    `json:"beforeDate"`
@@ -140,9 +150,13 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req UnlockFiscalPeriodRequest,
 	) (*fiscalperiod.FiscalPeriod, error)
-	GetOpenPeriodsCountByFiscalYear(
+	Activate(
 		ctx context.Context,
-		req GetOpenPeriodsCountByFiscalYearRequest,
+		req ActivateFiscalPeriodRequest,
+	) (*fiscalperiod.FiscalPeriod, error)
+	CountUnclosedPeriodsByFiscalYear(
+		ctx context.Context,
+		req CountUnclosedPeriodsByFiscalYearRequest,
 	) (int, error)
 	ListByFiscalYearID(
 		ctx context.Context,
@@ -164,8 +178,8 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req CloseAllByFiscalYearRequest,
 	) (int, error)
-	GetExpiredOpenPeriods(
+	GetExpiredUnclosedPeriods(
 		ctx context.Context,
-		req GetExpiredOpenPeriodsRequest,
+		req GetExpiredUnclosedPeriodsRequest,
 	) ([]*fiscalperiod.FiscalPeriod, error)
 }

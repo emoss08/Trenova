@@ -46,7 +46,6 @@ fragment CustomerBillingProfileFields on CustomerBillingProfile {
   requirePONumber
   requireBOLNumber
   requireDeliveryNumber
-  invoiceAdjustmentSupportingDocumentPolicy
   defaultBillerId
   billingNotes
   fuelSurchargeMode

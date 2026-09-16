@@ -2922,6 +2922,7 @@ func (r *Registry) registerAccountingResources() {
 			{Operation: OpReopen, DisplayName: "Reopen", Description: "Reopen fiscal periods"},
 			{Operation: OpLock, DisplayName: "Lock", Description: "Lock fiscal periods"},
 			{Operation: OpUnlock, DisplayName: "Unlock", Description: "Unlock fiscal periods"},
+			{Operation: OpActivate, DisplayName: "Open", Description: "Open inactive fiscal periods"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export fiscal calendar data"},
 		},
 		DefaultSensitivity: SensitivityRestricted,

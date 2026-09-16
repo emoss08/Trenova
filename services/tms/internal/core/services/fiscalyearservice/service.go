@@ -353,6 +353,11 @@ func (s *Service) Create(
 		return nil, err
 	}
 
+	if err := normalizeDateBounds(entity); err != nil {
+		log.Error("failed to normalize fiscal year dates", zap.Error(err))
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -434,15 +439,6 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	if err := s.transformer.TransformFiscalYear(ctx, entity); err != nil {
-		log.Error("failed to transform fiscal year", zap.Error(err))
-		return nil, err
-	}
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
@@ -453,6 +449,21 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original fiscal year", zap.Error(err))
 		return nil, err
+	}
+
+	if multiErr := validateEditable(original, entity); multiErr != nil {
+		return nil, multiErr
+	}
+
+	preserveLifecycle(original, entity)
+
+	if err = s.transformer.TransformFiscalYear(ctx, entity); err != nil {
+		log.Error("failed to transform fiscal year", zap.Error(err))
+		return nil, err
+	}
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
@@ -899,9 +910,9 @@ func (s *Service) validateClose(
 		return multiErr
 	}
 
-	openCount, err := s.fiscalPeriodRepo.GetOpenPeriodsCountByFiscalYear(
+	unclosedCount, err := s.fiscalPeriodRepo.CountUnclosedPeriodsByFiscalYear(
 		ctx,
-		repositories.GetOpenPeriodsCountByFiscalYearRequest{
+		repositories.CountUnclosedPeriodsByFiscalYearRequest{
 			FiscalYearID: entity.ID,
 			OrgID:        entity.OrganizationID,
 			BuID:         entity.BusinessUnitID,
@@ -912,12 +923,12 @@ func (s *Service) validateClose(
 		return multiErr
 	}
 
-	if openCount > 0 {
+	if unclosedCount > 0 {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
-			"Cannot close fiscal year: {0} period(s) are still open. Close all periods first.",
-			openCount,
+			"Cannot close fiscal year: {0} period(s) are still open or locked. Close all periods first.",
+			unclosedCount,
 		)
 	}
 

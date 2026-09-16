@@ -99,20 +99,6 @@ const (
 	InvoiceDetailSummary  = InvoiceDetail("Summary")
 )
 
-type InvoiceAdjustmentSupportingDocumentPolicy string
-
-const (
-	InvoiceAdjustmentSupportingDocumentPolicyInherit = InvoiceAdjustmentSupportingDocumentPolicy(
-		"Inherit",
-	)
-	InvoiceAdjustmentSupportingDocumentPolicyRequired = InvoiceAdjustmentSupportingDocumentPolicy(
-		"Required",
-	)
-	InvoiceAdjustmentSupportingDocumentPolicyOptional = InvoiceAdjustmentSupportingDocumentPolicy(
-		"Optional",
-	)
-)
-
 func (d InvoiceDelivery) IsValid() bool {
 	switch d {
 	case InvoiceDeliveryPerShipment, InvoiceDeliveryPerOrder, InvoiceDeliveryConsolidated:
@@ -223,17 +209,6 @@ func (k InvoiceSectionKey) IsValid() bool {
 func (d InvoiceDetail) IsValid() bool {
 	switch d {
 	case InvoiceDetailDetailed, InvoiceDetailSummary:
-		return true
-	default:
-		return false
-	}
-}
-
-func (p InvoiceAdjustmentSupportingDocumentPolicy) IsValid() bool {
-	switch p {
-	case InvoiceAdjustmentSupportingDocumentPolicyInherit,
-		InvoiceAdjustmentSupportingDocumentPolicyRequired,
-		InvoiceAdjustmentSupportingDocumentPolicyOptional:
 		return true
 	default:
 		return false

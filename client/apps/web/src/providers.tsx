@@ -119,7 +119,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               buttonPosition="bottom-left"
               initialIsOpen={false}
             />*/}
-            <Toaster position="bottom-right" />
+            <Toaster position="top-right" />
           </ThemeProvider>
         </NuqsAdapter>
       </QueryClientProvider>

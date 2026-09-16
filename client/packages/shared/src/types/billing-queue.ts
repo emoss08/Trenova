@@ -1,9 +1,18 @@
 import { z } from "zod";
 import { billTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
-import { decimalStringSchema, nullableStringSchema, optionalStringSchema } from "./helpers";
+import {
+  decimalStringSchema,
+  nullableEnumSchema,
+  nullableStringSchema,
+  optionalStringSchema,
+} from "./helpers";
 import { customerReferenceSchema } from "./customer";
-import { shipmentSchema } from "./shipment";
+import {
+  chargeAllocationKindSchema,
+  chargeAllocationMethodSchema,
+  shipmentSchema,
+} from "./shipment";
 import { userSchema } from "./user";
 
 export { billTypeSchema, defaultBillTypeSchema, type BillType } from "./bill-type";
@@ -22,6 +31,59 @@ export const exceptionReasonCodeSchema = z.enum([
   "Other",
 ]);
 export type ExceptionReasonCode = z.infer<typeof exceptionReasonCodeSchema>;
+
+export const payerRefSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string().nullish(),
+});
+export type PayerRef = z.infer<typeof payerRefSchema>;
+
+/** One payer's part of one charge. */
+export const payerSharePartySchema = z.object({
+  payerId: z.string(),
+  payerName: z.string(),
+  payerCode: z.string().nullish(),
+  amount: decimalStringSchema,
+  percent: decimalStringSchema,
+});
+export type PayerShareParty = z.infer<typeof payerSharePartySchema>;
+
+/**
+ * One charge as a single payer's bill sees it. `additionalChargeId` is null for
+ * freight; `method` is null for a charge billed whole.
+ */
+export const payerShareLineSchema = z.object({
+  kind: chargeAllocationKindSchema,
+  additionalChargeId: nullableStringSchema,
+  description: z.string(),
+  chargeTotal: decimalStringSchema,
+  amount: decimalStringSchema,
+  percent: decimalStringSchema,
+  method: nullableEnumSchema(chargeAllocationMethodSchema),
+  partial: z.boolean().default(false),
+  payers: z.array(payerSharePartySchema).default([]),
+});
+export type PayerShareLine = z.infer<typeof payerShareLineSchema>;
+
+/**
+ * What one billing queue item bills, resolved on the server by the same code
+ * that builds the invoice lines. `otherPayerLines` are charges this payer owes
+ * none of; `resolutionError` explains a split that cannot be divided right now.
+ */
+export const payerShareSchema = z.object({
+  payerId: z.string(),
+  isSplit: z.boolean().default(false),
+  payers: z.array(payerRefSchema).default([]),
+  lines: z.array(payerShareLineSchema).default([]),
+  otherPayerLines: z.array(payerShareLineSchema).default([]),
+  freightAmount: decimalStringSchema,
+  accessorialAmount: decimalStringSchema,
+  totalAmount: decimalStringSchema,
+  shipmentTotal: decimalStringSchema,
+  resolutionError: nullableStringSchema,
+});
+export type PayerShare = z.infer<typeof payerShareSchema>;
 
 export const billingQueueItemSchema = z.object({
   id: z.string(),
@@ -60,9 +122,36 @@ export const billingQueueItemSchema = z.object({
   billToCustomer: customerReferenceSchema.optional().nullable(),
   assignedBiller: userSchema.optional().nullable(),
   canceledBy: userSchema.optional().nullable(),
+  payerShare: payerShareSchema.nullish(),
 });
 
 export type BillingQueueItem = z.infer<typeof billingQueueItemSchema>;
+
+/**
+ * The queue after a charge moved between payers: the item the change came from
+ * (canceled when its payer no longer pays anything) and every active item.
+ */
+export const reassignChargeResultSchema = z.object({
+  item: billingQueueItemSchema,
+  items: z.array(billingQueueItemSchema).default([]),
+  createdItemIds: z.array(z.string()).default([]),
+  canceledItemIds: z.array(z.string()).default([]),
+});
+export type ReassignChargeResult = z.infer<typeof reassignChargeResultSchema>;
+
+export type ReassignChargeAllocationInput = {
+  id?: string;
+  billToCustomerId: string;
+  method: "Percent" | "Amount";
+  percent: string | null;
+  amount: string | null;
+};
+
+export type ReassignChargeInput = {
+  chargeKind: "Freight" | "Accessorial";
+  additionalChargeId?: string;
+  allocations: ReassignChargeAllocationInput[];
+};
 
 export const billingQueueTransferSchema = z.object({
   shipmentId: z.string(),
@@ -111,6 +200,8 @@ export const billingQueueUpdateChargesSchema = z.object({
       }),
     )
     .optional(),
+  /** Retries an edit refused because it left an amount split that no longer adds up. */
+  convertAmountSplitsToPercent: z.boolean().optional(),
 });
 export type BillingQueueUpdateChargesInput = z.infer<typeof billingQueueUpdateChargesSchema>;
 

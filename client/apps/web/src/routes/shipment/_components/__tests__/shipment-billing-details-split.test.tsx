@@ -210,9 +210,18 @@ describe("ShipmentBillingDetails split billing", () => {
     expect(latestForm?.getValues("billToCustomerId")).toBe("cus_amd");
   });
 
-  it("offers to split the freight charge from the charge summary", async () => {
+  // Who pays the freight is chosen on the freight row itself, the same way as
+  // for every accessorial; sharing it is one step further in.
+  it("names the freight's payer on the charge summary and opens the split from there", async () => {
+    const user = userEvent.setup();
     render(<Harness values={SPLIT_SHIPMENT} />);
 
-    expect(await screen.findByTestId("freight-split-action")).toHaveTextContent("Split");
+    const control = await screen.findByTestId("charge-payer-control");
+    expect(control).toHaveTextContent("Bill to: Same as shipment");
+
+    await user.click(control);
+    await user.click(await screen.findByRole("button", { name: "Split this charge…" }));
+
+    expect(await screen.findByText("Split freight charge")).toBeInTheDocument();
   });
 });

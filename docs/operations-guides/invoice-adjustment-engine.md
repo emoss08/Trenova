@@ -12,7 +12,6 @@ The engine consumes these `InvoiceAdjustmentControl` fields at runtime:
 - `adjustmentAccountingDatePolicy`
 - `closedPeriodAdjustmentPolicy`
 - `adjustmentReasonRequirement`
-- `adjustmentAttachmentRequirement`
 - `standardAdjustmentApprovalPolicy`
 - `standardAdjustmentApprovalThreshold`
 - `writeOffApprovalPolicy`
@@ -41,6 +40,12 @@ The engine also consumes related finance controls:
 - Approval-required adjustments persist as `invoice_adjustments` in `PendingApproval` and do not mutate financial artifacts until approved.
 - Approval re-runs policy and eligibility checks under lock before creating credit memo or rebill artifacts.
 - Paid and partially paid invoices do not mutate cash application state. The engine creates reconciliation exceptions and explicit follow-up artifacts instead.
+
+## Supporting documents
+
+Supporting documents are optional for every adjustment kind, including credit and rebill, full reversals, write-offs and voids. Nothing refuses an adjustment for having no documents attached. The organization-wide `adjustmentAttachmentRequirement` control and the per-customer `invoiceAdjustmentSupportingDocumentPolicy` billing profile setting were retired because they forced documentation on customers that have no documentation requirements.
+
+When documents are attached, each one must exist in the tenant, must not be archived, and must belong to a shipment the invoice bills. The GraphQL field `CustomerBillingProfile.invoiceAdjustmentSupportingDocumentPolicy` remains for compatibility, is deprecated, and always returns `Optional`.
 
 ## Full reversal voids the original
 

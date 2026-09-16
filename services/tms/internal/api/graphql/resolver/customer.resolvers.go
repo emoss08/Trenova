@@ -96,6 +96,10 @@ func (r *customerBillingProfileResolver) GracePeriodDays(ctx context.Context, ob
 	return int(obj.GracePeriodDays), nil
 }
 
+func (r *customerBillingProfileResolver) InvoiceAdjustmentSupportingDocumentPolicy(ctx context.Context, obj *customer.CustomerBillingProfile) (gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicy, error) {
+	return gqlmodel.CustomerInvoiceAdjustmentSupportingDocumentPolicyOptional, nil
+}
+
 func (r *queryResolver) Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceCustomer, permission.OpRead)
 	if err != nil {

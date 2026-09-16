@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
@@ -341,7 +340,6 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
 	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-		control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyOptional
 		control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 	})
 
@@ -784,26 +782,15 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.True(t, allowed.RequiresReconciliationException)
 	})
 
-	t.Run("reason and attachment policies are enforced", func(t *testing.T) {
+	t.Run("reason policy is enforced and supporting documents are optional", func(t *testing.T) {
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
 			control.AdjustmentReasonRequirement = tenant.RequirementPolicyRequired
-			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyRequiredForAll
 			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
-		h.setCustomerSupportingDocumentPolicy(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyRequired,
-		)
-		t.Cleanup(func() {
-			h.setCustomerSupportingDocumentPolicy(
-				t,
-				customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-			)
-		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
-			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Documented adjustment", 1, 100),
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Undocumented adjustment", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
 		_, missingErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
@@ -814,243 +801,45 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		}, h.actor())
 		require.Error(t, missingErr)
 		assert.Contains(t, missingErr.Error(), "reason")
-		assert.Contains(t, missingErr.Error(), "Supporting documents")
+		assert.NotContains(t, missingErr.Error(), "Supporting documents")
 
-		doc := h.createDocument(t, document.StatusActive)
 		valid, validErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "policy-valid-" + entity.ID.String(),
-			Reason:         "Has support",
-			AttachmentIDs:  []pulid.ID{doc.ID},
+			Reason:         "No documents needed",
 			TenantInfo:     h.tenantInfo(),
 		}, h.actor())
 		require.NoError(t, validErr)
 		assert.Equal(t, invoiceadjustment.StatusExecuted, valid.Status)
-
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyOptional
-		})
 	})
 
-	t.Run("customer supporting document policy overrides organization default", func(t *testing.T) {
+	t.Run("no adjustment kind requires supporting documents", func(t *testing.T) {
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyRequiredForAll
 			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
-		h.setCustomerSupportingDocumentPolicy(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyOptional,
-		)
-		profile, profileErr := h.customerRepo.GetByID(h.ctx, repositories.GetCustomerByIDRequest{
-			ID:         h.customerID,
-			TenantInfo: h.tenantInfo(),
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
-				IncludeBillingProfile: true,
-			},
-		})
-		require.NoError(t, profileErr)
-		require.NotNil(t, profile.BillingProfile)
-		assert.Equal(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyOptional,
-			profile.BillingProfile.InvoiceAdjustmentSupportingDocumentPolicy,
-		)
-		t.Cleanup(func() {
-			h.setCustomerSupportingDocumentPolicy(
-				t,
-				customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-			)
-		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
-			makeInvoiceLine(
-				1,
-				invoice.InvoiceLineTypeFreight,
-				"Customer override optional",
-				1,
-				100,
-			),
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Any kind", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		draft, draftErr := h.service.CreateDraft(
-			h.ctx,
-			&servicesports.CreateDraftInvoiceAdjustmentRequest{
-				InvoiceID:  entity.ID,
-				TenantInfo: h.tenantInfo(),
-			},
-			h.actor(),
-		)
-		require.NoError(t, draftErr)
-		assert.False(t, draft.SupportingDocumentsRequired)
-		assert.Equal(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyOptional,
-			draft.CustomerSupportingDocumentPolicy,
-		)
-		assert.Equal(
-			t,
-			string(invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile),
-			draft.SupportingDocumentPolicySource,
-		)
-
-		optionalPreview, optionalErr := h.service.Preview(
-			h.ctx,
-			&servicesports.InvoiceAdjustmentRequest{
-				InvoiceID:      entity.ID,
-				Kind:           invoiceadjustment.KindCreditOnly,
-				IdempotencyKey: "customer-optional-" + entity.ID.String(),
-				Reason:         "No docs required",
-				TenantInfo:     h.tenantInfo(),
-			},
-			h.actor(),
-		)
-		require.NoError(t, optionalErr)
-		assert.False(t, optionalPreview.SupportingDocumentsRequired)
-		assert.NotContains(t, optionalPreview.Errors, "attachmentIds")
-
-		h.setCustomerSupportingDocumentPolicy(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyRequired,
-		)
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyOptional
-		})
-
-		requiredPreview, requiredErr := h.service.Preview(
-			h.ctx,
-			&servicesports.InvoiceAdjustmentRequest{
-				InvoiceID:      entity.ID,
-				Kind:           invoiceadjustment.KindCreditOnly,
-				IdempotencyKey: "customer-required-" + entity.ID.String(),
-				Reason:         "Docs required",
-				TenantInfo:     h.tenantInfo(),
-			},
-			h.actor(),
-		)
-		require.NoError(t, requiredErr)
-		assert.True(t, requiredPreview.SupportingDocumentsRequired)
-		assert.Equal(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyRequired,
-			requiredPreview.CustomerSupportingDocumentPolicy,
-		)
-		assert.Equal(
-			t,
-			string(invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile),
-			requiredPreview.SupportingDocumentPolicySource,
-		)
-
-		_, requiredSubmitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
-			InvoiceID:      entity.ID,
-			Kind:           invoiceadjustment.KindCreditOnly,
-			IdempotencyKey: "customer-required-submit-" + entity.ID.String(),
-			Reason:         "Docs required",
-			TenantInfo:     h.tenantInfo(),
-		}, h.actor())
-		require.Error(t, requiredSubmitErr)
-		assert.Contains(
-			t,
-			requiredSubmitErr.Error(),
-			"Supporting documents are required for this adjustment by policy",
-		)
-	})
-
-	t.Run("organization supporting document policy applies when customer inherits", func(t *testing.T) {
-		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
-			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Org policy", 1, 100),
-		}, invoice.SettlementStatusUnpaid, decimal.Zero)
-
-		tests := []struct {
-			name           string
-			customerPolicy customer.InvoiceAdjustmentSupportingDocumentPolicy
-			orgPolicy      tenant.AdjustmentAttachmentPolicy
-			kind           invoiceadjustment.Kind
-			required       bool
-			source         invoiceadjustment.SupportingDocumentPolicySource
-		}{
-			{
-				name:           "inherit uses required for all",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForAll,
-				kind:           invoiceadjustment.KindCreditRebill,
-				required:       true,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
-			{
-				name:           "inherit uses optional",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyOptional,
-				kind:           invoiceadjustment.KindCreditOnly,
-				required:       false,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
-			{
-				name:           "customer required overrides optional",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyRequired,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyOptional,
-				kind:           invoiceadjustment.KindCreditOnly,
-				required:       true,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile,
-			},
-			{
-				name:           "customer optional overrides required for all",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyOptional,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForAll,
-				kind:           invoiceadjustment.KindCreditOnly,
-				required:       false,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile,
-			},
-			{
-				name:           "credit only requires docs for credit or write off",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
-				kind:           invoiceadjustment.KindCreditOnly,
-				required:       true,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
-			{
-				name:           "full reversal requires docs for credit or write off",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
-				kind:           invoiceadjustment.KindFullReversal,
-				required:       true,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
-			{
-				name:           "write off requires docs for credit or write off",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
-				kind:           invoiceadjustment.KindWriteOff,
-				required:       true,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
-			{
-				name:           "credit and rebill is optional for credit or write off",
-				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
-				kind:           invoiceadjustment.KindCreditRebill,
-				required:       false,
-				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
-			},
+		kinds := []invoiceadjustment.Kind{
+			invoiceadjustment.KindCreditOnly,
+			invoiceadjustment.KindCreditRebill,
+			invoiceadjustment.KindFullReversal,
+			invoiceadjustment.KindWriteOff,
 		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				h.setCustomerSupportingDocumentPolicy(t, tt.customerPolicy)
-				h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-					control.AdjustmentAttachmentRequirement = tt.orgPolicy
-				})
-
+		for _, kind := range kinds {
+			t.Run(string(kind), func(t *testing.T) {
 				preview, previewErr := h.service.Preview(
 					h.ctx,
 					&servicesports.InvoiceAdjustmentRequest{
 						InvoiceID:      entity.ID,
-						Kind:           tt.kind,
+						Kind:           kind,
 						RebillStrategy: invoiceadjustment.RebillStrategyManual,
-						IdempotencyKey: "org-policy-" + tt.name,
-						Reason:         "Policy preview",
+						IdempotencyKey: "no-docs-" + string(kind),
+						Reason:         "No documents attached",
 						TenantInfo:     h.tenantInfo(),
 						Lines: []*servicesports.InvoiceAdjustmentLineInput{{
 							OriginalLineID: entity.Lines[0].ID,
@@ -1063,18 +852,39 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 					h.actor(),
 				)
 				require.NoError(t, previewErr)
-				assert.Equal(t, tt.required, preview.SupportingDocumentsRequired)
-				assert.Equal(t, string(tt.source), preview.SupportingDocumentPolicySource)
+				assert.NotContains(t, preview.Errors, "attachmentIds")
 			})
 		}
+	})
 
-		h.setCustomerSupportingDocumentPolicy(
-			t,
-			customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-		)
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyOptional
-		})
+	t.Run("attached supporting documents must be usable", func(t *testing.T) {
+		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Archived evidence", 1, 100),
+		}, invoice.SettlementStatusUnpaid, decimal.Zero)
+
+		archived := h.createDocument(t, document.StatusArchived)
+		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+			InvoiceID:      entity.ID,
+			Kind:           invoiceadjustment.KindCreditOnly,
+			IdempotencyKey: "archived-doc-" + entity.ID.String(),
+			Reason:         "Archived attachment",
+			AttachmentIDs:  []pulid.ID{archived.ID},
+			TenantInfo:     h.tenantInfo(),
+		}, h.actor())
+		require.NoError(t, previewErr)
+		assert.Contains(t, preview.Errors, "attachmentIds")
+
+		active := h.createDocument(t, document.StatusActive)
+		executed, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+			InvoiceID:      entity.ID,
+			Kind:           invoiceadjustment.KindCreditOnly,
+			IdempotencyKey: "active-doc-" + entity.ID.String(),
+			Reason:         "Active attachment",
+			AttachmentIDs:  []pulid.ID{active.ID},
+			TenantInfo:     h.tenantInfo(),
+		}, h.actor())
+		require.NoError(t, submitErr)
+		assert.Equal(t, invoiceadjustment.StatusExecuted, executed.Status)
 	})
 
 	t.Run(
@@ -1464,25 +1274,6 @@ func (h *integrationHarness) setControls(
 	mutate(control)
 	_, err = h.adjustmentCtrlRepo.Update(h.ctx, control)
 	require.NoError(t, err)
-}
-
-func (h *integrationHarness) setCustomerSupportingDocumentPolicy(
-	t *testing.T,
-	policy customer.InvoiceAdjustmentSupportingDocumentPolicy,
-) {
-	t.Helper()
-
-	result, err := h.db.NewUpdate().
-		Table("customer_billing_profiles").
-		Set("invoice_adjustment_supporting_document_policy = ?", policy).
-		Where("customer_id = ?", h.customerID).
-		Where("organization_id = ?", h.orgID).
-		Where("business_unit_id = ?", h.buID).
-		Exec(h.ctx)
-	require.NoError(t, err)
-	rowsAffected, err := result.RowsAffected()
-	require.NoError(t, err)
-	require.Equal(t, int64(1), rowsAffected)
 }
 
 func (h *integrationHarness) createPostedInvoice(

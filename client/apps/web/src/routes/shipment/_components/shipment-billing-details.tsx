@@ -1,3 +1,4 @@
+import { ChargePayerControl } from "@/components/billing/charge-payer-control";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
@@ -40,7 +41,6 @@ import {
   ShieldAlertIcon,
   ShieldIcon,
   SparklesIcon,
-  SplitIcon,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -48,7 +48,7 @@ import { Link } from "react-router";
 import { ReceiptView } from "@/components/formula-editor/receipt-view";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
-import { FreightSplitDialog } from "./additional-charges/freight-split-dialog";
+import { useShipmentDefaultPayer } from "./use-shipment-default-payer";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { AutoRateDialog } from "./auto-rate-dialog";
 import { BillingByPayerCard } from "./billing-by-payer-card";
@@ -261,11 +261,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   const otherChargeAmount = useWatch({ control, name: "otherChargeAmount" });
   const totalChargeAmount = useWatch({ control, name: "totalChargeAmount" });
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
-  const freightAllocations = useWatch({ control, name: "freightAllocations" });
-  const [splitOpen, setSplitOpen] = useState(false);
-  const freightSplitCount = (freightAllocations ?? []).filter(
-    (row) => row?.billToCustomerId,
-  ).length;
+  const defaultPayer = useShipmentDefaultPayer();
 
   return (
     <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
@@ -297,28 +293,22 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
           label={t("Freight Charges")}
           value={freightChargeAmount}
           action={
-            <Button
-              type="button"
-              variant="ghost"
-              size="xxs"
-              className="text-2xs h-5"
-              onClick={() => setSplitOpen(true)}
-              data-testid="freight-split-action"
-            >
-              <SplitIcon className="size-3" />
-              {freightSplitCount > 1
-                ? t("Split {0} ways", freightSplitCount)
-                : freightSplitCount === 1
-                  ? t("Billed to another payer")
-                  : t("Split")}
-            </Button>
+            <ChargePayerControl
+              name="freightAllocations"
+              chargeAmount={Number(freightChargeAmount ?? 0)}
+              defaultPayer={defaultPayer}
+              splitTitle={t("Split freight charge")}
+              splitDescription={t(
+                "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.",
+                formatCurrency(Number(freightChargeAmount ?? 0)),
+              )}
+            />
           }
         />
         <ChargeSummaryRow label={t("Other Charges")} value={otherChargeAmount} />
         <Separator className="my-2" />
         <ChargeSummaryRow label={t("Total")} value={totalChargeAmount} bold />
       </div>
-      {splitOpen && <FreightSplitDialog open={splitOpen} onOpenChange={setSplitOpen} />}
     </div>
   );
 }

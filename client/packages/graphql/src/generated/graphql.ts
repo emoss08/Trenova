@@ -819,11 +819,6 @@ export type CustomerFuelSurchargeMode =
   | 'None'
   | 'Program';
 
-export type CustomerInvoiceAdjustmentSupportingDocumentPolicy =
-  | 'Inherit'
-  | 'Optional'
-  | 'Required';
-
 /** How many invoices a customer's freight turns into. */
 export type CustomerInvoiceDelivery =
   /** One or more invoices per billing period, covering the period's shipments. */
@@ -2237,6 +2232,40 @@ export type InviteWorkerToPortalInput = {
   workerId: string | number;
 };
 
+export type InvoiceAdjustmentApprovalStatus =
+  | 'Approved'
+  | 'NotRequired'
+  | 'Pending'
+  | 'Rejected';
+
+/**
+ * Pages the approval queue newest submission first. query matches the adjustment
+ * id, invoice number, customer, reason, policy reason, and submitter name.
+ */
+export type InvoiceAdjustmentApprovalsInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  kind?: InvoiceAdjustmentKind | null | undefined;
+  query?: string | null | undefined;
+  submittedById?: string | number | null | undefined;
+};
+
+/** What an invoice adjustment does to the posted invoice it corrects. */
+export type InvoiceAdjustmentKind =
+  | 'CreditAndRebill'
+  | 'CreditOnly'
+  | 'FullReversal'
+  | 'WriteOff';
+
+export type InvoiceAdjustmentStatus =
+  | 'Approved'
+  | 'Draft'
+  | 'Executed'
+  | 'Executing'
+  | 'ExecutionFailed'
+  | 'PendingApproval'
+  | 'Rejected';
+
 /** How verbose each section of a consolidated invoice is. */
 export type InvoiceDetail =
   | 'Detailed'
@@ -3288,6 +3317,11 @@ export type RecurringShipmentStatus =
   | 'Active'
   | 'Expired'
   | 'Paused';
+
+export type RejectInvoiceAdjustmentInput = {
+  adjustmentId: string | number;
+  reason?: string | null | undefined;
+};
 
 export type RemoveCarrierSettlementAdjustmentInput = {
   lineId: string | number;
@@ -5939,7 +5973,7 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
-export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
+export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, fromEmail: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
@@ -7909,6 +7943,41 @@ export type DeleteIftaTaxRateMutationVariables = Exact<{
 
 
 export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
+
+export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
+
+export type InvoiceAdjustmentApprovalsQueryVariables = Exact<{
+  input: InvoiceAdjustmentApprovalsInput;
+}>;
+
+
+export type InvoiceAdjustmentApprovalsQuery = { invoiceAdjustmentApprovals: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'InvoiceApprovalQueueItemFieldsFragment': InvoiceApprovalQueueItemFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type InvoiceAdjustmentApprovalDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceAdjustmentApprovalDetailQuery = { invoiceAdjustment: { id: string, status: InvoiceAdjustmentStatus, lines: Array<{ id: string, lineNumber: number, description: string, creditAmount: string, rebillAmount: string }> } | null };
+
+export type InvoiceAdjustmentOperationsSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InvoiceAdjustmentOperationsSummaryQuery = { invoiceAdjustmentOperationsSummary: { approvalsPending: number, reconciliationPending: number, writeOffPending: number, failedBatchItems: number } };
+
+export type ApproveInvoiceAdjustmentMutationVariables = Exact<{
+  adjustmentId: string | number;
+}>;
+
+
+export type ApproveInvoiceAdjustmentMutation = { approveInvoiceAdjustment: { id: string, status: InvoiceAdjustmentStatus, approvalStatus: InvoiceAdjustmentApprovalStatus } };
+
+export type RejectInvoiceAdjustmentMutationVariables = Exact<{
+  input: RejectInvoiceAdjustmentInput;
+}>;
+
+
+export type RejectInvoiceAdjustmentMutation = { rejectInvoiceAdjustment: { id: string, status: InvoiceAdjustmentStatus, approvalStatus: InvoiceAdjustmentApprovalStatus, rejectionReason: string } };
 
 export type InvoiceRelatedFieldsFragment = { id: string, number: string, billType: BillType, status: InvoiceStatus, scope: InvoiceScope, currencyCode: string, totalAmount: string, settlementStatus: InvoiceSettlementStatus, billToName: string, customerId: string, isSplitBill: boolean } & { ' $fragmentName'?: 'InvoiceRelatedFieldsFragment' };
 
@@ -11334,7 +11403,6 @@ export const CustomerBillingProfileFieldsFragmentDoc = new TypedDocumentString(`
   requirePONumber
   requireBOLNumber
   requireDeliveryNumber
-  invoiceAdjustmentSupportingDocumentPolicy
   defaultBillerId
   billingNotes
   fuelSurchargeMode
@@ -11451,7 +11519,6 @@ export const CustomerTableRowFieldsFragmentDoc = new TypedDocumentString(`
   requirePONumber
   requireBOLNumber
   requireDeliveryNumber
-  invoiceAdjustmentSupportingDocumentPolicy
   defaultBillerId
   billingNotes
   fuelSurchargeMode
@@ -13089,6 +13156,31 @@ export const IftaTaxRateFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"IftaTaxRateFields"}) as unknown as TypedDocumentString<IftaTaxRateFieldsFragment, unknown>;
+export const InvoiceApprovalQueueItemFieldsFragmentDoc = new TypedDocumentString(`
+    fragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {
+  adjustmentId
+  originalInvoiceId
+  originalInvoiceNumber
+  originalInvoiceStatus
+  customerName
+  kind
+  reason
+  policyReason
+  policySource
+  creditTotalAmount
+  rebillTotalAmount
+  netDeltaAmount
+  wouldCreateUnappliedCredit
+  requiresReconciliationException
+  requiresReplacementInvoiceReview
+  submittedByName
+  submittedAt
+  creditMemoInvoiceId
+  replacementInvoiceId
+  rebillQueueItemId
+  batchId
+}
+    `, {"fragmentName":"InvoiceApprovalQueueItemFields"}) as unknown as TypedDocumentString<InvoiceApprovalQueueItemFieldsFragment, unknown>;
 export const InvoiceRelatedFieldsFragmentDoc = new TypedDocumentString(`
     fragment InvoiceRelatedFields on Invoice {
   id
@@ -16677,7 +16769,7 @@ export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":
 export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"PostAndApplyCustomerPayment","hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}} as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
-export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:7f1c46a8f00d6387ca9c2019c08edef52ee49742ed4c1f08d361cb9fd9bed9b0"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
 export const DetentionFacilityStatsDocument = {"__meta__":{"kind":"query","name":"DetentionFacilityStats","hash":"sha256:c7c1f1b8d0b5c5fa3dced842b3436b910f8525f3f3dc5992cd753d0e247a40c2"}} as unknown as TypedDocumentString<DetentionFacilityStatsQuery, DetentionFacilityStatsQueryVariables>;
 export const DetentionCustomerStatsDocument = {"__meta__":{"kind":"query","name":"DetentionCustomerStats","hash":"sha256:188bf76366f9651b4c37387fa0792d2ba42578a237866a2bbfa3a1d0d904c056"}} as unknown as TypedDocumentString<DetentionCustomerStatsQuery, DetentionCustomerStatsQueryVariables>;
 export const DetentionWaiverStatsDocument = {"__meta__":{"kind":"query","name":"DetentionWaiverStats","hash":"sha256:23077469702670463ce465420c6147c9583c2fbb143df6d60a5c0ac2276d0da1"}} as unknown as TypedDocumentString<DetentionWaiverStatsQuery, DetentionWaiverStatsQueryVariables>;
@@ -16938,6 +17030,11 @@ export const BackfillJurisdictionMilesDocument = {"__meta__":{"kind":"mutation",
 export const IftaTaxRateTableDocument = {"__meta__":{"kind":"query","name":"IftaTaxRateTable","hash":"sha256:75d9876e1746a57e7069435584d0c2968945fa0273152ed0c5b0d4ac7c2ca8c3"}} as unknown as TypedDocumentString<IftaTaxRateTableQuery, IftaTaxRateTableQueryVariables>;
 export const UpsertIftaTaxRatesDocument = {"__meta__":{"kind":"mutation","name":"UpsertIftaTaxRates","hash":"sha256:40687ccd074f12591f177689ac65f9ebc0c02b96ee78cbd3a20c61f549c6f28b"}} as unknown as TypedDocumentString<UpsertIftaTaxRatesMutation, UpsertIftaTaxRatesMutationVariables>;
 export const DeleteIftaTaxRateDocument = {"__meta__":{"kind":"mutation","name":"DeleteIftaTaxRate","hash":"sha256:3ea06bea9c4fe480fb22642ac0608f800ac5ce37559751b23103bc25274b2755"}} as unknown as TypedDocumentString<DeleteIftaTaxRateMutation, DeleteIftaTaxRateMutationVariables>;
+export const InvoiceAdjustmentApprovalsDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovals","hash":"sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalsQuery, InvoiceAdjustmentApprovalsQueryVariables>;
+export const InvoiceAdjustmentApprovalDetailDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentApprovalDetail","hash":"sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b"}} as unknown as TypedDocumentString<InvoiceAdjustmentApprovalDetailQuery, InvoiceAdjustmentApprovalDetailQueryVariables>;
+export const InvoiceAdjustmentOperationsSummaryDocument = {"__meta__":{"kind":"query","name":"InvoiceAdjustmentOperationsSummary","hash":"sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3"}} as unknown as TypedDocumentString<InvoiceAdjustmentOperationsSummaryQuery, InvoiceAdjustmentOperationsSummaryQueryVariables>;
+export const ApproveInvoiceAdjustmentDocument = {"__meta__":{"kind":"mutation","name":"ApproveInvoiceAdjustment","hash":"sha256:8f7d664f83700e118b71a2c85719f27be70db7f7244f0d461d3b329bc5378f12"}} as unknown as TypedDocumentString<ApproveInvoiceAdjustmentMutation, ApproveInvoiceAdjustmentMutationVariables>;
+export const RejectInvoiceAdjustmentDocument = {"__meta__":{"kind":"mutation","name":"RejectInvoiceAdjustment","hash":"sha256:308f359b07521c3d3bc36a51a4248661305ab78cb23769b53fbdbf79a7ccad00"}} as unknown as TypedDocumentString<RejectInvoiceAdjustmentMutation, RejectInvoiceAdjustmentMutationVariables>;
 export const InvoiceArContextDocument = {"__meta__":{"kind":"query","name":"InvoiceArContext","hash":"sha256:358cd88ad211a46ea7fb335a621bf7a8a4f45f706c72e5be127227482515f49f"}} as unknown as TypedDocumentString<InvoiceArContextQuery, InvoiceArContextQueryVariables>;
 export const ShipmentInvoicesDocument = {"__meta__":{"kind":"query","name":"ShipmentInvoices","hash":"sha256:59e9f6ae56d7b75eaf4a8d2ca9c8305b7a609dbb056fbe26153e6ba0f1cecf69"}} as unknown as TypedDocumentString<ShipmentInvoicesQuery, ShipmentInvoicesQueryVariables>;
 export const CreateInvoicesFromShipmentsDocument = {"__meta__":{"kind":"mutation","name":"CreateInvoicesFromShipments","hash":"sha256:832416911f00d136410901090955db7c7bd384b3ad5314afd3404837de73d061"}} as unknown as TypedDocumentString<CreateInvoicesFromShipmentsMutation, CreateInvoicesFromShipmentsMutationVariables>;

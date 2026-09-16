@@ -2783,6 +2783,89 @@ const docTemplate = `{
                 }
             }
         },
+        "/billing-queue/{itemID}/reassign-charge/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Moves a freight or accessorial charge, whole or split, to other payers while the shipment is in review. Payers who gain a share get a queue item and payers left with nothing have theirs canceled.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Reassign who pays for one charge on a billing queue item's shipment",
+                "operationId": "reassignBillingQueueCharge",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Billing queue item ID",
+                        "name": "itemID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Charge and its new allocations",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.reassignChargeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ReassignChargeResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/billing-queue/{itemID}/status/": {
             "put": {
                 "security": [
@@ -10339,6 +10422,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/fiscal-periods/{fiscalPeriodID}/activate/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Fiscal Periods"
+                ],
+                "summary": "Open an inactive fiscal period",
+                "operationId": "activateFiscalPeriod",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Fiscal period ID",
+                        "name": "fiscalPeriodID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_fiscalperiod.FiscalPeriod"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/fiscal-periods/{fiscalPeriodID}/close/": {
             "put": {
                 "security": [
@@ -10462,6 +10603,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -10477,6 +10621,15 @@ const docTemplate = `{
                         "name": "fiscalPeriodID",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Reopen payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_fiscalperiodhandler.reopenFiscalPeriodPayload"
+                        }
                     }
                 ],
                 "responses": {
@@ -32624,6 +32777,14 @@ const docTemplate = `{
                 "organizationId": {
                     "type": "string"
                 },
+                "payerShare": {
+                    "description": "PayerShare is this item's payer's part of the shipment's charges, filled\nwhen the item is read with its shipment details.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShare"
+                        }
+                    ]
+                },
                 "rebillStrategy": {
                     "type": "string"
                 },
@@ -32694,6 +32855,120 @@ const docTemplate = `{
                 "ExceptionRateNotOnFile",
                 "ExceptionOther"
             ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerRef": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShare": {
+            "type": "object",
+            "properties": {
+                "accessorialAmount": {
+                    "type": "number"
+                },
+                "freightAmount": {
+                    "type": "number"
+                },
+                "isSplit": {
+                    "type": "boolean"
+                },
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShareLine"
+                    }
+                },
+                "otherPayerLines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShareLine"
+                    }
+                },
+                "payerId": {
+                    "type": "string"
+                },
+                "payers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerRef"
+                    }
+                },
+                "resolutionError": {
+                    "description": "ResolutionError explains why the shipment's split cannot be divided right\nnow, such as an amount split that no longer adds up after a charge changed.",
+                    "type": "string"
+                },
+                "shipmentTotal": {
+                    "type": "number"
+                },
+                "totalAmount": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShareLine": {
+            "type": "object",
+            "properties": {
+                "additionalChargeId": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "number"
+                },
+                "chargeTotal": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "kind": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationKind"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationMethod"
+                },
+                "partial": {
+                    "type": "boolean"
+                },
+                "payers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShareParty"
+                    }
+                },
+                "percent": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.PayerShareParty": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "payerCode": {
+                    "type": "string"
+                },
+                "payerId": {
+                    "type": "string"
+                },
+                "payerName": {
+                    "type": "string"
+                },
+                "percent": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                }
+            }
         },
         "github_com_emoss08_trenova_internal_core_domain_billingqueue.Status": {
             "type": "string",
@@ -33540,9 +33815,6 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "invoiceAdjustmentSupportingDocumentPolicy": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_customer.InvoiceAdjustmentSupportingDocumentPolicy"
-                },
                 "invoiceCopies": {
                     "type": "integer"
                 },
@@ -33678,19 +33950,6 @@ const docTemplate = `{
                 "FuelSurchargeModeNone",
                 "FuelSurchargeModeProgram",
                 "FuelSurchargeModeFuelIncluded"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceAdjustmentSupportingDocumentPolicy": {
-            "type": "string",
-            "enum": [
-                "Inherit",
-                "Required",
-                "Optional"
-            ],
-            "x-enum-varnames": [
-                "InvoiceAdjustmentSupportingDocumentPolicyInherit",
-                "InvoiceAdjustmentSupportingDocumentPolicyRequired",
-                "InvoiceAdjustmentSupportingDocumentPolicyOptional"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_customer.InvoiceDelivery": {
@@ -48928,6 +49187,32 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.ReassignChargeResult": {
+            "type": "object",
+            "properties": {
+                "canceledItemIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdItemIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "item": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                    }
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.ResourcePermissionDetail": {
             "type": "object",
             "properties": {
@@ -52944,6 +53229,24 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handlers_billingqueuehandler.reassignChargeRequest": {
+            "type": "object",
+            "properties": {
+                "additionalChargeId": {
+                    "type": "string"
+                },
+                "allocations": {
+                    "description": "Allocations divide the charge among payers. An empty list gives it back\nwhole to the shipment's payer.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocation"
+                    }
+                },
+                "chargeKind": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ChargeAllocationKind"
+                }
+            }
+        },
         "internal_api_handlers_billingqueuehandler.transferRequest": {
             "type": "object",
             "required": [
@@ -52969,6 +53272,10 @@ const docTemplate = `{
                 },
                 "baseRate": {
                     "type": "string"
+                },
+                "convertAmountSplitsToPercent": {
+                    "description": "ConvertAmountSplitsToPercent retries an edit that was refused because it\nleft an amount split that no longer adds up.",
+                    "type": "boolean"
                 },
                 "formulaTemplateId": {
                     "type": "string"
@@ -53075,6 +53382,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_fiscalperiodhandler.reopenFiscalPeriodPayload": {
+            "type": "object",
+            "properties": {
+                "reopenReason": {
                     "type": "string"
                 }
             }

@@ -2129,7 +2129,6 @@ var InvoiceAdjustmentControlColumns = struct {
 	AdjustmentAccountingDatePolicy       Column // "adjustment_accounting_date_policy" → qualified: "iac.adjustment_accounting_date_policy"
 	ClosedPeriodAdjustmentPolicy         Column // "closed_period_adjustment_policy" → qualified: "iac.closed_period_adjustment_policy"
 	AdjustmentReasonRequirement          Column // "adjustment_reason_requirement" → qualified: "iac.adjustment_reason_requirement"
-	AdjustmentAttachmentRequirement      Column // "adjustment_attachment_requirement" → qualified: "iac.adjustment_attachment_requirement"
 	StandardAdjustmentApprovalPolicy     Column // "standard_adjustment_approval_policy" → qualified: "iac.standard_adjustment_approval_policy"
 	StandardAdjustmentApprovalThreshold  Column // "standard_adjustment_approval_threshold" → qualified: "iac.standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               Column // "write_off_approval_policy" → qualified: "iac.write_off_approval_policy"
@@ -2152,7 +2151,6 @@ var InvoiceAdjustmentControlColumns = struct {
 	AdjustmentAccountingDatePolicy:       NewColumn("adjustment_accounting_date_policy", "iac"),
 	ClosedPeriodAdjustmentPolicy:         NewColumn("closed_period_adjustment_policy", "iac"),
 	AdjustmentReasonRequirement:          NewColumn("adjustment_reason_requirement", "iac"),
-	AdjustmentAttachmentRequirement:      NewColumn("adjustment_attachment_requirement", "iac"),
 	StandardAdjustmentApprovalPolicy:     NewColumn("standard_adjustment_approval_policy", "iac"),
 	StandardAdjustmentApprovalThreshold:  NewColumn("standard_adjustment_approval_threshold", "iac"),
 	WriteOffApprovalPolicy:               NewColumn("write_off_approval_policy", "iac"),
@@ -2181,7 +2179,6 @@ var InvoiceAdjustmentControlFieldMap = map[string]string{
 	"adjustmentAccountingDatePolicy":       "adjustment_accounting_date_policy",
 	"closedPeriodAdjustmentPolicy":         "closed_period_adjustment_policy",
 	"adjustmentReasonRequirement":          "adjustment_reason_requirement",
-	"adjustmentAttachmentRequirement":      "adjustment_attachment_requirement",
 	"standardAdjustmentApprovalPolicy":     "standard_adjustment_approval_policy",
 	"standardAdjustmentApprovalThreshold":  "standard_adjustment_approval_threshold",
 	"writeOffApprovalPolicy":               "write_off_approval_policy",
@@ -2208,7 +2205,6 @@ var InvoiceAdjustmentControlInsertableColumns = []string{
 	"adjustment_accounting_date_policy",
 	"closed_period_adjustment_policy",
 	"adjustment_reason_requirement",
-	"adjustment_attachment_requirement",
 	"standard_adjustment_approval_policy",
 	"standard_adjustment_approval_threshold",
 	"write_off_approval_policy",
@@ -2295,7 +2291,6 @@ var InvoiceAdjustmentControlFilter = struct {
 	AdjustmentAccountingDatePolicy       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentAccountingDatePolicy" → DB: "adjustment_accounting_date_policy"
 	ClosedPeriodAdjustmentPolicy         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "closedPeriodAdjustmentPolicy" → DB: "closed_period_adjustment_policy"
 	AdjustmentReasonRequirement          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentReasonRequirement" → DB: "adjustment_reason_requirement"
-	AdjustmentAttachmentRequirement      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentAttachmentRequirement" → DB: "adjustment_attachment_requirement"
 	StandardAdjustmentApprovalPolicy     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standardAdjustmentApprovalPolicy" → DB: "standard_adjustment_approval_policy"
 	StandardAdjustmentApprovalThreshold  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standardAdjustmentApprovalThreshold" → DB: "standard_adjustment_approval_threshold"
 	WriteOffApprovalPolicy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "writeOffApprovalPolicy" → DB: "write_off_approval_policy"
@@ -2335,9 +2330,6 @@ var InvoiceAdjustmentControlFilter = struct {
 	},
 	AdjustmentReasonRequirement: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("adjustmentReasonRequirement", op, value)
-	},
-	AdjustmentAttachmentRequirement: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("adjustmentAttachmentRequirement", op, value)
 	},
 	StandardAdjustmentApprovalPolicy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("standardAdjustmentApprovalPolicy", op, value)

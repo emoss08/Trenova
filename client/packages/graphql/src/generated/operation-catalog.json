@@ -1,6 +1,6 @@
 {
-  "operationCount": 711,
-  "fragmentCount": 177,
+  "operationCount": 716,
+  "fragmentCount": 178,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -790,6 +790,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ApproveDriverSettlement($input: DriverSettlementActionInput!) {\n  approveDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "ApproveInvoiceAdjustment",
+      "kind": "mutation",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "hash": "sha256:8f7d664f83700e118b71a2c85719f27be70db7f7244f0d461d3b329bc5378f12",
+      "rootFields": [
+        "approveInvoiceAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "adjustmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ApproveInvoiceAdjustment($adjustmentId: ID!) {\n  approveInvoiceAdjustment(adjustmentId: $adjustmentId) {\n    id\n    status\n    approvalStatus\n  }\n}"
     },
     {
       "name": "ApproveWorkerPto",
@@ -3861,7 +3881,7 @@
       "kind": "query",
       "domain": "customer",
       "sourceFile": "src/operations/customer/table.graphql",
-      "hash": "sha256:7f1c46a8f00d6387ca9c2019c08edef52ee49742ed4c1f08d361cb9fd9bed9b0",
+      "hash": "sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b",
       "rootFields": [
         "customers"
       ],
@@ -3884,7 +3904,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query CustomerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  customers(input: $input) {\n    edges {\n      node {\n        ...CustomerTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  invoiceAdjustmentSupportingDocumentPolicy\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerEmailProfileFields on CustomerEmailProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  subject\n  comment\n  fromEmail\n  toRecipients\n  ccRecipients\n  bccRecipients\n  attachmentName\n  readReceipt\n  includeShipmentDetail\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerTableRowFields on Customer {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  status\n  code\n  name\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  isGeocoded\n  longitude\n  latitude\n  placeId\n  externalId\n  allowConsolidation\n  exclusiveConsolidation\n  consolidationPriority\n  version\n  createdAt\n  updatedAt\n  billingProfile {\n    ...CustomerBillingProfileFields\n  }\n  emailProfile {\n    ...CustomerEmailProfileFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query CustomerTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  customers(input: $input) {\n    edges {\n      node {\n        ...CustomerTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerEmailProfileFields on CustomerEmailProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  subject\n  comment\n  fromEmail\n  toRecipients\n  ccRecipients\n  bccRecipients\n  attachmentName\n  readReceipt\n  includeShipmentDetail\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerTableRowFields on Customer {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  status\n  code\n  name\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  isGeocoded\n  longitude\n  latitude\n  placeId\n  externalId\n  allowConsolidation\n  exclusiveConsolidation\n  consolidationPriority\n  version\n  createdAt\n  updatedAt\n  billingProfile {\n    ...CustomerBillingProfileFields\n  }\n  emailProfile {\n    ...CustomerEmailProfileFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "CustomFieldDefinitionTable",
@@ -7399,6 +7419,62 @@
       "sdl": "mutation InviteWorkerToPortal($input: InviteWorkerToPortalInput!) {\n  inviteWorkerToPortal(input: $input) {\n    invitation {\n      id\n      email\n      status\n      expiresAt\n    }\n    inviteUrl\n    emailSent\n  }\n}"
     },
     {
+      "name": "InvoiceAdjustmentApprovalDetail",
+      "kind": "query",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "hash": "sha256:3faee37cd372092eca2df737c1d885af871a825933f88250bc9c91dc0cb6e59b",
+      "rootFields": [
+        "invoiceAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query InvoiceAdjustmentApprovalDetail($id: ID!) {\n  invoiceAdjustment(id: $id) {\n    id\n    status\n    lines {\n      id\n      lineNumber\n      description\n      creditAmount\n      rebillAmount\n    }\n  }\n}"
+    },
+    {
+      "name": "InvoiceAdjustmentApprovals",
+      "kind": "query",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "hash": "sha256:051cda2df75986990c40b1ec9cbcaa20d4a398519581fbf58098f79859a2b0f8",
+      "rootFields": [
+        "invoiceAdjustmentApprovals"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "InvoiceAdjustmentApprovalsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "InvoiceApprovalQueueItemFields"
+      ],
+      "usages": [],
+      "sdl": "query InvoiceAdjustmentApprovals($input: InvoiceAdjustmentApprovalsInput!) {\n  invoiceAdjustmentApprovals(input: $input) {\n    edges {\n      cursor\n      node {\n        ...InvoiceApprovalQueueItemFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {\n  adjustmentId\n  originalInvoiceId\n  originalInvoiceNumber\n  originalInvoiceStatus\n  customerName\n  kind\n  reason\n  policyReason\n  policySource\n  creditTotalAmount\n  rebillTotalAmount\n  netDeltaAmount\n  wouldCreateUnappliedCredit\n  requiresReconciliationException\n  requiresReplacementInvoiceReview\n  submittedByName\n  submittedAt\n  creditMemoInvoiceId\n  replacementInvoiceId\n  rebillQueueItemId\n  batchId\n}"
+    },
+    {
+      "name": "InvoiceAdjustmentOperationsSummary",
+      "kind": "query",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "hash": "sha256:441d3f879bd0cfc9f9aa4483469fc03a694dbdf70ec8831621691b0c8121b5e3",
+      "rootFields": [
+        "invoiceAdjustmentOperationsSummary"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query InvoiceAdjustmentOperationsSummary {\n  invoiceAdjustmentOperationsSummary {\n    approvalsPending\n    reconciliationPending\n    writeOffPending\n    failedBatchItems\n  }\n}"
+    },
+    {
       "name": "InvoiceArContext",
       "kind": "query",
       "domain": "invoice",
@@ -10381,6 +10457,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation RejectDriverSettlement($input: DriverSettlementActionInput!) {\n  rejectDriverSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "RejectInvoiceAdjustment",
+      "kind": "mutation",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "hash": "sha256:308f359b07521c3d3bc36a51a4248661305ab78cb23769b53fbdbf79a7ccad00",
+      "rootFields": [
+        "rejectInvoiceAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RejectInvoiceAdjustmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RejectInvoiceAdjustment($input: RejectInvoiceAdjustmentInput!) {\n  rejectInvoiceAdjustment(input: $input) {\n    id\n    status\n    approvalStatus\n    rejectionReason\n  }\n}"
     },
     {
       "name": "RejectWorkerPto",
@@ -16562,7 +16658,7 @@
         "CustomerTable"
       ],
       "usages": [],
-      "sdl": "fragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  invoiceAdjustmentSupportingDocumentPolicy\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CustomerEmailProfileFields",
@@ -16589,7 +16685,7 @@
         "CustomerTable"
       ],
       "usages": [],
-      "sdl": "fragment CustomerTableRowFields on Customer {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  status\n  code\n  name\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  isGeocoded\n  longitude\n  latitude\n  placeId\n  externalId\n  allowConsolidation\n  exclusiveConsolidation\n  consolidationPriority\n  version\n  createdAt\n  updatedAt\n  billingProfile {\n    ...CustomerBillingProfileFields\n  }\n  emailProfile {\n    ...CustomerEmailProfileFields\n  }\n}\n\nfragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  invoiceAdjustmentSupportingDocumentPolicy\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerEmailProfileFields on CustomerEmailProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  subject\n  comment\n  fromEmail\n  toRecipients\n  ccRecipients\n  bccRecipients\n  attachmentName\n  readReceipt\n  includeShipmentDetail\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment CustomerTableRowFields on Customer {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  status\n  code\n  name\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  isGeocoded\n  longitude\n  latitude\n  placeId\n  externalId\n  allowConsolidation\n  exclusiveConsolidation\n  consolidationPriority\n  version\n  createdAt\n  updatedAt\n  billingProfile {\n    ...CustomerBillingProfileFields\n  }\n  emailProfile {\n    ...CustomerEmailProfileFields\n  }\n}\n\nfragment CustomerBillingProfileFields on CustomerBillingProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  invoiceDelivery\n  billingCycle\n  billingCycleAnchorDay\n  billingCycleTimezone\n  lastBilledPeriodEnd\n  paymentTerm\n  hasBillingControlOverrides\n  creditLimit\n  creditBalance\n  creditStatus\n  enforceCreditLimit\n  autoCreditHold\n  creditHoldReason\n  autoSendInvoiceOnGeneration\n  emailInvoiceEnabled\n  ediInvoiceEnabled\n  splitBy\n  sectionBy\n  invoiceDetail\n  minConsolidatedAmount\n  maxShipmentsPerInvoice\n  invoiceNumberFormat\n  customerInvoicePrefix\n  invoiceCopies\n  revenueAccountId\n  arAccountId\n  applyLateCharges\n  lateChargeRate\n  gracePeriodDays\n  taxExempt\n  taxExemptNumber\n  enforceCustomerBillingReq\n  validateCustomerRates\n  autoTransfer\n  autoMarkReadyToBill\n  autoApprove\n  autoBill\n  countLateOnlyOnAppointmentStops\n  autoApplyAccessorials\n  billingCurrency\n  requirePONumber\n  requireBOLNumber\n  requireDeliveryNumber\n  defaultBillerId\n  billingNotes\n  fuelSurchargeMode\n  fuelSurchargeProgramId\n  documentTypes {\n    id\n    code\n    name\n    color\n    documentClassification\n    documentCategory\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CustomerEmailProfileFields on CustomerEmailProfile {\n  id\n  businessUnitId\n  organizationId\n  customerId\n  subject\n  comment\n  fromEmail\n  toRecipients\n  ccRecipients\n  bccRecipients\n  attachmentName\n  readReceipt\n  includeShipmentDetail\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CustomFieldDefinitionTableRowFields",
@@ -17408,6 +17504,18 @@
       ],
       "usages": [],
       "sdl": "fragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
+    },
+    {
+      "name": "InvoiceApprovalQueueItemFields",
+      "typeCondition": "InvoiceAdjustmentApprovalQueueItem",
+      "domain": "invoice-adjustment",
+      "sourceFile": "src/operations/invoice-adjustment/approvals.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "InvoiceAdjustmentApprovals"
+      ],
+      "usages": [],
+      "sdl": "fragment InvoiceApprovalQueueItemFields on InvoiceAdjustmentApprovalQueueItem {\n  adjustmentId\n  originalInvoiceId\n  originalInvoiceNumber\n  originalInvoiceStatus\n  customerName\n  kind\n  reason\n  policyReason\n  policySource\n  creditTotalAmount\n  rebillTotalAmount\n  netDeltaAmount\n  wouldCreateUnappliedCredit\n  requiresReconciliationException\n  requiresReplacementInvoiceReview\n  submittedByName\n  submittedAt\n  creditMemoInvoiceId\n  replacementInvoiceId\n  rebillQueueItemId\n  batchId\n}"
     },
     {
       "name": "InvoiceArFields",
@@ -22910,6 +23018,38 @@
       ],
       "sdl": "input InviteWorkerToPortalInput {\n  \"\"\"Overrides the email on the worker record when provided.\"\"\"\n  email: String\n  workerId: ID!\n}"
     },
+    "InvoiceAdjustmentApprovalsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "kind",
+          "type": "InvoiceAdjustmentKind",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "submittedById",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nPages the approval queue newest submission first. query matches the adjustment\nid, invoice number, customer, reason, policy reason, and submitter name.\n\"\"\"\ninput InvoiceAdjustmentApprovalsInput {\n  after: String\n  first: Int = 20\n  kind: InvoiceAdjustmentKind\n  query: String\n  submittedById: ID\n}"
+    },
     "IssueDisciplinaryActionInput": {
       "kind": "input",
       "fields": [
@@ -24609,6 +24749,22 @@
         }
       ],
       "sdl": "input RecordWorkerInjuryInput {\n  bodyPart: String\n  claimCarrier: String\n  claimFiledAt: Timestamp\n  claimNumber: String\n  claimStatus: WorkersCompClaimStatus\n  classification: OSHACaseClassification\n  daysAway: Int\n  daysRestricted: Int\n  description: String!\n  documentId: ID\n  harmfulAgent: String\n  illnessType: OSHAIllnessType\n  location: String\n  notes: String\n  occurredAt: Timestamp!\n  privacyCase: Boolean\n  reportedAt: Timestamp\n  returnedToWorkAt: Timestamp\n  safetyEventId: ID\n  treatment: InjuryTreatment\n  workerId: ID!\n}"
+    },
+    "RejectInvoiceAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "adjustmentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RejectInvoiceAdjustmentInput {\n  adjustmentId: ID!\n  reason: String\n}"
     },
     "RemoveCarrierSettlementAdjustmentInput": {
       "kind": "input",
@@ -30003,6 +30159,16 @@
         "Finalized"
       ],
       "sdl": "\"\"\"\nDraft figures move with the data. Finalized locks them and can be reopened with\na reason. Filed is immutable; corrections open a new Draft through amendIftaReturn.\n\"\"\"\nenum IFTAReturnStatus {\n  Draft\n  Filed\n  Finalized\n}"
+    },
+    "InvoiceAdjustmentKind": {
+      "kind": "enum",
+      "values": [
+        "CreditAndRebill",
+        "CreditOnly",
+        "FullReversal",
+        "WriteOff"
+      ],
+      "sdl": "\"\"\"What an invoice adjustment does to the posted invoice it corrects.\"\"\"\nenum InvoiceAdjustmentKind {\n  CreditAndRebill\n  CreditOnly\n  FullReversal\n  WriteOff\n}"
     },
     "DisciplinaryLevel": {
       "kind": "enum",

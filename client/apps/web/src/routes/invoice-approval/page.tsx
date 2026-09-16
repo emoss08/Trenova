@@ -18,14 +18,14 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
-import type {
-  InvoiceAdjustment,
-  InvoiceAdjustmentKind,
-  InvoiceApprovalQueueItem,
-} from "@/types/invoice-adjustment";
+import type { InvoiceAdjustmentKind } from "@trenova/graphql/generated/graphql";
+import {
+  approveInvoiceAdjustment,
+  rejectInvoiceAdjustment,
+  type InvoiceApprovalDetail,
+  type InvoiceApprovalQueueItem,
+} from "@/lib/graphql/invoice-adjustment";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, ExternalLinkIcon, SearchIcon, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
@@ -33,7 +33,15 @@ import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState 
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { invoiceApprovalSearchParamsParser } from "./use-invoice-approval-state";
+import {
+  invoiceAdjustmentOperationsSummaryQuery,
+  invoiceApprovalDetailQuery,
+  invoiceApprovalQueueQuery,
+} from "./invoice-approval-queries";
+import {
+  invoiceAdjustmentKinds,
+  invoiceApprovalSearchParamsParser,
+} from "./use-invoice-approval-state";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 
 const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind }> = [
@@ -43,7 +51,7 @@ const adjustmentKindChoices: Array<{ label: string; value: InvoiceAdjustmentKind
   { label: "Write-Off", value: "WriteOff" },
 ];
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<InvoiceAdjustmentKind, string> = {
   CreditOnly: "Credit Only",
   CreditAndRebill: "Credit & Rebill",
   FullReversal: "Full Reversal",
@@ -71,40 +79,14 @@ export function InvoiceApprovalPage() {
   const {
     data: listData,
     isLoading,
+    isError: isListError,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["invoice-adjustment-approvals", deferredQuery, kind],
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams({
-        limit: "20",
-        offset: String(pageParam),
-      });
-      if (deferredQuery.trim()) {
-        params.set("query", deferredQuery.trim());
-      }
-      if (kind) {
-        params.set(
-          "fieldFilters",
-          JSON.stringify([{ field: "kind", operator: "eq", value: kind }]),
-        );
-      }
-      return apiService.invoiceAdjustmentService.listApprovals(
-        Object.fromEntries(params.entries()),
-      );
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === 20) {
-        return lastPageParam + 20;
-      }
-      return undefined;
-    },
-  });
+  } = useInfiniteQuery(invoiceApprovalQueueQuery({ query: deferredQuery, kind }));
 
   const allRows = useMemo(
-    () => listData?.pages.flatMap((page) => page.results) ?? [],
+    () => listData?.pages.flatMap((page) => page.items) ?? [],
     [listData?.pages],
   );
 
@@ -133,18 +115,12 @@ export function InvoiceApprovalPage() {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const detailQuery = useQuery({
-    ...queries["invoice-adjustment"].get(selectedRow?.adjustmentId ?? ""),
-    enabled: Boolean(selectedRow?.adjustmentId),
-  });
+  const detailQuery = useQuery(invoiceApprovalDetailQuery(selectedRow?.adjustmentId ?? ""));
 
-  const summaryQuery = useQuery({
-    ...queries["invoice-adjustment"].summary(),
-  });
+  const summaryQuery = useQuery(invoiceAdjustmentOperationsSummaryQuery());
 
   const approveMutation = useMutation({
-    mutationFn: async (adjustmentId: string) =>
-      apiService.invoiceAdjustmentService.approve(adjustmentId),
+    mutationFn: approveInvoiceAdjustment,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
@@ -158,13 +134,7 @@ export function InvoiceApprovalPage() {
   const rejectMutation = useApiMutation({
     form: rejectForm,
     resourceName: "invoice adjustment reject",
-    mutationFn: async ({
-      adjustmentId,
-      rejectReason,
-    }: {
-      adjustmentId: InvoiceAdjustment["id"];
-      rejectReason: InvoiceAdjustment["rejectionReason"];
-    }) => apiService.invoiceAdjustmentService.reject(adjustmentId, rejectReason),
+    mutationFn: rejectInvoiceAdjustment,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
       rejectForm.reset();
@@ -177,7 +147,7 @@ export function InvoiceApprovalPage() {
     if (!selectedRow) return;
     rejectMutation.mutate({
       adjustmentId: selectedRow.adjustmentId,
-      rejectReason: rejectReason.trim(),
+      reason: rejectReason.trim(),
     });
   };
 
@@ -221,7 +191,9 @@ export function InvoiceApprovalPage() {
               value={kind ?? "all"}
               items={adjustmentKindChoices}
               onValueChange={(value) =>
-                void setSearchParams({ kind: value === "all" ? null : value })
+                void setSearchParams({
+                  kind: invoiceAdjustmentKinds.find((choice) => choice === value) ?? null,
+                })
               }
             >
               <SelectTrigger className="h-7 text-xs">
@@ -250,15 +222,24 @@ export function InvoiceApprovalPage() {
                   ))
                 : null}
               {!isLoading && allRows.length === 0 ? (
-                <BillingListEmpty
-                  title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
-                  description={
-                    hasActiveFilters
-                      ? "No submitted adjustment fits the search and filters. Widen them, or clear them to see everything waiting."
-                      : "An adjustment lands here when its policy needs finance to approve it before it posts. Until one does, there is nothing to decide."
-                  }
-                  onClearFilters={hasActiveFilters ? clearFilters : undefined}
-                />
+                isListError ? (
+                  <BillingListEmpty
+                    title={t("Approvals did not load")}
+                    description={t(
+                      "The approval queue could not be read. Check your connection and reload the page.",
+                    )}
+                  />
+                ) : (
+                  <BillingListEmpty
+                    title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
+                    description={
+                      hasActiveFilters
+                        ? "No submitted adjustment fits the search and filters. Widen them, or clear them to see everything waiting."
+                        : "An adjustment lands here when its policy needs finance to approve it before it posts. Until one does, there is nothing to decide."
+                    }
+                    onClearFilters={hasActiveFilters ? clearFilters : undefined}
+                  />
+                )
               ) : null}
               {allRows.map((row) => {
                 const isSelected = row.adjustmentId === selectedRow?.adjustmentId;
@@ -289,7 +270,7 @@ export function InvoiceApprovalPage() {
                       </p>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
-                      <Badge variant="secondary">{KIND_LABELS[row.kind] ?? row.kind}</Badge>
+                      <Badge variant="secondary">{KIND_LABELS[row.kind]}</Badge>
                       <span className="text-2xs text-muted-foreground">
                         {row.submittedByName || t("Unknown")}
                       </span>
@@ -324,11 +305,19 @@ export function InvoiceApprovalPage() {
                 "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.",
               )}
             />
-          ) : detailQuery.isLoading || !detailQuery.data ? (
+          ) : detailQuery.isPending ? (
             <div className="space-y-4 p-4">
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-64 w-full" />
             </div>
+          ) : detailQuery.isError || !detailQuery.data ? (
+            <BillingDetailUnselected
+              layout="cards"
+              title={t("Adjustment did not load")}
+              description={t(
+                "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.",
+              )}
+            />
           ) : (
             <ApprovalDetail
               selectedRow={selectedRow}
@@ -358,11 +347,11 @@ function ApprovalDetail({
   handleReject,
 }: {
   selectedRow: InvoiceApprovalQueueItem;
-  detail: InvoiceAdjustment;
+  detail: InvoiceApprovalDetail;
   showRejectForm: boolean;
   setShowRejectForm: (v: boolean) => void;
   rejectForm: ReturnType<typeof useForm<{ rejectReason: string }>>;
-  approveMutation: ReturnType<typeof useMutation<unknown, Error, string>>;
+  approveMutation: { mutate: (adjustmentId: string) => void; isPending: boolean };
   rejectMutation: { isPending: boolean };
   handleReject: (values: { rejectReason: string }) => void;
 }) {
@@ -382,7 +371,7 @@ function ApprovalDetail({
 
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="warning">{t("Pending Approval")}</Badge>
-        <Badge variant="secondary">{KIND_LABELS[selectedRow.kind] ?? selectedRow.kind}</Badge>
+        <Badge variant="secondary">{KIND_LABELS[selectedRow.kind]}</Badge>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">

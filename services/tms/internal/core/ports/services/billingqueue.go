@@ -66,6 +66,30 @@ type UpdateChargesRequest struct {
 	BaseRate          *decimal.Decimal
 	AdditionalCharges []*shipment.AdditionalCharge
 	TenantInfo        pagination.TenantInfo
+	// ConvertAmountSplitsToPercent answers the refusal an edit gets when it
+	// changes a charge that is split by amount: the split is rewritten as
+	// percentages that keep each payer's proportion.
+	ConvertAmountSplitsToPercent bool
+}
+
+// ReassignChargeRequest changes who pays for one charge on the item's shipment.
+// An empty Allocations list gives the charge back whole to the shipment's payer.
+type ReassignChargeRequest struct {
+	ItemID             pulid.ID
+	TenantInfo         pagination.TenantInfo
+	ChargeKind         shipment.ChargeAllocationKind
+	AdditionalChargeID pulid.ID
+	Allocations        []*shipment.ChargeAllocation
+}
+
+// ReassignChargeResult is the queue after a reassignment: the item the request
+// came from (canceled if its payer no longer pays anything), every active item
+// for the shipment, and which items the reassignment created or canceled.
+type ReassignChargeResult struct {
+	Item            *billingqueue.BillingQueueItem   `json:"item"`
+	Items           []*billingqueue.BillingQueueItem `json:"items"`
+	CreatedItemIDs  []pulid.ID                       `json:"createdItemIds"`
+	CanceledItemIDs []pulid.ID                       `json:"canceledItemIds"`
 }
 
 type BillingQueueService interface {
@@ -106,4 +130,9 @@ type BillingQueueService interface {
 		req *UpdateChargesRequest,
 		actor *RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	ReassignCharge(
+		ctx context.Context,
+		req *ReassignChargeRequest,
+		actor *RequestActor,
+	) (*ReassignChargeResult, error)
 }

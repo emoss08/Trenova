@@ -5,6 +5,7 @@ import {
   billingQueueFilterPresetSchema,
   billingQueueItemSchema,
   billingQueueStatsSchema,
+  reassignChargeResultSchema,
   type BillingQueueAssignInput,
   type BillingQueueFilterPreset,
   type BillingQueueFilterPresetInput,
@@ -12,6 +13,8 @@ import {
   type BillingQueueStats,
   type BillingQueueUpdateChargesInput,
   type BillingQueueUpdateStatusInput,
+  type ReassignChargeInput,
+  type ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
 
 export class BillingQueueService {
@@ -41,6 +44,19 @@ export class BillingQueueService {
   public async updateCharges(id: string, payload: BillingQueueUpdateChargesInput) {
     const response = await api.put<BillingQueueItem>(`/billing-queue/${id}/charges/`, payload);
     return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  }
+
+  /**
+   * Changes who pays for one charge on the item's shipment while it is in
+   * review. The server creates or cancels sibling queue items as payers gain or
+   * lose a share.
+   */
+  public async reassignCharge(id: string, payload: ReassignChargeInput) {
+    const response = await api.post<ReassignChargeResult>(
+      `/billing-queue/${id}/reassign-charge/`,
+      payload,
+    );
+    return safeParse(reassignChargeResultSchema, response, "ReassignChargeResult");
   }
 
   public async listFilterPresets() {

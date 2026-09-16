@@ -2317,7 +2317,7 @@ type CustomerBillingProfile {
   gracePeriodDays: Int!
   hasBillingControlOverrides: Boolean!
   id: ID!
-  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy!
+  invoiceAdjustmentSupportingDocumentPolicy: CustomerInvoiceAdjustmentSupportingDocumentPolicy! @deprecated(reason: "Supporting documents are no longer required for invoice adjustments or voids. Always Optional. Removed in a later release.")
   invoiceCopies: Int!
   invoiceDelivery: CustomerInvoiceDelivery!
   invoiceDetail: InvoiceDetail!
@@ -7477,6 +7477,203 @@ type Invoice {
   voidedById: ID
 }
 
+"""
+A credit, rebill, reversal, or write-off raised against a posted invoice.
+"""
+type InvoiceAdjustment {
+  accountingDate: Timestamp!
+  approvalRequired: Boolean!
+  approvalStatus: InvoiceAdjustmentApprovalStatus!
+  approvedAt: Timestamp
+  approvedById: ID
+  batchId: ID
+  businessUnitId: ID!
+  correctionGroupId: ID!
+  createdAt: Timestamp!
+  creditMemoInvoiceId: ID
+  creditTotalAmount: Decimal!
+  executionError: String!
+  id: ID!
+  kind: InvoiceAdjustmentKind!
+  """The corrected invoice lines, in line order."""
+  lines: [InvoiceAdjustmentLine!]!
+  netDeltaAmount: Decimal!
+  organizationId: ID!
+  originalInvoiceId: ID!
+  policyReason: String!
+  reason: String!
+  rebillQueueItemId: ID
+  """Set only for adjustments that rebill."""
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  rebillTotalAmount: Decimal!
+  rejectedAt: Timestamp
+  rejectedById: ID
+  rejectionReason: String!
+  replacementInvoiceId: ID
+  replacementReviewStatus: InvoiceAdjustmentReplacementReviewStatus!
+  requiresReconciliationException: Boolean!
+  rerateVariancePercent: Decimal!
+  status: InvoiceAdjustmentStatus!
+  submittedAt: Timestamp
+  submittedById: ID
+  updatedAt: Timestamp!
+  version: Int!
+  wouldCreateUnappliedCredit: Boolean!
+}
+
+type InvoiceAdjustmentApprovalQueueConnection {
+  edges: [InvoiceAdjustmentApprovalQueueEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type InvoiceAdjustmentApprovalQueueEdge {
+  cursor: String!
+  node: InvoiceAdjustmentApprovalQueueItem!
+}
+
+"""
+An adjustment waiting on finance approval, with the invoice, customer, people,
+and follow-on artifacts it touches resolved for review.
+"""
+type InvoiceAdjustmentApprovalQueueItem {
+  adjustmentId: ID!
+  approvalStatus: InvoiceAdjustmentApprovalStatus!
+  approvedAt: Timestamp
+  approvedById: ID
+  approvedByName: String!
+  batchId: ID
+  correctionGroupId: ID!
+  createdAt: Timestamp!
+  creditMemoInvoiceId: ID
+  creditMemoInvoiceNumber: String!
+  creditTotalAmount: Decimal!
+  customerName: String!
+  kind: InvoiceAdjustmentKind!
+  netDeltaAmount: Decimal!
+  originalInvoiceId: ID!
+  originalInvoiceNumber: String!
+  originalInvoiceStatus: String!
+  policyReason: String!
+  policySource: String!
+  reason: String!
+  rebillQueueItemId: ID
+  rebillQueueNumber: String!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  rebillTotalAmount: Decimal!
+  rejectedAt: Timestamp
+  rejectedById: ID
+  rejectedByName: String!
+  rejectionReason: String!
+  replacementInvoiceId: ID
+  replacementInvoiceNumber: String!
+  requiresReconciliationException: Boolean!
+  requiresReplacementInvoiceReview: Boolean!
+  rerateVariancePercent: Decimal!
+  status: InvoiceAdjustmentStatus!
+  submittedAt: Timestamp
+  submittedById: ID
+  submittedByName: String!
+  updatedAt: Timestamp!
+  wouldCreateUnappliedCredit: Boolean!
+}
+
+enum InvoiceAdjustmentApprovalStatus {
+  Approved
+  NotRequired
+  Pending
+  Rejected
+}
+
+"""
+Pages the approval queue newest submission first. query matches the adjustment
+id, invoice number, customer, reason, policy reason, and submitter name.
+"""
+input InvoiceAdjustmentApprovalsInput {
+  after: String
+  first: Int = 20
+  kind: InvoiceAdjustmentKind
+  query: String
+  submittedById: ID
+}
+
+"""What an invoice adjustment does to the posted invoice it corrects."""
+enum InvoiceAdjustmentKind {
+  CreditAndRebill
+  CreditOnly
+  FullReversal
+  WriteOff
+}
+
+"""
+How much of one original invoice line an adjustment credits and rebills.
+"""
+type InvoiceAdjustmentLine {
+  adjustmentId: ID!
+  createdAt: Timestamp!
+  creditAmount: Decimal!
+  creditMemoLineId: ID
+  creditQuantity: Decimal!
+  description: String!
+  id: ID!
+  lineNumber: Int!
+  originalInvoiceId: ID!
+  originalLineId: ID!
+  rebillAmount: Decimal!
+  rebillQuantity: Decimal!
+  remainingEligibleAmount: Decimal!
+  replacementLineId: ID
+  updatedAt: Timestamp!
+}
+
+"""Workload counts across the invoice adjustment queues."""
+type InvoiceAdjustmentOperationsSummary {
+  adjustmentsByStatus: [InvoiceAdjustmentSummaryCount!]!
+  approvalsPending: Int!
+  batchesInFlight: Int!
+  failedBatchItems: Int!
+  reasonDistribution: [InvoiceAdjustmentSummaryCount!]!
+  reconciliationPending: Int!
+  repeatedAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
+  repeatedCustomerAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
+  writeOffPending: Int!
+}
+
+"""How the replacement invoice of a credit-and-rebill is produced."""
+enum InvoiceAdjustmentRebillStrategy {
+  CloneExact
+  Manual
+  Rerate
+}
+
+type InvoiceAdjustmentRepeatedSummary {
+  count: Int!
+  entityId: ID!
+  entityType: String!
+  label: String!
+}
+
+enum InvoiceAdjustmentReplacementReviewStatus {
+  Completed
+  NotRequired
+  Required
+}
+
+enum InvoiceAdjustmentStatus {
+  Approved
+  Draft
+  Executed
+  Executing
+  ExecutionFailed
+  PendingApproval
+  Rejected
+}
+
+type InvoiceAdjustmentSummaryCount {
+  count: Int!
+  label: String!
+}
+
 type InvoiceConnection {
   edges: [InvoiceEdge!]!
   pageInfo: PageInfo!
@@ -8451,6 +8648,10 @@ type Mutation {
   approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """
+  Approves a pending adjustment and executes it: credit memo, rebill, and postings.
+  """
+  approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
   approveWorkerPTO(id: ID!): WorkerPTO!
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -8774,6 +8975,8 @@ type Mutation {
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """Rejects a pending adjustment; the invoice stays as posted."""
+  rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
@@ -10779,6 +10982,10 @@ type Query {
   iftaReturns(input: IFTAReturnsInput!): IFTAReturnConnection!
   iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
   invoice(id: ID!): Invoice
+  invoiceAdjustment(id: ID!): InvoiceAdjustment
+  """Adjustments whose policy holds them for finance approval."""
+  invoiceAdjustmentApprovals(input: InvoiceAdjustmentApprovalsInput!): InvoiceAdjustmentApprovalQueueConnection!
+  invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
   invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
   jobPosition(id: ID!): JobPosition!
@@ -11732,6 +11939,11 @@ enum RecurringShipmentStatus {
   Active
   Expired
   Paused
+}
+
+input RejectInvoiceAdjustmentInput {
+  adjustmentId: ID!
+  reason: String
 }
 
 input RemoveCarrierSettlementAdjustmentInput {

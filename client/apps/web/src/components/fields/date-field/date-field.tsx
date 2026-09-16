@@ -187,6 +187,7 @@ export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
   FormControlProps<T> & {
     label?: string;
     description?: string;
+    timezone?: string;
   };
 
 export function AutoCompleteDateField<T extends FieldValues>({
@@ -198,6 +199,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
   description,
   placeholder,
   disabled,
+  timezone,
   ...props
 }: AutoCompleteDateFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -226,8 +228,8 @@ export function AutoCompleteDateField<T extends FieldValues>({
               name={field.name}
               ref={field.ref}
               aria-label={label}
-              date={toUserWallClock(field.value)}
-              setDate={(date) => field.onChange(fromUserWallClock(date) ?? null)}
+              date={toUserWallClock(field.value, timezone)}
+              setDate={(date) => field.onChange(fromUserWallClock(date, timezone) ?? null)}
               onBlur={field.onBlur}
               placeholder={placeholder}
               disabled={disabled || field.disabled}

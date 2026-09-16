@@ -601,6 +601,18 @@ export function getEndOfYear(timezone?: string): number {
   );
 }
 
+/**
+ * The first and last second of a calendar year in UTC. Fiscal calendars are kept in
+ * UTC on the server, so a calendar fiscal year runs from Jan 1 00:00:00 UTC to
+ * Dec 31 23:59:59 UTC whatever zone the person creating it sits in.
+ */
+export function getUTCYearBounds(year: number): { startDate: number; endDate: number } {
+  return {
+    startDate: Date.UTC(year, 0, 1, 0, 0, 0) / 1000,
+    endDate: Date.UTC(year, 11, 31, 23, 59, 59) / 1000,
+  };
+}
+
 function getStartOfQuarter(date: Date): Date {
   const quarter = Math.floor(date.getMonth() / 3) * 3;
   return new Date(date.getFullYear(), quarter, 1);

@@ -1,6 +1,6 @@
 "use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { ChargePayerChip } from "@/components/billing/charge-payer-chip";
+import { ChargePayerControl } from "@/components/billing/charge-payer-control";
 import { EmptyState } from "@/components/empty-state";
 import { queries } from "@/lib/queries";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
@@ -8,7 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { cn } from "@trenova/shared/lib/utils";
+import { chargeLineTotal } from "@trenova/shared/lib/charge-split";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -31,6 +32,7 @@ import {
   DetentionChargeUnit,
 } from "./detention-charge-cell";
 import { FuelSurchargeAuditPopover } from "./fuel-surcharge-audit-popover";
+import { useShipmentDefaultPayer } from "../use-shipment-default-payer";
 import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
 
 const NO_OCCURRENCES: DetentionOccurrence[] = [];
@@ -112,6 +114,7 @@ export default function AdditionalChargesSection() {
   const charges = useWatch({ control, name: "additionalCharges" }) ?? [];
 
   const hasDetentionCharges = charges.some(isDetentionCharge);
+  const defaultPayer = useShipmentDefaultPayer();
 
   const { data: occurrences, refetch: refetchOccurrences } = useQuery({
     ...queries.detention.byShipment(shipmentId as string),
@@ -212,6 +215,16 @@ export default function AdditionalChargesSection() {
                     chargeObj?.description ??
                     (isDetention ? "Detention" : "—"));
                 const amt = Number(charge?.amount) || 0;
+                // A percentage accessorial is priced against the freight on the
+                // server, so only a percent split can be checked against it here.
+                const percentOnly = charge?.method === "Percentage";
+                const lineTotal = percentOnly
+                  ? null
+                  : chargeLineTotal({
+                      method: charge?.method,
+                      amount: charge?.amount,
+                      unit: charge?.unit,
+                    });
 
                 const chargeErrors = errors.additionalCharges?.[index];
                 const hasErrors = !!(chargeErrors && Object.keys(chargeErrors).length > 0);
@@ -232,7 +245,23 @@ export default function AdditionalChargesSection() {
                       ) : (
                         displayName
                       )}
-                      <ChargePayerChip allocations={charge?.allocations} />
+                      <ChargePayerControl
+                        name={`additionalCharges.${index}.allocations`}
+                        chargeAmount={lineTotal}
+                        percentOnly={percentOnly}
+                        defaultPayer={defaultPayer}
+                        splitTitle={t("Split {0}", displayName)}
+                        splitDescription={
+                          lineTotal == null
+                            ? t(
+                                "Divide this charge between the customers who pay for it. Each payer receives an invoice for their share.",
+                              )
+                            : t(
+                                "Divide the {0} charge between the customers who pay for it. Each payer receives an invoice for their share.",
+                                formatCurrency(lineTotal),
+                              )
+                        }
+                      />
                       {isFuelSurcharge && !fuelSurchargeLocked && (
                         <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
                           {t("Auto")}

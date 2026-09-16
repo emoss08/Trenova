@@ -104,7 +104,6 @@ Common persistence paths:
 | `adjustmentAccountingDatePolicy` | Reserved for future credit/rebill engine | `invoiceadjustmentcontrolservice/validator.go#createEligibilityRule` | none | Requires adjustment posting workflow |
 | `closedPeriodAdjustmentPolicy` | Reserved for future credit/rebill engine | `invoiceadjustmentcontrolservice/validator.go#createEligibilityRule` | none | Requires adjustment posting workflow |
 | `adjustmentReasonRequirement` | Reserved for future credit/rebill engine | domain required + client schema | none | Requires adjustment completion workflow |
-| `adjustmentAttachmentRequirement` | Reserved for future credit/rebill engine | domain required + client schema | none | Requires adjustment completion workflow |
 | `standardAdjustmentApprovalPolicy` | Reserved for future credit/rebill engine | `invoiceadjustmentcontrolservice/validator.go#createApprovalThresholdRule` | none | Requires adjustment approval workflow |
 | `standardAdjustmentApprovalThreshold` | Reserved for future credit/rebill engine | `invoiceadjustmentcontrolservice/validator.go#createApprovalThresholdRule`, migration hardening backfill | none | Requires adjustment approval workflow |
 | `writeOffApprovalPolicy` | Reserved for future credit/rebill engine | `invoiceadjustmentcontrolservice/validator.go#createApprovalThresholdRule` | none | Requires write-off workflow |

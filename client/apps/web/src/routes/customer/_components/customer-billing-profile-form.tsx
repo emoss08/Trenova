@@ -18,7 +18,6 @@ import {
   currencyChoices,
   customerFuelSurchargeModeChoices,
   customerPaymentTermChoices,
-  invoiceAdjustmentSupportingDocumentPolicyChoices,
   invoiceDeliveryChoices,
   invoiceDetailChoices,
   invoiceNumberFormatChoices,
@@ -669,17 +668,6 @@ export function CustomerBillingProfileForm() {
         description={t("Enforce documentation and validation rules before shipments can be billed")}
       />
       <FormGroup cols={1}>
-        <FormControl className="min-h-[3em]">
-          <SelectField
-            control={control}
-            name="billingProfile.invoiceAdjustmentSupportingDocumentPolicy"
-            label={t("Invoice Adjustment Supporting Documents")}
-            description={t(
-              "Controls whether supporting documents are required for this customer's invoice adjustments. 'Inherit Organization Default' uses the organization invoice-adjustment policy.",
-            )}
-            options={invoiceAdjustmentSupportingDocumentPolicyChoices}
-          />
-        </FormControl>
         <FormControl className="min-h-[3em]">
           <SwitchField
             control={control}

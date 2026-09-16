@@ -53,3 +53,7 @@ func (s Status) IsValid() bool {
 		return false
 	}
 }
+
+func (s Status) IsClosed() bool {
+	return s == StatusClosed || s == StatusPermanentlyClosed
+}

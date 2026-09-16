@@ -249,6 +249,9 @@ virtuals:
     - consolidationPeriodDays
     - consolidationLookbackDays
     - consolidationGroupBy
+    # Supporting documents are no longer required; the deprecated field is a
+    # constant with no column behind it.
+    - invoiceAdjustmentSupportingDocumentPolicy
   CustomerPayment:
     - customer
   CustomerPaymentApplication:
