@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/insightjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
@@ -121,6 +122,7 @@ func Options() fx.Option {
 		carriersettlementjobs.Module,
 		tenderjobs.Module,
 		compliancejobs.Module,
+		insightjobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,

@@ -1,0 +1,528 @@
+package insightservice
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+type stubDetector struct {
+	key      string
+	category insight.Category
+	resource permission.Resource
+	findings []detector.Finding
+	err      error
+	lastRun  detector.Params
+	runs     int
+}
+
+func (d *stubDetector) Key() string                     { return d.key }
+func (d *stubDetector) Category() insight.Category      { return d.category }
+func (d *stubDetector) Operation() permission.Operation { return permission.OpRead }
+
+func (d *stubDetector) Resource() permission.Resource {
+	if d.resource == "" {
+		return permission.ResourceShipment
+	}
+
+	return d.resource
+}
+
+func (d *stubDetector) Detect(
+	_ context.Context,
+	params detector.Params,
+) ([]detector.Finding, error) {
+	d.runs++
+	d.lastRun = params
+
+	return d.findings, d.err
+}
+
+type stubRepo struct {
+	replaced []repositories.ReplaceDetectorFindingsRequest
+	active   []*insight.Insight
+	err      error
+	lastList repositories.ListActiveInsightsRequest
+}
+
+func (r *stubRepo) ReplaceDetectorFindings(
+	_ context.Context,
+	req repositories.ReplaceDetectorFindingsRequest,
+) (repositories.ReplaceDetectorFindingsResult, error) {
+	if r.err != nil {
+		return repositories.ReplaceDetectorFindingsResult{}, r.err
+	}
+
+	r.replaced = append(r.replaced, req)
+
+	return repositories.ReplaceDetectorFindingsResult{Created: len(req.Insights)}, nil
+}
+
+func (r *stubRepo) ListActive(
+	_ context.Context,
+	req repositories.ListActiveInsightsRequest,
+) ([]*insight.Insight, error) {
+	r.lastList = req
+
+	return r.active, r.err
+}
+
+func (r *stubRepo) List(
+	context.Context,
+	*repositories.ListInsightRequest,
+) (*pagination.ListResult[*insight.Insight], error) {
+	return nil, nil
+}
+
+func (r *stubRepo) GetByID(
+	context.Context,
+	repositories.GetInsightByIDRequest,
+) (*insight.Insight, error) {
+	return nil, nil
+}
+
+func (r *stubRepo) Dismiss(
+	_ context.Context,
+	req repositories.DismissInsightRequest,
+) (*insight.Insight, error) {
+	return &insight.Insight{ID: req.ID, Status: insight.StatusDismissed}, r.err
+}
+
+type stubPermissions struct {
+	allowedResources map[permission.Resource]bool
+	err              error
+	checks           int
+}
+
+func (p *stubPermissions) Check(
+	_ context.Context,
+	req *services.PermissionCheckRequest,
+) (*services.PermissionCheckResult, error) {
+	p.checks++
+	if p.err != nil {
+		return nil, p.err
+	}
+
+	return &services.PermissionCheckResult{
+		Allowed: p.allowedResources[permission.Resource(req.Resource)],
+	}, nil
+}
+
+// A narrator with no completion service behind it falls back to detector
+// wording on every call, which is exactly the shape these tests want: the
+// narration path is covered in its own package.
+func silentNarrator() *narrator.Service {
+	return narrator.New(narrator.Params{
+		Logger:     zap.NewNop(),
+		Completion: failingCompletion{},
+	})
+}
+
+type failingCompletion struct{}
+
+func (failingCompletion) CompleteStructured(
+	context.Context,
+	*services.StructuredCompletionRequest,
+) (*services.StructuredCompletionResult, error) {
+	return nil, services.ErrNoProviderConfigured
+}
+
+func (failingCompletion) Diagnose(
+	context.Context,
+	*services.DiagnoseRequest,
+) (*services.DiagnoseResult, error) {
+	return nil, services.ErrNoProviderConfigured
+}
+
+func (failingCompletion) CompleteChat(
+	context.Context,
+	*services.ChatCompletionRequest,
+) (*services.ChatCompletionResult, error) {
+	return nil, services.ErrNoProviderConfigured
+}
+
+func newService(repo *stubRepo, perms *stubPermissions, ds ...detector.Detector) *Service {
+	return &Service{
+		l:           zap.NewNop(),
+		repo:        repo,
+		detectors:   detector.NewRegistry(ds...),
+		narrator:    silentNarrator(),
+		permissions: perms,
+	}
+}
+
+func testFinding(key string) detector.Finding {
+	return detector.Finding{
+		DedupeKey: key,
+		Subject:   "Acme Foods",
+		Headline:  "On-time delivery for Acme Foods is 82.4%",
+		Severity:  insight.SeverityWarning,
+		Metrics: []insight.Metric{
+			detector.Percent(
+				"onTimePercent",
+				"On-time delivery",
+				decimal.NewFromFloat(82.4),
+				insight.DirectionLowerIsWorse,
+			),
+		},
+	}
+}
+
+func tenant() pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+}
+
+func TestRefresh_StoresWhatTheDetectorsFound(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	svc := newService(repo, &stubPermissions{}, &stubDetector{
+		key:      "ontime-decline",
+		category: insight.CategoryServiceQuality,
+		findings: []detector.Finding{testFinding("ontime-decline:cus_1")},
+	})
+
+	result, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Created)
+	require.Len(t, repo.replaced, 1)
+	require.Len(t, repo.replaced[0].Insights, 1)
+
+	stored := repo.replaced[0].Insights[0]
+	assert.Equal(t, insight.CategoryServiceQuality, stored.Category)
+	assert.Equal(t, insight.StatusActive, stored.Status)
+	assert.Equal(t, "ontime-decline", stored.DetectorKey)
+}
+
+// An insight with no model behind it is still complete: the detector's plainer
+// wording, and narrated recorded as false so nobody mistakes it for prose.
+func TestRefresh_StoresTheDetectorWordingWhenNothingNarrates(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	finding := testFinding("ontime-decline:cus_1")
+	svc := newService(repo, &stubPermissions{}, &stubDetector{
+		key:      "ontime-decline",
+		category: insight.CategoryServiceQuality,
+		findings: []detector.Finding{finding},
+	})
+
+	_, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	require.NoError(t, err)
+
+	stored := repo.replaced[0].Insights[0]
+	assert.False(t, stored.Narrated)
+	assert.Equal(t, finding.Headline, stored.Headline)
+	assert.Empty(t, stored.ModelIdentifier)
+}
+
+// A home screen that goes blank because one aggregate broke is worse than one
+// missing a section.
+func TestRefresh_KeepsGoingWhenOneDetectorFails(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	broken := &stubDetector{key: "broken", err: errors.New("query exploded")}
+	working := &stubDetector{
+		key:      "working",
+		category: insight.CategoryCashFlow,
+		findings: []detector.Finding{testFinding("working:cus_1")},
+	}
+
+	result, err := svc(repo, broken, working).Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"broken"}, result.Failed)
+	assert.Equal(t, 1, result.Created)
+	assert.Equal(t, 1, working.runs)
+}
+
+func TestRefresh_ReportsAStorageFailureWithoutStoppingOtherDetectors(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{err: errors.New("database down")}
+	first := &stubDetector{
+		key:      "first",
+		category: insight.CategoryCashFlow,
+		findings: []detector.Finding{testFinding("first:cus_1")},
+	}
+	second := &stubDetector{
+		key:      "second",
+		category: insight.CategoryCostLeakage,
+		findings: []detector.Finding{testFinding("second:cus_1")},
+	}
+
+	result, err := svc(repo, first, second).Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+	)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []string{"first", "second"}, result.Failed)
+	assert.Equal(t, 1, second.runs)
+}
+
+// A detector returning something unshowable is a bug in that detector, and the
+// bad finding is dropped rather than stored or allowed to fail the run.
+func TestRefresh_DropsAMalformedFindingAndKeepsTheRest(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	malformed := testFinding("bad")
+	malformed.Metrics = nil
+
+	svc := newService(repo, &stubPermissions{}, &stubDetector{
+		key:      "mixed",
+		category: insight.CategoryCashFlow,
+		findings: []detector.Finding{malformed, testFinding("good:cus_1")},
+	})
+
+	result, err := svc.Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000})
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Created)
+	require.Len(t, repo.replaced[0].Insights, 1)
+	assert.Equal(t, "good:cus_1", repo.replaced[0].Insights[0].DedupeKey)
+}
+
+func TestRefresh_AnchorsTheWindowToTheGivenInstant(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_800_000_000)
+	stub := &stubDetector{key: "ontime", category: insight.CategoryServiceQuality}
+
+	_, err := svc(&stubRepo{}, stub).Refresh(
+		t.Context(),
+		RefreshRequest{TenantInfo: tenant(), Now: now},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, now, stub.lastRun.WindowEnd)
+	assert.Equal(t, 30, stub.lastRun.WindowDays())
+}
+
+// A dismissal has to reach storage as a cutoff, or the next refresh puts the
+// card a person just waved away straight back.
+func TestRefresh_PassesTheDismissalSuppressionCutoff(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	now := int64(1_800_000_000)
+
+	_, err := svc(repo, &stubDetector{
+		key:      "ontime",
+		category: insight.CategoryServiceQuality,
+		findings: []detector.Finding{testFinding("ontime:cus_1")},
+	}).Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: now})
+	require.NoError(t, err)
+
+	require.Len(t, repo.replaced, 1)
+	assert.Equal(
+		t,
+		now-int64(insight.DismissalSuppression.Seconds()),
+		repo.replaced[0].SuppressedBefore,
+	)
+}
+
+func TestRefresh_MarksNumbersStaleAfterTheRefreshHorizon(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	now := int64(1_800_000_000)
+
+	_, err := svc(repo, &stubDetector{
+		key:      "ontime",
+		category: insight.CategoryServiceQuality,
+		findings: []detector.Finding{testFinding("ontime:cus_1")},
+	}).Refresh(t.Context(), RefreshRequest{TenantInfo: tenant(), Now: now})
+	require.NoError(t, err)
+
+	stored := repo.replaced[0].Insights[0]
+	assert.Equal(t, now, stored.DetectedAt)
+	assert.Greater(t, stored.StaleAt, now)
+	assert.False(t, stored.IsStale(now))
+}
+
+// An insight headline names a customer and a figure. A reader who cannot read
+// customers must not receive it in a payload at all.
+func TestListActive_HidesInsightsTheReaderMayNotSee(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{active: []*insight.Insight{
+		{ID: pulid.MustNew("inst_"), DetectorKey: "shipments"},
+		{ID: pulid.MustNew("inst_"), DetectorKey: "workers"},
+	}}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	svc := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+	)
+
+	visible, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Limit:      10,
+	})
+	require.NoError(t, err)
+
+	require.Len(t, visible, 1)
+	assert.Equal(t, "shipments", visible[0].DetectorKey)
+}
+
+// A detector turned off in a release leaves its findings behind. Nothing is left
+// to say what permission they needed, so they are hidden rather than shown.
+func TestListActive_HidesFindingsFromADetectorThatNoLongerExists(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{active: []*insight.Insight{
+		{ID: pulid.MustNew("inst_"), DetectorKey: "retired-detector"},
+	}}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	visible, err := newService(repo, perms).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
+	)
+	require.NoError(t, err)
+
+	assert.Empty(t, visible)
+}
+
+// A failed permission check must not be read as permission granted.
+func TestListActive_HidesEverythingWhenThePermissionCheckFails(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{active: []*insight.Insight{
+		{ID: pulid.MustNew("inst_"), DetectorKey: "shipments"},
+	}}
+	perms := &stubPermissions{err: errors.New("permission service down")}
+
+	visible, err := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
+	)
+	require.NoError(t, err)
+
+	assert.Empty(t, visible)
+}
+
+// Detectors repeat across rows, so the same question is not asked once per card.
+func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
+	t.Parallel()
+
+	active := make([]*insight.Insight, 0, 6)
+	for range 6 {
+		active = append(active, &insight.Insight{
+			ID:          pulid.MustNew("inst_"),
+			DetectorKey: "shipments",
+		})
+	}
+
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	_, err := newService(&stubRepo{active: active}, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, perms.checks)
+}
+
+// A widget asking for five should get five where five are visible, so the read
+// has to over-fetch before filtering.
+func TestListActive_ReadsExtraToSurviveFiltering(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+
+	_, err := newService(repo, &stubPermissions{}).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 5},
+	)
+	require.NoError(t, err)
+
+	assert.Greater(t, repo.lastList.Limit, 5)
+}
+
+func TestListActive_TrimsToTheRequestedLimit(t *testing.T) {
+	t.Parallel()
+
+	active := make([]*insight.Insight, 0, 8)
+	for range 8 {
+		active = append(active, &insight.Insight{
+			ID:          pulid.MustNew("inst_"),
+			DetectorKey: "shipments",
+		})
+	}
+
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	visible, err := newService(&stubRepo{active: active}, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 3},
+	)
+	require.NoError(t, err)
+
+	assert.Len(t, visible, 3)
+}
+
+func TestDismiss_RecordsTheReaderAndTheirReason(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("inst_")
+
+	dismissed, err := newService(&stubRepo{}, &stubPermissions{}).Dismiss(
+		t.Context(),
+		services.DismissInsightRequest{
+			ID:         id,
+			UserID:     pulid.MustNew("usr_"),
+			Reason:     "Known seasonal pattern",
+			TenantInfo: tenant(),
+		},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, id, dismissed.ID)
+	assert.Equal(t, insight.StatusDismissed, dismissed.Status)
+}
+
+// svc builds a service whose permission stub allows everything, for the refresh
+// tests where visibility is not what is under examination.
+func svc(repo *stubRepo, ds ...detector.Detector) *Service {
+	return newService(repo, &stubPermissions{
+		allowedResources: map[permission.Resource]bool{permission.ResourceShipment: true},
+	}, ds...)
+}

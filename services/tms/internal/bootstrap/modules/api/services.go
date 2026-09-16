@@ -91,6 +91,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
@@ -269,6 +271,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentproposalservice.New,
 	agentexceptionservice.New,
 	proposalexecutor.New,
+	narrator.New,
+	newDetectorRegistry,
+	insightservice.New,
 	agentdecisionservice.New,
 	assignmentservice.New,
 	fx.Annotate(

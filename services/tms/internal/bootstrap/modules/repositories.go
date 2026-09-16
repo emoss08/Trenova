@@ -109,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iftarepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/insightrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
@@ -281,6 +282,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	accessorialchargerepository.New,
 	agentrunrepository.New,
 	agentproposalrepository.New,
+	insightrepository.New,
+	insightrepository.NewMetrics,
 	agentexceptionrepository.New,
 	agentdecisionrepository.New,
 	agentcontrolrepository.New,
