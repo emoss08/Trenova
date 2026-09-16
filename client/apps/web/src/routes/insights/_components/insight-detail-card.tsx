@@ -37,10 +37,12 @@ export function InsightDetailCard({
   insight,
   now,
   onChanged,
+  onOpen,
 }: {
   insight: Insight;
   now: number;
   onChanged: () => void;
+  onOpen: () => void;
 }) {
   const t = useT();
   const body = insightBody(insight);
@@ -60,9 +62,12 @@ export function InsightDetailCard({
   });
 
   return (
-    <div className="border-border bg-card rounded-lg border p-4">
+    <div className="border-border bg-card hover:border-border/80 rounded-lg border p-4 transition-colors">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        {/* The headline is the affordance rather than the whole card: the card
+            already holds links into the records, and a click target wrapping
+            those would swallow them. */}
+        <button type="button" onClick={onOpen} className="min-w-0 flex-1 cursor-pointer text-left">
           <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <Badge variant={SEVERITY_TONE[insight.severity]}>{insight.severity}</Badge>
             <Badge variant="outline">{t(CATEGORY_LABELS[insight.category])}</Badge>
@@ -80,7 +85,7 @@ export function InsightDetailCard({
           {insight.subject !== "" && (
             <p className="text-muted-foreground text-xs">{insight.subject}</p>
           )}
-        </div>
+        </button>
 
         {insight.status === "Active" ? (
           <Button

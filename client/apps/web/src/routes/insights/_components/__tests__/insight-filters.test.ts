@@ -40,6 +40,7 @@ describe("parseFilters", () => {
       categories: ["CashFlow"],
       severities: ["Critical"],
       page: 3,
+      selected: null,
     });
   });
 
@@ -81,6 +82,16 @@ describe("parseFilters", () => {
   });
 });
 
+describe("parseFilters selection", () => {
+  it("reads which finding is open", () => {
+    expect(parseFilters(new URLSearchParams("selected=inst_1")).selected).toBe("inst_1");
+  });
+
+  it("has nothing open by default", () => {
+    expect(parseFilters(new URLSearchParams()).selected).toBeNull();
+  });
+});
+
 describe("serializeFilters", () => {
   it("round-trips a filtered view", () => {
     const original = filters({
@@ -97,6 +108,13 @@ describe("serializeFilters", () => {
   // look filtered.
   it("writes nothing for a view nobody has narrowed", () => {
     expect(serializeFilters(DEFAULT_FILTERS).toString()).toBe("");
+  });
+
+  // An opened card is part of the view, so a link to it reopens it.
+  it("round-trips an opened finding", () => {
+    const opened = filters({ selected: "inst_1" });
+
+    expect(parseFilters(serializeFilters(opened)).selected).toBe("inst_1");
   });
 
   it("omits the first page", () => {
@@ -137,6 +155,14 @@ describe("toggleFilter", () => {
 
     expect(original.categories).toEqual(["CashFlow"]);
   });
+
+  // The open card may not survive the narrowing, and leaving a panel showing a
+  // finding that is no longer in the list behind it is disorienting.
+  it("closes whatever was open", () => {
+    const next = toggleFilter(filters({ selected: "inst_1" }), "categories", "CashFlow");
+
+    expect(next.selected).toBeNull();
+  });
 });
 
 describe("setStatusFilter", () => {
@@ -151,6 +177,10 @@ describe("setStatusFilter", () => {
     const next = setStatusFilter(filters({ categories: ["CashFlow"] }), "closed");
 
     expect(next.categories).toEqual(["CashFlow"]);
+  });
+
+  it("closes whatever was open", () => {
+    expect(setStatusFilter(filters({ selected: "inst_1" }), "closed").selected).toBeNull();
   });
 });
 
@@ -169,6 +199,11 @@ describe("hasActiveFilters", () => {
   // unfiltered list would suggest something is hidden when nothing is.
   it("is not triggered by paging alone", () => {
     expect(hasActiveFilters(filters({ page: 5 }))).toBe(false);
+  });
+
+  // Opening a card narrows nothing, so it must not offer to clear filters.
+  it("is not triggered by opening a finding", () => {
+    expect(hasActiveFilters(filters({ selected: "inst_1" }))).toBe(false);
   });
 });
 

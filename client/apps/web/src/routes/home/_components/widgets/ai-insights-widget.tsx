@@ -97,12 +97,15 @@ function InsightCard({ insight, now }: { insight: Insight; now: number }) {
     <div className="border-border/60 bg-card/50 group/insight rounded-md border p-2.5">
       <div className="flex items-start gap-2">
         <SeverityDot severity={insight.severity} />
-        <div className="min-w-0 flex-1">
-          <p className="text-xs leading-snug font-medium">{insight.headline}</p>
+        <Link
+          to={`/insights?selected=${encodeURIComponent(insight.id)}`}
+          className="min-w-0 flex-1"
+        >
+          <p className="text-xs leading-snug font-medium hover:underline">{insight.headline}</p>
           {insight.subject !== "" && (
             <p className="text-2xs text-muted-foreground mt-0.5 truncate">{insight.subject}</p>
           )}
-        </div>
+        </Link>
         <Button
           variant="ghost"
           size="xs"

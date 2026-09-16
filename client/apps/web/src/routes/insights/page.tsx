@@ -8,6 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon, LightbulbIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { InsightDetailCard } from "./_components/insight-detail-card";
+import { InsightDetailPanel } from "./_components/insight-detail-panel";
 import { InsightFilterBar } from "./_components/insight-filter-bar";
 import {
   DEFAULT_FILTERS,
@@ -85,9 +86,22 @@ export function InsightsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {insights.map((insight) => (
-            <InsightDetailCard key={insight.id} insight={insight} now={now} onChanged={refresh} />
+            <InsightDetailCard
+              key={insight.id}
+              insight={insight}
+              now={now}
+              onChanged={refresh}
+              onOpen={() => applyFilters({ ...filters, selected: insight.id })}
+            />
           ))}
         </div>
+      )}
+
+      {filters.selected !== null && (
+        <InsightDetailPanel
+          insightId={filters.selected}
+          onClose={() => applyFilters({ ...filters, selected: null })}
+        />
       )}
 
       {pages > 1 && (

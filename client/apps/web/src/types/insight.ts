@@ -85,6 +85,25 @@ export const insightListSchema = z.object({
   results: z.array(insightSchema),
 });
 
+/**
+ * What a detector looks for, in the reader's language.
+ *
+ * `excludes` is the part worth reading: a reader who knows a rule ignores
+ * low-volume customers can tell "no finding" apart from "no problem".
+ */
+export const insightExplanationSchema = z.object({
+  measures: z.string().optional().default(""),
+  threshold: z.string().optional().default(""),
+  excludes: z.string().optional().default(""),
+});
+
+export const insightDetailSchema = z.object({
+  insight: insightSchema,
+  /** Earlier runs of the same finding, newest first. */
+  history: z.array(insightSchema).nullish(),
+  explanation: insightExplanationSchema,
+});
+
 export const insightPageSchema = z.object({
   results: z.array(insightSchema),
   total: z.number().default(0),
@@ -97,3 +116,5 @@ export type InsightDirection = z.infer<typeof insightDirectionSchema>;
 export type InsightMetric = z.infer<typeof insightMetricSchema>;
 export type InsightLink = z.infer<typeof insightLinkSchema>;
 export type Insight = z.infer<typeof insightSchema>;
+export type InsightExplanation = z.infer<typeof insightExplanationSchema>;
+export type InsightDetail = z.infer<typeof insightDetailSchema>;

@@ -6,6 +6,10 @@ export const insight = createQueryKeys("insight", {
     queryKey: ["insights-active", limit],
     queryFn: () => apiService.insightService.list(limit),
   }),
+  detail: (id: string) => ({
+    queryKey: ["insight-detail", id],
+    queryFn: () => apiService.insightService.detail(id),
+  }),
   browse: (params: BrowseInsightsParams) => ({
     queryKey: ["insights-browse", params],
     queryFn: () => apiService.insightService.browse(params),

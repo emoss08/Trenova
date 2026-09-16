@@ -1,6 +1,7 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
+  insightDetailSchema,
   insightListSchema,
   insightPageSchema,
   insightSchema,
@@ -56,6 +57,18 @@ export class InsightService {
   public async dismiss(id: Insight["id"], reason = "") {
     const response = await api.post(`/insights/${id}/dismiss/`, { reason });
     return safeParse(insightSchema, response, "Insight");
+  }
+
+  /**
+   * One finding with its trend and the rule behind it.
+   *
+   * A finding the reader may not see comes back as a 404 rather than a 403:
+   * saying "this exists but is not for you" about a card naming a customer and
+   * a revenue figure is itself a disclosure.
+   */
+  public async detail(id: Insight["id"]) {
+    const response = await api.get(`/insights/${id}/`);
+    return safeParse(insightDetailSchema, response, "Insight");
   }
 
   /** Undoes a dismissal, so a misclick is not a month-long mistake. */

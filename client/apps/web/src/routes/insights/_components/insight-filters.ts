@@ -26,6 +26,14 @@ export type InsightFilterState = {
   categories: InsightCategory[];
   severities: InsightSeverity[];
   page: number;
+  /**
+   * The finding whose detail is open, if any.
+   *
+   * It rides with the filters rather than being component state so an opened
+   * card is part of the view a person can link to, and so closing the panel is
+   * the back button.
+   */
+  selected: string | null;
 };
 
 export const DEFAULT_FILTERS: InsightFilterState = {
@@ -33,6 +41,7 @@ export const DEFAULT_FILTERS: InsightFilterState = {
   categories: [],
   severities: [],
   page: 1,
+  selected: null,
 };
 
 /**
@@ -69,6 +78,7 @@ export function parseFilters(params: URLSearchParams): InsightFilterState {
     categories: keepKnown(params.getAll("category"), CATEGORY_FILTERS),
     severities: keepKnown(params.getAll("severity"), SEVERITY_FILTERS),
     page: parsePage(params.get("page")),
+    selected: params.get("selected"),
   };
 }
 
@@ -97,6 +107,10 @@ export function serializeFilters(filters: InsightFilterState): URLSearchParams {
     params.set("page", String(filters.page));
   }
 
+  if (filters.selected !== null && filters.selected !== "") {
+    params.set("selected", filters.selected);
+  }
+
   return params;
 }
 
@@ -117,14 +131,14 @@ export function toggleFilter<T extends string>(
     ? current.filter((entry) => entry !== value)
     : [...current, value];
 
-  return { ...filters, [key]: next, page: 1 } as InsightFilterState;
+  return { ...filters, [key]: next, page: 1, selected: null } as InsightFilterState;
 }
 
 export function setStatusFilter(
   filters: InsightFilterState,
   status: InsightStatusFilter,
 ): InsightFilterState {
-  return { ...filters, status, page: 1 };
+  return { ...filters, status, page: 1, selected: null };
 }
 
 /** Whether anything has been narrowed, for showing a "clear" affordance. */

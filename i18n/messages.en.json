@@ -44923,6 +44923,15 @@
       "routes/formula-template"
     ]
   },
+  "Dismiss for 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Dismiss refresh notification": {
     "sites": 1,
     "scope": [
@@ -44960,7 +44969,7 @@
     ]
   },
   "Dismissed": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -46906,6 +46915,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Does not report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Doing business as": {
@@ -56705,6 +56723,15 @@
       "routes/formula-template"
     ]
   },
+  "Explanation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Explicitly toggle integration state for this business unit.": {
     "sites": 1,
     "scope": [
@@ -64748,6 +64775,15 @@
       "routes/admin"
     ]
   },
+  "Getting worse": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Give at least ten characters saying what the amendment corrects.": {
     "sites": 1,
     "scope": [
@@ -66832,12 +66868,13 @@
     ]
   },
   "Holding steady": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fleet-safety"
+      "routes/fleet-safety",
+      "routes/insights"
     ]
   },
   "Holiday": {
@@ -69146,6 +69183,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Improving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "In Force": {
     "sites": 1,
     "scope": [
@@ -70327,6 +70373,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Insight not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Insights": {
@@ -73573,6 +73628,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "It will come back if the condition is still there in a month.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Italic": {
@@ -82614,11 +82678,12 @@
     ]
   },
   "Measures": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/insights",
       "routes/reports"
     ]
   },
@@ -92349,6 +92414,15 @@
       "routes/admin"
     ]
   },
+  "Not worth acting on?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Not yet": {
     "sites": 1,
     "scope": [
@@ -98782,6 +98856,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Optional: why is this being ignored?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Optional; anything worth knowing about the period, such as the job or site.": {
@@ -118708,6 +118791,15 @@
       "routes/worker"
     ]
   },
+  "Reported when": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Reporting position is invalid": {
     "sites": 2,
     "scope": [
@@ -120962,6 +121054,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Restore this finding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Restored": {
@@ -135635,6 +135736,15 @@
       "routes/pay-profile"
     ]
   },
+  "Since last time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "Since {0}": {
     "sites": 1,
     "scope": [
@@ -148035,6 +148145,15 @@
       "routes/worker"
     ]
   },
+  "The records behind this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "The recurring series created this shipment for you — you can discard this manual entry.": {
     "sites": 1,
     "scope": [
@@ -151300,6 +151419,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This is the first time this finding has been made, so there is nothing to compare.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "This is typically done after audits are complete. Continue?": {
@@ -164724,6 +164852,15 @@
       "apps/dash/_components"
     ]
   },
+  "What was measured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
+    ]
+  },
   "What you checked": {
     "sites": 1,
     "scope": [
@@ -166711,6 +166848,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Why you are seeing this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "Widget": {
@@ -169733,6 +169879,15 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "across {0} refreshes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "active worker is missing a Samsara driver mapping": {
@@ -174062,6 +174217,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "written by AI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/insights"
     ]
   },
   "written warning": {
