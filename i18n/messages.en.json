@@ -13279,6 +13279,24 @@
       "domain/documenttemplate"
     ]
   },
+  "An insight cannot carry more than 4 links": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
+  "An insight cannot carry more than 8 metrics": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "An instruction is required": {
     "sites": 1,
     "scope": [
@@ -25489,7 +25507,7 @@
     ]
   },
   "Category is required": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -25498,6 +25516,7 @@
       "domain/agent",
       "domain/audit",
       "domain/costingcontrol",
+      "domain/insight",
       "domain/integration",
       "domain/servicefailure",
       "domain/worker"
@@ -40546,6 +40565,15 @@
       "routes/driver-settlement"
     ]
   },
+  "Dedupe key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "DeepInfra": {
     "sites": 1,
     "scope": [
@@ -43751,6 +43779,15 @@
       "routes/admin"
     ]
   },
+  "Detector key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "Detention": {
     "sites": 2,
     "scope": [
@@ -44856,6 +44893,15 @@
       "routes/shipment"
     ]
   },
+  "Dismiss an insight that is not worth acting on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Dismiss explanation": {
     "sites": 1,
     "scope": [
@@ -44881,6 +44927,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Dismiss this insight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "Dismissal reason...": {
@@ -60743,6 +60798,24 @@
       "routes/billing-queue"
     ]
   },
+  "Findings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/insightservice"
+    ]
+  },
+  "Findings computed from your own records: service slipping, revenue unbilled, detention unclaimed, credentials running out": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/homelayout"
+    ]
+  },
   "Fine": {
     "sites": 1,
     "scope": [
@@ -66006,6 +66079,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Headline cannot be longer than 160 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
+  "Headline is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
     ]
   },
   "Healthy": {
@@ -71415,6 +71506,24 @@
     "areas": [
       "domain/accessorialcharge",
       "domain/shipment"
+    ]
+  },
+  "Invalid metric direction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
+  "Invalid metric unit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
     ]
   },
   "Invalid organization ID": {
@@ -77385,6 +77494,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Link label is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "Link must be a full http(s) address": {
     "sites": 2,
     "scope": [
@@ -77394,6 +77512,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Link must be a path inside this application": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
     ]
   },
   "Link must be an http or https URL": {
@@ -82931,6 +83058,24 @@
       "domain/homelayout"
     ]
   },
+  "Metric key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
+  "Metric label is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "Metrics": {
     "sites": 1,
     "scope": [
@@ -85873,6 +86018,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Narrative cannot be longer than 1200 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
     ]
   },
   "Narrow the template list.": {
@@ -92650,6 +92804,15 @@
       "routes/worker"
     ]
   },
+  "Nothing needs your attention. Findings appear here when service, billing, or compliance moves in the wrong direction.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "Nothing on file": {
     "sites": 1,
     "scope": [
@@ -93540,6 +93703,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Numbers may be out of date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "OANDA FXDS": {
@@ -97898,6 +98070,17 @@
       "apps/web/lib"
     ]
   },
+  "Operational Insights": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/homelayout",
+      "routes/home"
+    ]
+  },
   "Operational analytics and reporting views.": {
     "sites": 1,
     "scope": [
@@ -97914,6 +98097,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Operational findings surfaced on the home screen": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Operational notes for admins choosing sender identities.": {
@@ -114246,6 +114438,15 @@
       "apps/web/lib"
     ]
   },
+  "Recommendation cannot be longer than 400 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "Recommendations": {
     "sites": 1,
     "scope": [
@@ -114289,6 +114490,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Recompute home-screen operational insights for every organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Recompute operational insights for every organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Recompute the quarter's return to take it out of the figures.": {
@@ -132389,13 +132608,14 @@
     ]
   },
   "Severity is required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/edi",
+      "domain/insight",
       "domain/shipment",
       "domain/shipmentevent",
       "domain/worker",
@@ -137980,7 +138200,7 @@
     ]
   },
   "Status is required": {
-    "sites": 116,
+    "sites": 117,
     "scope": [
       "go"
     ],
@@ -138013,6 +138233,7 @@
       "domain/glaccount",
       "domain/iam",
       "domain/ifta",
+      "domain/insight",
       "domain/invoice",
       "domain/invoiceadjustment",
       "domain/journalreversal",
@@ -150609,6 +150830,15 @@
       "service/driversettlementservice"
     ]
   },
+  "This explanation was written by AI. The figures above were computed from your records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "This feature requires a valid Google Maps API key.": {
     "sites": 1,
     "scope": [
@@ -161486,6 +161716,15 @@
       "domain/permission"
     ]
   },
+  "View operational insights": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View or manage this manual journal entry.": {
     "sites": 1,
     "scope": [
@@ -166493,6 +166732,15 @@
       "api/handlers"
     ]
   },
+  "Window end is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "Window length": {
     "sites": 1,
     "scope": [
@@ -166509,6 +166757,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Window start must not be after window end": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
     ]
   },
   "Winter Weather": {
@@ -178374,6 +178631,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "· vs {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "· week {0} of the rotation": {

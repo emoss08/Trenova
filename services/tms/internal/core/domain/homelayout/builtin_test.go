@@ -151,6 +151,7 @@ func TestWidgetCatalogKeysAreStable(t *testing.T) {
 		homelayout.WidgetRevenueTrend,
 		homelayout.WidgetFleetStatus,
 		homelayout.WidgetOnTimeGoal,
+		homelayout.WidgetAIInsights,
 		homelayout.WidgetReport,
 		homelayout.WidgetDashboardLink,
 		homelayout.WidgetLaneHeatmap,
