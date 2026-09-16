@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"go.uber.org/fx"
@@ -11,28 +12,34 @@ import (
 type Params struct {
 	fx.In
 
-	Logger      *zap.Logger
-	Guard       *agentguard.Service
-	Completion  serviceports.CompletionService
-	QueryTools  serviceports.AgentQueryToolRegistry
-	ActionTools serviceports.AgentToolRegistry
+	Logger        *zap.Logger
+	Guard         *agentguard.Service
+	Completion    serviceports.CompletionService
+	QueryTools    serviceports.AgentQueryToolRegistry
+	ActionTools   serviceports.AgentToolRegistry
+	Conversations repositories.ConversationRepository
+	Definitions   repositories.AgentDefinitionRepository
 }
 
 type Service struct {
-	logger      *zap.Logger
-	guard       *agentguard.Service
-	completion  serviceports.CompletionService
-	queryTools  serviceports.AgentQueryToolRegistry
-	actionTools serviceports.AgentToolRegistry
+	logger        *zap.Logger
+	guard         *agentguard.Service
+	completion    serviceports.CompletionService
+	queryTools    serviceports.AgentQueryToolRegistry
+	actionTools   serviceports.AgentToolRegistry
+	conversations repositories.ConversationRepository
+	definitions   repositories.AgentDefinitionRepository
 }
 
-func New(p Params) *Service {
+func New(p Params) serviceports.AssistantService {
 	return &Service{
-		logger:      p.Logger.Named("service.assistant"),
-		guard:       p.Guard,
-		completion:  p.Completion,
-		queryTools:  p.QueryTools,
-		actionTools: p.ActionTools,
+		logger:        p.Logger.Named("service.assistant"),
+		guard:         p.Guard,
+		completion:    p.Completion,
+		queryTools:    p.QueryTools,
+		actionTools:   p.ActionTools,
+		conversations: p.Conversations,
+		definitions:   p.Definitions,
 	}
 }
 

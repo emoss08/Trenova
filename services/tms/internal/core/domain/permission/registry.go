@@ -2138,6 +2138,47 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	// Configuring an agent decides which tools it may reach and how much it may do
+	// unattended, so it sits at the same sensitivity as provider configuration.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentDefinition.String(),
+		DisplayName: "Agent Definition",
+		Description: "Per-organization agent configurations and their tool access",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View configured agents"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add an agent"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update an agent's tools and autonomy",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove an agent"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	// Using the assistant is an ordinary operational act rather than an
+	// administrative one, so it is held separately from configuring agents: a
+	// dispatcher should be able to ask questions without being able to change
+	// which tools an agent holds.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAssistant.String(),
+		DisplayName: "Assistant",
+		Description: "Conversations with configured agents",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View own conversations"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Start conversations and send messages",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete own conversations"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 	// Configuring a provider decides which endpoint an organization's freight and
 	// billing data is sent to, and whether that endpoint may be on the local
 	// network, so it is held at the same sensitivity as credential management.

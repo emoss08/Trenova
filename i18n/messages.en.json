@@ -8770,6 +8770,15 @@
       "domain/permission"
     ]
   },
+  "Add an agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Add an email and press Enter": {
     "sites": 1,
     "scope": [
@@ -10586,6 +10595,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Agent {0} is disabled and cannot be used": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Agent-proposed resolutions awaiting human decision": {
@@ -33132,6 +33150,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Conversations with configured agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Convert text to lowercase.": {
     "sites": 1,
     "scope": [
@@ -41989,6 +42016,15 @@
     ]
   },
   "Delete open safety events recorded in error": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Delete own conversations": {
     "sites": 1,
     "scope": [
       "go"
@@ -82374,6 +82410,15 @@
       "routes/admin"
     ]
   },
+  "Message cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "Message cannot exceed 2000 characters": {
     "sites": 1,
     "scope": [
@@ -103440,6 +103485,15 @@
       "domain/permission"
     ]
   },
+  "Per-organization agent configurations and their tool access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Per-page text used when rules target specific pages. If omitted, the parser uses the full text snapshot.": {
     "sites": 1,
     "scope": [
@@ -116503,6 +116557,15 @@
     ]
   },
   "Remove an AI provider": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Remove an agent": {
     "sites": 1,
     "scope": [
       "go"
@@ -136680,6 +136743,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Start conversations and send messages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Start date": {
@@ -157756,6 +157828,15 @@
       "domain/permission"
     ]
   },
+  "Update an agent's tools and autonomy": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Update billing queue item status": {
     "sites": 1,
     "scope": [
@@ -160515,6 +160596,15 @@
       "domain/permission"
     ]
   },
+  "View configured agents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View contacts": {
     "sites": 1,
     "scope": [
@@ -160858,6 +160948,15 @@
     ]
   },
   "View orders": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View own conversations": {
     "sites": 1,
     "scope": [
       "go"
