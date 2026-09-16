@@ -17,6 +17,9 @@ vi.mock("../unassigned-queue", () => ({
 vi.mock("../exceptions-inbox", () => ({
   ExceptionsInbox: () => <div data-testid="panel-exceptions" />,
 }));
+vi.mock("../insights-watch", () => ({
+  InsightsWatch: () => <div data-testid="panel-insights" />,
+}));
 vi.mock("../hos-watch", () => ({
   HosWatch: () => <div data-testid="panel-hos" />,
 }));
@@ -63,6 +66,7 @@ describe("availableRightStackModules", () => {
     expect(availableRightStackModules(ALL_MODULES, brokerageOnly)).toEqual([
       "unassigned",
       "exceptions",
+      "insights",
     ]);
   });
 
@@ -112,12 +116,12 @@ describe("RightStack under a stored preference that names a hidden module", () =
 
   it("honours a stored order that leads with a module the brokerage cannot use", () => {
     signIn(brokerageOnly);
-    setPreference(["hos", "unassigned", "certification", "exceptions"]);
+    setPreference(["hos", "unassigned", "certification", "exceptions", "insights"]);
 
     render(<RightStack />);
 
     const panels = screen.getAllByTestId(/^panel-/).map((node) => node.dataset.testid);
-    expect(panels).toEqual(["panel-unassigned", "panel-exceptions"]);
+    expect(panels).toEqual(["panel-unassigned", "panel-exceptions", "panel-insights"]);
   });
 
   it("does not offer a hidden driver module back through the add-panel menu", () => {
@@ -140,7 +144,7 @@ describe("RightStack under a stored preference that names a hidden module", () =
 
   it("falls back to the empty state when the only visible modules are gated away", () => {
     signIn(brokerageOnly);
-    setPreference([...ALL_MODULES], ["unassigned", "exceptions"]);
+    setPreference([...ALL_MODULES], ["unassigned", "exceptions", "insights"]);
 
     render(<RightStack />);
 

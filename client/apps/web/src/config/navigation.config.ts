@@ -937,6 +937,7 @@ const reportsModule: NavModule = {
   icon: BarChart3Icon,
   description: "Analytics and reporting",
   basePath: "/reports",
+  routePrefixes: ["/reports", "/insights"],
   navigation: [
     {
       id: "reports-library",
@@ -949,6 +950,12 @@ const reportsModule: NavModule = {
       label: "Run History",
       path: "/reports/runs",
       resource: Resource.Report,
+    },
+    {
+      id: "reports-insights",
+      label: "Insights",
+      path: "/insights",
+      resource: Resource.Insight,
     },
   ],
 };
@@ -1337,6 +1344,15 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["insight", "insights", "findings", "ai", "detention", "unbilled", "on-time"],
     },
     {
+      id: "open-assistant",
+      label: "Open Assistant",
+      description: "Ask about shipments, drivers and billing, or propose a change",
+      path: "/assistant",
+      resource: Resource.Assistant,
+      requiredOperation: Operation.Read,
+      keywords: ["assistant", "chat", "ai", "agent", "ask"],
+    },
+    {
       id: "create-home-layout",
       label: "Create Home Screen",
       description: "Author a home screen and assign it to roles",
@@ -1435,13 +1451,6 @@ export const adminLinks: SidebarLink[] = [
     capability: OrganizationCapability.AssetOperations,
   },
   {
-    href: "/admin/agent-control",
-    title: "Agent Control",
-    group: "Organization",
-    resource: Resource.AgentControl,
-    requiredOperation: Operation.Read,
-  },
-  {
     href: "/admin/cost-control",
     title: "Cost Control",
     group: "Organization",
@@ -1483,9 +1492,23 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/ai-providers",
+    title: "AI Providers",
+    group: "AI & Automation",
+    resource: Resource.AIProvider,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/agent-control",
+    title: "Agent Control",
+    group: "AI & Automation",
+    resource: Resource.AgentControl,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/document-intelligence",
     title: "Document Intelligence",
-    group: "Document Management",
+    group: "AI & Automation",
     resource: Resource.DocumentControl,
     requiredOperation: Operation.Read,
   },

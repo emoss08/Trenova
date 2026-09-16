@@ -28,6 +28,7 @@ import { useMemo } from "react";
 import { CertificationWatch } from "./certification-watch";
 import { ExceptionsInbox } from "./exceptions-inbox";
 import { HosWatch } from "./hos-watch";
+import { InsightsWatch } from "./insights-watch";
 import {
   ALL_MODULES,
   availableRightStackModules,
@@ -39,6 +40,7 @@ import { UnassignedQueue } from "./unassigned-queue";
 const MODULE_LABEL: Record<RightStackModuleId, string> = {
   unassigned: "Unassigned",
   exceptions: "Exceptions",
+  insights: "Insights",
   hos: "HOS watch",
   certification: "Uncertified logs",
 };
@@ -50,6 +52,7 @@ type RendererProps = {
 const RENDERERS: Record<RightStackModuleId, (props: RendererProps) => React.ReactElement> = {
   unassigned: UnassignedQueue,
   exceptions: ExceptionsInbox,
+  insights: InsightsWatch,
   hos: HosWatch,
   certification: CertificationWatch,
 };

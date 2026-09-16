@@ -8,11 +8,12 @@ import {
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
-export type RightStackModuleId = "unassigned" | "exceptions" | "hos" | "certification";
+export type RightStackModuleId = "unassigned" | "exceptions" | "insights" | "hos" | "certification";
 
 export const ALL_MODULES: readonly RightStackModuleId[] = [
   "unassigned",
   "exceptions",
+  "insights",
   "hos",
   "certification",
 ] as const;

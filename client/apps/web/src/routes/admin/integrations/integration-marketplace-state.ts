@@ -7,6 +7,7 @@ export const integrationModalTypes = [
   "Samsara",
   "GoogleMaps",
   "OpenAI",
+  "AIProviders",
   "OpenWeatherMap",
   "OANDAExchangeRates",
   "EIAFuelPrices",
