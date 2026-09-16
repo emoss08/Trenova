@@ -14,6 +14,7 @@ import {
   CircleCheckIcon,
   CircleSlashIcon,
   LoaderIcon,
+  ShieldQuestionIcon,
   XIcon,
 } from "lucide-react";
 import { argumentRows, classifyProposal, humanizeToolName } from "./proposal-state";
@@ -56,13 +57,20 @@ export function ProposalCard({
   });
 
   return (
-    <div className="border-border bg-card max-w-[85%] rounded-lg border p-3">
+    <div className="border-warning/40 bg-card max-w-[92%] rounded-lg border p-3">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium">{humanizeToolName(proposal.toolName)}</span>
-          <span className="text-muted-foreground text-xs">
-            {t("The assistant is asking to make this change. Nothing has run.")}
+        <div className="flex items-start gap-2.5">
+          <span className="bg-warning/15 text-warning flex size-7 shrink-0 items-center justify-center rounded-md">
+            <ShieldQuestionIcon className="size-4" />
           </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium">{humanizeToolName(proposal.toolName)}</span>
+            <span className="text-muted-foreground text-xs">
+              {presentation === "awaiting"
+                ? t("The assistant is asking to make this change. Nothing has run.")
+                : t("A change the assistant asked to make.")}
+            </span>
+          </div>
         </div>
         <ProposalStatusBadge proposal={proposal} />
       </div>

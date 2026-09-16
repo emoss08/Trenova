@@ -1593,6 +1593,15 @@
       "domain/iam"
     ]
   },
+  "A change the assistant asked to make.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "A change to this shipment (like an updated stop or distance) re-rated the automatic fuel surcharge from": {
     "sites": 1,
     "scope": [
@@ -4484,6 +4493,15 @@
     ],
     "areas": [
       "domain/invoicerun"
+    ]
+  },
+  "A small model on the office GPU server; cheap enough for every request.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A source is required": {
@@ -8425,6 +8443,15 @@
       "routes/holiday"
     ]
   },
+  "Add a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Add a hosted API, a gateway such as OpenRouter, or a model server running on your own hardware. AI features stay off until at least one provider is assigned to a task.": {
     "sites": 1,
     "scope": [
@@ -10728,6 +10755,15 @@
       "domain/agent"
     ]
   },
+  "Agent unavailable": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Agent updated": {
     "sites": 1,
     "scope": [
@@ -12724,7 +12760,7 @@
       "service/rateagreementservice"
     ]
   },
-  "An administrator needs to configure and enable an agent, and connect an AI provider, before conversations can start.": {
+  "An administrator needs to connect an AI provider and enable an agent before conversations can start.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -13897,12 +13933,13 @@
     ]
   },
   "Answers only": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/assistant"
     ]
   },
   "Anthropic": {
@@ -15169,6 +15206,15 @@
       "routes/formula-template"
     ]
   },
+  "Approve a proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Approve a swap the two drivers have agreed": {
     "sites": 1,
     "scope": [
@@ -16242,6 +16288,15 @@
       "apps/web/config"
     ]
   },
+  "Ask the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.": {
     "sites": 1,
     "scope": [
@@ -16249,6 +16304,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Asked {0}": {
@@ -26802,6 +26866,15 @@
       "routes/shipment-control"
     ]
   },
+  "Check a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Check at least one invoice and enter an applied amount.": {
     "sites": 1,
     "scope": [
@@ -26899,6 +26972,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Checking the question…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Checking...": {
@@ -27275,15 +27357,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Choose an agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/assistant"
     ]
   },
   "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.": {
@@ -32264,6 +32337,15 @@
       "routes/agent-control"
     ]
   },
+  "Connect an AI provider and enable an agent in Agent Control, then come back here to start a conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Connect with EIA Fuel Prices": {
     "sites": 1,
     "scope": [
@@ -33768,13 +33850,14 @@
     ]
   },
   "Copied": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/assistant",
       "routes/detention-desk",
       "routes/invoice"
     ]
@@ -33817,13 +33900,14 @@
     ]
   },
   "Copy": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/assistant",
       "routes/detention-desk",
       "routes/edi",
       "routes/invoice"
@@ -33962,6 +34046,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Copy reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Copy response": {
@@ -36064,6 +36157,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Create a rate matrix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Create a rule set to define how documents are parsed.": {
@@ -42417,7 +42519,7 @@
     ]
   },
   "Delete conversation": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -42702,6 +42804,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Delete this conversation?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Delete this entry?": {
@@ -43049,6 +43160,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Delivery estimate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Delivery is required": {
@@ -45137,12 +45257,13 @@
     ]
   },
   "Dismiss": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/assistant",
       "routes/bank-receipt-queue",
       "routes/driver-settlement",
       "routes/insights",
@@ -47264,7 +47385,7 @@
     ]
   },
   "Done": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -50223,7 +50344,7 @@
       "packages/shared/types"
     ]
   },
-  "Each agent covers a different part of the system and has its own tools.": {
+  "Each agent covers a different part of the system and has its own tools. Nothing an agent proposes runs until you approve it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -52946,6 +53067,15 @@
     ],
     "areas": [
       "service/benefitsservice"
+    ]
+  },
+  "Enter": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Enter BOL": {
@@ -56746,6 +56876,15 @@
       "apps/web/components"
     ]
   },
+  "Expiring credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Expiring in 30 days": {
     "sites": 1,
     "scope": [
@@ -58236,7 +58375,7 @@
     ]
   },
   "Failed": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -62099,6 +62238,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "For the next administrator. Where the endpoint runs and why it handles the tasks it does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "For {0}": {
@@ -66348,6 +66496,15 @@
     "areas": [
       "service/dispatcheligibility",
       "service/workerservice"
+    ]
+  },
+  "Hazmat endorsements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Hazmat expiry date is required for H or X endorsement (49 CFR 383.93)": {
@@ -73458,6 +73615,15 @@
       "routes/journal-entry"
     ]
   },
+  "Is a driver available?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Is any of": {
     "sites": 1,
     "scope": [
@@ -74615,11 +74781,12 @@
     ]
   },
   "Keep it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/assistant",
       "routes/time-attendance"
     ]
   },
@@ -79945,7 +80112,16 @@
       "routes/settlement-control"
     ]
   },
-  "Looked up {0}": {
+  "Looks like we hit a snag. Please try again later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
+  "Looks records up for you and proposes changes for your approval.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -79954,13 +80130,13 @@
       "routes/assistant"
     ]
   },
-  "Looks like we hit a snag. Please try again later.": {
+  "Looks up shipments and drivers for the night dispatch team.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/worker"
+      "routes/agent-control"
     ]
   },
   "Loop cannot be longer than 50 characters": {
@@ -83313,6 +83489,15 @@
       "domain/worker"
     ]
   },
+  "Message the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Message was delivered to the trading partner.": {
     "sites": 1,
     "scope": [
@@ -83329,6 +83514,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Message {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Message, shipment, transfer, ISA, GS, ST": {
@@ -84349,6 +84543,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Missing documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Missing documents:": {
@@ -86703,11 +86906,12 @@
     ]
   },
   "Needs approval": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/assistant",
       "routes/shipment"
     ]
   },
@@ -88814,7 +89018,16 @@
       "routes/shipment"
     ]
   },
-  "No conversations yet.": {
+  "No conversations match that search.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "No conversations yet. Start one to ask a question.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -92274,6 +92487,15 @@
       "routes/admin"
     ]
   },
+  "Not answered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Not applicable": {
     "sites": 1,
     "scope": [
@@ -93725,6 +93947,15 @@
       "routes/shipment"
     ]
   },
+  "Nothing was returned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Nothing was waived in this window. Every accrued detention charge stood.": {
     "sites": 1,
     "scope": [
@@ -95024,6 +95255,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Oldest blocked items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Oldest open invoice": {
@@ -97549,6 +97789,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Open Agent Control": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Open Assistant": {
@@ -100608,11 +100857,12 @@
     ]
   },
   "Outcome": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/assistant",
       "routes/billing-queue",
       "routes/jurisdiction-rule",
       "routes/osha",
@@ -113784,12 +114034,11 @@
     ]
   },
   "Read-only": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/assistant",
       "routes/edi"
     ]
   },
@@ -114995,6 +115244,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Recent shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Recent user and group synchronization events.": {
@@ -122156,6 +122414,15 @@
       "domain/worker"
     ]
   },
+  "Returned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Returned to duty": {
     "sites": 1,
     "scope": [
@@ -125048,12 +125315,13 @@
     ]
   },
   "Running": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/assistant",
       "routes/invoice-adjustment-batch",
       "routes/time-attendance"
     ]
@@ -127772,6 +128040,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Search conversations": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Search country...": {
@@ -130911,7 +131188,7 @@
     ]
   },
   "Send": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -133678,12 +133955,13 @@
     ]
   },
   "Shift": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/assistant",
       "routes/hos.tsx",
       "routes/worker"
     ]
@@ -134956,11 +135234,12 @@
     ]
   },
   "Shipment status": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/assistant",
       "routes/billing-queue"
     ]
   },
@@ -135613,6 +135892,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Show details for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Show every case": {
     "sites": 1,
     "scope": [
@@ -135909,6 +136197,15 @@
     ],
     "areas": [
       "routes/worker-credential-type"
+    ]
+  },
+  "Shown to people choosing an agent, so say who it is for and what it can do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Shown to the driver so they can plan for it.": {
@@ -139307,7 +139604,7 @@
     ]
   },
   "Stop": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -139315,6 +139612,7 @@
     "areas": [
       "apps/web/lib",
       "routes/admin",
+      "routes/assistant",
       "routes/billing-queue",
       "routes/service-failure",
       "template/rateconfirmation.pdf"
@@ -139535,6 +139833,15 @@
       "routes/shipment"
     ]
   },
+  "Stopped. The assistant may still finish and save its reply.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Stopping after this batch...": {
     "sites": 1,
     "scope": [
@@ -139747,6 +140054,15 @@
     ],
     "areas": [
       "domain/documentupload"
+    ]
+  },
+  "Streaming is not supported": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Streaming not supported": {
@@ -141427,6 +141743,15 @@
     ],
     "areas": [
       "template/notification.dash.profile_change_reviewed"
+    ]
+  },
+  "Talking to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Tanker (N)": {
@@ -144129,6 +144454,15 @@
       "routes/agent-control"
     ]
   },
+  "The assistant could not finish": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "The assistant is asking to make this change. Nothing has run.": {
     "sites": 1,
     "scope": [
@@ -144139,6 +144473,15 @@
     ]
   },
   "The assistant proposed a change that could not be saved for approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "The assistant reads only records you can already see, and never changes anything without your approval.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -145119,6 +145462,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The connection to the assistant was lost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "The consignee pays the carrier on delivery": {
@@ -148879,6 +149231,15 @@
       "domain/permission"
     ]
   },
+  "The reply ended before it was finished.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "The report artifact could not be prepared for download — try again shortly": {
     "sites": 1,
     "scope": [
@@ -149093,6 +149454,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The result was cut short for the model; the record itself is complete.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "The return could not be read": {
@@ -150937,6 +151307,15 @@
       "routes/shipment"
     ]
   },
+  "Thinking…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Third Party": {
     "sites": 1,
     "scope": [
@@ -151043,6 +151422,24 @@
     ],
     "areas": [
       "routes/invoice-approval"
+    ]
+  },
+  "This agent has been disabled, so the conversation cannot continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "This agent was disabled or removed. You can read the conversation but not continue it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "This allocation is already carried on a posted invoice and cannot change": {
@@ -157213,7 +157610,7 @@
     ]
   },
   "Try again": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -157222,6 +157619,7 @@
       "packages/shared/components",
       "routes/accept.tsx",
       "routes/admin",
+      "routes/assistant",
       "routes/billing-queue",
       "routes/detention-desk",
       "routes/detention-intelligence",
@@ -159387,7 +159785,7 @@
     ]
   },
   "Untitled conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -163689,6 +164087,15 @@
       "routes/shipment"
     ]
   },
+  "Waiting for the result…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Waiting for the trading partner to acknowledge this message.": {
     "sites": 1,
     "scope": [
@@ -165074,6 +165481,24 @@
       "routes/pay-profile"
     ]
   },
+  "What is blocking an invoice?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "What is picking up today?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "What is the customer disputing?": {
     "sites": 1,
     "scope": [
@@ -165416,15 +165841,6 @@
       "routes/org-structure"
     ]
   },
-  "What this agent is for": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "What this agreement covers": {
     "sites": 1,
     "scope": [
@@ -165468,15 +165884,6 @@
     ],
     "areas": [
       "routes/worker-credential-type"
-    ]
-  },
-  "What this endpoint is for": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "What this home screen is for.": {
@@ -166213,6 +166620,15 @@
       "routes/admin"
     ]
   },
+  "Where a shipment is, who is available, what is holding an invoice, how to do something in Trenova. It reads the records you can see and proposes changes for you to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Where and when": {
     "sites": 1,
     "scope": [
@@ -166256,6 +166672,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Where is a shipment right now?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Where it happened": {
@@ -167093,6 +167518,15 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Who do you want to ask?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Who has signed": {
@@ -168572,15 +169006,6 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
-    ]
-  },
-  "Working…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/assistant"
     ]
   },
   "Worksheet can still change": {
@@ -173185,6 +173610,15 @@
       "routes/reports"
     ]
   },
+  "for a new line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "for approval by the receiving organization.": {
     "sites": 1,
     "scope": [
@@ -174607,6 +175041,15 @@
       "apps/web/components"
     ]
   },
+  "to send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "to {0}": {
     "sites": 1,
     "scope": [
@@ -175747,12 +176190,13 @@
     ]
   },
   "{0, plural, one {# tool} other {# tools}}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/assistant"
     ]
   },
   "{0, plural, one {# unit} other {# units}}": {
@@ -176513,13 +176957,12 @@
     ]
   },
   "{0} failed": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
-      "routes/assistant",
       "routes/reports"
     ]
   },
@@ -176728,6 +177171,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} in, {1} out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "{0} integration is disabled": {
@@ -180383,6 +180835,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "“{0}” and everything the assistant looked up in it will be removed. Proposals that were already approved are not undone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "• Maximum file size: 50 MB per file": {

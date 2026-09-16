@@ -1,28 +1,41 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@trenova/shared/components/ui/message-scroller";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useApiMutation } from "@/hooks/use-api-mutation";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
-import type { AssistantMessage, AssistantProposal, AssistantThread } from "@/types/assistant";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { InfoIcon, SendIcon, ShieldAlertIcon, WrenchIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import { classifyMessage, type MessagePresentation } from "./classify-message";
+import type { AgentDefinition, AssistantThread } from "@/types/assistant";
+import { useQuery } from "@tanstack/react-query";
+import { Trash2Icon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Composer } from "./composer";
+import { AgentAvatar, AssistantEntry, DeclinedBubble, RefusalNotice, UserBubble } from "./message-items";
 import { ProposalCard } from "./proposal-card";
 import { groupProposalsByMessage } from "./proposal-state";
+import { StreamingTurn } from "./streaming-turn";
+import { suggestionsFor } from "./suggestions";
+import { groupThread } from "./thread-view";
+import { useAssistantTurn } from "./use-assistant-turn";
 
-export function MessageThread({ thread }: { thread: AssistantThread }) {
+export function MessageThread({
+  thread,
+  agent,
+  onDelete,
+}: {
+  thread: AssistantThread;
+  agent: AgentDefinition | null;
+  onDelete: () => void;
+}) {
   const t = useT();
-  const queryClient = useQueryClient();
-
-  const [draft, setDraft] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [seed, setSeed] = useState<string>();
 
   const messagesQuery = useQuery(queries.assistant.messages(thread.id));
   const messages = messagesQuery.data?.results ?? [];
@@ -36,229 +49,191 @@ export function MessageThread({ thread }: { thread: AssistantThread }) {
     messages,
   );
 
-  const sendMutation = useApiMutation({
-    mutationFn: (content: string) => apiService.assistantService.sendMessage(thread.id, content),
-    onSuccess: async (result) => {
-      setDraft("");
-      if (result.proposalsUnrecorded) {
-        toast.warning(t("The assistant proposed a change that could not be saved for approval"), {
-          description: t("Nothing was changed. Ask again if you still want to make the change."),
-        });
-      }
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: queries.assistant.messages(thread.id).queryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queries.assistant.proposals(thread.id).queryKey,
-        }),
-        queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey }),
-      ]);
-    },
-    resourceName: "Message",
-  });
+  const entries = useMemo(() => groupThread(messages), [messages]);
+  const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(thread.id);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, sendMutation.isPending]);
-
-  const submit = useCallback(() => {
-    const content = draft.trim();
-    if (content === "" || sendMutation.isPending) {
-      return;
-    }
-    sendMutation.mutate(content);
-  }, [draft, sendMutation]);
+  const agentUnavailable = agent === null;
+  const isEmpty = !messagesQuery.isLoading && entries.length === 0 && turn === null;
 
   return (
-    <>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-          {messagesQuery.isLoading ? (
-            <>
-              <Skeleton className="h-16" />
-              <Skeleton className="h-16" />
-            </>
-          ) : (
-            messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                proposals={proposalsByMessage.get(message.id) ?? []}
-                threadId={thread.id}
-              />
-            ))
-          )}
-          {/* A proposal whose turn is no longer in the visible thread is shown
-              here rather than dropped: a pending change nobody can see is worse
-              than one shown out of position. */}
-          {looseProposals.map((proposal) => (
-            <ProposalCard key={proposal.id} proposal={proposal} threadId={thread.id} />
-          ))}
-          {sendMutation.isPending && <ThinkingIndicator />}
-          <div ref={bottomRef} />
-        </div>
-      </ScrollArea>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ThreadHeader thread={thread} agent={agent} onDelete={onDelete} />
 
-      <div className="border-border border-t p-3">
-        <div className="mx-auto flex max-w-3xl items-end gap-2">
-          <Textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              // Enter sends; Shift+Enter is a newline, which is what people expect
-              // from a chat box rather than a form field.
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            placeholder={t("Ask about a shipment, a driver, or how to do something…")}
-            rows={2}
-            className="resize-none"
-          />
-          <Button
-            size="sm"
-            onClick={submit}
-            disabled={draft.trim() === "" || sendMutation.isPending}
-            aria-label={t("Send")}
-          >
-            <SendIcon className="size-4" />
-          </Button>
-        </div>
-      </div>
-    </>
+      <MessageScrollerProvider autoScroll defaultScrollPosition="end">
+        <MessageScroller className="flex-1">
+        <MessageScrollerViewport className="px-4">
+          <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-5 py-5">
+            {messagesQuery.isLoading ? (
+              <div className="flex flex-col gap-4">
+                <Skeleton className="ml-auto h-10 w-2/5" />
+                <Skeleton className="h-20 w-3/5" />
+                <Skeleton className="ml-auto h-10 w-1/3" />
+              </div>
+            ) : isEmpty ? (
+              <EmptyThread agent={agent} onSuggest={setSeed} />
+            ) : (
+              entries.map((entry) => (
+                <MessageScrollerItem key={entry.message.id} messageId={entry.message.id}>
+                  {entry.kind === "user" ? (
+                    <UserBubble content={entry.message.content} sentAt={entry.message.createdAt} />
+                  ) : entry.kind === "declined" ? (
+                    <DeclinedBubble content={entry.message.content} sentAt={entry.message.createdAt} />
+                  ) : entry.kind === "refusal" ? (
+                    <RefusalNotice message={entry.message.content} />
+                  ) : (
+                    <AssistantEntry
+                      entry={entry}
+                      proposals={proposalsByMessage.get(entry.message.id) ?? []}
+                      threadId={thread.id}
+                    />
+                  )}
+                </MessageScrollerItem>
+              ))
+            )}
+
+            {/* A proposal whose turn is no longer in the visible thread is shown
+                here rather than dropped: a pending change nobody can see is worse
+                than one shown out of position. */}
+            {looseProposals.map((proposal) => (
+              <MessageScrollerItem key={proposal.id} messageId={proposal.id}>
+                <ProposalCard proposal={proposal} threadId={thread.id} />
+              </MessageScrollerItem>
+            ))}
+
+            {turn && (
+              <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
+                <div className="flex flex-col gap-5">
+                  <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
+                </div>
+              </MessageScrollerItem>
+            )}
+          </MessageScrollerContent>
+        </MessageScrollerViewport>
+        <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
+
+      <Composer
+        seed={seed}
+        onSend={(content) => {
+          setSeed(undefined);
+          void send(content);
+        }}
+        onStop={stop}
+        active={isActive}
+        disabled={agentUnavailable}
+        disabledReason={t("This agent has been disabled, so the conversation cannot continue.")}
+        placeholder={
+          agent ? t("Message {0}…", agent.name) : t("Ask about a shipment, a driver, or how to do something…")
+        }
+      />
+    </div>
   );
 }
 
-function MessageBubble({
-  message,
-  proposals,
-  threadId,
+/**
+ * Who the reader is talking to, and what that agent may do. A conversation is
+ * with one agent, and its reach is the thing worth knowing before asking.
+ */
+function ThreadHeader({
+  thread,
+  agent,
+  onDelete,
 }: {
-  message: AssistantMessage;
-  proposals: AssistantProposal[];
-  threadId: string;
+  thread: AssistantThread;
+  agent: AgentDefinition | null;
+  onDelete: () => void;
 }) {
-  const presentation = classifyMessage(message);
-
-  if (presentation === "tool") {
-    return <ToolResultRow message={message} />;
-  }
-
-  if (presentation === "refusal" || presentation === "declined-prompt") {
-    return <RefusalBubble message={message} presentation={presentation} />;
-  }
-
-  if (presentation === "user") {
-    return (
-      <div className="flex justify-end">
-        <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap">
-          {message.content}
-        </div>
-      </div>
-    );
-  }
+  const t = useT();
+  const templatesQuery = useQuery(queries.assistant.agentTemplates());
+  const templateLabel = templatesQuery.data?.templates.find((item) => item.kind === agent?.kind)?.label;
 
   return (
-    <div className="flex flex-col gap-1">
-      {message.content && (
-        <div className="bg-muted max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap">
-          {message.content}
-        </div>
-      )}
-      {message.toolCalls && message.toolCalls.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {message.toolCalls.map((call) => (
-            <Badge key={call.id} variant="secondary" className="gap-1">
-              <WrenchIcon className="size-3" />
-              {call.name}
+    <div className="border-border flex items-center gap-3 border-b px-4 py-2.5">
+      <AgentAvatar className="size-8" />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="truncate text-sm font-medium">
+            {agent?.name ?? t("Agent unavailable")}
+          </span>
+          {templateLabel && <Badge variant="outline">{templateLabel}</Badge>}
+          {agent && (
+            <Badge variant="secondary">
+              {agent.toolNames.length === 0
+                ? t("Answers only")
+                : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
             </Badge>
+          )}
+        </div>
+        <p className="text-muted-foreground truncate text-xs">
+          {agent
+            ? agent.description || t("Looks records up for you and proposes changes for your approval.")
+            : t("This agent was disabled or removed. You can read the conversation but not continue it.")}
+        </p>
+      </div>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={onDelete}
+              aria-label={t("Delete conversation")}
+            />
+          }
+        >
+          <Trash2Icon className="size-4" />
+        </TooltipTrigger>
+        <TooltipContent>{t("Delete conversation")}</TooltipContent>
+      </Tooltip>
+      <span className="sr-only">{thread.title}</span>
+    </div>
+  );
+}
+
+/**
+ * The first thing a reader sees in a new conversation: what this agent is for
+ * and three questions it can actually answer. A blank box teaches nothing.
+ */
+function EmptyThread({
+  agent,
+  onSuggest,
+}: {
+  agent: AgentDefinition | null;
+  onSuggest: (prompt: string) => void;
+}) {
+  const t = useT();
+  const suggestions = agent ? suggestionsFor(agent.kind) : [];
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
+      <AgentAvatar className="size-12 rounded-xl [&_svg]:size-6" />
+      <div className="flex flex-col gap-1">
+        <p className="text-base font-semibold">
+          {agent ? t("Talking to {0}", agent.name) : t("Start a conversation")}
+        </p>
+        <p className="text-muted-foreground max-w-md text-sm">
+          {agent?.description ||
+            t(
+              "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
+            )}
+        </p>
+      </div>
+      {suggestions.length > 0 && (
+        <div className="flex max-w-xl flex-wrap justify-center gap-2">
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion.prompt}
+              type="button"
+              onClick={() => onSuggest(suggestion.prompt)}
+              className="bg-card text-muted-foreground hover:bg-muted hover:text-foreground rounded-full border px-3 py-1.5 text-xs transition-colors"
+            >
+              {t(suggestion.label)}
+            </button>
           ))}
         </div>
       )}
-      {proposals.map((proposal) => (
-        <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
-      ))}
-    </div>
-  );
-}
-
-/**
- * A refusal is rendered as a boundary rather than as an error. The assistant did
- * not fail; it declined, and the message explains what it does cover.
- */
-function RefusalBubble({
-  message,
-  presentation,
-}: {
-  message: AssistantMessage;
-  presentation: MessagePresentation;
-}) {
-  const t = useT();
-
-  if (presentation === "declined-prompt") {
-    return (
-      <div className="flex justify-end">
-        <div className="border-border text-muted-foreground max-w-[80%] rounded-lg border border-dashed px-3 py-2 text-sm whitespace-pre-wrap">
-          {message.content}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Alert variant="warning" className="max-w-[85%]">
-      <ShieldAlertIcon className="size-4" />
-      <AlertTitle>{t("Outside what this assistant covers")}</AlertTitle>
-      <AlertDescription>{message.content}</AlertDescription>
-    </Alert>
-  );
-}
-
-/**
- * Tool traffic is shown rather than hidden. "Which records did it read before
- * saying that" is the first question anyone asks of an answer, and a collapsed
- * row keeps it available without crowding the conversation.
- */
-function ToolResultRow({ message }: { message: AssistantMessage }) {
-  const t = useT();
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="text-muted-foreground text-xs">
-      <button
-        type="button"
-        className="hover:text-foreground flex items-center gap-1.5"
-        onClick={() => setExpanded((value) => !value)}
-      >
-        {message.toolFailed ? (
-          <ShieldAlertIcon className="size-3" />
-        ) : (
-          <InfoIcon className="size-3" />
-        )}
-        <span>
-          {message.toolFailed
-            ? t("{0} failed", message.toolName)
-            : t("Looked up {0}", message.toolName)}
-        </span>
-      </button>
-      {expanded && (
-        <pre className="bg-muted mt-1 max-h-64 overflow-auto rounded-md p-2 text-[11px] whitespace-pre-wrap">
-          {message.content}
-        </pre>
-      )}
-    </div>
-  );
-}
-
-function ThinkingIndicator() {
-  const t = useT();
-
-  return (
-    <div className="text-muted-foreground flex items-center gap-2 text-sm">
-      <span className="bg-muted-foreground size-1.5 animate-pulse rounded-full" />
-      <span>{t("Working…")}</span>
     </div>
   );
 }
