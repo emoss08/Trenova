@@ -1,3 +1,4 @@
+import { readEventStream } from "@trenova/shared/lib/sse";
 import { api, withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
@@ -262,62 +263,54 @@ export class DocumentService {
       return;
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      let currentEvent = "";
-      for (const line of lines) {
-        if (line.startsWith("event: ")) {
-          currentEvent = line.slice(7);
-        } else if (line.startsWith("data: ") && currentEvent) {
-          try {
-            const raw = line.slice(6);
-            const data = raw === "null" || raw === "" ? null : JSON.parse(raw);
-            switch (currentEvent) {
-              case "text_delta":
-                handlers.onTextDelta?.(data.delta);
-                break;
-              case "new_message":
-                handlers.onNewMessage?.();
-                break;
-              case "tool_call_start":
-                handlers.onToolCallStart?.(data.name, data.callId);
-                break;
-              case "tool_call_done":
-                handlers.onToolCallDone?.(
-                  data.name,
-                  data.callId,
-                  data.status,
-                  data.result,
-                  data.actions ?? [],
-                );
-                break;
-              case "suggestions":
-                handlers.onSuggestions?.(data.suggestions ?? []);
-                break;
-              case "done":
-                handlers.onDone?.(data.conversationId, data.actions ?? []);
-                break;
-              case "error":
-                handlers.onError?.(data.message);
-                break;
-            }
-          } catch {
-            // Skip malformed events
-          }
-          currentEvent = "";
-        }
+    await readEventStream(response.body, (message) => {
+      let data: {
+        delta?: string;
+        name?: string;
+        callId?: string;
+        status?: string;
+        result?: string;
+        actions?: ImportAssistantChatResponse["actions"];
+        suggestions?: ImportAssistantChatResponse["suggestions"];
+        conversationId?: string;
+        message?: string;
+      };
+      try {
+        data = message.data === "null" || message.data === "" ? {} : JSON.parse(message.data);
+      } catch {
+        // A malformed frame is skipped rather than ending the stream.
+        return;
       }
-    }
+      switch (message.event) {
+        case "text_delta":
+          handlers.onTextDelta?.(data.delta ?? "");
+          break;
+        case "new_message":
+          handlers.onNewMessage?.();
+          break;
+        case "tool_call_start":
+          handlers.onToolCallStart?.(data.name ?? "", data.callId ?? "");
+          break;
+        case "tool_call_done":
+          handlers.onToolCallDone?.(
+            data.name ?? "",
+            data.callId ?? "",
+            data.status ?? "",
+            data.result ?? "",
+            data.actions ?? [],
+          );
+          break;
+        case "suggestions":
+          handlers.onSuggestions?.(data.suggestions ?? []);
+          break;
+        case "done":
+          handlers.onDone?.(data.conversationId ?? "", data.actions ?? []);
+          break;
+        case "error":
+          handlers.onError?.(data.message ?? "");
+          break;
+      }
+    });
   }
 
   public async chatWithImportAssistant(

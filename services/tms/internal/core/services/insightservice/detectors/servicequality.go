@@ -56,6 +56,13 @@ func (d *OnTimeDecline) Category() insight.Category      { return insight.Catego
 func (d *OnTimeDecline) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *OnTimeDecline) Operation() permission.Operation { return permission.OpRead }
 
+// Surfaces puts a service decline where it can be acted on: the shipment desk
+// that owns the customer relationship and the dispatch console that decides
+// which loads get covered first.
+func (d *OnTimeDecline) Surfaces() []insight.Surface {
+	return []insight.Surface{insight.SurfaceShipments, insight.SurfaceDispatch}
+}
+
 // Explain is deliberately specific about the volume floor. A reader who does not
 // know this rule ignores small customers cannot tell "no finding" apart from "no
 // problem", and for a customer running eight loads a month those are very

@@ -174,7 +174,7 @@ var CatalogDefinitions = []CatalogItem{
 	{
 		Type:          integration.TypeOpenAI,
 		Name:          "OpenAI",
-		Description:   "AI-powered document classification and structured extraction for document intelligence workflows.",
+		Description:   "OpenAI credential for document intelligence and shipment import. The assistant, agents and insights route through AI Providers instead.",
 		Category:      integration.CategoryArtificialIntelligence,
 		CategoryLabel: "AI & Automation",
 		LogoURL:       "/integrations/logos/openai_logo.svg",

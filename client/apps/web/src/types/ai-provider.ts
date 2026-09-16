@@ -21,6 +21,9 @@ export const aiTaskSchema = z.enum([
   "DocumentExtraction",
   "BillingDiagnosis",
   "FormulaAssistant",
+  "ScopeClassification",
+  "AssistantChat",
+  "OperationalInsights",
   "General",
 ]);
 

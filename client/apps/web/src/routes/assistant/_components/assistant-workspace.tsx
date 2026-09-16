@@ -1,18 +1,31 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent } from "@trenova/shared/components/ui/card";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { usePermission } from "@/hooks/use-permission";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BotIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { BotIcon, PlugZapIcon, Trash2Icon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { AgentPicker } from "./agent-picker";
+import { AgentAvatar } from "./message-items";
 import { MessageThread } from "./message-thread";
+import { ThreadSidebar } from "./thread-sidebar";
 
 export function AssistantWorkspace() {
   const t = useT();
@@ -20,13 +33,16 @@ export function AssistantWorkspace() {
 
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [deleting, setDeleting] = useState<AssistantThread | null>(null);
 
   const threadsQuery = useQuery(queries.assistant.threads());
   // Only enabled agents can hold a conversation, so the picker asks for those.
   const agentsQuery = useQuery(queries.assistant.agents(true));
+  const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = threadsQuery.data?.items ?? [];
   const agents = agentsQuery.data?.results ?? [];
+  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
   const refreshThreads = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
@@ -46,6 +62,7 @@ export function AssistantWorkspace() {
     mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
       toast.success(t("Conversation deleted"));
+      setDeleting(null);
       if (activeThreadId === id) {
         setActiveThreadId(null);
       }
@@ -58,47 +75,33 @@ export function AssistantWorkspace() {
   // would recompute anyway while pretending not to. Scanning a sidebar-sized
   // list is cheaper than the illusion.
   const activeThread = threads.find((thread) => thread.id === activeThreadId) ?? null;
-
   const hasAgents = agents.length > 0;
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="border-border flex w-72 shrink-0 flex-col border-r">
-        <div className="border-border border-b p-3">
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => setPickerOpen(true)}
-            disabled={!hasAgents}
-          >
-            <PlusIcon className="size-4" />
-            {t("New conversation")}
-          </Button>
-        </div>
-        <ScrollArea className="flex-1">
-          {threadsQuery.isLoading ? (
-            <div className="space-y-2 p-3">
-              <Skeleton className="h-12" />
-              <Skeleton className="h-12" />
-            </div>
-          ) : (
-            <ThreadList
-              threads={threads}
-              activeThreadId={activeThreadId}
-              onSelect={setActiveThreadId}
-              onDelete={(id) => deleteMutation.mutate(id)}
-            />
-          )}
-        </ScrollArea>
-      </aside>
+      <ThreadSidebar
+        threads={threads}
+        agentsById={agentsById}
+        activeThreadId={activeThreadId}
+        isLoading={threadsQuery.isLoading}
+        canStart={hasAgents}
+        onSelect={setActiveThreadId}
+        onStart={() => setPickerOpen(true)}
+        onDelete={setDeleting}
+      />
 
       <section className="flex min-h-0 flex-1 flex-col">
         {!hasAgents && !agentsQuery.isLoading ? (
-          <NoAgentsConfigured />
+          <NoAgentsConfigured canManageAgents={canManageAgents} />
         ) : activeThread ? (
-          <MessageThread key={activeThread.id} thread={activeThread} />
+          <MessageThread
+            key={activeThread.id}
+            thread={activeThread}
+            agent={agentsById.get(activeThread.agentDefinitionId) ?? null}
+            onDelete={() => setDeleting(activeThread)}
+          />
         ) : (
-          <EmptyConversation onStart={() => setPickerOpen(true)} disabled={!hasAgents} />
+          <EmptyWorkspace onStart={() => setPickerOpen(true)} disabled={!hasAgents} />
         )}
       </section>
 
@@ -109,100 +112,84 @@ export function AssistantWorkspace() {
         isPending={startMutation.isPending}
         onSelect={(agentId) => startMutation.mutate(agentId)}
       />
+
+      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <Trash2Icon />
+            </AlertDialogMedia>
+            <AlertDialogTitle>{t("Delete this conversation?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "“{0}” and everything the assistant looked up in it will be removed. Proposals that were already approved are not undone.",
+                deleting?.title || t("Untitled conversation"),
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Keep it")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {t("Delete conversation")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-type ThreadListProps = {
-  threads: AssistantThread[];
-  activeThreadId: string | null;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
-};
-
-function ThreadList({ threads, activeThreadId, onSelect, onDelete }: ThreadListProps) {
-  const t = useT();
-
-  if (threads.length === 0) {
-    return <p className="text-muted-foreground p-3 text-sm">{t("No conversations yet.")}</p>;
-  }
-
-  return (
-    <ul className="p-2">
-      {threads.map((thread) => (
-        <li key={thread.id}>
-          <div
-            className={`group flex items-center gap-1 rounded-md px-2 py-2 ${
-              thread.id === activeThreadId ? "bg-muted" : "hover:bg-muted/60"
-            }`}
-          >
-            <button
-              type="button"
-              className="min-w-0 flex-1 text-left"
-              onClick={() => onSelect(thread.id)}
-            >
-              <span className="block truncate text-sm">
-                {thread.title || t("Untitled conversation")}
-              </span>
-            </button>
-            <button
-              type="button"
-              aria-label={t("Delete conversation")}
-              className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={() => onDelete(thread.id)}
-            >
-              <Trash2Icon className="size-3.5" />
-            </button>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function EmptyConversation({ onStart, disabled }: { onStart: () => void; disabled: boolean }) {
+function EmptyWorkspace({ onStart, disabled }: { onStart: () => void; disabled: boolean }) {
   const t = useT();
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <Card className="max-w-md">
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <BotIcon className="text-muted-foreground size-8" />
-          <div>
-            <p className="font-medium">{t("Start a conversation")}</p>
-            <p className="text-muted-foreground text-sm">
-              {t(
-                "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
-              )}
-            </p>
-          </div>
-          <Button size="sm" onClick={onStart} disabled={disabled}>
-            {t("New conversation")}
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
+      <AgentAvatar className="size-14 rounded-2xl [&_svg]:size-7" />
+      <div className="flex max-w-md flex-col gap-1.5">
+        <p className="text-lg font-semibold">{t("Ask the assistant")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t(
+            "Where a shipment is, who is available, what is holding an invoice, how to do something in Trenova. It reads the records you can see and proposes changes for you to approve.",
+          )}
+        </p>
+      </div>
+      <Button onClick={onStart} disabled={disabled}>
+        {t("New conversation")}
+      </Button>
     </div>
   );
 }
 
-function NoAgentsConfigured() {
+function NoAgentsConfigured({ canManageAgents }: { canManageAgents: boolean }) {
   const t = useT();
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <Card className="max-w-md">
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <BotIcon className="text-muted-foreground size-8" />
-          <div>
-            <p className="font-medium">{t("No agents are available")}</p>
-            <p className="text-muted-foreground text-sm">
-              {t(
-                "An administrator needs to configure and enable an agent, and connect an AI provider, before conversations can start.",
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
+      <span className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-2xl">
+        <BotIcon className="size-7" />
+      </span>
+      <div className="flex max-w-md flex-col gap-1.5">
+        <p className="text-lg font-semibold">{t("No agents are available")}</p>
+        <p className="text-muted-foreground text-sm">
+          {canManageAgents
+            ? t(
+                "Connect an AI provider and enable an agent in Agent Control, then come back here to start a conversation.",
+              )
+            : t(
+                "An administrator needs to connect an AI provider and enable an agent before conversations can start.",
               )}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        </p>
+      </div>
+      {canManageAgents && (
+        <Button variant="outline" nativeButton={false} render={<Link to="/admin/agent-control" />}>
+          <PlugZapIcon className="size-4" />
+          {t("Open Agent Control")}
+        </Button>
+      )}
     </div>
   );
 }

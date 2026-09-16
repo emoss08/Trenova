@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageInsightsCard } from "@/components/insights/page-insights";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { usePermission } from "@/hooks/use-permission";
@@ -96,7 +97,13 @@ export function AccountingDashboardPage() {
             <CollectionsWorklistCard />
           </Section>
 
+          {/* Findings about money earned and not collected belong beside the
+              worklist that collects it, not on a page of their own. */}
           <Section index={4}>
+            <PageInsightsCard surface="Accounting" title={t("Cash insights")} />
+          </Section>
+
+          <Section index={5}>
             <AccountingQuickLinks />
           </Section>
         </div>

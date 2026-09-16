@@ -23,6 +23,23 @@ func (s *Service) CompleteChat(
 	ctx context.Context,
 	req *serviceports.ChatCompletionRequest,
 ) (*serviceports.ChatCompletionResult, error) {
+	return s.runChat(ctx, req, nil)
+}
+
+// StreamChat is CompleteChat with the text handed to sink as it arrives.
+func (s *Service) StreamChat(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	sink serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, error) {
+	return s.runChat(ctx, req, sink)
+}
+
+func (s *Service) runChat(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	sink serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, error) {
 	if !s.cfg.AIEnabled() {
 		return nil, errortypes.NewBusinessError("AI features are disabled")
 	}
@@ -55,13 +72,23 @@ func (s *Service) CompleteChat(
 
 	var lastErr error
 	for _, provider := range usable {
-		result, attemptErr := s.attemptChat(ctx, provider, req)
+		result, emitted, attemptErr := s.attemptChat(ctx, provider, req, sink)
 		if attemptErr == nil {
 			return result, nil
 		}
 
 		if errors.Is(attemptErr, errRefused) {
 			return nil, errortypes.NewBusinessError("The model declined this request")
+		}
+
+		// Once a provider has started answering, the reader has seen its words.
+		// Handing the same question to the next provider would splice a second
+		// answer onto the first, so the failure is reported instead.
+		if emitted {
+			return nil, fmt.Errorf(
+				"chat provider %s failed after it started replying: %w",
+				provider.Name, attemptErr,
+			)
 		}
 
 		lastErr = attemptErr
@@ -74,19 +101,22 @@ func (s *Service) CompleteChat(
 	return nil, fmt.Errorf("every configured chat provider failed: %w", lastErr)
 }
 
+// attemptChat runs the turn on one provider. The returned flag reports whether
+// any text reached the sink, which decides whether a failure may fall through.
 func (s *Service) attemptChat(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
+	sink serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, bool, error) {
 	adapter, err := s.adapters.Get(provider.Kind)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	apiKey, err := s.resolveAPIKey(provider)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	maxTokens := req.MaxTokens
@@ -94,7 +124,7 @@ func (s *Service) attemptChat(
 		maxTokens = provider.ResolvedMaxTokens()
 	}
 
-	resp, err := s.executeWithRetry(ctx, adapter, &modeladapter.Call{
+	call := &modeladapter.Call{
 		Provider: provider,
 		APIKey:   apiKey,
 		Client:   s.clientFor(provider),
@@ -104,19 +134,33 @@ func (s *Service) attemptChat(
 			Tools:     req.Tools,
 			MaxTokens: maxTokens,
 		},
-	})
+	}
+
+	var (
+		resp    *modeladapter.Response
+		emitted bool
+	)
+	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
+		resp, emitted, err = s.executeStreamWithRetry(ctx, streamer, call, sink)
+	} else {
+		resp, err = s.executeWithRetry(ctx, adapter, call)
+		if err == nil && sink != nil && resp.Text != "" {
+			sink(resp.Text)
+			emitted = true
+		}
+	}
 	if err != nil {
-		return nil, err
+		return nil, emitted, err
 	}
 
 	if resp.Refused {
-		return nil, errRefused
+		return nil, emitted, errRefused
 	}
 
 	// A turn with neither text nor a tool call is a dead end rather than an
 	// answer, so it counts as a failure and the next provider gets a try.
 	if resp.Text == "" && len(resp.ToolCalls) == 0 {
-		return nil, errors.New("provider returned neither content nor a tool call")
+		return nil, emitted, errors.New("provider returned neither content nor a tool call")
 	}
 
 	return &serviceports.ChatCompletionResult{
@@ -127,5 +171,46 @@ func (s *Service) attemptChat(
 		OutputTokens:    resp.OutputTokens,
 		ProviderID:      provider.ID,
 		ProviderKind:    provider.Kind,
-	}, nil
+	}, emitted, nil
+}
+
+// executeStreamWithRetry retries a stream only while nothing has reached the
+// sink. A retry after the first delta would replay text the reader already has.
+func (s *Service) executeStreamWithRetry(
+	ctx context.Context,
+	streamer modeladapter.Streamer,
+	call *modeladapter.Call,
+	sink serviceports.ChatStreamSink,
+) (*modeladapter.Response, bool, error) {
+	attempts := s.cfg.GetAIMaxRetries()
+	if attempts < 1 {
+		attempts = 1
+	}
+
+	emitted := false
+	tracked := func(delta string) {
+		emitted = true
+		sink(delta)
+	}
+
+	var lastErr error
+	for attempt := range attempts {
+		resp, err := streamer.Stream(ctx, call, tracked)
+		if err == nil {
+			return resp, emitted, nil
+		}
+
+		lastErr = err
+		if emitted || !modeladapter.IsRetryable(err) || ctx.Err() != nil {
+			return nil, emitted, err
+		}
+
+		s.logger.Debug("retrying provider stream",
+			zap.String("provider", call.Provider.Name),
+			zap.Int("attempt", attempt+1),
+			zap.Error(err),
+		)
+	}
+
+	return nil, emitted, lastErr
 }

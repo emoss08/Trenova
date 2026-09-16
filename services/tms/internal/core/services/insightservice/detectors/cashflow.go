@@ -52,6 +52,11 @@ func (d *UnbilledAging) Category() insight.Category      { return insight.Catego
 func (d *UnbilledAging) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *UnbilledAging) Operation() permission.Operation { return permission.OpRead }
 
+// Surfaces puts unbilled revenue in front of the people who invoice.
+func (d *UnbilledAging) Surfaces() []insight.Surface {
+	return []insight.Surface{insight.SurfaceAccounting}
+}
+
 func (d *UnbilledAging) Explain() detector.Explanation {
 	return detector.Explanation{
 		Measures: "Delivered shipments that have never been billed, grouped by customer, " +

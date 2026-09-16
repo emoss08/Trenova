@@ -97,6 +97,10 @@ type Detector interface {
 	// profitability must not reach someone who cannot read customers.
 	Resource() permission.Resource
 	Operation() permission.Operation
+	// Surfaces names the working pages this detector's findings belong on. A
+	// finding may matter to more than one desk; an empty list means it is only
+	// ever shown on the home screen and the insights page.
+	Surfaces() []insight.Surface
 	// Explain describes the rule for a person reading one of its findings.
 	Explain() Explanation
 	// Detect runs the queries. Returning no findings is the normal, healthy case
@@ -144,6 +148,25 @@ func (r *Registry) Get(key string) (Detector, bool) {
 	d, ok := r.byKey[key]
 
 	return d, ok
+}
+
+// KeysForSurface lists the detectors whose findings belong on one page, in
+// registration order. It is the page's half of the read: the permission filter
+// is the reader's half, and the query takes the intersection.
+func (r *Registry) KeysForSurface(surface insight.Surface) []string {
+	keys := make([]string, 0, len(r.detectors))
+
+	for _, d := range r.detectors {
+		for _, candidate := range d.Surfaces() {
+			if candidate == surface {
+				keys = append(keys, d.Key())
+
+				break
+			}
+		}
+	}
+
+	return keys
 }
 
 // Validate reports what is wrong with a finding.

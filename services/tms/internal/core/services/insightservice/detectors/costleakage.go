@@ -51,6 +51,12 @@ func (d *UnbilledDetention) Operation() permission.Operation {
 	return permission.OpRead
 }
 
+// Surfaces puts unbilled detention in front of both desks that can fix it: the
+// one that raises the accessorial and the one that schedules the door.
+func (d *UnbilledDetention) Surfaces() []insight.Surface {
+	return []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch}
+}
+
 func (d *UnbilledDetention) Explain() detector.Explanation {
 	return detector.Explanation{
 		Measures: "Detention that accrued past free time at a location and never became " +
@@ -171,6 +177,12 @@ func (d *EmptyMiles) Key() string                     { return EmptyMilesKey }
 func (d *EmptyMiles) Category() insight.Category      { return insight.CategoryCostLeakage }
 func (d *EmptyMiles) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *EmptyMiles) Operation() permission.Operation { return permission.OpRead }
+
+// Surfaces puts empty-mile concentration on the dispatch console, where the
+// next load is chosen.
+func (d *EmptyMiles) Surfaces() []insight.Surface {
+	return []insight.Surface{insight.SurfaceDispatch}
+}
 
 // Explain names the comparison explicitly, because the absolute number is the
 // one a reader will reach for and it is the wrong one. A dedicated fleet lives

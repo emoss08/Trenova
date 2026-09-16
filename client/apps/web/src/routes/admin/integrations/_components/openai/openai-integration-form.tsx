@@ -78,10 +78,10 @@ export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClos
       <OpenAIFormHeader />
       <Alert variant="info">
         <SparklesIcon className="size-4" />
-        <AlertTitle>{t("Document AI requires two layers")}</AlertTitle>
+        <AlertTitle>{t("This key is for document intelligence")}</AlertTitle>
         <AlertDescription>
           {t(
-            "This integration stores the organization OpenAI credential. AI-assisted classification and extraction are still controlled separately in Document Controls.",
+            "It powers document classification, extraction and shipment import, which are switched on in Document Intelligence. The assistant, agents and operational insights route through AI Providers instead, where any model endpoint can be connected.",
           )}
         </AlertDescription>
       </Alert>

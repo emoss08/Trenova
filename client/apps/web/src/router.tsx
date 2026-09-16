@@ -1783,12 +1783,10 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                // Agents are configured from Agent Control; the old standalone
+                // page forwards so a saved link still lands somewhere useful.
                 path: "agents",
-                loader: createPermissionLoader(Resource.AgentDefinition, Operation.Read),
-                async lazy() {
-                  const { AgentsPage } = await import("@/routes/admin/agents/page");
-                  return { Component: AgentsPage };
-                },
+                loader: () => redirect("/admin/agent-control"),
               },
               {
                 path: "ai-providers",

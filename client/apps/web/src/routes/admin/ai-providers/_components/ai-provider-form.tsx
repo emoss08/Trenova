@@ -239,7 +239,12 @@ export function AIProviderForm({ provider, onClose, onSaved }: AIProviderFormPro
             name="description"
             control={control}
             label={t("Description")}
-            placeholder={t("What this endpoint is for")}
+            placeholder={t(
+              "A small model on the office GPU server; cheap enough for every request.",
+            )}
+            description={t(
+              "For the next administrator. Where the endpoint runs and why it handles the tasks it does.",
+            )}
           />
         </FormControl>
       </FormGroup>

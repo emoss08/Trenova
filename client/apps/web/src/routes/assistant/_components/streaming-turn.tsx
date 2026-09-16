@@ -1,0 +1,118 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { CircleAlertIcon } from "lucide-react";
+import { AssistantFrame, AssistantProse, RefusalNotice, UserBubble } from "./message-items";
+import { ToolActivity } from "./tool-activity";
+import { describeToolCall } from "./tool-presentation";
+import type { TurnState } from "./turn-stream";
+
+/**
+ * The turn in progress, rendered straight from its state.
+ *
+ * Everything the reader sees here is provisional and is replaced by the saved
+ * thread once the server confirms it; the point of showing it is that a
+ * question about a shipment should start being answered within a second, not
+ * after every lookup has finished.
+ */
+export function StreamingTurn({
+  turn,
+  onRetry,
+  onDismiss,
+}: {
+  turn: TurnState;
+  onRetry?: () => void;
+  onDismiss: () => void;
+}) {
+  const t = useT();
+
+  const hasBody = turn.segments.length > 0;
+  const showFrame = hasBody || turn.status === "guarding" || turn.status === "working";
+
+  return (
+    <>
+      <UserBubble content={turn.userContent} />
+
+      {turn.status === "refused" && turn.refusal && <RefusalNotice message={turn.refusal.message} />}
+
+      {showFrame && turn.status !== "refused" && (
+        <AssistantFrame>
+          {turn.segments.map((segment, index) =>
+            segment.kind === "text" ? (
+              <AssistantProse
+                key={`text-${index}`}
+                content={segment.text}
+                streaming={!segment.closed && turn.status === "streaming"}
+              />
+            ) : (
+              <div key={segment.callId} className="flex max-w-[92%] flex-col gap-1.5">
+                <ToolActivity
+                  name={segment.name}
+                  arguments={segment.arguments}
+                  status={segment.status}
+                  content={segment.content}
+                  live
+                />
+              </div>
+            ),
+          )}
+          <StatusLine turn={turn} />
+        </AssistantFrame>
+      )}
+
+      {turn.status === "error" && (
+        <AssistantFrame>
+          <Alert variant="destructive" className="max-w-[92%]">
+            <CircleAlertIcon className="size-4" />
+            <AlertTitle>{t("The assistant could not finish")}</AlertTitle>
+            <AlertDescription className="flex flex-col gap-2">
+              <p>{turn.error}</p>
+              <div className="flex gap-2">
+                {onRetry && (
+                  <Button size="xs" variant="outline" onClick={onRetry}>
+                    {t("Try again")}
+                  </Button>
+                )}
+                <Button size="xs" variant="ghost" onClick={onDismiss}>
+                  {t("Dismiss")}
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </AssistantFrame>
+      )}
+    </>
+  );
+}
+
+/**
+ * What the assistant is doing right now, in words, so a pause never reads as
+ * a hang: the guard is checking, a record is being read, or the model is
+ * composing.
+ */
+function StatusLine({ turn }: { turn: TurnState }) {
+  const t = useT();
+
+  if (turn.status === "guarding") {
+    return <TextShimmer as="span" className="text-xs">{t("Checking the question…")}</TextShimmer>;
+  }
+
+  if (turn.status !== "working") {
+    return null;
+  }
+
+  const running = turn.segments.find(
+    (segment) => segment.kind === "tool" && segment.status === "running",
+  );
+  if (running && running.kind === "tool") {
+    const description = describeToolCall(running.name, running.arguments);
+    const label =
+      description.subject !== ""
+        ? `${description.title} · ${description.subject}…`
+        : `${description.title}…`;
+    return <TextShimmer as="span" className="text-xs">{label}</TextShimmer>;
+  }
+
+  return <TextShimmer as="span" className="text-xs">{t("Thinking…")}</TextShimmer>;
+}

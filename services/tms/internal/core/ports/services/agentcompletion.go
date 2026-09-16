@@ -106,6 +106,10 @@ type ChatCompletionResult struct {
 	ProviderKind    aiprovider.Kind
 }
 
+// ChatStreamSink receives reply text as the model produces it. It is a preview
+// of the result's Text, delivered in order; the result is still authoritative.
+type ChatStreamSink func(delta string)
+
 type CompletionService interface {
 	Diagnose(ctx context.Context, req *DiagnoseRequest) (*DiagnoseResult, error)
 	CompleteStructured(
@@ -118,5 +122,13 @@ type CompletionService interface {
 	CompleteChat(
 		ctx context.Context,
 		req *ChatCompletionRequest,
+	) (*ChatCompletionResult, error)
+	// StreamChat is CompleteChat with the reply text delivered to sink as it
+	// arrives. A provider whose protocol cannot stream delivers the whole text at
+	// once, so callers need no second path.
+	StreamChat(
+		ctx context.Context,
+		req *ChatCompletionRequest,
+		sink ChatStreamSink,
 	) (*ChatCompletionResult, error)
 }

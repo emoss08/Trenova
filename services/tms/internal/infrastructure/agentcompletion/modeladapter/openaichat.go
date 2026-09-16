@@ -2,6 +2,7 @@ package modeladapter
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -27,6 +28,13 @@ type chatRequest struct {
 	ResponseFormat *chatResponseFormat `json:"response_format,omitempty"`
 	Tools          []chatTool          `json:"tools,omitempty"`
 	Stream         bool                `json:"stream"`
+	StreamOptions  *chatStreamOptions  `json:"stream_options,omitempty"`
+}
+
+// chatStreamOptions asks for a final usage chunk. Without it a streamed reply
+// carries no token counts, and usage is what the AI log is for.
+type chatStreamOptions struct {
+	IncludeUsage bool `json:"include_usage"`
 }
 
 type chatMessage struct {
@@ -119,6 +127,136 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		ModelIdentifier: firstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.Usage.PromptTokens,
 		OutputTokens:    envelope.Usage.CompletionTokens,
+		Refused:         refused,
+	}, nil
+}
+
+// chatStreamChunk is one streamed delta. Tool calls arrive as fragments keyed by
+// index, with the id and name on the first fragment and the arguments spread
+// across the rest as pieces of one JSON string.
+type chatStreamChunk struct {
+	Model   string `json:"model"`
+	Choices []struct {
+		FinishReason string `json:"finish_reason"`
+		Delta        struct {
+			Content   string `json:"content"`
+			ToolCalls []struct {
+				Index    int    `json:"index"`
+				ID       string `json:"id"`
+				Function struct {
+					Name      string `json:"name"`
+					Arguments string `json:"arguments"`
+				} `json:"function"`
+			} `json:"tool_calls"`
+		} `json:"delta"`
+	} `json:"choices"`
+	Usage *chatUsage `json:"usage"`
+}
+
+type chatToolCallBuffer struct {
+	id        string
+	name      string
+	arguments strings.Builder
+}
+
+func (a openAIChatAdapter) Stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+) (*Response, error) {
+	body := chatRequest{
+		Model:         call.Provider.Model,
+		MaxTokens:     call.Request.MaxTokens,
+		Messages:      toChatMessages(call.Request.System, call.Request.Messages),
+		Tools:         toChatTools(call.Request.Tools),
+		Stream:        true,
+		StreamOptions: &chatStreamOptions{IncludeUsage: true},
+	}
+	body.ResponseFormat = chatResponseFormatFor(call)
+
+	stream, err := postStream(
+		ctx,
+		call.Client,
+		call.Provider.ResolvedBaseURL()+"/chat/completions",
+		map[string]string{"Authorization": bearer(call.APIKey)},
+		body,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = stream.Close() }()
+
+	var (
+		text    strings.Builder
+		model   string
+		usage   chatUsage
+		refused bool
+		buffers = map[int]*chatToolCallBuffer{}
+		order   []int
+	)
+
+	err = readSSE(stream, func(_, data string) error {
+		if data == "[DONE]" {
+			return nil
+		}
+
+		var chunk chatStreamChunk
+		if err := sonic.Unmarshal([]byte(data), &chunk); err != nil {
+			return fmt.Errorf("decode stream chunk: %w", err)
+		}
+
+		model = firstNonEmpty(model, chunk.Model)
+		if chunk.Usage != nil {
+			usage = *chunk.Usage
+		}
+
+		for idx := range chunk.Choices {
+			choice := &chunk.Choices[idx]
+			if choice.FinishReason == "content_filter" {
+				refused = true
+			}
+			if choice.Delta.Content != "" {
+				text.WriteString(choice.Delta.Content)
+				sink(choice.Delta.Content)
+			}
+			for _, fragment := range choice.Delta.ToolCalls {
+				buffer, ok := buffers[fragment.Index]
+				if !ok {
+					buffer = &chatToolCallBuffer{}
+					buffers[fragment.Index] = buffer
+					order = append(order, fragment.Index)
+				}
+				buffer.id = firstNonEmpty(buffer.id, fragment.ID)
+				buffer.name = firstNonEmpty(buffer.name, fragment.Function.Name)
+				buffer.arguments.WriteString(fragment.Function.Arguments)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	toolCalls := make([]ToolCall, 0, len(order))
+	for _, index := range order {
+		buffer := buffers[index]
+		toolCalls = append(toolCalls, ToolCall{
+			ID:        firstNonEmpty(buffer.id, fmt.Sprintf("call_%d", index)),
+			Name:      buffer.name,
+			Arguments: decodeArguments(buffer.arguments.String()),
+		})
+	}
+	if len(toolCalls) == 0 {
+		toolCalls = nil
+	}
+
+	return &Response{
+		Text:            text.String(),
+		ToolCalls:       toolCalls,
+		ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+		InputTokens:     usage.PromptTokens,
+		OutputTokens:    usage.CompletionTokens,
 		Refused:         refused,
 	}, nil
 }

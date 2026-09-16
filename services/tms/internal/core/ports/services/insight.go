@@ -15,7 +15,10 @@ type ListInsightsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 	Categories []insight.Category
-	Limit      int
+	// Surface narrows to the detectors that belong on one working page. Empty
+	// means the home screen's view: everything the reader may see.
+	Surface insight.Surface
+	Limit   int
 }
 
 // BrowseInsightsRequest reads the history rather than the home screen's slice:

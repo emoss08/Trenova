@@ -271,12 +271,42 @@ func (s *Service) ListActive(
 		limit = widgetLimit
 	}
 
+	allowed := s.allowedDetectorKeys(ctx, req)
+	if req.Surface != "" {
+		allowed = s.restrictToSurface(allowed, req.Surface)
+	}
+
 	return s.repo.ListActive(ctx, repositories.ListActiveInsightsRequest{
 		TenantInfo:          req.TenantInfo,
-		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, req),
+		AllowedDetectorKeys: allowed,
 		Categories:          req.Categories,
 		Limit:               limit,
 	})
+}
+
+// restrictToSurface keeps only the detectors that belong on one page.
+//
+// It is an intersection, never a union: a page asking for its own slice cannot
+// widen what the reader's permissions already allow. A surface no detector
+// claims yields an empty set, which the repository reads as nothing to show —
+// the same shape as a reader with no permissions, and for the same reason.
+func (s *Service) restrictToSurface(
+	allowed repositories.AllowedDetectorKeys,
+	surface insight.Surface,
+) repositories.AllowedDetectorKeys {
+	onSurface := make(map[string]struct{}, len(allowed))
+	for _, key := range s.detectors.KeysForSurface(surface) {
+		onSurface[key] = struct{}{}
+	}
+
+	restricted := make(repositories.AllowedDetectorKeys, 0, len(allowed))
+	for _, key := range allowed {
+		if _, ok := onSurface[key]; ok {
+			restricted = append(restricted, key)
+		}
+	}
+
+	return restricted
 }
 
 // List browses the history a page at a time.

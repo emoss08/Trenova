@@ -9,6 +9,13 @@ export const insightCategorySchema = z.enum([
 
 export const insightSeveritySchema = z.enum(["Info", "Warning", "Critical"]);
 
+/**
+ * A working page a finding belongs on. A category says what kind of problem a
+ * finding is; a surface says which desk can act on it, and each page asks for
+ * its own slice by name.
+ */
+export const insightSurfaceSchema = z.enum(["Accounting", "Dispatch", "Shipments", "Fleet"]);
+
 export const insightStatusSchema = z.enum(["Active", "Dismissed", "Resolved", "Superseded"]);
 
 export const insightUnitSchema = z.enum(["Count", "Currency", "Percent", "Days", "Hours", "Miles"]);
@@ -111,6 +118,7 @@ export const insightPageSchema = z.object({
 
 export type InsightCategory = z.infer<typeof insightCategorySchema>;
 export type InsightSeverity = z.infer<typeof insightSeveritySchema>;
+export type InsightSurface = z.infer<typeof insightSurfaceSchema>;
 export type InsightUnit = z.infer<typeof insightUnitSchema>;
 export type InsightDirection = z.infer<typeof insightDirectionSchema>;
 export type InsightMetric = z.infer<typeof insightMetricSchema>;

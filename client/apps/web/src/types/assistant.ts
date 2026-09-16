@@ -162,6 +162,91 @@ export const sendMessageResultSchema = z.object({
   proposalsUnrecorded: z.boolean().default(false),
 });
 
+/**
+ * The events a streamed turn emits, in the shape the server sends them. The
+ * union is discriminated on the SSE event name so a reducer can switch on it
+ * without a second lookup.
+ */
+export const assistantAcceptedEventSchema = z.object({
+  content: z.string(),
+  scopeStage: z.string().optional().default(""),
+  scopeCategory: z.string().optional().default(""),
+});
+
+export const assistantRefusedEventSchema = z.object({
+  message: z.string(),
+  stage: z.string().optional().default(""),
+  category: z.string().optional().default(""),
+  reason: z.string().optional().default(""),
+});
+
+export const assistantDeltaEventSchema = z.object({ text: z.string() });
+
+export const assistantMessageEventSchema = z.object({
+  content: z.string().optional().default(""),
+  toolCalls: z.array(toolCallRecordSchema).nullish(),
+  model: z.string().optional().default(""),
+});
+
+export const assistantToolStartedEventSchema = z.object({
+  callId: z.string(),
+  name: z.string(),
+  arguments: z.record(z.string(), z.unknown()).nullish(),
+});
+
+export const assistantToolFinishedEventSchema = z.object({
+  callId: z.string(),
+  name: z.string(),
+  failed: z.boolean().default(false),
+  proposed: z.boolean().default(false),
+  content: z.string().optional().default(""),
+});
+
+export const assistantErrorEventSchema = z.object({ message: z.string() });
+
+export type AssistantStreamEvent =
+  | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
+  | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
+  | { event: "delta"; data: z.infer<typeof assistantDeltaEventSchema> }
+  | { event: "message"; data: z.infer<typeof assistantMessageEventSchema> }
+  | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
+  | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
+  | { event: "done"; data: SendMessageResult }
+  | { event: "error"; data: z.infer<typeof assistantErrorEventSchema> };
+
+/**
+ * Parses one raw SSE frame into a typed event. An event name this client does
+ * not know returns null so a newer server can add events without breaking an
+ * older reader; a known event with a malformed body throws, because that is a
+ * contract violation rather than an extension.
+ */
+export function parseAssistantStreamEvent(
+  event: string,
+  raw: string,
+): AssistantStreamEvent | null {
+  const data: unknown = raw === "" ? {} : JSON.parse(raw);
+  switch (event) {
+    case "accepted":
+      return { event, data: assistantAcceptedEventSchema.parse(data) };
+    case "refused":
+      return { event, data: assistantRefusedEventSchema.parse(data) };
+    case "delta":
+      return { event, data: assistantDeltaEventSchema.parse(data) };
+    case "message":
+      return { event, data: assistantMessageEventSchema.parse(data) };
+    case "tool_started":
+      return { event, data: assistantToolStartedEventSchema.parse(data) };
+    case "tool_finished":
+      return { event, data: assistantToolFinishedEventSchema.parse(data) };
+    case "done":
+      return { event, data: sendMessageResultSchema.parse(data) };
+    case "error":
+      return { event, data: assistantErrorEventSchema.parse(data) };
+    default:
+      return null;
+  }
+}
+
 export type AgentKind = z.infer<typeof agentKindSchema>;
 export type AutonomyTier = z.infer<typeof autonomyTierSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;

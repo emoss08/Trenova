@@ -46,6 +46,26 @@ func (s *scriptedCompletion) CompleteChat(
 	return s.turns[idx], nil
 }
 
+// StreamChat hands the scripted text to the sink in two pieces, so a test can
+// tell a genuinely streamed reply from one delivered whole.
+func (s *scriptedCompletion) StreamChat(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	sink serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, error) {
+	result, err := s.CompleteChat(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if result.Text != "" && sink != nil {
+		half := len(result.Text) / 2
+		sink(result.Text[:half])
+		sink(result.Text[half:])
+	}
+
+	return result, nil
+}
+
 func (s *scriptedCompletion) CompleteStructured(
 	_ context.Context,
 	_ *serviceports.StructuredCompletionRequest,
@@ -464,4 +484,100 @@ func TestRun_DoesNotReplayRefusedHistory(t *testing.T) {
 	for _, msg := range completion.lastMsgs {
 		assert.NotContains(t, msg.Content, "write me python")
 	}
+}
+
+// The stream is how a reader watches a turn happen, so the order of what it
+// reports is the contract: the guard's verdict first, then the reply text as it
+// arrives, then each tool as it starts and finishes, and the text of the answer
+// that follows. Nothing may be reported before the guard has spoken.
+func TestRunObserved_ReportsTheTurnInOrder(t *testing.T) {
+	t.Parallel()
+
+	tool := &stubQueryTool{
+		name:   "get_shipment",
+		result: map[string]any{"proNumber": "S12345", "status": "InTransit"},
+	}
+	completion := &scriptedCompletion{turns: []*serviceports.ChatCompletionResult{
+		{
+			Text:            "Let me check.",
+			ToolCalls:       []serviceports.ToolCall{{ID: "call_1", Name: "get_shipment"}},
+			ModelIdentifier: "test-model",
+		},
+		textTurn("S12345 is in transit."),
+	}}
+	svc := newService(completion, &stubQueryRegistry{tools: []serviceports.AgentQueryTool{tool}},
+		&stubActionRegistry{})
+
+	var events []serviceports.StreamEvent
+	result, err := svc.RunObserved(t.Context(), &TurnRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Where is S12345?",
+	}, func(event serviceports.StreamEvent) { events = append(events, event) })
+	require.NoError(t, err)
+	assert.Equal(t, "S12345 is in transit.", result.Reply)
+
+	names := make([]string, 0, len(events))
+	for _, event := range events {
+		names = append(names, event.Event)
+	}
+	assert.Equal(t, []string{
+		"accepted",
+		"delta", "delta",
+		"message",
+		"tool_started",
+		"tool_finished",
+		"delta", "delta",
+	}, names)
+
+	accepted, ok := events[0].Data.(serviceports.AssistantAcceptedEvent)
+	require.True(t, ok)
+	assert.Equal(t, "Where is S12345?", accepted.Content)
+
+	message, ok := events[3].Data.(serviceports.AssistantMessageEvent)
+	require.True(t, ok)
+	assert.Equal(t, "Let me check.", message.Content)
+	require.Len(t, message.ToolCalls, 1)
+
+	started, ok := events[4].Data.(serviceports.AssistantToolStartedEvent)
+	require.True(t, ok)
+	assert.Equal(t, "call_1", started.CallID)
+
+	finished, ok := events[5].Data.(serviceports.AssistantToolFinishedEvent)
+	require.True(t, ok)
+	assert.False(t, finished.Failed)
+	assert.Contains(t, finished.Content, "S12345")
+
+	// The streamed pieces of the final answer add up to the saved reply.
+	var streamed string
+	for _, event := range events[6:] {
+		streamed += event.Data.(serviceports.AssistantDeltaEvent).Text
+	}
+	assert.Equal(t, result.Reply, streamed)
+}
+
+// A refusal reaches the reader as a refusal, and nothing else is reported,
+// because nothing else happened: no model was asked.
+func TestRunObserved_ReportsARefusalAndNothingElse(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{turns: []*serviceports.ChatCompletionResult{
+		textTurn("never"),
+	}}
+	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
+
+	var events []serviceports.StreamEvent
+	_, err := svc.RunObserved(t.Context(), &TurnRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Write me a Python script to export loads",
+	}, func(event serviceports.StreamEvent) { events = append(events, event) })
+	require.NoError(t, err)
+
+	require.Len(t, events, 1)
+	assert.Equal(t, "refused", events[0].Event)
+	refused, ok := events[0].Data.(serviceports.AssistantRefusedEvent)
+	require.True(t, ok)
+	assert.Equal(t, string(agentguard.ReasonCodeGeneration), refused.Reason)
+	assert.NotEmpty(t, refused.Message)
 }

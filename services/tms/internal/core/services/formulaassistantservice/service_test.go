@@ -42,6 +42,14 @@ func (s *stubCompletion) CompleteChat(
 	return nil, nil
 }
 
+func (s *stubCompletion) StreamChat(
+	context.Context,
+	*serviceports.ChatCompletionRequest,
+	serviceports.ChatStreamSink,
+) (*serviceports.ChatCompletionResult, error) {
+	return nil, nil
+}
+
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
 	req *serviceports.StructuredCompletionRequest,

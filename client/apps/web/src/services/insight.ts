@@ -8,6 +8,7 @@ import {
   type Insight,
   type InsightCategory,
   type InsightSeverity,
+  type InsightSurface,
 } from "@/types/insight";
 
 export type BrowseInsightsParams = {
@@ -18,14 +19,30 @@ export type BrowseInsightsParams = {
   offset: number;
 };
 
+/**
+ * The active-insights read, as a URL.
+ *
+ * A page names the surface it is asking for; the home widget names none and
+ * gets the whole view. The parameter is only written when given so the
+ * unfiltered request says nothing it does not mean.
+ */
+export function activeInsightsPath(limit: number, surface?: InsightSurface): string {
+  const query = new URLSearchParams({ limit: String(limit) });
+  if (surface) {
+    query.set("surface", surface);
+  }
+
+  return `/insights/?${query.toString()}`;
+}
+
 export class InsightService {
   /**
    * Insights are read, never generated on demand. Refreshing them runs several
    * month-wide aggregates and may call a model, so it happens on a schedule and
    * this only fetches what that produced.
    */
-  public async list(limit = 5) {
-    const response = await api.get(`/insights/?limit=${limit}`);
+  public async list(limit = 5, surface?: InsightSurface) {
+    const response = await api.get(activeInsightsPath(limit, surface));
     return safeParse(insightListSchema, response, "Insight");
   }
 

@@ -2,6 +2,7 @@ package modeladapter
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -23,6 +24,7 @@ type responsesRequest struct {
 	Text            *responsesTextConfig `json:"text,omitempty"`
 	Tools           []responsesTool      `json:"tools,omitempty"`
 	MaxOutputTokens int                  `json:"max_output_tokens,omitempty"`
+	Stream          bool                 `json:"stream,omitempty"`
 }
 
 // responsesItem is both a message and a function call or its output: this
@@ -120,6 +122,123 @@ func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Resp
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         refused,
+	}, nil
+}
+
+// responsesStreamEvent is the union of the Responses API stream events this
+// adapter reads. The text deltas feed the sink; the completed event carries the
+// whole response, which is what the final Response is built from, so a stream
+// that reaches completion is byte-for-byte what the blocking call returns.
+type responsesStreamEvent struct {
+	Type     string `json:"type"`
+	Delta    string `json:"delta"`
+	Item     *responsesItem
+	Response *struct {
+		responsesEnvelope
+		Error *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error"`
+	} `json:"response"`
+	Error *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+func (a openAIResponsesAdapter) Stream(
+	ctx context.Context,
+	call *Call,
+	sink StreamSink,
+) (*Response, error) {
+	body := responsesRequest{
+		Model:           call.Provider.Model,
+		MaxOutputTokens: call.Request.MaxTokens,
+		Input:           toResponsesInput(call.Request.System, call.Request.Messages),
+		Tools:           toResponsesTools(call.Request.Tools),
+		Stream:          true,
+	}
+
+	stream, err := postStream(
+		ctx,
+		call.Client,
+		call.Provider.ResolvedBaseURL()+"/v1/responses",
+		map[string]string{"Authorization": bearer(call.APIKey)},
+		body,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = stream.Close() }()
+
+	var (
+		text      strings.Builder
+		completed *responsesEnvelope
+		model     string
+		refused   bool
+	)
+
+	err = readSSE(stream, func(_, data string) error {
+		var event responsesStreamEvent
+		if err := sonic.Unmarshal([]byte(data), &event); err != nil {
+			return fmt.Errorf("decode stream event: %w", err)
+		}
+
+		switch event.Type {
+		case "response.created":
+			if event.Response != nil {
+				model = event.Response.Model
+			}
+		case "response.output_text.delta":
+			if event.Delta != "" {
+				text.WriteString(event.Delta)
+				sink(event.Delta)
+			}
+		case "response.refusal.delta":
+			refused = true
+		case "response.completed", "response.incomplete":
+			if event.Response != nil {
+				envelope := event.Response.responsesEnvelope
+				completed = &envelope
+			}
+		case "response.failed":
+			if event.Response != nil && event.Response.Error != nil {
+				return streamError(event.Response.Error.Code, event.Response.Error.Message)
+			}
+			return streamError("", "response failed")
+		case "error":
+			if event.Error != nil {
+				return streamError(event.Error.Code, event.Error.Message)
+			}
+			return streamError("", "")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if completed == nil {
+		// The stream closed without a terminal event. The text that arrived is
+		// still the model's answer, so it is returned rather than discarded; tool
+		// calls cannot be trusted without the completed output, so none are.
+		return &Response{
+			Text:            text.String(),
+			ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+			Refused:         refused,
+		}, nil
+	}
+
+	finalText, toolCalls, finalRefused := splitResponsesOutput(completed)
+
+	return &Response{
+		Text:            firstNonEmpty(finalText, text.String()),
+		ToolCalls:       toolCalls,
+		ModelIdentifier: firstNonEmpty(completed.Model, model, call.Provider.Model),
+		InputTokens:     completed.Usage.InputTokens,
+		OutputTokens:    completed.Usage.OutputTokens,
+		Refused:         refused || finalRefused,
 	}, nil
 }
 

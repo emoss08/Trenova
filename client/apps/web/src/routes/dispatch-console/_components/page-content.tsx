@@ -15,6 +15,7 @@ import {
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
 import { Suspense, lazy, useCallback, useEffect, useMemo } from "react";
+import { PageInsightsStrip } from "@/components/insights/page-insights";
 import { CapacityRail } from "./capacity-rail";
 import { ConsoleCenterPane } from "./console-center-pane";
 import { ConsoleOverlays } from "./console-overlays";
@@ -220,6 +221,11 @@ export function DispatchConsoleContent() {
           onUndo={actions.undo}
           onPlan={planForWindow}
         />
+
+        {/* Empty miles, a slipping customer, a driver about to lose a card: the
+            findings a dispatcher can act on from here, kept to one row so the
+            board underneath keeps its height. */}
+        <PageInsightsStrip surface="Dispatch" />
 
         <div
           className={cn(

@@ -149,6 +149,7 @@ func AllTasks() []Task {
 		TaskFormulaAssistant,
 		TaskScopeClassification,
 		TaskAssistantChat,
+		TaskOperationalInsights,
 		TaskGeneral,
 	}
 }

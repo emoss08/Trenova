@@ -61,6 +61,74 @@ type AssistantProposal struct {
 	ExecutionError string `json:"executionError"`
 }
 
+// Names of the events a streamed turn emits, in the order a client should
+// expect them: accepted or refused first, then any number of delta, message,
+// tool_started and tool_finished, then done. A refusal can also arrive late,
+// when the answer rather than the question was declined.
+const (
+	AssistantEventAccepted     = "accepted"
+	AssistantEventRefused      = "refused"
+	AssistantEventDelta        = "delta"
+	AssistantEventMessage      = "message"
+	AssistantEventToolStarted  = "tool_started"
+	AssistantEventToolFinished = "tool_finished"
+	AssistantEventDone         = "done"
+)
+
+// AssistantAcceptedEvent says the question passed the scope guard and a model is
+// being asked. It carries what the guard decided so a client can show the
+// person's message immediately, before anything is saved.
+type AssistantAcceptedEvent struct {
+	Content       string `json:"content"`
+	ScopeStage    string `json:"scopeStage"`
+	ScopeCategory string `json:"scopeCategory"`
+}
+
+// AssistantRefusedEvent is the guard declining either the question or, later,
+// the answer. Text already streamed before a late refusal must be discarded.
+type AssistantRefusedEvent struct {
+	Message  string `json:"message"`
+	Stage    string `json:"stage"`
+	Category string `json:"category"`
+	Reason   string `json:"reason"`
+}
+
+// AssistantDeltaEvent is a piece of the reply the model is composing.
+type AssistantDeltaEvent struct {
+	Text string `json:"text"`
+}
+
+// AssistantMessageEvent closes the assistant message being streamed. It is
+// sent when the model asked for tools, so the text before the tool traffic is
+// kept as its own message; the final answer is closed by done instead.
+type AssistantMessageEvent struct {
+	Content   string                        `json:"content"`
+	ToolCalls []conversation.ToolCallRecord `json:"toolCalls"`
+	Model     string                        `json:"model"`
+}
+
+// AssistantToolStartedEvent says a tool is running with these arguments.
+type AssistantToolStartedEvent struct {
+	CallID    string         `json:"callId"`
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
+}
+
+// AssistantToolFinishedEvent carries what the tool returned. Proposed means the
+// tool was a write and became a proposal rather than running.
+type AssistantToolFinishedEvent struct {
+	CallID   string `json:"callId"`
+	Name     string `json:"name"`
+	Failed   bool   `json:"failed"`
+	Proposed bool   `json:"proposed"`
+	Content  string `json:"content"`
+}
+
+// AssistantStreamEmitter receives the events of one turn as they happen. It is
+// called from the turn's own goroutine, in order, and never after the turn
+// returns.
+type AssistantStreamEmitter func(event StreamEvent)
+
 type AssistantService interface {
 	StartThread(
 		ctx context.Context,
@@ -89,5 +157,13 @@ type AssistantService interface {
 		ctx context.Context,
 		req *SendMessageRequest,
 		actor *RequestActor,
+	) (*SendMessageResult, error)
+	// SendMessageStream is SendMessage reported live: the guard's verdict, the
+	// reply as it is written, and each tool as it runs, before the saved result.
+	SendMessageStream(
+		ctx context.Context,
+		req *SendMessageRequest,
+		actor *RequestActor,
+		emit AssistantStreamEmitter,
 	) (*SendMessageResult, error)
 }

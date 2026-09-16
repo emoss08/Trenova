@@ -11,6 +11,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import type { AgentDefinition, AgentTemplate, SaveAgentDefinitionRequest } from "@/types/assistant";
+import { describeToolCall } from "@/routes/assistant/_components/tool-presentation";
 import { InfoIcon, ShieldAlertIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -65,10 +66,12 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
     setValue("toolNames", null, { shouldDirty: true });
   }, [setValue]);
 
+  // A tool is shown by what it does, with its identifier alongside so the row
+  // still matches what appears in a conversation's activity log.
   const toolOptions = useMemo(
     () =>
       (template?.availableTools ?? []).map((tool) => ({
-        label: tool.name,
+        label: `${describeToolCall(tool.name, null).title} · ${tool.name}`,
         value: tool.name,
         description: tool.description,
       })),
@@ -127,7 +130,10 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
             name="description"
             control={control}
             label={t("Description")}
-            placeholder={t("What this agent is for")}
+            placeholder={t("Looks up shipments and drivers for the night dispatch team.")}
+            description={t(
+              "Shown to people choosing an agent, so say who it is for and what it can do.",
+            )}
           />
         </FormControl>
 

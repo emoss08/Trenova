@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { PageInsightsCard } from "@/components/insights/page-insights";
 import { usePermission } from "@/hooks/use-permission";
 import { isWindowMonths, type WindowMonths } from "@/lib/fleet-safety-console";
 import { useQuery } from "@tanstack/react-query";
@@ -105,6 +106,11 @@ export default function FleetSafetyConsole() {
           windowMonths={summary.windowMonths}
         />
       </div>
+
+      {/* Credentials running out are the one finding that takes a truck off the
+          road on a date nobody chose, so they sit with the rest of the safety
+          picture rather than behind a separate page. */}
+      <PageInsightsCard surface="Fleet" title={t("Compliance insights")} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <TerminalsPanel
