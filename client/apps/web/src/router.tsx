@@ -1761,6 +1761,14 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "ai-providers",
+                loader: createPermissionLoader(Resource.AIProvider, Operation.Read),
+                async lazy() {
+                  const { AIProvidersPage } = await import("@/routes/admin/ai-providers/page");
+                  return { Component: AIProvidersPage };
+                },
+              },
+              {
                 path: "api-keys",
                 loader: createPermissionLoader(Resource.APIKey, Operation.Read),
                 async lazy() {

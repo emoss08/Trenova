@@ -2,6 +2,7 @@ import { AccessorialChargeService } from "./accessorial-charge";
 import { AccountingControlService } from "./accounting-control";
 import { AccountingReportService } from "./accounting-report";
 import { AccountTypeService } from "./account-type";
+import { AIProviderService } from "./ai-provider";
 import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { AssignmentService } from "./assignment";
@@ -155,6 +156,7 @@ class APIService {
   public integrationService: IntegrationService;
   public analyticService: AnalyticsService;
   public apiKeyService: APIKeyService;
+  public aiProviderService: AIProviderService;
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
@@ -243,6 +245,7 @@ class APIService {
     this.exchangeRateService = new ExchangeRateService();
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();
+    this.aiProviderService = new AIProviderService();
     this.analyticService = new AnalyticsService();
     this.assignmentService = new AssignmentService();
     this.notificationService = notificationService;

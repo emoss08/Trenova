@@ -127,6 +127,7 @@ export const Resource = {
   AgentProposal: "agent_proposal",
   AgentException: "agent_exception",
   AgentControl: "agent_control",
+  AIProvider: "ai_provider",
 
   // Customers
   Customer: "customer",
