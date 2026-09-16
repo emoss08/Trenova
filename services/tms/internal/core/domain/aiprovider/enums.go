@@ -117,7 +117,11 @@ const (
 	TaskScopeClassification = Task("ScopeClassification")
 	// TaskAssistantChat answers a person's question and drives the tool loop.
 	TaskAssistantChat = Task("AssistantChat")
-	TaskGeneral       = Task("General")
+	// TaskOperationalInsights writes the prose on a home-screen insight. It never
+	// produces a number, a severity or a link — those are computed before it runs
+	// and checked after it — so it is safe to route to whatever is cheapest.
+	TaskOperationalInsights = Task("OperationalInsights")
+	TaskGeneral             = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -128,6 +132,7 @@ func (t Task) IsValid() bool {
 		TaskFormulaAssistant,
 		TaskScopeClassification,
 		TaskAssistantChat,
+		TaskOperationalInsights,
 		TaskGeneral:
 		return true
 	default:
