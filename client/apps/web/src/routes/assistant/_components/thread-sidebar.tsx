@@ -10,6 +10,8 @@ import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-reac
 import { useMemo, useState } from "react";
 import { groupThreadsByRecency } from "./thread-grouping";
 
+const nowInSeconds = () => Math.floor(Date.now() / 1000);
+
 export type ThreadSidebarProps = {
   threads: AssistantThread[];
   agentsById: Map<string, AgentDefinition>;
@@ -33,8 +35,10 @@ export function ThreadSidebar({
 }: ThreadSidebarProps) {
   const t = useT();
   const [query, setQuery] = useState("");
+  // Read once per mount: the shelves are relative to when the list was opened,
+  // and a clock read during render would make every render impure.
+  const [now] = useState(nowInSeconds);
 
-  const now = Math.floor(Date.now() / 1000);
   const groups = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const visible =

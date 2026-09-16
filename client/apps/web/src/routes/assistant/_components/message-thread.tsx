@@ -17,7 +17,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Composer } from "./composer";
-import { AgentAvatar, AssistantEntry, DeclinedBubble, RefusalNotice, UserBubble } from "./message-items";
+import {
+  AgentAvatar,
+  AssistantEntry,
+  DeclinedBubble,
+  RefusalNotice,
+  UserBubble,
+} from "./message-items";
 import { ProposalCard } from "./proposal-card";
 import { groupProposalsByMessage } from "./proposal-state";
 import { StreamingTurn } from "./streaming-turn";
@@ -38,7 +44,8 @@ export function MessageThread({
   const [seed, setSeed] = useState<string>();
 
   const messagesQuery = useQuery(queries.assistant.messages(thread.id));
-  const messages = messagesQuery.data?.results ?? [];
+  const messageResults = messagesQuery.data?.results;
+  const messages = useMemo(() => messageResults ?? [], [messageResults]);
 
   // Proposals are fetched rather than taken from the send response: they outlive
   // the turn that raised them, so reopening a thread has to show what is still
@@ -61,55 +68,61 @@ export function MessageThread({
 
       <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <MessageScroller className="flex-1">
-        <MessageScrollerViewport className="px-4">
-          <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-5 py-5">
-            {messagesQuery.isLoading ? (
-              <div className="flex flex-col gap-4">
-                <Skeleton className="ml-auto h-10 w-2/5" />
-                <Skeleton className="h-20 w-3/5" />
-                <Skeleton className="ml-auto h-10 w-1/3" />
-              </div>
-            ) : isEmpty ? (
-              <EmptyThread agent={agent} onSuggest={setSeed} />
-            ) : (
-              entries.map((entry) => (
-                <MessageScrollerItem key={entry.message.id} messageId={entry.message.id}>
-                  {entry.kind === "user" ? (
-                    <UserBubble content={entry.message.content} sentAt={entry.message.createdAt} />
-                  ) : entry.kind === "declined" ? (
-                    <DeclinedBubble content={entry.message.content} sentAt={entry.message.createdAt} />
-                  ) : entry.kind === "refusal" ? (
-                    <RefusalNotice message={entry.message.content} />
-                  ) : (
-                    <AssistantEntry
-                      entry={entry}
-                      proposals={proposalsByMessage.get(entry.message.id) ?? []}
-                      threadId={thread.id}
-                    />
-                  )}
-                </MessageScrollerItem>
-              ))
-            )}
+          <MessageScrollerViewport className="px-4">
+            <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-5 py-5">
+              {messagesQuery.isLoading ? (
+                <div className="flex flex-col gap-4">
+                  <Skeleton className="ml-auto h-10 w-2/5" />
+                  <Skeleton className="h-20 w-3/5" />
+                  <Skeleton className="ml-auto h-10 w-1/3" />
+                </div>
+              ) : isEmpty ? (
+                <EmptyThread agent={agent} onSuggest={setSeed} />
+              ) : (
+                entries.map((entry) => (
+                  <MessageScrollerItem key={entry.message.id} messageId={entry.message.id}>
+                    {entry.kind === "user" ? (
+                      <UserBubble
+                        content={entry.message.content}
+                        sentAt={entry.message.createdAt}
+                      />
+                    ) : entry.kind === "declined" ? (
+                      <DeclinedBubble
+                        content={entry.message.content}
+                        sentAt={entry.message.createdAt}
+                      />
+                    ) : entry.kind === "refusal" ? (
+                      <RefusalNotice message={entry.message.content} />
+                    ) : (
+                      <AssistantEntry
+                        entry={entry}
+                        proposals={proposalsByMessage.get(entry.message.id) ?? []}
+                        threadId={thread.id}
+                      />
+                    )}
+                  </MessageScrollerItem>
+                ))
+              )}
 
-            {/* A proposal whose turn is no longer in the visible thread is shown
+              {/* A proposal whose turn is no longer in the visible thread is shown
                 here rather than dropped: a pending change nobody can see is worse
                 than one shown out of position. */}
-            {looseProposals.map((proposal) => (
-              <MessageScrollerItem key={proposal.id} messageId={proposal.id}>
-                <ProposalCard proposal={proposal} threadId={thread.id} />
-              </MessageScrollerItem>
-            ))}
+              {looseProposals.map((proposal) => (
+                <MessageScrollerItem key={proposal.id} messageId={proposal.id}>
+                  <ProposalCard proposal={proposal} threadId={thread.id} />
+                </MessageScrollerItem>
+              ))}
 
-            {turn && (
-              <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
-                <div className="flex flex-col gap-5">
-                  <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
-                </div>
-              </MessageScrollerItem>
-            )}
-          </MessageScrollerContent>
-        </MessageScrollerViewport>
-        <MessageScrollerButton />
+              {turn && (
+                <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
+                  <div className="flex flex-col gap-5">
+                    <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
+                  </div>
+                </MessageScrollerItem>
+              )}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
         </MessageScroller>
       </MessageScrollerProvider>
 
@@ -124,7 +137,9 @@ export function MessageThread({
         disabled={agentUnavailable}
         disabledReason={t("This agent has been disabled, so the conversation cannot continue.")}
         placeholder={
-          agent ? t("Message {0}…", agent.name) : t("Ask about a shipment, a driver, or how to do something…")
+          agent
+            ? t("Message {0}…", agent.name)
+            : t("Ask about a shipment, a driver, or how to do something…")
         }
       />
     </div>
@@ -146,7 +161,9 @@ function ThreadHeader({
 }) {
   const t = useT();
   const templatesQuery = useQuery(queries.assistant.agentTemplates());
-  const templateLabel = templatesQuery.data?.templates.find((item) => item.kind === agent?.kind)?.label;
+  const templateLabel = templatesQuery.data?.templates.find(
+    (item) => item.kind === agent?.kind,
+  )?.label;
 
   return (
     <div className="border-border flex items-center gap-3 border-b px-4 py-2.5">
@@ -167,8 +184,11 @@ function ThreadHeader({
         </div>
         <p className="text-muted-foreground truncate text-xs">
           {agent
-            ? agent.description || t("Looks records up for you and proposes changes for your approval.")
-            : t("This agent was disabled or removed. You can read the conversation but not continue it.")}
+            ? agent.description ||
+              t("Looks records up for you and proposes changes for your approval.")
+            : t(
+                "This agent was disabled or removed. You can read the conversation but not continue it.",
+              )}
         </p>
       </div>
       <Tooltip>
