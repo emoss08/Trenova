@@ -128,6 +128,8 @@ export const Resource = {
   AgentException: "agent_exception",
   AgentControl: "agent_control",
   AIProvider: "ai_provider",
+  AgentDefinition: "agent_definition",
+  Assistant: "assistant",
 
   // Customers
   Customer: "customer",

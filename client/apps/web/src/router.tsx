@@ -84,6 +84,17 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/assistant",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+            ),
+            async lazy() {
+              const { AssistantPage } = await import("@/routes/assistant/page");
+              return { Component: AssistantPage };
+            },
+          },
+          {
             path: "/shipment-management/shipments",
             loader: combineLoaders(
               protectedLoader,

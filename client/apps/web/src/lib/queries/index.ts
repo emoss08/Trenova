@@ -25,6 +25,7 @@ import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { aiProvider } from "./ai-provider";
+import { assistant } from "./assistant";
 import { integration } from "./integration";
 import { invoice } from "./invoice";
 import { invoiceAdjustment } from "./invoice-adjustment";
@@ -115,6 +116,7 @@ const workspaceQueries = mergeQueryKeys(
   organization,
   integration,
   aiProvider,
+  assistant,
   attention,
   audit,
   notification,

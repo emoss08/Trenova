@@ -3,6 +3,7 @@ import { AccountingControlService } from "./accounting-control";
 import { AccountingReportService } from "./accounting-report";
 import { AccountTypeService } from "./account-type";
 import { AIProviderService } from "./ai-provider";
+import { AgentDefinitionService, AssistantService } from "./assistant";
 import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { AssignmentService } from "./assignment";
@@ -157,6 +158,8 @@ class APIService {
   public analyticService: AnalyticsService;
   public apiKeyService: APIKeyService;
   public aiProviderService: AIProviderService;
+  public assistantService: AssistantService;
+  public agentDefinitionService: AgentDefinitionService;
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
@@ -246,6 +249,8 @@ class APIService {
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();
     this.aiProviderService = new AIProviderService();
+    this.assistantService = new AssistantService();
+    this.agentDefinitionService = new AgentDefinitionService();
     this.analyticService = new AnalyticsService();
     this.assignmentService = new AssignmentService();
     this.notificationService = notificationService;

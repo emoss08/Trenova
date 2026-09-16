@@ -12555,6 +12555,15 @@
       "service/rateagreementservice"
     ]
   },
+  "An administrator needs to configure and enable an agent, and connect an AI provider, before conversations can start.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "An agent cannot be given more than 32 tools": {
     "sites": 1,
     "scope": [
@@ -15954,6 +15963,33 @@
       "routes/admin"
     ]
   },
+  "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "Ask about a shipment, a driver, or how to do something…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
+  "Ask about shipments, dispatch, billing, and how to get things done in Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Ask the recipient's email client to send a delivery/read confirmation. Note: many email clients and corporate mail servers silently ignore read receipt requests.": {
     "sites": 1,
     "scope": [
@@ -16720,6 +16756,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Assume notices were sent on time": {
@@ -26796,6 +26841,15 @@
       "routes/edi"
     ]
   },
+  "Choose an agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Choose an existing rule set from the sidebar to view and edit its parsing configuration, or create a new one to define extraction rules for a document provider.": {
     "sites": 1,
     "scope": [
@@ -33139,6 +33193,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Conversation deleted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Conversation is required": {
@@ -41898,6 +41961,15 @@
       "routes/shipment"
     ]
   },
+  "Delete conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Delete custom field definitions": {
     "sites": 1,
     "scope": [
@@ -49617,6 +49689,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Each agent covers a different part of the system and has its own tools.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Each component computes pay per completed move; team splits apply on top.": {
@@ -79127,6 +79208,15 @@
       "routes/settlement-control"
     ]
   },
+  "Looked up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Looks like we hit a snag. Please try again later.": {
     "sites": 1,
     "scope": [
@@ -86483,6 +86573,15 @@
       "apps/web/lib"
     ]
   },
+  "New conversation": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "New credit memo": {
     "sites": 1,
     "scope": [
@@ -87379,6 +87478,15 @@
       "routes/edi"
     ]
   },
+  "No agents are available": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "No analysis captured.": {
     "sites": 1,
     "scope": [
@@ -87819,6 +87927,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No conversations yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "No country found.": {
@@ -99438,6 +99555,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Outside what this assistant covers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Outstanding": {
@@ -112414,11 +112540,12 @@
     ]
   },
   "Read-only": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/assistant",
       "routes/edi"
     ]
   },
@@ -129444,12 +129571,13 @@
     ]
   },
   "Send": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/assistant",
       "routes/detention-desk",
       "routes/invoice",
       "routes/shipment"
@@ -136707,6 +136835,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Start a conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "Start a new thumbnail workflow": {
@@ -157672,6 +157809,15 @@
       "routes/my-team"
     ]
   },
+  "Untitled conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Untitled report": {
     "sites": 1,
     "scope": [
@@ -166768,6 +166914,15 @@
       "routes/fuel-feed-run"
     ]
   },
+  "Working…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Worksheet can still change": {
     "sites": 1,
     "scope": [
@@ -174590,12 +174745,13 @@
     ]
   },
   "{0} failed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/assistant",
       "routes/reports"
     ]
   },
