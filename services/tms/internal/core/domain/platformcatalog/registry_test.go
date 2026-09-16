@@ -661,6 +661,7 @@ func protectedProductRoutePrefixes() []protectedProductRoutePrefix {
 		{prefix: "/api/v1/hazardous-materials/", featureKey: FeatureCoreTMS},
 		{prefix: "/api/v1/hazmat-segregation-rules/", featureKey: FeatureCoreTMS},
 		{prefix: "/api/v1/hold-reasons/", featureKey: FeatureDispatch},
+		{prefix: "/api/v1/insights/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/integrations/", featureKey: FeatureSamsaraIntegration},
 		{prefix: "/api/v1/invoice-adjustment-controls/", featureKey: FeatureAccounting},
 		{prefix: "/api/v1/jurisdiction-rule-overrides/", featureKey: FeatureAccounting},

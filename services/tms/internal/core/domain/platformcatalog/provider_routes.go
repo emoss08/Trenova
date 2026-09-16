@@ -1066,9 +1066,16 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/assistant/threads/",
 			"/api/v1/assistant/threads/:threadID/",
 			"/api/v1/assistant/threads/:threadID/messages/",
+			// The insights panel rides with this feature rather than becoming a
+			// pack of its own. Its findings are computed without a model and its
+			// narration goes through the same provider configuration as everything
+			// else here, so an organization that holds agent automation already
+			// holds everything the panel needs.
+			"/api/v1/insights/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
+			"/api/v1/insights/:insightID/dismiss/",
 			"/api/v1/agent-proposals/:proposalID/resolve/",
 			"/api/v1/agent-runs/",
 			"/api/v1/ai-providers/",

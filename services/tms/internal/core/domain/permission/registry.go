@@ -2179,6 +2179,27 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityInternal,
 	})
 
+	// An insight names a customer, a location or a driver alongside a figure, so
+	// reading the panel is a real disclosure. It is held separately from the
+	// records it draws on because a reader still needs permission over those:
+	// the panel filters to what its reader may already see, and this permission
+	// only decides whether they get a panel at all.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInsight.String(),
+		DisplayName: "Insight",
+		Description: "Operational findings surfaced on the home screen",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View operational insights"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Dismiss an insight that is not worth acting on",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 	// Configuring a provider decides which endpoint an organization's freight and
 	// billing data is sent to, and whether that endpoint may be on the local
 	// network, so it is held at the same sensitivity as credential management.

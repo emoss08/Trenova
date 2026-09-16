@@ -67,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
@@ -189,6 +190,7 @@ type RouterParams struct {
 	AIProviderHandler               *aiproviderhandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
 	AssistantHandler                *assistanthandler.Handler
+	InsightHandler                  *insighthandler.Handler
 	AgentRunHandler                 *agentrunhandler.Handler
 	VersionHandler                  *versionhandler.Handler
 	NetworkPulseHandler             *networkpulsehandler.Handler
@@ -331,6 +333,7 @@ type Router struct {
 	aiProviderHandler               *aiproviderhandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
 	assistantHandler                *assistanthandler.Handler
+	insightHandler                  *insighthandler.Handler
 	agentRunHandler                 *agentrunhandler.Handler
 	versionHandler                  *versionhandler.Handler
 	networkPulseHandler             *networkpulsehandler.Handler
@@ -464,6 +467,7 @@ func NewRouter(p RouterParams) *Router {
 		aiProviderHandler:               p.AIProviderHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
 		assistantHandler:                p.AssistantHandler,
+		insightHandler:                  p.InsightHandler,
 		agentRunHandler:                 p.AgentRunHandler,
 		versionHandler:                  p.VersionHandler,
 		networkPulseHandler:             p.NetworkPulseHandler,
@@ -660,6 +664,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.aiProviderHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)
 	r.assistantHandler.RegisterRoutes(protected)
+	r.insightHandler.RegisterRoutes(protected)
 	r.agentRunHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.orderHandler.RegisterRoutes(protected)

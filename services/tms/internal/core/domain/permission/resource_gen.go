@@ -127,6 +127,7 @@ const (
 	ResourceAIProvider      Resource = "ai_provider"
 	ResourceAgentDefinition Resource = "agent_definition"
 	ResourceAssistant       Resource = "assistant"
+	ResourceInsight         Resource = "insight"
 
 	// Customers
 	ResourceCustomer        Resource = "customer"

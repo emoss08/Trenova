@@ -64,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
@@ -164,6 +165,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	agentcontrolhandler.New,
 	agentdefinitionhandler.New,
 	assistanthandler.New,
+	insighthandler.New,
 	aiproviderhandler.New,
 	agentrunhandler.New,
 	assignmenthandler.New,

@@ -130,6 +130,7 @@ export const Resource = {
   AIProvider: "ai_provider",
   AgentDefinition: "agent_definition",
   Assistant: "assistant",
+  Insight: "insight",
 
   // Customers
   Customer: "customer",
