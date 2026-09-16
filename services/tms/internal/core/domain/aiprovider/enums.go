@@ -111,7 +111,13 @@ const (
 	TaskDocumentExtraction     = Task("DocumentExtraction")
 	TaskBillingDiagnosis       = Task("BillingDiagnosis")
 	TaskFormulaAssistant       = Task("FormulaAssistant")
-	TaskGeneral                = Task("General")
+	// TaskScopeClassification decides whether a request belongs to this system at
+	// all. It runs on every chat turn and needs only a yes/no with a category, so
+	// it is the cheapest thing to route to a small local model.
+	TaskScopeClassification = Task("ScopeClassification")
+	// TaskAssistantChat answers a person's question and drives the tool loop.
+	TaskAssistantChat = Task("AssistantChat")
+	TaskGeneral       = Task("General")
 )
 
 func (t Task) IsValid() bool {
@@ -120,6 +126,8 @@ func (t Task) IsValid() bool {
 		TaskDocumentExtraction,
 		TaskBillingDiagnosis,
 		TaskFormulaAssistant,
+		TaskScopeClassification,
+		TaskAssistantChat,
 		TaskGeneral:
 		return true
 	default:
@@ -134,6 +142,8 @@ func AllTasks() []Task {
 		TaskDocumentExtraction,
 		TaskBillingDiagnosis,
 		TaskFormulaAssistant,
+		TaskScopeClassification,
+		TaskAssistantChat,
 		TaskGeneral,
 	}
 }
