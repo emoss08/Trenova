@@ -59,6 +59,15 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.sendMessage,
 	)
+	// Reading a conversation's proposals needs no more than reading the
+	// conversation: they are part of what was said. Acting on one goes through the
+	// agent proposal endpoint, which requires permission over proposals and, at
+	// execution, over whatever the tool touches.
+	api.GET(
+		"/threads/:threadID/proposals/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.listThreadProposals,
+	)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -189,6 +198,22 @@ func (h *Handler) deleteThread(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) listThreadProposals(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	proposals, err := h.service.ListThreadProposals(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": proposals})
 }
 
 func (h *Handler) listMessages(c *gin.Context) {

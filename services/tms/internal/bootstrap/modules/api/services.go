@@ -121,6 +121,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
+	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
@@ -267,6 +268,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentrunservice.New,
 	agentproposalservice.New,
 	agentexceptionservice.New,
+	proposalexecutor.New,
 	agentdecisionservice.New,
 	assignmentservice.New,
 	fx.Annotate(

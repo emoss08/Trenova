@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -57,6 +58,12 @@ type PendingAction struct {
 	ToolName  string         `json:"toolName"`
 	Arguments map[string]any `json:"arguments"`
 	Rationale string         `json:"rationale"`
+	// Tier is the effective autonomy tier for this call: the more restrictive of
+	// the tool's own default and the agent's ceiling.
+	Tier agent.AutonomyTier `json:"tier"`
+	// ToolCallID ties the proposal back to the assistant message that asked for
+	// it, so the persisted proposal can point at the turn it came out of.
+	ToolCallID string `json:"toolCallId"`
 }
 
 // Run executes one turn.
@@ -153,7 +160,7 @@ func (s *Service) runLoop(
 		})
 
 		for _, call := range completion.ToolCalls {
-			outcome := s.dispatch(ctx, req, call)
+			outcome := s.dispatch(ctx, req, call, completion.Text)
 			if outcome.proposal != nil {
 				result.Proposals = append(result.Proposals, *outcome.proposal)
 			}
@@ -253,6 +260,7 @@ func (s *Service) dispatch(
 	ctx context.Context,
 	req *TurnRequest,
 	call modeladapter.ToolCall,
+	completionText string,
 ) toolOutcome {
 	if !req.Definition.AllowsTool(call.Name) && !s.isQueryTool(call.Name) {
 		return toolOutcome{
@@ -287,9 +295,11 @@ func (s *Service) dispatch(
 			call.Name, tier,
 		),
 		proposal: &PendingAction{
-			ToolName:  call.Name,
-			Arguments: call.Arguments,
-			Rationale: "Requested by the assistant during a conversation",
+			ToolName:   call.Name,
+			Arguments:  call.Arguments,
+			Rationale:  proposalRationale(completionText, call.Name),
+			Tier:       tier,
+			ToolCallID: call.ID,
 		},
 	}
 }
@@ -424,4 +434,28 @@ func fromToolCallRecords(records []conversation.ToolCallRecord) []modeladapter.T
 	}
 
 	return calls
+}
+
+// maxRationaleChars bounds what the model's own words contribute to a proposal's
+// rationale. An approver reads this next to the parameters; several paragraphs
+// of narration would bury the one thing they need to check.
+const maxRationaleChars = 600
+
+// proposalRationale is what an approver sees as the reason for a proposed write.
+//
+// The model's own text is used when it said anything, because "reassigning this
+// move to the Dallas terminal because the original driver is out of hours" is
+// more useful than a generic line. It is the model's claim rather than a
+// verified fact, so it is truncated and never treated as more than narration:
+// the parameters shown beside it are what would actually run.
+func proposalRationale(completionText, toolName string) string {
+	trimmed := strings.TrimSpace(completionText)
+	if trimmed == "" {
+		return fmt.Sprintf(
+			"The assistant asked to run %s during a conversation without explaining why.",
+			toolName,
+		)
+	}
+
+	return truncateRunes(trimmed, maxRationaleChars)
 }

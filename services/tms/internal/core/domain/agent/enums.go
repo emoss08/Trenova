@@ -5,11 +5,15 @@ type Type string
 const (
 	TypeBillingException   = Type("BillingException")
 	TypeDispatchAssignment = Type("DispatchAssignment")
+	// TypeAssistantChat covers proposals raised while someone was talking to the
+	// assistant. Its runs are opened inline, since the reasoning happened in the
+	// request rather than in a workflow.
+	TypeAssistantChat = Type("AssistantChat")
 )
 
 func (t Type) IsValid() bool {
 	switch t {
-	case TypeBillingException, TypeDispatchAssignment:
+	case TypeBillingException, TypeDispatchAssignment, TypeAssistantChat:
 		return true
 	default:
 		return false
@@ -21,11 +25,12 @@ type SubjectType string
 const (
 	SubjectBillingQueueItem = SubjectType("BillingQueueItem")
 	SubjectShipmentMove     = SubjectType("ShipmentMove")
+	SubjectAssistantThread  = SubjectType("AssistantThread")
 )
 
 func (s SubjectType) IsValid() bool {
 	switch s {
-	case SubjectBillingQueueItem, SubjectShipmentMove:
+	case SubjectBillingQueueItem, SubjectShipmentMove, SubjectAssistantThread:
 		return true
 	default:
 		return false
@@ -68,6 +73,12 @@ const (
 	ProposalStatusRejected   = ProposalStatus("Rejected")
 	ProposalStatusExpired    = ProposalStatus("Expired")
 	ProposalStatusSuperseded = ProposalStatus("Superseded")
+	// ProposalStatusExecuted and ProposalStatusExecutionFailed separate "a person
+	// approved this" from "the tool actually ran". Without them an accepted
+	// proposal is indistinguishable from a completed one, which is exactly the
+	// ambiguity that let accepted proposals go unexecuted unnoticed.
+	ProposalStatusExecuted        = ProposalStatus("Executed")
+	ProposalStatusExecutionFailed = ProposalStatus("ExecutionFailed")
 )
 
 func (s ProposalStatus) IsValid() bool {
@@ -77,7 +88,9 @@ func (s ProposalStatus) IsValid() bool {
 		ProposalStatusModified,
 		ProposalStatusRejected,
 		ProposalStatusExpired,
-		ProposalStatusSuperseded:
+		ProposalStatusSuperseded,
+		ProposalStatusExecuted,
+		ProposalStatusExecutionFailed:
 		return true
 	default:
 		return false

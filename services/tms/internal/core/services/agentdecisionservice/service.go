@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -26,6 +27,7 @@ type Params struct {
 	Control      services.AgentControlService
 	Permissions  services.PermissionEngine
 	Workflows    services.WorkflowStarter
+	Executor     *proposalexecutor.Service
 	AuditService services.AuditService
 }
 
@@ -37,6 +39,7 @@ type Service struct {
 	control      services.AgentControlService
 	permissions  services.PermissionEngine
 	workflows    services.WorkflowStarter
+	executor     *proposalexecutor.Service
 	audit        services.AuditService
 }
 
@@ -49,6 +52,7 @@ func New(p Params) services.AgentDecisionService {
 		control:      p.Control,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
+		executor:     p.Executor,
 		audit:        p.AuditService,
 	}
 }
@@ -64,10 +68,6 @@ func (s *Service) Decide(
 			errortypes.ErrForbidden,
 			"Only a human user can decide on agent proposals",
 		)
-	}
-
-	if err := s.assertHumanCanApprove(ctx, actor); err != nil {
-		return nil, err
 	}
 
 	control, err := s.control.Get(ctx, req.TenantInfo)
@@ -121,6 +121,10 @@ func (s *Service) Decide(
 		s.l.Error("failed to signal agent workflow", zap.Error(err))
 	}
 
+	// An approval that does not act is worse than no approval: the audit trail
+	// would say a person authorized something that never happened.
+	s.executeIfApproved(ctx, proposal, req, actor)
+
 	auditActor := actor.AuditActor()
 	if err = s.audit.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
@@ -141,33 +145,29 @@ func (s *Service) Decide(
 	return created, nil
 }
 
-func (s *Service) assertHumanCanApprove(
+// executeIfApproved runs the tool behind an accepted or modified proposal.
+//
+// Execution failure does not fail the decision. The person's judgement was
+// recorded and is not invalidated by the write going wrong afterwards; the
+// failure is stored on the proposal so they can see it and retry or escalate.
+// Rolling the decision back would lose the one durable fact in the exchange.
+func (s *Service) executeIfApproved(
 	ctx context.Context,
+	proposal *agent.AgentProposal,
+	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
-) error {
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
-		PrincipalType:  actor.PrincipalType,
-		PrincipalID:    actor.PrincipalID,
-		UserID:         actor.UserID,
-		APIKeyID:       actor.APIKeyID,
-		BusinessUnitID: actor.BusinessUnitID,
-		OrganizationID: actor.OrganizationID,
-		Resource:       permission.ResourceBillingQueue.String(),
-		Operation:      permission.OpApprove,
-	})
-	if err != nil {
-		return err
+) {
+	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+		return
 	}
 
-	if !result.Allowed {
-		return errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrForbidden,
-			"You do not have permission to approve billing queue items",
+	if err := s.executor.Execute(ctx, proposal, req.Modifications, actor); err != nil {
+		s.l.Error("approved proposal did not execute",
+			zap.String("proposal", proposal.ID.String()),
+			zap.String("tool", proposal.ToolName),
+			zap.Error(err),
 		)
 	}
-
-	return nil
 }
 
 func (s *Service) signalWorkflow(

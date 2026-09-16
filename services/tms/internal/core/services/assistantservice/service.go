@@ -19,6 +19,8 @@ type Params struct {
 	ActionTools   serviceports.AgentToolRegistry
 	Conversations repositories.ConversationRepository
 	Definitions   repositories.AgentDefinitionRepository
+	Runs          repositories.AgentRunRepository
+	Proposals     repositories.AgentProposalRepository
 }
 
 type Service struct {
@@ -29,6 +31,8 @@ type Service struct {
 	actionTools   serviceports.AgentToolRegistry
 	conversations repositories.ConversationRepository
 	definitions   repositories.AgentDefinitionRepository
+	runs          chatRunOpener
+	proposals     chatProposalStore
 }
 
 func New(p Params) serviceports.AssistantService {
@@ -40,6 +44,8 @@ func New(p Params) serviceports.AssistantService {
 		actionTools:   p.ActionTools,
 		conversations: p.Conversations,
 		definitions:   p.Definitions,
+		runs:          p.Runs,
+		proposals:     p.Proposals,
 	}
 }
 

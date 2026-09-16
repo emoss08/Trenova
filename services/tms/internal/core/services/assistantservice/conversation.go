@@ -167,12 +167,26 @@ func (s *Service) SendMessage(
 
 	s.titleIfUnnamed(ctx, thread, content)
 
+	proposals, err := s.persistProposals(ctx, persistProposalsParams{
+		Definition: definition,
+		Thread:     thread,
+		Actor:      actor,
+		Saved:      saved,
+		Actions:    turn.Proposals,
+		Model:      turn.Model,
+		Input:      content,
+	})
+	if err != nil {
+		s.logProposalPersistFailure(thread, err)
+	}
+
 	return &services.SendMessageResult{
-		Thread:    thread,
-		Messages:  saved,
-		Reply:     turn.Reply,
-		Refused:   !turn.Decision.Allowed,
-		Proposals: toServiceProposals(turn.Proposals),
+		Thread:              thread,
+		Messages:            saved,
+		Reply:               turn.Reply,
+		Refused:             !turn.Decision.Allowed,
+		Proposals:           proposals,
+		ProposalsUnrecorded: err != nil,
 	}, nil
 }
 
@@ -204,21 +218,4 @@ func truncateRunes(s string, limit int) string {
 	runes := []rune(s)
 
 	return strings.TrimSpace(string(runes[:limit])) + "…"
-}
-
-func toServiceProposals(proposals []PendingAction) []services.AssistantProposal {
-	if len(proposals) == 0 {
-		return nil
-	}
-
-	out := make([]services.AssistantProposal, 0, len(proposals))
-	for _, proposal := range proposals {
-		out = append(out, services.AssistantProposal{
-			ToolName:  proposal.ToolName,
-			Arguments: proposal.Arguments,
-			Rationale: proposal.Rationale,
-		})
-	}
-
-	return out
 }
