@@ -21,7 +21,14 @@ import (
 // maxLimit bounds what one request may ask for. The panel is a home-screen
 // widget, not a report, and an unbounded limit is a way to make the permission
 // filter do a lot of work for nothing.
-const maxLimit = 25
+const (
+	maxLimit = 25
+	// The page shows more than the widget and can be paged through, but a single
+	// request still has a ceiling: the permission filter runs per detector, and
+	// an unbounded page is a way to make the database do a lot of work at once.
+	maxBrowseLimit  = 100
+	maxBrowseOffset = 10_000
+)
 
 type Params struct {
 	fx.In
@@ -49,7 +56,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/insights")
 	resource := permission.ResourceInsight.String()
 
+	// The home widget reads the active slice; the page browses the history. They
+	// are separate endpoints rather than one with a mode flag because their
+	// defaults differ in a way that matters: a widget that accidentally returned
+	// dismissed findings would put back the cards someone just cleared.
 	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
+	api.GET("/browse/", h.pm.RequirePermission(resource, permission.OpRead), h.browse)
 	// Dismissing changes what everyone in the organization sees on their home
 	// screen, so it is an update to the insight rather than a per-reader
 	// preference, and it is gated as one.
@@ -57,6 +69,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:insightID/dismiss/",
 		h.pm.RequirePermission(resource, permission.OpUpdate),
 		h.dismiss,
+	)
+	api.POST(
+		"/:insightID/restore/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.restore,
 	)
 }
 
@@ -84,6 +101,50 @@ func (h *Handler) list(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": found})
+}
+
+func (h *Handler) browse(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	result, err := h.service.List(c.Request.Context(), serviceports.BrowseInsightsRequest{
+		TenantInfo: tenantFromAuthContext(authCtx),
+		UserID:     authCtx.UserID,
+		Categories: parseCategories(c.QueryArray("category")),
+		Severities: parseSeverities(c.QueryArray("severity")),
+		Statuses:   parseStatuses(c.QueryArray("status")),
+		Limit:      parseInt(c.Query("limit"), maxBrowseLimit),
+		Offset:     parseInt(c.Query("offset"), maxBrowseOffset),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": result.Items, "total": result.Total})
+}
+
+func (h *Handler) restore(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	insightID, err := pulid.Parse(c.Param("insightID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+
+		return
+	}
+
+	restored, err := h.service.Restore(c.Request.Context(), serviceports.RestoreInsightRequest{
+		ID:         insightID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, restored)
 }
 
 type dismissRequest struct {
@@ -146,15 +207,57 @@ func parseCategories(values []string) []insight.Category {
 	return categories
 }
 
+// parseSeverities and parseStatuses drop values the domain does not recognise,
+// for the same reason parseCategories does: a filter this build has not heard of
+// should narrow nothing rather than fail the request.
+func parseSeverities(values []string) []insight.Severity {
+	severities := make([]insight.Severity, 0, len(values))
+	for _, value := range values {
+		severity := insight.Severity(value)
+		if severity.IsValid() {
+			severities = append(severities, severity)
+		}
+	}
+
+	if len(severities) == 0 {
+		return nil
+	}
+
+	return severities
+}
+
+func parseStatuses(values []string) []insight.Status {
+	statuses := make([]insight.Status, 0, len(values))
+	for _, value := range values {
+		status := insight.Status(value)
+		if status.IsValid() {
+			statuses = append(statuses, status)
+		}
+	}
+
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	return statuses
+}
+
 func parseLimit(value string) int {
+	return parseInt(value, maxLimit)
+}
+
+// parseInt reads a bounded non-negative query parameter, treating anything
+// unreadable as absent so a malformed URL falls back to the default rather than
+// erroring on a page someone is just trying to open.
+func parseInt(value string, ceiling int) int {
 	if value == "" {
 		return 0
 	}
 
-	limit, err := strconv.Atoi(value)
-	if err != nil || limit <= 0 {
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed <= 0 {
 		return 0
 	}
 
-	return min(limit, maxLimit)
+	return min(parsed, ceiling)
 }

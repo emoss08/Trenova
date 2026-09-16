@@ -12,16 +12,19 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// defaultActiveLimit bounds an unbounded read. A home widget asks for a handful;
-// this only catches a caller that forgot to say.
-const defaultActiveLimit = 50
+const (
+	// defaultActiveLimit bounds an unbounded read. A home widget asks for a
+	// handful; this only catches a caller that forgot to say.
+	defaultActiveLimit = 50
+	defaultPageLimit   = 25
+	maxPageLimit       = 100
+)
 
 type Params struct {
 	fx.In
@@ -64,11 +67,19 @@ func (r *repository) ListActive(
 	cols := buncolgen.InsightColumns
 	entities := make([]*insight.Insight, 0, limit)
 
+	if len(req.AllowedDetectorKeys) == 0 {
+		// No detector is visible to this reader, so there is nothing to ask the
+		// database for. Returning early also keeps an empty IN () out of the query,
+		// which Postgres treats as matching nothing but Bun renders awkwardly.
+		return entities, nil
+	}
+
 	query := r.db.DB().
 		NewSelect().
 		Model(&entities).
 		Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
-		Where(cols.Status.Eq(), insight.StatusActive)
+		Where(cols.Status.Eq(), insight.StatusActive).
+		Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
 
 	if len(req.Categories) > 0 {
 		query = query.Where(cols.Category.In(), bun.In(req.Categories))
@@ -87,31 +98,53 @@ func (r *repository) ListActive(
 	return entities, nil
 }
 
+// List browses the whole history a page at a time.
+//
+// Every filter is applied in the query, including the detector permission, so
+// the total is a count of what this reader can actually receive. A page that
+// filtered afterwards would report a total nobody can reach and hand back short
+// pages with no explanation.
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListInsightRequest,
+	req repositories.ListInsightsRequest,
 ) (*pagination.ListResult[*insight.Insight], error) {
 	log := r.l.With(zap.String("operation", "List"))
 
 	cols := buncolgen.InsightColumns
-	entities := make([]*insight.Insight, 0, req.Filter.Pagination.SafeLimit())
+	limit, offset := pageBounds(req.Limit, req.Offset)
+	entities := make([]*insight.Insight, 0, limit)
 
-	total, err := r.db.DB().
+	if len(req.AllowedDetectorKeys) == 0 {
+		return &pagination.ListResult[*insight.Insight]{Items: entities, Total: 0}, nil
+	}
+
+	query := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = querybuilder.ApplyFilters(
-				sq,
-				buncolgen.InsightTable.Alias,
-				req.Filter,
-				(*insight.Insight)(nil),
-			)
+		Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+		Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
 
-			return sq.Apply(buncolgen.InsightApplyTenant(req.Filter.TenantInfo)).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset()).
-				Order(cols.DetectedAt.OrderDesc())
-		}).
+	if len(req.Statuses) > 0 {
+		query = query.Where(cols.Status.In(), bun.In(req.Statuses))
+	} else {
+		// Someone opening the page is asking what needs attention now. Seeing what
+		// was dismissed or has since resolved is a deliberate act, not the default.
+		query = query.Where(cols.Status.Eq(), insight.StatusActive)
+	}
+
+	if len(req.Categories) > 0 {
+		query = query.Where(cols.Category.In(), bun.In(req.Categories))
+	}
+
+	if len(req.Severities) > 0 {
+		query = query.Where(cols.Severity.In(), bun.In(req.Severities))
+	}
+
+	total, err := query.
+		OrderExpr(severityOrder).
+		Order(cols.DetectedAt.OrderDesc()).
+		Limit(limit).
+		Offset(offset).
 		ScanAndCount(ctx)
 	if err != nil {
 		log.Error("failed to scan and count insights", zap.Error(err))
@@ -120,6 +153,20 @@ func (r *repository) List(
 	}
 
 	return &pagination.ListResult[*insight.Insight]{Items: entities, Total: total}, nil
+}
+
+// pageBounds keeps a caller that asked for nothing, or for everything, inside
+// what one page is meant to be.
+func pageBounds(limit, offset int) (int, int) {
+	if limit <= 0 || limit > maxPageLimit {
+		limit = defaultPageLimit
+	}
+
+	if offset < 0 {
+		offset = 0
+	}
+
+	return limit, offset
 }
 
 func (r *repository) GetByID(
@@ -177,6 +224,50 @@ func (r *repository) Dismiss(
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to dismiss insight", zap.Error(err))
+
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(results, "Insight", req.ID.String()); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// Restore returns a dismissed finding to active.
+//
+// Only a dismissed one: a resolved insight describes a condition a later refresh
+// could no longer find, and putting that back would be asserting something the
+// data does not support. The dismissal columns are cleared rather than kept, so
+// the next refresh stops suppressing the finding and the card behaves as though
+// it had never been waved away.
+func (r *repository) Restore(
+	ctx context.Context,
+	req repositories.RestoreInsightRequest,
+) (*insight.Insight, error) {
+	log := r.l.With(zap.String("operation", "Restore"), zap.String("id", req.ID.String()))
+
+	cols := buncolgen.InsightColumns
+	entity := new(insight.Insight)
+
+	results, err := r.db.DB().
+		NewUpdate().
+		Model(entity).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.InsightScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.Status.Eq(), insight.StatusDismissed)
+		}).
+		Set(cols.Status.Set(), insight.StatusActive).
+		Set(cols.DismissedAt.SetNull()).
+		Set(cols.DismissedByID.SetNull()).
+		Set(cols.DismissReason.SetNull()).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to restore insight", zap.Error(err))
 
 		return nil, err
 	}

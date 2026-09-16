@@ -8,18 +8,53 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListInsightRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
+// AllowedDetectorKeys restricts a read to the detectors a reader may see.
+//
+// It is pushed into the query rather than applied to the results, which is what
+// makes a paginated page correct: filtering after the fact gives uneven pages
+// and a total that counts rows the reader never receives.
+//
+// An empty slice means nothing is visible, not everything. A reader holding none
+// of the relevant permissions must get an empty list, and the one shape that
+// could plausibly be read as "no restriction" is the one that would silently
+// hand them every finding in the organization.
+type AllowedDetectorKeys []string
 
 // ListActiveInsightsRequest reads what the home screen shows: the findings that
 // were present at the last refresh and that nobody has dismissed.
 type ListActiveInsightsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
+	TenantInfo          pagination.TenantInfo `json:"-"`
+	AllowedDetectorKeys AllowedDetectorKeys   `json:"-"`
 	// Categories narrows to particular kinds of finding. Empty means all.
 	Categories []insight.Category `json:"categories"`
 	// Limit bounds what a widget asks for. A home screen shows a handful.
 	Limit int `json:"limit"`
+}
+
+// ListInsightsRequest browses the whole history rather than the home screen's
+// slice of it: any status, any severity, a page at a time.
+type ListInsightsRequest struct {
+	TenantInfo          pagination.TenantInfo `json:"-"`
+	AllowedDetectorKeys AllowedDetectorKeys   `json:"-"`
+	Categories          []insight.Category    `json:"categories"`
+	Severities          []insight.Severity    `json:"severities"`
+	// Statuses narrows the lifecycle. Empty means active only, because that is
+	// what someone opening the page is asking about; seeing what was dismissed or
+	// has since resolved is a deliberate act.
+	Statuses []insight.Status `json:"statuses"`
+	Limit    int              `json:"limit"`
+	Offset   int              `json:"offset"`
+}
+
+// RestoreInsightRequest undoes a dismissal.
+//
+// Dismissing is one click next to the card, so it is one misclick away, and
+// without this the mistake stands for a month. Restoring only ever returns a
+// dismissed finding to active; it cannot revive one the system resolved,
+// because that condition is no longer true.
+type RestoreInsightRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
 type GetInsightByIDRequest struct {
@@ -69,10 +104,11 @@ type InsightRepository interface {
 	) ([]*insight.Insight, error)
 	List(
 		ctx context.Context,
-		req *ListInsightRequest,
+		req ListInsightsRequest,
 	) (*pagination.ListResult[*insight.Insight], error)
 	GetByID(ctx context.Context, req GetInsightByIDRequest) (*insight.Insight, error)
 	Dismiss(ctx context.Context, req DismissInsightRequest) (*insight.Insight, error)
+	Restore(ctx context.Context, req RestoreInsightRequest) (*insight.Insight, error)
 	ReplaceDetectorFindings(
 		ctx context.Context,
 		req ReplaceDetectorFindingsRequest,

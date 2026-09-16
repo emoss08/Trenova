@@ -260,12 +260,7 @@ func (s *Service) buildInsights(
 	return entities
 }
 
-// ListActive returns what a reader is allowed to see.
-//
-// Filtering by permission here rather than at render time is the point: an
-// insight about customer profitability names a customer and a figure in its
-// headline, and a person who cannot read customers must not receive it in a
-// payload at all.
+// ListActive returns the home screen's slice of what a reader may see.
 func (s *Service) ListActive(
 	ctx context.Context,
 	req services.ListInsightsRequest,
@@ -275,68 +270,73 @@ func (s *Service) ListActive(
 		limit = widgetLimit
 	}
 
-	found, err := s.repo.ListActive(ctx, repositories.ListActiveInsightsRequest{
-		TenantInfo: req.TenantInfo,
-		Categories: req.Categories,
-		// Read more than asked for, because permission filtering below removes
-		// some and a widget asking for five should still get five where five are
-		// visible to that reader.
-		Limit: limit * 2,
+	return s.repo.ListActive(ctx, repositories.ListActiveInsightsRequest{
+		TenantInfo:          req.TenantInfo,
+		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, req),
+		Categories:          req.Categories,
+		Limit:               limit,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	visible := s.filterByPermission(ctx, req, found)
-	if len(visible) > limit {
-		visible = visible[:limit]
-	}
-
-	return visible, nil
 }
 
-func (s *Service) filterByPermission(
+// List browses the history a page at a time.
+func (s *Service) List(
+	ctx context.Context,
+	req services.BrowseInsightsRequest,
+) (*pagination.ListResult[*insight.Insight], error) {
+	return s.repo.List(ctx, repositories.ListInsightsRequest{
+		TenantInfo: req.TenantInfo,
+		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, services.ListInsightsRequest{
+			TenantInfo: req.TenantInfo,
+			UserID:     req.UserID,
+		}),
+		Categories: req.Categories,
+		Severities: req.Severities,
+		Statuses:   req.Statuses,
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+	})
+}
+
+// allowedDetectorKeys is the set of detectors whose findings this reader may
+// receive.
+//
+// Resolving it here and pushing it into the query is what makes a paginated page
+// honest: filtering rows after they come back gives short pages and a total that
+// counts findings the reader will never see. It is also cheaper — one permission
+// check per detector rather than per row.
+//
+// An insight names a customer, a location or a driver alongside a figure, so a
+// reader who cannot see those records must not receive the finding at all, not
+// merely be prevented from clicking through to it.
+func (s *Service) allowedDetectorKeys(
 	ctx context.Context,
 	req services.ListInsightsRequest,
-	found []*insight.Insight,
-) []*insight.Insight {
-	visible := make([]*insight.Insight, 0, len(found))
-	// Detectors repeat across insights, so the permission for a given detector is
-	// resolved once rather than per row.
-	decided := make(map[string]bool, len(s.detectors.All()))
+) repositories.AllowedDetectorKeys {
+	detectors := s.detectors.All()
+	allowed := make(repositories.AllowedDetectorKeys, 0, len(detectors))
 
-	for _, entity := range found {
-		allowed, seen := decided[entity.DetectorKey]
-		if !seen {
-			allowed = s.readerMaySee(ctx, req, entity.DetectorKey)
-			decided[entity.DetectorKey] = allowed
-		}
-
-		if allowed {
-			visible = append(visible, entity)
+	for _, d := range detectors {
+		if s.readerMaySee(ctx, req, d) {
+			allowed = append(allowed, d.Key())
 		}
 	}
 
-	return visible
+	return allowed
 }
 
-// readerMaySee answers whether this reader holds the permission the detector's
+// readerMaySee answers whether this reader holds the permission a detector's
 // subject matter requires.
 //
-// A detector that is no longer registered — turned off in a release, while its
-// findings are still stored — is refused rather than allowed. There is nothing
-// left to say what permission it needed, and defaulting to visible is how a
-// retired detector's cards outlive the check that guarded them.
+// Only registered detectors are ever asked about. A detector turned off in a
+// release leaves its findings in the table, and nothing is left to say what
+// permission they needed — so its key never joins the allowed set and those rows
+// stay out of every read. Defaulting the other way is how a retired rule's cards
+// outlive the check that guarded them.
 func (s *Service) readerMaySee(
 	ctx context.Context,
 	req services.ListInsightsRequest,
-	detectorKey string,
+	d detector.Detector,
 ) bool {
-	d, ok := s.detectors.Get(detectorKey)
-	if !ok {
-		return false
-	}
-
 	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
 		PrincipalType:  services.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
@@ -347,8 +347,9 @@ func (s *Service) readerMaySee(
 		Operation:      d.Operation(),
 	})
 	if err != nil {
+		// A permission service that cannot answer is not permission granted.
 		s.l.Error("failed to check insight permission",
-			zap.String("detector", detectorKey),
+			zap.String("detector", d.Key()),
 			zap.Error(err),
 		)
 
@@ -367,6 +368,17 @@ func (s *Service) Dismiss(
 		ID:         req.ID,
 		UserID:     req.UserID,
 		Reason:     req.Reason,
+		TenantInfo: req.TenantInfo,
+	})
+}
+
+// Restore undoes a dismissal.
+func (s *Service) Restore(
+	ctx context.Context,
+	req services.RestoreInsightRequest,
+) (*insight.Insight, error) {
+	return s.repo.Restore(ctx, repositories.RestoreInsightRequest{
+		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
 }

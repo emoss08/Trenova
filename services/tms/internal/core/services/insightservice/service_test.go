@@ -52,10 +52,11 @@ func (d *stubDetector) Detect(
 }
 
 type stubRepo struct {
-	replaced []repositories.ReplaceDetectorFindingsRequest
-	active   []*insight.Insight
-	err      error
-	lastList repositories.ListActiveInsightsRequest
+	replaced   []repositories.ReplaceDetectorFindingsRequest
+	active     []*insight.Insight
+	err        error
+	lastList   repositories.ListActiveInsightsRequest
+	lastBrowse repositories.ListInsightsRequest
 }
 
 func (r *stubRepo) ReplaceDetectorFindings(
@@ -81,10 +82,19 @@ func (r *stubRepo) ListActive(
 }
 
 func (r *stubRepo) List(
-	context.Context,
-	*repositories.ListInsightRequest,
+	_ context.Context,
+	req repositories.ListInsightsRequest,
 ) (*pagination.ListResult[*insight.Insight], error) {
-	return nil, nil
+	r.lastBrowse = req
+
+	return &pagination.ListResult[*insight.Insight]{Items: r.active, Total: len(r.active)}, r.err
+}
+
+func (r *stubRepo) Restore(
+	_ context.Context,
+	req repositories.RestoreInsightRequest,
+) (*insight.Insight, error) {
+	return &insight.Insight{ID: req.ID, Status: insight.StatusActive}, r.err
 }
 
 func (r *stubRepo) GetByID(
@@ -361,14 +371,12 @@ func TestRefresh_MarksNumbersStaleAfterTheRefreshHorizon(t *testing.T) {
 }
 
 // An insight headline names a customer and a figure. A reader who cannot read
-// customers must not receive it in a payload at all.
-func TestListActive_HidesInsightsTheReaderMayNotSee(t *testing.T) {
+// customers must not receive it in a payload at all, so the restriction goes
+// into the query rather than being applied to what comes back.
+func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubRepo{active: []*insight.Insight{
-		{ID: pulid.MustNew("inst_"), DetectorKey: "shipments"},
-		{ID: pulid.MustNew("inst_"), DetectorKey: "workers"},
-	}}
+	repo := &stubRepo{}
 	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
 		permission.ResourceShipment: true,
 	}}
@@ -378,59 +386,88 @@ func TestListActive_HidesInsightsTheReaderMayNotSee(t *testing.T) {
 		&stubDetector{key: "workers", resource: permission.ResourceWorker},
 	)
 
-	visible, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Limit:      10,
 	})
 	require.NoError(t, err)
 
-	require.Len(t, visible, 1)
-	assert.Equal(t, "shipments", visible[0].DetectorKey)
+	assert.Equal(
+		t,
+		repositories.AllowedDetectorKeys{"shipments"},
+		repo.lastList.AllowedDetectorKeys,
+	)
+}
+
+// The one shape that could be read as "no restriction" is the one that would
+// hand a reader every finding in the organization, so a reader who may see
+// nothing must produce an empty set rather than an absent filter.
+func TestListActive_AsksForNothingWhenTheReaderMaySeeNothing(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	svc := newService(repo, &stubPermissions{},
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	)
+
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Limit:      10,
+	})
+	require.NoError(t, err)
+
+	assert.Empty(t, repo.lastList.AllowedDetectorKeys)
 }
 
 // A detector turned off in a release leaves its findings behind. Nothing is left
-// to say what permission they needed, so they are hidden rather than shown.
-func TestListActive_HidesFindingsFromADetectorThatNoLongerExists(t *testing.T) {
+// to say what permission they needed, so its key never joins the allowed set.
+func TestListActive_NeverAllowsADetectorThatNoLongerExists(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubRepo{active: []*insight.Insight{
-		{ID: pulid.MustNew("inst_"), DetectorKey: "retired-detector"},
-	}}
+	repo := &stubRepo{}
 	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
 		permission.ResourceShipment: true,
 	}}
 
-	visible, err := newService(repo, perms).ListActive(
-		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
+	svc := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
+
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Limit:      10,
+	})
 	require.NoError(t, err)
 
-	assert.Empty(t, visible)
+	assert.NotContains(t, repo.lastList.AllowedDetectorKeys, "retired-detector")
 }
 
 // A failed permission check must not be read as permission granted.
-func TestListActive_HidesEverythingWhenThePermissionCheckFails(t *testing.T) {
+func TestListActive_AllowsNothingWhenThePermissionCheckFails(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubRepo{active: []*insight.Insight{
-		{ID: pulid.MustNew("inst_"), DetectorKey: "shipments"},
-	}}
+	repo := &stubRepo{}
 	perms := &stubPermissions{err: errors.New("permission service down")}
 
-	visible, err := newService(repo, perms,
+	svc := newService(repo, perms,
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-	).ListActive(
-		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 10},
 	)
+
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Limit:      10,
+	})
 	require.NoError(t, err)
 
-	assert.Empty(t, visible)
+	assert.Empty(t, repo.lastList.AllowedDetectorKeys)
 }
 
-// Detectors repeat across rows, so the same question is not asked once per card.
+// Detectors repeat across rows, so the question is asked once per detector
+// rather than once per card.
 func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 	t.Parallel()
 
@@ -457,46 +494,99 @@ func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 	assert.Equal(t, 1, perms.checks)
 }
 
-// A widget asking for five should get five where five are visible, so the read
-// has to over-fetch before filtering.
-func TestListActive_ReadsExtraToSurviveFiltering(t *testing.T) {
+// Browsing the history carries the same restriction as the home screen: the
+// page must not be able to widen what a reader can see.
+func TestList_CarriesTheSameDetectorRestrictionAsTheWidget(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubRepo{}
-
-	_, err := newService(repo, &stubPermissions{}).ListActive(
-		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 5},
-	)
-	require.NoError(t, err)
-
-	assert.Greater(t, repo.lastList.Limit, 5)
-}
-
-func TestListActive_TrimsToTheRequestedLimit(t *testing.T) {
-	t.Parallel()
-
-	active := make([]*insight.Insight, 0, 8)
-	for range 8 {
-		active = append(active, &insight.Insight{
-			ID:          pulid.MustNew("inst_"),
-			DetectorKey: "shipments",
-		})
-	}
-
 	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
 		permission.ResourceShipment: true,
 	}}
 
-	visible, err := newService(&stubRepo{active: active}, perms,
+	svc := newService(repo, perms,
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-	).ListActive(
+		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+	)
+
+	_, err := svc.List(t.Context(), services.BrowseInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Statuses:   []insight.Status{insight.StatusDismissed},
+		Limit:      25,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		repositories.AllowedDetectorKeys{"shipments"},
+		repo.lastBrowse.AllowedDetectorKeys,
+	)
+}
+
+func TestList_PassesTheRequestedFiltersThrough(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	svc := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	)
+
+	_, err := svc.List(t.Context(), services.BrowseInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Categories: []insight.Category{insight.CategoryCashFlow},
+		Severities: []insight.Severity{insight.SeverityCritical},
+		Statuses:   []insight.Status{insight.StatusResolved},
+		Limit:      50,
+		Offset:     25,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []insight.Category{insight.CategoryCashFlow}, repo.lastBrowse.Categories)
+	assert.Equal(t, []insight.Severity{insight.SeverityCritical}, repo.lastBrowse.Severities)
+	assert.Equal(t, []insight.Status{insight.StatusResolved}, repo.lastBrowse.Statuses)
+	assert.Equal(t, 50, repo.lastBrowse.Limit)
+	assert.Equal(t, 25, repo.lastBrowse.Offset)
+}
+
+func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("inst_")
+
+	restored, err := newService(&stubRepo{}, &stubPermissions{}).Restore(
 		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_"), Limit: 3},
+		services.RestoreInsightRequest{ID: id, TenantInfo: tenant()},
 	)
 	require.NoError(t, err)
 
-	assert.Len(t, visible, 3)
+	assert.Equal(t, id, restored.ID)
+	assert.Equal(t, insight.StatusActive, restored.Status)
+}
+
+// The widget's default applies when a caller does not say how many it wants.
+func TestListActive_AppliesADefaultLimit(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	_, err := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).ListActive(
+		t.Context(),
+		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_")},
+	)
+	require.NoError(t, err)
+
+	assert.Positive(t, repo.lastList.Limit)
 }
 
 func TestDismiss_RecordsTheReaderAndTheirReason(t *testing.T) {

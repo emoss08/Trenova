@@ -1072,10 +1072,12 @@ func agentAutomationRouteRefs() []RouteRef {
 			// else here, so an organization that holds agent automation already
 			// holds everything the panel needs.
 			"/api/v1/insights/",
+			"/api/v1/insights/browse/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
 			"/api/v1/insights/:insightID/dismiss/",
+			"/api/v1/insights/:insightID/restore/",
 			"/api/v1/agent-proposals/:proposalID/resolve/",
 			"/api/v1/agent-runs/",
 			"/api/v1/ai-providers/",

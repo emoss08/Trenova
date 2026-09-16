@@ -18,6 +18,23 @@ type ListInsightsRequest struct {
 	Limit      int
 }
 
+// BrowseInsightsRequest reads the history rather than the home screen's slice:
+// any status, any severity, a page at a time.
+type BrowseInsightsRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	Categories []insight.Category
+	Severities []insight.Severity
+	Statuses   []insight.Status
+	Limit      int
+	Offset     int
+}
+
+type RestoreInsightRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type DismissInsightRequest struct {
 	ID         pulid.ID
 	UserID     pulid.ID
