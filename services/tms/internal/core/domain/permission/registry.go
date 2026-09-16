@@ -2138,6 +2138,94 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	// Configuring an agent decides which tools it may reach and how much it may do
+	// unattended, so it sits at the same sensitivity as provider configuration.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentDefinition.String(),
+		DisplayName: "Agent Definition",
+		Description: "Per-organization agent configurations and their tool access",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View configured agents"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add an agent"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update an agent's tools and autonomy",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove an agent"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	// Using the assistant is an ordinary operational act rather than an
+	// administrative one, so it is held separately from configuring agents: a
+	// dispatcher should be able to ask questions without being able to change
+	// which tools an agent holds.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAssistant.String(),
+		DisplayName: "Assistant",
+		Description: "Conversations with configured agents",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View own conversations"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Start conversations and send messages",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete own conversations"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	// An insight names a customer, a location or a driver alongside a figure, so
+	// reading the panel is a real disclosure. It is held separately from the
+	// records it draws on because a reader still needs permission over those:
+	// the panel filters to what its reader may already see, and this permission
+	// only decides whether they get a panel at all.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceInsight.String(),
+		DisplayName: "Insight",
+		Description: "Operational findings surfaced on the home screen",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View operational insights"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Dismiss an insight that is not worth acting on",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	// Configuring a provider decides which endpoint an organization's freight and
+	// billing data is sent to, and whether that endpoint may be on the local
+	// network, so it is held at the same sensitivity as credential management.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAIProvider.String(),
+		DisplayName: "AI Provider",
+		Description: "Model endpoints, including self-hosted servers, and their task routing",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View AI providers"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Add an AI provider"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update an AI provider and its task routing",
+			},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Remove an AI provider"},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Test an AI provider connection",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceAccessorialCharge.String(),
 		DisplayName:        "Accessorial Charge",

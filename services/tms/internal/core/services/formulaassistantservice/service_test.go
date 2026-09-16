@@ -35,6 +35,13 @@ func (s *stubCompletion) Diagnose(
 	return nil, nil
 }
 
+func (s *stubCompletion) CompleteChat(
+	_ context.Context,
+	_ *serviceports.ChatCompletionRequest,
+) (*serviceports.ChatCompletionResult, error) {
+	return nil, nil
+}
+
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
 	req *serviceports.StructuredCompletionRequest,

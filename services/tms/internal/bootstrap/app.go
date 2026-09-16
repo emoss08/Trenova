@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -34,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/insightjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
@@ -48,7 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
@@ -109,12 +113,16 @@ func Options() fx.Option {
 		shipmentjobs.Module,
 		agentjobs.Module,
 		agenttoolservice.Module,
-		anthropiccompletionservice.Module,
+		agentquerytoolservice.Module,
+		agentguard.Module,
+		fx.Provide(assistantservice.New),
+		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
 		carriersettlementjobs.Module,
 		tenderjobs.Module,
 		compliancejobs.Module,
+		insightjobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,

@@ -68,6 +68,20 @@ func (f fakeProposalRepo) Create(
 	return entity, nil
 }
 
+func (f fakeProposalRepo) RecordExecution(
+	context.Context,
+	repositories.RecordAgentProposalExecutionRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (f fakeProposalRepo) ListByThread(
+	context.Context,
+	repositories.ListAgentProposalsByThreadRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (f fakeProposalRepo) UpdateStatus(
 	context.Context,
 	repositories.UpdateAgentProposalStatusRequest,

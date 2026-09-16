@@ -37,6 +37,7 @@ import {
 } from "./widgets/orientation-widgets";
 import { AnnouncementWidget, MapWidget } from "./widgets/comms-widgets";
 import { WorkerAttentionWidget } from "./widgets/worker-attention-widget";
+import { AIInsightsWidget } from "./widgets/ai-insights-widget";
 
 export type WidgetProps = {
   widget: HomeWidget;
@@ -72,6 +73,7 @@ export const WIDGET_COMPONENTS: Record<string, ComponentType<WidgetProps>> = {
   "on-time-goal": OnTimeGoalWidget,
 
   // Insight
+  "ai-insights": AIInsightsWidget,
   report: ReportWidget,
   "dashboard-link": DashboardLinkWidget,
   "lane-heatmap": LaneHeatmapWidget,

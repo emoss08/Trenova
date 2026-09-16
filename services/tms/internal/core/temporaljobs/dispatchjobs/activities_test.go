@@ -61,6 +61,20 @@ func (m *stubProposalRepo) Create(
 	return nil, nil
 }
 
+func (m *stubProposalRepo) RecordExecution(
+	context.Context,
+	repositories.RecordAgentProposalExecutionRequest,
+) (*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (m *stubProposalRepo) ListByThread(
+	context.Context,
+	repositories.ListAgentProposalsByThreadRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (m *stubProposalRepo) UpdateStatus(
 	context.Context,
 	repositories.UpdateAgentProposalStatusRequest,

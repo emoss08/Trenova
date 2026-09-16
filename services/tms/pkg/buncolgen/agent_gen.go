@@ -491,35 +491,41 @@ var AgentProposalTable = TableInfo{
 //	q.Where(AgentProposalColumns.ID.Eq(), id)           // WHERE ap.id = ?
 //	q.Order(AgentProposalColumns.CreatedAt.OrderDesc())  // ORDER BY ap.created_at DESC
 var AgentProposalColumns = struct {
-	ID             Column // "id" → qualified: "ap.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "ap.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "ap.organization_id"
-	RunID          Column // "run_id" → qualified: "ap.run_id"
-	ToolName       Column // "tool_name" → qualified: "ap.tool_name"
-	ToolParams     Column // "tool_params" → qualified: "ap.tool_params"
-	Confidence     Column // "confidence" → qualified: "ap.confidence"
-	Rationale      Column // "rationale" → qualified: "ap.rationale"
-	Evidence       Column // "evidence" → qualified: "ap.evidence"
-	AutonomyTier   Column // "autonomy_tier" → qualified: "ap.autonomy_tier"
-	Status         Column // "status" → qualified: "ap.status"
-	Version        Column // "version" → qualified: "ap.version"
-	CreatedAt      Column // "created_at" → qualified: "ap.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "ap.updated_at"
+	ID              Column // "id" → qualified: "ap.id"
+	BusinessUnitID  Column // "business_unit_id" → qualified: "ap.business_unit_id"
+	OrganizationID  Column // "organization_id" → qualified: "ap.organization_id"
+	RunID           Column // "run_id" → qualified: "ap.run_id"
+	ToolName        Column // "tool_name" → qualified: "ap.tool_name"
+	ToolParams      Column // "tool_params" → qualified: "ap.tool_params"
+	Confidence      Column // "confidence" → qualified: "ap.confidence"
+	Rationale       Column // "rationale" → qualified: "ap.rationale"
+	Evidence        Column // "evidence" → qualified: "ap.evidence"
+	AutonomyTier    Column // "autonomy_tier" → qualified: "ap.autonomy_tier"
+	Status          Column // "status" → qualified: "ap.status"
+	ExecutedAt      Column // "executed_at" → qualified: "ap.executed_at"
+	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
+	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
+	Version         Column // "version" → qualified: "ap.version"
+	CreatedAt       Column // "created_at" → qualified: "ap.created_at"
+	UpdatedAt       Column // "updated_at" → qualified: "ap.updated_at"
 }{
-	ID:             NewColumn("id", "ap"),
-	BusinessUnitID: NewColumn("business_unit_id", "ap"),
-	OrganizationID: NewColumn("organization_id", "ap"),
-	RunID:          NewColumn("run_id", "ap"),
-	ToolName:       NewColumn("tool_name", "ap"),
-	ToolParams:     NewColumn("tool_params", "ap"),
-	Confidence:     NewColumn("confidence", "ap"),
-	Rationale:      NewColumn("rationale", "ap"),
-	Evidence:       NewColumn("evidence", "ap"),
-	AutonomyTier:   NewColumn("autonomy_tier", "ap"),
-	Status:         NewColumn("status", "ap"),
-	Version:        NewColumn("version", "ap"),
-	CreatedAt:      NewColumn("created_at", "ap"),
-	UpdatedAt:      NewColumn("updated_at", "ap"),
+	ID:              NewColumn("id", "ap"),
+	BusinessUnitID:  NewColumn("business_unit_id", "ap"),
+	OrganizationID:  NewColumn("organization_id", "ap"),
+	RunID:           NewColumn("run_id", "ap"),
+	ToolName:        NewColumn("tool_name", "ap"),
+	ToolParams:      NewColumn("tool_params", "ap"),
+	Confidence:      NewColumn("confidence", "ap"),
+	Rationale:       NewColumn("rationale", "ap"),
+	Evidence:        NewColumn("evidence", "ap"),
+	AutonomyTier:    NewColumn("autonomy_tier", "ap"),
+	Status:          NewColumn("status", "ap"),
+	ExecutedAt:      NewColumn("executed_at", "ap"),
+	ExecutionError:  NewColumn("execution_error", "ap"),
+	SourceMessageID: NewColumn("source_message_id", "ap"),
+	Version:         NewColumn("version", "ap"),
+	CreatedAt:       NewColumn("created_at", "ap"),
+	UpdatedAt:       NewColumn("updated_at", "ap"),
 }
 
 // AgentProposalFieldMap maps JSON API field names to database column names.
@@ -527,20 +533,23 @@ var AgentProposalColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentProposal.GetStaticFieldMap().
 var AgentProposalFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"runId":          "run_id",
-	"toolName":       "tool_name",
-	"toolParams":     "tool_params",
-	"confidence":     "confidence",
-	"rationale":      "rationale",
-	"evidence":       "evidence",
-	"autonomyTier":   "autonomy_tier",
-	"status":         "status",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"runId":           "run_id",
+	"toolName":        "tool_name",
+	"toolParams":      "tool_params",
+	"confidence":      "confidence",
+	"rationale":       "rationale",
+	"evidence":        "evidence",
+	"autonomyTier":    "autonomy_tier",
+	"status":          "status",
+	"executedAt":      "executed_at",
+	"executionError":  "execution_error",
+	"sourceMessageId": "source_message_id",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
 }
 
 // AgentProposalInsertableColumns lists column names suitable for INSERT statements on the "agent_proposals" table.
@@ -557,6 +566,9 @@ var AgentProposalInsertableColumns = []string{
 	"evidence",
 	"autonomy_tier",
 	"status",
+	"executed_at",
+	"execution_error",
+	"source_message_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -627,20 +639,23 @@ func AgentProposalApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	AgentProposalFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentProposalFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
-	ToolParams     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolParams" → DB: "tool_params"
-	Confidence     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
-	Rationale      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rationale" → DB: "rationale"
-	Evidence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evidence" → DB: "evidence"
-	AutonomyTier   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyTier" → DB: "autonomy_tier"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	ToolName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	ToolParams      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolParams" → DB: "tool_params"
+	Confidence      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
+	Rationale       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rationale" → DB: "rationale"
+	Evidence        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evidence" → DB: "evidence"
+	AutonomyTier    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyTier" → DB: "autonomy_tier"
+	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ExecutedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedAt" → DB: "executed_at"
+	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
+	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -674,6 +689,15 @@ var AgentProposalFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	ExecutedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executedAt", op, value)
+	},
+	ExecutionError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executionError", op, value)
+	},
+	SourceMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceMessageId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

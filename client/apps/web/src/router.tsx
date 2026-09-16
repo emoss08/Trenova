@@ -84,6 +84,28 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/assistant",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Assistant, Operation.Read),
+            ),
+            async lazy() {
+              const { AssistantPage } = await import("@/routes/assistant/page");
+              return { Component: AssistantPage };
+            },
+          },
+          {
+            path: "/insights",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Insight, Operation.Read),
+            ),
+            async lazy() {
+              const { InsightsPage } = await import("@/routes/insights/page");
+              return { Component: InsightsPage };
+            },
+          },
+          {
             path: "/shipment-management/shipments",
             loader: combineLoaders(
               protectedLoader,
@@ -1758,6 +1780,22 @@ export const routes: RouteObject[] = [
                 async lazy() {
                   const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
                   return { Component: IntegrationsPage };
+                },
+              },
+              {
+                path: "agents",
+                loader: createPermissionLoader(Resource.AgentDefinition, Operation.Read),
+                async lazy() {
+                  const { AgentsPage } = await import("@/routes/admin/agents/page");
+                  return { Component: AgentsPage };
+                },
+              },
+              {
+                path: "ai-providers",
+                loader: createPermissionLoader(Resource.AIProvider, Operation.Read),
+                async lazy() {
+                  const { AIProvidersPage } = await import("@/routes/admin/ai-providers/page");
+                  return { Component: AIProvidersPage };
                 },
               },
               {

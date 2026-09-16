@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdecisionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdefinitionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentexceptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentrunrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
@@ -32,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/costingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
@@ -106,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/homelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iftarepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/insightrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
@@ -278,9 +282,14 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	accessorialchargerepository.New,
 	agentrunrepository.New,
 	agentproposalrepository.New,
+	insightrepository.New,
+	insightrepository.NewMetrics,
 	agentexceptionrepository.New,
 	agentdecisionrepository.New,
 	agentcontrolrepository.New,
+	agentdefinitionrepository.New,
+	conversationrepository.New,
+	aiproviderrepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,
 	bankreceiptbatchrepository.New,

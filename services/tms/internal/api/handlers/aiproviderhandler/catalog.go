@@ -1,0 +1,257 @@
+package aiproviderhandler
+
+import "github.com/emoss08/trenova/internal/core/domain/aiprovider"
+
+// KindDescriptor describes a wire protocol to the configuration UI.
+type KindDescriptor struct {
+	Kind                       aiprovider.Kind                 `json:"kind"`
+	Label                      string                          `json:"label"`
+	Description                string                          `json:"description"`
+	DefaultBaseURL             string                          `json:"defaultBaseUrl"`
+	RequiresAPIKey             bool                            `json:"requiresApiKey"`
+	RequiresBaseURL            bool                            `json:"requiresBaseUrl"`
+	DefaultStructuredOutput    aiprovider.StructuredOutputMode `json:"defaultStructuredOutputMode"`
+	SupportsStructuredEnforced bool                            `json:"supportsStructuredEnforced"`
+}
+
+func kindDescriptors() []KindDescriptor {
+	return []KindDescriptor{
+		{
+			Kind:                       aiprovider.KindAnthropicMessages,
+			Label:                      "Anthropic Messages",
+			Description:                "Anthropic's API, and any endpoint serving the same shape such as Amazon Bedrock.",
+			DefaultBaseURL:             aiprovider.KindAnthropicMessages.DefaultBaseURL(),
+			RequiresAPIKey:             true,
+			DefaultStructuredOutput:    aiprovider.KindAnthropicMessages.DefaultStructuredOutputMode(),
+			SupportsStructuredEnforced: true,
+		},
+		{
+			Kind:                       aiprovider.KindOpenAIResponses,
+			Label:                      "OpenAI Responses",
+			Description:                "OpenAI's Responses API, and endpoints serving the same shape.",
+			DefaultBaseURL:             aiprovider.KindOpenAIResponses.DefaultBaseURL(),
+			RequiresAPIKey:             true,
+			DefaultStructuredOutput:    aiprovider.KindOpenAIResponses.DefaultStructuredOutputMode(),
+			SupportsStructuredEnforced: true,
+		},
+		{
+			Kind:  aiprovider.KindOpenAIChat,
+			Label: "OpenAI-compatible",
+			Description: "Any server exposing /chat/completions — vLLM, SGLang, LM Studio, " +
+				"OpenRouter, Groq, Together, Fireworks, DeepInfra, and others.",
+			RequiresAPIKey:             false,
+			RequiresBaseURL:            true,
+			DefaultStructuredOutput:    aiprovider.KindOpenAIChat.DefaultStructuredOutputMode(),
+			SupportsStructuredEnforced: true,
+		},
+		{
+			Kind:  aiprovider.KindOllama,
+			Label: "Ollama",
+			Description: "Ollama's native API. Used instead of its OpenAI-compatible " +
+				"endpoint, which ignores JSON schemas.",
+			DefaultBaseURL:             aiprovider.KindOllama.DefaultBaseURL(),
+			RequiresAPIKey:             false,
+			DefaultStructuredOutput:    aiprovider.KindOllama.DefaultStructuredOutputMode(),
+			SupportsStructuredEnforced: true,
+		},
+	}
+}
+
+// Preset is a known deployment an administrator can start from, so configuring a
+// provider does not begin with hunting for the right base URL.
+type Preset struct {
+	Key                  string                          `json:"key"`
+	Label                string                          `json:"label"`
+	Kind                 aiprovider.Kind                 `json:"kind"`
+	BaseURL              string                          `json:"baseUrl"`
+	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
+	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
+	RequiresAPIKey       bool                            `json:"requiresApiKey"`
+	SelfHosted           bool                            `json:"selfHosted"`
+	ExampleModel         string                          `json:"exampleModel"`
+	Notes                string                          `json:"notes,omitempty"`
+}
+
+// Presets covers the deployments organizations actually reach for. The
+// structured-output mode differs per entry because support genuinely differs:
+// vLLM and SGLang enforce schemas server-side, while a bare llama.cpp server
+// does not reliably honour response_format on its OpenAI-compatible route.
+func Presets() []Preset {
+	return []Preset{
+		{
+			Key:                  "anthropic",
+			Label:                "Anthropic",
+			Kind:                 aiprovider.KindAnthropicMessages,
+			BaseURL:              "https://api.anthropic.com",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "claude-opus-5",
+		},
+		{
+			Key:                  "openai",
+			Label:                "OpenAI",
+			Kind:                 aiprovider.KindOpenAIResponses,
+			BaseURL:              "https://api.openai.com",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "gpt-5-mini",
+		},
+		{
+			Key:                  "openrouter",
+			Label:                "OpenRouter",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://openrouter.ai/api/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "qwen/qwen3-max",
+			Notes:                "Routes to hundreds of models across many upstream providers.",
+		},
+		{
+			Key:                  "groq",
+			Label:                "Groq",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://api.groq.com/openai/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "llama-3.3-70b-versatile",
+			Notes:                "Lowest time to first token; useful for high-volume classification.",
+		},
+		{
+			Key:                  "together",
+			Label:                "Together AI",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://api.together.xyz/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "Qwen/Qwen3-235B-A22B",
+		},
+		{
+			Key:                  "fireworks",
+			Label:                "Fireworks AI",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://api.fireworks.ai/inference/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "accounts/fireworks/models/qwen3-235b-a22b",
+		},
+		{
+			Key:                  "deepinfra",
+			Label:                "DeepInfra",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://api.deepinfra.com/v1/openai",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "Qwen/Qwen3-235B-A22B",
+		},
+		{
+			Key:                  "bedrock",
+			Label:                "Amazon Bedrock",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			Notes: "Use the bedrock-mantle endpoint for your region and a Bedrock " +
+				"API key, for example https://bedrock-mantle.us-east-1.amazonaws.com/openai/v1.",
+		},
+		{
+			Key:                  "ollama",
+			Label:                "Ollama (self-hosted)",
+			Kind:                 aiprovider.KindOllama,
+			BaseURL:              "http://localhost:11434",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "qwen3:8b",
+			Notes:                "Runs open-weight models on your own hardware; no data leaves your network.",
+		},
+		{
+			Key:                  "vllm",
+			Label:                "vLLM (self-hosted)",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "http://localhost:8000/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "Qwen/Qwen3-32B",
+			Notes:                "Enforces JSON schemas server-side; the strongest self-hosted option for throughput.",
+		},
+		{
+			Key:                  "sglang",
+			Label:                "SGLang (self-hosted)",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "http://localhost:30000/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "Qwen/Qwen3-32B",
+		},
+		{
+			Key:                  "lmstudio",
+			Label:                "LM Studio (self-hosted)",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "http://localhost:1234/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "qwen3-32b",
+		},
+		{
+			Key:                  "llamacpp",
+			Label:                "llama.cpp (self-hosted)",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "http://localhost:8080/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputPrompted,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "qwen3-32b",
+			Notes: "llama-server does not reliably honour response_format on its " +
+				"OpenAI-compatible route, so schemas are sent in the prompt instead.",
+		},
+	}
+}
+
+// TaskDescriptor describes a routable unit of work to the UI.
+type TaskDescriptor struct {
+	Task           aiprovider.Task `json:"task"`
+	Label          string          `json:"label"`
+	Description    string          `json:"description"`
+	RequiresTrust  bool            `json:"requiresTrust"`
+	VolumeGuidance string          `json:"volumeGuidance"`
+}
+
+func taskDescriptors() []TaskDescriptor {
+	return []TaskDescriptor{
+		{
+			Task:           aiprovider.TaskDocumentClassification,
+			Label:          "Document classification",
+			Description:    "Decide what an uploaded document is.",
+			VolumeGuidance: "High volume, low complexity — a small local model handles this well.",
+		},
+		{
+			Task:           aiprovider.TaskDocumentExtraction,
+			Label:          "Document extraction",
+			Description:    "Pull structured fields out of a document.",
+			VolumeGuidance: "High volume; needs reliable structured output.",
+		},
+		{
+			Task:          aiprovider.TaskBillingDiagnosis,
+			Label:         "Billing diagnosis",
+			Description:   "Diagnose a blocked billing item and propose resolutions.",
+			RequiresTrust: true,
+			VolumeGuidance: "Low volume, high stakes — this reaches the ledger, so it " +
+				"requires a provider marked trusted.",
+		},
+		{
+			Task:           aiprovider.TaskFormulaAssistant,
+			Label:          "Formula assistant",
+			Description:    "Generate and explain rating formulas.",
+			VolumeGuidance: "Interactive; favours a capable model.",
+		},
+		{
+			Task:           aiprovider.TaskGeneral,
+			Label:          "General",
+			Description:    "Anything not routed to a more specific task.",
+			VolumeGuidance: "Fallback pool.",
+		},
+	}
+}

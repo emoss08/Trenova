@@ -19,7 +19,9 @@ type Log struct {
 	UserID           pulid.ID  `json:"userId"           bun:"user_id,type:VARCHAR(100),notnull"`
 	Prompt           string    `json:"prompt"           bun:"prompt,type:TEXT,notnull"`
 	Response         string    `json:"response"         bun:"response,type:TEXT,notnull"`
-	Model            Model     `json:"model"            bun:"model,type:model_enum,notnull"`
+	Model            Model     `json:"model"            bun:"model,type:VARCHAR(200),notnull"`
+	ProviderKind     string    `json:"providerKind"     bun:"provider_kind,type:VARCHAR(50),notnull"`
+	ProviderID       pulid.ID  `json:"providerId"       bun:"provider_id,type:VARCHAR(100),nullzero"`
 	Operation        Operation `json:"operation"        bun:"operation,type:operation_enum,notnull"`
 	Object           string    `json:"object"           bun:"object,type:VARCHAR(100),notnull"`
 	ServiceTier      string    `json:"serviceTier"      bun:"service_tier,type:VARCHAR(100),notnull"`
@@ -54,16 +56,17 @@ func (l *Log) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&l.UserID, validation.Required.Error("User is required")),
 		validation.Field(&l.Prompt, validation.Required.Error("Prompt is required")),
+		// Deliberately not constrained to a known set: an organization can point
+		// Trenova at its own model server, and those models are named arbitrarily.
+		// Length is the only thing worth enforcing here.
 		validation.Field(&l.Model,
 			validation.Required.Error("Model is required"),
-			validation.In(
-				ModelGPT5Nano,
-				ModelGPT5Nano20250807,
-				ModelGPT5Mini,
-				ModelGPT5Mini20250807,
-				ModelModerationLatest,
-				ModelClaudeOpus5,
-			).Error("Model is not one this system calls"),
+			validation.Length(1, maxModelLength).
+				Error("Model cannot be longer than 200 characters"),
+		),
+		validation.Field(&l.ProviderKind,
+			validation.Length(0, maxProviderKindLength).
+				Error("Provider kind cannot be longer than 50 characters"),
 		),
 		validation.Field(&l.Operation,
 			validation.Required.Error("Operation is required"),
@@ -103,6 +106,8 @@ func (l *Log) Validate(multiErr *errortypes.MultiError) {
 }
 
 const (
-	maxObjectLength      = 100
-	maxServiceTierLength = 100
+	maxObjectLength       = 100
+	maxServiceTierLength  = 100
+	maxModelLength        = 200
+	maxProviderKindLength = 50
 )

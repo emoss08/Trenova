@@ -42,6 +42,12 @@ type AgentProposal struct {
 	AutonomyTier AutonomyTier    `json:"autonomyTier" bun:"autonomy_tier,type:agent_autonomy_tier_enum,notnull,default:'Propose'"`
 	Status       ProposalStatus  `json:"status"       bun:"status,type:agent_proposal_status_enum,notnull,default:'Pending'"`
 
+	// ExecutedAt and ExecutionError record what happened after approval. An
+	// accepted proposal with neither set has been approved but has not run.
+	ExecutedAt      *int64   `json:"executedAt"      bun:"executed_at,type:BIGINT,nullzero"`
+	ExecutionError  string   `json:"executionError"  bun:"execution_error,type:TEXT,nullzero"`
+	SourceMessageID pulid.ID `json:"sourceMessageId" bun:"source_message_id,type:VARCHAR(100),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

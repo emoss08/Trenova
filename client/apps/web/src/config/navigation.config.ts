@@ -1328,6 +1328,15 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["user"],
     },
     {
+      id: "open-insights",
+      label: "Operational Insights",
+      description: "Findings computed from your own records",
+      path: "/insights",
+      resource: Resource.Insight,
+      requiredOperation: Operation.Read,
+      keywords: ["insight", "insights", "findings", "ai", "detention", "unbilled", "on-time"],
+    },
+    {
       id: "create-home-layout",
       label: "Create Home Screen",
       description: "Author a home screen and assign it to roles",

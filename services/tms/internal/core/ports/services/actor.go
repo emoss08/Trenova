@@ -1,6 +1,9 @@
 package services
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 const (
 	SystemPrincipalID = pulid.ID("system")
@@ -33,6 +36,21 @@ func (a *RequestActor) UserIDOrNil() pulid.ID {
 		return pulid.Nil
 	}
 	return a.UserID
+}
+
+// TenantInfo is the actor's tenant scope. Deriving it here rather than at each
+// call site keeps a caller from scoping a query to a tenant the actor does not
+// belong to.
+func (a *RequestActor) TenantInfo() pagination.TenantInfo {
+	if a == nil {
+		return pagination.TenantInfo{}
+	}
+
+	return pagination.TenantInfo{
+		OrgID:  a.OrganizationID,
+		BuID:   a.BusinessUnitID,
+		UserID: a.UserID,
+	}
 }
 
 func (a *RequestActor) AuditActorOrSystem() AuditActor {

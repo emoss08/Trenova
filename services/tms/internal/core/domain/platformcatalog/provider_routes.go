@@ -1054,14 +1054,49 @@ func agentAutomationRouteRefs() []RouteRef {
 			"/api/v1/agent-exceptions/",
 			"/api/v1/agent-proposals/",
 			"/api/v1/agent-runs/:runID/",
+			// Provider configuration belongs to this feature rather than to a
+			// separate one: it is the substrate agents run on, and splitting it out
+			// would create a pack an organization could hold without being able to
+			// point its agents at a model.
+			"/api/v1/ai-providers/",
+			"/api/v1/ai-providers/catalog/",
+			"/api/v1/ai-providers/:providerID/",
+			"/api/v1/agent-definitions/",
+			"/api/v1/agent-definitions/templates/",
+			"/api/v1/agent-definitions/:agentID/",
+			"/api/v1/assistant/threads/",
+			"/api/v1/assistant/threads/:threadID/",
+			"/api/v1/assistant/threads/:threadID/messages/",
+			// The insights panel rides with this feature rather than becoming a
+			// pack of its own. Its findings are computed without a model and its
+			// narration goes through the same provider configuration as everything
+			// else here, so an organization that holds agent automation already
+			// holds everything the panel needs.
+			"/api/v1/insights/",
+			"/api/v1/insights/browse/",
+			"/api/v1/insights/:insightID/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",
+			"/api/v1/insights/:insightID/dismiss/",
+			"/api/v1/insights/:insightID/restore/",
 			"/api/v1/agent-proposals/:proposalID/resolve/",
 			"/api/v1/agent-runs/",
+			"/api/v1/ai-providers/",
+			"/api/v1/ai-providers/:providerID/test/",
+			"/api/v1/agent-definitions/",
+			"/api/v1/assistant/threads/",
+			"/api/v1/assistant/threads/:threadID/messages/",
 		),
 		routeRefsFor("PUT",
 			"/api/v1/agent-controls/",
+			"/api/v1/ai-providers/:providerID/",
+			"/api/v1/agent-definitions/:agentID/",
+		),
+		routeRefsFor("DELETE",
+			"/api/v1/ai-providers/:providerID/",
+			"/api/v1/agent-definitions/:agentID/",
+			"/api/v1/assistant/threads/:threadID/",
 		),
 	)
 }

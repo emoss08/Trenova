@@ -1,0 +1,293 @@
+package aiproviderservice
+
+import (
+	"context"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	Repo         repositories.AIProviderRepository
+	Encryption   *encryptionservice.Service
+	Prober       *Prober
+	AuditService services.AuditService
+}
+
+type Service struct {
+	l          *zap.Logger
+	repo       repositories.AIProviderRepository
+	encryption *encryptionservice.Service
+	prober     *Prober
+	audit      services.AuditService
+}
+
+func New(p Params) services.AIProviderService {
+	return &Service{
+		l:          p.Logger.Named("service.aiprovider"),
+		repo:       p.Repo,
+		encryption: p.Encryption,
+		prober:     p.Prober,
+		audit:      p.AuditService,
+	}
+}
+
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListAIProviderRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	result, err := s.repo.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx, provider := range result.Items {
+		result.Items[idx] = provider.Redacted()
+	}
+
+	return result, nil
+}
+
+func (s *Service) GetByID(
+	ctx context.Context,
+	req repositories.GetAIProviderByIDRequest,
+) (*aiprovider.Provider, error) {
+	provider, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.Redacted(), nil
+}
+
+func (s *Service) Create(
+	ctx context.Context,
+	req *services.SaveAIProviderRequest,
+	actor *services.RequestActor,
+) (*aiprovider.Provider, error) {
+	provider := &aiprovider.Provider{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+	}
+	if err := s.apply(provider, req); err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	provider.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	created, err := s.repo.Create(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAudit(&auditParams{
+		provider:  created,
+		previous:  nil,
+		operation: permission.OpCreate,
+		actor:     actor,
+		comment:   "AI provider created",
+	})
+
+	return created.Redacted(), nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	req *services.SaveAIProviderRequest,
+	actor *services.RequestActor,
+) (*aiprovider.Provider, error) {
+	existing, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	previous := existing.Redacted()
+
+	updated := *existing
+	updated.Version = req.Version
+	if err = s.apply(&updated, req); err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	updated.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	saved, err := s.repo.Update(ctx, &updated)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAudit(&auditParams{
+		provider:  saved,
+		previous:  previous,
+		operation: permission.OpUpdate,
+		actor:     actor,
+		comment:   "AI provider updated",
+	})
+
+	return saved.Redacted(), nil
+}
+
+func (s *Service) Delete(
+	ctx context.Context,
+	req repositories.DeleteAIProviderRequest,
+	actor *services.RequestActor,
+) error {
+	existing, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.Delete(ctx, req); err != nil {
+		return err
+	}
+
+	s.logAudit(&auditParams{
+		provider:  existing,
+		previous:  existing.Redacted(),
+		operation: permission.OpDelete,
+		actor:     actor,
+		comment:   "AI provider deleted",
+	})
+
+	return nil
+}
+
+func (s *Service) Test(
+	ctx context.Context,
+	req repositories.GetAIProviderByIDRequest,
+) (*services.TestAIProviderResult, error) {
+	provider, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKey, err := s.decryptAPIKey(provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.prober.Probe(ctx, provider, apiKey), nil
+}
+
+// apply copies a save request onto an entity, encrypting the credential and
+// defaulting the fields an administrator can reasonably leave blank.
+func (s *Service) apply(
+	provider *aiprovider.Provider,
+	req *services.SaveAIProviderRequest,
+) error {
+	provider.Name = strings.TrimSpace(req.Name)
+	provider.Description = strings.TrimSpace(req.Description)
+	provider.Kind = req.Kind
+	provider.BaseURL = strings.TrimSpace(req.BaseURL)
+	provider.Model = strings.TrimSpace(req.Model)
+	provider.AllowPrivateNetwork = req.AllowPrivateNetwork
+	provider.MaxTokens = req.MaxTokens
+	provider.Tasks = req.Tasks
+	provider.Priority = req.Priority
+	provider.Trusted = req.Trusted
+	provider.Enabled = req.Enabled
+
+	provider.StructuredOutputMode = req.StructuredOutputMode
+	if provider.StructuredOutputMode == "" {
+		provider.StructuredOutputMode = req.Kind.DefaultStructuredOutputMode()
+	}
+
+	// A nil key means "leave what is stored alone", so an administrator can
+	// retask a provider without re-entering its secret.
+	if req.APIKey == nil {
+		return nil
+	}
+
+	incoming := strings.TrimSpace(*req.APIKey)
+	if incoming == "" {
+		provider.APIKey = ""
+		return nil
+	}
+
+	encrypted, err := s.encryption.EncryptString(incoming)
+	if err != nil {
+		return errortypes.NewBusinessError(
+			"failed to encrypt the credential for this AI provider",
+		).WithInternal(err)
+	}
+	provider.APIKey = encrypted
+
+	return nil
+}
+
+func (s *Service) decryptAPIKey(provider *aiprovider.Provider) (string, error) {
+	if !provider.HasAPIKey() {
+		return "", nil
+	}
+
+	decrypted, err := s.encryption.DecryptString(provider.APIKey)
+	if err != nil {
+		return "", errortypes.NewBusinessError(
+			"failed to decrypt the credential for AI provider {0}", provider.Name,
+		).WithInternal(err)
+	}
+
+	return decrypted, nil
+}
+
+type auditParams struct {
+	provider  *aiprovider.Provider
+	previous  *aiprovider.Provider
+	operation permission.Operation
+	actor     *services.RequestActor
+	comment   string
+}
+
+func (s *Service) logAudit(p *auditParams) {
+	auditActor := p.actor.AuditActor()
+
+	// The redacted form is what is recorded: an audit trail that carried the
+	// encrypted credential would spread the secret into a second store.
+	var previousState map[string]any
+	if p.previous != nil {
+		previousState = jsonutils.MustToJSON(p.previous)
+	}
+
+	if err := s.audit.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceAIProvider,
+		ResourceID:     p.provider.GetID().String(),
+		Operation:      p.operation,
+		UserID:         auditActor.UserID,
+		PrincipalType:  auditActor.PrincipalType,
+		PrincipalID:    auditActor.PrincipalID,
+		APIKeyID:       auditActor.APIKeyID,
+		CurrentState:   jsonutils.MustToJSON(p.provider.Redacted()),
+		PreviousState:  previousState,
+		OrganizationID: p.provider.OrganizationID,
+		BusinessUnitID: p.provider.BusinessUnitID,
+	}, auditservice.WithComment(p.comment)); err != nil {
+		s.l.Error("failed to log ai provider audit", zap.Error(err))
+	}
+}

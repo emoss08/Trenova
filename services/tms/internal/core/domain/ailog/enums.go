@@ -1,5 +1,9 @@
 package ailog
 
+// Model is the provider-reported model identifier. It is not a closed set: an
+// organization can route work to its own model server, whose models carry
+// arbitrary names. The constants below are the ones this system calls by default,
+// kept for reference and defaulting rather than for validation.
 type Model string
 
 const (

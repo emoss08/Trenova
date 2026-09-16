@@ -4,6 +4,12 @@
 // (including cloud metadata endpoints), shared-address-space, multicast, and
 // unspecified network addresses, re-checking every resolved IP at dial time to
 // defeat DNS-rebinding.
+//
+// A caller that must reach an operator-designated host on its own network — a
+// self-hosted model server, for instance — opts in with Policy.AllowPrivateNetworks.
+// That relaxation is deliberately partial: loopback and private ranges open up,
+// while link-local stays blocked, because 169.254.169.254 is the cloud metadata
+// endpoint and reaching it is never the intent behind "this host is internal".
 package httpsafe
 
 import (
@@ -41,15 +47,43 @@ var carrierGradeNAT = &net.IPNet{
 	Mask: net.CIDRMask(10, 32),
 }
 
+// Policy controls how permissive the address checks are. The zero value is the
+// strict default that every existing caller gets.
+type Policy struct {
+	// AllowPrivateNetworks permits loopback, RFC 1918 / RFC 4193 private, and
+	// carrier-grade-NAT destinations. Link-local, multicast, and unspecified
+	// addresses remain blocked regardless, so cloud metadata endpoints stay
+	// unreachable. Only set this for a host an operator explicitly designated.
+	AllowPrivateNetworks bool
+
+	// ResponseHeaderTimeout overrides how long the transport waits for response
+	// headers. A model server that holds the connection open while it generates
+	// sends nothing until the first token, which on a loaded self-hosted GPU can
+	// outlast the 30s default. Zero keeps that default.
+	ResponseHeaderTimeout time.Duration
+}
+
 // IsBlockedIP reports whether connecting to ip would reach a non-publicly
 // routable destination that could be leveraged for server-side request forgery.
 func IsBlockedIP(ip net.IP) bool {
+	return IsBlockedIPWithPolicy(ip, Policy{})
+}
+
+// IsBlockedIPWithPolicy reports whether connecting to ip is disallowed under p.
+func IsBlockedIPWithPolicy(ip net.IP, p Policy) bool {
 	if ip == nil {
 		return true
 	}
-	if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() ||
-		ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
+	// Never reachable: an unspecified or multicast target is not a model server,
+	// and link-local covers the metadata service that SSRF most often targets.
+	if ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() ||
 		ip.IsInterfaceLocalMulticast() || ip.IsMulticast() {
+		return true
+	}
+	if p.AllowPrivateNetworks {
+		return false
+	}
+	if ip.IsLoopback() || ip.IsPrivate() {
 		return true
 	}
 	return carrierGradeNAT.Contains(ip)
@@ -61,6 +95,11 @@ func IsBlockedIP(ip net.IP) bool {
 // returned from NewClient, so a passing result here is a necessary but not
 // sufficient guarantee on its own.
 func ValidateURL(rawURL string) (*url.URL, error) {
+	return ValidateURLWithPolicy(rawURL, Policy{})
+}
+
+// ValidateURLWithPolicy is ValidateURL under an explicit Policy.
+func ValidateURLWithPolicy(rawURL string, p Policy) (*url.URL, error) {
 	parsed, err := url.Parse(strings.TrimSpace(rawURL))
 	if err != nil {
 		return nil, fmt.Errorf("httpsafe: url is invalid: %w", err)
@@ -74,25 +113,27 @@ func ValidateURL(rawURL string) (*url.URL, error) {
 	if host == "" {
 		return nil, ErrMissingHost
 	}
-	if ip := net.ParseIP(host); ip != nil && IsBlockedIP(ip) {
+	if ip := net.ParseIP(host); ip != nil && IsBlockedIPWithPolicy(ip, p) {
 		return nil, fmt.Errorf("%w: %s", ErrBlockedAddress, host)
 	}
 	return parsed, nil
 }
 
-func guardedControl(_, address string, _ syscall.RawConn) error {
-	host, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return fmt.Errorf("httpsafe: dial address %q is invalid: %w", address, err)
+func guardedControl(p Policy) func(string, string, syscall.RawConn) error {
+	return func(_, address string, _ syscall.RawConn) error {
+		host, _, err := net.SplitHostPort(address)
+		if err != nil {
+			return fmt.Errorf("httpsafe: dial address %q is invalid: %w", address, err)
+		}
+		ip := net.ParseIP(host)
+		if ip == nil {
+			return fmt.Errorf("%w: %s", ErrBlockedAddress, host)
+		}
+		if IsBlockedIPWithPolicy(ip, p) {
+			return fmt.Errorf("%w: %s", ErrBlockedAddress, host)
+		}
+		return nil
 	}
-	ip := net.ParseIP(host)
-	if ip == nil {
-		return fmt.Errorf("%w: %s", ErrBlockedAddress, host)
-	}
-	if IsBlockedIP(ip) {
-		return fmt.Errorf("%w: %s", ErrBlockedAddress, host)
-	}
-	return nil
 }
 
 // NewClient returns an *http.Client whose dialer refuses connections to
@@ -100,10 +141,21 @@ func guardedControl(_, address string, _ syscall.RawConn) error {
 // DNS-rebinding. Redirects are not followed, since a redirect target could
 // otherwise escape the URL-level validation.
 func NewClient(timeout time.Duration) *http.Client {
+	return NewClientWithPolicy(timeout, Policy{})
+}
+
+// NewClientWithPolicy is NewClient under an explicit Policy. The policy is bound
+// into the dialer, so a client built for a private-network destination cannot be
+// reused to reach one that was never vetted.
+func NewClientWithPolicy(timeout time.Duration, p Policy) *http.Client {
 	dialer := &net.Dialer{
 		Timeout:   defaultDialTimeout,
 		KeepAlive: defaultKeepAlive,
-		Control:   guardedControl,
+		Control:   guardedControl(p),
+	}
+	responseHeaderTO := p.ResponseHeaderTimeout
+	if responseHeaderTO <= 0 {
+		responseHeaderTO = defaultResponseHeaderTO
 	}
 	return &http.Client{
 		Timeout: timeout,
@@ -114,7 +166,7 @@ func NewClient(timeout time.Duration) *http.Client {
 			IdleConnTimeout:       defaultIdleConnTimeout,
 			TLSHandshakeTimeout:   defaultTLSHandshake,
 			ExpectContinueTimeout: defaultExpectContinue,
-			ResponseHeaderTimeout: defaultResponseHeaderTO,
+			ResponseHeaderTimeout: responseHeaderTO,
 		},
 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse

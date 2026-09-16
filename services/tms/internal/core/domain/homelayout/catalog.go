@@ -69,6 +69,7 @@ const (
 	WidgetFleetStatus  = "fleet-status"
 	WidgetOnTimeGoal   = "on-time-goal"
 
+	WidgetAIInsights    = "ai-insights"
 	WidgetReport        = "report"
 	WidgetDashboardLink = "dashboard-link"
 	WidgetLaneHeatmap   = "lane-heatmap"
@@ -400,6 +401,20 @@ func insightWidgets() []WidgetDefinition {
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindNone,
 			DefaultW:    6, DefaultH: 5, MinW: 4, MinH: 3, MaxW: 12, MaxH: 10,
+		},
+		{
+			Key:   WidgetAIInsights,
+			Label: "Operational Insights",
+			Description: "Findings computed from your own records: service slipping, " +
+				"revenue unbilled, detention unclaimed, credentials running out",
+			Category:   CategoryInsight,
+			Resource:   permission.ResourceInsight,
+			Operation:  permission.OpRead,
+			ConfigKind: ConfigKindNone,
+			// Taller than wide by default. Each finding needs a headline, a couple
+			// of numbers and somewhere to go, and a short wide tile turns that into
+			// a scroll box nobody opens.
+			DefaultW: 4, DefaultH: 6, MinW: 3, MinH: 4, MaxW: 12, MaxH: 12,
 		},
 		{
 			Key:         WidgetCustomerMix,

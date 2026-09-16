@@ -30,6 +30,7 @@ const CATALOG_KEYS = [
   "fleet-status",
   "on-time-goal",
   // Insight
+  "ai-insights",
   "report",
   "dashboard-link",
   "lane-heatmap",
