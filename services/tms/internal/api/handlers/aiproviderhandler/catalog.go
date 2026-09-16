@@ -248,6 +248,27 @@ func taskDescriptors() []TaskDescriptor {
 			VolumeGuidance: "Interactive; favours a capable model.",
 		},
 		{
+			Task:        aiprovider.TaskScopeClassification,
+			Label:       "Scope classification",
+			Description: "Decide whether a chat message is about this organization's freight at all.",
+			VolumeGuidance: "Runs on every assistant turn and needs only a yes/no — the " +
+				"cheapest thing to route to a small local model.",
+		},
+		{
+			Task:        aiprovider.TaskAssistantChat,
+			Label:       "Assistant chat",
+			Description: "Answer questions and drive the tool loop in the assistant.",
+			VolumeGuidance: "Interactive and multi-step; needs reliable tool calling and " +
+				"favours a capable model.",
+		},
+		{
+			Task:        aiprovider.TaskOperationalInsights,
+			Label:       "Operational insights",
+			Description: "Write the explanation on a finding whose numbers were already computed.",
+			VolumeGuidance: "A batch every few hours. It never produces a number or a " +
+				"severity, so it is safe to route to whatever is cheapest.",
+		},
+		{
 			Task:           aiprovider.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",

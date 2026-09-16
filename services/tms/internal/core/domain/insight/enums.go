@@ -43,6 +43,43 @@ func (c Category) String() string {
 	return string(c)
 }
 
+// Surface is a working page a finding belongs on.
+//
+// A category says what kind of problem a finding is; a surface says who is
+// looking when it matters. Unbilled detention is a cost-leakage finding, but the
+// person who can fix it is in the accounting dashboard, not the dispatch
+// console. A detector names its surfaces so each page asks for its own slice
+// rather than every page showing everything.
+type Surface string
+
+const (
+	// SurfaceAccounting is the receivables dashboard: money earned and not yet
+	// collected.
+	SurfaceAccounting = Surface("Accounting")
+	// SurfaceDispatch is the dispatch console: capacity, coverage, and the miles
+	// that cost money without earning any.
+	SurfaceDispatch = Surface("Dispatch")
+	// SurfaceShipments is the shipment command center: service the customer
+	// feels.
+	SurfaceShipments = Surface("Shipments")
+	// SurfaceFleet is fleet safety and compliance: what takes a driver off the
+	// road.
+	SurfaceFleet = Surface("Fleet")
+)
+
+func (s Surface) IsValid() bool {
+	switch s {
+	case SurfaceAccounting, SurfaceDispatch, SurfaceShipments, SurfaceFleet:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s Surface) String() string {
+	return string(s)
+}
+
 // Severity is how loudly an insight should present itself.
 //
 // A detector assigns this from its own thresholds, never a model. Letting

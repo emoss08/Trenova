@@ -95,6 +95,7 @@ func (h *Handler) list(c *gin.Context) {
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
 		Categories: parseCategories(c.QueryArray("category")),
+		Surface:    parseSurface(c.Query("surface")),
 		Limit:      parseLimit(c.Query("limit")),
 	})
 	if err != nil {
@@ -244,6 +245,22 @@ func parseCategories(values []string) []insight.Category {
 	}
 
 	return categories
+}
+
+// parseSurface reads the page asking for its own slice.
+//
+// An unknown surface is treated as absent rather than rejected, for the same
+// reason as an unknown category — but note what "absent" means here: the home
+// screen's full view, not nothing. A page that names a surface this build has
+// not heard of gets everything the reader may see, which is more than it asked
+// for and never less.
+func parseSurface(value string) insight.Surface {
+	surface := insight.Surface(value)
+	if !surface.IsValid() {
+		return ""
+	}
+
+	return surface
 }
 
 // parseSeverities and parseStatuses drop values the domain does not recognise,

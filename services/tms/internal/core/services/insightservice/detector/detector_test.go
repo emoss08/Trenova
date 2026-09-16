@@ -18,6 +18,7 @@ import (
 type stubDetector struct {
 	key      string
 	category insight.Category
+	surfaces []insight.Surface
 	findings []detector.Finding
 	err      error
 }
@@ -26,6 +27,7 @@ func (d stubDetector) Key() string                     { return d.key }
 func (d stubDetector) Category() insight.Category      { return d.category }
 func (d stubDetector) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d stubDetector) Operation() permission.Operation { return permission.OpRead }
+func (d stubDetector) Surfaces() []insight.Surface     { return d.surfaces }
 
 func (d stubDetector) Explain() detector.Explanation {
 	return detector.Explanation{Measures: "a stub"}
@@ -108,6 +110,34 @@ func TestRegistry_IgnoresANilDetector(t *testing.T) {
 	registry := detector.NewRegistry(stubDetector{key: "real"}, nil)
 
 	assert.Len(t, registry.All(), 1)
+}
+
+// A page asks for the detectors that belong on it and gets exactly those, in
+// registration order, whether a detector claims one surface or several.
+func TestRegistry_KeysForSurface_ListsOnlyTheDetectorsOnThatPage(t *testing.T) {
+	t.Parallel()
+
+	registry := detector.NewRegistry(
+		stubDetector{key: "unbilled-aging", surfaces: []insight.Surface{insight.SurfaceAccounting}},
+		stubDetector{key: "empty-miles", surfaces: []insight.Surface{insight.SurfaceDispatch}},
+		stubDetector{
+			key:      "unbilled-detention",
+			surfaces: []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch},
+		},
+		stubDetector{key: "home-only"},
+	)
+
+	assert.Equal(
+		t,
+		[]string{"unbilled-aging", "unbilled-detention"},
+		registry.KeysForSurface(insight.SurfaceAccounting),
+	)
+	assert.Equal(
+		t,
+		[]string{"empty-miles", "unbilled-detention"},
+		registry.KeysForSurface(insight.SurfaceDispatch),
+	)
+	assert.Empty(t, registry.KeysForSurface(insight.SurfaceFleet))
 }
 
 func TestFindingValidate_AcceptsACompleteFinding(t *testing.T) {

@@ -52,6 +52,12 @@ func (d *CredentialExpiry) Operation() permission.Operation {
 	return permission.OpRead
 }
 
+// Surfaces puts an expiring credential in front of the safety desk that renews
+// it and the dispatch console that will be short a driver if nobody does.
+func (d *CredentialExpiry) Surfaces() []insight.Surface {
+	return []insight.Surface{insight.SurfaceFleet, insight.SurfaceDispatch}
+}
+
 func (d *CredentialExpiry) Explain() detector.Explanation {
 	return detector.Explanation{
 		Measures: "Active workers whose credentials expire within the next 45 days, " +

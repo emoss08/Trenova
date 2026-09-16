@@ -23,6 +23,7 @@ type stubDetector struct {
 	key      string
 	category insight.Category
 	resource permission.Resource
+	surfaces []insight.Surface
 	findings []detector.Finding
 	err      error
 	lastRun  detector.Params
@@ -32,6 +33,7 @@ type stubDetector struct {
 func (d *stubDetector) Key() string                     { return d.key }
 func (d *stubDetector) Category() insight.Category      { return d.category }
 func (d *stubDetector) Operation() permission.Operation { return permission.OpRead }
+func (d *stubDetector) Surfaces() []insight.Surface     { return d.surfaces }
 
 func (d *stubDetector) Explain() detector.Explanation {
 	return detector.Explanation{
@@ -419,6 +421,74 @@ func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 		repositories.AllowedDetectorKeys{"shipments"},
 		repo.lastList.AllowedDetectorKeys,
 	)
+}
+
+// A page asking for its own slice narrows the reader's set; it never widens it.
+// The accounting dashboard must not be a way to see findings a reader's
+// permissions keep off their home screen.
+func TestListActive_RestrictsASurfaceToWhatTheReaderMaySee(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	svc := newService(repo, perms,
+		&stubDetector{
+			key:      "unbilled-aging",
+			resource: permission.ResourceShipment,
+			surfaces: []insight.Surface{insight.SurfaceAccounting},
+		},
+		&stubDetector{
+			key:      "empty-miles",
+			resource: permission.ResourceShipment,
+			surfaces: []insight.Surface{insight.SurfaceDispatch},
+		},
+		&stubDetector{
+			key:      "credential-expiry",
+			resource: permission.ResourceWorker,
+			surfaces: []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch},
+		},
+	)
+
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Surface:    insight.SurfaceAccounting,
+		Limit:      10,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		repositories.AllowedDetectorKeys{"unbilled-aging"},
+		repo.lastList.AllowedDetectorKeys,
+	)
+}
+
+// A surface no detector claims is an empty page, not the whole home screen.
+func TestListActive_AsksForNothingOnASurfaceNoDetectorClaims(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	svc := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	)
+
+	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+		TenantInfo: tenant(),
+		UserID:     pulid.MustNew("usr_"),
+		Surface:    insight.SurfaceFleet,
+		Limit:      10,
+	})
+	require.NoError(t, err)
+
+	assert.Empty(t, repo.lastList.AllowedDetectorKeys)
 }
 
 // The one shape that could be read as "no restriction" is the one that would
