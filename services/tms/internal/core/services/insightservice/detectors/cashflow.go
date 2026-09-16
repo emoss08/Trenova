@@ -52,6 +52,18 @@ func (d *UnbilledAging) Category() insight.Category      { return insight.Catego
 func (d *UnbilledAging) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *UnbilledAging) Operation() permission.Operation { return permission.OpRead }
 
+func (d *UnbilledAging) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures: "Delivered shipments that have never been billed, grouped by customer, " +
+			"with the revenue they represent and the age of the oldest.",
+		Threshold: "Reported when at least 3 shipments worth 5,000 or more are waiting, " +
+			"and treated as critical past 25,000.",
+		Excludes: "Anything delivered within the last 7 days, which is still inside a " +
+			"normal paperwork cycle, and any customer whose total will not parse as a " +
+			"number — reporting zero there would read as good news.",
+	}
+}
+
 func (d *UnbilledAging) Detect(
 	ctx context.Context,
 	params detector.Params,

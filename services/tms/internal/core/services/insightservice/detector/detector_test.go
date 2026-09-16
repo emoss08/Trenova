@@ -26,6 +26,10 @@ func (d stubDetector) Key() string                     { return d.key }
 func (d stubDetector) Category() insight.Category      { return d.category }
 func (d stubDetector) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d stubDetector) Operation() permission.Operation { return permission.OpRead }
+
+func (d stubDetector) Explain() detector.Explanation {
+	return detector.Explanation{Measures: "a stub"}
+}
 func (d stubDetector) Detect(context.Context, detector.Params) ([]detector.Finding, error) {
 	return d.findings, d.err
 }

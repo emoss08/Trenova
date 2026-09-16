@@ -10,6 +10,7 @@ package insightservice
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
@@ -357,6 +358,73 @@ func (s *Service) readerMaySee(
 	}
 
 	return result.Allowed
+}
+
+// ErrInsightNotVisible reports a finding the reader may not see. It is returned
+// rather than a not-found so the caller can decide how to phrase it; the handler
+// turns it into the same 404 a missing insight produces, because telling someone
+// a finding exists but is not for them is itself a disclosure.
+var ErrInsightNotVisible = errors.New("insight is not visible to this reader")
+
+// GetDetail reads one finding with its history and the rule behind it.
+//
+// The permission check happens here rather than being left to the query, because
+// unlike a list this reads a single row by id: there is no filter to fold the
+// restriction into, and a reader who guesses an id must not receive a finding
+// their permissions exclude.
+func (s *Service) GetDetail(
+	ctx context.Context,
+	req services.GetInsightDetailRequest,
+) (*services.InsightDetail, error) {
+	found, err := s.repo.GetByID(ctx, repositories.GetInsightByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	d, registered := s.detectors.Get(found.DetectorKey)
+	if !registered {
+		// A retired detector leaves findings with nothing left to say what
+		// permission they needed. Refusing is the only safe reading.
+		return nil, ErrInsightNotVisible
+	}
+
+	visible := s.readerMaySee(ctx, services.ListInsightsRequest{
+		TenantInfo: req.TenantInfo,
+		UserID:     req.UserID,
+	}, d)
+	if !visible {
+		return nil, ErrInsightNotVisible
+	}
+
+	history, err := s.repo.ListHistory(ctx, repositories.ListInsightHistoryRequest{
+		DedupeKey:  found.DedupeKey,
+		TenantInfo: req.TenantInfo,
+		ExcludeID:  found.ID,
+	})
+	if err != nil {
+		// A finding without its trend is still worth reading, so a failed history
+		// read degrades the view rather than failing it.
+		s.l.Error("failed to read insight history",
+			zap.String("insight", found.ID.String()),
+			zap.Error(err),
+		)
+		history = nil
+	}
+
+	explanation := d.Explain()
+
+	return &services.InsightDetail{
+		Insight: found,
+		History: history,
+		Explanation: services.InsightExplanation{
+			Measures:  explanation.Measures,
+			Threshold: explanation.Threshold,
+			Excludes:  explanation.Excludes,
+		},
+	}, nil
 }
 
 // Dismiss records that a person judged a finding not worth acting on.

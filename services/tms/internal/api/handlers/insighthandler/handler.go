@@ -2,6 +2,7 @@
 package insighthandler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -62,6 +64,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// dismissed findings would put back the cards someone just cleared.
 	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
 	api.GET("/browse/", h.pm.RequirePermission(resource, permission.OpRead), h.browse)
+	api.GET("/:insightID/", h.pm.RequirePermission(resource, permission.OpRead), h.detail)
 	// Dismissing changes what everyone in the organization sees on their home
 	// screen, so it is an update to the insight rather than a per-reader
 	// preference, and it is gated as one.
@@ -122,6 +125,42 @@ func (h *Handler) browse(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"results": result.Items, "total": result.Total})
+}
+
+// detail reads one finding with its history and the rule behind it.
+//
+// A finding the reader may not see is reported as not found rather than
+// forbidden. Saying "this exists but is not for you" about a card that names a
+// customer and a revenue figure is itself a disclosure, and there is nothing a
+// reader can do with the distinction.
+func (h *Handler) detail(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	insightID, err := pulid.Parse(c.Param("insightID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+
+		return
+	}
+
+	found, err := h.service.GetDetail(c.Request.Context(), serviceports.GetInsightDetailRequest{
+		ID:         insightID,
+		UserID:     authCtx.UserID,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	})
+	if err != nil {
+		if errors.Is(err, insightservice.ErrInsightNotVisible) {
+			h.eh.HandleError(c, errortypes.NewNotFoundError("Insight not found"))
+
+			return
+		}
+
+		h.eh.HandleError(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, found)
 }
 
 func (h *Handler) restore(c *gin.Context) {

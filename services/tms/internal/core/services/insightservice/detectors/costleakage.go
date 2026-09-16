@@ -51,6 +51,18 @@ func (d *UnbilledDetention) Operation() permission.Operation {
 	return permission.OpRead
 }
 
+func (d *UnbilledDetention) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures: "Detention that accrued past free time at a location and never became " +
+			"a billed charge, with the total dwell behind it.",
+		Threshold: "Reported when at least 3 occurrences at one location total 1,000 or " +
+			"more in unbilled detention, and treated as critical past 7,500.",
+		Excludes: "Occurrences still accruing, where the clock is running and nobody has " +
+			"decided yet, and single occurrences, which are one bad afternoon rather " +
+			"than a problem with the door.",
+	}
+}
+
 func (d *UnbilledDetention) Detect(
 	ctx context.Context,
 	params detector.Params,
@@ -159,6 +171,20 @@ func (d *EmptyMiles) Key() string                     { return EmptyMilesKey }
 func (d *EmptyMiles) Category() insight.Category      { return insight.CategoryCostLeakage }
 func (d *EmptyMiles) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *EmptyMiles) Operation() permission.Operation { return permission.OpRead }
+
+// Explain names the comparison explicitly, because the absolute number is the
+// one a reader will reach for and it is the wrong one. A dedicated fleet lives
+// at 8% empty and a brokered operation at 25%, and neither is a problem.
+func (d *EmptyMiles) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures: "The share of each customer's completed miles run empty, against the " +
+			"same figure for the whole book over the same period.",
+		Threshold: "Reported when a customer runs at least 8 percentage points emptier " +
+			"than the fleet average, and treated as critical past 18.",
+		Excludes: "Customers with fewer than 10 completed moves, where geography alone " +
+			"can produce the gap, and moves with no recorded distance.",
+	}
+}
 
 func (d *EmptyMiles) Detect(
 	ctx context.Context,

@@ -56,6 +56,24 @@ func (d *OnTimeDecline) Category() insight.Category      { return insight.Catego
 func (d *OnTimeDecline) Resource() permission.Resource   { return permission.ResourceShipment }
 func (d *OnTimeDecline) Operation() permission.Operation { return permission.OpRead }
 
+// Explain is deliberately specific about the volume floor. A reader who does not
+// know this rule ignores small customers cannot tell "no finding" apart from "no
+// problem", and for a customer running eight loads a month those are very
+// different answers.
+func (d *OnTimeDecline) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures: "The share of deliveries that arrived within their scheduled window, " +
+			"for each customer, compared with that same customer over the previous period " +
+			"of equal length.",
+		Threshold: "Reported when on-time delivery has fallen by at least 5 percentage " +
+			"points, and treated as critical past 12.",
+		Excludes: "Customers with fewer than 12 completed deliveries in either period, " +
+			"where one delayed truck can move the number by more than the threshold. " +
+			"Stops with no scheduled window are not counted at all, because nothing " +
+			"was promised.",
+	}
+}
+
 func (d *OnTimeDecline) Detect(
 	ctx context.Context,
 	params detector.Params,

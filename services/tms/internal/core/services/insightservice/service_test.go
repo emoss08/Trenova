@@ -33,6 +33,14 @@ func (d *stubDetector) Key() string                     { return d.key }
 func (d *stubDetector) Category() insight.Category      { return d.category }
 func (d *stubDetector) Operation() permission.Operation { return permission.OpRead }
 
+func (d *stubDetector) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures:  "what " + d.key + " computes",
+		Threshold: "when it speaks",
+		Excludes:  "what it passes over",
+	}
+}
+
 func (d *stubDetector) Resource() permission.Resource {
 	if d.resource == "" {
 		return permission.ResourceShipment
@@ -52,11 +60,24 @@ func (d *stubDetector) Detect(
 }
 
 type stubRepo struct {
-	replaced   []repositories.ReplaceDetectorFindingsRequest
-	active     []*insight.Insight
-	err        error
-	lastList   repositories.ListActiveInsightsRequest
-	lastBrowse repositories.ListInsightsRequest
+	replaced    []repositories.ReplaceDetectorFindingsRequest
+	active      []*insight.Insight
+	byID        *insight.Insight
+	history     []*insight.Insight
+	historyErr  error
+	err         error
+	lastList    repositories.ListActiveInsightsRequest
+	lastBrowse  repositories.ListInsightsRequest
+	lastHistory repositories.ListInsightHistoryRequest
+}
+
+func (r *stubRepo) ListHistory(
+	_ context.Context,
+	req repositories.ListInsightHistoryRequest,
+) ([]*insight.Insight, error) {
+	r.lastHistory = req
+
+	return r.history, r.historyErr
 }
 
 func (r *stubRepo) ReplaceDetectorFindings(
@@ -101,7 +122,7 @@ func (r *stubRepo) GetByID(
 	context.Context,
 	repositories.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
-	return nil, nil
+	return r.byID, r.err
 }
 
 func (r *stubRepo) Dismiss(
@@ -552,6 +573,143 @@ func TestList_PassesTheRequestedFiltersThrough(t *testing.T) {
 	assert.Equal(t, []insight.Status{insight.StatusResolved}, repo.lastBrowse.Statuses)
 	assert.Equal(t, 50, repo.lastBrowse.Limit)
 	assert.Equal(t, 25, repo.lastBrowse.Offset)
+}
+
+func TestGetDetail_ReturnsTheFindingItsTrendAndTheRuleBehindIt(t *testing.T) {
+	t.Parallel()
+
+	found := &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "shipments",
+		DedupeKey:   "shipments:cus_1",
+	}
+	older := &insight.Insight{ID: pulid.MustNew("inst_"), DedupeKey: "shipments:cus_1"}
+
+	repo := &stubRepo{byID: found, history: []*insight.Insight{older}}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	detail, err := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+		ID:         found.ID,
+		UserID:     pulid.MustNew("usr_"),
+		TenantInfo: tenant(),
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, found.ID, detail.Insight.ID)
+	assert.Equal(t, []*insight.Insight{older}, detail.History)
+	assert.Equal(t, "what shipments computes", detail.Explanation.Measures)
+	assert.Equal(t, "what it passes over", detail.Explanation.Excludes)
+}
+
+// The finding being read must not appear inside its own history, or the trend
+// starts with a duplicate of the number already on screen.
+func TestGetDetail_KeepsTheFindingOutOfItsOwnHistory(t *testing.T) {
+	t.Parallel()
+
+	found := &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "shipments",
+		DedupeKey:   "shipments:cus_1",
+	}
+	repo := &stubRepo{byID: found}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	_, err := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+		ID:         found.ID,
+		UserID:     pulid.MustNew("usr_"),
+		TenantInfo: tenant(),
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, found.ID, repo.lastHistory.ExcludeID)
+	assert.Equal(t, found.DedupeKey, repo.lastHistory.DedupeKey)
+}
+
+// Reading by id has no filter to fold the permission into, so a reader who
+// guesses an id must still be refused.
+func TestGetDetail_RefusesAFindingTheReaderMayNotSee(t *testing.T) {
+	t.Parallel()
+
+	found := &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "workers",
+		DedupeKey:   "workers:wct_1",
+	}
+	repo := &stubRepo{byID: found}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	_, err := newService(repo, perms,
+		&stubDetector{key: "workers", resource: permission.ResourceWorker},
+	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+		ID:         found.ID,
+		UserID:     pulid.MustNew("usr_"),
+		TenantInfo: tenant(),
+	})
+
+	require.ErrorIs(t, err, ErrInsightNotVisible)
+}
+
+// A retired detector leaves findings with nothing left to say what permission
+// they needed, so reading one directly is refused rather than allowed.
+func TestGetDetail_RefusesAFindingFromADetectorThatNoLongerExists(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{byID: &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "retired-detector",
+	}}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	_, err := newService(repo, perms).GetDetail(
+		t.Context(),
+		services.GetInsightDetailRequest{
+			ID:         pulid.MustNew("inst_"),
+			UserID:     pulid.MustNew("usr_"),
+			TenantInfo: tenant(),
+		},
+	)
+
+	require.ErrorIs(t, err, ErrInsightNotVisible)
+}
+
+// A finding without its trend is still worth reading, so a failed history read
+// degrades the view rather than failing it.
+func TestGetDetail_StillReturnsTheFindingWhenItsHistoryCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	found := &insight.Insight{
+		ID:          pulid.MustNew("inst_"),
+		DetectorKey: "shipments",
+		DedupeKey:   "shipments:cus_1",
+	}
+	repo := &stubRepo{byID: found, historyErr: errors.New("history query failed")}
+	perms := &stubPermissions{allowedResources: map[permission.Resource]bool{
+		permission.ResourceShipment: true,
+	}}
+
+	detail, err := newService(repo, perms,
+		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
+	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+		ID:         found.ID,
+		UserID:     pulid.MustNew("usr_"),
+		TenantInfo: tenant(),
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, found.ID, detail.Insight.ID)
+	assert.Empty(t, detail.History)
 }
 
 func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {

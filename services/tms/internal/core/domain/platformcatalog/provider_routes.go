@@ -1073,6 +1073,7 @@ func agentAutomationRouteRefs() []RouteRef {
 			// holds everything the panel needs.
 			"/api/v1/insights/",
 			"/api/v1/insights/browse/",
+			"/api/v1/insights/:insightID/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/agent-exceptions/:exceptionID/resolve/",

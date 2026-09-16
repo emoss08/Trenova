@@ -68,6 +68,24 @@ type Finding struct {
 	Links    []insight.Link
 }
 
+// Explanation says what a rule looks for, in the reader's language.
+//
+// It exists so a person can audit why they are being shown something. A card
+// that asserts a customer's service has slipped is only worth acting on if the
+// reader can find out what "slipped" meant and what the rule declined to report
+// — and that last part is the one that builds trust, because it is where a
+// detector admits what it cannot see.
+type Explanation struct {
+	// Measures is what the detector computes, in one sentence.
+	Measures string
+	// Threshold is what has to be true before it says anything at all.
+	Threshold string
+	// Excludes is what it deliberately passes over, and why. A reader who knows
+	// a rule ignores low-volume customers can tell "no finding" apart from "no
+	// problem", which are very different things.
+	Excludes string
+}
+
 // Detector is one rule. Implementations live beside this file and are registered
 // with a Registry.
 type Detector interface {
@@ -79,6 +97,8 @@ type Detector interface {
 	// profitability must not reach someone who cannot read customers.
 	Resource() permission.Resource
 	Operation() permission.Operation
+	// Explain describes the rule for a person reading one of its findings.
+	Explain() Explanation
 	// Detect runs the queries. Returning no findings is the normal, healthy case
 	// and is not an error.
 	Detect(ctx context.Context, params Params) ([]Finding, error)

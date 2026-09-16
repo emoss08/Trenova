@@ -24,6 +24,10 @@ const (
 	defaultActiveLimit = 50
 	defaultPageLimit   = 25
 	maxPageLimit       = 100
+	// maxHistoryLimit bounds the trend behind one finding. A dozen refreshes is
+	// several days of history at the scheduled cadence, which is as far back as a
+	// 30-day rolling window stays comparable.
+	maxHistoryLimit = 12
 )
 
 type Params struct {
@@ -190,6 +194,49 @@ func (r *repository) GetByID(
 	}
 
 	return entity, nil
+}
+
+// ListHistory reads earlier runs of the same finding, newest first.
+//
+// Superseded rows are exactly what makes this possible: a refresh does not
+// overwrite, it closes the old row and writes a new one, so the table is already
+// a record of how a condition moved. Nothing here filters by detector permission
+// because the caller has established that for the insight this history belongs
+// to — the rows share its dedupe key, so they share its detector.
+func (r *repository) ListHistory(
+	ctx context.Context,
+	req repositories.ListInsightHistoryRequest,
+) ([]*insight.Insight, error) {
+	log := r.l.With(zap.String("operation", "ListHistory"))
+
+	limit := req.Limit
+	if limit <= 0 || limit > maxHistoryLimit {
+		limit = maxHistoryLimit
+	}
+
+	cols := buncolgen.InsightColumns
+	entities := make([]*insight.Insight, 0, limit)
+
+	query := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+		Where(cols.DedupeKey.Eq(), req.DedupeKey)
+
+	if !req.ExcludeID.IsNil() {
+		query = query.Where(cols.ID.Ne(), req.ExcludeID)
+	}
+
+	if err := query.
+		Order(cols.DetectedAt.OrderDesc()).
+		Limit(limit).
+		Scan(ctx); err != nil {
+		log.Error("failed to list insight history", zap.Error(err))
+
+		return nil, err
+	}
+
+	return entities, nil
 }
 
 // Dismiss records a person's judgement that a finding is not worth acting on.

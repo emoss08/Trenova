@@ -52,6 +52,18 @@ func (d *CredentialExpiry) Operation() permission.Operation {
 	return permission.OpRead
 }
 
+func (d *CredentialExpiry) Explain() detector.Explanation {
+	return detector.Explanation{
+		Measures: "Active workers whose credentials expire within the next 45 days, " +
+			"grouped by credential type, with how many have already lapsed.",
+		Threshold: "A required credential is always reported, because somebody must act " +
+			"before the date. An optional one needs at least 3 workers. Anything already " +
+			"expired and required is critical: that driver cannot legally run today.",
+		Excludes: "Archived credentials, which have been superseded, and workers who are " +
+			"no longer active, who cannot be taken off the road by an expiry.",
+	}
+}
+
 func (d *CredentialExpiry) Detect(
 	ctx context.Context,
 	params detector.Params,

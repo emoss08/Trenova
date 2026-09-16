@@ -57,6 +57,20 @@ type RestoreInsightRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+// ListInsightHistoryRequest reads the same finding across earlier refreshes.
+//
+// Every run stores a fresh row and supersedes the last, so the table already
+// holds how a condition has moved. Reading it back is what turns "detention cost
+// you 9,840 here" into "and it was 4,200 a month ago", which is the difference
+// between a number and a trend.
+type ListInsightHistoryRequest struct {
+	DedupeKey  string                `json:"dedupeKey"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+	// ExcludeID keeps the insight being viewed out of its own history.
+	ExcludeID pulid.ID `json:"-"`
+	Limit     int      `json:"limit"`
+}
+
 type GetInsightByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -107,6 +121,10 @@ type InsightRepository interface {
 		req ListInsightsRequest,
 	) (*pagination.ListResult[*insight.Insight], error)
 	GetByID(ctx context.Context, req GetInsightByIDRequest) (*insight.Insight, error)
+	ListHistory(
+		ctx context.Context,
+		req ListInsightHistoryRequest,
+	) ([]*insight.Insight, error)
 	Dismiss(ctx context.Context, req DismissInsightRequest) (*insight.Insight, error)
 	Restore(ctx context.Context, req RestoreInsightRequest) (*insight.Insight, error)
 	ReplaceDetectorFindings(
