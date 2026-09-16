@@ -30,6 +30,12 @@ DROP INDEX IF EXISTS "idx_ai_logs_model";
 DROP INDEX IF EXISTS "idx_ai_logs_provider";
 
 --bun:split
+-- The generated search vector depends on "model" and must be rebuilt around
+-- the retyped column, as the forward migration did.
+ALTER TABLE "ai_logs"
+    DROP COLUMN IF EXISTS "search_vector";
+
+--bun:split
 ALTER TABLE "ai_logs"
     ALTER COLUMN "model" TYPE model_enum
     USING "model"::model_enum;
@@ -40,3 +46,15 @@ ALTER TABLE "ai_logs"
 
 ALTER TABLE "ai_logs"
     DROP COLUMN IF EXISTS "provider_id";
+
+--bun:split
+ALTER TABLE "ai_logs"
+    ADD COLUMN IF NOT EXISTS "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("prompt", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("operation"), '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE("response", '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("model"), '')), 'B')
+    ) STORED;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_ai_logs_search_vector" ON "ai_logs" USING GIN("search_vector");

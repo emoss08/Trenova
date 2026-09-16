@@ -282,7 +282,7 @@ export function IntegrationCatalogCard() {
 
   const openModal = (type: string) => {
     if (hasModal(type)) {
-      setSearchParams({ type });
+      void setSearchParams({ type });
     }
   };
 

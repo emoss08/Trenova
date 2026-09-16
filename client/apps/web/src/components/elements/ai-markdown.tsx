@@ -1,6 +1,6 @@
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
-import { memo, type ComponentProps } from "react";
+import { Children, memo, type ComponentProps, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -26,8 +26,15 @@ function resolveLang(className: string | undefined): HighlightedLang | null {
   return HIGHLIGHTED_LANGS.has(lang) ? (lang as HighlightedLang) : null;
 }
 
+/** The text inside a code node: react-markdown hands it as one or more strings. */
+function textOf(children: ReactNode): string {
+  return Children.toArray(children)
+    .map((child) => (typeof child === "string" || typeof child === "number" ? String(child) : ""))
+    .join("");
+}
+
 function CodeBlock({ className, children }: ComponentProps<"code">) {
-  const code = String(children ?? "").replace(/\n$/u, "");
+  const code = textOf(children).replace(/\n$/u, "");
   const lang = resolveLang(className);
 
   if (lang) {
@@ -43,8 +50,12 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
 
 const components: Components = {
   p: ({ children }) => <p className="my-1.5 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
-  h1: ({ children }) => <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>,
-  h2: ({ children }) => <h3 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>,
+  h1: ({ children }) => (
+    <h3 className="mt-3 mb-1.5 text-base font-semibold first:mt-0">{children}</h3>
+  ),
+  h2: ({ children }) => (
+    <h3 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
+  ),
   h3: ({ children }) => <h4 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h4>,
   h4: ({ children }) => <h5 className="mt-2 mb-1 text-sm font-medium first:mt-0">{children}</h5>,
   ul: ({ children }) => <ul className="my-1.5 list-disc space-y-0.5 pl-5">{children}</ul>,
@@ -82,7 +93,7 @@ const components: Components = {
   ),
   code: ({ className, children, ...props }) => {
     const isBlock = typeof className === "string" && className.includes("language-");
-    const text = String(children ?? "");
+    const text = textOf(children);
     if (isBlock || text.includes("\n")) {
       return <CodeBlock className={className}>{children}</CodeBlock>;
     }

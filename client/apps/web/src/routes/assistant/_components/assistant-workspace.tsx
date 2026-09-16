@@ -41,7 +41,8 @@ export function AssistantWorkspace() {
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = threadsQuery.data?.items ?? [];
-  const agents = agentsQuery.data?.results ?? [];
+  const agentResults = agentsQuery.data?.results;
+  const agents = useMemo(() => agentResults ?? [], [agentResults]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
   const refreshThreads = useCallback(async () => {
