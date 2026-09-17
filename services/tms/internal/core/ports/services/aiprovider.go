@@ -53,6 +53,10 @@ type AIProviderService interface {
 		ctx context.Context,
 		req *repositories.ListAIProviderRequest,
 	) (*pagination.ListResult[*aiprovider.Provider], error)
+	ListConnection(
+		ctx context.Context,
+		req *repositories.ListAIProviderConnectionRequest,
+	) (*pagination.CursorListResult[*aiprovider.Provider], error)
 	GetByID(
 		ctx context.Context,
 		req repositories.GetAIProviderByIDRequest,
@@ -72,7 +76,8 @@ type AIProviderService interface {
 		req repositories.DeleteAIProviderRequest,
 		actor *RequestActor,
 	) error
-	// Test issues a live probe against a saved provider.
+	// Test issues a live probe against a saved provider and records its outcome
+	// on the provider.
 	Test(
 		ctx context.Context,
 		req repositories.GetAIProviderByIDRequest,

@@ -1789,12 +1789,9 @@ export const routes: RouteObject[] = [
                 loader: () => redirect("/admin/agent-control"),
               },
               {
+                // Providers are a tab of AI Control now; saved links keep working.
                 path: "ai-providers",
-                loader: createPermissionLoader(Resource.AIProvider, Operation.Read),
-                async lazy() {
-                  const { AIProvidersPage } = await import("@/routes/admin/ai-providers/page");
-                  return { Component: AIProvidersPage };
-                },
+                loader: () => redirect("/admin/agent-control?tab=providers"),
               },
               {
                 path: "api-keys",

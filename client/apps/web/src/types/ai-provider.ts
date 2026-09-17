@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 /**
  * A provider is identified by the wire protocol it speaks rather than the vendor
@@ -27,6 +26,16 @@ export const aiTaskSchema = z.enum([
   "General",
 ]);
 
+export const aiProviderTestOutcomeSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  modelIdentifier: z.string().optional().default(""),
+  schemaHonoured: z.boolean().default(false),
+  latencyMs: z.number().default(0),
+  detail: z.string().optional().default(""),
+  testedAt: z.number(),
+});
+
 export const aiProviderSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -36,6 +45,8 @@ export const aiProviderSchema = z.object({
   kind: aiProviderKindSchema,
   baseUrl: z.string().optional().default(""),
   model: z.string(),
+  /** The secret never leaves the server; only whether one is stored is reported. */
+  hasApiKey: z.boolean().default(false),
   allowPrivateNetwork: z.boolean().default(false),
   structuredOutputMode: structuredOutputModeSchema,
   maxTokens: z.number().default(8192),
@@ -44,12 +55,11 @@ export const aiProviderSchema = z.object({
   priority: z.number().default(100),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
+  lastTest: aiProviderTestOutcomeSchema.nullable().optional().default(null),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
-
-export const aiProviderListSchema = createLimitOffsetResponse(aiProviderSchema);
 
 export const saveAIProviderRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -103,6 +113,8 @@ export const aiProviderPresetSchema = z.object({
   selfHosted: z.boolean().default(false),
   exampleModel: z.string().optional().default(""),
   notes: z.string().optional().default(""),
+  /** Vendor web domain, used to resolve a brand logo. Empty for generic servers. */
+  domain: z.string().optional().default(""),
 });
 
 export const aiTaskDescriptorSchema = z.object({
@@ -120,7 +132,7 @@ export const aiProviderCatalogSchema = z.object({
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;
-export type AIProviderList = z.infer<typeof aiProviderListSchema>;
+export type AIProviderTestOutcome = z.infer<typeof aiProviderTestOutcomeSchema>;
 export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;

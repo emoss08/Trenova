@@ -179,6 +179,50 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AIProvider struct {
+		AllowPrivateNetwork  func(childComplexity int) int
+		BaseURL              func(childComplexity int) int
+		BusinessUnitID       func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		Description          func(childComplexity int) int
+		Enabled              func(childComplexity int) int
+		HasAPIKey            func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		Kind                 func(childComplexity int) int
+		LastTest             func(childComplexity int) int
+		MaxTokens            func(childComplexity int) int
+		Model                func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		OrganizationID       func(childComplexity int) int
+		Priority             func(childComplexity int) int
+		StructuredOutputMode func(childComplexity int) int
+		Tasks                func(childComplexity int) int
+		Trusted              func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Version              func(childComplexity int) int
+	}
+
+	AIProviderConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AIProviderEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AIProviderTestOutcome struct {
+		Detail          func(childComplexity int) int
+		LatencyMS       func(childComplexity int) int
+		Message         func(childComplexity int) int
+		ModelIdentifier func(childComplexity int) int
+		SchemaHonoured  func(childComplexity int) int
+		Success         func(childComplexity int) int
+		TestedAt        func(childComplexity int) int
+	}
+
 	ARAgingBucketTotals struct {
 		CurrentMinor    func(childComplexity int) int
 		Days1To30Minor  func(childComplexity int) int
@@ -587,23 +631,26 @@ type ComplexityRoot struct {
 	}
 
 	AgentRun struct {
-		AgentType        func(childComplexity int) int
-		BusinessUnitID   func(childComplexity int) int
-		CompletedAt      func(childComplexity int) int
-		CreatedAt        func(childComplexity int) int
-		ErrorMessage     func(childComplexity int) int
-		ID               func(childComplexity int) int
-		InputContextHash func(childComplexity int) int
-		ModelIdentifier  func(childComplexity int) int
-		OrganizationID   func(childComplexity int) int
-		PromptVersion    func(childComplexity int) int
-		StartedAt        func(childComplexity int) int
-		Status           func(childComplexity int) int
-		SubjectID        func(childComplexity int) int
-		SubjectType      func(childComplexity int) int
-		UpdatedAt        func(childComplexity int) int
-		Version          func(childComplexity int) int
-		WorkflowID       func(childComplexity int) int
+		AgentDefinitionID func(childComplexity int) int
+		AgentType         func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		CompletedAt       func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		ErrorMessage      func(childComplexity int) int
+		ID                func(childComplexity int) int
+		InputContextHash  func(childComplexity int) int
+		ModelIdentifier   func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		PromptVersion     func(childComplexity int) int
+		StartedAt         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		SubjectID         func(childComplexity int) int
+		SubjectType       func(childComplexity int) int
+		Summary           func(childComplexity int) int
+		Trigger           func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		Version           func(childComplexity int) int
+		WorkflowID        func(childComplexity int) int
 	}
 
 	AgentRunConnection struct {
@@ -6305,6 +6352,8 @@ type ComplexityRoot struct {
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRun                            func(childComplexity int, id string) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AiProvider                          func(childComplexity int, id string) int
+		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		ApprovalDelegations                 func(childComplexity int, delegatorID *string, delegateID *string, activeOnly *bool) int
 		ArAgingSummary                      func(childComplexity int, asOfDate *int) int
 		ArAgingTrend                        func(childComplexity int, weeks *int) int
@@ -10453,6 +10502,202 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "AIProvider.allowPrivateNetwork":
+		if e.ComplexityRoot.AIProvider.AllowPrivateNetwork == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.AllowPrivateNetwork(childComplexity), true
+	case "AIProvider.baseUrl":
+		if e.ComplexityRoot.AIProvider.BaseURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.BaseURL(childComplexity), true
+	case "AIProvider.businessUnitId":
+		if e.ComplexityRoot.AIProvider.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.BusinessUnitID(childComplexity), true
+	case "AIProvider.createdAt":
+		if e.ComplexityRoot.AIProvider.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.CreatedAt(childComplexity), true
+	case "AIProvider.description":
+		if e.ComplexityRoot.AIProvider.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Description(childComplexity), true
+	case "AIProvider.enabled":
+		if e.ComplexityRoot.AIProvider.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Enabled(childComplexity), true
+	case "AIProvider.hasApiKey":
+		if e.ComplexityRoot.AIProvider.HasAPIKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.HasAPIKey(childComplexity), true
+	case "AIProvider.id":
+		if e.ComplexityRoot.AIProvider.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.ID(childComplexity), true
+	case "AIProvider.kind":
+		if e.ComplexityRoot.AIProvider.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Kind(childComplexity), true
+	case "AIProvider.lastTest":
+		if e.ComplexityRoot.AIProvider.LastTest == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.LastTest(childComplexity), true
+	case "AIProvider.maxTokens":
+		if e.ComplexityRoot.AIProvider.MaxTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.MaxTokens(childComplexity), true
+	case "AIProvider.model":
+		if e.ComplexityRoot.AIProvider.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Model(childComplexity), true
+	case "AIProvider.name":
+		if e.ComplexityRoot.AIProvider.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Name(childComplexity), true
+	case "AIProvider.organizationId":
+		if e.ComplexityRoot.AIProvider.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.OrganizationID(childComplexity), true
+	case "AIProvider.priority":
+		if e.ComplexityRoot.AIProvider.Priority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Priority(childComplexity), true
+	case "AIProvider.structuredOutputMode":
+		if e.ComplexityRoot.AIProvider.StructuredOutputMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.StructuredOutputMode(childComplexity), true
+	case "AIProvider.tasks":
+		if e.ComplexityRoot.AIProvider.Tasks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Tasks(childComplexity), true
+	case "AIProvider.trusted":
+		if e.ComplexityRoot.AIProvider.Trusted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Trusted(childComplexity), true
+	case "AIProvider.updatedAt":
+		if e.ComplexityRoot.AIProvider.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.UpdatedAt(childComplexity), true
+	case "AIProvider.version":
+		if e.ComplexityRoot.AIProvider.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.Version(childComplexity), true
+
+	case "AIProviderConnection.edges":
+		if e.ComplexityRoot.AIProviderConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderConnection.Edges(childComplexity), true
+	case "AIProviderConnection.pageInfo":
+		if e.ComplexityRoot.AIProviderConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderConnection.PageInfo(childComplexity), true
+	case "AIProviderConnection.totalCount":
+		if e.ComplexityRoot.AIProviderConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderConnection.TotalCount(childComplexity), true
+
+	case "AIProviderEdge.cursor":
+		if e.ComplexityRoot.AIProviderEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderEdge.Cursor(childComplexity), true
+	case "AIProviderEdge.node":
+		if e.ComplexityRoot.AIProviderEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderEdge.Node(childComplexity), true
+
+	case "AIProviderTestOutcome.detail":
+		if e.ComplexityRoot.AIProviderTestOutcome.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.Detail(childComplexity), true
+	case "AIProviderTestOutcome.latencyMs":
+		if e.ComplexityRoot.AIProviderTestOutcome.LatencyMS == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.LatencyMS(childComplexity), true
+	case "AIProviderTestOutcome.message":
+		if e.ComplexityRoot.AIProviderTestOutcome.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.Message(childComplexity), true
+	case "AIProviderTestOutcome.modelIdentifier":
+		if e.ComplexityRoot.AIProviderTestOutcome.ModelIdentifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.ModelIdentifier(childComplexity), true
+	case "AIProviderTestOutcome.schemaHonoured":
+		if e.ComplexityRoot.AIProviderTestOutcome.SchemaHonoured == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.SchemaHonoured(childComplexity), true
+	case "AIProviderTestOutcome.success":
+		if e.ComplexityRoot.AIProviderTestOutcome.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.Success(childComplexity), true
+	case "AIProviderTestOutcome.testedAt":
+		if e.ComplexityRoot.AIProviderTestOutcome.TestedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProviderTestOutcome.TestedAt(childComplexity), true
+
 	case "ARAgingBucketTotals.currentMinor":
 		if e.ComplexityRoot.ARAgingBucketTotals.CurrentMinor == nil {
 			break
@@ -12249,6 +12494,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentProposalEdge.Node(childComplexity), true
 
+	case "AgentRun.agentDefinitionId":
+		if e.ComplexityRoot.AgentRun.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.AgentDefinitionID(childComplexity), true
 	case "AgentRun.agentType":
 		if e.ComplexityRoot.AgentRun.AgentType == nil {
 			break
@@ -12333,6 +12584,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRun.SubjectType(childComplexity), true
+	case "AgentRun.summary":
+		if e.ComplexityRoot.AgentRun.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.Summary(childComplexity), true
+	case "AgentRun.trigger":
+		if e.ComplexityRoot.AgentRun.Trigger == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.Trigger(childComplexity), true
 	case "AgentRun.updatedAt":
 		if e.ComplexityRoot.AgentRun.UpdatedAt == nil {
 			break
@@ -41490,6 +41753,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentRuns(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.aiProvider":
+		if e.ComplexityRoot.Query.AiProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiProvider_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiProvider(childComplexity, args["id"].(string)), true
+	case "Query.aiProviders":
+		if e.ComplexityRoot.Query.AiProviders == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiProviders_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiProviders(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.approvalDelegations":
 		if e.ComplexityRoot.Query.ApprovalDelegations == nil {
 			break
@@ -63943,10 +64228,26 @@ extend type Query {
 `, BuiltIn: false},
 	{Name: "../schema/agent.graphqls", Input: `enum AgentType {
   BillingException
+  DispatchAssignment
+  AssistantChat
+  General
 }
 
 enum AgentSubjectType {
   BillingQueueItem
+  ShipmentMove
+  AssistantThread
+  Shipment
+  Document
+  Organization
+}
+
+enum AgentRunTrigger {
+  Manual
+  Chat
+  Scheduled
+  Event
+  Continuous
 }
 
 enum AgentRunStatus {
@@ -64025,6 +64326,10 @@ type AgentRun {
   organizationId: ID!
   businessUnitId: ID!
   agentType: AgentType!
+  "The agent definition this run belongs to; absent for runs of the retired built-in agents."
+  agentDefinitionId: ID!
+  trigger: AgentRunTrigger!
+  summary: String!
   subjectType: AgentSubjectType!
   subjectId: ID!
   status: AgentRunStatus!
@@ -64262,6 +64567,84 @@ type AgentDefinitionConnection {
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+}
+`, BuiltIn: false},
+	{Name: "../schema/aiprovider.graphqls", Input: `enum AIProviderKind {
+  AnthropicMessages
+  OpenAIResponses
+  OpenAIChat
+  Ollama
+}
+
+enum AIStructuredOutputMode {
+  JSONSchema
+  JSONMode
+  Prompted
+}
+
+enum AITask {
+  DocumentClassification
+  DocumentExtraction
+  BillingDiagnosis
+  FormulaAssistant
+  ScopeClassification
+  AssistantChat
+  OperationalInsights
+  General
+}
+
+"What the most recent live probe of the endpoint revealed."
+type AIProviderTestOutcome {
+  success: Boolean!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  latencyMs: Int!
+  detail: String!
+  testedAt: Timestamp!
+}
+
+"""
+One configured model endpoint. The credential never leaves the server; only
+whether one is stored is exposed.
+"""
+type AIProvider {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  model: String!
+  hasApiKey: Boolean!
+  allowPrivateNetwork: Boolean!
+  structuredOutputMode: AIStructuredOutputMode!
+  maxTokens: Int!
+  tasks: [AITask!]!
+  priority: Int!
+  trusted: Boolean!
+  enabled: Boolean!
+  lastTest: AIProviderTestOutcome
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIProviderEdge {
+  node: AIProvider!
+  cursor: String!
+}
+
+type AIProviderConnection {
+  edges: [AIProviderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
+  aiProvider(id: ID!): AIProvider
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {
@@ -82584,6 +82967,94 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
 
+func (ec *executionContext) childFields_AIProvider(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIProvider_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AIProvider_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AIProvider_businessUnitId(ctx, field)
+	case "name":
+		return ec.fieldContext_AIProvider_name(ctx, field)
+	case "description":
+		return ec.fieldContext_AIProvider_description(ctx, field)
+	case "kind":
+		return ec.fieldContext_AIProvider_kind(ctx, field)
+	case "baseUrl":
+		return ec.fieldContext_AIProvider_baseUrl(ctx, field)
+	case "model":
+		return ec.fieldContext_AIProvider_model(ctx, field)
+	case "hasApiKey":
+		return ec.fieldContext_AIProvider_hasApiKey(ctx, field)
+	case "allowPrivateNetwork":
+		return ec.fieldContext_AIProvider_allowPrivateNetwork(ctx, field)
+	case "structuredOutputMode":
+		return ec.fieldContext_AIProvider_structuredOutputMode(ctx, field)
+	case "maxTokens":
+		return ec.fieldContext_AIProvider_maxTokens(ctx, field)
+	case "tasks":
+		return ec.fieldContext_AIProvider_tasks(ctx, field)
+	case "priority":
+		return ec.fieldContext_AIProvider_priority(ctx, field)
+	case "trusted":
+		return ec.fieldContext_AIProvider_trusted(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AIProvider_enabled(ctx, field)
+	case "lastTest":
+		return ec.fieldContext_AIProvider_lastTest(ctx, field)
+	case "version":
+		return ec.fieldContext_AIProvider_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AIProvider_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AIProvider_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIProvider", field.Name)
+}
+
+func (ec *executionContext) childFields_AIProviderConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AIProviderConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AIProviderConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AIProviderConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIProviderConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AIProviderEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AIProviderEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AIProviderEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIProviderEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AIProviderTestOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "success":
+		return ec.fieldContext_AIProviderTestOutcome_success(ctx, field)
+	case "message":
+		return ec.fieldContext_AIProviderTestOutcome_message(ctx, field)
+	case "modelIdentifier":
+		return ec.fieldContext_AIProviderTestOutcome_modelIdentifier(ctx, field)
+	case "schemaHonoured":
+		return ec.fieldContext_AIProviderTestOutcome_schemaHonoured(ctx, field)
+	case "latencyMs":
+		return ec.fieldContext_AIProviderTestOutcome_latencyMs(ctx, field)
+	case "detail":
+		return ec.fieldContext_AIProviderTestOutcome_detail(ctx, field)
+	case "testedAt":
+		return ec.fieldContext_AIProviderTestOutcome_testedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIProviderTestOutcome", field.Name)
+}
+
 func (ec *executionContext) childFields_ARAgingBucketTotals(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "currentMinor":
@@ -83408,6 +83879,12 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_businessUnitId(ctx, field)
 	case "agentType":
 		return ec.fieldContext_AgentRun_agentType(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentRun_agentDefinitionId(ctx, field)
+	case "trigger":
+		return ec.fieldContext_AgentRun_trigger(ctx, field)
+	case "summary":
+		return ec.fieldContext_AgentRun_summary(ctx, field)
 	case "subjectType":
 		return ec.fieldContext_AgentRun_subjectType(ctx, field)
 	case "subjectId":

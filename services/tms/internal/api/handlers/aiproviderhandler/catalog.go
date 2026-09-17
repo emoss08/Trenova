@@ -70,6 +70,9 @@ type Preset struct {
 	SelfHosted           bool                            `json:"selfHosted"`
 	ExampleModel         string                          `json:"exampleModel"`
 	Notes                string                          `json:"notes,omitempty"`
+	// Domain is the vendor's web domain, which is how the UI resolves a brand
+	// logo without shipping one per vendor.
+	Domain string `json:"domain,omitempty"`
 }
 
 // Presets covers the deployments organizations actually reach for. The
@@ -80,6 +83,7 @@ func Presets() []Preset {
 	return []Preset{
 		{
 			Key:                  "anthropic",
+			Domain:               "anthropic.com",
 			Label:                "Anthropic",
 			Kind:                 aiprovider.KindAnthropicMessages,
 			BaseURL:              "https://api.anthropic.com",
@@ -89,6 +93,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "openai",
+			Domain:               "openai.com",
 			Label:                "OpenAI",
 			Kind:                 aiprovider.KindOpenAIResponses,
 			BaseURL:              "https://api.openai.com",
@@ -98,6 +103,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "openrouter",
+			Domain:               "openrouter.ai",
 			Label:                "OpenRouter",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "https://openrouter.ai/api/v1",
@@ -108,6 +114,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "groq",
+			Domain:               "groq.com",
 			Label:                "Groq",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "https://api.groq.com/openai/v1",
@@ -118,6 +125,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "together",
+			Domain:               "together.ai",
 			Label:                "Together AI",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "https://api.together.xyz/v1",
@@ -127,6 +135,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "fireworks",
+			Domain:               "fireworks.ai",
 			Label:                "Fireworks AI",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "https://api.fireworks.ai/inference/v1",
@@ -136,6 +145,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "deepinfra",
+			Domain:               "deepinfra.com",
 			Label:                "DeepInfra",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "https://api.deepinfra.com/v1/openai",
@@ -145,6 +155,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "bedrock",
+			Domain:               "aws.amazon.com",
 			Label:                "Amazon Bedrock",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "",
@@ -155,6 +166,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "ollama",
+			Domain:               "ollama.com",
 			Label:                "Ollama (self-hosted)",
 			Kind:                 aiprovider.KindOllama,
 			BaseURL:              "http://localhost:11434",
@@ -166,6 +178,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "vllm",
+			Domain:               "vllm.ai",
 			Label:                "vLLM (self-hosted)",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:8000/v1",
@@ -177,6 +190,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "sglang",
+			Domain:               "sglang.ai",
 			Label:                "SGLang (self-hosted)",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:30000/v1",
@@ -187,6 +201,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "lmstudio",
+			Domain:               "lmstudio.ai",
 			Label:                "LM Studio (self-hosted)",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:1234/v1",
@@ -197,6 +212,7 @@ func Presets() []Preset {
 		},
 		{
 			Key:                  "llamacpp",
+			Domain:               "ggml.ai",
 			Label:                "llama.cpp (self-hosted)",
 			Kind:                 aiprovider.KindOpenAIChat,
 			BaseURL:              "http://localhost:8080/v1",

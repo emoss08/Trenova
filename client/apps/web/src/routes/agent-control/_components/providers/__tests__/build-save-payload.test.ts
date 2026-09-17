@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSavePayload,
   type ProviderFormValues,
-} from "@/routes/admin/ai-providers/_components/build-save-payload";
+} from "@/routes/agent-control/_components/providers/build-save-payload";
 
 function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormValues {
   return {

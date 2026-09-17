@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -31,6 +32,8 @@ const (
 // rather than a credential keyed by vendor.
 type Provider struct {
 	bun.BaseModel `bun:"table:ai_providers,alias:aiprv" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -71,6 +74,15 @@ type Provider struct {
 	Trusted bool `json:"trusted" bun:"trusted,type:BOOLEAN,notnull"`
 	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
 
+	// LastTest is the outcome of the most recent live probe, kept so the
+	// configuration UI can show whether an endpoint was ever reachable without
+	// probing it again on every page load.
+	LastTest *TestOutcome `json:"lastTest" bun:"last_test,type:JSONB,nullzero"`
+
+	// HasAPIKey is set on the redacted copy so a client can tell a credential is
+	// stored without the secret making the trip.
+	HasAPIKey bool `json:"hasApiKey" bun:"-"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -96,7 +108,21 @@ func (p *Provider) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
+// TestOutcome is what a live probe of the endpoint revealed, recorded on the
+// provider when it ran.
+type TestOutcome struct {
+	Success         bool   `json:"success"`
+	Message         string `json:"message"`
+	ModelIdentifier string `json:"modelIdentifier,omitempty"`
+	SchemaHonoured  bool   `json:"schemaHonoured"`
+	LatencyMS       int64  `json:"latencyMs"`
+	Detail          string `json:"detail,omitempty"`
+	TestedAt        int64  `json:"testedAt"`
+}
+
 func (p *Provider) GetID() pulid.ID { return p.ID }
+
+func (p *Provider) GetCreatedAt() int64 { return p.CreatedAt }
 
 func (p *Provider) GetTableName() string { return "ai_providers" }
 
@@ -105,13 +131,14 @@ func (p *Provider) GetTableName() string { return "ai_providers" }
 // a configured state without the secret making the trip.
 func (p *Provider) Redacted() *Provider {
 	clone := *p
+	clone.HasAPIKey = p.HasStoredAPIKey()
 	clone.APIKey = ""
 
 	return &clone
 }
 
-// HasAPIKey reports whether a credential is stored.
-func (p *Provider) HasAPIKey() bool {
+// HasStoredAPIKey reports whether a credential is stored.
+func (p *Provider) HasStoredAPIKey() bool {
 	return strings.TrimSpace(p.APIKey) != ""
 }
 

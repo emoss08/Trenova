@@ -65,6 +65,7 @@ var ProviderColumns = struct {
 	Priority             Column // "priority" → qualified: "aiprv.priority"
 	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
 	Enabled              Column // "enabled" → qualified: "aiprv.enabled"
+	LastTest             Column // "last_test" → qualified: "aiprv.last_test"
 	Version              Column // "version" → qualified: "aiprv.version"
 	CreatedAt            Column // "created_at" → qualified: "aiprv.created_at"
 	UpdatedAt            Column // "updated_at" → qualified: "aiprv.updated_at"
@@ -85,6 +86,7 @@ var ProviderColumns = struct {
 	Priority:             NewColumn("priority", "aiprv"),
 	Trusted:              NewColumn("trusted", "aiprv"),
 	Enabled:              NewColumn("enabled", "aiprv"),
+	LastTest:             NewColumn("last_test", "aiprv"),
 	Version:              NewColumn("version", "aiprv"),
 	CreatedAt:            NewColumn("created_at", "aiprv"),
 	UpdatedAt:            NewColumn("updated_at", "aiprv"),
@@ -110,6 +112,7 @@ var ProviderFieldMap = map[string]string{
 	"priority":             "priority",
 	"trusted":              "trusted",
 	"enabled":              "enabled",
+	"lastTest":             "last_test",
 	"version":              "version",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
@@ -134,6 +137,7 @@ var ProviderInsertableColumns = []string{
 	"priority",
 	"trusted",
 	"enabled",
+	"last_test",
 	"version",
 	"created_at",
 	"updated_at",
@@ -217,6 +221,7 @@ var ProviderFilter = struct {
 	Priority             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
 	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
 	Enabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	LastTest             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTest" → DB: "last_test"
 	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -265,6 +270,9 @@ var ProviderFilter = struct {
 	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enabled", op, value)
+	},
+	LastTest: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastTest", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -1509,6 +1509,9 @@ models:
   AgentSubjectType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.SubjectType
+  AgentRunTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RunTrigger
   AgentRunStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.RunStatus
@@ -1536,6 +1539,21 @@ models:
   AgentRun:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRun
+  AIProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.Provider
+  AIProviderTestOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.TestOutcome
+  AIProviderKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.Kind
+  AIStructuredOutputMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.StructuredOutputMode
+  AITask:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.Task
   AgentDefinition:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Definition

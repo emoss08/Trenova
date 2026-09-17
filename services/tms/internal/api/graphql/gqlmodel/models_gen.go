@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -95,6 +96,17 @@ type ShipmentEvent interface {
 	GetCorrelationID() *string
 	GetActor() *tenant.User
 	GetShipment() *ShipmentEventShipmentReference
+}
+
+type AIProviderConnection struct {
+	Edges      []*AIProviderEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type AIProviderEdge struct {
+	Node   *aiprovider.Provider `json:"node"`
+	Cursor string               `json:"cursor"`
 }
 
 type AccessorialChargeConnection struct {

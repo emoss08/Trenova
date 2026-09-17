@@ -1,0 +1,49 @@
+fragment AIProviderCardFields on AIProvider {
+  id
+  organizationId
+  businessUnitId
+  name
+  description
+  kind
+  baseUrl
+  model
+  hasApiKey
+  allowPrivateNetwork
+  structuredOutputMode
+  maxTokens
+  tasks
+  priority
+  trusted
+  enabled
+  lastTest {
+    success
+    message
+    modelIdentifier
+    schemaHonoured
+    latencyMs
+    detail
+    testedAt
+  }
+  version
+  createdAt
+  updatedAt
+}
+
+query AIProviderCards($input: DataTableConnectionInput!) {
+  aiProviders(input: $input) {
+    edges {
+      node {
+        ...AIProviderCardFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AIProviderDetail($id: ID!) {
+  aiProvider(id: $id) {
+    ...AIProviderCardFields
+  }
+}

@@ -2,7 +2,6 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   aiProviderCatalogSchema,
-  aiProviderListSchema,
   aiProviderSchema,
   saveAIProviderRequestSchema,
   testAIProviderResultSchema,
@@ -11,16 +10,6 @@ import {
 } from "@/types/ai-provider";
 
 export class AIProviderService {
-  public async list() {
-    const response = await api.get("/ai-providers/");
-    return safeParse(aiProviderListSchema, response, "AI Provider");
-  }
-
-  public async get(id: AIProvider["id"]) {
-    const response = await api.get(`/ai-providers/${id}/`);
-    return safeParse(aiProviderSchema, response, "AI Provider");
-  }
-
   public async catalog() {
     const response = await api.get("/ai-providers/catalog/");
     return safeParse(aiProviderCatalogSchema, response, "AI Provider Catalog");

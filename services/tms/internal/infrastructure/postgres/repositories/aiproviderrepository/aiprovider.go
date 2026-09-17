@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -74,6 +75,67 @@ func (r *repository) List(
 	}
 
 	return &pagination.ListResult[*aiprovider.Provider]{Items: entities, Total: total}, nil
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAIProviderConnectionRequest,
+) (*pagination.CursorListResult[*aiprovider.Provider], error) {
+	dba := r.db.DBForContext(ctx)
+
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*aiprovider.Provider)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.ProviderTable.Alias,
+					req.Filter,
+					(*aiprovider.Provider)(nil),
+				)
+
+				return sq.Apply(buncolgen.ProviderApplyTenant(req.Filter.TenantInfo))
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count ai providers", zap.Error(err))
+			return nil, err
+		}
+		totalCount = &total
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*aiprovider.Provider]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*aiprovider.Provider) *bun.SelectQuery {
+				sq := dba.NewSelect().Model(entities)
+				if len(req.Columns) == 0 {
+					return sq.ColumnExpr(buncolgen.ProviderTable.All())
+				}
+
+				return sq.Column(req.Columns...)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return querybuilder.ApplyCursorFilters(
+					sq,
+					buncolgen.ProviderTable.Alias,
+					req.Filter,
+					req.Cursor,
+					(*aiprovider.Provider)(nil),
+				)
+			},
+		})
+	if err != nil {
+		r.l.Error("failed to scan ai providers", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetByID(
@@ -239,3 +301,25 @@ func taskStrings(tasks []aiprovider.Task) []string {
 }
 
 const defaultTaskCandidates = 4
+
+func (r *repository) MarkTested(
+	ctx context.Context,
+	req repositories.MarkAIProviderTestedRequest,
+) error {
+	cols := buncolgen.ProviderColumns
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*aiprovider.Provider)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Set(cols.LastTest.Set(), req.Outcome).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("mark ai provider tested: %w", err)
+	}
+
+	return dberror.CheckRowsAffected(res, "AIProvider", req.ID.String())
+}

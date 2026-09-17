@@ -6,8 +6,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2Icon, PlugZapIcon, TriangleAlertIcon } from "lucide-react";
-import { Link } from "react-router";
 import { assessReadiness } from "./ai-readiness";
+
+type AIReadinessBannerProps = {
+  onOpenProviders: () => void;
+};
 
 /**
  * Answers the question an administrator opening this page has: if I turn an
@@ -18,7 +21,7 @@ import { assessReadiness } from "./ai-readiness";
  * what lets an organization enable an agent that can never answer. This joins
  * the two and says so before anyone finds out from a failed conversation.
  */
-export function AIReadinessBanner() {
+export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   const t = useT();
 
   const providersQuery = useQuery(queries.aiProvider.list());
@@ -28,10 +31,7 @@ export function AIReadinessBanner() {
     return <Skeleton className="h-20" />;
   }
 
-  const readiness = assessReadiness(
-    providersQuery.data?.results ?? [],
-    catalogQuery.data?.tasks ?? [],
-  );
+  const readiness = assessReadiness(providersQuery.data ?? [], catalogQuery.data?.tasks ?? []);
 
   if (!readiness.hasProviders) {
     return (
@@ -41,16 +41,12 @@ export function AIReadinessBanner() {
         <AlertDescription className="flex flex-col gap-3">
           <p>
             {t(
-              "Agents, the assistant and insight explanations all route through a provider. Connect one from the integration marketplace — a hosted API, a gateway, or a model server on your own hardware — then come back here to switch agents on.",
+              "Agents, the assistant and insight explanations all route through a provider. Connect one — a hosted API, a gateway, or a model server on your own hardware — then switch agents on.",
             )}
           </p>
           <div>
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={<Link to="/admin/integrations?type=AIProviders" />}
-            >
+            <Button size="sm" variant="outline" onClick={onOpenProviders}>
+              <PlugZapIcon className="size-3.5" />
               {t("Connect a provider")}
             </Button>
           </div>
@@ -65,11 +61,7 @@ export function AIReadinessBanner() {
         <CheckCircle2Icon className="size-4 text-emerald-500" />
         <AlertTitle>{t("Every AI task has a provider")}</AlertTitle>
         <AlertDescription>
-          {t("Agents you enable below will run. Manage routing from")}{" "}
-          <Link to="/admin/ai-providers" className="text-foreground underline">
-            {t("AI Providers")}
-          </Link>
-          .
+          {t("Agents you enable will run. Routing is managed on the Providers tab.")}
         </AlertDescription>
       </Alert>
     );
@@ -90,7 +82,7 @@ export function AIReadinessBanner() {
                 "Conversations will work, but the tasks below have no enabled provider assigned and will fail when something needs them.",
               )
             : t(
-                "Assistant chat needs an enabled provider before a conversation can start. Assign it on a provider and the agents below become usable.",
+                "Assistant chat needs an enabled provider before a conversation can start. Assign it on a provider and the agents become usable.",
               )}
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -102,12 +94,7 @@ export function AIReadinessBanner() {
           ))}
         </div>
         <div>
-          <Button
-            size="sm"
-            variant="outline"
-            nativeButton={false}
-            render={<Link to="/admin/ai-providers" />}
-          >
+          <Button size="sm" variant="outline" onClick={onOpenProviders}>
             {t("Assign tasks to a provider")}
           </Button>
         </div>

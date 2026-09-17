@@ -206,6 +206,7 @@ type Params struct {
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
 	AgentDefinitionService       services.AgentDefinitionService
+	AIProviderService            services.AIProviderService
 	AgentProposalService         services.AgentProposalService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
@@ -347,6 +348,7 @@ type Resolver struct {
 	lateChargeService            services.LateChargeService
 	agentRunService              services.AgentRunService
 	agentDefinitionService       services.AgentDefinitionService
+	aiProviderService            services.AIProviderService
 	agentProposalService         services.AgentProposalService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
@@ -489,6 +491,7 @@ func New(p Params) *Resolver {
 		lateChargeService:            p.LateChargeService,
 		agentRunService:              p.AgentRunService,
 		agentDefinitionService:       p.AgentDefinitionService,
+		aiProviderService:            p.AIProviderService,
 		agentProposalService:         p.AgentProposalService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,

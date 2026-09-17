@@ -3,6 +3,9 @@ fragment AgentRunTableRowFields on AgentRun {
   organizationId
   businessUnitId
   agentType
+  agentDefinitionId
+  trigger
+  summary
   subjectType
   subjectId
   status

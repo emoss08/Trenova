@@ -267,3 +267,16 @@ func TestTaskWritesToLedger(t *testing.T) {
 		assert.True(t, task.IsValid(), "task %q should be valid", task)
 	}
 }
+
+func TestRedactedReportsStoredCredentialWithoutExposingIt(t *testing.T) {
+	provider := validProvider()
+
+	redacted := provider.Redacted()
+
+	assert.Empty(t, redacted.APIKey)
+	assert.True(t, redacted.HasAPIKey)
+	assert.Equal(t, "sk-ant-test", provider.APIKey, "redaction must not mutate the source")
+
+	provider.APIKey = "   "
+	assert.False(t, provider.Redacted().HasAPIKey)
+}

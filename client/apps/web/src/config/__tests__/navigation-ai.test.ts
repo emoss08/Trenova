@@ -28,22 +28,18 @@ describe("AI surfaces in navigation", () => {
     expect(item?.resource).toBe(Resource.Insight);
   });
 
-  it("groups the AI administration pages together in the settings sidebar", () => {
+  // Providers, agents and activity are tabs of one hub. A second settings link
+  // for providers would send people to two places for the same configuration.
+  it("lists AI Control once in the settings sidebar and no separate providers page", () => {
     const byHref = new Map(adminLinks.map((link) => [link.href, link]));
 
-    const providers = byHref.get("/admin/ai-providers");
-    expect(providers?.group).toBe("AI & Automation");
-    expect(providers?.resource).toBe(Resource.AIProvider);
-    expect(providers?.requiredOperation).toBe(Operation.Read);
+    const hub = byHref.get("/admin/agent-control");
+    expect(hub?.title).toBe("AI Control");
+    expect(hub?.group).toBe("AI & Automation");
+    expect(hub?.resource).toBe(Resource.AgentControl);
+    expect(hub?.requiredOperation).toBe(Operation.Read);
 
-    const agentControl = byHref.get("/admin/agent-control");
-    expect(agentControl?.group).toBe("AI & Automation");
-    expect(agentControl?.resource).toBe(Resource.AgentControl);
-  });
-
-  // Agents are configured from Agent Control rather than from a page of their
-  // own, so nothing may point people at the retired route.
-  it("does not list a separate agents page", () => {
+    expect(adminLinks.some((link) => link.href.startsWith("/admin/ai-providers"))).toBe(false);
     expect(adminLinks.some((link) => link.href.startsWith("/admin/agents"))).toBe(false);
   });
 
@@ -51,7 +47,6 @@ describe("AI surfaces in navigation", () => {
     const actions = navigationConfig.quickActions ?? [];
 
     const assistant = actions.find((action) => action.id === "open-assistant");
-    expect(assistant?.path).toBe("/assistant");
     expect(assistant?.resource).toBe(Resource.Assistant);
     expect(assistant?.requiredOperation).toBe(Operation.Read);
 

@@ -1,0 +1,77 @@
+enum AIProviderKind {
+  AnthropicMessages
+  OpenAIResponses
+  OpenAIChat
+  Ollama
+}
+
+enum AIStructuredOutputMode {
+  JSONSchema
+  JSONMode
+  Prompted
+}
+
+enum AITask {
+  DocumentClassification
+  DocumentExtraction
+  BillingDiagnosis
+  FormulaAssistant
+  ScopeClassification
+  AssistantChat
+  OperationalInsights
+  General
+}
+
+"What the most recent live probe of the endpoint revealed."
+type AIProviderTestOutcome {
+  success: Boolean!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  latencyMs: Int!
+  detail: String!
+  testedAt: Timestamp!
+}
+
+"""
+One configured model endpoint. The credential never leaves the server; only
+whether one is stored is exposed.
+"""
+type AIProvider {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  model: String!
+  hasApiKey: Boolean!
+  allowPrivateNetwork: Boolean!
+  structuredOutputMode: AIStructuredOutputMode!
+  maxTokens: Int!
+  tasks: [AITask!]!
+  priority: Int!
+  trusted: Boolean!
+  enabled: Boolean!
+  lastTest: AIProviderTestOutcome
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIProviderEdge {
+  node: AIProvider!
+  cursor: String!
+}
+
+type AIProviderConnection {
+  edges: [AIProviderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
+  aiProvider(id: ID!): AIProvider
+}

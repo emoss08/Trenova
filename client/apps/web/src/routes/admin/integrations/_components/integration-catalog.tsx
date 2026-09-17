@@ -32,11 +32,6 @@ import {
   integrationCatalogSearchParamsParser,
   integrationModalTypes,
 } from "../integration-marketplace-state";
-import {
-  AI_PROVIDERS_CATALOG_TYPE,
-  aiProvidersCatalogItem,
-} from "./ai-providers/ai-providers-catalog-item";
-import { AIProvidersIntegrationModal } from "./ai-providers/ai-providers-integration-modal";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { EIAFuelPricesIntegrationModal } from "./eia/eia-integration-modal";
@@ -224,15 +219,7 @@ export function IntegrationCatalogCard() {
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
   });
-  // AI providers are rows of their own rather than an integration credential,
-  // so their card is assembled here and joins the server's list before any
-  // filter runs: search, category and status treat it like every other card.
-  const providersQuery = useQuery(queries.aiProvider.list());
-
-  const items = [
-    ...(catalogQuery.data?.items ?? []),
-    aiProvidersCatalogItem(providersQuery.data?.results ?? []),
-  ];
+  const items = catalogQuery.data?.items ?? [];
   const uniqueCategories = new Map<string, string>();
   for (const item of items) {
     if (!item.category) {
@@ -420,10 +407,6 @@ export function IntegrationCatalogCard() {
       <OpenAIIntegrationModal
         open={searchParams.type === "OpenAI"}
         onOpenChange={setModalOpen("OpenAI")}
-      />
-      <AIProvidersIntegrationModal
-        open={searchParams.type === AI_PROVIDERS_CATALOG_TYPE}
-        onOpenChange={setModalOpen(AI_PROVIDERS_CATALOG_TYPE)}
       />
       <OpenWeatherMapIntegrationModal
         open={searchParams.type === "OpenWeatherMap"}

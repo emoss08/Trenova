@@ -1,27 +1,12 @@
-import type { AIProvider, AITaskDescriptor } from "@/types/ai-provider";
+import type { AITaskDescriptor } from "@/types/ai-provider";
 import { describe, expect, it } from "vitest";
-import { assessReadiness } from "../ai-readiness";
+import { assessReadiness, type RoutingProvider } from "../ai-readiness";
 
-function provider(overrides: Partial<AIProvider> = {}): AIProvider {
+function provider(overrides: Partial<RoutingProvider> = {}): RoutingProvider {
   return {
-    id: "aiprv_1",
-    businessUnitId: "bu_1",
-    organizationId: "org_1",
-    name: "Local Ollama",
-    description: "",
-    kind: "Ollama",
-    baseUrl: "",
-    model: "qwen2.5:14b",
-    allowPrivateNetwork: true,
-    structuredOutputMode: "JSONSchema",
-    maxTokens: 8192,
     tasks: ["AssistantChat"],
-    priority: 10,
     trusted: false,
     enabled: true,
-    version: 0,
-    createdAt: 0,
-    updatedAt: 0,
     ...overrides,
   };
 }
@@ -70,7 +55,7 @@ describe("assessReadiness", () => {
       requiresTrust: true,
     });
     const untrusted = provider({ tasks: ["BillingDiagnosis"], trusted: false });
-    const trusted = provider({ id: "aiprv_2", tasks: ["BillingDiagnosis"], trusted: true });
+    const trusted = provider({ tasks: ["BillingDiagnosis"], trusted: true });
 
     expect(assessReadiness([untrusted], [billing]).uncovered.map((e) => e.task)).toEqual([
       "BillingDiagnosis",

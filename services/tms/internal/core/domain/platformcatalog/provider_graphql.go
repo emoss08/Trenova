@@ -137,6 +137,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	FeatureAgentAutomation: {
 		"agent.graphqls",
 		"agentdefinition.graphqls",
+		"aiprovider.graphqls",
 	},
 }
 

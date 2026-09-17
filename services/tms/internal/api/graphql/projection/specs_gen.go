@@ -4,6 +4,8 @@ package projection
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+var AIProviderSpec TypeSpec
+
 var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
@@ -480,6 +482,97 @@ var WorkerTrainingRecordSpec TypeSpec
 // package-level initialisers. Assigning inside init lets the zero-valued vars
 // exist first and be filled in afterwards.
 func init() {
+	AIProviderSpec = TypeSpec{
+		TypeName: "AIProvider",
+		FieldMap: buncolgen.ProviderFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "baseUrl",
+				FieldMapKey: "baseUrl",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:    "hasApiKey",
+				Special: "hasApiKey",
+			},
+			{
+				Name:        "allowPrivateNetwork",
+				FieldMapKey: "allowPrivateNetwork",
+			},
+			{
+				Name:        "structuredOutputMode",
+				FieldMapKey: "structuredOutputMode",
+			},
+			{
+				Name:        "maxTokens",
+				FieldMapKey: "maxTokens",
+			},
+			{
+				Name:        "tasks",
+				FieldMapKey: "tasks",
+			},
+			{
+				Name:        "priority",
+				FieldMapKey: "priority",
+			},
+			{
+				Name:        "trusted",
+				FieldMapKey: "trusted",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "lastTest",
+				FieldMapKey: "lastTest",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AccessorialChargeSpec = TypeSpec{
 		TypeName: "AccessorialCharge",
 		FieldMap: buncolgen.AccessorialChargeFieldMap,
@@ -1048,6 +1141,18 @@ func init() {
 			{
 				Name:        "agentType",
 				FieldMapKey: "agentType",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
 			},
 			{
 				Name:        "subjectType",

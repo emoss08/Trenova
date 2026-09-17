@@ -5,6 +5,79 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+"""
+One configured model endpoint. The credential never leaves the server; only
+whether one is stored is exposed.
+"""
+type AIProvider {
+  allowPrivateNetwork: Boolean!
+  baseUrl: String!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  description: String!
+  enabled: Boolean!
+  hasApiKey: Boolean!
+  id: ID!
+  kind: AIProviderKind!
+  lastTest: AIProviderTestOutcome
+  maxTokens: Int!
+  model: String!
+  name: String!
+  organizationId: ID!
+  priority: Int!
+  structuredOutputMode: AIStructuredOutputMode!
+  tasks: [AITask!]!
+  trusted: Boolean!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AIProviderConnection {
+  edges: [AIProviderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIProviderEdge {
+  cursor: String!
+  node: AIProvider!
+}
+
+enum AIProviderKind {
+  AnthropicMessages
+  Ollama
+  OpenAIChat
+  OpenAIResponses
+}
+
+"""What the most recent live probe of the endpoint revealed."""
+type AIProviderTestOutcome {
+  detail: String!
+  latencyMs: Int!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  success: Boolean!
+  testedAt: Timestamp!
+}
+
+enum AIStructuredOutputMode {
+  JSONMode
+  JSONSchema
+  Prompted
+}
+
+enum AITask {
+  AssistantChat
+  BillingDiagnosis
+  DocumentClassification
+  DocumentExtraction
+  FormulaAssistant
+  General
+  OperationalInsights
+  ScopeClassification
+}
+
 type ARAgingBucketTotals {
   currentMinor: Int!
   days1To30Minor: Int!
@@ -340,6 +413,14 @@ enum AgentAutonomyTier {
   Propose
 }
 
+enum AgentContextProvider {
+  Clock
+  Organization
+  Page
+  Tools
+  User
+}
+
 type AgentControl {
   billingAgentEnabled: Boolean!
   businessUnitId: ID!
@@ -380,6 +461,69 @@ enum AgentDecisionType {
   Accepted
   Modified
   Rejected
+}
+
+"""
+An organization's own agent: who it is, which tools it may call, how much it
+may do on its own, and when it runs.
+"""
+type AgentDefinition {
+  autonomyCeiling: AgentAutonomyTier!
+  businessUnitId: ID!
+  contextProviders: [AgentContextProvider!]!
+  createdAt: Timestamp!
+  cronExpression: String!
+  cronTimezone: String!
+  decisionTimeoutSeconds: Int!
+  description: String!
+  enabled: Boolean!
+  endsAt: Timestamp
+  eventKinds: [String!]!
+  guardrails: [String!]!
+  id: ID!
+  instructions: String!
+  intervalSeconds: Int!
+  lastRunAt: Timestamp
+  maxConcurrentRuns: Int!
+  maxToolCalls: Int!
+  name: String!
+  nextRunAt: Timestamp
+  """Runs of this agent that have not finished."""
+  openRuns: Int!
+  organizationId: ID!
+  outputMode: AgentOutputMode!
+  """Proposals raised by this agent that still await a person's decision."""
+  pendingProposals: Int!
+  preferredProviderId: ID!
+  runTimeoutSeconds: Int!
+  shadowMode: Boolean!
+  """
+  Set on the agents the platform itself creates and fires; they cannot be deleted.
+  """
+  systemKey: String!
+  """
+  The starter this agent was created from, if any. It carries no restriction.
+  """
+  template: AgentTemplate
+  toolNames: [String!]!
+  """
+  Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling.
+  """
+  toolTiers: JSON!
+  triggerMode: AgentTriggerMode!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AgentDefinitionConnection {
+  edges: [AgentDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentDefinitionEdge {
+  cursor: String!
+  node: AgentDefinition!
 }
 
 type AgentEvidenceRef {
@@ -443,6 +587,11 @@ input AgentExceptionResolveInput {
   resolutionState: AgentResolutionState!
 }
 
+enum AgentOutputMode {
+  Conversational
+  Report
+}
+
 type AgentProposal {
   autonomyTier: AgentAutonomyTier!
   businessUnitId: ID!
@@ -497,6 +646,10 @@ enum AgentResolutionState {
 }
 
 type AgentRun {
+  """
+  The agent definition this run belongs to; absent for runs of the retired built-in agents.
+  """
+  agentDefinitionId: ID!
   agentType: AgentType!
   businessUnitId: ID!
   completedAt: Timestamp
@@ -511,6 +664,8 @@ type AgentRun {
   status: AgentRunStatus!
   subjectId: ID!
   subjectType: AgentSubjectType!
+  summary: String!
+  trigger: AgentRunTrigger!
   updatedAt: Timestamp!
   version: Int!
   workflowId: String!
@@ -537,6 +692,14 @@ enum AgentRunStatus {
   ShadowCompleted
 }
 
+enum AgentRunTrigger {
+  Chat
+  Continuous
+  Event
+  Manual
+  Scheduled
+}
+
 enum AgentSeverity {
   Critical
   High
@@ -545,11 +708,37 @@ enum AgentSeverity {
 }
 
 enum AgentSubjectType {
+  AssistantThread
   BillingQueueItem
+  Document
+  Organization
+  Shipment
+  ShipmentMove
+}
+
+enum AgentTemplate {
+  BillingAssistant
+  BillingException
+  ComplianceAssistant
+  CustomerAssistant
+  DispatchAssignment
+  DispatchAssistant
+  GeneralAssistant
+  ImportAssistant
+}
+
+enum AgentTriggerMode {
+  Chat
+  Continuous
+  Event
+  Scheduled
 }
 
 enum AgentType {
+  AssistantChat
   BillingException
+  DispatchAssignment
+  General
 }
 
 input AmendWorkerEmploymentEventInput {
@@ -10772,12 +10961,16 @@ type Query {
   """
   activeWorkerCredentialTypes: [WorkerCredentialType!]!
   agentControl: AgentControl!
+  agentDefinition(id: ID!): AgentDefinition
+  agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentException(id: ID!): AgentException
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentProposal(id: ID!): AgentProposal
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   agentRun(id: ID!): AgentRun
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
+  aiProvider(id: ID!): AIProvider
+  aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   """

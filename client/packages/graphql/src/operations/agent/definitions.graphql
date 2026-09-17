@@ -1,0 +1,68 @@
+fragment AgentDefinitionCardFields on AgentDefinition {
+  id
+  organizationId
+  businessUnitId
+  name
+  description
+  template
+  instructions
+  guardrails
+  toolNames
+  toolTiers
+  autonomyCeiling
+  enabled
+  shadowMode
+  decisionTimeoutSeconds
+  triggerMode
+  cronExpression
+  cronTimezone
+  eventKinds
+  intervalSeconds
+  endsAt
+  maxConcurrentRuns
+  runTimeoutSeconds
+  maxToolCalls
+  contextProviders
+  outputMode
+  preferredProviderId
+  systemKey
+  lastRunAt
+  nextRunAt
+  pendingProposals
+  openRuns
+  version
+  createdAt
+  updatedAt
+}
+
+query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentDefinitions(input: $input) {
+    edges {
+      node {
+        ...AgentDefinitionCardFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentDefinitionCount($input: DataTableConnectionInput!) {
+  agentDefinitions(input: $input) {
+    totalCount
+  }
+}
+
+query AgentRunCount($input: DataTableConnectionInput!) {
+  agentRuns(input: $input) {
+    totalCount
+  }
+}
+
+query AgentProposalCount($input: DataTableConnectionInput!) {
+  agentProposals(input: $input) {
+    totalCount
+  }
+}

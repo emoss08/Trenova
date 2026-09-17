@@ -1,9 +1,25 @@
 enum AgentType {
   BillingException
+  DispatchAssignment
+  AssistantChat
+  General
 }
 
 enum AgentSubjectType {
   BillingQueueItem
+  ShipmentMove
+  AssistantThread
+  Shipment
+  Document
+  Organization
+}
+
+enum AgentRunTrigger {
+  Manual
+  Chat
+  Scheduled
+  Event
+  Continuous
 }
 
 enum AgentRunStatus {
@@ -82,6 +98,10 @@ type AgentRun {
   organizationId: ID!
   businessUnitId: ID!
   agentType: AgentType!
+  "The agent definition this run belongs to; absent for runs of the retired built-in agents."
+  agentDefinitionId: ID!
+  trigger: AgentRunTrigger!
+  summary: String!
   subjectType: AgentSubjectType!
   subjectId: ID!
   status: AgentRunStatus!

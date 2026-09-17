@@ -1,4 +1,11 @@
-import type { AIProvider, AITask, AITaskDescriptor } from "@/types/ai-provider";
+import type { AITask, AITaskDescriptor } from "@/types/ai-provider";
+
+/** The slice of a provider the router's candidate rule reads. */
+export type RoutingProvider = {
+  enabled: boolean;
+  trusted: boolean;
+  tasks: readonly AITask[];
+};
 
 export type AIReadiness = {
   /** Whether any provider is configured at all, enabled or not. */
@@ -25,7 +32,7 @@ export type AIReadiness = {
  * would come back "no provider configured".
  */
 export function assessReadiness(
-  providers: readonly AIProvider[],
+  providers: readonly RoutingProvider[],
   tasks: readonly AITaskDescriptor[],
 ): AIReadiness {
   const covered = new Set<AITask>();

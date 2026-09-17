@@ -68,6 +68,8 @@ virtuals:
   AgentDefinition:
     - pendingProposals
     - openRuns
+  AIProvider:
+    - hasApiKey
   Invoice:
     - relatedInvoices
     - shipperCustomer

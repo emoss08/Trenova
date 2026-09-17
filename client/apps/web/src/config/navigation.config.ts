@@ -1492,15 +1492,8 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
-    href: "/admin/ai-providers",
-    title: "AI Providers",
-    group: "AI & Automation",
-    resource: Resource.AIProvider,
-    requiredOperation: Operation.Read,
-  },
-  {
     href: "/admin/agent-control",
-    title: "Agent Control",
+    title: "AI Control",
     group: "AI & Automation",
     resource: Resource.AgentControl,
     requiredOperation: Operation.Read,

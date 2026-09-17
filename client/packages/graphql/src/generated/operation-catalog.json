@@ -1,6 +1,6 @@
 {
-  "operationCount": 716,
-  "fragmentCount": 178,
+  "operationCount": 722,
+  "fragmentCount": 180,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -425,6 +425,54 @@
       "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentDefinitionCards",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "hash": "sha256:0b756a4283eb5513469808ddd21b67ce7ad8cf8905bb8398959c0a716c97c8cb",
+      "rootFields": [
+        "agentDefinitions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AgentDefinitionCardFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentDefinitionCount",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "hash": "sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831",
+      "rootFields": [
+        "agentDefinitions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AgentDefinitionCount($input: DataTableConnectionInput!) {\n  agentDefinitions(input: $input) {\n    totalCount\n  }\n}"
+    },
+    {
       "name": "AgentExceptionDetail",
       "kind": "query",
       "domain": "agent",
@@ -475,6 +523,26 @@
       ],
       "usages": [],
       "sdl": "query AgentExceptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentExceptions(input: $input) {\n    edges {\n      node {\n        ...AgentExceptionTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentProposalCount",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "hash": "sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28",
+      "rootFields": [
+        "agentProposals"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AgentProposalCount($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    totalCount\n  }\n}"
     },
     {
       "name": "AgentProposalDetail",
@@ -529,11 +597,31 @@
       "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AgentRunCount",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "hash": "sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e",
+      "rootFields": [
+        "agentRuns"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AgentRunCount($input: DataTableConnectionInput!) {\n  agentRuns(input: $input) {\n    totalCount\n  }\n}"
+    },
+    {
       "name": "AgentRunDetail",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:1c4280969a19e8c0d0948fd97bb58d9d25538909c8f9a0224646c8813dfcdfa3",
+      "hash": "sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5",
       "rootFields": [
         "agentRun"
       ],
@@ -548,14 +636,14 @@
         "AgentRunTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentRunTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:fa9353177a2669c44a06fceca571cd7f13eedc630e6d6c0e519af077639e1479",
+      "hash": "sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d",
       "rootFields": [
         "agentRuns"
       ],
@@ -576,7 +664,52 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AIProviderCards",
+      "kind": "query",
+      "domain": "ai-provider",
+      "sourceFile": "src/operations/ai-provider/providers.graphql",
+      "hash": "sha256:3827844faba9ef77aafa0fb3e49c82bab14ba70fb2209a1c5cf98faf78202216",
+      "rootFields": [
+        "aiProviders"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIProviderCardFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AIProviderCards($input: DataTableConnectionInput!) {\n  aiProviders(input: $input) {\n    edges {\n      node {\n        ...AIProviderCardFields\n      }\n    }\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  maxTokens\n  tasks\n  priority\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AIProviderDetail",
+      "kind": "query",
+      "domain": "ai-provider",
+      "sourceFile": "src/operations/ai-provider/providers.graphql",
+      "hash": "sha256:c4f659be8abbd49a26566a96a25ec8c11247526c333f0844304201df2d0209c4",
+      "rootFields": [
+        "aiProvider"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIProviderCardFields"
+      ],
+      "usages": [],
+      "sdl": "query AIProviderDetail($id: ID!) {\n  aiProvider(id: $id) {\n    ...AIProviderCardFields\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  maxTokens\n  tasks\n  priority\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AmendIftaReturn",
@@ -16414,6 +16547,18 @@
       "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentDefinitionCardFields",
+      "typeCondition": "AgentDefinition",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/definitions.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentDefinitionCards"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AgentEvidenceRefFields",
       "typeCondition": "AgentEvidenceRef",
       "domain": "agent",
@@ -16493,7 +16638,20 @@
         "AgentRunTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AIProviderCardFields",
+      "typeCondition": "AIProvider",
+      "domain": "ai-provider",
+      "sourceFile": "src/operations/ai-provider/providers.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIProviderCards",
+        "AIProviderDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  maxTokens\n  tasks\n  priority\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ApiKeyTableRowFields",
@@ -16708,9 +16866,11 @@
       "usedByOperations": [
         "AccessorialChargeTable",
         "AccountTypeTable",
+        "AgentDefinitionCards",
         "AgentExceptionTable",
         "AgentProposalTable",
         "AgentRunTable",
+        "AIProviderCards",
         "ApiKeyTable",
         "AuditLogTable",
         "CarrierCostEventTable",

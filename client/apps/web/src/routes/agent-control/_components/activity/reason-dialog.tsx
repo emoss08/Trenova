@@ -1,0 +1,106 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useId, useState } from "react";
+
+export type ReasonDialogRequest = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  reasonLabel: string;
+  /** When true the confirm button stays disabled until a reason is typed. */
+  requireReason: boolean;
+  destructive?: boolean;
+  onConfirm: (reason: string) => Promise<void> | void;
+};
+
+type ReasonDialogProps = {
+  request: ReasonDialogRequest | null;
+  onClose: () => void;
+};
+
+/**
+ * One dialog for every decision the activity tab takes: accepting or
+ * rejecting a proposal, reviewing or dismissing an exception. A reason is
+ * recorded with each so the audit trail says why, not only what.
+ */
+export function ReasonDialog({ request, onClose }: ReasonDialogProps) {
+  return (
+    <Dialog open={request !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        {request && <ReasonForm request={request} onClose={onClose} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Mounted only while the dialog is open, so each request starts from a blank
+// reason without any effect having to reset it.
+function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClose: () => void }) {
+  const t = useT();
+  const id = useId();
+  const [reason, setReason] = useState("");
+  const [isPending, setIsPending] = useState(false);
+
+  const trimmed = reason.trim();
+  const canConfirm = !isPending && (!request.requireReason || trimmed !== "");
+
+  const confirm = async () => {
+    if (!canConfirm) {
+      return;
+    }
+    setIsPending(true);
+    try {
+      await request.onConfirm(trimmed);
+      onClose();
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{request.title}</DialogTitle>
+        <DialogDescription>{request.description}</DialogDescription>
+      </DialogHeader>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={id}>
+          {request.reasonLabel}
+          {request.requireReason ? "" : ` (${t("optional")})`}
+        </Label>
+        <Textarea
+          id={id}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          minRows={3}
+          maxLength={500}
+          placeholder={t("A sentence the next person can act on.")}
+        />
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+          {t("Cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant={request.destructive ? "destructive" : "default"}
+          onClick={() => void confirm()}
+          disabled={!canConfirm}
+          isLoading={isPending}
+        >
+          {request.confirmLabel}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}

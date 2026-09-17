@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,11 +28,20 @@ type Params struct {
 	AuditService services.AuditService
 }
 
+// EndpointProber issues a live call against a configured endpoint.
+type EndpointProber interface {
+	Probe(
+		ctx context.Context,
+		provider *aiprovider.Provider,
+		apiKey string,
+	) *services.TestAIProviderResult
+}
+
 type Service struct {
 	l          *zap.Logger
 	repo       repositories.AIProviderRepository
 	encryption *encryptionservice.Service
-	prober     *Prober
+	prober     EndpointProber
 	audit      services.AuditService
 }
 
@@ -56,6 +66,22 @@ func (s *Service) List(
 
 	for idx, provider := range result.Items {
 		result.Items[idx] = provider.Redacted()
+	}
+
+	return result, nil
+}
+
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAIProviderConnectionRequest,
+) (*pagination.CursorListResult[*aiprovider.Provider], error) {
+	result, err := s.repo.ListConnection(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, provider := range result.Items {
+		result.Items[i] = provider.Redacted()
 	}
 
 	return result, nil
@@ -193,7 +219,27 @@ func (s *Service) Test(
 		return nil, err
 	}
 
-	return s.prober.Probe(ctx, provider, apiKey), nil
+	result := s.prober.Probe(ctx, provider, apiKey)
+
+	if err = s.repo.MarkTested(ctx, repositories.MarkAIProviderTestedRequest{
+		ID:         provider.ID,
+		TenantInfo: req.TenantInfo,
+		Outcome: &aiprovider.TestOutcome{
+			Success:         result.Success,
+			Message:         result.Message,
+			ModelIdentifier: result.ModelIdentifier,
+			SchemaHonoured:  result.SchemaHonoured,
+			LatencyMS:       result.LatencyMS,
+			Detail:          result.Detail,
+			TestedAt:        timeutils.NowUnix(),
+		},
+	}); err != nil {
+		s.l.Error("failed to record ai provider test outcome",
+			zap.String("providerID", provider.ID.String()),
+			zap.Error(err))
+	}
+
+	return result, nil
 }
 
 // apply copies a save request onto an entity, encrypting the credential and
@@ -243,7 +289,7 @@ func (s *Service) apply(
 }
 
 func (s *Service) decryptAPIKey(provider *aiprovider.Provider) (string, error) {
-	if !provider.HasAPIKey() {
+	if !provider.HasStoredAPIKey() {
 		return "", nil
 	}
 
