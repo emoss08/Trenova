@@ -30,6 +30,7 @@ var messageArgs = map[string]int{
 	"NewNotImplementedError":         0,
 	"NewConflictError":               0,
 	"NewRateLimitError":              1,
+	"NewUserError":                   0,
 	"Error":                          0,
 }
 
@@ -75,6 +76,7 @@ var noMessage = map[string]struct{}{
 	"NewDataIntegrityError":           {},
 	"NewThrottleError":                {},
 	"NewConcurrentAccessError":        {},
+	"NewContinueAsNewError":           {},
 }
 
 func isErrortypesConstructor(name string) bool {
