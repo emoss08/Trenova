@@ -132,7 +132,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-7 pb-14">
+    <div className="flex flex-col gap-7">
       {isSystem && (
         <Alert variant="info">
           <LockIcon className="size-4" />

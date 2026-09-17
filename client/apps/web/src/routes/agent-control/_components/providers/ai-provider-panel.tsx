@@ -1,10 +1,10 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
-import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { AIProvider } from "@/types/ai-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useForm, type Resolver } from "react-hook-form";
 import { AIProviderForm } from "./ai-provider-form";
 import { buildSavePayload, type ProviderFormValues } from "./build-save-payload";
@@ -40,7 +40,6 @@ export function AIProviderPanel({
         queryKey={PROVIDER_QUERY_SCOPE}
         title={t("AI Provider")}
         fieldKey="name"
-        size="lg"
         formComponent={<AIProviderForm mode="edit" />}
         mutationFn={(values, current) =>
           apiService.aiProviderService.update(current.id, buildSavePayload(values, true))
@@ -60,7 +59,6 @@ export function AIProviderPanel({
       description={t(
         "Point Trenova at a model endpoint and choose which work it handles. Start from a preset, or configure any OpenAI-compatible server directly.",
       )}
-      size="lg"
       formComponent={<AIProviderForm mode="create" />}
       mutationFn={(values) => apiService.aiProviderService.create(buildSavePayload(values, false))}
       useDock

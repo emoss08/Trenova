@@ -1,10 +1,10 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { apiService } from "@/services/api";
 import type { AgentDefinition } from "@/types/assistant";
-import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useForm, type Resolver } from "react-hook-form";
 import { AgentForm } from "./agent-form";
 import {
@@ -36,7 +36,7 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
         queryKey={AGENT_QUERY_SCOPE}
         title={t("Agent")}
         fieldKey="name"
-        size="xl"
+        // size="lg"
         formComponent={<AgentForm mode="edit" systemKey={row?.systemKey ?? ""} />}
         mutationFn={(values, current) =>
           apiService.agentDefinitionService.update(current.id, toSaveRequest(values))
@@ -56,7 +56,7 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
       description={t(
         "Write what the agent is for, choose the tools it may call and how much it may do on its own, and decide when it runs.",
       )}
-      size="xl"
+      // size="xl"
       formComponent={<AgentForm mode="create" />}
       mutationFn={(values) => apiService.agentDefinitionService.create(toSaveRequest(values))}
       useDock

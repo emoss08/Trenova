@@ -1,22 +1,22 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { toneVar } from "@/components/kpi/tone";
-import { kindMark } from "./kind-marks";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { toneVar } from "@/components/kpi/tone";
 import { queries } from "@/lib/queries";
 import type { AIProviderPreset } from "@/types/ai-provider";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { KeyRoundIcon, ShieldAlertIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
+import { kindMark } from "./kind-marks";
 import { PresetPicker } from "./preset-picker";
 
 type AIProviderFormProps = {
@@ -86,7 +86,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
   );
 
   return (
-    <div className="flex flex-col gap-6 pb-14">
+    <div className="flex flex-col gap-6">
       <FormSection
         title={t("Start from a preset")}
         description={t(
