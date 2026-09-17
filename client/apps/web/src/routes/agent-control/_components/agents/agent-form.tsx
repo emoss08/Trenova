@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CronCadenceField } from "@/components/fields/cron-cadence-field";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { FieldWrapper } from "@/components/fields/field-components";
@@ -9,16 +8,16 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextChipsField } from "@/components/fields/text-chips-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
 import { toneVar } from "@/components/kpi/tone";
-import { brandMarkFor } from "@trenova/shared/components/ui/logos/registry";
-import { providerBrandDomain } from "../providers/provider-brand";
 import { queries } from "@/lib/queries";
 import type { AgentTemplate, AutonomyTier, OutputMode, TriggerMode } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { brandMarkFor } from "@trenova/shared/components/ui/logos/registry";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
 import {
   BoltIcon,
   CalendarClockIcon,
@@ -30,10 +29,10 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
-import { toSaveRequest, type AgentFormValues } from "./agent-form-schema";
-import { PromptPreviewSheet } from "./prompt-preview-sheet";
-import { applyTemplateStarter } from "./template-fill";
+import { providerBrandDomain } from "../providers/provider-brand";
+import { type AgentFormValues } from "./agent-form-schema";
 import { IdentityPicker } from "./identity-picker";
+import { applyTemplateStarter } from "./template-fill";
 import { TemplatePicker } from "./template-picker";
 import { ToolPicker } from "./tool-picker";
 
@@ -206,7 +205,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
         description={t(
           "Who this agent is, what it prioritises, the policies it follows and how it should talk. These are authoritative; Trenova only adds its tenant and safety boundary in front of them.",
         )}
-        action={<PromptPreviewSheet getRequest={() => toSaveRequest(getValues())} />}
+        // action={<PromptPreviewSheet getRequest={() => toSaveRequest(getValues())} />}
       >
         <FormGroup cols={1}>
           <FormControl cols="full">
@@ -298,7 +297,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           />
         </FieldWrapper>
         <FormGroup cols={2}>
-          <FormControl>
+          <FormControl cols="full">
             <SelectField
               name="decisionTimeoutSeconds"
               control={control}
@@ -481,7 +480,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
         )}
       >
         <FormGroup cols={2}>
-          <FormControl>
+          <FormControl cols="full">
             <SelectField
               name="preferredProviderId"
               control={control}
@@ -494,7 +493,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <FieldWrapper
               label={t("Replies as")}
               description={t("A conversation answers in prose; a report answers in sections.")}
