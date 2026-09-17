@@ -1,6 +1,7 @@
 import {
   AcknowledgeCarrierIntelEventsDocument,
   ApplyCarrierIntelSuggestionsDocument,
+  CarrierIntelEventDocument,
   CarrierIntelEventTableDocument,
   CarrierIntelOverridesDocument,
   CarrierIntelRawPayloadDocument,
@@ -25,6 +26,7 @@ import {
   type CarrierIntelOverrideFieldsFragment,
   type CarrierIntelProfileFieldsFragment,
   type CarrierIntelSnapshotFieldsFragment,
+  type CarrierIntelReviewQueueQuery,
   type CarrierIntelSettingsQuery,
   type CarrierIntelSnapshotSummaryFieldsFragment,
   type CarrierIntelSyncPlanQuery,
@@ -103,10 +105,14 @@ export async function fetchCarrierIntelSettings(
   return unmask(data);
 }
 
+export type CarrierIntelReviewQueueItem = UnmaskFragments<
+  CarrierIntelReviewQueueQuery["carrierIntelReviewQueue"][number]
+>;
+
 export async function fetchCarrierIntelReviewQueue(
   limit: number,
   options?: RequestOptions,
-): Promise<CarrierIntelSnapshotSummary[]> {
+): Promise<CarrierIntelReviewQueueItem[]> {
   const data = await requestGraphQL({
     document: CarrierIntelReviewQueueDocument,
     operationName: "CarrierIntelReviewQueue",
@@ -167,6 +173,19 @@ export async function fetchCarrierIntelOverrides(
     signal: options?.signal,
   });
   return unmask(data.carrierIntelOverrides);
+}
+
+export async function fetchCarrierIntelEvent(
+  id: string,
+  options?: RequestOptions,
+): Promise<CarrierIntelEvent | null> {
+  const data = await requestGraphQL({
+    document: CarrierIntelEventDocument,
+    operationName: "CarrierIntelEvent",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.carrierIntelEvent ? unmask(data.carrierIntelEvent) : null;
 }
 
 export type FetchCarrierIntelEventsArgs = {

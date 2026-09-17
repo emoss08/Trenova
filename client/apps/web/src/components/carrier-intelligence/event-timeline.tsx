@@ -1,46 +1,33 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { canAcknowledgeEvent, canResolveEvent } from "@/lib/carrier-intelligence";
 import {
   acknowledgeCarrierIntelEvents,
   type CarrierIntelEvent,
 } from "@/lib/graphql/carrier-intelligence";
-import type { CarrierIntelSeverity } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
-import { formatRelativeTime } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, CheckCheckIcon, CheckIcon, InboxIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { EventStatusBadge } from "./event-status-badge";
+import { RelativeTime } from "./relative-time";
 import { ResolveEventDialog } from "./resolve-event-dialog";
-import { SeverityBadge } from "./severity-badge";
+import { StatusDot, severityTone } from "./status-dot";
 import { useCarrierIntelLabels } from "./use-carrier-intel-labels";
+import { useEventPresenter } from "./use-event-presenter";
 
 export type EventTimelineProps = {
   events: readonly CarrierIntelEvent[];
   canUpdate: boolean;
   onChanged?: () => void;
-  showSubject?: boolean;
-  emptyMessage?: string;
+  emptyMessage?: ReactNode;
   className?: string;
-};
-
-const DOT_CLASSES: Record<CarrierIntelSeverity, string> = {
-  Critical: "bg-red-600",
-  High: "bg-orange-500",
-  Medium: "bg-yellow-500",
-  Low: "bg-blue-500",
-  Info: "bg-muted-foreground",
 };
 
 type EventRowProps = {
   event: CarrierIntelEvent;
-  now: number;
+  title: string;
   canUpdate: boolean;
-  showSubject: boolean;
   acknowledging: boolean;
   onAcknowledge: (event: CarrierIntelEvent) => void;
   onResolve: (event: CarrierIntelEvent) => void;
@@ -48,109 +35,101 @@ type EventRowProps = {
 
 function EventRow({
   event,
-  now,
+  title,
   canUpdate,
-  showSubject,
   acknowledging,
   onAcknowledge,
   onResolve,
 }: EventRowProps) {
   const t = useT();
   const labels = useCarrierIntelLabels();
-  const closed = event.status === "Resolved" || event.status === "Dismissed";
+  const settled = event.status === "Resolved" || event.status === "Dismissed";
+  const showAcknowledge = canUpdate && canAcknowledgeEvent(event.status);
+  const showResolve = canUpdate && canResolveEvent(event.status);
 
-  return (
-    <li className="group relative flex gap-3 pb-4 pl-1 last:pb-0" data-event-status={event.status}>
-      <span
-        aria-hidden
-        className="bg-border absolute top-4 bottom-0 left-[8px] w-px group-last:hidden"
-      />
-      <span
-        aria-hidden
-        className={cn(
-          "ring-background relative mt-1.5 size-2.5 shrink-0 rounded-full ring-4",
-          closed ? "bg-muted-foreground/40" : DOT_CLASSES[event.severity],
-        )}
-      />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <SeverityBadge severity={event.severity} />
-          <EventStatusBadge status={event.status} />
-          <span className="text-muted-foreground text-xs">
-            {labels.section[event.category]} · {labels.eventSource[event.source]}
-          </span>
-          <span
-            className="text-muted-foreground ml-auto text-xs"
-            title={formatUnixDateTimeMedium(event.detectedAt)}
-          >
-            {formatRelativeTime(event.detectedAt - now)}
-          </span>
-        </div>
-        <p className={cn("text-sm", closed && "text-muted-foreground")}>
-          {showSubject && event.subjectName ? (
-            <span className="font-medium">{event.subjectName}: </span>
-          ) : null}
-          {event.summary}
-        </p>
-        {event.priorValue !== null || event.currentValue !== null ? (
-          <p className="flex flex-wrap items-center gap-1.5 text-xs">
-            {event.fieldPath ? (
-              <span className="text-muted-foreground font-mono">{event.fieldPath}</span>
-            ) : null}
-            <span className="bg-muted rounded px-1.5 py-0.5 line-through decoration-1">
-              {event.priorValue ?? t("empty")}
-            </span>
-            <ArrowRightIcon className="text-muted-foreground size-3" aria-hidden />
-            <span className="bg-muted rounded px-1.5 py-0.5 font-medium">
-              {event.currentValue ?? t("empty")}
-            </span>
-          </p>
-        ) : null}
-        {event.vendorChangedAt ? (
-          <p className="text-muted-foreground text-xs">
-            {t("Changed at the source {0}", formatUnixDateTimeMedium(event.vendorChangedAt))}
-          </p>
-        ) : null}
-        {event.status === "Resolved" && event.resolution ? (
-          <p className="text-muted-foreground text-xs">
-            {event.resolvedAt
+  const resolver = event.resolvedBy?.name;
+  const acknowledger = event.acknowledgedBy?.name;
+
+  const outcome =
+    event.status === "Resolved" && event.resolution
+      ? [
+          event.resolvedAt
+            ? resolver
               ? t(
+                  "Resolved as {0} by {1} on {2}",
+                  labels.resolution[event.resolution],
+                  resolver,
+                  formatUnixDateTimeMedium(event.resolvedAt),
+                )
+              : t(
                   "Resolved as {0} on {1}",
                   labels.resolution[event.resolution],
                   formatUnixDateTimeMedium(event.resolvedAt),
                 )
-              : t("Resolved as {0}", labels.resolution[event.resolution])}
-            {event.resolutionNote ? ` · ${event.resolutionNote}` : null}
-          </p>
-        ) : null}
-        {event.status === "Acknowledged" && event.acknowledgedAt ? (
-          <p className="text-muted-foreground text-xs">
-            {t("Acknowledged {0}", formatUnixDateTimeMedium(event.acknowledgedAt))}
-          </p>
-        ) : null}
-        {canUpdate && (canAcknowledgeEvent(event.status) || canResolveEvent(event.status)) ? (
-          <div className="flex items-center gap-1.5 pt-0.5">
-            {canAcknowledgeEvent(event.status) ? (
-              <Button
-                type="button"
-                size="xs"
-                variant="outline"
-                isLoading={acknowledging}
-                onClick={() => onAcknowledge(event)}
-              >
-                <CheckIcon />
-                {t("Acknowledge")}
-              </Button>
-            ) : null}
-            {canResolveEvent(event.status) ? (
-              <Button type="button" size="xs" variant="outline" onClick={() => onResolve(event)}>
-                <CheckCheckIcon />
-                {t("Resolve")}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
+            : t("Resolved as {0}", labels.resolution[event.resolution]),
+          event.resolutionNote,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : event.status === "Acknowledged" && event.acknowledgedAt
+        ? acknowledger
+          ? t(
+              "Acknowledged by {0} on {1}",
+              acknowledger,
+              formatUnixDateTimeMedium(event.acknowledgedAt),
+            )
+          : t("Acknowledged {0}", formatUnixDateTimeMedium(event.acknowledgedAt))
+        : null;
+
+  return (
+    <li
+      className="group flex min-h-14 items-start gap-3 py-2.5"
+      data-event-status={event.status}
+      data-event-id={event.id}
+    >
+      <span className="flex h-5 shrink-0 items-center">
+        <StatusDot tone={settled ? "neutral" : severityTone(event.severity)} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span
+          className={cn(
+            "text-sm",
+            settled ? "text-muted-foreground" : "text-foreground font-medium",
+          )}
+        >
+          {title}
+        </span>
+        <span className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs">
+          <span>{labels.severity[event.severity]}</span>
+          <span aria-hidden>·</span>
+          <span>{labels.section[event.category]}</span>
+          <span aria-hidden>·</span>
+          <span>{labels.eventStatus[event.status]}</span>
+          <span aria-hidden>·</span>
+          <RelativeTime timestamp={event.detectedAt} />
+        </span>
+        {outcome ? <span className="text-muted-foreground text-xs">{outcome}</span> : null}
       </div>
+      {showAcknowledge || showResolve ? (
+        <div className="flex shrink-0 items-center gap-1">
+          {showAcknowledge ? (
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              isLoading={acknowledging}
+              onClick={() => onAcknowledge(event)}
+            >
+              {t("Acknowledge")}
+            </Button>
+          ) : null}
+          {showResolve ? (
+            <Button type="button" size="xs" variant="ghost" onClick={() => onResolve(event)}>
+              {t("Resolve")}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </li>
   );
 }
@@ -159,12 +138,11 @@ export function EventTimeline({
   events,
   canUpdate,
   onChanged,
-  showSubject = false,
   emptyMessage,
   className,
 }: EventTimelineProps) {
   const t = useT();
-  const now = useNowSeconds();
+  const present = useEventPresenter();
   const [resolving, setResolving] = useState<CarrierIntelEvent | null>(null);
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
 
@@ -180,28 +158,21 @@ export function EventTimeline({
 
   if (events.length === 0) {
     return (
-      <div
-        className={cn(
-          "text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-4 text-sm",
-          className,
-        )}
-      >
-        <InboxIcon className="size-4" aria-hidden />
-        {emptyMessage ?? t("No change events recorded.")}
-      </div>
+      <p className={cn("text-muted-foreground py-6 text-center text-xs", className)}>
+        {emptyMessage ?? t("No changes recorded.")}
+      </p>
     );
   }
 
   return (
     <>
-      <ol className={cn("flex flex-col", className)}>
+      <ol className={cn("divide-border divide-y", className)} aria-label={t("Carrier changes")}>
         {events.map((event) => (
           <EventRow
             key={event.id}
             event={event}
-            now={now}
+            title={present(event).title}
             canUpdate={canUpdate}
-            showSubject={showSubject}
             acknowledging={acknowledgingId === event.id}
             onAcknowledge={(target) => {
               setAcknowledgingId(target.id);
@@ -213,6 +184,7 @@ export function EventTimeline({
       </ol>
       <ResolveEventDialog
         event={resolving}
+        title={resolving ? present(resolving).title : null}
         open={resolving !== null}
         onOpenChange={(open) => {
           if (!open) {

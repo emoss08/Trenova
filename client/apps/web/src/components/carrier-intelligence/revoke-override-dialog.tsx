@@ -90,7 +90,7 @@ export function RevokeOverrideDialog({
           </DialogDescription>
         </DialogHeader>
         {override ? (
-          <div className="bg-muted/50 flex flex-col gap-1 rounded-md border px-3 py-2 text-sm">
+          <div className="flex flex-col gap-1 border-y py-3 text-sm">
             <span className="font-medium">{ruleLabel ?? override.ruleCode}</span>
             <span className="text-muted-foreground text-xs">
               {t(

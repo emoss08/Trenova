@@ -29,6 +29,7 @@ import { useCarrierIntelLabels } from "./use-carrier-intel-labels";
 
 export type ResolveEventDialogProps = {
   event: CarrierIntelEvent | null;
+  title?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onResolved?: (event: CarrierIntelEvent) => void;
@@ -41,6 +42,7 @@ const DEFAULT_VALUES: ResolveEventFormValues = {
 
 export function ResolveEventDialog({
   event,
+  title,
   open,
   onOpenChange,
   onResolved,
@@ -101,7 +103,7 @@ export function ResolveEventDialog({
         <DialogHeader>
           <DialogTitle>{t("Resolve event")}</DialogTitle>
           <DialogDescription>
-            {event ? event.summary : t("Record how this change was handled.")}
+            {title ?? event?.summary ?? t("Record how this change was handled.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>

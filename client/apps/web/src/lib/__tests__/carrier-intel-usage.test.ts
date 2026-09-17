@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  dailyUsageSeries,
   recentUsageMonths,
+  shiftUsageMonth,
   spendCapProgress,
   summarizeUsageByDay,
   utcDayKeyToUnix,
@@ -44,5 +46,35 @@ describe("carrier intelligence usage", () => {
       state: "exceeded",
       percent: 100,
     });
+  });
+
+  it("moves a month start across year boundaries", () => {
+    expect(shiftUsageMonth(Date.UTC(2026, 0, 1) / 1000, -1)).toBe(Date.UTC(2025, 11, 1) / 1000);
+    expect(shiftUsageMonth(Date.UTC(2025, 11, 1) / 1000, 1)).toBe(Date.UTC(2026, 0, 1) / 1000);
+  });
+
+  it("fills every day of the month up to today, with zero cost on quiet days", () => {
+    const monthStart = Date.UTC(2026, 8, 1) / 1000;
+    const now = Date.UTC(2026, 8, 3, 15) / 1000;
+    const series = dailyUsageSeries(
+      [
+        { day: 20260901, endpoint: "lookup", calls: 2, billableUnits: 2, estimatedCost: "1.00" },
+        { day: 20260903, endpoint: "lookup", calls: 1, billableUnits: 1, estimatedCost: "0.50" },
+        { day: 20260903, endpoint: "monitor", calls: 1, billableUnits: 3, estimatedCost: "0.25" },
+      ],
+      monthStart,
+      now,
+    );
+
+    expect(series.map((point) => [point.day, point.cost, point.calls])).toEqual([
+      [20260901, 1, 2],
+      [20260902, 0, 0],
+      [20260903, 0.75, 2],
+    ]);
+  });
+
+  it("covers the whole month for a month that has ended", () => {
+    const series = dailyUsageSeries([], Date.UTC(2026, 1, 1) / 1000, Date.UTC(2026, 8, 1) / 1000);
+    expect(series).toHaveLength(28);
   });
 });

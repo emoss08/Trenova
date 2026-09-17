@@ -2,15 +2,19 @@ import type {
   CarrierIntelDepth,
   CarrierIntelEventResolution,
   CarrierIntelEventStatus,
+  CarrierIntelNetworkKind,
   CarrierIntelRiskLevel,
   CarrierIntelSection,
   CarrierIntelSeverity,
   CarrierIntelVendorState,
 } from "@trenova/graphql/generated/graphql";
+import { intlLocale } from "@trenova/shared/i18n/format";
 import { CSA_BASIC_ORDER } from "@trenova/shared/lib/csa";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { compareDecimalStrings, isDecimalString } from "@trenova/shared/types/decimal";
+import type { CarrierIntelProfile } from "@/lib/graphql/carrier-intelligence";
 import { z } from "zod";
 
 export type CarrierIntelFindingLike = {
@@ -205,24 +209,20 @@ export function sortBasicMeasures<T extends { basic: string }>(measures: readonl
   return [...measures].sort((a, b) => rank(a.basic) - rank(b.basic));
 }
 
-export function fmcsaSafetyRatingTone(
-  rating: string,
-): "active" | "warning" | "inactive" | "secondary" {
-  const normalized = rating.trim().toLowerCase();
-  if (normalized === "s" || normalized.startsWith("satisf")) {
-    return "active";
-  }
-  if (normalized === "c" || normalized.startsWith("condition")) {
-    return "warning";
-  }
-  if (normalized === "u" || normalized.startsWith("unsatisf")) {
-    return "inactive";
-  }
-  return "secondary";
-}
-
 export function canOverrideFinding(finding: { action: string; overridden: boolean }): boolean {
   return finding.action === "Block" && !finding.overridden;
+}
+
+export type CarrierIntelOverrideState = "active" | "revoked" | "expired";
+
+export function carrierIntelOverrideState(override: {
+  active: boolean;
+  revokedAt: number | null;
+}): CarrierIntelOverrideState {
+  if (override.active) {
+    return "active";
+  }
+  return override.revokedAt ? "revoked" : "expired";
 }
 
 export function canAcknowledgeEvent(status: CarrierIntelEventStatus): boolean {
@@ -238,6 +238,30 @@ export const CARRIER_INTEL_DEPTH_CAPABILITY: Record<CarrierIntelDepth, string> =
   Lite: "LookupLite",
   FMCSA: "LookupFMCSA",
 };
+
+export type CarrierIntelDepthMerge = {
+  held: CarrierIntelDepth;
+  heldAt: number;
+  fetched: CarrierIntelDepth;
+  fetchedAt: number;
+};
+
+export function carrierIntelDepthMerge({
+  depth,
+  depthFetchedAt,
+  fetchedDepth,
+  fetchedAt,
+}: {
+  depth: CarrierIntelDepth | null | undefined;
+  depthFetchedAt: number | null | undefined;
+  fetchedDepth: CarrierIntelDepth | null | undefined;
+  fetchedAt: number | null | undefined;
+}): CarrierIntelDepthMerge | null {
+  if (!depth || !fetchedDepth || depth === fetchedDepth || !depthFetchedAt || !fetchedAt) {
+    return null;
+  }
+  return { held: depth, heldAt: depthFetchedAt, fetched: fetchedDepth, fetchedAt };
+}
 
 export function availableVetDepths(capabilities: readonly string[]): CarrierIntelDepth[] {
   return (["Full", "Lite", "FMCSA"] as const).filter((depth) =>
@@ -359,6 +383,10 @@ export type CarrierIntelErrorKind =
   | "forbidden"
   | "unexpected";
 
+export function isCarrierIntelNotFound(error: unknown): boolean {
+  return error instanceof GraphQLRequestError && error.isNotFoundError();
+}
+
 export function classifyCarrierIntelError(error: unknown): CarrierIntelErrorKind {
   if (!(error instanceof GraphQLRequestError)) {
     return "unexpected";
@@ -376,4 +404,218 @@ export function classifyCarrierIntelError(error: unknown): CarrierIntelErrorKind
     return "business";
   }
   return "unexpected";
+}
+
+export const DAYS_PER_YEAR = 365;
+export const DAYS_PER_MONTH = 30;
+
+export type CarrierAge = { unit: "year" | "month"; value: number };
+
+export function ageFromDays(days: number | null | undefined): CarrierAge | null {
+  if (days === null || days === undefined || !Number.isFinite(days) || days < 0) {
+    return null;
+  }
+  if (days >= DAYS_PER_YEAR) {
+    return { unit: "year", value: Math.floor(days / DAYS_PER_YEAR) };
+  }
+  return { unit: "month", value: Math.floor(days / DAYS_PER_MONTH) };
+}
+
+export function cityStateLabel(
+  city: string | null | undefined,
+  state: string | null | undefined,
+): string | null {
+  if (city && state) {
+    return `${city}, ${state}`;
+  }
+  return city || state || null;
+}
+
+type AuthorityGrantLike = { status: string; ageDays: number | null } | null | undefined;
+
+export function oldestActiveAuthorityAgeDays(
+  authority:
+    | Pick<NonNullable<CarrierIntelProfile["authority"]>, "common" | "contract" | "broker">
+    | null
+    | undefined,
+): number | null {
+  if (!authority) {
+    return null;
+  }
+  let oldest: number | null = null;
+  const grants: AuthorityGrantLike[] = [authority.common, authority.contract, authority.broker];
+  for (const grant of grants) {
+    if (!grant || grant.status !== "Active" || grant.ageDays === null) {
+      continue;
+    }
+    if (oldest === null || grant.ageDays > oldest) {
+      oldest = grant.ageDays;
+    }
+  }
+  return oldest;
+}
+
+export function profileAuthorityAgeDays(
+  profile: Pick<CarrierIntelProfile, "authority" | "identity">,
+): number | null {
+  return oldestActiveAuthorityAgeDays(profile.authority) ?? profile.identity?.dotAgeDays ?? null;
+}
+
+type IntelNetworkLink = NonNullable<NonNullable<CarrierIntelProfile["network"]>["links"]>[number];
+
+const NETWORK_KIND_ORDER: readonly CarrierIntelNetworkKind[] = [
+  "EIN",
+  "Equipment",
+  "Address",
+  "Phone",
+  "Email",
+];
+
+export type LinkedCarrier = {
+  dotNumber: string;
+  kinds: CarrierIntelNetworkKind[];
+};
+
+export function groupNetworkLinks(links: readonly IntelNetworkLink[]): LinkedCarrier[] {
+  const byDot = new Map<string, Set<CarrierIntelNetworkKind>>();
+  for (const link of links) {
+    if (!link.dotNumber) {
+      continue;
+    }
+    const kinds = byDot.get(link.dotNumber) ?? new Set<CarrierIntelNetworkKind>();
+    kinds.add(link.kind);
+    byDot.set(link.dotNumber, kinds);
+  }
+  const rank = (kind: CarrierIntelNetworkKind) => NETWORK_KIND_ORDER.indexOf(kind);
+  return [...byDot.entries()]
+    .map(([dotNumber, kinds]) => ({
+      dotNumber,
+      kinds: [...kinds].sort((a, b) => rank(a) - rank(b)),
+    }))
+    .sort(
+      (a, b) =>
+        rank(a.kinds[0]) - rank(b.kinds[0]) ||
+        b.kinds.length - a.kinds.length ||
+        a.dotNumber.localeCompare(b.dotNumber),
+    );
+}
+
+export function joinPresent(
+  parts: readonly (string | number | null | undefined)[],
+  separator: string,
+): string | null {
+  const text = parts
+    .filter((part) => part !== null && part !== undefined && part !== "")
+    .join(separator);
+  return text === "" ? null : text;
+}
+
+export type IntelValueLabels = {
+  yes: string;
+  no: string;
+  empty: string;
+};
+
+export const INTEL_EMPTY_VALUE = "—";
+
+const DEFAULT_INTEL_VALUE_LABELS: IntelValueLabels = {
+  yes: "Yes",
+  no: "No",
+  empty: INTEL_EMPTY_VALUE,
+};
+
+const INTEL_MONEY_PATH = /^insurance\.(bipd|cargo|bond)(OnFile|Required)$/;
+const INTEL_ENUM_PATH = /^(safety\.(rating|riskScore)|authority\.[A-Za-z]+\.status)$/;
+const INTEL_DATE_LEAF = /(At|Date)$/;
+const INTEL_AGE_DAYS_LEAF = /(^a|A)geDays$/;
+const INTEL_INTEGER = /^-?\d+$/;
+
+function unquoteIntelValue(text: string): string {
+  if (text.length >= 2 && text.startsWith('"') && text.endsWith('"')) {
+    return text.slice(1, -1);
+  }
+  return text;
+}
+
+function humanizeIntelEnum(value: string): string {
+  const words = value.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(" ");
+  return words.map((word, index) => (index === 0 ? word : word.toLowerCase())).join(" ");
+}
+
+function sentenceCase(text: string): string {
+  const spaced = text.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+export function humanizeIntelFieldPath(fieldPath: string): string {
+  const parts = fieldPath.split(".").filter((part) => part !== "");
+  if (parts.length === 0) {
+    return INTEL_EMPTY_VALUE;
+  }
+  if (parts[0] === "basics" && parts.length >= 3) {
+    return sentenceCase(`${parts[1]} ${parts[2]}`);
+  }
+  return sentenceCase(parts[parts.length - 1]);
+}
+
+function formatIntelAge(days: number): string {
+  const age = ageFromDays(days);
+  if (!age) {
+    return INTEL_EMPTY_VALUE;
+  }
+  return new Intl.NumberFormat(intlLocale(), {
+    style: "unit",
+    unit: age.unit,
+    unitDisplay: "short",
+    maximumFractionDigits: 0,
+  }).format(age.value);
+}
+
+/**
+ * Renders a carrier intelligence value the way a person reads it. Event values
+ * arrive as strings (a JSON encoding for anything that is not already text), so
+ * the field path decides the shape: epoch seconds on `...At`/`...Date` become a
+ * date, insurance amounts become currency, ages become years, booleans become
+ * Yes/No and a missing value becomes an em dash.
+ */
+export function formatIntelValue(
+  fieldPath: string | null | undefined,
+  value: string | number | boolean | null | undefined,
+  labels: IntelValueLabels = DEFAULT_INTEL_VALUE_LABELS,
+): string {
+  if (value === null || value === undefined) {
+    return labels.empty;
+  }
+  if (typeof value === "boolean") {
+    return value ? labels.yes : labels.no;
+  }
+
+  const text = unquoteIntelValue(String(value).trim());
+  if (text === "" || text === "null") {
+    return labels.empty;
+  }
+  if (text === "true") {
+    return labels.yes;
+  }
+  if (text === "false") {
+    return labels.no;
+  }
+
+  const path = fieldPath ?? "";
+  const leaf = path.slice(path.lastIndexOf(".") + 1);
+
+  if (INTEL_MONEY_PATH.test(path) && isDecimalString(text)) {
+    return formatCurrency(Number(text));
+  }
+  if (INTEL_DATE_LEAF.test(leaf) && INTEL_INTEGER.test(text)) {
+    const seconds = Number(text);
+    return seconds > 0 ? formatUnixDateMedium(seconds, { timezone: "UTC" }) : labels.empty;
+  }
+  if (INTEL_AGE_DAYS_LEAF.test(leaf) && INTEL_INTEGER.test(text)) {
+    return formatIntelAge(Number(text));
+  }
+  if (INTEL_ENUM_PATH.test(path)) {
+    return humanizeIntelEnum(text);
+  }
+  return text;
 }

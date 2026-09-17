@@ -9,7 +9,6 @@ import {
 import type { CarrierIntelProviderInfo } from "@/lib/graphql/carrier-intel-settings";
 import { vetCarrier, type CarrierIntelVetResult } from "@/lib/graphql/carrier-intelligence";
 import type { CarrierIntelDepth } from "@trenova/graphql/generated/graphql";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -123,14 +122,12 @@ export function VetCarrierDialog({
               <p className="text-muted-foreground text-xs">{labels.depthHint[depth]}</p>
             </div>
           ) : (
-            <Alert variant="warning">
-              <AlertDescription>
-                {t(
-                  "{0} does not advertise a profile lookup. The default depth is used.",
-                  providerName,
-                )}
-              </AlertDescription>
-            </Alert>
+            <p className="text-muted-foreground text-xs">
+              {t(
+                "{0} does not advertise a profile lookup. The default depth is used.",
+                providerName,
+              )}
+            </p>
           )}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-0.5">
@@ -144,8 +141,8 @@ export function VetCarrierDialog({
             <Switch id={forceId} checked={force} onCheckedChange={setForce} />
           </div>
           {cost ? (
-            <div className="bg-muted/50 flex items-start gap-2 rounded-md border px-3 py-2 text-xs">
-              <CoinsIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <div className="text-muted-foreground flex items-start gap-2 border-t pt-3 text-xs">
+              <CoinsIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               <span>
                 {cost.basis === "Free"
                   ? t("{0} does not charge per lookup.", providerName)

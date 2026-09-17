@@ -13,7 +13,7 @@ import {
   type ImportedSourcedCarrier,
 } from "@/lib/graphql/carrier-sourcing";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -43,26 +43,23 @@ export type ImportCarrierDialogProps = {
   candidate: ImportCandidate | null;
   canEnrollMonitoring: boolean;
   onOpenChange: (open: boolean) => void;
+  onImported: (dotNumber: string, carrier: ImportedSourcedCarrier) => void;
 };
 
 export function ImportCarrierDialog({
   candidate,
   canEnrollMonitoring,
   onOpenChange,
+  onImported,
 }: ImportCarrierDialogProps) {
   const t = useT();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const open = candidate !== null;
 
-  const defaults: ImportSourcedCarrierFormValues = {
-    code: "",
-    enrollMonitoring: canEnrollMonitoring,
-  };
-
   const form = useForm<ImportSourcedCarrierFormValues>({
     resolver: zodResolver(importSourcedCarrierSchema) as Resolver<ImportSourcedCarrierFormValues>,
-    defaultValues: defaults,
+    defaultValues: { code: "", enrollMonitoring: canEnrollMonitoring },
   });
   const { control, handleSubmit, reset } = form;
 
@@ -92,10 +89,18 @@ export function ImportCarrierDialog({
     },
     onSuccess: async (carrier) => {
       const dotNumber = candidate?.dotNumber ?? carrier.dotNumber ?? "";
-      queryClient.setQueriesData<CarrierSourcingPage>(
+      queryClient.setQueriesData<InfiniteData<CarrierSourcingPage>>(
         { queryKey: [CARRIER_SOURCING_SEARCH_KEY] },
-        (page) =>
-          page ? { ...page, items: withExistingCarrier(page.items, dotNumber, carrier.id) } : page,
+        (data) =>
+          data
+            ? {
+                ...data,
+                pages: data.pages.map((page) => ({
+                  ...page,
+                  items: withExistingCarrier(page.items, dotNumber, carrier.id),
+                })),
+              }
+            : data,
       );
       queryClient.setQueriesData<CarrierIntelProspectLookup>(
         { queryKey: [CARRIER_INTEL_LOOKUP_KEY] },
@@ -104,28 +109,32 @@ export function ImportCarrierDialog({
             ? { ...lookup, existingCarrierId: carrier.id }
             : lookup,
       );
-      await queryClient.invalidateQueries({ queryKey: ["carrier-list"] });
-      toast.success(t("{0} imported as {1}", carrier.name, carrier.code), {
-        description: t("The carrier starts in Pending compliance until it is reviewed."),
-      });
+      onImported(dotNumber, carrier);
       onOpenChange(false);
-      void navigate(carrierPanelPath(carrier.id, "intelligence"));
+      toast.success(t("{0} imported as {1}", carrier.name, carrier.code), {
+        description: t("It starts in Pending compliance until someone reviews it."),
+        action: {
+          label: t("Open carrier"),
+          onClick: () => void navigate(carrierPanelPath(carrier.id, "intelligence")),
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["carrier-list"] });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("Import carrier")}</DialogTitle>
           <DialogDescription>
             {candidate
               ? t(
-                  "Creates {0} (USDOT {1}) from the provider's FMCSA record, attaches its intelligence and opens it so you can finish onboarding.",
+                  "Create {0} (USDOT {1}) from its FMCSA record.",
                   candidate.legalName || t("this carrier"),
                   candidate.dotNumber,
                 )
-              : t("Create a carrier from the provider's record.")}
+              : t("Create a carrier from its FMCSA record.")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -143,9 +152,6 @@ export function ImportCarrierDialog({
                   name="code"
                   label={t("Carrier code")}
                   placeholder={t("Generated from the name")}
-                  description={t(
-                    "Leave blank to generate one from the legal name and USDOT number.",
-                  )}
                   maxLength={CARRIER_CODE_MAX_LENGTH}
                   autoComplete="off"
                 />
@@ -156,16 +162,14 @@ export function ImportCarrierDialog({
                     control={control}
                     name="enrollMonitoring"
                     label={t("Monitor this carrier")}
-                    description={t(
-                      "Watch for authority, insurance and safety changes as soon as it is created.",
-                    )}
+                    description={t("Watch for authority, insurance and safety changes.")}
                     position="left"
                   />
                 </FormControl>
               ) : null}
             </FormGroup>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 {t("Cancel")}
               </Button>
               <Button type="submit" isLoading={isPending} disabled={!candidate}>

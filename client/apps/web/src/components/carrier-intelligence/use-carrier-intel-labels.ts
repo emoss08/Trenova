@@ -29,6 +29,7 @@ export type CarrierIntelLabels = {
   resolutionHint: Record<CarrierIntelEventResolution, string>;
   depth: Record<CarrierIntelDepth, string>;
   depthHint: Record<CarrierIntelDepth, string>;
+  depthSource: Record<CarrierIntelDepth, string>;
   syncField: Record<CarrierIntelSyncField, string>;
   networkKind: Record<CarrierIntelNetworkKind, string>;
   filingType: Record<CarrierIntelInsuranceFilingType, string>;
@@ -104,6 +105,11 @@ export function useCarrierIntelLabels(): CarrierIntelLabels {
         Full: t("Full profile"),
         Lite: t("Lite profile"),
         FMCSA: t("FMCSA only"),
+      },
+      depthSource: {
+        Full: t("a full profile"),
+        Lite: t("a lite profile"),
+        FMCSA: t("FMCSA data"),
       },
       depthHint: {
         Full: t("Every section the provider offers, including network signals and lanes."),

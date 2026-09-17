@@ -1,7 +1,6 @@
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { parseAsInteger, parseAsStringLiteral } from "nuqs";
-import { enrollmentViewParser } from "./enrollment-filter";
-import { eventInboxSearchParams } from "./event-inbox-filter";
+import { CLEARED_INBOX_STATE, inboxSearchParams, type InboxScope } from "./inbox/inbox-filters";
 
 export const MONITORING_TABS = ["inbox", "review", "enrollments", "usage"] as const;
 
@@ -11,13 +10,13 @@ export const monitoringTabParser = parseAsStringLiteral(MONITORING_TABS).withDef
 
 export const monitoringPageSearchParams = {
   ...searchParamsParser,
-  ...eventInboxSearchParams,
+  ...inboxSearchParams,
   tab: monitoringTabParser,
-  enrollmentView: enrollmentViewParser,
   month: parseAsInteger,
 };
 
 export const CLEARED_TAB_STATE = {
+  ...CLEARED_INBOX_STATE,
   pageIndex: null,
   query: null,
   fieldFilters: null,
@@ -27,10 +26,14 @@ export const CLEARED_TAB_STATE = {
   panelEntityId: null,
   entityId: null,
   modalType: null,
-  scope: null,
-  severity: null,
-  category: null,
-  carrier: null,
-  enrollmentView: null,
   month: null,
 } as const;
+
+export type MonitoringNavigation = {
+  tab: MonitoringTab;
+  scope?: InboxScope;
+};
+
+export function isMonitoringTab(value: unknown): value is MonitoringTab {
+  return typeof value === "string" && (MONITORING_TABS as readonly string[]).includes(value);
+}

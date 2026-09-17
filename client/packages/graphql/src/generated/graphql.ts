@@ -806,14 +806,21 @@ export type CarrierSourcingSearchInput = {
   excludeExistingCarriers?: boolean | null | undefined;
   hazmatOnly?: boolean | null | undefined;
   limit?: number | null | undefined;
+  maxAuthorityAgeDays?: number | null | undefined;
   maxPowerUnits?: number | null | undefined;
   minAuthorityAgeDays?: number | null | undefined;
   minPowerUnits?: number | null | undefined;
   offset?: number | null | undefined;
   originState?: string | null | undefined;
+  sort?: CarrierSourcingSort | null | undefined;
   state?: string | null | undefined;
   text?: string | null | undefined;
 };
+
+export type CarrierSourcingSort =
+  | 'AuthorityAgeDesc'
+  | 'BestMatch'
+  | 'FleetSizeDesc';
 
 export type CarrierStatus =
   | 'Active'
@@ -6063,16 +6070,16 @@ export type CarrierIntelAddressFieldsFragment = { line1: string | null, city: st
 
 export type CarrierIntelAuthorityGrantFieldsFragment = { status: CarrierIntelAuthorityStatus, pending: boolean, underReview: boolean, revocationPending: boolean, grantedAt: number | null, ageDays: number | null } & { ' $fragmentName'?: 'CarrierIntelAuthorityGrantFieldsFragment' };
 
-export type CarrierIntelProfileFieldsFragment = { coverage: Array<CarrierIntelSection>, identity: { dotNumber: string, docketPrefix: string | null, docketNumber: string | null, legalName: string | null, dbaName: string | null, ein: string | null, usdotStatus: string | null, entityType: string | null, carrierOperation: string | null, dotAddedAt: number | null, dotAgeDays: number | null, physicalAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null, mailingAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null } | null, authority: { totalRevocations: number | null, lastRevocationAt: number | null, common: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, contract: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, broker: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, history: Array<{ authorityType: string, action: string, servedAt: number | null, effectiveAt: number | null }> | null } | null, insurance: { bipdOnFile: string | null, bipdRequired: string | null, cargoOnFile: string | null, cargoRequired: string | null, bondOnFile: string | null, bondRequired: string | null, pendingCancelAt: number | null, lastCanceledAt: number | null, cancelCount: number | null, filings: Array<{ type: CarrierIntelInsuranceFilingType, insurerName: string | null, policyNumber: string | null, coverage: string | null, effectiveAt: number | null, cancelEffectiveAt: number | null, cancelMethod: string | null }> | null } | null, safety: { rating: string | null, ratingDate: number | null, issValue: number | null, issRecommendation: string | null, riskScore: string | null, riskProbability: number | null, safetyScore: number | null, outOfServiceOrder: boolean | null, outOfServiceAt: number | null, latestReviewType: string | null, latestReviewAt: number | null } | null, basics: Array<{ basic: CsaBasic, measure: number | null, percentile: number | null, threshold: number | null, alert: boolean, roadsideAlert: boolean, acIndicator: boolean }> | null, inspections: { total: number | null, driver: number | null, vehicle: number | null, hazmat: number | null, driverOos: number | null, vehicleOos: number | null, hazmatOos: number | null, driverOosRate: number | null, vehicleOosRate: number | null, hazmatOosRate: number | null, nationalDriverOosRate: number | null, nationalVehicleOosRate: number | null, nationalHazmatOosRate: number | null, lastInspectionAt: number | null } | null, crashes: { total: number | null, fatal: number | null, injury: number | null, tow: number | null, lastCrashAt: number | null } | null, fleet: { powerUnits: number | null, drivers: number | null, cdlDrivers: number | null, ownedTractors: number | null, termLeasedTractors: number | null, ownedTrailers: number | null, termLeasedTrailers: number | null, trailers: number | null, trucks: number | null } | null, equipment: Array<{ vin: string | null, unitType: string | null, category: string | null, make: string | null, model: string | null, year: number | null, plateNumber: string | null, plateState: string | null, unitNumber: string | null }> | null, contacts: { phone: string | null, cellphone: string | null, fax: string | null, email: string | null, primaryContact: string | null, secondaryContact: string | null } | null, operations: { classification: Array<string> | null, cargoCarried: Array<string> | null, hazmatCarrier: boolean | null, mcs150At: number | null, mcs150Mileage: number | null, boc3OnFile: boolean | null, boc3Agent: string | null, smartWay: boolean | null, carbCompliant: boolean | null, phmsa: boolean | null } | null, changeHistory: { nameChanges: number | null, nameLastChangedAt: number | null, emailChanges: number | null, emailLastChangedAt: number | null, phoneChanges: number | null, phoneLastChangedAt: number | null, addressChanges: number | null, addressLastChangedAt: number | null, contactChanges: number | null, contactLastChangedAt: number | null } | null, network: { sharedAddresses: number | null, sharedPhones: number | null, sharedEmails: number | null, sharedEins: number | null, sharedEquipment: number | null, links: Array<{ kind: CarrierIntelNetworkKind, dotNumber: string | null, legalName: string | null, value: string | null, status: string | null }> | null } | null, lanes: { totalLoads: number | null, ftlPercent: number | null, ltlPercent: number | null, deadheadPercent: number | null, firstLoadAt: number | null, lastLoadAt: number | null, preferred: Array<{ originCity: string | null, originState: string | null, destinationCity: string | null, destinationState: string | null, loads: number | null }> | null } | null, benchmarks: { anyAnomaly: boolean | null, inspectionMileageAnomaly: boolean | null, inspectedUnitsAnomaly: boolean | null, powerUnitMileageAnomaly: boolean | null } | null } & { ' $fragmentName'?: 'CarrierIntelProfileFieldsFragment' };
+export type CarrierIntelProfileFieldsFragment = { coverage: Array<CarrierIntelSection>, identity: { dotNumber: string, docketPrefix: string | null, docketNumber: string | null, legalName: string | null, dbaName: string | null, ein: string | null, usdotStatus: string | null, entityType: string | null, carrierOperation: string | null, dotAddedAt: number | null, dotAgeDays: number | null, physicalAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null, mailingAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null } | null, authority: { totalRevocations: number | null, lastRevocationAt: number | null, common: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, contract: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, broker: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, history: Array<{ authorityType: string, action: string, servedAt: number | null, effectiveAt: number | null }> | null } | null, insurance: { bipdOnFile: string | null, bipdRequired: string | null, cargoOnFile: string | null, cargoRequired: string | null, bondOnFile: string | null, bondRequired: string | null, pendingCancelAt: number | null, lastCanceledAt: number | null, cancelCount: number | null, filings: Array<{ type: CarrierIntelInsuranceFilingType, status: string | null, insurerName: string | null, policyNumber: string | null, coverage: string | null, effectiveAt: number | null, cancelEffectiveAt: number | null, cancelMethod: string | null }> | null } | null, safety: { rating: string | null, ratingDate: number | null, issValue: number | null, issRecommendation: string | null, riskScore: string | null, riskProbability: number | null, safetyScore: number | null, outOfServiceOrder: boolean | null, outOfServiceAt: number | null, latestReviewType: string | null, latestReviewAt: number | null } | null, basics: Array<{ basic: CsaBasic, measure: number | null, percentile: number | null, threshold: number | null, alert: boolean, roadsideAlert: boolean, acIndicator: boolean, violations: number | null, oosViolations: number | null, measuredAt: number | null }> | null, inspections: { total: number | null, driver: number | null, vehicle: number | null, hazmat: number | null, driverOos: number | null, vehicleOos: number | null, hazmatOos: number | null, driverOosRate: number | null, vehicleOosRate: number | null, hazmatOosRate: number | null, nationalDriverOosRate: number | null, nationalVehicleOosRate: number | null, nationalHazmatOosRate: number | null, lastInspectionAt: number | null } | null, crashes: { total: number | null, fatal: number | null, injury: number | null, tow: number | null, lastCrashAt: number | null } | null, fleet: { powerUnits: number | null, drivers: number | null, cdlDrivers: number | null, ownedTractors: number | null, termLeasedTractors: number | null, ownedTrailers: number | null, termLeasedTrailers: number | null, trailers: number | null, trucks: number | null } | null, equipment: Array<{ vin: string | null, unitType: string | null, category: string | null, make: string | null, model: string | null, year: number | null, plateNumber: string | null, plateState: string | null, unitNumber: string | null }> | null, contacts: { phone: string | null, cellphone: string | null, fax: string | null, email: string | null, primaryContact: string | null, secondaryContact: string | null } | null, operations: { classification: Array<string> | null, cargoCarried: Array<string> | null, hazmatCarrier: boolean | null, mcs150At: number | null, mcs150Mileage: number | null, boc3OnFile: boolean | null, boc3Agent: string | null, smartWay: boolean | null, carbCompliant: boolean | null, phmsa: boolean | null } | null, changeHistory: { nameChanges: number | null, nameLastChangedAt: number | null, emailChanges: number | null, emailLastChangedAt: number | null, phoneChanges: number | null, phoneLastChangedAt: number | null, addressChanges: number | null, addressLastChangedAt: number | null, contactChanges: number | null, contactLastChangedAt: number | null } | null, network: { sharedAddresses: number | null, sharedPhones: number | null, sharedEmails: number | null, sharedEins: number | null, sharedEquipment: number | null, links: Array<{ kind: CarrierIntelNetworkKind, dotNumber: string | null, legalName: string | null, value: string | null, status: string | null }> | null } | null, lanes: { totalLoads: number | null, ftlPercent: number | null, ltlPercent: number | null, deadheadPercent: number | null, firstLoadAt: number | null, lastLoadAt: number | null, preferredStates: Array<string> | null, preferred: Array<{ originCity: string | null, originState: string | null, destinationCity: string | null, destinationState: string | null, loads: number | null }> | null } | null, benchmarks: { anyAnomaly: boolean | null, inspectionMileageAnomaly: boolean | null, inspectedUnitsAnomaly: boolean | null, powerUnitMileageAnomaly: boolean | null } | null } & { ' $fragmentName'?: 'CarrierIntelProfileFieldsFragment' };
 
-export type CarrierIntelSnapshotSummaryFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, docketNumber: string | null, provider: string, depth: CarrierIntelDepth, source: string, notFound: boolean, riskLevel: CarrierIntelRiskLevel, reviewState: CarrierIntelReviewState, reviewedAt: number | null, reviewNote: string | null, blockingCodes: Array<string>, advisoryCodes: Array<string>, fetchedAt: number, confirmedAt: number | null, effectiveAsOf: number, hasRawPayload: boolean, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }> } & { ' $fragmentName'?: 'CarrierIntelSnapshotSummaryFieldsFragment' };
+export type CarrierIntelSnapshotSummaryFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, docketNumber: string | null, provider: string, depth: CarrierIntelDepth, depthFetchedAt: number, fetchedDepth: CarrierIntelDepth, source: string, notFound: boolean, riskLevel: CarrierIntelRiskLevel, reviewState: CarrierIntelReviewState, reviewedAt: number | null, reviewNote: string | null, blockingCodes: Array<string>, advisoryCodes: Array<string>, fetchedAt: number, confirmedAt: number | null, effectiveAsOf: number, hasRawPayload: boolean, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }> } & { ' $fragmentName'?: 'CarrierIntelSnapshotSummaryFieldsFragment' };
 
 export type CarrierIntelSnapshotFieldsFragment = (
   { providerRef: string | null, policyVersion: number, sourceAsOf: number | null, reviewedById: string | null, profile: { ' $fragmentRefs'?: { 'CarrierIntelProfileFieldsFragment': CarrierIntelProfileFieldsFragment } } }
   & { ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }
 ) & { ' $fragmentName'?: 'CarrierIntelSnapshotFieldsFragment' };
 
-export type CarrierIntelEventFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, subjectName: string | null, provider: string, source: CarrierIntelEventSource, category: CarrierIntelSection, fieldPath: string | null, ruleCode: string | null, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, priorValue: string | null, currentValue: string | null, summary: string, vendorChangedAt: number | null, detectedAt: number, status: CarrierIntelEventStatus, acknowledgedById: string | null, acknowledgedAt: number | null, resolvedById: string | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null, resolutionNote: string | null, snapshotId: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierIntelEventFieldsFragment' };
+export type CarrierIntelEventFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, subjectName: string | null, provider: string, source: CarrierIntelEventSource, category: CarrierIntelSection, fieldPath: string | null, fieldLabel: string | null, ruleCode: string | null, ruleLabel: string | null, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, priorValue: string | null, currentValue: string | null, summary: string, vendorChangedAt: number | null, detectedAt: number, status: CarrierIntelEventStatus, acknowledgedById: string | null, acknowledgedAt: number | null, resolvedById: string | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null, resolutionNote: string | null, snapshotId: string | null, version: number, createdAt: number, updatedAt: number, acknowledgedBy: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'CarrierIntelEventFieldsFragment' };
 
 export type CarrierMonitoringEnrollmentFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, subjectName: string | null, dotNumber: string, docketNumber: string | null, provider: string, providerRef: string | null, mode: CarrierIntelEnrollmentMode, desiredState: CarrierIntelDesiredState, vendorState: CarrierIntelVendorState, reason: CarrierIntelEnrollmentReason, ownedByTrenova: boolean, enrolledAt: number | null, unenrolledAt: number | null, lastSyncedAt: number | null, lastConfirmedAt: number | null, lastUsedAt: number | null, failureCount: number, lastError: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierMonitoringEnrollmentFieldsFragment' };
 
@@ -6122,6 +6129,28 @@ export type CarrierIntelEventTableQueryVariables = Exact<{
 
 export type CarrierIntelEventTableQuery = { carrierIntelEvents: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type CarrierIntelEventInboxQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: CarrierIntelEventFilterInput | null | undefined;
+}>;
+
+
+export type CarrierIntelEventInboxQuery = { carrierIntelEvents: { edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CarrierIntelEventQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CarrierIntelEventQuery = { carrierIntelEvent: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } | null };
+
+export type CarrierIntelEventCarrierSummaryQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type CarrierIntelEventCarrierSummaryQuery = { carrier: { id: string, name: string, dotNumber: string | null, mcNumber: string | null, intelRiskLevel: string | null, intelReviewRequired: boolean, intelBlockingCount: number, openIntelEventCount: number } | null };
+
 export type CarrierMonitoringEnrollmentTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
   filter?: CarrierMonitoringEnrollmentFilterInput | null | undefined;
@@ -6135,7 +6164,10 @@ export type CarrierIntelReviewQueueQueryVariables = Exact<{
 }>;
 
 
-export type CarrierIntelReviewQueueQuery = { carrierIntelReviewQueue: Array<{ ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }> };
+export type CarrierIntelReviewQueueQuery = { carrierIntelReviewQueue: Array<(
+    { profile: { identity: { legalName: string | null, dbaName: string | null } | null } }
+    & { ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }
+  )> };
 
 export type CarrierIntelligenceQueryVariables = Exact<{
   carrierId: string | number;
@@ -6186,7 +6218,7 @@ export type CarrierSourcingSearchQueryVariables = Exact<{
 }>;
 
 
-export type CarrierSourcingSearchQuery = { carrierSourcingSearch: { total: number, provider: string, items: Array<{ providerRef: string | null, dotNumber: string, legalName: string | null, existingCarrierId: string | null, laneMatches: number, riskLevel: CarrierIntelRiskLevel, score: number, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }>, profile: { ' $fragmentRefs'?: { 'CarrierIntelProfileFieldsFragment': CarrierIntelProfileFieldsFragment } } }> } };
+export type CarrierSourcingSearchQuery = { carrierSourcingSearch: { total: number, filteredOut: number, provider: string, items: Array<{ providerRef: string | null, dotNumber: string, legalName: string | null, existingCarrierId: string | null, laneMatches: number, riskLevel: CarrierIntelRiskLevel, score: number, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }>, profile: { ' $fragmentRefs'?: { 'CarrierIntelProfileFieldsFragment': CarrierIntelProfileFieldsFragment } } }> } };
 
 export type CarrierSourcingAutocompleteQueryVariables = Exact<{
   query: string;
@@ -11936,6 +11968,8 @@ export const CarrierIntelSnapshotSummaryFieldsFragmentDoc = new TypedDocumentStr
   docketNumber
   provider
   depth
+  depthFetchedAt
+  fetchedDepth
   source
   notFound
   riskLevel
@@ -12037,6 +12071,7 @@ export const CarrierIntelProfileFieldsFragmentDoc = new TypedDocumentString(`
     cancelCount
     filings {
       type
+      status
       insurerName
       policyNumber
       coverage
@@ -12066,6 +12101,9 @@ export const CarrierIntelProfileFieldsFragmentDoc = new TypedDocumentString(`
     alert
     roadsideAlert
     acIndicator
+    violations
+    oosViolations
+    measuredAt
   }
   inspections {
     total
@@ -12172,6 +12210,7 @@ export const CarrierIntelProfileFieldsFragmentDoc = new TypedDocumentString(`
       destinationState
       loads
     }
+    preferredStates
   }
   benchmarks {
     anyAnomaly
@@ -12287,6 +12326,7 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
     cancelCount
     filings {
       type
+      status
       insurerName
       policyNumber
       coverage
@@ -12316,6 +12356,9 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
     alert
     roadsideAlert
     acIndicator
+    violations
+    oosViolations
+    measuredAt
   }
   inspections {
     total
@@ -12422,6 +12465,7 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
       destinationState
       loads
     }
+    preferredStates
   }
   benchmarks {
     anyAnomaly
@@ -12439,6 +12483,8 @@ fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {
   docketNumber
   provider
   depth
+  depthFetchedAt
+  fetchedDepth
   source
   notFound
   riskLevel
@@ -12467,7 +12513,9 @@ export const CarrierIntelEventFieldsFragmentDoc = new TypedDocumentString(`
   source
   category
   fieldPath
+  fieldLabel
   ruleCode
+  ruleLabel
   severity
   action
   priorValue
@@ -12477,8 +12525,16 @@ export const CarrierIntelEventFieldsFragmentDoc = new TypedDocumentString(`
   detectedAt
   status
   acknowledgedById
+  acknowledgedBy {
+    id
+    name
+  }
   acknowledgedAt
   resolvedById
+  resolvedBy {
+    id
+    name
+  }
   resolvedAt
   resolution
   resolutionNote
@@ -18205,28 +18261,31 @@ export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;
 export const CarrierIntelMonitoringStatusDocument = {"__meta__":{"kind":"query","name":"CarrierIntelMonitoringStatus","hash":"sha256:a4dbfbac4b61159f3f86de41a083e889afb58c0ff1fe7aa087a4d2b8288f0c23"}} as unknown as TypedDocumentString<CarrierIntelMonitoringStatusQuery, CarrierIntelMonitoringStatusQueryVariables>;
-export const CarrierIntelEventTableDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEventTable","hash":"sha256:b4e5f0c26a0e088c988e4984ee37fddebd4020861b1d3d6adc46d3990512df32"}} as unknown as TypedDocumentString<CarrierIntelEventTableQuery, CarrierIntelEventTableQueryVariables>;
+export const CarrierIntelEventTableDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEventTable","hash":"sha256:48b8b11f63efcf488d44bc8d542ffc4384e079bb8928cfd6aa36b009d0a371f1"}} as unknown as TypedDocumentString<CarrierIntelEventTableQuery, CarrierIntelEventTableQueryVariables>;
+export const CarrierIntelEventInboxDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEventInbox","hash":"sha256:57af5683d4b5c7275b3abdad602e6cea483509a30c37c04c150b56ab12b4aa02"}} as unknown as TypedDocumentString<CarrierIntelEventInboxQuery, CarrierIntelEventInboxQueryVariables>;
+export const CarrierIntelEventDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEvent","hash":"sha256:42ae95e6d384999e3870f9d88e87c2f6b573d8b87fa6f17119c14a1bd6b33f2b"}} as unknown as TypedDocumentString<CarrierIntelEventQuery, CarrierIntelEventQueryVariables>;
+export const CarrierIntelEventCarrierSummaryDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEventCarrierSummary","hash":"sha256:2dab9505958d52f09da03b0922ff681c63a0db4f19ca9b9630bbb2bccb4bd249"}} as unknown as TypedDocumentString<CarrierIntelEventCarrierSummaryQuery, CarrierIntelEventCarrierSummaryQueryVariables>;
 export const CarrierMonitoringEnrollmentTableDocument = {"__meta__":{"kind":"query","name":"CarrierMonitoringEnrollmentTable","hash":"sha256:966e86c6af06277bdb504e96822d13c2c369fa33477e017b07bcee357f8a6253"}} as unknown as TypedDocumentString<CarrierMonitoringEnrollmentTableQuery, CarrierMonitoringEnrollmentTableQueryVariables>;
-export const CarrierIntelReviewQueueDocument = {"__meta__":{"kind":"query","name":"CarrierIntelReviewQueue","hash":"sha256:760539d290ea5a47f3b90c4d9c4c8cb1b8426d4df47e3f1ef5f9803a548db392"}} as unknown as TypedDocumentString<CarrierIntelReviewQueueQuery, CarrierIntelReviewQueueQueryVariables>;
-export const CarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"CarrierIntelligence","hash":"sha256:457900c7502bc63c6891bdc7bf43d077e0a9865074da807ff3c64de14300e826"}} as unknown as TypedDocumentString<CarrierIntelligenceQuery, CarrierIntelligenceQueryVariables>;
-export const CarrierIntelSnapshotHistoryDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSnapshotHistory","hash":"sha256:2ebec1591f8a1bc497376284b07dc87e34ecce2f917603ae18f732cf97ee736e"}} as unknown as TypedDocumentString<CarrierIntelSnapshotHistoryQuery, CarrierIntelSnapshotHistoryQueryVariables>;
+export const CarrierIntelReviewQueueDocument = {"__meta__":{"kind":"query","name":"CarrierIntelReviewQueue","hash":"sha256:4b1e5fbfd29c0379b5d8fe02d823921c533a63e77a5ee466e15b5508b6fe30c3"}} as unknown as TypedDocumentString<CarrierIntelReviewQueueQuery, CarrierIntelReviewQueueQueryVariables>;
+export const CarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"CarrierIntelligence","hash":"sha256:ded048c903e34b6965bde08fe43b825761bc6a36e32d9afe6cfde6b091e2f67e"}} as unknown as TypedDocumentString<CarrierIntelligenceQuery, CarrierIntelligenceQueryVariables>;
+export const CarrierIntelSnapshotHistoryDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSnapshotHistory","hash":"sha256:d22f0433f94511866772c5aef6dec6bf1471fd9738ade107d3bc508571f69b4d"}} as unknown as TypedDocumentString<CarrierIntelSnapshotHistoryQuery, CarrierIntelSnapshotHistoryQueryVariables>;
 export const CarrierIntelSyncPlanDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSyncPlan","hash":"sha256:caf6f7f1f6d0cfea386d56d3187421dbf327db320a0618a4340907367d043109"}} as unknown as TypedDocumentString<CarrierIntelSyncPlanQuery, CarrierIntelSyncPlanQueryVariables>;
 export const CarrierIntelOverridesDocument = {"__meta__":{"kind":"query","name":"CarrierIntelOverrides","hash":"sha256:16c8e0c11b5bfeb3e928eb8c71abd24cfb2751883f5457ca309cea01a95d1a51"}} as unknown as TypedDocumentString<CarrierIntelOverridesQuery, CarrierIntelOverridesQueryVariables>;
 export const CarrierIntelRawPayloadDocument = {"__meta__":{"kind":"query","name":"CarrierIntelRawPayload","hash":"sha256:676eb1c365c28819fc1fa43b5023acc49131d5127716cd98c6a492d96949a300"}} as unknown as TypedDocumentString<CarrierIntelRawPayloadQuery, CarrierIntelRawPayloadQueryVariables>;
-export const CarrierIntelLookupDocument = {"__meta__":{"kind":"query","name":"CarrierIntelLookup","hash":"sha256:fc626e3797730774daa76327a5067a500a84dd4000590ce564555a2747ccb682"}} as unknown as TypedDocumentString<CarrierIntelLookupQuery, CarrierIntelLookupQueryVariables>;
-export const CarrierSourcingSearchDocument = {"__meta__":{"kind":"query","name":"CarrierSourcingSearch","hash":"sha256:c4a51cec3985478f74820cad530001af74dfb093ae31d0e55079aeb49942eb54"}} as unknown as TypedDocumentString<CarrierSourcingSearchQuery, CarrierSourcingSearchQueryVariables>;
+export const CarrierIntelLookupDocument = {"__meta__":{"kind":"query","name":"CarrierIntelLookup","hash":"sha256:885bb1b1928c4b1537b278251aef73eaae8495cd2a8cf2c67a1bdee468c9ab10"}} as unknown as TypedDocumentString<CarrierIntelLookupQuery, CarrierIntelLookupQueryVariables>;
+export const CarrierSourcingSearchDocument = {"__meta__":{"kind":"query","name":"CarrierSourcingSearch","hash":"sha256:0f6f81e73841d1f99ba76c44427de6b9a0ecd2003e53485b1571e75d3e3992df"}} as unknown as TypedDocumentString<CarrierSourcingSearchQuery, CarrierSourcingSearchQueryVariables>;
 export const CarrierSourcingAutocompleteDocument = {"__meta__":{"kind":"query","name":"CarrierSourcingAutocomplete","hash":"sha256:92dd91c7327cceb37c632be3185e2f041304310eb67b3eceb101b07d16cd11d8"}} as unknown as TypedDocumentString<CarrierSourcingAutocompleteQuery, CarrierSourcingAutocompleteQueryVariables>;
 export const CarrierEquipmentVerificationsDocument = {"__meta__":{"kind":"query","name":"CarrierEquipmentVerifications","hash":"sha256:b7c3a7a3998b4c9ae9c57ef470e6e0e8c062cdf612bf080726ad1341f719480a"}} as unknown as TypedDocumentString<CarrierEquipmentVerificationsQuery, CarrierEquipmentVerificationsQueryVariables>;
-export const MyCarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"MyCarrierIntelligence","hash":"sha256:04e3321004b5cb7dc18559dd98307032e4ac47dc70f9dd5caf41450314530ef7"}} as unknown as TypedDocumentString<MyCarrierIntelligenceQuery, MyCarrierIntelligenceQueryVariables>;
-export const CustomerBrokerIntelligenceDocument = {"__meta__":{"kind":"query","name":"CustomerBrokerIntelligence","hash":"sha256:e580d85127d41169a17b28b4dd012d95d9b651d01b53df6fc1ff51468688bf8e"}} as unknown as TypedDocumentString<CustomerBrokerIntelligenceQuery, CustomerBrokerIntelligenceQueryVariables>;
+export const MyCarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"MyCarrierIntelligence","hash":"sha256:13c3606bbc6fcbc5a0a180dd3040e44c05440e6614faab0a8b85ff59b957917c"}} as unknown as TypedDocumentString<MyCarrierIntelligenceQuery, MyCarrierIntelligenceQueryVariables>;
+export const CustomerBrokerIntelligenceDocument = {"__meta__":{"kind":"query","name":"CustomerBrokerIntelligence","hash":"sha256:db7c76cc0bbd76d8dcd0cebf7fdb5057eb767b8dd8a530e03c7a629b86fbc2f4"}} as unknown as TypedDocumentString<CustomerBrokerIntelligenceQuery, CustomerBrokerIntelligenceQueryVariables>;
 export const UpdateCarrierIntelControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateCarrierIntelControl","hash":"sha256:e3f55ef2a5ede39a95644905617d163f4e4c2e019e6cfcab34da57afe0bac2f1"}} as unknown as TypedDocumentString<UpdateCarrierIntelControlMutation, UpdateCarrierIntelControlMutationVariables>;
 export const SwitchCarrierIntelProviderDocument = {"__meta__":{"kind":"mutation","name":"SwitchCarrierIntelProvider","hash":"sha256:723a5cd553858cad5da942f19e5d6021cfbe5d54d86674e10339d7a88c4b396b"}} as unknown as TypedDocumentString<SwitchCarrierIntelProviderMutation, SwitchCarrierIntelProviderMutationVariables>;
 export const ResumeCarrierIntelMonitoringDocument = {"__meta__":{"kind":"mutation","name":"ResumeCarrierIntelMonitoring","hash":"sha256:327c11fd2f21367fabeb0b8eb49272d8e0149687c0f51c8150d6d376a3a0242d"}} as unknown as TypedDocumentString<ResumeCarrierIntelMonitoringMutation, ResumeCarrierIntelMonitoringMutationVariables>;
-export const VetCarrierDocument = {"__meta__":{"kind":"mutation","name":"VetCarrier","hash":"sha256:d1dc1ccbf9067a3fea18db23538bb331c18987c65ea7d71382ecf805b9955b18"}} as unknown as TypedDocumentString<VetCarrierMutation, VetCarrierMutationVariables>;
-export const VetCustomerBrokerDocument = {"__meta__":{"kind":"mutation","name":"VetCustomerBroker","hash":"sha256:53f5da838d98378f75ca8d890a7fded20d8f0413d59fb9e6d8bbf57a21d1bd9b"}} as unknown as TypedDocumentString<VetCustomerBrokerMutation, VetCustomerBrokerMutationVariables>;
+export const VetCarrierDocument = {"__meta__":{"kind":"mutation","name":"VetCarrier","hash":"sha256:26ab21a418728c88bd236bb2b2798dfc99568b683acc7a220f4a0557e2e9cf22"}} as unknown as TypedDocumentString<VetCarrierMutation, VetCarrierMutationVariables>;
+export const VetCustomerBrokerDocument = {"__meta__":{"kind":"mutation","name":"VetCustomerBroker","hash":"sha256:75340a9b5c626c3550e88698b5e40b202c96bf0efdcc0002a9bfcea5e8ea58a3"}} as unknown as TypedDocumentString<VetCustomerBrokerMutation, VetCustomerBrokerMutationVariables>;
 export const SetCarrierMonitoringDocument = {"__meta__":{"kind":"mutation","name":"SetCarrierMonitoring","hash":"sha256:a202dd10a8fcd1b45c96d158c90e6b07a335a1d5a8bffe0979f631964ba06bb9"}} as unknown as TypedDocumentString<SetCarrierMonitoringMutation, SetCarrierMonitoringMutationVariables>;
 export const AcknowledgeCarrierIntelEventsDocument = {"__meta__":{"kind":"mutation","name":"AcknowledgeCarrierIntelEvents","hash":"sha256:702b3d2e949cbc7981298ea6cc38fb3c388804fb0e566b4b3f311cb3ed67630d"}} as unknown as TypedDocumentString<AcknowledgeCarrierIntelEventsMutation, AcknowledgeCarrierIntelEventsMutationVariables>;
-export const ResolveCarrierIntelEventDocument = {"__meta__":{"kind":"mutation","name":"ResolveCarrierIntelEvent","hash":"sha256:c9e3b27a6c005da7ed4267cd04a3f5f31bbd3d8bec6196603184a2bd729646d4"}} as unknown as TypedDocumentString<ResolveCarrierIntelEventMutation, ResolveCarrierIntelEventMutationVariables>;
+export const ResolveCarrierIntelEventDocument = {"__meta__":{"kind":"mutation","name":"ResolveCarrierIntelEvent","hash":"sha256:7e1a0f4ef5e56d3a203db3310947c4b9f556ea667a5e36b8a02b6cb74cb04b1a"}} as unknown as TypedDocumentString<ResolveCarrierIntelEventMutation, ResolveCarrierIntelEventMutationVariables>;
 export const MarkCarrierIntelReviewedDocument = {"__meta__":{"kind":"mutation","name":"MarkCarrierIntelReviewed","hash":"sha256:622231042e033a37223f902d909c3f8dd8b9a36a312a1a59d82447a43af2ad16"}} as unknown as TypedDocumentString<MarkCarrierIntelReviewedMutation, MarkCarrierIntelReviewedMutationVariables>;
 export const GrantCarrierIntelOverrideDocument = {"__meta__":{"kind":"mutation","name":"GrantCarrierIntelOverride","hash":"sha256:6bb9445b54e17e0c8d35e2254ef80433bf95606a3b24c28c173b9b116657ad7f"}} as unknown as TypedDocumentString<GrantCarrierIntelOverrideMutation, GrantCarrierIntelOverrideMutationVariables>;
 export const RevokeCarrierIntelOverrideDocument = {"__meta__":{"kind":"mutation","name":"RevokeCarrierIntelOverride","hash":"sha256:3c6d56353cb759f14c5952c47dbb365fa4c2bb3bf9bfcdac2d2d34cb26d8f4d4"}} as unknown as TypedDocumentString<RevokeCarrierIntelOverrideMutation, RevokeCarrierIntelOverrideMutationVariables>;

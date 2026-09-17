@@ -3,30 +3,53 @@ import { groupFindings } from "@/lib/carrier-intelligence";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { FindingList } from "../finding-list";
+import { buildFinding } from "./fixtures";
 
 function finding(overrides: Partial<CarrierIntelFinding> = {}): CarrierIntelFinding {
-  return {
+  return buildFinding({
     code: "authority.inactive",
-    category: "Authority",
-    action: "Block",
-    severity: "High",
     message: "Operating authority is not active",
-    unverifiable: false,
-    unconfirmed: false,
-    overridden: false,
-    overrideId: null,
-    overrideExpiresAt: null,
     ...overrides,
-  };
+  });
 }
 
 const FINDINGS: CarrierIntelFinding[] = [
-  finding({ code: "insurance.low", action: "Warn", severity: "Medium", category: "Insurance" }),
+  finding({
+    code: "insurance.low",
+    action: "Warn",
+    severity: "Medium",
+    category: "Insurance",
+    message: "Insurance is low",
+  }),
   finding({ code: "authority.inactive", action: "Block", severity: "High" }),
-  finding({ code: "safety.oos", action: "Block", severity: "Critical", category: "Safety" }),
-  finding({ code: "contacts.changed", action: "Notify", severity: "Info", category: "Contacts" }),
-  finding({ code: "lanes.off", action: "Off", severity: "Low", category: "Lanes" }),
+  finding({
+    code: "safety.oos",
+    action: "Block",
+    severity: "Critical",
+    category: "Safety",
+    message: "Carrier is out of service",
+  }),
+  finding({
+    code: "contacts.changed",
+    action: "Notify",
+    severity: "Info",
+    category: "Contacts",
+    message: "Contact details changed",
+  }),
+  finding({
+    code: "lanes.off",
+    action: "Off",
+    severity: "Low",
+    category: "Lanes",
+    message: "Lane rule is off",
+  }),
 ];
+
+function kinds(container: HTMLElement): (string | null)[] {
+  return [...container.querySelectorAll("[data-finding-kind]")].map((node) =>
+    node.getAttribute("data-finding-kind"),
+  );
+}
 
 describe("groupFindings", () => {
   it("splits findings by action, drops rules that are off, and orders by severity", () => {
@@ -45,51 +68,33 @@ describe("groupFindings", () => {
 });
 
 describe("FindingList", () => {
-  it("renders blockers, advisories and notices as separate groups in that order", () => {
+  it("lists blockers, advisories and notices in that order and leaves out rules that are off", () => {
     const { container } = render(<FindingList findings={FINDINGS} />);
+
+    expect(kinds(container)).toEqual(["blocker", "blocker", "advisory", "notice"]);
+    expect(screen.getByText("Carrier is out of service")).toBeInTheDocument();
+    expect(screen.queryByText("Lane rule is off")).toBeNull();
+    expect(screen.queryByText("safety.oos")).toBeNull();
+  });
+
+  it("groups under quiet headings with counts and omits empty groups", () => {
+    const { container } = render(<FindingList findings={FINDINGS} grouped />);
 
     const groups = [...container.querySelectorAll("[data-finding-group]")].map((node) =>
       node.getAttribute("data-finding-group"),
     );
     expect(groups).toEqual(["blocker", "advisory", "notice"]);
 
-    const blockers = screen.getByRole("region", { name: "Blockers" });
-    expect(within(blockers).getByText("safety.oos")).toBeInTheDocument();
-    expect(within(blockers).getByText("authority.inactive")).toBeInTheDocument();
-    expect(within(blockers).queryByText("insurance.low")).toBeNull();
-    expect(screen.queryByText("lanes.off")).toBeNull();
+    const blocking = screen.getByRole("region", { name: "Blocking" });
+    expect(within(blocking).getByText("2")).toBeInTheDocument();
+    expect(within(blocking).getByText("Carrier is out of service")).toBeInTheDocument();
+    expect(within(blocking).queryByText("Insurance is low")).toBeNull();
+
+    render(<FindingList findings={[finding({ action: "Warn" })]} grouped />);
+    expect(screen.getAllByRole("region", { name: "Blocking" })).toHaveLength(1);
   });
 
-  it("omits a group that has nothing in it", () => {
-    render(<FindingList findings={[finding({ action: "Warn" })]} />);
-
-    expect(screen.queryByRole("region", { name: "Blockers" })).toBeNull();
-    expect(screen.getByRole("region", { name: "Advisories" })).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Notices" })).toBeNull();
-  });
-
-  it("flags unverifiable, unconfirmed and overridden findings", () => {
-    render(
-      <FindingList
-        findings={[
-          finding({ code: "a.unverifiable", unverifiable: true }),
-          finding({ code: "b.unconfirmed", unconfirmed: true }),
-          finding({
-            code: "c.overridden",
-            overridden: true,
-            overrideId: "cio_1",
-            overrideExpiresAt: 1_900_000_000,
-          }),
-        ]}
-      />,
-    );
-
-    expect(screen.getByText("Unverifiable")).toBeInTheDocument();
-    expect(screen.getByText("Unconfirmed")).toBeInTheDocument();
-    expect(screen.getByText(/^Overridden until /)).toBeInTheDocument();
-  });
-
-  it("prefers the rule label and still shows the code", () => {
+  it("uses the rule label as the title and the message as muted detail", () => {
     render(
       <FindingList
         findings={[finding()]}
@@ -98,7 +103,30 @@ describe("FindingList", () => {
     );
 
     expect(screen.getByText("Authority must be active")).toBeInTheDocument();
-    expect(screen.getByText("authority.inactive")).toBeInTheDocument();
+    expect(screen.getByText("Operating authority is not active")).toBeInTheDocument();
+    expect(screen.queryByText("authority.inactive")).toBeNull();
+  });
+
+  it("notes unverifiable, unconfirmed and overridden findings in plain text", () => {
+    render(
+      <FindingList
+        findings={[
+          finding({ code: "a.unverifiable", message: "A", unverifiable: true }),
+          finding({ code: "b.unconfirmed", message: "B", unconfirmed: true }),
+          finding({
+            code: "c.overridden",
+            message: "C",
+            overridden: true,
+            overrideId: "cio_1",
+            overrideExpiresAt: 1_900_000_000,
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Couldn't be verified")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for a confirming refresh")).toBeInTheDocument();
+    expect(screen.getByText(/^Overridden until /)).toBeInTheDocument();
   });
 
   it("renders per-finding actions from the caller", () => {
@@ -115,11 +143,21 @@ describe("FindingList", () => {
     expect(screen.queryByRole("button", { name: "Override insurance.low" })).toBeNull();
   });
 
-  it("says when every rule passed", () => {
-    render(<FindingList findings={[finding({ action: "Off" })]} />);
+  it("shows a compact, limited list of the chosen kinds", () => {
+    const { container } = render(
+      <FindingList findings={FINDINGS} kinds={["blocker", "advisory"]} compact limit={2} />,
+    );
 
-    expect(
-      screen.getByText("No findings. Every enabled rule passed on the latest vetting."),
-    ).toBeInTheDocument();
+    expect(kinds(container)).toEqual(["blocker", "blocker"]);
+    expect(screen.getByText("1 more finding")).toBeInTheDocument();
+    expect(screen.queryByText("Contact details changed")).toBeNull();
+  });
+
+  it("says when every rule passed, or renders nothing when asked", () => {
+    const { container, rerender } = render(<FindingList findings={[finding({ action: "Off" })]} />);
+    expect(screen.getByText("Every enabled vetting rule passed.")).toBeInTheDocument();
+
+    rerender(<FindingList findings={[]} emptyMessage={null} />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

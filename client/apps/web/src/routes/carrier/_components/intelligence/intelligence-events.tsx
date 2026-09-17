@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EventTimeline } from "@/components/carrier-intelligence/event-timeline";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import {
   CARRIER_INTEL_EVENTS_KEY,
   fetchCarrierIntelEvents,
@@ -61,16 +62,16 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
         <SegmentedControl<EventScope>
           items={[
             { value: "open", label: t("Needs attention") },
-            { value: "all", label: t("All events") },
+            { value: "all", label: t("All changes") },
           ]}
           value={scope}
           onValueChange={setScope}
-          aria-label={t("Event filter")}
+          aria-label={t("Change filter")}
         />
         <div className="flex items-center gap-2">
           {totalCount !== null ? (
             <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0, plural, one {# event} other {# events}}", totalCount)}
+              {t("{0, plural, one {# change} other {# changes}}", totalCount)}
             </span>
           ) : null}
           <Button
@@ -86,15 +87,23 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
         </div>
       </div>
       {eventsQuery.isPending ? (
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
-          <Skeleton className="h-14 w-full" />
+        <div className="divide-border flex flex-col divide-y" aria-busy>
+          {[0, 1, 2].map((index) => (
+            <div key={index} className="flex items-start gap-3 py-2.5">
+              <Skeleton className="mt-1.5 size-2 rounded-full" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-3.5 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : eventsQuery.isError ? (
-        <p className="text-destructive rounded-lg border border-dashed p-3 text-sm">
-          {t("Events could not be loaded. {0}", eventsQuery.error.message)}
-        </p>
+        <IntelInlineError
+          error={eventsQuery.error}
+          title={t("Changes could not be loaded")}
+          onRetry={() => void refetch()}
+        />
       ) : (
         <>
           <EventTimeline
@@ -103,14 +112,14 @@ export function IntelligenceEvents({ carrierId, canUpdate, onChanged }: Intellig
             onChanged={handleChanged}
             emptyMessage={
               scope === "open"
-                ? t("No open events. Changes that need attention will appear here.")
-                : t("No change events have been recorded for this carrier.")
+                ? t("Nothing needs attention. Changes that do will appear here.")
+                : t("No changes have been recorded for this carrier.")
             }
           />
           {eventsQuery.hasNextPage ? (
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               className="self-center"
               isLoading={eventsQuery.isFetchingNextPage}

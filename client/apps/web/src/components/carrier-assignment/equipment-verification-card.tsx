@@ -1,11 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { RelativeTime } from "@/components/carrier-intelligence/relative-time";
+import { carrierIntelProviderLabel, joinPresent } from "@/lib/carrier-intelligence";
 import { canOverrideEquipmentVerification } from "@/lib/equipment-verification";
 import type { CarrierEquipmentVerification } from "@/lib/graphql/carrier-intelligence";
 import type {
   CarrierEquipmentVerificationResult,
   CarrierIntelUnitType,
 } from "@trenova/graphql/generated/graphql";
-import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -14,7 +15,6 @@ import {
   CircleHelpIcon,
   CircleXIcon,
   SearchXIcon,
-  ShieldOffIcon,
   TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -23,8 +23,8 @@ import { useMemo } from "react";
 type ResultMeta = {
   label: string;
   description: string;
-  variant: BadgeVariant;
   icon: LucideIcon;
+  iconClassName: string;
 };
 
 export function useEquipmentVerificationLabels() {
@@ -36,32 +36,32 @@ export function useEquipmentVerificationLabels() {
         Match: {
           label: t("Match"),
           description: t("The equipment is registered to this carrier."),
-          variant: "active",
           icon: CircleCheckIcon,
+          iconClassName: "text-emerald-600 dark:text-emerald-400",
         },
         Mismatch: {
           label: t("Mismatch"),
           description: t("The equipment is registered to a different carrier."),
-          variant: "inactive",
           icon: CircleXIcon,
+          iconClassName: "text-red-600 dark:text-red-400",
         },
         NotFound: {
           label: t("Not found"),
           description: t("No carrier is registered to this equipment."),
-          variant: "warning",
           icon: SearchXIcon,
+          iconClassName: "text-amber-600 dark:text-amber-400",
         },
         Unverifiable: {
           label: t("Unverifiable"),
           description: t("The equipment could not be checked against a registration."),
-          variant: "secondary",
           icon: CircleHelpIcon,
+          iconClassName: "text-muted-foreground",
         },
         ProviderError: {
           label: t("Provider error"),
           description: t("The provider failed to answer. Try again shortly."),
-          variant: "orange",
           icon: TriangleAlertIcon,
+          iconClassName: "text-amber-600 dark:text-amber-400",
         },
       } satisfies Record<CarrierEquipmentVerificationResult, ResultMeta>,
       unitType: {
@@ -114,68 +114,51 @@ export function EquipmentVerificationCard({
   const meta = labels.result[verification.result];
   const Icon = meta.icon;
   const detail = verification.detail;
-  const vehicle = detail
-    ? [detail.year, detail.make, detail.model].filter((part) => part !== null && part !== "")
-    : [];
+  const overridden = verification.overriddenAt !== null;
 
   return (
     <article
       data-verification-result={verification.result}
+      data-highlighted={highlighted ? "true" : undefined}
       aria-label={t("Verification {0}", meta.label)}
-      className={cn(
-        "bg-card flex flex-col gap-2 rounded-lg border p-3",
-        highlighted && "ring-ring/40 ring-2",
-      )}
+      className={cn("flex flex-col gap-2 py-3", highlighted && "bg-muted/40 -mx-3 rounded-md px-3")}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant={meta.variant} className="max-h-5" title={meta.description}>
-              <Icon aria-hidden />
+      <div className="flex items-start gap-2.5">
+        <Icon
+          className={cn(
+            "mt-0.5 size-3.5 shrink-0",
+            overridden ? "text-muted-foreground" : meta.iconClassName,
+          )}
+          aria-hidden
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
+            <span className="font-medium" title={meta.description}>
               {meta.label}
-            </Badge>
-            <span className="text-xs font-medium">{labels.unitType[verification.unitType]}</span>
+            </span>
+            {overridden ? <span className="text-muted-foreground">{t("Overridden")}</span> : null}
+            <span className="text-muted-foreground text-xs">
+              {labels.unitType[verification.unitType]}
+            </span>
             <span className="text-muted-foreground truncate font-mono text-xs">
               {identifierSummary(verification)}
             </span>
-            {verification.overriddenAt ? (
-              <Badge variant="teal" className="max-h-5">
-                <ShieldOffIcon aria-hidden />
-                {t("Overridden")}
-              </Badge>
-            ) : null}
           </div>
-          <span className="text-muted-foreground text-2xs">
-            {t("Verified {0}", formatUnixDateTimeMedium(verification.verifiedAt))}
+          {verification.mismatchReason ? (
+            <p className="text-sm">{verification.mismatchReason}</p>
+          ) : null}
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+            {t("Verified")} <RelativeTime timestamp={verification.verifiedAt} />
           </span>
         </div>
         {canApprove && canOverrideEquipmentVerification(verification) ? (
-          <Button
-            type="button"
-            size="xs"
-            variant="outline"
-            onClick={() => onOverride(verification)}
-          >
-            <ShieldOffIcon />
+          <Button type="button" size="xs" variant="ghost" onClick={() => onOverride(verification)}>
             {t("Override")}
           </Button>
         ) : null}
       </div>
 
-      {verification.mismatchReason ? (
-        <p
-          className={cn(
-            "text-sm",
-            verification.result === "Mismatch" && !verification.overriddenAt
-              ? "text-red-700 dark:text-red-400"
-              : "text-foreground",
-          )}
-        >
-          {verification.mismatchReason}
-        </p>
-      ) : null}
-
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-6 text-xs">
         <Detail label={t("Expected DOT")} value={verification.expectedDotNumber} />
         <Detail
           label={t("Registered DOT")}
@@ -186,23 +169,32 @@ export function EquipmentVerificationCard({
           }
         />
         <Detail label={t("Registered to")} value={verification.matchedLegalName} />
-        <Detail label={t("Vehicle")} value={vehicle.length > 0 ? vehicle.join(" ") : null} />
+        <Detail
+          label={t("Vehicle")}
+          value={detail ? joinPresent([detail.year, detail.make, detail.model], " ") : null}
+        />
         <Detail label={t("Category")} value={detail?.category} />
         <Detail label={t("VIN")} value={detail?.vin} />
         <Detail
           label={t("Plate")}
           value={
             detail?.plateNumber
-              ? `${detail.plateNumber}${detail.plateState ? ` (${detail.plateState})` : ""}`
+              ? joinPresent(
+                  [detail.plateNumber, detail.plateState ? `(${detail.plateState})` : null],
+                  " ",
+                )
               : null
           }
         />
         <Detail label={t("Unit number")} value={detail?.unitNumber} />
-        <Detail label={t("Provider")} value={verification.provider} />
+        <Detail
+          label={t("Provider")}
+          value={verification.provider ? carrierIntelProviderLabel(verification.provider) : null}
+        />
       </dl>
 
       {verification.overriddenAt ? (
-        <p className="bg-muted/50 text-muted-foreground rounded-md px-2 py-1.5 text-xs">
+        <p className="text-muted-foreground pl-6 text-xs">
           {t(
             "Overridden {0}: {1}",
             formatUnixDateTimeMedium(verification.overriddenAt),

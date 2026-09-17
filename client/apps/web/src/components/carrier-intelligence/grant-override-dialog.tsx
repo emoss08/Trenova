@@ -30,7 +30,7 @@ import { dateToUnixTimestamp, formatUnixDateTimeMedium } from "@trenova/shared/l
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
-import { SeverityBadge } from "./severity-badge";
+import { FindingList } from "./finding-list";
 
 export type GrantOverrideDialogProps = {
   carrierId: string;
@@ -131,13 +131,12 @@ export function GrantOverrideDialog({
           </DialogDescription>
         </DialogHeader>
         {finding ? (
-          <div className="bg-muted/50 flex flex-col gap-1 rounded-md border px-3 py-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <SeverityBadge severity={finding.severity} />
-              <span className="text-sm font-medium">{ruleLabel ?? finding.code}</span>
-            </div>
-            <p className="text-sm">{finding.message}</p>
-          </div>
+          <FindingList
+            findings={[finding]}
+            ruleLabels={ruleLabel ? { [finding.code]: ruleLabel } : undefined}
+            emptyMessage={null}
+            className="border-y"
+          />
         ) : null}
         <FormProvider {...form}>
           <Form
