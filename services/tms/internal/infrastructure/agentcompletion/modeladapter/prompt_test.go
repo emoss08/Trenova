@@ -48,23 +48,6 @@ func TestBuildContextText_NeutralizesClosingTagInjection(t *testing.T) {
 	require.Equal(t, 1, strings.Count(text, untrustedCloseTag))
 }
 
-func TestBuildDiagnoseSystemPrompt_UnaffectedByUntrustedContent(t *testing.T) {
-	req := &serviceports.DiagnoseRequest{
-		SystemPrompt: "You are a billing exception analyst.",
-		Context: serviceports.DelimitedContext{
-			Sections: []serviceports.ContextSection{
-				{Title: "Notes", Trusted: false, Content: injectionString},
-			},
-		},
-	}
-
-	system := BuildDiagnoseSystemPrompt(req)
-
-	require.NotContains(t, system, injectionString,
-		"untrusted comment content must never leak into the system prompt")
-	require.Contains(t, system, untrustedGuard)
-}
-
 func TestWithSchemaInstruction(t *testing.T) {
 	t.Parallel()
 

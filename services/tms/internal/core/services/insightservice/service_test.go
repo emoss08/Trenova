@@ -173,13 +173,6 @@ func (failingCompletion) CompleteStructured(
 	return nil, services.ErrNoProviderConfigured
 }
 
-func (failingCompletion) Diagnose(
-	context.Context,
-	*services.DiagnoseRequest,
-) (*services.DiagnoseResult, error) {
-	return nil, services.ErrNoProviderConfigured
-}
-
 func (failingCompletion) CompleteChat(
 	context.Context,
 	*services.ChatCompletionRequest,

@@ -2,6 +2,7 @@ package billingqueueservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
@@ -46,6 +47,7 @@ type Params struct {
 	Realtime             services.RealtimeService
 	Validator            *Validator
 	OrderDerivation      services.OrderDerivationService
+	AgentEvents          services.AgentEventPublisher `optional:"true"`
 }
 
 type service struct {
@@ -67,6 +69,7 @@ type service struct {
 	realtime             services.RealtimeService
 	validator            *Validator
 	orderDerivation      services.OrderDerivationService
+	agentEvents          services.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection
@@ -90,6 +93,7 @@ func New(p Params) services.BillingQueueService {
 		realtime:             p.Realtime,
 		validator:            p.Validator,
 		orderDerivation:      p.OrderDerivation,
+		agentEvents:          p.AgentEvents,
 	}
 }
 
@@ -664,8 +668,33 @@ func (s *service) UpdateStatus(
 		"Billing queue item status updated to "+string(req.NewStatus),
 	)
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
+	s.publishStatusAgentEvent(ctx, updated)
 
 	return updated, nil
+}
+
+func (s *service) publishStatusAgentEvent(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+) {
+	var kind agent.EventKind
+	switch item.Status {
+	case billingqueue.StatusException:
+		kind = agent.EventBillingQueueItemException
+	case billingqueue.StatusOnHold:
+		kind = agent.EventBillingQueueItemOnHold
+	default:
+		return
+	}
+
+	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
+		Kind:      kind,
+		SubjectID: item.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: item.OrganizationID,
+			BuID:  item.BusinessUnitID,
+		},
+	})
 }
 
 func (s *service) completeReplacementReview(

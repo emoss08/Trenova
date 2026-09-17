@@ -23,6 +23,7 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(base.NewDocumentTemplateStartersSeed())
 	r.MustRegister(base.NewJurisdictionRulesBaselineSeed())
 	r.MustRegister(base.NewIFTAJurisdictionsSeed())
+	r.MustRegister(base.NewSystemAgentDefinitionsSeed())
 	r.MustRegister(development.NewTestOrganizationsSeed())
 	r.MustRegister(development.NewFormulaTemplateSeed())
 	r.MustRegister(development.NewNormalAccountSeed())

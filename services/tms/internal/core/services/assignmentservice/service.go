@@ -3,6 +3,7 @@ package assignmentservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
@@ -55,7 +56,8 @@ type Params struct {
 	EventService        portservices.ShipmentEventService
 	Realtime            portservices.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
-	TenderGuard         portservices.TenderGuard `optional:"true"`
+	TenderGuard         portservices.TenderGuard         `optional:"true"`
+	AgentEvents         portservices.AgentEventPublisher `optional:"true"`
 }
 
 type service struct {
@@ -81,6 +83,7 @@ type service struct {
 	realtime            portservices.RealtimeService
 	driverNotify        *drivernotificationservice.Service
 	tenderGuard         portservices.TenderGuard
+	agentEvents         portservices.AgentEventPublisher
 }
 
 func New(p Params) portservices.AssignmentService {
@@ -107,6 +110,7 @@ func New(p Params) portservices.AssignmentService {
 		realtime:            p.Realtime,
 		driverNotify:        p.DriverNotify,
 		tenderGuard:         p.TenderGuard,
+		agentEvents:         p.AgentEvents,
 	}
 }
 
@@ -409,6 +413,14 @@ func (s *service) Unassign(
 		))
 		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "unassigned")
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
+		portservices.PublishAgentEvent(ctx, s.agentEvents, portservices.AgentEvent{
+			Kind:      agent.EventShipmentMoveUnassigned,
+			SubjectID: ref.MoveID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: req.TenantInfo.OrgID,
+				BuID:  req.TenantInfo.BuID,
+			},
+		})
 	}
 
 	return nil

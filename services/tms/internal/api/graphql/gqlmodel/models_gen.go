@@ -171,9 +171,9 @@ type AdjustWorkerPTOBalanceInput struct {
 }
 
 type AgentControlInput struct {
-	ShadowMode             bool `json:"shadowMode"`
-	BillingAgentEnabled    bool `json:"billingAgentEnabled"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds"`
+	ShadowMode             bool  `json:"shadowMode"`
+	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
+	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }
 
 type AgentDefinitionConnection struct {

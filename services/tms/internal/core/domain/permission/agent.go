@@ -1,11 +1,31 @@
 package permission
 
 var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
-	ResourceBillingQueue: {
-		OpRead: {},
-	},
 	ResourceShipment: {
 		OpRead: {},
+	},
+	ResourceShipmentMove: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
+	ResourceWorker: {
+		OpRead: {},
+	},
+	ResourceTractor: {
+		OpRead: {},
+	},
+	ResourceTrailer: {
+		OpRead: {},
+	},
+	ResourceCustomer: {
+		OpRead: {},
+	},
+	ResourceLocation: {
+		OpRead: {},
+	},
+	ResourceBillingQueue: {
+		OpRead:   {},
+		OpUpdate: {},
 	},
 	ResourceDocument: {
 		OpRead:   {},
@@ -33,4 +53,17 @@ func IsAgentAllowed(resource Resource, operation Operation) bool {
 
 	_, ok = operations[operation]
 	return ok
+}
+
+func AgentAllowedPermissions() map[Resource][]Operation {
+	out := make(map[Resource][]Operation, len(agentAllowedPermissions))
+	for resource, operations := range agentAllowedPermissions {
+		ops := make([]Operation, 0, len(operations))
+		for operation := range operations {
+			ops = append(ops, operation)
+		}
+		out[resource] = ops
+	}
+
+	return out
 }

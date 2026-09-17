@@ -3,8 +3,6 @@ fragment AgentControlFields on AgentControl {
   organizationId
   businessUnitId
   shadowMode
-  billingAgentEnabled
-  decisionTimeoutSeconds
   version
   createdAt
   updatedAt

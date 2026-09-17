@@ -160,6 +160,7 @@ func (s *Service) executeAction(
 		BusinessUnitID: req.Actor.BusinessUnitID,
 		Actor:          req.Actor,
 		IdempotencyKey: call.ID,
+		RunID:          req.RunID,
 		Params:         call.Arguments,
 	})
 	if err != nil {

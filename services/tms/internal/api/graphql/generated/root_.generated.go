@@ -64404,7 +64404,9 @@ type AgentControl {
   businessUnitId: ID!
   shadowMode: Boolean!
   billingAgentEnabled: Boolean!
+    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
+    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -64456,8 +64458,10 @@ input AgentExceptionResolveInput {
 
 input AgentControlInput {
   shadowMode: Boolean!
-  billingAgentEnabled: Boolean!
-  decisionTimeoutSeconds: Int!
+  billingAgentEnabled: Boolean
+    @deprecated(reason: "Enable or disable the billing exception agent definition instead")
+  decisionTimeoutSeconds: Int
+    @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
 }
 
 extend type Query {

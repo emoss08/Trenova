@@ -42,6 +42,7 @@ const (
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
 	SeedShipment SeedID = "Shipment" // from 07_shipment.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
+	SeedSystemAgentDefinitions SeedID = "SystemAgentDefinitions" // from 13_system_agent_definitions.go
 	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
 	SeedTestData SeedID = "TestData" // from 06_test_data.go
 	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
@@ -87,6 +88,7 @@ var AllSeedIDs = []SeedID{
 	SeedServiceFailureReasonCode,
 	SeedShipment,
 	SeedSystemAccount,
+	SeedSystemAgentDefinitions,
 	SeedTCAAllowlistedTables,
 	SeedTestData,
 	SeedTestOrganizations,
@@ -111,6 +113,7 @@ var BaseSeedIDs = []SeedID{
 	SeedOrganizationRoles,
 	SeedServiceFailureReasonCode,
 	SeedSystemAccount,
+	SeedSystemAgentDefinitions,
 	SeedTCAAllowlistedTables,
 	SeedUSStates,
 }

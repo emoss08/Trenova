@@ -4,6 +4,7 @@ import { AccountingReportService } from "./accounting-report";
 import { AccountTypeService } from "./account-type";
 import { AIProviderService } from "./ai-provider";
 import { AgentDefinitionService, AssistantService } from "./assistant";
+import { AgentRunService } from "@/services/agent-run";
 import { InsightService } from "./insight";
 export type { BrowseInsightsParams } from "./insight";
 import { AnalyticsService } from "./analytics";
@@ -163,6 +164,7 @@ class APIService {
   public assistantService: AssistantService;
   public insightService: InsightService;
   public agentDefinitionService: AgentDefinitionService;
+  public agentRunService: AgentRunService;
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
@@ -255,6 +257,7 @@ class APIService {
     this.assistantService = new AssistantService();
     this.insightService = new InsightService();
     this.agentDefinitionService = new AgentDefinitionService();
+    this.agentRunService = new AgentRunService();
     this.analyticService = new AnalyticsService();
     this.assignmentService = new AssignmentService();
     this.notificationService = notificationService;

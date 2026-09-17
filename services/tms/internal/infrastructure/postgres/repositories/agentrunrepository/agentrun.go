@@ -224,3 +224,35 @@ func (r *repository) Update(
 
 	return entity, nil
 }
+
+func (r *repository) CountOpen(
+	ctx context.Context,
+	req repositories.CountOpenAgentRunsRequest,
+) (int, error) {
+	cols := buncolgen.AgentRunColumns
+
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*agent.AgentRun)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+				Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
+				Where(cols.Status.NotIn(), bun.In([]agent.RunStatus{
+					agent.RunStatusCompleted,
+					agent.RunStatusShadowCompleted,
+					agent.RunStatusFailed,
+				}))
+			if req.SubjectID.IsNotNil() {
+				sq = sq.Where(cols.SubjectID.Eq(), req.SubjectID)
+			}
+
+			return sq
+		}).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count open agent runs", zap.Error(err))
+		return 0, err
+	}
+
+	return count, nil
+}

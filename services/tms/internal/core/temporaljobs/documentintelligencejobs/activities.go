@@ -59,6 +59,7 @@ type ActivitiesParams struct {
 	ParsingRuleRuntime  services.DocumentParsingRuleRuntime
 	TemporalClient      client.Client `optional:"true"`
 	Encryption          *encryptionservice.Service
+	AgentEvents         services.AgentEventPublisher `optional:"true"`
 }
 
 type Activities struct {
@@ -78,6 +79,7 @@ type Activities struct {
 	parsingRuleRuntime  services.DocumentParsingRuleRuntime
 	temporalClient      client.Client
 	encryption          *encryptionservice.Service
+	agentEvents         services.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection param
@@ -119,6 +121,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		parsingRuleRuntime:  parsingRuleRuntime,
 		temporalClient:      p.TemporalClient,
 		encryption:          p.Encryption,
+		agentEvents:         p.AgentEvents,
 	}
 }
 

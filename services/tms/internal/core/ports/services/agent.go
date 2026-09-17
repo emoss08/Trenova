@@ -10,29 +10,39 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type StartAgentRunRequest struct {
-	AgentType   agent.Type
-	SubjectType agent.SubjectType
-	SubjectID   pulid.ID
-	TenantInfo  pagination.TenantInfo
+// StartAgentRunForDefinitionRequest starts a background run of one agent.
+// The definition is named by id or by its system key; the subject is optional
+// and defaults to the organization itself.
+type StartAgentRunForDefinitionRequest struct {
+	DefinitionID pulid.ID
+	SystemKey    string
+	SubjectType  agent.SubjectType
+	SubjectID    pulid.ID
+	Trigger      agent.RunTrigger
+	EventKind    agent.EventKind
+	// Slot is the schedule slot a sweep claimed. It keys the workflow id so two
+	// sweeps that both see the slot start one run, not two.
+	Slot       int64
+	TenantInfo pagination.TenantInfo
 }
 
 // StartInlineAgentRunRequest opens a run for an agent whose reasoning happens in-process
 // rather than in a Temporal workflow.
 type StartInlineAgentRunRequest struct {
-	AgentType     agent.Type
-	SubjectType   agent.SubjectType
-	SubjectID     pulid.ID
-	PromptVersion string
-	Summary       string
-	Trigger       agent.RunTrigger
-	TenantInfo    pagination.TenantInfo
+	AgentType         agent.Type
+	AgentDefinitionID pulid.ID
+	SubjectType       agent.SubjectType
+	SubjectID         pulid.ID
+	PromptVersion     string
+	Summary           string
+	Trigger           agent.RunTrigger
+	TenantInfo        pagination.TenantInfo
 }
 
 type AgentRunService interface {
-	Start(
+	StartForDefinition(
 		ctx context.Context,
-		req *StartAgentRunRequest,
+		req *StartAgentRunForDefinitionRequest,
 		actor *RequestActor,
 	) (*agent.AgentRun, error)
 	// StartInline records a run for a deterministic agent that reasons in-process. Such
@@ -130,8 +140,8 @@ type AgentDecisionService interface {
 
 type UpdateAgentControlRequest struct {
 	ShadowMode             bool
-	BillingAgentEnabled    bool
-	DecisionTimeoutSeconds int
+	BillingAgentEnabled    *bool
+	DecisionTimeoutSeconds *int
 	TenantInfo             pagination.TenantInfo
 }
 

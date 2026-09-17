@@ -69,13 +69,6 @@ func (s *ScriptedCompletion) CompleteStructured(
 	}, nil
 }
 
-func (s *ScriptedCompletion) Diagnose(
-	_ context.Context,
-	_ *serviceports.DiagnoseRequest,
-) (*serviceports.DiagnoseResult, error) {
-	return nil, errors.New("not used")
-}
-
 type StubQueryTool struct {
 	ToolName   string
 	Result     any

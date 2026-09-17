@@ -20,13 +20,9 @@ type GetAgentDefinitionBySystemKeyRequest struct {
 }
 
 type ListAgentDefinitionRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-	// EnabledOnly narrows to agents a person can actually start a conversation
-	// with.
+	Filter      *pagination.QueryOptions `json:"filter"`
 	EnabledOnly bool
-	// ChatOnly narrows to agents that hold conversations, since a scheduled or
-	// event-driven agent has no thread to talk in.
-	ChatOnly bool
+	ChatOnly    bool
 }
 
 type ListAgentDefinitionConnectionRequest struct {
@@ -38,8 +34,7 @@ type ListAgentDefinitionConnectionRequest struct {
 type ListAgentDefinitionsByTriggerRequest struct {
 	TenantInfo pagination.TenantInfo
 	Mode       agentdefinition.TriggerMode
-	// EventKind narrows event-triggered definitions to those subscribed to it.
-	EventKind agent.EventKind
+	EventKind  agent.EventKind
 }
 
 type ListDueAgentDefinitionsRequest struct {
@@ -48,15 +43,16 @@ type ListDueAgentDefinitionsRequest struct {
 	Limit      int
 }
 
+type ListDueAcrossTenantsRequest struct {
+	Now   int64
+	Limit int
+}
+
 type MarkAgentDefinitionRunRequest struct {
-	ID         pulid.ID
-	TenantInfo pagination.TenantInfo
-	LastRunAt  int64
-	// NextRunAt is the slot the sweep claimed; nil clears it, which is how a
-	// definition that reached its end stops firing.
-	NextRunAt *int64
-	// ExpectedNextRunAt is the slot the caller saw. The update applies only when
-	// the row still carries it, so two sweeps cannot both claim one slot.
+	ID                pulid.ID
+	TenantInfo        pagination.TenantInfo
+	LastRunAt         int64
+	NextRunAt         *int64
 	ExpectedNextRunAt *int64
 }
 
@@ -96,6 +92,10 @@ type AgentDefinitionRepository interface {
 	ListDue(
 		ctx context.Context,
 		req ListDueAgentDefinitionsRequest,
+	) ([]*agentdefinition.Definition, error)
+	ListDueAcrossTenants(
+		ctx context.Context,
+		req ListDueAcrossTenantsRequest,
 	) ([]*agentdefinition.Definition, error)
 	Create(
 		ctx context.Context,

@@ -65,6 +65,9 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AgentControl:
+    - billingAgentEnabled
+    - decisionTimeoutSeconds
   AgentDefinition:
     - pendingProposals
     - openRuns

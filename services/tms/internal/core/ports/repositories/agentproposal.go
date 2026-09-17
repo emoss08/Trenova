@@ -9,13 +9,15 @@ import (
 )
 
 type ListAgentProposalRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Filter                   *pagination.QueryOptions `json:"filter"`
+	ExcludeShadowDefinitions bool                     `json:"-"`
 }
 
 type ListAgentProposalConnectionRequest struct {
-	Filter  *pagination.QueryOptions `json:"filter"`
-	Cursor  pagination.CursorInfo    `json:"-"`
-	Columns []string                 `json:"-"`
+	Filter                   *pagination.QueryOptions `json:"filter"`
+	Cursor                   pagination.CursorInfo    `json:"-"`
+	Columns                  []string                 `json:"-"`
+	ExcludeShadowDefinitions bool                     `json:"-"`
 }
 
 type GetAgentProposalByIDRequest struct {

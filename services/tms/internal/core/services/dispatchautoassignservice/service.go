@@ -7,11 +7,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,10 +39,11 @@ type Params struct {
 	ConsoleRepo         repositories.DispatchConsoleRepository
 	DispatchControlRepo repositories.DispatchControlRepository
 	AgentControlRepo    repositories.AgentControlRepository
+	DefinitionRepo      repositories.AgentDefinitionRepository
 	ProposalRepo        repositories.AgentProposalRepository
 	CandidateService    *dispatchcandidateservice.Service
 	AgentRunService     portservices.AgentRunService
-	AssignmentService   portservices.AssignmentService
+	Executor            *proposalexecutor.Service
 }
 
 type Service struct {
@@ -50,10 +51,11 @@ type Service struct {
 	consoleRepo         repositories.DispatchConsoleRepository
 	dispatchControlRepo repositories.DispatchControlRepository
 	agentControlRepo    repositories.AgentControlRepository
+	definitionRepo      repositories.AgentDefinitionRepository
 	proposalRepo        repositories.AgentProposalRepository
 	candidates          *dispatchcandidateservice.Service
 	runService          portservices.AgentRunService
-	assignments         portservices.AssignmentService
+	executor            *proposalexecutor.Service
 }
 
 func New(p Params) *Service {
@@ -62,10 +64,11 @@ func New(p Params) *Service {
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
 		agentControlRepo:    p.AgentControlRepo,
+		definitionRepo:      p.DefinitionRepo,
 		proposalRepo:        p.ProposalRepo,
 		candidates:          p.CandidateService,
 		runService:          p.AgentRunService,
-		assignments:         p.AssignmentService,
+		executor:            p.Executor,
 	}
 }
 
@@ -82,7 +85,7 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
-	agentControl, err := s.agentControlRepo.GetOrCreate(ctx, req.TenantInfo)
+	policy, err := s.loadPolicy(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +112,7 @@ func (s *Service) Plan(
 	}
 
 	if len(moves) == 0 {
-		return emptyPlan(control, agentControl, now), nil
+		return emptyPlan(control, policy, now), nil
 	}
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
@@ -124,19 +127,20 @@ func (s *Service) Plan(
 	}
 
 	plan := s.solve(&solveParams{
-		Moves:        moves,
-		Snapshot:     snapshot,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          now,
+		Moves:    moves,
+		Snapshot: snapshot,
+		Control:  control,
+		Policy:   policy,
+		Now:      now,
 	})
 
-	if err = s.recordPlan(ctx, req, agentControl, plan); err != nil {
+	proposals, err := s.recordPlan(ctx, req, policy, plan)
+	if err != nil {
 		return nil, err
 	}
 
 	if req.Apply {
-		s.applyAutoExecutable(ctx, req, plan)
+		s.applyAutoExecutable(ctx, req, plan, proposals)
 	}
 
 	return plan, nil
@@ -144,7 +148,7 @@ func (s *Service) Plan(
 
 func emptyPlan(
 	control *dispatchcontrol.DispatchControl,
-	agentControl *tenant.AgentControl,
+	policy Policy,
 	now int64,
 ) *portservices.DispatchPlan {
 	return &portservices.DispatchPlan{
@@ -152,8 +156,8 @@ func emptyPlan(
 		Uncovered:    []*portservices.DispatchUncoveredMove{},
 		Tours:        []*portservices.DispatchTour{},
 		PlanningMode: control.ResolvedPlanningMode().String(),
-		ShadowMode:   agentControl.ShadowMode,
-		AutonomyTier: resolveTier(agentControl),
+		ShadowMode:   policy.ShadowMode,
+		AutonomyTier: policy.Tier,
 		GeneratedAt:  now,
 	}
 }
@@ -181,11 +185,11 @@ func buildFilter(
 }
 
 type solveParams struct {
-	Moves        []*repositories.BoardMove
-	Snapshot     *dispatchcandidateservice.FleetSnapshot
-	Control      *dispatchcontrol.DispatchControl
-	AgentControl *tenant.AgentControl
-	Now          int64
+	Moves    []*repositories.BoardMove
+	Snapshot *dispatchcandidateservice.FleetSnapshot
+	Control  *dispatchcontrol.DispatchControl
+	Policy   Policy
+	Now      int64
 }
 
 func (s *Service) solve(p *solveParams) *portservices.DispatchPlan {
@@ -201,7 +205,7 @@ func (s *Service) solve(p *solveParams) *portservices.DispatchPlan {
 }
 
 func uncoveredOnlyPlan(p *solveParams) *portservices.DispatchPlan {
-	plan := emptyPlan(p.Control, p.AgentControl, p.Now)
+	plan := emptyPlan(p.Control, p.Policy, p.Now)
 	plan.Uncovered = make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves))
 	for _, move := range p.Moves {
 		plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
@@ -238,26 +242,26 @@ func (s *Service) solveImmediate(p *solveParams) *portservices.DispatchPlan {
 	}
 
 	return buildPlan(&buildPlanParams{
-		Moves:        p.Moves,
-		Solution:     assignmentsolver.Solve(cost),
-		Scores:       scores,
-		Control:      p.Control,
-		AgentControl: p.AgentControl,
-		Now:          p.Now,
+		Moves:    p.Moves,
+		Solution: assignmentsolver.Solve(cost),
+		Scores:   scores,
+		Control:  p.Control,
+		Policy:   p.Policy,
+		Now:      p.Now,
 	})
 }
 
 type buildPlanParams struct {
-	Moves        []*repositories.BoardMove
-	Solution     assignmentsolver.Result
-	Scores       [][]*dispatchcandidateservice.CandidateScore
-	Control      *dispatchcontrol.DispatchControl
-	AgentControl *tenant.AgentControl
-	Now          int64
+	Moves    []*repositories.BoardMove
+	Solution assignmentsolver.Result
+	Scores   [][]*dispatchcandidateservice.CandidateScore
+	Control  *dispatchcontrol.DispatchControl
+	Policy   Policy
+	Now      int64
 }
 
 func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
-	tier := resolveTier(p.AgentControl)
+	tier := p.Policy.Tier
 	threshold := p.Control.ConfidenceThreshold()
 
 	plan := &portservices.DispatchPlan{
@@ -265,7 +269,7 @@ func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
 		Uncovered:    make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves)),
 		Tours:        []*portservices.DispatchTour{},
 		PlanningMode: dispatchcontrol.PlanningModeImmediate.String(),
-		ShadowMode:   p.AgentControl.ShadowMode,
+		ShadowMode:   p.Policy.ShadowMode,
 		AutonomyTier: tier,
 		GeneratedAt:  p.Now,
 	}
@@ -286,7 +290,7 @@ func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
 			Score:      score,
 			Tier:       tier,
 			Threshold:  threshold,
-			ShadowMode: p.AgentControl.ShadowMode,
+			ShadowMode: p.Policy.ShadowMode,
 		})
 
 		plan.Assignments = append(plan.Assignments, planned)
@@ -350,18 +354,19 @@ func uncoveredFor(
 func (s *Service) recordPlan(
 	ctx context.Context,
 	req *portservices.DispatchPlanRequest,
-	agentControl *tenant.AgentControl,
+	policy Policy,
 	plan *portservices.DispatchPlan,
-) error {
+) ([]*agent.AgentProposal, error) {
 	if len(plan.Assignments) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	run, err := s.runService.StartInline(ctx, &portservices.StartInlineAgentRunRequest{
-		AgentType:     agent.TypeDispatchAssignment,
-		SubjectType:   agent.SubjectShipmentMove,
-		SubjectID:     plan.Assignments[0].MoveID,
-		PromptVersion: promptVersion,
+		AgentType:         agent.TypeDispatchAssignment,
+		AgentDefinitionID: policy.DefinitionID,
+		SubjectType:       agent.SubjectShipmentMove,
+		SubjectID:         plan.Assignments[0].MoveID,
+		PromptVersion:     promptVersion,
 		Summary: fmt.Sprintf(
 			"Dispatch auto-assign proposed coverage for %d move(s)",
 			len(plan.Assignments),
@@ -370,15 +375,15 @@ func (s *Service) recordPlan(
 		TenantInfo: req.TenantInfo,
 	}, actorFor(req))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	plan.RunID = run.ID
 
-	tier := resolveTier(agentControl)
+	proposals := make([]*agent.AgentProposal, 0, len(plan.Assignments))
 	for _, planned := range plan.Assignments {
 		toolParams, paramsErr := toolParamsFor(planned)
 		if paramsErr != nil {
-			return paramsErr
+			return nil, paramsErr
 		}
 
 		proposal, createErr := s.proposalRepo.Create(ctx, &agent.AgentProposal{
@@ -390,65 +395,41 @@ func (s *Service) recordPlan(
 			Confidence:     planned.Confidence,
 			Rationale:      planned.Rationale,
 			Evidence:       evidenceFor(planned.Score, moveStubFor(planned)),
-			AutonomyTier:   tier,
+			AutonomyTier:   policy.Tier,
 			Status:         agent.ProposalStatusPending,
 		})
 		if createErr != nil {
-			return createErr
+			return nil, createErr
 		}
 		planned.ProposalID = proposal.ID
+		proposals = append(proposals, proposal)
 	}
 
-	return nil
+	return proposals, nil
 }
 
 func (s *Service) applyAutoExecutable(
 	ctx context.Context,
 	req *portservices.DispatchPlanRequest,
 	plan *portservices.DispatchPlan,
+	proposals []*agent.AgentProposal,
 ) {
 	if plan.ShadowMode {
 		return
 	}
 
-	for _, planned := range plan.Assignments {
-		if !planned.AutoExecutable {
+	actor := actorFor(req)
+	for i, planned := range plan.Assignments {
+		if !planned.AutoExecutable || i >= len(proposals) {
 			continue
 		}
 
-		assignReq := &repositories.AssignShipmentMoveRequest{
-			TenantInfo:      req.TenantInfo,
-			ShipmentMoveID:  planned.MoveID,
-			PrimaryWorkerID: planned.WorkerID,
-			TractorID:       planned.TractorID,
-		}
-		if !planned.TrailerID.IsNil() {
-			trailerID := planned.TrailerID
-			assignReq.TrailerID = &trailerID
-		}
-
-		if _, err := s.assignments.AssignToMove(ctx, assignReq); err != nil {
+		if err := s.executor.Execute(ctx, proposals[i], nil, actor); err != nil {
 			planned.AutoExecutable = false
 			s.l.Warn(
 				"auto-assign proposal could not be executed and remains pending",
 				zap.String("moveId", planned.MoveID.String()),
 				zap.String("workerId", planned.WorkerID.String()),
-				zap.Error(err),
-			)
-			continue
-		}
-
-		if _, err := s.proposalRepo.UpdateStatus(
-			ctx,
-			repositories.UpdateAgentProposalStatusRequest{
-				ID:         planned.ProposalID,
-				TenantInfo: req.TenantInfo,
-				Status:     agent.ProposalStatusAccepted,
-			},
-		); err != nil {
-			s.l.Error(
-				"auto-assign executed but the proposal status could not be updated",
-				zap.String("moveId", planned.MoveID.String()),
 				zap.String("proposalId", planned.ProposalID.String()),
 				zap.Error(err),
 			)
@@ -484,17 +465,6 @@ func toolParamsFor(planned *portservices.DispatchPlannedAssignment) (map[string]
 	}
 
 	return out, nil
-}
-
-func resolveTier(agentControl *tenant.AgentControl) agent.AutonomyTier {
-	if agentControl == nil || !agentControl.DispatchAgentEnabled {
-		return agent.TierPropose
-	}
-	tier := agent.AutonomyTier(agentControl.DispatchAutonomyTier)
-	if !tier.IsValid() {
-		return agent.TierPropose
-	}
-	return tier
 }
 
 func actorFor(req *portservices.DispatchPlanRequest) *portservices.RequestActor {

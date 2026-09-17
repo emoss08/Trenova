@@ -22,6 +22,8 @@ import (
 )
 
 type fakeRepo struct {
+	repositories.AIProviderRepository
+
 	providers []*aiprovider.Provider
 	err       error
 }
@@ -250,10 +252,7 @@ func TestCompleteStructured_DisabledGlobally(t *testing.T) {
 	assert.Contains(t, err.Error(), "disabled")
 }
 
-// A diagnosis reply that no provider can parse must fail over rather than
-// returning an empty diagnosis, since an empty diagnosis reads as "nothing is
-// wrong with this billing item".
-func TestDiagnose_FallsThroughOnUnparseableOutput(t *testing.T) {
+func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 	t.Parallel()
 
 	garbage, _ := chatServer(t, http.StatusOK, "I cannot help with that.")
@@ -272,28 +271,40 @@ func TestDiagnose_FallsThroughOnUnparseableOutput(t *testing.T) {
 
 	svc := newTestService(t, weak, strong)
 
-	result, err := svc.Diagnose(t.Context(), &serviceports.DiagnoseRequest{
+	result, err := svc.CompleteStructured(t.Context(), &serviceports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		SystemPrompt: "Diagnose the blocker.",
+		Task:   aiprovider.TaskBillingDiagnosis,
+		System: "Diagnose the blocker.",
 		Context: serviceports.DelimitedContext{
 			Sections: []serviceports.ContextSection{
 				{Title: "Item", Trusted: true, Content: "blocked"},
 			},
 		},
+		OutputSchema: exceptionsSchema(),
+		SchemaName:   "exceptions",
 	})
 	require.NoError(t, err)
 
-	require.Len(t, result.Exceptions, 1)
-	assert.Equal(t, "Other", result.Exceptions[0].Category)
+	assert.Contains(t, result.Text, `"category":"Other"`)
 	assert.Equal(t, int32(1), goodCalls.Load())
 }
 
-// An untrusted provider must never serve a task that can change financial
-// records, even when it is the only candidate the repository returns.
-func TestDiagnose_RefusesUntrustedProviderForLedgerTask(t *testing.T) {
+func exceptionsSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"proposals":  map[string]any{"type": "array"},
+			"exceptions": map[string]any{"type": "array"},
+		},
+		"required":             []string{"proposals", "exceptions"},
+		"additionalProperties": false,
+	}
+}
+
+func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) {
 	t.Parallel()
 
 	server, calls := chatServer(t, http.StatusOK, `{"proposals":[],"exceptions":[]}`)
@@ -303,12 +314,13 @@ func TestDiagnose_RefusesUntrustedProviderForLedgerTask(t *testing.T) {
 
 	svc := newTestService(t, provider)
 
-	_, err := svc.Diagnose(t.Context(), &serviceports.DiagnoseRequest{
+	_, err := svc.CompleteStructured(t.Context(), &serviceports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		SystemPrompt: "Diagnose the blocker.",
+		Task:   aiprovider.TaskBillingDiagnosis,
+		System: "Diagnose the blocker.",
 	})
 	require.Error(t, err)
 	assert.Equal(t, int32(0), calls.Load(), "an untrusted provider must not be called")

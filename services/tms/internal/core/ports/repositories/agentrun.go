@@ -23,6 +23,12 @@ type GetAgentRunByIDRequest struct {
 	TenantInfo *pagination.TenantInfo `json:"-"`
 }
 
+type CountOpenAgentRunsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	SubjectID    pulid.ID
+}
+
 type AgentRunRepository interface {
 	List(
 		ctx context.Context,
@@ -35,4 +41,5 @@ type AgentRunRepository interface {
 	GetByID(ctx context.Context, req GetAgentRunByIDRequest) (*agent.AgentRun, error)
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	Update(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
+	CountOpen(ctx context.Context, req CountOpenAgentRunsRequest) (int, error)
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -61,13 +60,13 @@ func newHorizonFixture(
 	}
 }
 
-func horizonControls() (*dispatchcontrol.DispatchControl, *tenant.AgentControl) {
+func horizonControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
 			PlanningMode:             dispatchcontrol.PlanningModeHorizon,
 			HorizonMaxMovesPerDriver: 3,
-		}, &tenant.AgentControl{
-			DispatchAgentEnabled: true,
-			DispatchAutonomyTier: string(agent.TierPropose),
+		}, Policy{
+			Enabled: true,
+			Tier:    agent.TierPropose,
 		}
 }
 
@@ -80,7 +79,7 @@ func TestBuildHorizonPlan_GroupsChainedMovesIntoOneTour(t *testing.T) {
 		{horizonScore(worker, "Dana", 90, 10)},
 		{horizonScore(worker, "Dana", 80, 25)},
 	})
-	control, agentControl := horizonControls()
+	control, policy := horizonControls()
 
 	plan := buildHorizonPlan(&buildHorizonPlanParams{
 		Moves: moves,
@@ -91,10 +90,10 @@ func TestBuildHorizonPlan_GroupsChainedMovesIntoOneTour(t *testing.T) {
 			},
 			Unassigned: []int{},
 		},
-		Oracle:       fixture.oracle,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          horizonNow,
+		Oracle:  fixture.oracle,
+		Control: control,
+		Policy:  policy,
+		Now:     horizonNow,
 	})
 
 	require.Len(t, plan.Assignments, 2)
@@ -124,7 +123,7 @@ func TestBuildHorizonPlan_SeparateDriversGetSeparateTours(t *testing.T) {
 		{horizonScore(first, "Dana", 90, 10), horizonScore(second, "Sam", 70, 40)},
 		{horizonScore(first, "Dana", 60, 50), horizonScore(second, "Sam", 85, 15)},
 	})
-	control, agentControl := horizonControls()
+	control, policy := horizonControls()
 
 	plan := buildHorizonPlan(&buildHorizonPlanParams{
 		Moves: moves,
@@ -135,10 +134,10 @@ func TestBuildHorizonPlan_SeparateDriversGetSeparateTours(t *testing.T) {
 			},
 			Unassigned: []int{},
 		},
-		Oracle:       fixture.oracle,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          horizonNow,
+		Oracle:  fixture.oracle,
+		Control: control,
+		Policy:  policy,
+		Now:     horizonNow,
 	})
 
 	require.Len(t, plan.Tours, 2)
@@ -156,7 +155,7 @@ func TestBuildHorizonPlan_UnassignedMovesBecomeUncovered(t *testing.T) {
 		{horizonScore(worker, "Dana", 90, 10)},
 		{nil},
 	})
-	control, agentControl := horizonControls()
+	control, policy := horizonControls()
 
 	plan := buildHorizonPlan(&buildHorizonPlanParams{
 		Moves: moves,
@@ -164,10 +163,10 @@ func TestBuildHorizonPlan_UnassignedMovesBecomeUncovered(t *testing.T) {
 			Assignments: []dispatchplanner.Assignment{{Task: 0, Resource: 0, Sequence: 0}},
 			Unassigned:  []int{1},
 		},
-		Oracle:       fixture.oracle,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          horizonNow,
+		Oracle:  fixture.oracle,
+		Control: control,
+		Policy:  policy,
+		Now:     horizonNow,
 	})
 
 	require.Len(t, plan.Assignments, 1)
@@ -184,7 +183,7 @@ func TestBuildHorizonPlan_CarriesProjectionsOntoAssignments(t *testing.T) {
 	scored := horizonScore(worker, "Dana", 90, 10)
 	scored.HOSProjectedDriveMs = 5 * 3600 * 1000
 	fixture := newHorizonFixture(moves, [][]*dispatchcandidateservice.CandidateScore{{scored}})
-	control, agentControl := horizonControls()
+	control, policy := horizonControls()
 
 	plan := buildHorizonPlan(&buildHorizonPlanParams{
 		Moves: moves,
@@ -192,10 +191,10 @@ func TestBuildHorizonPlan_CarriesProjectionsOntoAssignments(t *testing.T) {
 			Assignments: []dispatchplanner.Assignment{{Task: 0, Resource: 0, Sequence: 0}},
 			Unassigned:  []int{},
 		},
-		Oracle:       fixture.oracle,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          horizonNow,
+		Oracle:  fixture.oracle,
+		Control: control,
+		Policy:  policy,
+		Now:     horizonNow,
 	})
 
 	require.Len(t, plan.Assignments, 1)
@@ -210,7 +209,7 @@ func TestSolve_RoutesOnPlanningMode(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{}
-	_, agentControl := horizonControls()
+	_, policy := horizonControls()
 
 	t.Run("no drivers short-circuits in either mode", func(t *testing.T) {
 		t.Parallel()
@@ -220,11 +219,11 @@ func TestSolve_RoutesOnPlanningMode(t *testing.T) {
 			dispatchcontrol.PlanningModeHorizon,
 		} {
 			plan := svc.solve(&solveParams{
-				Moves:        []*repositories.BoardMove{horizonMove("P1")},
-				Snapshot:     &dispatchcandidateservice.FleetSnapshot{},
-				Control:      &dispatchcontrol.DispatchControl{PlanningMode: mode},
-				AgentControl: agentControl,
-				Now:          horizonNow,
+				Moves:    []*repositories.BoardMove{horizonMove("P1")},
+				Snapshot: &dispatchcandidateservice.FleetSnapshot{},
+				Control:  &dispatchcontrol.DispatchControl{PlanningMode: mode},
+				Policy:   policy,
+				Now:      horizonNow,
 			})
 
 			assert.Empty(t, plan.Assignments)
@@ -344,7 +343,7 @@ func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{candidates: &dispatchcandidateservice.Service{}}
-	_, agentControl := horizonControls()
+	_, policy := horizonControls()
 
 	build := func(control *dispatchcontrol.DispatchControl) *portservices.DispatchPlan {
 		return svc.solve(&solveParams{
@@ -354,9 +353,9 @@ func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 				Control: control,
 				Drivers: []*repositories.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
 			},
-			Control:      control,
-			AgentControl: agentControl,
-			Now:          horizonNow,
+			Control: control,
+			Policy:  policy,
+			Now:     horizonNow,
 		})
 	}
 
@@ -385,7 +384,7 @@ func TestSolve_HorizonModeIsLabelledAsSuch(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{candidates: &dispatchcandidateservice.Service{}}
-	control, agentControl := horizonControls()
+	control, policy := horizonControls()
 	disabled := int16(0)
 	control.HorizonSearchIterations = &disabled
 
@@ -396,9 +395,9 @@ func TestSolve_HorizonModeIsLabelledAsSuch(t *testing.T) {
 			Control: control,
 			Drivers: []*repositories.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
 		},
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          horizonNow,
+		Control: control,
+		Policy:  policy,
+		Now:     horizonNow,
 	})
 
 	assert.Equal(t, dispatchcontrol.PlanningModeHorizon.String(), plan.PlanningMode)

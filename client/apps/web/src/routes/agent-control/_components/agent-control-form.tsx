@@ -1,141 +1,76 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { NumberField } from "@/components/fields/number-field";
-import { SwitchField } from "@/components/fields/switch-field";
-import { FormSaveDock } from "@/components/form-save-dock";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { fetchAgentControl, updateAgentControl } from "@/lib/graphql/agent-control";
-import { agentControlSchema, type AgentControlFormValues } from "@/types/agent-control";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Card } from "@trenova/shared/components/ui/card";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { usePermission } from "@/hooks/use-permission";
+import { fetchAgentControl, updateAgentControl } from "@/lib/graphql/agent-control";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { PauseCircleIcon } from "lucide-react";
 import { useCallback } from "react";
-import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 const AGENT_CONTROL_QUERY_KEY = ["agent-control"];
 
 export default function AgentControlForm() {
   const t = useT();
-
   const queryClient = useQueryClient();
+
   const { data } = useSuspenseQuery({
     queryKey: AGENT_CONTROL_QUERY_KEY,
     queryFn: ({ signal }) => fetchAgentControl({ signal }),
   });
 
-  const defaultValues: AgentControlFormValues = {
-    billingAgentEnabled: data.billingAgentEnabled,
-    shadowMode: data.shadowMode,
-    decisionTimeoutSeconds: data.decisionTimeoutSeconds,
-  };
-
-  const form = useForm<AgentControlFormValues>({
-    resolver: zodResolver(agentControlSchema) as Resolver<AgentControlFormValues>,
-    defaultValues,
-    values: defaultValues,
-  });
-  const { handleSubmit, reset } = form;
+  const { allowed: canUpdate } = usePermission(Resource.AgentControl, Operation.Update);
 
   const mutation = useApiMutation({
-    mutationFn: (values: AgentControlFormValues) => updateAgentControl(values),
-    onSuccess: (_, values) => {
-      toast.success(t("Agent control updated"));
-      reset(values);
-      void queryClient.invalidateQueries({ queryKey: AGENT_CONTROL_QUERY_KEY });
+    mutationFn: (shadowMode: boolean) => updateAgentControl({ shadowMode }),
+    onSuccess: async (_result, shadowMode) => {
+      toast.success(shadowMode ? t("All agents paused") : t("Agents resumed"));
+      await queryClient.invalidateQueries({ queryKey: AGENT_CONTROL_QUERY_KEY });
     },
-    form,
     resourceName: "Agent Control",
   });
 
-  const onSubmit = useCallback(
-    (values: AgentControlFormValues) => mutation.mutate(values),
-    [mutation],
-  );
+  const onChange = useCallback((checked: boolean) => mutation.mutate(checked), [mutation]);
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-14">
-          <BillingAgentCard />
-          <FormSaveDock saveButtonContent={t("Save Changes")} />
-        </div>
-      </Form>
-    </FormProvider>
-  );
-}
-
-function BillingAgentCard() {
-  const t = useT();
-
-  const { control } = useFormContext<AgentControlFormValues>();
-  const shadowMode = useWatch({ control, name: "shadowMode" });
-  const billingAgentEnabled = useWatch({ control, name: "billingAgentEnabled" });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Billing Exception Agent")}</CardTitle>
-        <CardDescription>
-          {t(
-            "The billing exception agent inspects blocked billing queue items, diagnoses why they are held, and proposes resolutions for a human to approve. It never approves or transitions an item itself.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="billingAgentEnabled"
-              label={t("Enable Billing Exception Agent")}
-              description={t(
-                "Allow the agent to run against this organization's blocked billing queue items.",
-              )}
-              position="left"
-            />
-          </FormControl>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="shadowMode"
-              label={t("Shadow Mode")}
-              description={t(
-                "While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions.",
-              )}
-              position="left"
-            />
-          </FormControl>
-          {shadowMode && billingAgentEnabled ? (
-            <Alert variant="warning">
-              <AlertTitle>{t("Proposals are hidden")}</AlertTitle>
-              <AlertDescription>
+    <div className="flex flex-col gap-3">
+      <Card size="sm" className="gap-3 px-4 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <PauseCircleIcon className="size-4" />
+            </span>
+            <div className="max-w-prose">
+              <p className="text-sm font-semibold">{t("Pause all agents")}</p>
+              <p className="text-muted-foreground text-xs">
                 {t(
-                  "Shadow mode is on, so runs complete and persist proposals but nothing appears for review and no decisions are awaited. Turn shadow mode off to surface proposals and enable human decisions.",
+                  "Agents keep running and keep recording what they would do, but nothing they propose is offered for a decision and nothing they propose can be executed. Each agent also has its own shadow switch.",
                 )}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-          <FormControl className="max-w-[420px]">
-            <NumberField
-              control={control}
-              name="decisionTimeoutSeconds"
-              label={t("Decision Timeout (seconds)")}
-              description={t(
-                "How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours).",
-              )}
-              rules={{ required: true }}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={data.shadowMode}
+            disabled={!canUpdate || mutation.isPending}
+            onCheckedChange={onChange}
+            aria-label={t("Pause all agents")}
+          />
+        </div>
+      </Card>
+
+      {data.shadowMode && (
+        <Alert variant="warning">
+          <AlertTitle>{t("Proposals are hidden")}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Every agent in this organization is paused. Runs finish and their proposals are stored for review later, but none appear for a decision. Turn this off to let agents surface their work.",
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
   );
 }

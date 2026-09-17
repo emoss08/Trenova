@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -76,6 +77,7 @@ type Params struct {
 	OrderDerivation      services.OrderDerivationService
 	DistanceCalculation  services.DistanceCalculationService `optional:"true"`
 	TenderGuard          services.TenderGuard                `optional:"true"`
+	AgentEvents          services.AgentEventPublisher        `optional:"true"`
 }
 
 type service struct {
@@ -112,6 +114,7 @@ type service struct {
 	orderDerivation      services.OrderDerivationService
 	distanceCalculation  services.DistanceCalculationService
 	tenderGuard          services.TenderGuard
+	agentEvents          services.AgentEventPublisher
 	mutationObservers    []services.ShipmentMutationObserver
 }
 
@@ -150,6 +153,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		orderDerivation:      p.OrderDerivation,
 		distanceCalculation:  p.DistanceCalculation,
 		tenderGuard:          p.TenderGuard,
+		agentEvents:          p.AgentEvents,
 	}
 }
 
@@ -385,6 +389,14 @@ func (s *service) Create(
 		createdEntity,
 		auditActor,
 	))
+	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
+		Kind:      agent.EventShipmentCreated,
+		SubjectID: createdEntity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: createdEntity.OrganizationID,
+			BuID:  createdEntity.BusinessUnitID,
+		},
+	})
 
 	return createdEntity, nil
 }

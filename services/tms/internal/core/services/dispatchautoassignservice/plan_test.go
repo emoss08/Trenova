@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -110,7 +109,7 @@ func planFor(
 	t *testing.T,
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
-	agentControl *tenant.AgentControl,
+	policy Policy,
 ) *portservices.DispatchPlan {
 	t.Helper()
 
@@ -136,33 +135,33 @@ func planFor(
 	}
 
 	return buildPlan(&buildPlanParams{
-		Moves:        moves,
-		Solution:     assignmentsolver.Solve(cost),
-		Scores:       grid,
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          1_700_000_000,
+		Moves:    moves,
+		Solution: assignmentsolver.Solve(cost),
+		Scores:   grid,
+		Control:  control,
+		Policy:   policy,
+		Now:      1_700_000_000,
 	})
 }
 
-func autoExecuteControls() (*dispatchcontrol.DispatchControl, *tenant.AgentControl) {
+func autoExecuteControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
 			AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
-		}, &tenant.AgentControl{
-			DispatchAgentEnabled: true,
-			DispatchAutonomyTier: string(agent.TierAutoExecute),
-			ShadowMode:           false,
+		}, Policy{
+			Enabled:    true,
+			Tier:       agent.TierAutoExecute,
+			ShadowMode: false,
 		}
 }
 
 func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
+	control, policy := autoExecuteControls()
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{
 		score(95),
 		score(80),
-	}, control, agentControl)
+	}, control, policy)
 
 	require.Len(t, plan.Assignments, 2)
 	assert.True(t, plan.Assignments[0].AutoExecutable, "0.95 clears the 0.85 threshold")
@@ -174,9 +173,9 @@ func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {
 func TestBuildPlan_BelowThresholdStillProducesAnAssignment(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
+	control, policy := autoExecuteControls()
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(50)},
-		control, agentControl)
+		control, policy)
 
 	require.Len(t, plan.Assignments, 1)
 	assert.False(t, plan.Assignments[0].AutoExecutable)
@@ -186,11 +185,11 @@ func TestBuildPlan_BelowThresholdStillProducesAnAssignment(t *testing.T) {
 func TestBuildPlan_ShadowModeNeverAutoExecutes(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
-	agentControl.ShadowMode = true
+	control, policy := autoExecuteControls()
+	policy.ShadowMode = true
 
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, agentControl)
+		control, policy)
 
 	require.Len(t, plan.Assignments, 1)
 	assert.False(t, plan.Assignments[0].AutoExecutable)
@@ -200,11 +199,11 @@ func TestBuildPlan_ShadowModeNeverAutoExecutes(t *testing.T) {
 func TestBuildPlan_ProposeTierNeverAutoExecutes(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
-	agentControl.DispatchAutonomyTier = string(agent.TierPropose)
+	control, policy := autoExecuteControls()
+	policy.Tier = agent.TierPropose
 
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, agentControl)
+		control, policy)
 
 	require.Len(t, plan.Assignments, 1)
 	assert.False(t, plan.Assignments[0].AutoExecutable)
@@ -214,11 +213,11 @@ func TestBuildPlan_ProposeTierNeverAutoExecutes(t *testing.T) {
 func TestBuildPlan_ActWithApprovalNeverAutoExecutes(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
-	agentControl.DispatchAutonomyTier = string(agent.TierActWithApproval)
+	control, policy := autoExecuteControls()
+	policy.Tier = agent.TierActWithApproval
 
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, agentControl)
+		control, policy)
 
 	require.Len(t, plan.Assignments, 1)
 	assert.False(t, plan.Assignments[0].AutoExecutable)
@@ -227,12 +226,12 @@ func TestBuildPlan_ActWithApprovalNeverAutoExecutes(t *testing.T) {
 func TestBuildPlan_UncoveredMovesExplainTheClosestDisqualification(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
+	control, policy := autoExecuteControls()
 	blocked := score(70, blockFinding())
 	blocked.WorkerName = "Dana Ellis"
 
 	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{blocked},
-		control, agentControl)
+		control, policy)
 
 	assert.Empty(t, plan.Assignments)
 	require.Len(t, plan.Uncovered, 1)
@@ -244,16 +243,16 @@ func TestBuildPlan_UncoveredMovesExplainTheClosestDisqualification(t *testing.T)
 func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
+	control, policy := autoExecuteControls()
 	moves := []*repositories.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
 
 	plan := buildPlan(&buildPlanParams{
-		Moves:        moves,
-		Solution:     assignmentsolver.Result{RowAssignment: []int{}, ColAssignment: []int{}},
-		Scores:       [][]*dispatchcandidateservice.CandidateScore{nil},
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          1_700_000_000,
+		Moves:    moves,
+		Solution: assignmentsolver.Result{RowAssignment: []int{}, ColAssignment: []int{}},
+		Scores:   [][]*dispatchcandidateservice.CandidateScore{nil},
+		Control:  control,
+		Policy:   policy,
+		Now:      1_700_000_000,
 	})
 
 	assert.Empty(t, plan.Assignments)
@@ -264,7 +263,7 @@ func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
 func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 	t.Parallel()
 
-	control, agentControl := autoExecuteControls()
+	control, policy := autoExecuteControls()
 	svc := &Service{}
 
 	plan := svc.solve(&solveParams{
@@ -272,10 +271,10 @@ func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-1"},
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-2"},
 		},
-		Snapshot:     &dispatchcandidateservice.FleetSnapshot{},
-		Control:      control,
-		AgentControl: agentControl,
-		Now:          1_700_000_000,
+		Snapshot: &dispatchcandidateservice.FleetSnapshot{},
+		Control:  control,
+		Policy:   policy,
+		Now:      1_700_000_000,
 	})
 
 	assert.Empty(t, plan.Assignments)
@@ -322,24 +321,6 @@ func TestUncoveredFor_DistinguishesBlockedFromMerelyUnchosen(t *testing.T) {
 	assert.NotContains(t, disqualified.Reason, "no drive time remaining",
 		"the findings carry the why; repeating it in the reason reads twice in the UI")
 	assert.NotEmpty(t, disqualified.BestBlockedFindings)
-}
-
-func TestResolveTier(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, agent.TierPropose, resolveTier(nil))
-	assert.Equal(t, agent.TierPropose, resolveTier(&tenant.AgentControl{
-		DispatchAgentEnabled: false,
-		DispatchAutonomyTier: string(agent.TierAutoExecute),
-	}), "a disabled dispatch agent can never act, whatever tier is stored")
-	assert.Equal(t, agent.TierPropose, resolveTier(&tenant.AgentControl{
-		DispatchAgentEnabled: true,
-		DispatchAutonomyTier: "NotATier",
-	}), "an unrecognized tier falls back to the safest one")
-	assert.Equal(t, agent.TierAutoExecute, resolveTier(&tenant.AgentControl{
-		DispatchAgentEnabled: true,
-		DispatchAutonomyTier: string(agent.TierAutoExecute),
-	}))
 }
 
 func TestRationaleFor_LeadsWithTheDrivingFactors(t *testing.T) {

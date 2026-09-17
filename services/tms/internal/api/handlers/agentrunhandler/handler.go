@@ -64,7 +64,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 type startRunRequest struct {
-	SubjectID pulid.ID `json:"subjectId"`
+	AgentDefinitionID pulid.ID          `json:"agentDefinitionId"`
+	SystemKey         string            `json:"systemKey"`
+	SubjectType       agent.SubjectType `json:"subjectType"`
+	SubjectID         pulid.ID          `json:"subjectId"`
 }
 
 func (h *Handler) start(c *gin.Context) {
@@ -77,12 +80,14 @@ func (h *Handler) start(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	run, err := h.service.Start(
+	run, err := h.service.StartForDefinition(
 		c.Request.Context(),
-		&serviceports.StartAgentRunRequest{
-			AgentType:   agent.TypeBillingException,
-			SubjectType: agent.SubjectBillingQueueItem,
-			SubjectID:   body.SubjectID,
+		&serviceports.StartAgentRunForDefinitionRequest{
+			DefinitionID: body.AgentDefinitionID,
+			SystemKey:    body.SystemKey,
+			SubjectType:  body.SubjectType,
+			SubjectID:    body.SubjectID,
+			Trigger:      agent.RunTriggerManual,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,

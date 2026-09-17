@@ -13,7 +13,11 @@ type ToolExecuteParams struct {
 	BusinessUnitID pulid.ID
 	Actor          *RequestActor
 	IdempotencyKey string
-	Params         map[string]any
+	// RunID is the agent run the call belongs to, when there is one. Tools
+	// that record something about the run itself, such as an exception, read
+	// it from here rather than trusting a model-supplied id.
+	RunID  pulid.ID
+	Params map[string]any
 }
 
 type AgentTool interface {

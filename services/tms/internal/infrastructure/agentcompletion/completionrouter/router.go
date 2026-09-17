@@ -59,38 +59,6 @@ func New(p Params) serviceports.CompletionService {
 	}
 }
 
-func (s *Service) Diagnose(
-	ctx context.Context,
-	req *serviceports.DiagnoseRequest,
-) (*serviceports.DiagnoseResult, error) {
-	if !s.cfg.AIEnabled() {
-		return nil, errortypes.NewBusinessError("AI features are disabled")
-	}
-
-	schema := modeladapter.BuildDiagnosisSchema()
-	system := modeladapter.BuildDiagnoseSystemPrompt(req)
-
-	var payload modeladapter.DiagnosisPayload
-	outcome, err := s.run(ctx, &runRequest{
-		TenantInfo:  req.TenantInfo,
-		Task:        aiprovider.TaskBillingDiagnosis,
-		System:      system,
-		UserContent: modeladapter.BuildContextText(req.Context),
-		Schema:      schema,
-		SchemaName:  modeladapter.DiagnosisSchemaName,
-		Into:        &payload,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	result := payload.ToDiagnoseResult(outcome.Model)
-	result.ProviderID = outcome.ProviderID
-	result.ProviderKind = outcome.ProviderKind
-
-	return result, nil
-}
-
 func (s *Service) CompleteStructured(
 	ctx context.Context,
 	req *serviceports.StructuredCompletionRequest,

@@ -17,6 +17,7 @@ import {
   LockIcon,
   MessageSquareIcon,
   PencilIcon,
+  PlayIcon,
   RepeatIcon,
   Trash2Icon,
   WrenchIcon,
@@ -45,9 +46,12 @@ type AgentCardProps = {
   templates: readonly AgentTemplate[];
   canUpdate: boolean;
   canDelete: boolean;
+  canRun: boolean;
   isToggling: boolean;
+  isRunning: boolean;
   onEdit: () => void;
   onToggleEnabled: (enabled: boolean) => void;
+  onRunNow: () => void;
   onDelete: () => void;
 };
 
@@ -56,9 +60,12 @@ export function AgentCard({
   templates,
   canUpdate,
   canDelete,
+  canRun,
   isToggling,
+  isRunning,
   onEdit,
   onToggleEnabled,
+  onRunNow,
   onDelete,
 }: AgentCardProps) {
   const t = useT();
@@ -191,6 +198,30 @@ export function AgentCard({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {canRun && agent.triggerMode !== "Chat" && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex">
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={t("Run now")}
+                      disabled={!agent.enabled || isRunning}
+                      onClick={onRunNow}
+                    >
+                      <PlayIcon className="size-3.5" />
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {agent.enabled
+                  ? t("Start a run now without waiting for its trigger")
+                  : t("Enable the agent before running it")}
+              </TooltipContent>
+            </Tooltip>
+          )}
           {canUpdate && (
             <Button size="icon-xs" variant="ghost" aria-label={t("Edit agent")} onClick={onEdit}>
               <PencilIcon className="size-3.5" />

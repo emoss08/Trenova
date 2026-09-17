@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -23,15 +22,10 @@ type AgentControl struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 
-	ShadowMode          bool `json:"shadowMode"          bun:"shadow_mode,type:BOOLEAN,notnull"`
-	BillingAgentEnabled bool `json:"billingAgentEnabled" bun:"billing_agent_enabled,type:BOOLEAN,notnull"`
-	// DispatchAgentEnabled gates the auto-assign agent separately from the billing agent,
-	// so enabling one never enables the other.
-	DispatchAgentEnabled bool `json:"dispatchAgentEnabled" bun:"dispatch_agent_enabled,type:BOOLEAN,notnull"`
-	// DispatchAutonomyTier is an agent.AutonomyTier. It is held as a string because the
-	// agent domain already depends on this package, and importing it back would cycle.
-	DispatchAutonomyTier   string `json:"dispatchAutonomyTier"   bun:"dispatch_autonomy_tier,type:agent_autonomy_tier_enum,notnull,default:'Propose'"`
-	DecisionTimeoutSeconds int    `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull,default:86400"`
+	ShadowMode bool `json:"shadowMode" bun:"shadow_mode,type:BOOLEAN,notnull"`
+
+	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
+	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -41,15 +35,7 @@ type AgentControl struct {
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(
-		ac,
-		validation.Field(
-			&ac.DecisionTimeoutSeconds,
-			validation.Min(60).Error("Decision timeout must be at least 60 seconds"),
-		),
-	))
-}
+func (ac *AgentControl) Validate(_ *errortypes.MultiError) {}
 
 func (ac *AgentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

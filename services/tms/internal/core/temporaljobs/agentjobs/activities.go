@@ -4,295 +4,221 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const billingExceptionSystemPrompt = "You are a billing exception analyst for a transportation " +
-	"management system. You inspect a blocked billing queue item, determine why it is blocked, and " +
-	"propose resolutions for a human biller to approve. You never execute changes yourself. Prefer " +
-	"a proposal that a registered tool can carry out; when you cannot resolve the blocker or your " +
-	"confidence is low, raise an exception instead."
+const (
+	maxSummaryChars = 2000
+	promptVersion   = "agent-definition/v2"
+)
 
 type ActivitiesParams struct {
 	fx.In
 
-	BillingQueue serviceports.BillingQueueService
-	Shipment     serviceports.ShipmentService
-	Completion   serviceports.CompletionService
-	ToolRegistry serviceports.AgentToolRegistry
-	ExceptionSvc serviceports.AgentExceptionService
+	Logger       *zap.Logger
+	Definitions  repositories.AgentDefinitionRepository
+	Controls     repositories.AgentControlRepository
 	RunRepo      repositories.AgentRunRepository
 	ProposalRepo repositories.AgentProposalRepository
-	Logger       *zap.Logger
+	Runs         serviceports.AgentRunService
+	Runtime      serviceports.AgentRuntime
+	Contexts     serviceports.RuntimeContextBuilder
+	Recorder     *proposalrecorder.Service
+	BillingQueue serviceports.BillingQueueService
+	Shipment     serviceports.ShipmentService
+	Console      repositories.DispatchConsoleRepository `optional:"true"`
 }
 
 type Activities struct {
-	billingQueue serviceports.BillingQueueService
-	shipment     serviceports.ShipmentService
-	completion   serviceports.CompletionService
-	toolRegistry serviceports.AgentToolRegistry
-	exceptionSvc serviceports.AgentExceptionService
+	logger       *zap.Logger
+	definitions  repositories.AgentDefinitionRepository
+	controls     repositories.AgentControlRepository
 	runRepo      repositories.AgentRunRepository
 	proposalRepo repositories.AgentProposalRepository
-	logger       *zap.Logger
+	runs         serviceports.AgentRunService
+	runtime      serviceports.AgentRuntime
+	contexts     serviceports.RuntimeContextBuilder
+	recorder     *proposalrecorder.Service
+	subjects     *SubjectContext
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
+	logger := p.Logger.Named("agent-activities")
+
 	return &Activities{
-		billingQueue: p.BillingQueue,
-		shipment:     p.Shipment,
-		completion:   p.Completion,
-		toolRegistry: p.ToolRegistry,
-		exceptionSvc: p.ExceptionSvc,
+		logger:       logger,
+		definitions:  p.Definitions,
+		controls:     p.Controls,
 		runRepo:      p.RunRepo,
 		proposalRepo: p.ProposalRepo,
-		logger:       p.Logger.Named("billing-agent-activities"),
+		runs:         p.Runs,
+		runtime:      p.Runtime,
+		contexts:     p.Contexts,
+		recorder:     p.Recorder,
+		subjects: &SubjectContext{
+			billingQueue: p.BillingQueue,
+			shipments:    p.Shipment,
+			console:      p.Console,
+			logger:       logger,
+		},
 	}
 }
 
-func (a *Activities) GatherContextActivity(
+func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
 	payload *AgentRunPayload,
-) (*GatherContextResult, error) {
+) (*PrepareRunResult, error) {
 	tenant := payload.tenantInfo()
 
-	item, err := a.billingQueue.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		TenantInfo:            tenant,
-		ItemID:                payload.SubjectID,
-		ExpandShipmentDetails: true,
+	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         payload.DefinitionID,
+		TenantInfo: tenant,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("gather context: load billing queue item: %w", err)
-	}
-
-	sections := make([]serviceports.ContextSection, 0, 3)
-	sections = append(sections, serviceports.ContextSection{
-		Title:   "Billing Queue Item",
-		Trusted: true,
-		Content: marshalTrusted(item),
-	})
-
-	if item.ShipmentID.IsNotNil() {
-		readiness, rErr := a.shipment.GetBillingReadiness(ctx, item.ShipmentID, tenant)
-		if rErr != nil {
-			a.logger.Warn("failed to load billing readiness", zap.Error(rErr))
-		} else {
-			sections = append(sections, serviceports.ContextSection{
-				Title:   "Billing Readiness",
-				Trusted: true,
-				Content: marshalTrusted(map[string]any{
-					"validationFailures":  readiness.ValidationFailures,
-					"missingRequirements": readiness.MissingRequirements,
-					"warnings":            readiness.Warnings,
-					"serviceFailures":     readiness.ServiceFailureContext,
-				}),
-			})
-		}
-	}
-
-	notes := strings.TrimSpace(
-		strings.Join([]string{item.ReviewNotes, item.ExceptionNotes, item.CancelReason}, "\n"),
-	)
-	if notes != "" {
-		sections = append(sections, serviceports.ContextSection{
-			Title:   "Notes and Comments",
-			Trusted: false,
-			Content: notes,
-		})
-	}
-
-	deliminated := serviceports.DelimitedContext{Sections: sections}
-	hash := hashContext(deliminated)
-
-	if err = a.updateRun(ctx, tenant, payload.RunID, func(run *agent.AgentRun) {
-		run.Status = agent.RunStatusDiagnosing
-		run.InputContextHash = hash
-		run.StartedAt = run.CreatedAt
-	}); err != nil {
-		return nil, err
-	}
-
-	return &GatherContextResult{
-		Context:          deliminated,
-		InputContextHash: hash,
-		SubjectID:        payload.SubjectID,
-	}, nil
-}
-
-func (a *Activities) DiagnoseActivity(
-	ctx context.Context,
-	input *DiagnoseActivityInput,
-) (*DiagnoseActivityResult, error) {
-	req := &serviceports.DiagnoseRequest{
-		TenantInfo:    input.TenantInfo,
-		PromptVersion: input.PromptVersion,
-		SystemPrompt:  billingExceptionSystemPrompt,
-		Context:       input.Context,
-		ToolSchemas:   a.toolRegistry.Descriptors(),
-	}
-
-	result, err := a.completion.Diagnose(ctx, req)
-	if err == nil {
-		return toDiagnoseResult(result), nil
-	}
-
-	if !errors.Is(err, serviceports.ErrModelSchemaValidation) {
-		return nil, err
-	}
-
-	req.SystemPrompt += "\n\nYour previous response did not satisfy the required schema: " +
-		err.Error() + "\nReturn output that strictly matches the schema."
-
-	result, err = a.completion.Diagnose(ctx, req)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
-			"model output failed schema validation after retry",
-			"SchemaValidation",
-			err,
+			"agent definition unavailable", "DefinitionUnavailable", err,
+		)
+	}
+	if !definition.Enabled {
+		return nil, temporal.NewNonRetryableApplicationError(
+			"agent definition is disabled", "DefinitionDisabled", nil,
 		)
 	}
 
-	return toDiagnoseResult(result), nil
-}
-
-func (a *Activities) PersistDiagnosisActivity(
-	ctx context.Context,
-	input *PersistDiagnosisInput,
-) (*PersistDiagnosisResult, error) {
-	result := &PersistDiagnosisResult{}
-
-	for _, proposed := range input.Proposals {
-		persisted, err := a.persistProposal(ctx, input, proposed)
-		if err != nil {
-			return nil, err
-		}
-		if persisted {
-			result.ProposalsPersisted++
-		}
+	control, err := a.controls.GetOrCreate(ctx, tenant)
+	if err != nil {
+		return nil, fmt.Errorf("load agent control: %w", err)
 	}
 
-	for _, raised := range input.Exceptions {
-		if err := a.flagException(ctx, input, raised); err != nil {
-			return nil, err
-		}
-		result.ExceptionsPersisted++
+	subject, err := a.subjects.Describe(ctx, tenant, payload.SubjectType, payload.SubjectID)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
-		run.ModelIdentifier = input.ModelIdentifier
+	hash := hashSubject(definition, subject)
+	if err = a.updateRun(ctx, tenant, payload.RunID, func(run *agent.AgentRun) {
+		run.Status = agent.RunStatusDiagnosing
+		run.InputContextHash = hash
+		run.PromptVersion = promptVersion
+		if run.StartedAt == 0 {
+			run.StartedAt = timeutils.NowUnix()
+		}
 	}); err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return &PrepareRunResult{
+		Definition:             definition,
+		Subject:                subject,
+		ShadowMode:             definition.EffectiveShadow(control.ShadowMode),
+		DecisionTimeoutSeconds: definition.DecisionTimeoutSeconds,
+		RunTimeoutSeconds:      definition.RunTimeoutSeconds,
+	}, nil
 }
 
-func (a *Activities) persistProposal(
+func (a *Activities) RunAgentActivity(
 	ctx context.Context,
-	input *PersistDiagnosisInput,
-	proposed serviceports.ProposedAction,
-) (bool, error) {
-	tool, ok := a.toolRegistry.Get(proposed.ToolName)
-	if !ok {
-		return false, a.flagException(ctx, input, serviceports.RaisedException{
-			Category:       string(agent.CategoryUnableToDiagnose),
-			Severity:       string(agent.SeverityMedium),
-			AttemptSummary: "Model proposed an unknown tool: " + proposed.ToolName,
-			Evidence:       proposed.Evidence,
-		})
-	}
+	input *RunAgentInput,
+) (*RunAgentResult, error) {
+	payload := input.Payload
+	tenant := payload.tenantInfo()
+	actor := agentActor(tenant)
+	definition := input.Definition
 
-	proposal := &agent.AgentProposal{
-		OrganizationID: input.TenantInfo.OrgID,
-		BusinessUnitID: input.TenantInfo.BuID,
-		RunID:          input.RunID,
-		ToolName:       proposed.ToolName,
-		ToolParams:     proposed.ToolParams,
-		Confidence:     decimal.NewFromFloat(proposed.Confidence),
-		Rationale:      proposed.Rationale,
-		Evidence:       proposed.Evidence,
-		AutonomyTier:   tool.DefaultAutonomyTier(),
-		Status:         agent.ProposalStatusPending,
-	}
-
-	me := errortypes.NewMultiError()
-	proposal.Validate(me)
-	if me.HasErrors() {
-		return false, a.flagException(ctx, input, serviceports.RaisedException{
-			Category:       string(agent.CategoryUnableToDiagnose),
-			Severity:       string(agent.SeverityMedium),
-			AttemptSummary: "Model produced an invalid proposal for tool " + proposed.ToolName,
-			Evidence:       proposed.Evidence,
-		})
-	}
-
-	if _, err := a.proposalRepo.Create(ctx, proposal); err != nil {
-		return false, fmt.Errorf("persist proposal: %w", err)
-	}
-
-	return true, nil
-}
-
-func (a *Activities) flagException(
-	ctx context.Context,
-	input *PersistDiagnosisInput,
-	raised serviceports.RaisedException,
-) error {
-	category := agent.ExceptionCategory(raised.Category)
-	if !category.IsValid() {
-		category = agent.CategoryOther
-	}
-
-	severity := agent.Severity(raised.Severity)
-	if !severity.IsValid() {
-		severity = agent.SeverityMedium
-	}
-
-	evidence := raised.Evidence
-	if len(evidence) == 0 {
-		evidence = []agent.EvidenceRef{{
-			Type: "agent_run",
-			ID:   input.RunID.String(),
-			Note: "raised by billing exception agent",
-		}}
-	}
-
-	_, err := a.exceptionSvc.Flag(ctx, &serviceports.FlagAgentExceptionRequest{
-		RunID:          input.RunID,
-		Category:       category,
-		Severity:       severity,
-		SubjectType:    input.SubjectType,
-		SubjectID:      input.SubjectID,
-		AttemptSummary: raised.AttemptSummary,
-		Evidence:       evidence,
-		BlastRadius:    raised.BlastRadius,
-		TenantInfo:     input.TenantInfo,
-	}, agentActor(input.TenantInfo))
+	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
+		Definition: definition,
+		Actor:      actor,
+		Trigger:    payload.Trigger,
+		Subject:    input.Subject,
+	})
 	if err != nil {
-		return fmt.Errorf("flag exception: %w", err)
+		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
 
-	return nil
+	activity.RecordHeartbeat(ctx, "running")
+
+	outcome, err := a.runtime.Run(ctx, &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      actor,
+		Context:    runtimeContext,
+		Input:      backgroundInput(payload, input.Subject),
+		RunID:      payload.RunID,
+		Emit: func(serviceports.StreamEvent) {
+			activity.RecordHeartbeat(ctx, "working")
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		ID:         payload.RunID,
+		TenantInfo: &tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load agent run: %w", err)
+	}
+
+	recorded, err := a.recorder.Record(ctx, &proposalrecorder.RecordRequest{
+		Actor:      actor,
+		Definition: definition,
+		Run:        run,
+		Actions:    outcome.Actions,
+		Evidence:   subjectEvidence(input.Subject, payload.RunID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("record proposals: %w", err)
+	}
+
+	pending := 0
+	for _, proposal := range recorded.Proposals {
+		if proposal.Status == agent.ProposalStatusPending {
+			pending++
+		}
+	}
+
+	run.ModelIdentifier = outcome.Model
+	run.Summary = stringutils.Ellipsize(strings.TrimSpace(outcome.Reply), maxSummaryChars)
+	if pending > 0 {
+		run.Status = agent.RunStatusAwaitingDecision
+	}
+	if _, err = a.runRepo.Update(ctx, run); err != nil {
+		return nil, fmt.Errorf("update agent run: %w", err)
+	}
+
+	return &RunAgentResult{
+		Reply:            outcome.Reply,
+		Model:            outcome.Model,
+		ToolCallsUsed:    outcome.ToolCallsUsed,
+		Exhausted:        outcome.Exhausted,
+		ProposalsRaised:  len(recorded.Proposals),
+		PendingProposals: pending,
+	}, nil
 }
 
 func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRunInput) error {
 	return a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
 		run.Status = input.Status
-		completedAt := run.UpdatedAt
+		if input.Error != "" {
+			run.ErrorMessage = stringutils.Ellipsize(input.Error, maxSummaryChars)
+		}
+		completedAt := timeutils.NowUnix()
 		run.CompletedAt = &completedAt
 	})
 }
@@ -313,9 +239,119 @@ func (a *Activities) ExpireProposalsActivity(
 
 	return a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
 		run.Status = agent.RunStatusCompleted
-		completedAt := run.UpdatedAt
+		completedAt := timeutils.NowUnix()
 		run.CompletedAt = &completedAt
 	})
+}
+
+func (a *Activities) ListDueDefinitionsActivity(
+	ctx context.Context,
+	input *ListDueDefinitionsInput,
+) (*ListDueDefinitionsResult, error) {
+	definitions, err := a.definitions.ListDueAcrossTenants(ctx, repositories.ListDueAcrossTenantsRequest{
+		Now:   input.Now,
+		Limit: input.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	due := make([]DueDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		if definition.NextRunAt == nil {
+			continue
+		}
+		due = append(due, DueDefinition{
+			DefinitionID:   definition.ID,
+			OrganizationID: definition.OrganizationID,
+			BusinessUnitID: definition.BusinessUnitID,
+			NextRunAt:      *definition.NextRunAt,
+		})
+	}
+
+	return &ListDueDefinitionsResult{Due: due}, nil
+}
+
+func (a *Activities) StartDueRunActivity(
+	ctx context.Context,
+	due *DueDefinition,
+) (*StartDueRunResult, error) {
+	tenant := pagination.TenantInfo{OrgID: due.OrganizationID, BuID: due.BusinessUnitID}
+	now := timeutils.NowUnix()
+
+	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         due.DefinitionID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !definition.Enabled || !definition.IsBackground() {
+		return &StartDueRunResult{Skipped: "not_runnable"}, nil
+	}
+
+	open, err := a.runRepo.CountOpen(ctx, repositories.CountOpenAgentRunsRequest{
+		TenantInfo:   tenant,
+		DefinitionID: definition.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if open >= definition.MaxConcurrentRuns {
+		return &StartDueRunResult{Skipped: "at_concurrency_limit"}, nil
+	}
+
+	var next *int64
+	ended := definition.EndsAt != nil && *definition.EndsAt <= now
+	if !ended {
+		computed, cErr := definition.ComputeNextRun(now)
+		if cErr != nil {
+			return nil, fmt.Errorf("compute next run: %w", cErr)
+		}
+		if definition.EndsAt == nil || computed < *definition.EndsAt {
+			next = &computed
+		}
+	}
+
+	expected := due.NextRunAt
+	claimed, err := a.definitions.MarkRun(ctx, repositories.MarkAgentDefinitionRunRequest{
+		ID:                definition.ID,
+		TenantInfo:        tenant,
+		LastRunAt:         now,
+		NextRunAt:         next,
+		ExpectedNextRunAt: &expected,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !claimed {
+		return &StartDueRunResult{Skipped: "slot_already_claimed"}, nil
+	}
+
+	if ended {
+		definition.Enabled = false
+		definition.NextRunAt = nil
+		if _, uErr := a.definitions.Update(ctx, definition); uErr != nil {
+			a.logger.Warn("agent sweep: could not disable an ended definition",
+				zap.String("definitionId", definition.ID.String()),
+				zap.Error(uErr),
+			)
+		}
+
+		return &StartDueRunResult{Skipped: "ended"}, nil
+	}
+
+	run, err := a.runs.StartForDefinition(ctx, &serviceports.StartAgentRunForDefinitionRequest{
+		DefinitionID: definition.ID,
+		Trigger:      definition.TriggerMode.RunTrigger(),
+		Slot:         due.NextRunAt,
+		TenantInfo:   tenant,
+	}, agentActor(tenant))
+	if err != nil {
+		return nil, err
+	}
+
+	return &StartDueRunResult{Started: true, RunID: run.ID.String()}, nil
 }
 
 func (a *Activities) updateRun(
@@ -350,27 +386,69 @@ func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
 	}
 }
 
-func toDiagnoseResult(result *serviceports.DiagnoseResult) *DiagnoseActivityResult {
-	return &DiagnoseActivityResult{
-		Proposals:       result.Proposals,
-		Exceptions:      result.Exceptions,
-		ModelIdentifier: result.ModelIdentifier,
+func backgroundInput(payload *AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {
+	var builder strings.Builder
+	switch payload.Trigger {
+	case agent.RunTriggerEvent:
+		builder.WriteString("An event started this run")
+		if payload.EventKind != "" {
+			builder.WriteString(": ")
+			builder.WriteString(string(payload.EventKind))
+		}
+		builder.WriteString(".")
+	case agent.RunTriggerScheduled:
+		builder.WriteString("This is a scheduled run.")
+	case agent.RunTriggerContinuous:
+		builder.WriteString("This is one pass of a continuous run.")
+	default:
+		builder.WriteString("A person started this run.")
+	}
+	if subject != nil {
+		builder.WriteString(" It concerns ")
+		builder.WriteString(subject.Label)
+		builder.WriteString(" (")
+		builder.WriteString(string(subject.Type))
+		builder.WriteString(" ")
+		builder.WriteString(subject.ID)
+		builder.WriteString("), described in the runtime context.")
+	}
+	builder.WriteString(" Follow your instructions: look up what you need, act through your tools " +
+		"where you are allowed to, propose what needs a person, and finish with a short report of " +
+		"what you found and did.")
+
+	return builder.String()
+}
+
+func subjectEvidence(
+	subject *agentdefinition.RuntimeSubject,
+	runID pulid.ID,
+) proposalrecorder.EvidenceFunc {
+	return func(action serviceports.PendingAction, _ pulid.ID) []agent.EvidenceRef {
+		evidence := []agent.EvidenceRef{{
+			Type: "agent_run",
+			ID:   runID.String(),
+			Note: "proposed by " + action.ToolName,
+		}}
+		if subject != nil {
+			evidence = append(evidence, agent.EvidenceRef{
+				Type: strings.ToLower(string(subject.Type)),
+				ID:   subject.ID,
+				Note: subject.Label,
+			})
+		}
+
+		return evidence
 	}
 }
 
-func marshalTrusted(value any) string {
-	encoded, err := sonic.MarshalIndent(value, "", "  ")
+func hashSubject(definition *agentdefinition.Definition, subject *agentdefinition.RuntimeSubject) string {
+	encoded, err := sonic.Marshal(map[string]any{
+		"definition": definition.ID,
+		"version":    definition.Version,
+		"subject":    subject,
+	})
 	if err != nil {
-		return fmt.Sprintf("%v", value)
-	}
-
-	return string(encoded)
-}
-
-func hashContext(deliminated serviceports.DelimitedContext) string {
-	encoded, err := sonic.Marshal(deliminated)
-	if err != nil {
-		encoded = []byte(fmt.Sprintf("%v", deliminated))
+		encoded = []byte(fmt.Sprintf("%v", subject))
 	}
 
 	sum := sha256.Sum256(encoded)

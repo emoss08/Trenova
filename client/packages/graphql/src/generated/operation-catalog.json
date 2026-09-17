@@ -413,7 +413,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:a0288f356c0efe08e5b5e03734dc189a623608a752569930855e8cbf64a92ec8",
+      "hash": "sha256:01a79457d60f7388e3157449d24e4e3621ae53bcfb08d00b5e9516013ff874f0",
       "rootFields": [
         "agentControl"
       ],
@@ -422,7 +422,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentControlSettings {\n  agentControl {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCards",
@@ -13796,7 +13796,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/control.graphql",
-      "hash": "sha256:58093530f37a6c071acec43d9b2b1887de5e9e0dee5f701e95ae8772ff374946",
+      "hash": "sha256:bb8bb9870a2aeed63569f8027288488f394c5ced12f541a2d86a4abad6bf9dda",
       "rootFields": [
         "updateAgentControl"
       ],
@@ -13811,7 +13811,7 @@
         "AgentControlFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateBenefitPlan",
@@ -16544,7 +16544,7 @@
         "UpdateAgentControl"
       ],
       "usages": [],
-      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  billingAgentEnabled\n  decisionTimeoutSeconds\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentDefinitionCardFields",
@@ -19391,12 +19391,12 @@
       "fields": [
         {
           "name": "billingAgentEnabled",
-          "type": "Boolean!",
+          "type": "Boolean",
           "defaultValue": null
         },
         {
           "name": "decisionTimeoutSeconds",
-          "type": "Int!",
+          "type": "Int",
           "defaultValue": null
         },
         {
@@ -19405,7 +19405,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean!\n  decisionTimeoutSeconds: Int!\n  shadowMode: Boolean!\n}"
+      "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  shadowMode: Boolean!\n}"
     },
     "AgentExceptionResolveInput": {
       "kind": "input",

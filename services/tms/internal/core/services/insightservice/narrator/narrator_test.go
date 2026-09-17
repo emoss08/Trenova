@@ -37,13 +37,6 @@ func (c *stubCompletion) CompleteStructured(
 	return c.result, c.err
 }
 
-func (c *stubCompletion) Diagnose(
-	context.Context,
-	*services.DiagnoseRequest,
-) (*services.DiagnoseResult, error) {
-	return nil, errors.New("not used")
-}
-
 func (c *stubCompletion) CompleteChat(
 	context.Context,
 	*services.ChatCompletionRequest,

@@ -28,13 +28,6 @@ type stubCompletion struct {
 	lastRequest *serviceports.StructuredCompletionRequest
 }
 
-func (s *stubCompletion) Diagnose(
-	_ context.Context,
-	_ *serviceports.DiagnoseRequest,
-) (*serviceports.DiagnoseResult, error) {
-	return nil, nil
-}
-
 func (s *stubCompletion) CompleteChat(
 	_ context.Context,
 	_ *serviceports.ChatCompletionRequest,

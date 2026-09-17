@@ -86,7 +86,7 @@ describe("presentProposal", () => {
       proposal({
         toolName: "assign_move",
         arguments: {
-          moveId: "smv_1",
+          shipmentMoveId: "smv_1",
           primaryWorkerId: "wrk_1",
           secondaryWorkerId: "",
           tractorId: "trc_1",
@@ -129,7 +129,7 @@ describe("presentProposal", () => {
     const view = presentProposal(
       proposal({
         toolName: "assign_move",
-        arguments: { moveId: "smv_1", primaryWorkerId: "wrk_1", surprise: "yes" },
+        arguments: { shipmentMoveId: "smv_1", primaryWorkerId: "wrk_1", surprise: "yes" },
       }),
     );
 

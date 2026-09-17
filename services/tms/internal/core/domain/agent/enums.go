@@ -65,6 +65,17 @@ func (s SubjectType) IsValid() bool {
 	}
 }
 
+func AllSubjectTypes() []SubjectType {
+	return []SubjectType{
+		SubjectBillingQueueItem,
+		SubjectShipmentMove,
+		SubjectAssistantThread,
+		SubjectShipment,
+		SubjectDocument,
+		SubjectOrganization,
+	}
+}
+
 type RunStatus string
 
 const (
@@ -219,6 +230,28 @@ const (
 	CategoryUnableToDiagnose           = ExceptionCategory("UnableToDiagnose")
 	CategoryOther                      = ExceptionCategory("Other")
 )
+
+func AllExceptionCategories() []ExceptionCategory {
+	return []ExceptionCategory{
+		CategoryMissingDocumentation,
+		CategoryIncorrectRates,
+		CategoryWeightDiscrepancy,
+		CategoryAccessorialDispute,
+		CategoryDuplicateCharge,
+		CategoryMissingReferenceNumber,
+		CategoryCustomerInformationError,
+		CategoryServiceFailure,
+		CategoryRateNotOnFile,
+		CategoryMissingBOL,
+		CategoryRateMissingBasis,
+		CategoryRateVarianceRequiresAction,
+		CategoryUnresolvedServiceFailures,
+		CategoryMissingRequiredDocument,
+		CategoryConfidenceBelowThreshold,
+		CategoryUnableToDiagnose,
+		CategoryOther,
+	}
+}
 
 func (c ExceptionCategory) IsValid() bool {
 	switch c {

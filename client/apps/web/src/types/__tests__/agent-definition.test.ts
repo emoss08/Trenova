@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest";
  * definition's list columns (`guardrails`, `tool_names`, `event_kinds`,
  * `context_providers`) are `nullzero` arrays and `tool_tiers` is a nullable
  * JSONB map, so an agent saved with none of them is serialized with `null` in
- * each, not `[]`, `{}` or an absent key. `template` is nullable too: a custom
- * agent built without a starter has none.
+ * each, not `[]`, `{}` or an absent key.
+ *
+ * The two unset scalars go the opposite ways: `template` is a Go string type,
+ * so an agent built without a starter serializes as `""`, while an unset PULID
+ * such as `preferredProviderId` serializes as `null`.
  */
 const customAgent = {
   id: "agdef_01JAGENT0000000000000000",
@@ -15,7 +18,7 @@ const customAgent = {
   organizationId: "org_01JORGANIZATION00000000",
   name: "Help",
   description: "Explains how to do things in Trenova.",
-  template: null,
+  template: "",
   instructions: "",
   guardrails: null,
   toolNames: null,
@@ -35,7 +38,7 @@ const customAgent = {
   maxToolCalls: 12,
   contextProviders: null,
   outputMode: "Conversational",
-  preferredProviderId: "",
+  preferredProviderId: null,
   systemKey: "",
   lastRunAt: null,
   nextRunAt: null,
@@ -49,6 +52,7 @@ describe("agentDefinitionSchema", () => {
     const parsed = agentDefinitionSchema.parse(customAgent);
 
     expect(parsed.template).toBeNull();
+    expect(parsed.preferredProviderId).toBe("");
     expect(parsed.toolNames).toEqual([]);
     expect(parsed.guardrails).toEqual([]);
     expect(parsed.eventKinds).toEqual([]);

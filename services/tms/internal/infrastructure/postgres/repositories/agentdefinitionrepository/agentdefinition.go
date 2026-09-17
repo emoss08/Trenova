@@ -212,6 +212,37 @@ func (r *repository) ListEnabledByTrigger(
 	return entities, nil
 }
 
+func (r *repository) ListDueAcrossTenants(
+	ctx context.Context,
+	req repositories.ListDueAcrossTenantsRequest,
+) ([]*agentdefinition.Definition, error) {
+	cols := buncolgen.DefinitionColumns
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultDueLimit
+	}
+	entities := make([]*agentdefinition.Definition, 0, limit)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where(cols.Enabled.IsTrue()).
+		Where(cols.TriggerMode.In(), bun.In([]agentdefinition.TriggerMode{
+			agentdefinition.TriggerScheduled,
+			agentdefinition.TriggerContinuous,
+		})).
+		Where(cols.NextRunAt.IsNotNull()).
+		Where(cols.NextRunAt.Lte(), req.Now).
+		Order(cols.NextRunAt.OrderAsc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list due agent definitions across tenants: %w", err)
+	}
+
+	return entities, nil
+}
+
 func (r *repository) ListDue(
 	ctx context.Context,
 	req repositories.ListDueAgentDefinitionsRequest,

@@ -100,7 +100,7 @@ const PRESENTERS: Record<string, Presenter> = {
   },
 
   assign_move: (args) => {
-    const move = text(args.moveId);
+    const move = text(args.shipmentMoveId);
     const driver = text(args.primaryWorkerId);
     const second = text(args.secondaryWorkerId);
     const tractor = text(args.tractorId);
@@ -121,7 +121,7 @@ const PRESENTERS: Record<string, Presenter> = {
       ),
       longText: null,
       reversible: true,
-      covered: ["moveId", "primaryWorkerId", "secondaryWorkerId", "tractorId", "trailerId"],
+      covered: ["shipmentMoveId", "primaryWorkerId", "secondaryWorkerId", "tractorId", "trailerId"],
     };
   },
 

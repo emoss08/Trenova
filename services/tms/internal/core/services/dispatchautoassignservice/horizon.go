@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -125,26 +124,26 @@ func (s *Service) solveHorizon(p *solveParams) *portservices.DispatchPlan {
 	}
 
 	return buildHorizonPlan(&buildHorizonPlanParams{
-		Moves:        p.Moves,
-		Result:       result,
-		Oracle:       oracle,
-		Control:      p.Control,
-		AgentControl: p.AgentControl,
-		Now:          p.Now,
+		Moves:   p.Moves,
+		Result:  result,
+		Oracle:  oracle,
+		Control: p.Control,
+		Policy:  p.Policy,
+		Now:     p.Now,
 	})
 }
 
 type buildHorizonPlanParams struct {
-	Moves        []*repositories.BoardMove
-	Result       dispatchplanner.Result
-	Oracle       *horizonOracle
-	Control      *dispatchcontrol.DispatchControl
-	AgentControl *tenant.AgentControl
-	Now          int64
+	Moves   []*repositories.BoardMove
+	Result  dispatchplanner.Result
+	Oracle  *horizonOracle
+	Control *dispatchcontrol.DispatchControl
+	Policy  Policy
+	Now     int64
 }
 
 func buildHorizonPlan(p *buildHorizonPlanParams) *portservices.DispatchPlan {
-	tier := resolveTier(p.AgentControl)
+	tier := p.Policy.Tier
 	threshold := p.Control.ConfidenceThreshold()
 
 	plan := &portservices.DispatchPlan{
@@ -152,7 +151,7 @@ func buildHorizonPlan(p *buildHorizonPlanParams) *portservices.DispatchPlan {
 		Uncovered:    make([]*portservices.DispatchUncoveredMove, 0, len(p.Result.Unassigned)),
 		Tours:        make([]*portservices.DispatchTour, 0, len(p.Oracle.drivers)),
 		PlanningMode: dispatchcontrol.PlanningModeHorizon.String(),
-		ShadowMode:   p.AgentControl.ShadowMode,
+		ShadowMode:   p.Policy.ShadowMode,
 		AutonomyTier: tier,
 		GeneratedAt:  p.Now,
 	}
@@ -186,7 +185,7 @@ func buildHorizonPlan(p *buildHorizonPlanParams) *portservices.DispatchPlan {
 			Score:      score,
 			Tier:       tier,
 			Threshold:  threshold,
-			ShadowMode: p.AgentControl.ShadowMode,
+			ShadowMode: p.Policy.ShadowMode,
 		})
 		planned.TourID = tour.TourID
 		planned.SequenceIndex = assignment.Sequence

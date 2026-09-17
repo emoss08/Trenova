@@ -26,3 +26,5 @@ types:
       status: domaintypes.EquipmentStatusAvailable
   TableConfiguration:
     skip: true
+  AgentControl:
+    skip: true

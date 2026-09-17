@@ -2208,14 +2208,14 @@ func (ec *executionContext) unmarshalInputAgentControlInput(ctx context.Context,
 			it.ShadowMode = data
 		case "billingAgentEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingAgentEnabled"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.BillingAgentEnabled = data
 		case "decisionTimeoutSeconds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decisionTimeoutSeconds"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}

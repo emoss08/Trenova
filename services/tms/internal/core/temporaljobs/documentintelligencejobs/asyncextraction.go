@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"strings"
 	"time"
 
@@ -862,6 +863,15 @@ func (a *Activities) upsertDraft(
 	}); err != nil {
 		return "", err
 	}
+
+	services.PublishAgentEvent(ctx, a.agentEvents, services.AgentEvent{
+		Kind:      agent.EventDocumentExtracted,
+		SubjectID: doc.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: doc.OrganizationID,
+			BuID:  doc.BusinessUnitID,
+		},
+	})
 
 	return draftStatus, nil
 }

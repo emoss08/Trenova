@@ -5671,7 +5671,7 @@
     ]
   },
   "AI features are disabled": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -10786,15 +10786,6 @@
       "routes/agent-control"
     ]
   },
-  "Agent control updated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Agent definition stats loader is not configured": {
     "sites": 1,
     "scope": [
@@ -10867,7 +10858,7 @@
       "service/agentproposalservice"
     ]
   },
-  "Agent proposals cannot be actioned while the organization is in shadow mode": {
+  "Agent proposals cannot be actioned while the agent is in shadow mode": {
     "sites": 1,
     "scope": [
       "go"
@@ -10921,6 +10912,15 @@
       "service/assistantservice"
     ]
   },
+  "Agent {0} is disabled and cannot run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentrunservice"
+    ]
+  },
   "Agent-proposed resolutions awaiting human decision": {
     "sites": 1,
     "scope": [
@@ -10941,6 +10941,24 @@
     ]
   },
   "Agents enabled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents keep running and keep recording what they would do, but nothing they propose is offered for a decision and nothing they propose can be executed. Each agent also has its own shadow switch.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents resumed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -11378,6 +11396,15 @@
     ],
     "areas": [
       "routes/invoice-approval"
+    ]
+  },
+  "All agents paused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "All attachment documents must belong to the current tenant": {
@@ -12147,15 +12174,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Allow the agent to run against this organization's blocked billing queue items.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Allow this partner record to receive load tenders from the connected organization.": {
@@ -12952,6 +12970,15 @@
     ],
     "areas": [
       "domain/agentdefinition"
+    ]
+  },
+  "An agent definition id or system key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentrunservice"
     ]
   },
   "An agent is a set of instructions, a choice of tools and a trigger. Build one from a template in a minute, or write exactly the agent your operation needs.": {
@@ -21666,15 +21693,6 @@
       "apps/web/config"
     ]
   },
-  "Billing Exception Agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Billing Exception Disposition": {
     "sites": 1,
     "scope": [
@@ -21735,15 +21753,6 @@
       "routes/invoice"
     ]
   },
-  "Billing Queue Item": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Billing Queue Number": {
     "sites": 1,
     "scope": [
@@ -21781,14 +21790,12 @@
     ]
   },
   "Billing Readiness": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "go/other"
+      "apps/web/components"
     ]
   },
   "Billing Requirements": {
@@ -41138,15 +41145,6 @@
       "routes/worker"
     ]
   },
-  "Decision Timeout (seconds)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Decision is required": {
     "sites": 2,
     "scope": [
@@ -41164,24 +41162,6 @@
     ],
     "areas": [
       "domain/agentdefinition"
-    ]
-  },
-  "Decision timeout is required": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
-  "Decision timeout must be at least 60 seconds": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/tenant"
     ]
   },
   "Decision timeout must be at least one minute": {
@@ -45168,15 +45148,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Diagnose a blocked billing queue item and propose resolutions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Diagnostics": {
@@ -52879,15 +52850,6 @@
       "routes/admin"
     ]
   },
-  "Enable Billing Exception Agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Enable DOT Compliance Enforcement": {
     "sites": 1,
     "scope": [
@@ -53042,6 +53004,15 @@
     ]
   },
   "Enable agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Enable the agent before running it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55358,6 +55329,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Every agent in this organization is paused. Runs finish and their proposals are stored for review later, but none appear for a decision. Turn this off to let agents surface their work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every agent run, whatever started it": {
@@ -68560,15 +68540,6 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
-    ]
-  },
-  "How long a proposal waits for a human decision before its proposals expire and the run is parked. Defaults to 86400 (24 hours).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "How long a worker has once the course is assigned. 0 = no due date.": {
@@ -93953,15 +93924,6 @@
       "routes/worker"
     ]
   },
-  "Notes and Comments": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Notes for whoever schedules against the shift, such as what it covers or where it starts.": {
     "sites": 1,
     "scope": [
@@ -104225,6 +104187,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Pause all agents": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.": {
@@ -126195,6 +126166,15 @@
       "domain/latecharge"
     ]
   },
+  "Run now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Run now ({0})": {
     "sites": 1,
     "scope": [
@@ -126220,6 +126200,15 @@
     ],
     "areas": [
       "domain/invoicerun"
+    ]
+  },
+  "Run one agent definition against its subject and wait for decisions on what it proposes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Run one to see what this contract would have charged for the freight you already moved — before it prices a single live shipment.": {
@@ -126265,6 +126254,15 @@
     ],
     "areas": [
       "domain/invoicerun"
+    ]
+  },
+  "Run started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Run status is invalid": {
@@ -127500,7 +127498,7 @@
     ]
   },
   "Save Changes": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -127508,7 +127506,6 @@
       "apps/web/components",
       "routes/accounting-control",
       "routes/admin",
-      "routes/agent-control",
       "routes/billing-control",
       "routes/carrier-settlement-control",
       "routes/cost-control",
@@ -134815,25 +134812,7 @@
       "routes/agent-control"
     ]
   },
-  "Shadow Mode": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Shadow mode": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Shadow mode is on, so runs complete and persist proposals but nothing appears for review and no decisions are awaited. Turn shadow mode off to surface proposals and enable human decisions.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -136109,6 +136088,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Shipment move": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Shipment move ID is required": {
@@ -139704,6 +139692,15 @@
       "routes/worker"
     ]
   },
+  "Start a run now without waiting for its trigger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Start agent runs": {
     "sites": 1,
     "scope": [
@@ -139781,6 +139778,15 @@
       "packages/shared/types"
     ]
   },
+  "Start every scheduled or continuous agent whose slot has come": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start from a preset": {
     "sites": 1,
     "scope": [
@@ -139834,6 +139840,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Start scheduled and continuous agents whose slot has come": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Start the backfill": {
@@ -145851,24 +145866,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "The billing exception agent inspects blocked billing queue items, diagnoses why they are held, and proposes resolutions for a human to approve. It never approves or transitions an item itself.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The billing exception agent is disabled for this organization": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agentrunservice"
     ]
   },
   "The billing period a consolidated invoice covers. Blank on an invoice that is not billed on a cycle.": {
@@ -168973,15 +168970,6 @@
     ],
     "areas": [
       "routes/policies"
-    ]
-  },
-  "While on, the agent runs and stores its proposals for observation but they are never surfaced or actionable. Turn off only once you trust the agent's suggestions.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Who and when": {

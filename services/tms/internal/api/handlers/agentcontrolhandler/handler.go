@@ -76,9 +76,9 @@ func (h *Handler) get(c *gin.Context) {
 }
 
 type updateControlRequest struct {
-	ShadowMode             bool `json:"shadowMode"`
-	BillingAgentEnabled    bool `json:"billingAgentEnabled"`
-	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds"`
+	ShadowMode             bool  `json:"shadowMode"`
+	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
+	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }
 
 func (h *Handler) update(c *gin.Context) {

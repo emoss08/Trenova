@@ -41,13 +41,6 @@ func (s *stubCompletion) CompleteStructured(
 	return &serviceports.StructuredCompletionResult{Text: string(text)}, nil
 }
 
-func (s *stubCompletion) Diagnose(
-	_ context.Context,
-	_ *serviceports.DiagnoseRequest,
-) (*serviceports.DiagnoseResult, error) {
-	return nil, errors.New("not used")
-}
-
 func (s *stubCompletion) CompleteChat(
 	_ context.Context,
 	_ *serviceports.ChatCompletionRequest,

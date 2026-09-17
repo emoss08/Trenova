@@ -18,6 +18,7 @@ const (
 	TaskQueueFiscal               TaskQueue = "fiscal-queue"
 	TaskQueueEDI                  TaskQueue = "edi-queue"
 	TaskQueueReport               TaskQueue = "report-queue"
+	TaskQueueAgent                TaskQueue = "agent-queue"
 )
 
 func (t TaskQueue) String() string {

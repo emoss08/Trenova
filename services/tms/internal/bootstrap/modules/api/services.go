@@ -15,9 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentevents"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
@@ -268,6 +270,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
 	agentrunservice.New,
+	agentshadow.New,
+	agentevents.New,
 	agentproposalservice.New,
 	agentexceptionservice.New,
 	proposalexecutor.New,

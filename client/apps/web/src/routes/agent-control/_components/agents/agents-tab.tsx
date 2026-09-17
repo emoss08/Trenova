@@ -40,6 +40,7 @@ export default function AgentsTab() {
   const { allowed: canCreate } = usePermission(Resource.AgentDefinition, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.AgentDefinition, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.AgentDefinition, Operation.Delete);
+  const { allowed: canRun } = usePermission(Resource.AgentRun, Operation.Create);
 
   const [panel, setPanel] = useState<PanelState>({ open: false, mode: "create", row: null });
   const [deleting, setDeleting] = useState<AgentDefinitionRow | null>(null);
@@ -62,6 +63,16 @@ export default function AgentsTab() {
       await invalidate();
     },
     resourceName: "Agent",
+  });
+
+  const runMutation = useApiMutation({
+    mutationFn: (agent: AgentDefinitionRow) =>
+      apiService.agentRunService.start({ agentDefinitionId: agent.id }),
+    onSuccess: async () => {
+      toast.success(t("Run started"));
+      await invalidate();
+    },
+    resourceName: "Agent Run",
   });
 
   const deleteMutation = useApiMutation({
@@ -139,11 +150,14 @@ export default function AgentsTab() {
               templates={templates}
               canUpdate={canUpdate}
               canDelete={canDelete}
+              canRun={canRun}
               isToggling={
                 toggleMutation.isPending && toggleMutation.variables?.agent.id === agent.id
               }
+              isRunning={runMutation.isPending && runMutation.variables?.id === agent.id}
               onEdit={() => openEdit(agent)}
               onToggleEnabled={(enabled) => toggleMutation.mutate({ agent, enabled })}
+              onRunNow={() => runMutation.mutate(agent)}
               onDelete={() => setDeleting(agent)}
             />
           ))}

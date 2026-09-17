@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS "agent_controls"(
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     CONSTRAINT "pk_agent_controls" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
-    CONSTRAINT "chk_agent_controls_decision_timeout" CHECK ("decision_timeout_seconds" >= 60),
     CONSTRAINT "fk_agent_controls_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_agent_controls_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );

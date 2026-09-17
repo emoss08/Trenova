@@ -27,6 +27,19 @@ export const threadStatusSchema = z.enum(["Active", "Archived"]);
 const nullableList = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => value ?? [], z.array(item));
 
+/**
+ * A PULID the server leaves unset. Those columns marshal as `null` rather than
+ * `""`, so the reader has to accept null where the UI wants an empty string.
+ */
+const optionalId = z.preprocess((value) => value ?? "", z.string());
+
+/**
+ * An enum-typed Go string the server leaves unset. A plain string field
+ * marshals as `""`, which is not one of the enum's values.
+ */
+const nullableEnum = <T extends z.ZodType>(item: T) =>
+  z.preprocess((value) => (value === "" || value == null ? null : value), item.nullable());
+
 const toolTiersSchema = z.preprocess(
   (value) => value ?? {},
   z.record(z.string(), autonomyTierSchema),
@@ -39,7 +52,7 @@ export const agentDefinitionSchema = z.object({
   name: z.string(),
   description: z.string().optional().default(""),
   /** The starter this agent began from. It carries no restriction. */
-  template: agentTemplateKindSchema.nullish(),
+  template: nullableEnum(agentTemplateKindSchema),
   /** Organization-authored instructions, placed after Trenova's safety preamble. */
   instructions: z.string().optional().default(""),
   guardrails: nullableList(z.string()),
@@ -60,7 +73,7 @@ export const agentDefinitionSchema = z.object({
   maxToolCalls: z.number().default(12),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
-  preferredProviderId: z.string().optional().default(""),
+  preferredProviderId: optionalId,
   systemKey: z.string().optional().default(""),
   lastRunAt: z.number().nullish(),
   nextRunAt: z.number().nullish(),
@@ -145,7 +158,7 @@ export const saveAgentDefinitionRequestSchema = z.object({
   maxToolCalls: z.number().min(1).max(64).default(12),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
-  preferredProviderId: z.string().optional().default(""),
+  preferredProviderId: optionalId,
   version: z.number().default(0),
 });
 
@@ -234,7 +247,7 @@ export const assistantProposalSchema = z.object({
   rationale: z.string().optional().default(""),
   autonomyTier: autonomyTierSchema,
   status: proposalStatusSchema,
-  sourceMessageId: z.string().optional().default(""),
+  sourceMessageId: optionalId,
   /** The model's own estimate, 0 to 1. */
   confidence: z.number().min(0).max(1).nullish(),
   /** Set once an approved proposal has actually run. */

@@ -8,8 +8,8 @@ import (
 )
 
 var DomainConfig = registry.DomainConfig{
-	Name:         "billing-agent-worker",
-	TaskQueue:    temporaltype.TaskQueueBilling.String(),
+	Name:         "agent-worker",
+	TaskQueue:    temporaltype.TaskQueueAgent.String(),
 	WorkerConfig: registry.DefaultWorkerConfig(),
 }
 

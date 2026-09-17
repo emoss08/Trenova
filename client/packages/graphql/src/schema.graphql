@@ -422,10 +422,10 @@ enum AgentContextProvider {
 }
 
 type AgentControl {
-  billingAgentEnabled: Boolean!
+  billingAgentEnabled: Boolean! @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   businessUnitId: ID!
   createdAt: Timestamp!
-  decisionTimeoutSeconds: Int!
+  decisionTimeoutSeconds: Int! @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   id: ID!
   organizationId: ID!
   shadowMode: Boolean!
@@ -434,8 +434,8 @@ type AgentControl {
 }
 
 input AgentControlInput {
-  billingAgentEnabled: Boolean!
-  decisionTimeoutSeconds: Int!
+  billingAgentEnabled: Boolean @deprecated(reason: "Enable or disable the billing exception agent definition instead")
+  decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   shadowMode: Boolean!
 }
 

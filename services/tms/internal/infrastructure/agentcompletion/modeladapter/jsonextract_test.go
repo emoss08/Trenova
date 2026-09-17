@@ -118,9 +118,7 @@ func TestExtractJSON_Failures(t *testing.T) {
 	})
 }
 
-// A diagnosis reply is the shape that actually matters, so it is exercised
-// through the same repair path a self-hosted model would put it through.
-func TestExtractJSON_DiagnosisPayload(t *testing.T) {
+func TestExtractJSON_ProposalPayloadWithTrailingCommas(t *testing.T) {
 	t.Parallel()
 
 	raw := "```json\n" + `{
@@ -136,7 +134,15 @@ func TestExtractJSON_DiagnosisPayload(t *testing.T) {
   "exceptions": [],
 }` + "\n```"
 
-	var payload modeladapter.DiagnosisPayload
+	var payload struct {
+		Proposals []struct {
+			ToolName   string           `json:"toolName"`
+			ToolParams map[string]any   `json:"toolParams"`
+			Confidence float64          `json:"confidence"`
+			Evidence   []map[string]any `json:"evidence"`
+		} `json:"proposals"`
+		Exceptions []map[string]any `json:"exceptions"`
+	}
 	require.NoError(t, modeladapter.ExtractJSON(raw, &payload))
 
 	require.Len(t, payload.Proposals, 1)
@@ -144,9 +150,4 @@ func TestExtractJSON_DiagnosisPayload(t *testing.T) {
 	assert.InDelta(t, 0.82, payload.Proposals[0].Confidence, 0.001)
 	require.Len(t, payload.Proposals[0].Evidence, 1)
 	assert.Empty(t, payload.Exceptions)
-
-	result := payload.ToDiagnoseResult("qwen3:32b")
-	assert.Equal(t, "qwen3:32b", result.ModelIdentifier)
-	require.Len(t, result.Proposals, 1)
-	assert.NotNil(t, result.Exceptions)
 }

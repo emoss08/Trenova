@@ -748,12 +748,12 @@ func init() {
 				FieldMapKey: "shadowMode",
 			},
 			{
-				Name:        "billingAgentEnabled",
-				FieldMapKey: "billingAgentEnabled",
+				Name:    "billingAgentEnabled",
+				Special: "billingAgentEnabled",
 			},
 			{
-				Name:        "decisionTimeoutSeconds",
-				FieldMapKey: "decisionTimeoutSeconds",
+				Name:    "decisionTimeoutSeconds",
+				Special: "decisionTimeoutSeconds",
 			},
 			{
 				Name:        "version",

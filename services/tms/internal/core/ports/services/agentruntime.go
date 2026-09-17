@@ -26,6 +26,9 @@ type RunRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *RequestActor
 	Context    agentdefinition.RuntimeContext
+	// RunID is set for a background run so auto-executing tools can tie what
+	// they do to it. A chat turn has no run until proposals are recorded.
+	RunID pulid.ID
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string

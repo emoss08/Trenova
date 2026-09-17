@@ -2,8 +2,10 @@ package agentrunservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -14,18 +16,20 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	agentPromptVersion = "billing-exception-v1"
-	// inlinePromptVersion is the fallback for a deterministic agent that did not name its
-	// own version. Runs still carry one so the audit trail has a uniform shape.
-	inlinePromptVersion = "inline-v1"
-	provisionalHash     = "pending"
-	workflowIDPrefix    = "billing-exception-agent-"
+	SystemKeyBillingException   = "billing_exception"
+	SystemKeyDispatchAssignment = "dispatch_assignment"
+
+	definitionPromptVersion = "agent-definition/v2"
+	inlinePromptVersion     = "inline-v1"
+	provisionalHash         = "pending"
+	workflowIDPrefix        = "agent-run-"
 )
 
 type Params struct {
@@ -33,62 +37,72 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Repo         repositories.AgentRunRepository
-	Control      services.AgentControlService
+	Definitions  repositories.AgentDefinitionRepository
 	Workflows    services.WorkflowStarter
 	Validator    *Validator
 	AuditService services.AuditService
 }
 
 type Service struct {
-	l         *zap.Logger
-	repo      repositories.AgentRunRepository
-	control   services.AgentControlService
-	validator *Validator
-	workflows services.WorkflowStarter
-	audit     services.AuditService
+	l           *zap.Logger
+	repo        repositories.AgentRunRepository
+	definitions repositories.AgentDefinitionRepository
+	validator   *Validator
+	workflows   services.WorkflowStarter
+	audit       services.AuditService
 }
 
 func New(p Params) services.AgentRunService {
 	return &Service{
-		l:         p.Logger.Named("service.agentrun"),
-		repo:      p.Repo,
-		control:   p.Control,
-		validator: p.Validator,
-		workflows: p.Workflows,
-		audit:     p.AuditService,
+		l:           p.Logger.Named("service.agentrun"),
+		repo:        p.Repo,
+		definitions: p.Definitions,
+		validator:   p.Validator,
+		workflows:   p.Workflows,
+		audit:       p.AuditService,
 	}
 }
-
-func (s *Service) Start(
+func (s *Service) StartForDefinition(
 	ctx context.Context,
-	req *services.StartAgentRunRequest,
+	req *services.StartAgentRunForDefinitionRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentRun, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
 
-	control, err := s.control.Get(ctx, req.TenantInfo)
+	definition, err := s.resolveDefinition(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	if !control.BillingAgentEnabled {
+	if !definition.Enabled {
 		return nil, errortypes.NewBusinessError(
-			"The billing exception agent is disabled for this organization",
+			"Agent {0} is disabled and cannot run", definition.Name,
 		)
 	}
 
+	subjectType := req.SubjectType
+	subjectID := req.SubjectID
+	if subjectType == "" {
+		subjectType = agent.SubjectOrganization
+		subjectID = req.TenantInfo.OrgID
+	}
+	trigger := req.Trigger
+	if trigger == "" {
+		trigger = runTrigger(actor)
+	}
+
 	run := &agent.AgentRun{
-		OrganizationID:   req.TenantInfo.OrgID,
-		BusinessUnitID:   req.TenantInfo.BuID,
-		AgentType:        req.AgentType,
-		SubjectType:      req.SubjectType,
-		SubjectID:        req.SubjectID,
-		Status:           agent.RunStatusPending,
-		Trigger:          runTrigger(actor),
-		PromptVersion:    agentPromptVersion,
-		InputContextHash: provisionalHash,
+		OrganizationID:    req.TenantInfo.OrgID,
+		BusinessUnitID:    req.TenantInfo.BuID,
+		AgentType:         agentTypeFor(definition),
+		AgentDefinitionID: definition.ID,
+		SubjectType:       subjectType,
+		SubjectID:         subjectID,
+		Status:            agent.RunStatusPending,
+		Trigger:           trigger,
+		PromptVersion:     definitionPromptVersion,
+		InputContextHash:  provisionalHash,
 	}
 
 	if multiErr := s.validator.ValidateCreate(ctx, run); multiErr != nil {
@@ -100,7 +114,7 @@ func (s *Service) Start(
 		return nil, err
 	}
 
-	workflowID := workflowIDPrefix + created.ID.String()
+	workflowID := workflowIDFor(definition, created, req.Slot)
 	payload := &agentjobs.AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: req.TenantInfo.OrgID,
@@ -108,18 +122,19 @@ func (s *Service) Start(
 			UserID:         actor.UserIDOrNil(),
 			Timestamp:      timeutils.NowUnix(),
 		},
-		RunID:                  created.ID,
-		SubjectType:            req.SubjectType,
-		SubjectID:              req.SubjectID,
-		PromptVersion:          agentPromptVersion,
-		ShadowMode:             control.ShadowMode,
-		DecisionTimeoutSeconds: control.DecisionTimeoutSeconds,
+		RunID:        created.ID,
+		DefinitionID: definition.ID,
+		Trigger:      trigger,
+		SubjectType:  subjectType,
+		SubjectID:    subjectID,
+		EventKind:    req.EventKind,
 	}
 
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID:        workflowID,
-		TaskQueue: temporaltype.TaskQueueBilling.String(),
-	}, agentjobs.BillingExceptionAgentWorkflowName, payload); err != nil {
+		ID:                    workflowID,
+		TaskQueue:             temporaltype.TaskQueueAgent.String(),
+		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+	}, agentjobs.AgentRunWorkflowName, payload); err != nil {
 		created.Status = agent.RunStatusFailed
 		created.ErrorMessage = err.Error()
 		if _, updateErr := s.repo.Update(ctx, created); updateErr != nil {
@@ -134,29 +149,34 @@ func (s *Service) Start(
 		return nil, err
 	}
 
-	auditActor := actor.AuditActorOrSystem()
-	if err = s.audit.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceAgentRun,
-		ResourceID:     updated.GetID().String(),
-		Operation:      permission.OpCreate,
-		UserID:         auditActor.UserID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(updated),
-		OrganizationID: updated.OrganizationID,
-		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Billing exception agent run started")); err != nil {
-		s.l.Error("failed to log agent run audit", zap.Error(err))
-	}
+	s.logStart(updated, actor, fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger))
 
 	return updated, nil
 }
 
-// StartInline records a run for an agent whose reasoning happens in-process rather than
-// in a Temporal workflow. The dispatch optimizer is deterministic and finishes within the
-// request, but it still needs a run row so its proposals, decisions, and audit trail are
-// indistinguishable from an LLM-backed agent's.
+func (s *Service) resolveDefinition(
+	ctx context.Context,
+	req *services.StartAgentRunForDefinitionRequest,
+) (*agentdefinition.Definition, error) {
+	if req.DefinitionID.IsNotNil() {
+		return s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+			ID:         req.DefinitionID,
+			TenantInfo: req.TenantInfo,
+		})
+	}
+	if req.SystemKey != "" {
+		return s.definitions.GetBySystemKey(ctx, repositories.GetAgentDefinitionBySystemKeyRequest{
+			SystemKey:  req.SystemKey,
+			TenantInfo: req.TenantInfo,
+		})
+	}
+
+	return nil, errortypes.NewValidationError(
+		"agentDefinitionId",
+		errortypes.ErrRequired,
+		"An agent definition id or system key is required",
+	)
+}
 func (s *Service) StartInline(
 	ctx context.Context,
 	req *services.StartInlineAgentRunRequest,
@@ -168,16 +188,17 @@ func (s *Service) StartInline(
 	}
 
 	run := &agent.AgentRun{
-		OrganizationID:   req.TenantInfo.OrgID,
-		BusinessUnitID:   req.TenantInfo.BuID,
-		AgentType:        req.AgentType,
-		SubjectType:      req.SubjectType,
-		SubjectID:        req.SubjectID,
-		Status:           agent.RunStatusAwaitingDecision,
-		Trigger:          inlineTrigger(req.Trigger, actor),
-		PromptVersion:    promptVersion,
-		InputContextHash: provisionalHash,
-		StartedAt:        timeutils.NowUnix(),
+		OrganizationID:    req.TenantInfo.OrgID,
+		BusinessUnitID:    req.TenantInfo.BuID,
+		AgentType:         req.AgentType,
+		AgentDefinitionID: req.AgentDefinitionID,
+		SubjectType:       req.SubjectType,
+		SubjectID:         req.SubjectID,
+		Status:            agent.RunStatusAwaitingDecision,
+		Trigger:           inlineTrigger(req.Trigger, actor),
+		PromptVersion:     promptVersion,
+		InputContextHash:  provisionalHash,
+		StartedAt:         timeutils.NowUnix(),
 	}
 
 	if multiErr := s.validator.ValidateCreate(ctx, run); multiErr != nil {
@@ -189,25 +210,11 @@ func (s *Service) StartInline(
 		return nil, err
 	}
 
-	auditActor := actor.AuditActorOrSystem()
 	comment := req.Summary
 	if comment == "" {
 		comment = "Inline agent run started"
 	}
-	if err = s.audit.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceAgentRun,
-		ResourceID:     created.GetID().String(),
-		Operation:      permission.OpCreate,
-		UserID:         auditActor.UserID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		APIKeyID:       auditActor.APIKeyID,
-		CurrentState:   jsonutils.MustToJSON(created),
-		OrganizationID: created.OrganizationID,
-		BusinessUnitID: created.BusinessUnitID,
-	}, auditservice.WithComment(comment)); err != nil {
-		s.l.Error("failed to log inline agent run audit", zap.Error(err))
-	}
+	s.logStart(created, actor, comment)
 
 	return created, nil
 }
@@ -224,6 +231,43 @@ func (s *Service) GetByID(
 	req repositories.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) logStart(run *agent.AgentRun, actor *services.RequestActor, comment string) {
+	auditActor := actor.AuditActorOrSystem()
+	if err := s.audit.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceAgentRun,
+		ResourceID:     run.GetID().String(),
+		Operation:      permission.OpCreate,
+		UserID:         auditActor.UserID,
+		PrincipalType:  auditActor.PrincipalType,
+		PrincipalID:    auditActor.PrincipalID,
+		APIKeyID:       auditActor.APIKeyID,
+		CurrentState:   jsonutils.MustToJSON(run),
+		OrganizationID: run.OrganizationID,
+		BusinessUnitID: run.BusinessUnitID,
+	}, auditservice.WithComment(comment)); err != nil {
+		s.l.Error("failed to log agent run audit", zap.Error(err))
+	}
+}
+
+func workflowIDFor(definition *agentdefinition.Definition, run *agent.AgentRun, slot int64) string {
+	if slot > 0 {
+		return fmt.Sprintf("%s%s-%d", workflowIDPrefix, definition.ID, slot)
+	}
+
+	return workflowIDPrefix + run.ID.String()
+}
+
+func agentTypeFor(definition *agentdefinition.Definition) agent.Type {
+	switch definition.SystemKey {
+	case SystemKeyBillingException:
+		return agent.TypeBillingException
+	case SystemKeyDispatchAssignment:
+		return agent.TypeDispatchAssignment
+	default:
+		return agent.TypeGeneral
+	}
 }
 
 func inlineTrigger(requested agent.RunTrigger, actor *services.RequestActor) agent.RunTrigger {

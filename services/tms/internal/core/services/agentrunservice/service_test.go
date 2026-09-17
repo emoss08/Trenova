@@ -6,12 +6,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
@@ -36,16 +39,24 @@ func (f *fakeAgentRunRepo) Update(
 	return f.update(ctx, entity)
 }
 
-type fakeAgentControlService struct {
-	serviceports.AgentControlService
-	get func(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.AgentControl, error)
+type fakeDefinitionRepo struct {
+	repositories.AgentDefinitionRepository
+	byID  func(ctx context.Context, req repositories.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error)
+	byKey func(ctx context.Context, req repositories.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error)
 }
 
-func (f *fakeAgentControlService) Get(
+func (f *fakeDefinitionRepo) GetByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	return f.get(ctx, tenantInfo)
+	req repositories.GetAgentDefinitionByIDRequest,
+) (*agentdefinition.Definition, error) {
+	return f.byID(ctx, req)
+}
+
+func (f *fakeDefinitionRepo) GetBySystemKey(
+	ctx context.Context,
+	req repositories.GetAgentDefinitionBySystemKeyRequest,
+) (*agentdefinition.Definition, error) {
+	return f.byKey(ctx, req)
 }
 
 type fakeWorkflowStarter struct {
@@ -83,23 +94,55 @@ func (f *fakeAuditService) LogAction(
 	return nil
 }
 
-func startRequest() *serviceports.StartAgentRunRequest {
-	return &serviceports.StartAgentRunRequest{
-		AgentType:   agent.TypeBillingException,
-		SubjectType: agent.SubjectBillingQueueItem,
-		SubjectID:   pulid.MustNew("bqi_"),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+var testTenant = pagination.TenantInfo{
+	OrgID: pulid.MustNew("org_"),
+	BuID:  pulid.MustNew("bu_"),
+}
+
+func definitionFixture(enabled bool) *agentdefinition.Definition {
+	return &agentdefinition.Definition{
+		ID:             pulid.MustNew("agd_"),
+		OrganizationID: testTenant.OrgID,
+		BusinessUnitID: testTenant.BuID,
+		Name:           "Billing exceptions",
+		SystemKey:      SystemKeyBillingException,
+		Enabled:        enabled,
+	}
+}
+
+func definitionRepoFor(def *agentdefinition.Definition) *fakeDefinitionRepo {
+	return &fakeDefinitionRepo{
+		byID: func(_ context.Context, req repositories.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error) {
+			if req.ID != def.ID || req.TenantInfo.OrgID != def.OrganizationID {
+				return nil, errortypes.NewNotFoundError("Agent definition not found")
+			}
+			return def, nil
+		},
+		byKey: func(_ context.Context, req repositories.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error) {
+			if req.SystemKey != def.SystemKey || req.TenantInfo.OrgID != def.OrganizationID {
+				return nil, errortypes.NewNotFoundError("Agent definition not found")
+			}
+			return def, nil
 		},
 	}
 }
 
-func TestStartRejectsWhenBillingAgentDisabled(t *testing.T) {
+func startRequest(def *agentdefinition.Definition) *serviceports.StartAgentRunForDefinitionRequest {
+	return &serviceports.StartAgentRunForDefinitionRequest{
+		DefinitionID: def.ID,
+		SubjectType:  agent.SubjectBillingQueueItem,
+		SubjectID:    pulid.MustNew("bqi_"),
+		Trigger:      agent.RunTriggerEvent,
+		TenantInfo:   testTenant,
+	}
+}
+
+func TestStartForDefinitionRejectsDisabledDefinition(t *testing.T) {
 	t.Parallel()
 
 	createCalled := false
 	startCalled := false
+	def := definitionFixture(false)
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakeAgentRunRepo{
@@ -108,11 +151,7 @@ func TestStartRejectsWhenBillingAgentDisabled(t *testing.T) {
 				return entity, nil
 			},
 		},
-		control: &fakeAgentControlService{
-			get: func(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
-				return &tenant.AgentControl{BillingAgentEnabled: false}, nil
-			},
-		},
+		definitions: definitionRepoFor(def),
 		workflows: &fakeWorkflowStarter{
 			enabled: true,
 			startWorkflow: func(
@@ -128,12 +167,12 @@ func TestStartRejectsWhenBillingAgentDisabled(t *testing.T) {
 		audit: &fakeAuditService{},
 	}
 
-	run, err := svc.Start(t.Context(), startRequest(), nil)
+	run, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
 	if err == nil {
-		t.Fatalf("expected error when billing agent is disabled")
+		t.Fatalf("expected error when the definition is disabled")
 	}
 	if run != nil {
-		t.Fatalf("expected no run when billing agent is disabled, got %+v", run)
+		t.Fatalf("expected no run, got %+v", run)
 	}
 
 	var businessErr *errortypes.BusinessError
@@ -141,25 +180,26 @@ func TestStartRejectsWhenBillingAgentDisabled(t *testing.T) {
 		t.Fatalf("expected BusinessError, got %T: %v", err, err)
 	}
 	if createCalled {
-		t.Fatalf("expected no run row to be created when billing agent is disabled")
+		t.Fatalf("expected no run row when the definition is disabled")
 	}
 	if startCalled {
-		t.Fatalf("expected no workflow to start when billing agent is disabled")
+		t.Fatalf("expected no workflow when the definition is disabled")
 	}
 }
 
-func TestStartLaunchesWorkflowWhenBillingAgentEnabled(t *testing.T) {
+func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	t.Parallel()
 
 	runID := pulid.MustNew("ar_")
-	var startedWorkflowID string
+	def := definitionFixture(true)
+	var started client.StartWorkflowOptions
+	var startedName any
+	var payload *agentjobs.AgentRunPayload
 	audit := &fakeAuditService{}
 	svc := &Service{
-		l: zap.NewNop(),
-		// Reaching the validator is the point of this test: the disabled case
-		// returns before it, so a Service without one passes there and panics
-		// here.
-		validator: NewValidator(ValidatorParams{}),
+		l:           zap.NewNop(),
+		validator:   NewValidator(ValidatorParams{}),
+		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
 				entity.ID = runID
@@ -169,13 +209,89 @@ func TestStartLaunchesWorkflowWhenBillingAgentEnabled(t *testing.T) {
 				return entity, nil
 			},
 		},
-		control: &fakeAgentControlService{
-			get: func(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
-				return &tenant.AgentControl{
-					BillingAgentEnabled:    true,
-					ShadowMode:             true,
-					DecisionTimeoutSeconds: 300,
-				}, nil
+		workflows: &fakeWorkflowStarter{
+			enabled: true,
+			startWorkflow: func(
+				_ context.Context,
+				options client.StartWorkflowOptions,
+				name any,
+				args ...any,
+			) (client.WorkflowRun, error) {
+				started = options
+				startedName = name
+				if len(args) == 1 {
+					payload, _ = args[0].(*agentjobs.AgentRunPayload)
+				}
+				return nil, nil
+			},
+		},
+		audit: audit,
+	}
+
+	run, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
+	if err != nil {
+		t.Fatalf("expected start to succeed, got %v", err)
+	}
+	if run == nil {
+		t.Fatalf("expected a run to be returned")
+	}
+
+	wantWorkflowID := workflowIDPrefix + runID.String()
+	if started.ID != wantWorkflowID {
+		t.Fatalf("expected workflow id %s, got %s", wantWorkflowID, started.ID)
+	}
+	if started.TaskQueue != temporaltype.TaskQueueAgent.String() {
+		t.Fatalf("expected agent task queue, got %s", started.TaskQueue)
+	}
+	if started.WorkflowIDReusePolicy != enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE {
+		t.Fatalf("expected reject-duplicate reuse policy, got %v", started.WorkflowIDReusePolicy)
+	}
+	if startedName != agentjobs.AgentRunWorkflowName {
+		t.Fatalf("expected workflow %s, got %v", agentjobs.AgentRunWorkflowName, startedName)
+	}
+	if payload == nil {
+		t.Fatalf("expected an agent run payload")
+	}
+	if payload.RunID != runID || payload.DefinitionID != def.ID {
+		t.Fatalf("expected payload for run %s / definition %s, got %+v", runID, def.ID, payload)
+	}
+	if payload.OrganizationID != testTenant.OrgID || payload.BusinessUnitID != testTenant.BuID {
+		t.Fatalf("expected payload tenant to come from the request, got %+v", payload.BasePayload)
+	}
+	if run.WorkflowID != wantWorkflowID {
+		t.Fatalf("expected run workflow id %s, got %s", wantWorkflowID, run.WorkflowID)
+	}
+	if run.AgentDefinitionID != def.ID {
+		t.Fatalf("expected run linked to definition %s, got %s", def.ID, run.AgentDefinitionID)
+	}
+	if run.AgentType != agent.TypeBillingException {
+		t.Fatalf("expected billing exception agent type, got %s", run.AgentType)
+	}
+	if run.Trigger != agent.RunTriggerEvent {
+		t.Fatalf("expected event trigger, got %s", run.Trigger)
+	}
+	if len(audit.logged) != 1 {
+		t.Fatalf("expected one audit entry, got %d", len(audit.logged))
+	}
+}
+
+func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
+	t.Parallel()
+
+	def := definitionFixture(true)
+	def.SystemKey = ""
+	var started client.StartWorkflowOptions
+	svc := &Service{
+		l:           zap.NewNop(),
+		validator:   NewValidator(ValidatorParams{}),
+		definitions: definitionRepoFor(def),
+		repo: &fakeAgentRunRepo{
+			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
+				entity.ID = pulid.MustNew("ar_")
+				return entity, nil
+			},
+			update: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
+				return entity, nil
 			},
 		},
 		workflows: &fakeWorkflowStarter{
@@ -186,34 +302,79 @@ func TestStartLaunchesWorkflowWhenBillingAgentEnabled(t *testing.T) {
 				_ any,
 				_ ...any,
 			) (client.WorkflowRun, error) {
-				startedWorkflowID = options.ID
+				started = options
 				return nil, nil
 			},
 		},
-		audit: audit,
+		audit: &fakeAuditService{},
 	}
 
-	run, err := svc.Start(t.Context(), startRequest(), nil)
+	req := &serviceports.StartAgentRunForDefinitionRequest{
+		SystemKey:  def.SystemKey,
+		Trigger:    agent.RunTriggerScheduled,
+		Slot:       1_700_000_000,
+		TenantInfo: testTenant,
+	}
+	req.DefinitionID = def.ID
+
+	run, err := svc.StartForDefinition(t.Context(), req, nil)
 	if err != nil {
-		t.Fatalf("expected start to succeed when billing agent is enabled, got %v", err)
+		t.Fatalf("expected start to succeed, got %v", err)
 	}
-	if run == nil {
-		t.Fatalf("expected a run to be returned")
+	want := workflowIDPrefix + def.ID.String() + "-1700000000"
+	if started.ID != want {
+		t.Fatalf("expected slot workflow id %s, got %s", want, started.ID)
 	}
-
-	wantWorkflowID := workflowIDPrefix + runID.String()
-	if startedWorkflowID != wantWorkflowID {
-		t.Fatalf("expected workflow id %s, got %s", wantWorkflowID, startedWorkflowID)
+	if run.SubjectType != agent.SubjectOrganization || run.SubjectID != testTenant.OrgID {
+		t.Fatalf("expected organization subject by default, got %s %s", run.SubjectType, run.SubjectID)
 	}
-	if run.WorkflowID != wantWorkflowID {
-		t.Fatalf("expected run workflow id %s, got %s", wantWorkflowID, run.WorkflowID)
-	}
-	if len(audit.logged) != 1 {
-		t.Fatalf("expected one audit entry, got %d", len(audit.logged))
+	if run.AgentType != agent.TypeGeneral {
+		t.Fatalf("expected general agent type for a custom definition, got %s", run.AgentType)
 	}
 }
 
-func TestStartRejectsWhenWorkflowEngineUnavailable(t *testing.T) {
+func TestStartForDefinitionMarksRunFailedWhenWorkflowStartFails(t *testing.T) {
+	t.Parallel()
+
+	def := definitionFixture(true)
+	var last *agent.AgentRun
+	svc := &Service{
+		l:           zap.NewNop(),
+		validator:   NewValidator(ValidatorParams{}),
+		definitions: definitionRepoFor(def),
+		repo: &fakeAgentRunRepo{
+			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
+				entity.ID = pulid.MustNew("ar_")
+				return entity, nil
+			},
+			update: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
+				last = entity
+				return entity, nil
+			},
+		},
+		workflows: &fakeWorkflowStarter{
+			enabled: true,
+			startWorkflow: func(
+				context.Context,
+				client.StartWorkflowOptions,
+				any,
+				...any,
+			) (client.WorkflowRun, error) {
+				return nil, errors.New("temporal down")
+			},
+		},
+		audit: &fakeAuditService{},
+	}
+
+	if _, err := svc.StartForDefinition(t.Context(), startRequest(def), nil); err == nil {
+		t.Fatalf("expected the workflow start error to surface")
+	}
+	if last == nil || last.Status != agent.RunStatusFailed {
+		t.Fatalf("expected the run to be marked failed, got %+v", last)
+	}
+}
+
+func TestStartForDefinitionRejectsWhenWorkflowEngineUnavailable(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
@@ -221,7 +382,24 @@ func TestStartRejectsWhenWorkflowEngineUnavailable(t *testing.T) {
 		workflows: &fakeWorkflowStarter{enabled: false},
 	}
 
-	if _, err := svc.Start(t.Context(), startRequest(), nil); err == nil {
+	if _, err := svc.StartForDefinition(t.Context(), startRequest(definitionFixture(true)), nil); err == nil {
 		t.Fatalf("expected error when workflow engine is unavailable")
+	}
+}
+
+func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{
+		l:           zap.NewNop(),
+		workflows:   &fakeWorkflowStarter{enabled: true},
+		definitions: &fakeDefinitionRepo{},
+	}
+
+	_, err := svc.StartForDefinition(t.Context(), &serviceports.StartAgentRunForDefinitionRequest{
+		TenantInfo: testTenant,
+	}, nil)
+	if err == nil {
+		t.Fatalf("expected a validation error without an id or system key")
 	}
 }

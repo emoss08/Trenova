@@ -48,8 +48,12 @@ func (r *repository) filterQuery(
 		(*agent.AgentProposal)(nil),
 	)
 
-	return q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo)).
-		Limit(req.Filter.Pagination.SafeLimit()).
+	q = q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo))
+	if req.ExcludeShadowDefinitions {
+		q = excludeShadowDefinitions(q)
+	}
+
+	return q.Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
 }
@@ -86,19 +90,60 @@ func (r *repository) applyTotalCountFilters(
 		(*agent.AgentProposal)(nil),
 	)
 
-	return q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo))
+	q = q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo))
+	if req.ExcludeShadowDefinitions {
+		q = excludeShadowDefinitions(q)
+	}
+
+	return q
 }
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListAgentProposalConnectionRequest,
 ) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
+	q, err := querybuilder.ApplyCursorFilters(
 		q,
 		buncolgen.AgentProposalTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*agent.AgentProposal)(nil),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if req.ExcludeShadowDefinitions {
+		q = excludeShadowDefinitions(q)
+	}
+
+	return q, nil
+}
+
+func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
+	proposals := buncolgen.AgentProposalColumns
+	runs := buncolgen.AgentRunColumns
+	definitions := buncolgen.DefinitionColumns
+
+	return q.Where(
+		"NOT EXISTS (SELECT 1 FROM ? AS ? JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ? "+
+			"WHERE ? = ? AND ? = ? AND ? = ? AND ? = TRUE)",
+		bun.Ident(buncolgen.AgentRunTable.Name),
+		bun.Ident(buncolgen.AgentRunTable.Alias),
+		bun.Ident(buncolgen.DefinitionTable.Name),
+		bun.Ident(buncolgen.DefinitionTable.Alias),
+		bun.Safe(definitions.ID.Qualified()),
+		bun.Safe(runs.AgentDefinitionID.Qualified()),
+		bun.Safe(definitions.OrganizationID.Qualified()),
+		bun.Safe(runs.OrganizationID.Qualified()),
+		bun.Safe(definitions.BusinessUnitID.Qualified()),
+		bun.Safe(runs.BusinessUnitID.Qualified()),
+		bun.Safe(runs.ID.Qualified()),
+		bun.Safe(proposals.RunID.Qualified()),
+		bun.Safe(runs.OrganizationID.Qualified()),
+		bun.Safe(proposals.OrganizationID.Qualified()),
+		bun.Safe(runs.BusinessUnitID.Qualified()),
+		bun.Safe(proposals.BusinessUnitID.Qualified()),
+		bun.Safe(definitions.ShadowMode.Qualified()),
 	)
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,38 +24,6 @@ type ContextSection struct {
 
 type DelimitedContext struct {
 	Sections []ContextSection
-}
-
-type ProposedAction struct {
-	ToolName   string              `json:"toolName"`
-	ToolParams map[string]any      `json:"toolParams"`
-	Confidence float64             `json:"confidence"`
-	Rationale  string              `json:"rationale"`
-	Evidence   []agent.EvidenceRef `json:"evidence"`
-}
-
-type RaisedException struct {
-	Category       string              `json:"category"`
-	Severity       string              `json:"severity"`
-	AttemptSummary string              `json:"attemptSummary"`
-	Evidence       []agent.EvidenceRef `json:"evidence"`
-	BlastRadius    int                 `json:"blastRadius"`
-}
-
-type DiagnoseRequest struct {
-	TenantInfo    pagination.TenantInfo
-	PromptVersion string
-	SystemPrompt  string
-	Context       DelimitedContext
-	ToolSchemas   []AgentToolDescriptor
-}
-
-type DiagnoseResult struct {
-	Proposals       []ProposedAction
-	Exceptions      []RaisedException
-	ModelIdentifier string
-	ProviderID      pulid.ID
-	ProviderKind    aiprovider.Kind
 }
 
 type StructuredCompletionRequest struct {
@@ -115,7 +82,6 @@ type ChatCompletionResult struct {
 type ChatStreamSink func(delta string)
 
 type CompletionService interface {
-	Diagnose(ctx context.Context, req *DiagnoseRequest) (*DiagnoseResult, error)
 	CompleteStructured(
 		ctx context.Context,
 		req *StructuredCompletionRequest,

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/database/seeds/base"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,31 +18,21 @@ import (
 const (
 	SeedAgentDispatchName = "Dispatch desk"
 	SeedAgentBillingName  = "Billing exceptions"
-
-	SystemKeyBillingException   = "billing_exception"
-	SystemKeyDispatchAssignment = "dispatch_assignment"
 )
 
 type AgentDefinitionSeed struct {
 	seedhelpers.BaseSeed
 }
 
-// AgentDefinitionSeed configures a spread of agents so the assistant's picker,
-// the AI Control page, the scheduler sweep and the conversation seed all have
-// something to show: chat agents built from templates, the two system agents
-// the platform's own events fire, and a scheduled report.
-//
-// Depends on:
-//   - AdminAccount: the default organization the agents belong to
 func NewAgentDefinitionSeed() *AgentDefinitionSeed {
 	seed := &AgentDefinitionSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"AgentDefinition",
-		"2.0.0",
+		"2.1.0",
 		"Seeds chat, event-driven and scheduled agents for the default organization",
 		[]common.Environment{common.EnvDevelopment},
 	)
-	seed.SetDependencies(seedhelpers.SeedAdminAccount)
+	seed.SetDependencies(seedhelpers.SeedAdminAccount, seedhelpers.SeedSystemAgentDefinitions)
 	return seed
 }
 
@@ -62,12 +53,17 @@ func (s *AgentDefinitionSeed) Run(ctx context.Context, tx bun.Tx) error {
 				Model((*agentdefinition.Definition)(nil)).
 				Where(cols.OrganizationID.Eq(), org.ID).
 				Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
+				Where(cols.SystemKey.IsNull()).
 				Count(ctx)
 			if err != nil {
 				return fmt.Errorf("count existing agents: %w", err)
 			}
 			if count > 0 {
 				return nil
+			}
+
+			if err = s.enableSystemAgents(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
+				return err
 			}
 
 			now := timeutils.NowUnix()
@@ -169,47 +165,6 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 		{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Name:           "Billing exception agent",
-			Description:    "Diagnoses each billing item that becomes blocked and proposes how to clear it.",
-			Template:       agentdefinition.TemplateBillingException,
-			Instructions:   agentdefinition.TemplateBillingException.StarterInstructions(),
-			ToolNames: []string{
-				"get_shipment",
-				"search_shipments",
-				"transition_item_to_in_review",
-				"correct_charge_code",
-				"request_missing_docs",
-				"attach_document_to_bqi",
-				"flag_for_manual_review",
-			},
-			AutonomyCeiling:  agent.TierActWithApproval,
-			TriggerMode:      agentdefinition.TriggerEvent,
-			EventKinds:       []agent.EventKind{agent.EventBillingQueueItemException},
-			OutputMode:       agentdefinition.OutputReport,
-			ShadowMode:       true,
-			SystemKey:        SystemKeyBillingException,
-			ContextProviders: []agentdefinition.ContextProvider{agentdefinition.ContextOrganization, agentdefinition.ContextClock, agentdefinition.ContextTools},
-			Enabled:          true,
-		},
-		{
-			OrganizationID:  orgID,
-			BusinessUnitID:  buID,
-			Name:            "Dispatch coverage agent",
-			Description:     "Every half hour, reviews moves with no driver and proposes assignments.",
-			Template:        agentdefinition.TemplateDispatchAssignment,
-			Instructions:    agentdefinition.TemplateDispatchAssignment.StarterInstructions(),
-			ToolNames:       []string{"get_shipment", "search_shipments", "get_worker", "search_workers"},
-			AutonomyCeiling: agent.TierActWithApproval,
-			TriggerMode:     agentdefinition.TriggerScheduled,
-			CronExpression:  agentdefinition.TemplateDispatchAssignment.StarterCron(),
-			CronTimezone:    "America/Los_Angeles",
-			OutputMode:      agentdefinition.OutputReport,
-			SystemKey:       SystemKeyDispatchAssignment,
-			Enabled:         true,
-		},
-		{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
 			Name:           "Morning operations digest",
 			Description:    "A weekday summary of what is stuck, late or unassigned, ready before the desk opens.",
 			Instructions: "Each weekday morning, review shipments that are late, moves without a driver, " +
@@ -224,6 +179,38 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Enabled:         true,
 		},
 	}
+}
+
+func (s *AgentDefinitionSeed) enableSystemAgents(
+	ctx context.Context,
+	tx bun.Tx,
+	orgID, buID pulid.ID,
+) error {
+	cols := buncolgen.DefinitionColumns
+	now := timeutils.NowUnix()
+	for _, definition := range base.SystemAgentDefinitions(orgID, buID) {
+		query := tx.NewUpdate().
+			Model((*agentdefinition.Definition)(nil)).
+			Set(cols.Enabled.Set(), true).
+			Set(cols.ShadowMode.Set(), true).
+			Set(cols.UpdatedAt.Set(), now).
+			Where(cols.OrganizationID.Eq(), orgID).
+			Where(cols.BusinessUnitID.Eq(), buID).
+			Where(cols.SystemKey.Eq(), definition.SystemKey)
+		if definition.TriggerMode == agentdefinition.TriggerScheduled {
+			next, err := definition.ComputeNextRun(now)
+			if err != nil {
+				return fmt.Errorf("schedule system agent %s: %w", definition.SystemKey, err)
+			}
+			query = query.Set(cols.NextRunAt.Set(), next).
+				Set(cols.CronTimezone.Set(), "America/Los_Angeles")
+		}
+		if _, err := query.Exec(ctx); err != nil {
+			return fmt.Errorf("enable system agent %s: %w", definition.SystemKey, err)
+		}
+	}
+
+	return nil
 }
 
 func (s *AgentDefinitionSeed) Down(ctx context.Context, tx bun.Tx) error {

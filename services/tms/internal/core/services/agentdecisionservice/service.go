@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
@@ -24,7 +25,7 @@ type Params struct {
 	DecisionRepo repositories.AgentDecisionRepository
 	ProposalRepo repositories.AgentProposalRepository
 	RunRepo      repositories.AgentRunRepository
-	Control      services.AgentControlService
+	Shadow       *agentshadow.Resolver
 	Permissions  services.PermissionEngine
 	Workflows    services.WorkflowStarter
 	Executor     *proposalexecutor.Service
@@ -36,7 +37,7 @@ type Service struct {
 	decisionRepo repositories.AgentDecisionRepository
 	proposalRepo repositories.AgentProposalRepository
 	runRepo      repositories.AgentRunRepository
-	control      services.AgentControlService
+	shadow       *agentshadow.Resolver
 	permissions  services.PermissionEngine
 	workflows    services.WorkflowStarter
 	executor     *proposalexecutor.Service
@@ -49,7 +50,7 @@ func New(p Params) services.AgentDecisionService {
 		decisionRepo: p.DecisionRepo,
 		proposalRepo: p.ProposalRepo,
 		runRepo:      p.RunRepo,
-		control:      p.Control,
+		shadow:       p.Shadow,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
 		executor:     p.Executor,
@@ -70,22 +71,22 @@ func (s *Service) Decide(
 		)
 	}
 
-	control, err := s.control.Get(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	if control.ShadowMode {
-		return nil, errortypes.NewBusinessError(
-			"Agent proposals cannot be actioned while the organization is in shadow mode",
-		)
-	}
-
 	proposal, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
 		ID:         req.ProposalID,
 		TenantInfo: &req.TenantInfo,
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	shadow, err := s.shadow.ForRun(ctx, req.TenantInfo, proposal.RunID)
+	if err != nil {
+		return nil, err
+	}
+	if shadow {
+		return nil, errortypes.NewBusinessError(
+			"Agent proposals cannot be actioned while the agent is in shadow mode",
+		)
 	}
 
 	decision := &agent.AgentDecision{

@@ -121,6 +121,7 @@ func (s *Service) Execute(
 		BusinessUnitID: proposal.BusinessUnitID,
 		Actor:          actor,
 		IdempotencyKey: proposal.ID.String(),
+		RunID:          proposal.RunID,
 		Params:         params,
 	})
 	if err != nil {
