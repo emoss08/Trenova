@@ -21,5 +21,6 @@ export function kindMark(kind: string): ReactNode {
 
   const Mark = brandMarkFor({ presetKey: preset });
 
-  return Mark ? <Mark className="size-full" /> : null;
+  // No sizing class: whatever slot renders this decides the box.
+  return Mark ? <Mark /> : null;
 }

@@ -15,7 +15,7 @@ type Mask = {
   right: boolean;
 };
 
-export type ScrollAreaMaskVariant = "background" | "card" | "muted" | "sidebar";
+export type ScrollAreaMaskVariant = "background" | "card" | "muted" | "popover" | "sidebar";
 
 export type ScrollAreaContextProps = {
   isTouch: boolean;
@@ -31,6 +31,7 @@ const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   background: "before:from-background after:from-background",
   card: "before:from-card after:from-card",
   muted: "before:from-muted after:from-muted",
+  popover: "before:from-popover after:from-popover",
   sidebar: "before:from-sidebar after:from-sidebar",
 };
 

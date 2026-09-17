@@ -1,9 +1,4 @@
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@trenova/shared/components/ui/collapsible";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -15,7 +10,6 @@ import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
-  ChevronRightIcon,
   CircleAlertIcon,
   CircleCheckIcon,
   CircleSlashIcon,
@@ -24,7 +18,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { m } from "motion/react";
-import { useState } from "react";
 import { presentProposal } from "./proposal-presenters";
 import { classifyProposal, type ProposalPresentation } from "./proposal-state";
 
@@ -116,12 +109,9 @@ export function ProposalCard({
         <p className="text-sm leading-snug">{view.summary}</p>
 
         {view.highlights.length > 0 && (
-          <dl className="flex flex-col gap-1 text-xs">
+          <dl className="flex flex-col gap-1.5 text-xs">
             {view.highlights.map((entry) => (
-              <div key={entry.label} className="flex gap-2">
-                <dt className="text-muted-foreground w-28 shrink-0 truncate">{entry.label}</dt>
-                <dd className="min-w-0 flex-1 break-words">{entry.value}</dd>
-              </div>
+              <HighlightRow key={entry.label} label={entry.label} value={entry.value} />
             ))}
           </dl>
         )}
@@ -166,39 +156,34 @@ export function ProposalCard({
               {t("Permanent")}
             </span>
           )}
-          {view.details.length > 0 && <DetailsDisclosure details={view.details} />}
         </span>
       </div>
     </m.div>
   );
 }
 
-function DetailsDisclosure({ details }: { details: { label: string; value: string }[] }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
+/**
+ * A short value reads as a label/value pair; a sentence does not. The old card
+ * ran every value through a fixed 7rem gutter, which turned "what the agent
+ * found" into a narrow column beside a wall of wrapped text.
+ */
+const INLINE_VALUE_LIMIT = 48;
+
+function HighlightRow({ label, value }: { label: string; value: string }) {
+  if (value.length > INLINE_VALUE_LIMIT) {
+    return (
+      <div>
+        <dt className="text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5 break-words">{value}</dd>
+      </div>
+    );
+  }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-[11px] transition-colors">
-        <ChevronRightIcon
-          className={cn(
-            "size-3 transition-transform duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-            open && "rotate-90",
-          )}
-        />
-        {t("Details")}
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <dl className="border-border/70 mt-2 flex flex-col gap-1 border-t pt-2 text-[11px]">
-          {details.map((entry) => (
-            <div key={entry.label} className="flex gap-2">
-              <dt className="text-muted-foreground w-28 shrink-0 truncate">{entry.label}</dt>
-              <dd className="min-w-0 flex-1 font-mono break-all">{entry.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </CollapsibleContent>
-    </Collapsible>
+    <div className="flex gap-3">
+      <dt className="text-muted-foreground w-24 shrink-0 truncate">{label}</dt>
+      <dd className="min-w-0 flex-1 break-words">{value}</dd>
+    </div>
   );
 }
 

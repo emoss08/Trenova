@@ -77,7 +77,7 @@ export function AssistantHome({
   const recent = threads.slice(0, RECENT_LIMIT);
 
   return (
-    <ScrollArea className="flex-1" maskVariant="card">
+    <ScrollArea className="flex-1" maskVariant="popover">
       <div className="flex flex-col gap-5 px-4 py-4">
         {/* No corner flourishes and no blurred wash behind the text. This is
             the first thing a person sees every time they open the panel, and

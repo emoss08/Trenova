@@ -13,7 +13,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
 import { Composer } from "./composer";
 import {
@@ -74,6 +74,26 @@ export function MessageThread({
     getTurnContext,
   );
 
+  // The composer floats over the bottom of the thread, so the last message has
+  // to be padded clear of it and the jump-to-latest button lifted above it. The
+  // textarea grows to eight rows, which is why this is measured, not a constant.
+  const composerRef = useRef<HTMLDivElement>(null);
+  const [composerHeight, setComposerHeight] = useState(0);
+
+  useEffect(() => {
+    const element = composerRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(([entry]) => {
+      setComposerHeight(entry.target.getBoundingClientRect().height);
+    });
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
   const agentUnavailable = agent === null;
   const isEmpty = !messagesQuery.isLoading && entries.length === 0 && turn === null;
   const suggestions = useMemo(
@@ -86,12 +106,13 @@ export function MessageThread({
 
   return (
     <AssistantAgentProvider agent={agent}>
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="relative flex min-h-0 flex-1 flex-col">
         <MessageScrollerProvider autoScroll defaultScrollPosition="end">
           <MessageScroller className="flex-1">
             <MessageScrollerViewport className={expanded ? "px-4" : "px-3"}>
               <MessageScrollerContent
                 className={expanded ? "mx-auto w-full max-w-3xl gap-5 py-5" : "gap-4 py-4"}
+                style={{ paddingBottom: composerHeight }}
               >
                 {messagesQuery.isLoading ? (
                   <div className="flex flex-col gap-4">
@@ -146,11 +167,12 @@ export function MessageThread({
                 )}
               </MessageScrollerContent>
             </MessageScrollerViewport>
-            <MessageScrollerButton />
+            <MessageScrollerButton style={{ bottom: composerHeight + 12 }} />
           </MessageScroller>
         </MessageScrollerProvider>
 
         <Composer
+          ref={composerRef}
           onSend={(content) => void send(content)}
           onStop={stop}
           active={isActive}
