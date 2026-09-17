@@ -75,8 +75,13 @@ func (r *queryResolver) Carrier(ctx context.Context, id string) (*carrier.Carrie
 	})
 }
 
+func (r *Resolver) Carrier() generated.CarrierResolver { return &carrierResolver{r} }
+
 func (r *Resolver) CarrierInsurancePolicy() generated.CarrierInsurancePolicyResolver {
 	return &carrierInsurancePolicyResolver{r}
 }
 
-type carrierInsurancePolicyResolver struct{ *Resolver }
+type (
+	carrierResolver                struct{ *Resolver }
+	carrierInsurancePolicyResolver struct{ *Resolver }
+)

@@ -396,8 +396,5 @@ func (r *queryResolver) DispatchCarrierAssignmentPreview(ctx context.Context, in
 		return nil, err
 	}
 
-	return &gqlmodel.DispatchCarrierEligibility{
-		Blockers: append([]string{}, result.Blockers...),
-		Warnings: append([]string{}, result.Warnings...),
-	}, nil
+	return dispatchCarrierEligibilityToModel(result), nil
 }

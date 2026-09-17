@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -87,4 +88,25 @@ func assignMoveToCarrierRequestFromInput(
 		Replace:                  boolValue(input.Replace),
 		OverrideInsuranceWarning: boolValue(input.OverrideInsuranceWarning),
 	}, nil
+}
+
+func dispatchCarrierEligibilityToModel(
+	result *carrier.EligibilityResult,
+) *gqlmodel.DispatchCarrierEligibility {
+	findings := make([]*gqlmodel.DispatchCarrierEligibilityFinding, 0, len(result.Findings))
+	for _, finding := range result.Findings {
+		findings = append(findings, &gqlmodel.DispatchCarrierEligibilityFinding{
+			Code:             finding.Code,
+			Source:           finding.Source,
+			Severity:         finding.Severity,
+			Message:          finding.Message,
+			RequiresOverride: finding.RequiresOverride,
+		})
+	}
+	return &gqlmodel.DispatchCarrierEligibility{
+		Blockers:   append([]string{}, result.Blockers...),
+		Warnings:   append([]string{}, result.Warnings...),
+		Advisories: append([]string{}, result.Advisories...),
+		Findings:   findings,
+	}
 }

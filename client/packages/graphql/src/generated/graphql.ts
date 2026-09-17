@@ -212,6 +212,12 @@ export type AmendWorkerEmploymentEventInput = {
   version?: number | null | undefined;
 };
 
+export type ApplyCarrierIntelSuggestionsInput = {
+  carrierId: string | number;
+  fields?: Array<CarrierIntelSyncField> | null | undefined;
+  policyIds?: Array<string | number> | null | undefined;
+};
+
 export type ApplyCreditMemoInput = {
   accountingDate: number;
   applications: Array<CreditMemoApplicationInput>;
@@ -501,12 +507,236 @@ export type CarrierCostEventType =
   | 'FuelSurcharge'
   | 'LinehaulCost';
 
+export type CarrierEquipmentVerificationResult =
+  | 'Match'
+  | 'Mismatch'
+  | 'NotFound'
+  | 'ProviderError'
+  | 'Unverifiable';
+
 export type CarrierInsurancePolicyType =
   | 'AutoLiability'
   | 'CargoLiability'
   | 'GeneralLiability'
   | 'Umbrella'
   | 'WorkersComp';
+
+export type CarrierIntelAuthorityStatus =
+  | 'Active'
+  | 'Inactive'
+  | 'None'
+  | 'Revoked'
+  | 'Unknown';
+
+export type CarrierIntelControlPatchInput = {
+  autoApplySafetyRating?: boolean | null | undefined;
+  autoDisqualifyOnBlock?: boolean | null | undefined;
+  autoEnrollOnCreate?: boolean | null | undefined;
+  autoSyncFields?: Array<CarrierIntelSyncField> | null | undefined;
+  autoUnenrollOnInactive?: boolean | null | undefined;
+  confirmBlockingChanges?: boolean | null | undefined;
+  confirmEstimatedCost?: boolean | null | undefined;
+  dailyFullProfileCap?: number | null | undefined;
+  enrollmentPolicy?: CarrierIntelEnrollmentPolicy | null | undefined;
+  exclusiveWatchlist?: boolean | null | undefined;
+  fullProfileTtlDays?: number | null | undefined;
+  hardMaxAgeHours?: number | null | undefined;
+  includeOpenTenders?: boolean | null | undefined;
+  monthlySpendCap?: string | null | undefined;
+  outagePolicy?: CarrierIntelOutagePolicy | null | undefined;
+  pollIntervalMinutes?: number | null | undefined;
+  preTenderMaxAgeHours?: number | null | undefined;
+  preTenderRefreshEnabled?: boolean | null | undefined;
+  rawRetentionDays?: number | null | undefined;
+  recentUsageDays?: number | null | undefined;
+  rules?: Array<CarrierIntelRuleSettingInput> | null | undefined;
+  selfMonitoringEnabled?: boolean | null | undefined;
+  snapshotHistoryLimit?: number | null | undefined;
+  snapshotTtlHours?: number | null | undefined;
+  softCapPercent?: number | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type CarrierIntelDepth =
+  | 'FMCSA'
+  | 'Full'
+  | 'Lite';
+
+export type CarrierIntelDesiredState =
+  | 'Enrolled'
+  | 'NotEnrolled';
+
+export type CarrierIntelEnrollmentMode =
+  | 'Native'
+  | 'SnapshotDiff';
+
+export type CarrierIntelEnrollmentPolicy =
+  | 'AllActive'
+  | 'Manual'
+  | 'RecentlyUsed';
+
+export type CarrierIntelEnrollmentReason =
+  | 'AssignedOrTendered'
+  | 'CustomerBroker'
+  | 'Manual'
+  | 'PolicyAllActive'
+  | 'PolicyRecentUse'
+  | 'SelfMonitor';
+
+export type CarrierIntelEventFilterInput = {
+  carrierId?: string | number | null | undefined;
+  categories?: Array<CarrierIntelSection> | null | undefined;
+  openOnly?: boolean | null | undefined;
+  severities?: Array<CarrierIntelSeverity> | null | undefined;
+  statuses?: Array<CarrierIntelEventStatus> | null | undefined;
+  subjectId?: string | null | undefined;
+  subjectType?: CarrierIntelSubjectType | null | undefined;
+};
+
+export type CarrierIntelEventResolution =
+  | 'CarrierBlocked'
+  | 'CarrierUpdated'
+  | 'FalsePositive'
+  | 'NoActionRequired'
+  | 'OverrideGranted';
+
+export type CarrierIntelEventSource =
+  | 'Enrollment'
+  | 'EquipmentVerification'
+  | 'NativeChangeFeed'
+  | 'Override'
+  | 'ProviderError'
+  | 'RuleEvaluation'
+  | 'SnapshotDiff';
+
+export type CarrierIntelEventStatus =
+  | 'Acknowledged'
+  | 'Dismissed'
+  | 'Open'
+  | 'Resolved';
+
+export type CarrierIntelFeedType =
+  | 'ChangeFeed'
+  | 'SnapshotRefresh';
+
+export type CarrierIntelInsuranceChangeKind =
+  | 'CoverageChanged'
+  | 'NewFiling'
+  | 'ShortenExpiration';
+
+export type CarrierIntelInsuranceFilingType =
+  | 'BIPD'
+  | 'Bond'
+  | 'Cargo'
+  | 'Other';
+
+export type CarrierIntelLookupInput = {
+  depth?: CarrierIntelDepth | null | undefined;
+  docketNumber?: string | null | undefined;
+  dotNumber?: string | null | undefined;
+};
+
+export type CarrierIntelNetworkKind =
+  | 'Address'
+  | 'EIN'
+  | 'Email'
+  | 'Equipment'
+  | 'Phone';
+
+export type CarrierIntelOutagePolicy =
+  | 'FailClosed'
+  | 'FailOpen';
+
+export type CarrierIntelReviewState =
+  | 'NeedsReview'
+  | 'None'
+  | 'Reviewed';
+
+export type CarrierIntelRiskLevel =
+  | 'Elevated'
+  | 'High'
+  | 'Low'
+  | 'Moderate'
+  | 'Unknown'
+  | 'VeryHigh';
+
+export type CarrierIntelRuleAction =
+  | 'Block'
+  | 'Notify'
+  | 'Off'
+  | 'Warn';
+
+export type CarrierIntelRuleParamInput = {
+  key: string;
+  value: string;
+};
+
+export type CarrierIntelRuleParamType =
+  | 'Decimal'
+  | 'Integer'
+  | 'MultiSelect'
+  | 'Number'
+  | 'Select';
+
+export type CarrierIntelRuleSettingInput = {
+  action: CarrierIntelRuleAction;
+  code: string;
+  params?: Array<CarrierIntelRuleParamInput> | null | undefined;
+};
+
+export type CarrierIntelSection =
+  | 'Authority'
+  | 'Basics'
+  | 'Benchmarks'
+  | 'ChangeHistory'
+  | 'Contacts'
+  | 'Crashes'
+  | 'Equipment'
+  | 'Fleet'
+  | 'Identity'
+  | 'Inspections'
+  | 'Insurance'
+  | 'Lanes'
+  | 'Network'
+  | 'Operations'
+  | 'Safety';
+
+export type CarrierIntelSeverity =
+  | 'Critical'
+  | 'High'
+  | 'Info'
+  | 'Low'
+  | 'Medium';
+
+export type CarrierIntelSubjectType =
+  | 'Carrier'
+  | 'Customer'
+  | 'Organization'
+  | 'Prospect';
+
+export type CarrierIntelSyncField =
+  | 'addressLine1'
+  | 'city'
+  | 'dbaName'
+  | 'email'
+  | 'mcNumber'
+  | 'name'
+  | 'phone'
+  | 'postalCode'
+  | 'safetyRating';
+
+export type CarrierIntelUnitType =
+  | 'Straight'
+  | 'Tractor'
+  | 'Trailer';
+
+export type CarrierIntelVendorState =
+  | 'Active'
+  | 'Failed'
+  | 'PendingAdd'
+  | 'PendingRemove'
+  | 'Removed'
+  | 'Unknown';
 
 export type CarrierInvoiceMatchActionInput = {
   matchId: string | number;
@@ -532,6 +762,11 @@ export type CarrierLedgerEntryType =
   | 'Adjustment'
   | 'Bill'
   | 'Payment';
+
+export type CarrierMonitoringEnrollmentFilterInput = {
+  desiredState?: CarrierIntelDesiredState | null | undefined;
+  vendorStates?: Array<CarrierIntelVendorState> | null | undefined;
+};
 
 export type CarrierPaymentMethod =
   | 'ACHManual'
@@ -564,6 +799,21 @@ export type CarrierSettlementStatus =
   | 'PendingApproval'
   | 'Posted'
   | 'Voided';
+
+export type CarrierSourcingSearchInput = {
+  destinationState?: string | null | undefined;
+  excludeBlocking?: boolean | null | undefined;
+  excludeExistingCarriers?: boolean | null | undefined;
+  hazmatOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+  maxPowerUnits?: number | null | undefined;
+  minAuthorityAgeDays?: number | null | undefined;
+  minPowerUnits?: number | null | undefined;
+  offset?: number | null | undefined;
+  originState?: string | null | undefined;
+  state?: string | null | undefined;
+  text?: string | null | undefined;
+};
 
 export type CarrierStatus =
   | 'Active'
@@ -2067,6 +2317,13 @@ export type GenerateSettlementBatchInput = {
   periodStart?: number | null | undefined;
 };
 
+export type GrantCarrierIntelOverrideInput = {
+  carrierId: string | number;
+  expiresAt?: number | null | undefined;
+  reason: string;
+  ruleCode: string;
+};
+
 export type HazardousClass =
   | 'HazardClass1'
   | 'HazardClass1And1'
@@ -2273,6 +2530,12 @@ export type IftaTaxRatesInput = {
   period?: IftaPeriodInput | null | undefined;
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
+};
+
+export type ImportSourcedCarrierInput = {
+  code?: string | null | undefined;
+  dotNumber: string;
+  enrollMonitoring?: boolean | null | undefined;
 };
 
 export type InjuryCaseStatus =
@@ -3612,6 +3875,12 @@ export type RescindDisciplinaryActionInput = {
   id: string | number;
   reason: string;
   version?: number | null | undefined;
+};
+
+export type ResolveCarrierIntelEventInput = {
+  id: string | number;
+  note?: string | null | undefined;
+  resolution: CarrierIntelEventResolution;
 };
 
 export type ResolveInvoiceDisputeInput = {
@@ -5025,6 +5294,15 @@ export type UpdateWorkerSafetyEventInput = {
   version: number;
 };
 
+export type VerifyCarrierEquipmentInput = {
+  carrierAssignmentId: string | number;
+  plateNumber?: string | null | undefined;
+  plateState?: string | null | undefined;
+  unitNumber?: string | null | undefined;
+  unitType: CarrierIntelUnitType;
+  vin?: string | null | undefined;
+};
+
 export type VoidInvoiceInput = {
   disposition: InvoiceVoidDisposition;
   invoiceId: string | number;
@@ -5779,6 +6057,276 @@ export type BillingTransferCandidateIdsQueryVariables = Exact<{
 
 export type BillingTransferCandidateIdsQuery = { shipmentBillingTransferCandidateIds: { ids: Array<string>, totalCount: number, truncated: boolean } };
 
+export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
+
+export type CarrierIntelAddressFieldsFragment = { line1: string | null, city: string | null, state: string | null, postalCode: string | null, country: string | null, undelivered: boolean | null } & { ' $fragmentName'?: 'CarrierIntelAddressFieldsFragment' };
+
+export type CarrierIntelAuthorityGrantFieldsFragment = { status: CarrierIntelAuthorityStatus, pending: boolean, underReview: boolean, revocationPending: boolean, grantedAt: number | null, ageDays: number | null } & { ' $fragmentName'?: 'CarrierIntelAuthorityGrantFieldsFragment' };
+
+export type CarrierIntelProfileFieldsFragment = { coverage: Array<CarrierIntelSection>, identity: { dotNumber: string, docketPrefix: string | null, docketNumber: string | null, legalName: string | null, dbaName: string | null, ein: string | null, usdotStatus: string | null, entityType: string | null, carrierOperation: string | null, dotAddedAt: number | null, dotAgeDays: number | null, physicalAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null, mailingAddress: { ' $fragmentRefs'?: { 'CarrierIntelAddressFieldsFragment': CarrierIntelAddressFieldsFragment } } | null } | null, authority: { totalRevocations: number | null, lastRevocationAt: number | null, common: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, contract: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, broker: { ' $fragmentRefs'?: { 'CarrierIntelAuthorityGrantFieldsFragment': CarrierIntelAuthorityGrantFieldsFragment } } | null, history: Array<{ authorityType: string, action: string, servedAt: number | null, effectiveAt: number | null }> | null } | null, insurance: { bipdOnFile: string | null, bipdRequired: string | null, cargoOnFile: string | null, cargoRequired: string | null, bondOnFile: string | null, bondRequired: string | null, pendingCancelAt: number | null, lastCanceledAt: number | null, cancelCount: number | null, filings: Array<{ type: CarrierIntelInsuranceFilingType, insurerName: string | null, policyNumber: string | null, coverage: string | null, effectiveAt: number | null, cancelEffectiveAt: number | null, cancelMethod: string | null }> | null } | null, safety: { rating: string | null, ratingDate: number | null, issValue: number | null, issRecommendation: string | null, riskScore: string | null, riskProbability: number | null, safetyScore: number | null, outOfServiceOrder: boolean | null, outOfServiceAt: number | null, latestReviewType: string | null, latestReviewAt: number | null } | null, basics: Array<{ basic: CsaBasic, measure: number | null, percentile: number | null, threshold: number | null, alert: boolean, roadsideAlert: boolean, acIndicator: boolean }> | null, inspections: { total: number | null, driver: number | null, vehicle: number | null, hazmat: number | null, driverOos: number | null, vehicleOos: number | null, hazmatOos: number | null, driverOosRate: number | null, vehicleOosRate: number | null, hazmatOosRate: number | null, nationalDriverOosRate: number | null, nationalVehicleOosRate: number | null, nationalHazmatOosRate: number | null, lastInspectionAt: number | null } | null, crashes: { total: number | null, fatal: number | null, injury: number | null, tow: number | null, lastCrashAt: number | null } | null, fleet: { powerUnits: number | null, drivers: number | null, cdlDrivers: number | null, ownedTractors: number | null, termLeasedTractors: number | null, ownedTrailers: number | null, termLeasedTrailers: number | null, trailers: number | null, trucks: number | null } | null, equipment: Array<{ vin: string | null, unitType: string | null, category: string | null, make: string | null, model: string | null, year: number | null, plateNumber: string | null, plateState: string | null, unitNumber: string | null }> | null, contacts: { phone: string | null, cellphone: string | null, fax: string | null, email: string | null, primaryContact: string | null, secondaryContact: string | null } | null, operations: { classification: Array<string> | null, cargoCarried: Array<string> | null, hazmatCarrier: boolean | null, mcs150At: number | null, mcs150Mileage: number | null, boc3OnFile: boolean | null, boc3Agent: string | null, smartWay: boolean | null, carbCompliant: boolean | null, phmsa: boolean | null } | null, changeHistory: { nameChanges: number | null, nameLastChangedAt: number | null, emailChanges: number | null, emailLastChangedAt: number | null, phoneChanges: number | null, phoneLastChangedAt: number | null, addressChanges: number | null, addressLastChangedAt: number | null, contactChanges: number | null, contactLastChangedAt: number | null } | null, network: { sharedAddresses: number | null, sharedPhones: number | null, sharedEmails: number | null, sharedEins: number | null, sharedEquipment: number | null, links: Array<{ kind: CarrierIntelNetworkKind, dotNumber: string | null, legalName: string | null, value: string | null, status: string | null }> | null } | null, lanes: { totalLoads: number | null, ftlPercent: number | null, ltlPercent: number | null, deadheadPercent: number | null, firstLoadAt: number | null, lastLoadAt: number | null, preferred: Array<{ originCity: string | null, originState: string | null, destinationCity: string | null, destinationState: string | null, loads: number | null }> | null } | null, benchmarks: { anyAnomaly: boolean | null, inspectionMileageAnomaly: boolean | null, inspectedUnitsAnomaly: boolean | null, powerUnitMileageAnomaly: boolean | null } | null } & { ' $fragmentName'?: 'CarrierIntelProfileFieldsFragment' };
+
+export type CarrierIntelSnapshotSummaryFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, docketNumber: string | null, provider: string, depth: CarrierIntelDepth, source: string, notFound: boolean, riskLevel: CarrierIntelRiskLevel, reviewState: CarrierIntelReviewState, reviewedAt: number | null, reviewNote: string | null, blockingCodes: Array<string>, advisoryCodes: Array<string>, fetchedAt: number, confirmedAt: number | null, effectiveAsOf: number, hasRawPayload: boolean, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }> } & { ' $fragmentName'?: 'CarrierIntelSnapshotSummaryFieldsFragment' };
+
+export type CarrierIntelSnapshotFieldsFragment = (
+  { providerRef: string | null, policyVersion: number, sourceAsOf: number | null, reviewedById: string | null, profile: { ' $fragmentRefs'?: { 'CarrierIntelProfileFieldsFragment': CarrierIntelProfileFieldsFragment } } }
+  & { ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }
+) & { ' $fragmentName'?: 'CarrierIntelSnapshotFieldsFragment' };
+
+export type CarrierIntelEventFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, dotNumber: string, subjectName: string | null, provider: string, source: CarrierIntelEventSource, category: CarrierIntelSection, fieldPath: string | null, ruleCode: string | null, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, priorValue: string | null, currentValue: string | null, summary: string, vendorChangedAt: number | null, detectedAt: number, status: CarrierIntelEventStatus, acknowledgedById: string | null, acknowledgedAt: number | null, resolvedById: string | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null, resolutionNote: string | null, snapshotId: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierIntelEventFieldsFragment' };
+
+export type CarrierMonitoringEnrollmentFieldsFragment = { id: string, subjectType: CarrierIntelSubjectType, subjectId: string, carrierId: string | null, subjectName: string | null, dotNumber: string, docketNumber: string | null, provider: string, providerRef: string | null, mode: CarrierIntelEnrollmentMode, desiredState: CarrierIntelDesiredState, vendorState: CarrierIntelVendorState, reason: CarrierIntelEnrollmentReason, ownedByTrenova: boolean, enrolledAt: number | null, unenrolledAt: number | null, lastSyncedAt: number | null, lastConfirmedAt: number | null, lastUsedAt: number | null, failureCount: number, lastError: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierMonitoringEnrollmentFieldsFragment' };
+
+export type CarrierIntelOverrideFieldsFragment = { id: string, carrierId: string, ruleCode: string, reason: string, grantedById: string, grantedAt: number, expiresAt: number, revokedById: string | null, revokedAt: number | null, revokeReason: string | null, active: boolean, version: number, createdAt: number } & { ' $fragmentName'?: 'CarrierIntelOverrideFieldsFragment' };
+
+export type CarrierEquipmentVerificationFieldsFragment = { id: string, carrierAssignmentId: string, shipmentMoveId: string | null, carrierId: string, expectedDotNumber: string | null, unitType: CarrierIntelUnitType, vin: string | null, plateNumber: string | null, plateState: string | null, unitNumber: string | null, result: CarrierEquipmentVerificationResult, matchedDotNumbers: Array<string>, matchedLegalName: string | null, mismatchReason: string | null, provider: string | null, verifiedById: string, verifiedAt: number, overrideById: string | null, overrideReason: string | null, overriddenAt: number | null, cleared: boolean, createdAt: number, detail: { vin: string | null, unitType: string | null, category: string | null, make: string | null, model: string | null, year: number | null, plateNumber: string | null, plateState: string | null, unitNumber: string | null } | null } & { ' $fragmentName'?: 'CarrierEquipmentVerificationFieldsFragment' };
+
+export type CarrierIntelControlFieldsFragment = { id: string, primaryProvider: string | null, fallbackProvider: string | null, enrollmentPolicy: CarrierIntelEnrollmentPolicy, recentUsageDays: number, includeOpenTenders: boolean, autoEnrollOnCreate: boolean, autoUnenrollOnInactive: boolean, exclusiveWatchlist: boolean, pollIntervalMinutes: number, snapshotTtlHours: number, fullProfileTtlDays: number, preTenderRefreshEnabled: boolean, preTenderMaxAgeHours: number, hardMaxAgeHours: number, confirmBlockingChanges: boolean, outagePolicy: CarrierIntelOutagePolicy, autoDisqualifyOnBlock: boolean, autoApplySafetyRating: boolean, autoSyncFields: Array<CarrierIntelSyncField>, monthlySpendCap: string | null, softCapPercent: number, dailyFullProfileCap: number | null, rawRetentionDays: number, snapshotHistoryLimit: number, selfMonitoringEnabled: boolean, policyVersion: number, version: number, updatedAt: number, rules: Array<{ code: string, action: CarrierIntelRuleAction, params: Array<{ key: string, value: string }> }> } & { ' $fragmentName'?: 'CarrierIntelControlFieldsFragment' };
+
+export type CarrierIntelProviderInfoFieldsFragment = { configured: boolean, provider: string | null, fallbackProvider: string | null, capabilities: Array<string>, sections: Array<CarrierIntelSection> } & { ' $fragmentName'?: 'CarrierIntelProviderInfoFieldsFragment' };
+
+export type CarrierIntelFieldUpdateFieldsFragment = { field: CarrierIntelSyncField, current: string, proposed: string, reason: string } & { ' $fragmentName'?: 'CarrierIntelFieldUpdateFieldsFragment' };
+
+export type CarrierIntelInsuranceChangeFieldsFragment = { kind: CarrierIntelInsuranceChangeKind, policyId: string | null, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, currentCoverage: string | null, proposedCoverage: string | null, currentExpirationDate: number | null, proposedExpirationDate: number | null, effectiveDate: number | null, reason: string } & { ' $fragmentName'?: 'CarrierIntelInsuranceChangeFieldsFragment' };
+
+export type CarrierIntelSettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CarrierIntelSettingsQuery = { carrierIntelControl: { ' $fragmentRefs'?: { 'CarrierIntelControlFieldsFragment': CarrierIntelControlFieldsFragment } }, carrierIntelProvider: { ' $fragmentRefs'?: { 'CarrierIntelProviderInfoFieldsFragment': CarrierIntelProviderInfoFieldsFragment } }, carrierIntelRuleCatalog: Array<{ code: string, label: string, description: string, category: CarrierIntelSection, defaultAction: CarrierIntelRuleAction, recommendedAction: CarrierIntelRuleAction, requiredSections: Array<CarrierIntelSection>, subjects: Array<CarrierIntelSubjectType>, gateRelevant: boolean, params: Array<{ key: string, label: string, type: CarrierIntelRuleParamType, default: string, min: number | null, max: number | null, options: Array<string> | null, helpText: string | null }> }> };
+
+export type CarrierIntelCostEstimateQueryVariables = Exact<{
+  policy: CarrierIntelEnrollmentPolicy;
+  recentUsageDays?: number | null | undefined;
+  includeOpenTenders?: boolean | null | undefined;
+}>;
+
+
+export type CarrierIntelCostEstimateQuery = { carrierIntelCostEstimate: { provider: string, policy: CarrierIntelEnrollmentPolicy, subjectCount: number, monthlyMonitoring: string, perSubject: string } };
+
+export type CarrierIntelUsageQueryVariables = Exact<{
+  month?: number | null | undefined;
+}>;
+
+
+export type CarrierIntelUsageQuery = { carrierIntelUsage: { monthStart: number, monthToDate: string, cap: string | null, softCapPercent: number, byEndpoint: Array<{ provider: string, endpoint: string, calls: number, billableUnits: number, estimatedCost: string }>, daily: Array<{ day: number, endpoint: string, calls: number, billableUnits: number, estimatedCost: string }> } };
+
+export type CarrierIntelMonitoringStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CarrierIntelMonitoringStatusQuery = { carrierIntelMonitoringStatus: { reviewQueueCount: number, provider: { ' $fragmentRefs'?: { 'CarrierIntelProviderInfoFieldsFragment': CarrierIntelProviderInfoFieldsFragment } }, enrollmentCounts: { desired: number, active: number, pending: number, failed: number }, eventCounts: { open: number, acknowledged: number, bySeverity: Array<{ severity: CarrierIntelSeverity, count: number }> }, feeds: Array<{ provider: string, feedType: CarrierIntelFeedType, lastPolledAt: number | null, lastSuccessAt: number | null, nextPollAfter: number | null, pausedReason: string | null, pausedAt: number | null, failureCount: number, lastError: string | null }> } };
+
+export type CarrierIntelEventTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: CarrierIntelEventFilterInput | null | undefined;
+}>;
+
+
+export type CarrierIntelEventTableQuery = { carrierIntelEvents: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CarrierMonitoringEnrollmentTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: CarrierMonitoringEnrollmentFilterInput | null | undefined;
+}>;
+
+
+export type CarrierMonitoringEnrollmentTableQuery = { carrierMonitoringEnrollments: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierMonitoringEnrollmentFieldsFragment': CarrierMonitoringEnrollmentFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CarrierIntelReviewQueueQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type CarrierIntelReviewQueueQuery = { carrierIntelReviewQueue: Array<{ ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }> };
+
+export type CarrierIntelligenceQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type CarrierIntelligenceQuery = { carrier: { id: string, name: string, dotNumber: string | null, mcNumber: string | null, intelRiskLevel: string | null, intelReviewRequired: boolean, intelBlockingCount: number, openIntelEventCount: number, intelligence: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } | null, monitoringEnrollment: { ' $fragmentRefs'?: { 'CarrierMonitoringEnrollmentFieldsFragment': CarrierMonitoringEnrollmentFieldsFragment } } | null } | null, carrierIntelProvider: { ' $fragmentRefs'?: { 'CarrierIntelProviderInfoFieldsFragment': CarrierIntelProviderInfoFieldsFragment } } };
+
+export type CarrierIntelSnapshotHistoryQueryVariables = Exact<{
+  carrierId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CarrierIntelSnapshotHistoryQuery = { carrierIntelSnapshotHistory: Array<{ ' $fragmentRefs'?: { 'CarrierIntelSnapshotSummaryFieldsFragment': CarrierIntelSnapshotSummaryFieldsFragment } }> };
+
+export type CarrierIntelSyncPlanQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type CarrierIntelSyncPlanQuery = { carrierIntelSyncPlan: { autoApply: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFieldUpdateFieldsFragment': CarrierIntelFieldUpdateFieldsFragment } }>, suggestions: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFieldUpdateFieldsFragment': CarrierIntelFieldUpdateFieldsFragment } }>, insuranceAutoApply: Array<{ ' $fragmentRefs'?: { 'CarrierIntelInsuranceChangeFieldsFragment': CarrierIntelInsuranceChangeFieldsFragment } }>, insuranceSuggestions: Array<{ ' $fragmentRefs'?: { 'CarrierIntelInsuranceChangeFieldsFragment': CarrierIntelInsuranceChangeFieldsFragment } }> } };
+
+export type CarrierIntelOverridesQueryVariables = Exact<{
+  carrierId: string | number;
+}>;
+
+
+export type CarrierIntelOverridesQuery = { carrierIntelOverrides: Array<{ ' $fragmentRefs'?: { 'CarrierIntelOverrideFieldsFragment': CarrierIntelOverrideFieldsFragment } }> };
+
+export type CarrierIntelRawPayloadQueryVariables = Exact<{
+  carrierId: string | number;
+  snapshotId: string | number;
+}>;
+
+
+export type CarrierIntelRawPayloadQuery = { carrierIntelRawPayload: unknown };
+
+export type CarrierIntelLookupQueryVariables = Exact<{
+  input: CarrierIntelLookupInput;
+}>;
+
+
+export type CarrierIntelLookupQuery = { carrierIntelLookup: { existingCarrierId: string | null, snapshot: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } } };
+
+export type CarrierSourcingSearchQueryVariables = Exact<{
+  input: CarrierSourcingSearchInput;
+}>;
+
+
+export type CarrierSourcingSearchQuery = { carrierSourcingSearch: { total: number, provider: string, items: Array<{ providerRef: string | null, dotNumber: string, legalName: string | null, existingCarrierId: string | null, laneMatches: number, riskLevel: CarrierIntelRiskLevel, score: number, findings: Array<{ ' $fragmentRefs'?: { 'CarrierIntelFindingFieldsFragment': CarrierIntelFindingFieldsFragment } }>, profile: { ' $fragmentRefs'?: { 'CarrierIntelProfileFieldsFragment': CarrierIntelProfileFieldsFragment } } }> } };
+
+export type CarrierSourcingAutocompleteQueryVariables = Exact<{
+  query: string;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CarrierSourcingAutocompleteQuery = { carrierSourcingAutocomplete: Array<{ dotNumber: string, legalName: string | null, dbaName: string | null, city: string | null, state: string | null }> };
+
+export type CarrierEquipmentVerificationsQueryVariables = Exact<{
+  carrierAssignmentId: string | number;
+}>;
+
+
+export type CarrierEquipmentVerificationsQuery = { carrierEquipmentVerifications: Array<{ ' $fragmentRefs'?: { 'CarrierEquipmentVerificationFieldsFragment': CarrierEquipmentVerificationFieldsFragment } }> };
+
+export type MyCarrierIntelligenceQueryVariables = Exact<{
+  refresh?: boolean | null | undefined;
+}>;
+
+
+export type MyCarrierIntelligenceQuery = { myCarrierIntelligence: { configured: boolean, dotNumber: string | null, snapshot: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } | null } };
+
+export type CustomerBrokerIntelligenceQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type CustomerBrokerIntelligenceQuery = { customer: { id: string, name: string, dotNumber: string | null, mcNumber: string | null, brokerVettingEnabled: boolean, brokerIntelligence: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } | null } | null };
+
+export type UpdateCarrierIntelControlMutationVariables = Exact<{
+  input: CarrierIntelControlPatchInput;
+}>;
+
+
+export type UpdateCarrierIntelControlMutation = { updateCarrierIntelControl: { ' $fragmentRefs'?: { 'CarrierIntelControlFieldsFragment': CarrierIntelControlFieldsFragment } } };
+
+export type SwitchCarrierIntelProviderMutationVariables = Exact<{
+  provider: string;
+}>;
+
+
+export type SwitchCarrierIntelProviderMutation = { switchCarrierIntelProvider: { ' $fragmentRefs'?: { 'CarrierIntelControlFieldsFragment': CarrierIntelControlFieldsFragment } } };
+
+export type ResumeCarrierIntelMonitoringMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ResumeCarrierIntelMonitoringMutation = { resumeCarrierIntelMonitoring: boolean };
+
+export type VetCarrierMutationVariables = Exact<{
+  carrierId: string | number;
+  depth?: CarrierIntelDepth | null | undefined;
+  force?: boolean | null | undefined;
+}>;
+
+
+export type VetCarrierMutation = { vetCarrier: { fromCache: boolean, usedFallback: boolean, raisedCount: number, changeCount: number, snapshot: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } } };
+
+export type VetCustomerBrokerMutationVariables = Exact<{
+  customerId: string | number;
+  force?: boolean | null | undefined;
+}>;
+
+
+export type VetCustomerBrokerMutation = { vetCustomerBroker: { fromCache: boolean, usedFallback: boolean, raisedCount: number, changeCount: number, snapshot: { ' $fragmentRefs'?: { 'CarrierIntelSnapshotFieldsFragment': CarrierIntelSnapshotFieldsFragment } } } };
+
+export type SetCarrierMonitoringMutationVariables = Exact<{
+  carrierIds: Array<string | number> | string | number;
+  enabled: boolean;
+}>;
+
+
+export type SetCarrierMonitoringMutation = { setCarrierMonitoring: number };
+
+export type AcknowledgeCarrierIntelEventsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type AcknowledgeCarrierIntelEventsMutation = { acknowledgeCarrierIntelEvents: number };
+
+export type ResolveCarrierIntelEventMutationVariables = Exact<{
+  input: ResolveCarrierIntelEventInput;
+}>;
+
+
+export type ResolveCarrierIntelEventMutation = { resolveCarrierIntelEvent: { ' $fragmentRefs'?: { 'CarrierIntelEventFieldsFragment': CarrierIntelEventFieldsFragment } } };
+
+export type MarkCarrierIntelReviewedMutationVariables = Exact<{
+  carrierId: string | number;
+  note: string;
+}>;
+
+
+export type MarkCarrierIntelReviewedMutation = { markCarrierIntelReviewed: boolean };
+
+export type GrantCarrierIntelOverrideMutationVariables = Exact<{
+  input: GrantCarrierIntelOverrideInput;
+}>;
+
+
+export type GrantCarrierIntelOverrideMutation = { grantCarrierIntelOverride: { ' $fragmentRefs'?: { 'CarrierIntelOverrideFieldsFragment': CarrierIntelOverrideFieldsFragment } } };
+
+export type RevokeCarrierIntelOverrideMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type RevokeCarrierIntelOverrideMutation = { revokeCarrierIntelOverride: { ' $fragmentRefs'?: { 'CarrierIntelOverrideFieldsFragment': CarrierIntelOverrideFieldsFragment } } };
+
+export type ApplyCarrierIntelSuggestionsMutationVariables = Exact<{
+  input: ApplyCarrierIntelSuggestionsInput;
+}>;
+
+
+export type ApplyCarrierIntelSuggestionsMutation = { applyCarrierIntelSuggestions: number };
+
+export type ImportSourcedCarrierMutationVariables = Exact<{
+  input: ImportSourcedCarrierInput;
+}>;
+
+
+export type ImportSourcedCarrierMutation = { importSourcedCarrier: { id: string, code: string, name: string, dotNumber: string | null, mcNumber: string | null, status: CarrierStatus, complianceStatus: CarrierComplianceStatus } };
+
+export type VerifyCarrierEquipmentMutationVariables = Exact<{
+  input: VerifyCarrierEquipmentInput;
+}>;
+
+
+export type VerifyCarrierEquipmentMutation = { verifyCarrierEquipment: { ' $fragmentRefs'?: { 'CarrierEquipmentVerificationFieldsFragment': CarrierEquipmentVerificationFieldsFragment } } };
+
+export type OverrideCarrierEquipmentVerificationMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type OverrideCarrierEquipmentVerificationMutation = { overrideCarrierEquipmentVerification: { ' $fragmentRefs'?: { 'CarrierEquipmentVerificationFieldsFragment': CarrierEquipmentVerificationFieldsFragment } } };
+
 export type CarrierSettlementTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
@@ -5993,7 +6541,7 @@ export type CarrierContactFieldsFragment = { id: string, businessUnitId: string,
 
 export type CarrierInsurancePolicyFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, coverageAmount: string, effectiveDate: number, expirationDate: number, isVerified: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierInsurancePolicyFieldsFragment' };
 
-export type CarrierTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string | null, remitStateId: string | null, status: CarrierStatus, code: string, name: string, dbaName: string | null, carrierType: CarrierType, dotNumber: string | null, mcNumber: string | null, scac: string | null, complianceStatus: CarrierComplianceStatus, safetyRating: CarrierSafetyRating, qualifiedAt: number | null, disqualifiedReason: string | null, taxId: string | null, taxIdType: CarrierTaxIdType | null, w9OnFile: boolean, is1099Eligible: boolean, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string | null, phone: string | null, email: string | null, externalId: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, contacts: Array<{ ' $fragmentRefs'?: { 'CarrierContactFieldsFragment': CarrierContactFieldsFragment } }> | null, insurancePolicies: Array<{ ' $fragmentRefs'?: { 'CarrierInsurancePolicyFieldsFragment': CarrierInsurancePolicyFieldsFragment } }> | null } & { ' $fragmentName'?: 'CarrierTableRowFieldsFragment' };
+export type CarrierTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string | null, remitStateId: string | null, status: CarrierStatus, code: string, name: string, dbaName: string | null, carrierType: CarrierType, dotNumber: string | null, mcNumber: string | null, scac: string | null, complianceStatus: CarrierComplianceStatus, safetyRating: CarrierSafetyRating, qualifiedAt: number | null, disqualifiedReason: string | null, taxId: string | null, taxIdType: CarrierTaxIdType | null, w9OnFile: boolean, is1099Eligible: boolean, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string | null, phone: string | null, email: string | null, externalId: string | null, notes: string | null, intelRiskLevel: string | null, intelReviewRequired: boolean, intelBlockingCount: number, version: number, createdAt: number, updatedAt: number, contacts: Array<{ ' $fragmentRefs'?: { 'CarrierContactFieldsFragment': CarrierContactFieldsFragment } }> | null, insurancePolicies: Array<{ ' $fragmentRefs'?: { 'CarrierInsurancePolicyFieldsFragment': CarrierInsurancePolicyFieldsFragment } }> | null } & { ' $fragmentName'?: 'CarrierTableRowFieldsFragment' };
 
 export type CarrierTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6285,7 +6833,7 @@ export type DispatchCarrierAssignmentPreviewQueryVariables = Exact<{
 }>;
 
 
-export type DispatchCarrierAssignmentPreviewQuery = { dispatchCarrierAssignmentPreview: { blockers: Array<string>, warnings: Array<string> } };
+export type DispatchCarrierAssignmentPreviewQuery = { dispatchCarrierAssignmentPreview: { blockers: Array<string>, warnings: Array<string>, advisories: Array<string>, findings: Array<{ code: string, source: string, severity: string, message: string, requiresOverride: boolean }> } };
 
 export type DispatchAssignMoveToCarrierMutationVariables = Exact<{
   input: DispatchAssignMoveToCarrierInput;
@@ -11362,6 +11910,737 @@ export const BillingQueueActionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"BillingQueueActionFields"}) as unknown as TypedDocumentString<BillingQueueActionFieldsFragment, unknown>;
+export const CarrierIntelFindingFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelFindingFields on CarrierIntelFinding {
+  code
+  category
+  action
+  severity
+  message
+  unverifiable
+  unconfirmed
+  overridden
+  overrideId
+  overrideExpiresAt
+}
+    `, {"fragmentName":"CarrierIntelFindingFields"}) as unknown as TypedDocumentString<CarrierIntelFindingFieldsFragment, unknown>;
+export const CarrierIntelSnapshotSummaryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {
+  id
+  subjectType
+  subjectId
+  carrierId
+  dotNumber
+  docketNumber
+  provider
+  depth
+  source
+  notFound
+  riskLevel
+  reviewState
+  reviewedAt
+  reviewNote
+  blockingCodes
+  advisoryCodes
+  fetchedAt
+  confirmedAt
+  effectiveAsOf
+  hasRawPayload
+  findings {
+    ...CarrierIntelFindingFields
+  }
+}
+    fragment CarrierIntelFindingFields on CarrierIntelFinding {
+  code
+  category
+  action
+  severity
+  message
+  unverifiable
+  unconfirmed
+  overridden
+  overrideId
+  overrideExpiresAt
+}`, {"fragmentName":"CarrierIntelSnapshotSummaryFields"}) as unknown as TypedDocumentString<CarrierIntelSnapshotSummaryFieldsFragment, unknown>;
+export const CarrierIntelAddressFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelAddressFields on CarrierIntelAddress {
+  line1
+  city
+  state
+  postalCode
+  country
+  undelivered
+}
+    `, {"fragmentName":"CarrierIntelAddressFields"}) as unknown as TypedDocumentString<CarrierIntelAddressFieldsFragment, unknown>;
+export const CarrierIntelAuthorityGrantFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {
+  status
+  pending
+  underReview
+  revocationPending
+  grantedAt
+  ageDays
+}
+    `, {"fragmentName":"CarrierIntelAuthorityGrantFields"}) as unknown as TypedDocumentString<CarrierIntelAuthorityGrantFieldsFragment, unknown>;
+export const CarrierIntelProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelProfileFields on CarrierIntelProfile {
+  coverage
+  identity {
+    dotNumber
+    docketPrefix
+    docketNumber
+    legalName
+    dbaName
+    ein
+    usdotStatus
+    entityType
+    carrierOperation
+    dotAddedAt
+    dotAgeDays
+    physicalAddress {
+      ...CarrierIntelAddressFields
+    }
+    mailingAddress {
+      ...CarrierIntelAddressFields
+    }
+  }
+  authority {
+    common {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    contract {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    broker {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    totalRevocations
+    lastRevocationAt
+    history {
+      authorityType
+      action
+      servedAt
+      effectiveAt
+    }
+  }
+  insurance {
+    bipdOnFile
+    bipdRequired
+    cargoOnFile
+    cargoRequired
+    bondOnFile
+    bondRequired
+    pendingCancelAt
+    lastCanceledAt
+    cancelCount
+    filings {
+      type
+      insurerName
+      policyNumber
+      coverage
+      effectiveAt
+      cancelEffectiveAt
+      cancelMethod
+    }
+  }
+  safety {
+    rating
+    ratingDate
+    issValue
+    issRecommendation
+    riskScore
+    riskProbability
+    safetyScore
+    outOfServiceOrder
+    outOfServiceAt
+    latestReviewType
+    latestReviewAt
+  }
+  basics {
+    basic
+    measure
+    percentile
+    threshold
+    alert
+    roadsideAlert
+    acIndicator
+  }
+  inspections {
+    total
+    driver
+    vehicle
+    hazmat
+    driverOos
+    vehicleOos
+    hazmatOos
+    driverOosRate
+    vehicleOosRate
+    hazmatOosRate
+    nationalDriverOosRate
+    nationalVehicleOosRate
+    nationalHazmatOosRate
+    lastInspectionAt
+  }
+  crashes {
+    total
+    fatal
+    injury
+    tow
+    lastCrashAt
+  }
+  fleet {
+    powerUnits
+    drivers
+    cdlDrivers
+    ownedTractors
+    termLeasedTractors
+    ownedTrailers
+    termLeasedTrailers
+    trailers
+    trucks
+  }
+  equipment {
+    vin
+    unitType
+    category
+    make
+    model
+    year
+    plateNumber
+    plateState
+    unitNumber
+  }
+  contacts {
+    phone
+    cellphone
+    fax
+    email
+    primaryContact
+    secondaryContact
+  }
+  operations {
+    classification
+    cargoCarried
+    hazmatCarrier
+    mcs150At
+    mcs150Mileage
+    boc3OnFile
+    boc3Agent
+    smartWay
+    carbCompliant
+    phmsa
+  }
+  changeHistory {
+    nameChanges
+    nameLastChangedAt
+    emailChanges
+    emailLastChangedAt
+    phoneChanges
+    phoneLastChangedAt
+    addressChanges
+    addressLastChangedAt
+    contactChanges
+    contactLastChangedAt
+  }
+  network {
+    sharedAddresses
+    sharedPhones
+    sharedEmails
+    sharedEins
+    sharedEquipment
+    links {
+      kind
+      dotNumber
+      legalName
+      value
+      status
+    }
+  }
+  lanes {
+    totalLoads
+    ftlPercent
+    ltlPercent
+    deadheadPercent
+    firstLoadAt
+    lastLoadAt
+    preferred {
+      originCity
+      originState
+      destinationCity
+      destinationState
+      loads
+    }
+  }
+  benchmarks {
+    anyAnomaly
+    inspectionMileageAnomaly
+    inspectedUnitsAnomaly
+    powerUnitMileageAnomaly
+  }
+}
+    fragment CarrierIntelAddressFields on CarrierIntelAddress {
+  line1
+  city
+  state
+  postalCode
+  country
+  undelivered
+}
+fragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {
+  status
+  pending
+  underReview
+  revocationPending
+  grantedAt
+  ageDays
+}`, {"fragmentName":"CarrierIntelProfileFields"}) as unknown as TypedDocumentString<CarrierIntelProfileFieldsFragment, unknown>;
+export const CarrierIntelSnapshotFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {
+  ...CarrierIntelSnapshotSummaryFields
+  providerRef
+  policyVersion
+  sourceAsOf
+  reviewedById
+  profile {
+    ...CarrierIntelProfileFields
+  }
+}
+    fragment CarrierIntelFindingFields on CarrierIntelFinding {
+  code
+  category
+  action
+  severity
+  message
+  unverifiable
+  unconfirmed
+  overridden
+  overrideId
+  overrideExpiresAt
+}
+fragment CarrierIntelAddressFields on CarrierIntelAddress {
+  line1
+  city
+  state
+  postalCode
+  country
+  undelivered
+}
+fragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {
+  status
+  pending
+  underReview
+  revocationPending
+  grantedAt
+  ageDays
+}
+fragment CarrierIntelProfileFields on CarrierIntelProfile {
+  coverage
+  identity {
+    dotNumber
+    docketPrefix
+    docketNumber
+    legalName
+    dbaName
+    ein
+    usdotStatus
+    entityType
+    carrierOperation
+    dotAddedAt
+    dotAgeDays
+    physicalAddress {
+      ...CarrierIntelAddressFields
+    }
+    mailingAddress {
+      ...CarrierIntelAddressFields
+    }
+  }
+  authority {
+    common {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    contract {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    broker {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    totalRevocations
+    lastRevocationAt
+    history {
+      authorityType
+      action
+      servedAt
+      effectiveAt
+    }
+  }
+  insurance {
+    bipdOnFile
+    bipdRequired
+    cargoOnFile
+    cargoRequired
+    bondOnFile
+    bondRequired
+    pendingCancelAt
+    lastCanceledAt
+    cancelCount
+    filings {
+      type
+      insurerName
+      policyNumber
+      coverage
+      effectiveAt
+      cancelEffectiveAt
+      cancelMethod
+    }
+  }
+  safety {
+    rating
+    ratingDate
+    issValue
+    issRecommendation
+    riskScore
+    riskProbability
+    safetyScore
+    outOfServiceOrder
+    outOfServiceAt
+    latestReviewType
+    latestReviewAt
+  }
+  basics {
+    basic
+    measure
+    percentile
+    threshold
+    alert
+    roadsideAlert
+    acIndicator
+  }
+  inspections {
+    total
+    driver
+    vehicle
+    hazmat
+    driverOos
+    vehicleOos
+    hazmatOos
+    driverOosRate
+    vehicleOosRate
+    hazmatOosRate
+    nationalDriverOosRate
+    nationalVehicleOosRate
+    nationalHazmatOosRate
+    lastInspectionAt
+  }
+  crashes {
+    total
+    fatal
+    injury
+    tow
+    lastCrashAt
+  }
+  fleet {
+    powerUnits
+    drivers
+    cdlDrivers
+    ownedTractors
+    termLeasedTractors
+    ownedTrailers
+    termLeasedTrailers
+    trailers
+    trucks
+  }
+  equipment {
+    vin
+    unitType
+    category
+    make
+    model
+    year
+    plateNumber
+    plateState
+    unitNumber
+  }
+  contacts {
+    phone
+    cellphone
+    fax
+    email
+    primaryContact
+    secondaryContact
+  }
+  operations {
+    classification
+    cargoCarried
+    hazmatCarrier
+    mcs150At
+    mcs150Mileage
+    boc3OnFile
+    boc3Agent
+    smartWay
+    carbCompliant
+    phmsa
+  }
+  changeHistory {
+    nameChanges
+    nameLastChangedAt
+    emailChanges
+    emailLastChangedAt
+    phoneChanges
+    phoneLastChangedAt
+    addressChanges
+    addressLastChangedAt
+    contactChanges
+    contactLastChangedAt
+  }
+  network {
+    sharedAddresses
+    sharedPhones
+    sharedEmails
+    sharedEins
+    sharedEquipment
+    links {
+      kind
+      dotNumber
+      legalName
+      value
+      status
+    }
+  }
+  lanes {
+    totalLoads
+    ftlPercent
+    ltlPercent
+    deadheadPercent
+    firstLoadAt
+    lastLoadAt
+    preferred {
+      originCity
+      originState
+      destinationCity
+      destinationState
+      loads
+    }
+  }
+  benchmarks {
+    anyAnomaly
+    inspectionMileageAnomaly
+    inspectedUnitsAnomaly
+    powerUnitMileageAnomaly
+  }
+}
+fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {
+  id
+  subjectType
+  subjectId
+  carrierId
+  dotNumber
+  docketNumber
+  provider
+  depth
+  source
+  notFound
+  riskLevel
+  reviewState
+  reviewedAt
+  reviewNote
+  blockingCodes
+  advisoryCodes
+  fetchedAt
+  confirmedAt
+  effectiveAsOf
+  hasRawPayload
+  findings {
+    ...CarrierIntelFindingFields
+  }
+}`, {"fragmentName":"CarrierIntelSnapshotFields"}) as unknown as TypedDocumentString<CarrierIntelSnapshotFieldsFragment, unknown>;
+export const CarrierIntelEventFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelEventFields on CarrierIntelEvent {
+  id
+  subjectType
+  subjectId
+  carrierId
+  dotNumber
+  subjectName
+  provider
+  source
+  category
+  fieldPath
+  ruleCode
+  severity
+  action
+  priorValue
+  currentValue
+  summary
+  vendorChangedAt
+  detectedAt
+  status
+  acknowledgedById
+  acknowledgedAt
+  resolvedById
+  resolvedAt
+  resolution
+  resolutionNote
+  snapshotId
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CarrierIntelEventFields"}) as unknown as TypedDocumentString<CarrierIntelEventFieldsFragment, unknown>;
+export const CarrierMonitoringEnrollmentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierMonitoringEnrollmentFields on CarrierMonitoringEnrollment {
+  id
+  subjectType
+  subjectId
+  carrierId
+  subjectName
+  dotNumber
+  docketNumber
+  provider
+  providerRef
+  mode
+  desiredState
+  vendorState
+  reason
+  ownedByTrenova
+  enrolledAt
+  unenrolledAt
+  lastSyncedAt
+  lastConfirmedAt
+  lastUsedAt
+  failureCount
+  lastError
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CarrierMonitoringEnrollmentFields"}) as unknown as TypedDocumentString<CarrierMonitoringEnrollmentFieldsFragment, unknown>;
+export const CarrierIntelOverrideFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelOverrideFields on CarrierIntelOverride {
+  id
+  carrierId
+  ruleCode
+  reason
+  grantedById
+  grantedAt
+  expiresAt
+  revokedById
+  revokedAt
+  revokeReason
+  active
+  version
+  createdAt
+}
+    `, {"fragmentName":"CarrierIntelOverrideFields"}) as unknown as TypedDocumentString<CarrierIntelOverrideFieldsFragment, unknown>;
+export const CarrierEquipmentVerificationFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {
+  id
+  carrierAssignmentId
+  shipmentMoveId
+  carrierId
+  expectedDotNumber
+  unitType
+  vin
+  plateNumber
+  plateState
+  unitNumber
+  result
+  matchedDotNumbers
+  matchedLegalName
+  mismatchReason
+  provider
+  verifiedById
+  verifiedAt
+  overrideById
+  overrideReason
+  overriddenAt
+  cleared
+  createdAt
+  detail {
+    vin
+    unitType
+    category
+    make
+    model
+    year
+    plateNumber
+    plateState
+    unitNumber
+  }
+}
+    `, {"fragmentName":"CarrierEquipmentVerificationFields"}) as unknown as TypedDocumentString<CarrierEquipmentVerificationFieldsFragment, unknown>;
+export const CarrierIntelControlFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelControlFields on CarrierIntelControl {
+  id
+  primaryProvider
+  fallbackProvider
+  enrollmentPolicy
+  recentUsageDays
+  includeOpenTenders
+  autoEnrollOnCreate
+  autoUnenrollOnInactive
+  exclusiveWatchlist
+  pollIntervalMinutes
+  snapshotTtlHours
+  fullProfileTtlDays
+  preTenderRefreshEnabled
+  preTenderMaxAgeHours
+  hardMaxAgeHours
+  confirmBlockingChanges
+  outagePolicy
+  autoDisqualifyOnBlock
+  autoApplySafetyRating
+  rules {
+    code
+    action
+    params {
+      key
+      value
+    }
+  }
+  autoSyncFields
+  monthlySpendCap
+  softCapPercent
+  dailyFullProfileCap
+  rawRetentionDays
+  snapshotHistoryLimit
+  selfMonitoringEnabled
+  policyVersion
+  version
+  updatedAt
+}
+    `, {"fragmentName":"CarrierIntelControlFields"}) as unknown as TypedDocumentString<CarrierIntelControlFieldsFragment, unknown>;
+export const CarrierIntelProviderInfoFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {
+  configured
+  provider
+  fallbackProvider
+  capabilities
+  sections
+}
+    `, {"fragmentName":"CarrierIntelProviderInfoFields"}) as unknown as TypedDocumentString<CarrierIntelProviderInfoFieldsFragment, unknown>;
+export const CarrierIntelFieldUpdateFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelFieldUpdateFields on CarrierIntelFieldUpdate {
+  field
+  current
+  proposed
+  reason
+}
+    `, {"fragmentName":"CarrierIntelFieldUpdateFields"}) as unknown as TypedDocumentString<CarrierIntelFieldUpdateFieldsFragment, unknown>;
+export const CarrierIntelInsuranceChangeFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierIntelInsuranceChangeFields on CarrierIntelInsuranceChange {
+  kind
+  policyId
+  policyType
+  policyNumber
+  providerName
+  currentCoverage
+  proposedCoverage
+  currentExpirationDate
+  proposedExpirationDate
+  effectiveDate
+  reason
+}
+    `, {"fragmentName":"CarrierIntelInsuranceChangeFields"}) as unknown as TypedDocumentString<CarrierIntelInsuranceChangeFieldsFragment, unknown>;
 export const CarrierContactFieldsFragmentDoc = new TypedDocumentString(`
     fragment CarrierContactFields on CarrierContact {
   id
@@ -11435,6 +12714,9 @@ export const CarrierTableRowFieldsFragmentDoc = new TypedDocumentString(`
   email
   externalId
   notes
+  intelRiskLevel
+  intelReviewRequired
+  intelBlockingCount
   version
   createdAt
   updatedAt
@@ -16917,6 +18199,39 @@ export const UpdateBillingQueueStatusDocument = {"__meta__":{"kind":"mutation","
 export const AssignBillingQueueBillerDocument = {"__meta__":{"kind":"mutation","name":"AssignBillingQueueBiller","hash":"sha256:580bb67efadea27d0a830702624819ad9a1c2f93b231afe2587ea899e8bfec3f"}} as unknown as TypedDocumentString<AssignBillingQueueBillerMutation, AssignBillingQueueBillerMutationVariables>;
 export const BillingTransferCandidatesDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidates","hash":"sha256:450580ede6ca95f084bf654b2fe54bcf394a97d7d927989fbea661193da083ee"}} as unknown as TypedDocumentString<BillingTransferCandidatesQuery, BillingTransferCandidatesQueryVariables>;
 export const BillingTransferCandidateIdsDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidateIds","hash":"sha256:705c57e3782a1890e509966d298df4f97e2f1d2b2aa33b27b1068d98258381a6"}} as unknown as TypedDocumentString<BillingTransferCandidateIdsQuery, BillingTransferCandidateIdsQueryVariables>;
+export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
+export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
+export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;
+export const CarrierIntelMonitoringStatusDocument = {"__meta__":{"kind":"query","name":"CarrierIntelMonitoringStatus","hash":"sha256:a4dbfbac4b61159f3f86de41a083e889afb58c0ff1fe7aa087a4d2b8288f0c23"}} as unknown as TypedDocumentString<CarrierIntelMonitoringStatusQuery, CarrierIntelMonitoringStatusQueryVariables>;
+export const CarrierIntelEventTableDocument = {"__meta__":{"kind":"query","name":"CarrierIntelEventTable","hash":"sha256:b4e5f0c26a0e088c988e4984ee37fddebd4020861b1d3d6adc46d3990512df32"}} as unknown as TypedDocumentString<CarrierIntelEventTableQuery, CarrierIntelEventTableQueryVariables>;
+export const CarrierMonitoringEnrollmentTableDocument = {"__meta__":{"kind":"query","name":"CarrierMonitoringEnrollmentTable","hash":"sha256:966e86c6af06277bdb504e96822d13c2c369fa33477e017b07bcee357f8a6253"}} as unknown as TypedDocumentString<CarrierMonitoringEnrollmentTableQuery, CarrierMonitoringEnrollmentTableQueryVariables>;
+export const CarrierIntelReviewQueueDocument = {"__meta__":{"kind":"query","name":"CarrierIntelReviewQueue","hash":"sha256:760539d290ea5a47f3b90c4d9c4c8cb1b8426d4df47e3f1ef5f9803a548db392"}} as unknown as TypedDocumentString<CarrierIntelReviewQueueQuery, CarrierIntelReviewQueueQueryVariables>;
+export const CarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"CarrierIntelligence","hash":"sha256:457900c7502bc63c6891bdc7bf43d077e0a9865074da807ff3c64de14300e826"}} as unknown as TypedDocumentString<CarrierIntelligenceQuery, CarrierIntelligenceQueryVariables>;
+export const CarrierIntelSnapshotHistoryDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSnapshotHistory","hash":"sha256:2ebec1591f8a1bc497376284b07dc87e34ecce2f917603ae18f732cf97ee736e"}} as unknown as TypedDocumentString<CarrierIntelSnapshotHistoryQuery, CarrierIntelSnapshotHistoryQueryVariables>;
+export const CarrierIntelSyncPlanDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSyncPlan","hash":"sha256:caf6f7f1f6d0cfea386d56d3187421dbf327db320a0618a4340907367d043109"}} as unknown as TypedDocumentString<CarrierIntelSyncPlanQuery, CarrierIntelSyncPlanQueryVariables>;
+export const CarrierIntelOverridesDocument = {"__meta__":{"kind":"query","name":"CarrierIntelOverrides","hash":"sha256:16c8e0c11b5bfeb3e928eb8c71abd24cfb2751883f5457ca309cea01a95d1a51"}} as unknown as TypedDocumentString<CarrierIntelOverridesQuery, CarrierIntelOverridesQueryVariables>;
+export const CarrierIntelRawPayloadDocument = {"__meta__":{"kind":"query","name":"CarrierIntelRawPayload","hash":"sha256:676eb1c365c28819fc1fa43b5023acc49131d5127716cd98c6a492d96949a300"}} as unknown as TypedDocumentString<CarrierIntelRawPayloadQuery, CarrierIntelRawPayloadQueryVariables>;
+export const CarrierIntelLookupDocument = {"__meta__":{"kind":"query","name":"CarrierIntelLookup","hash":"sha256:fc626e3797730774daa76327a5067a500a84dd4000590ce564555a2747ccb682"}} as unknown as TypedDocumentString<CarrierIntelLookupQuery, CarrierIntelLookupQueryVariables>;
+export const CarrierSourcingSearchDocument = {"__meta__":{"kind":"query","name":"CarrierSourcingSearch","hash":"sha256:c4a51cec3985478f74820cad530001af74dfb093ae31d0e55079aeb49942eb54"}} as unknown as TypedDocumentString<CarrierSourcingSearchQuery, CarrierSourcingSearchQueryVariables>;
+export const CarrierSourcingAutocompleteDocument = {"__meta__":{"kind":"query","name":"CarrierSourcingAutocomplete","hash":"sha256:92dd91c7327cceb37c632be3185e2f041304310eb67b3eceb101b07d16cd11d8"}} as unknown as TypedDocumentString<CarrierSourcingAutocompleteQuery, CarrierSourcingAutocompleteQueryVariables>;
+export const CarrierEquipmentVerificationsDocument = {"__meta__":{"kind":"query","name":"CarrierEquipmentVerifications","hash":"sha256:b7c3a7a3998b4c9ae9c57ef470e6e0e8c062cdf612bf080726ad1341f719480a"}} as unknown as TypedDocumentString<CarrierEquipmentVerificationsQuery, CarrierEquipmentVerificationsQueryVariables>;
+export const MyCarrierIntelligenceDocument = {"__meta__":{"kind":"query","name":"MyCarrierIntelligence","hash":"sha256:04e3321004b5cb7dc18559dd98307032e4ac47dc70f9dd5caf41450314530ef7"}} as unknown as TypedDocumentString<MyCarrierIntelligenceQuery, MyCarrierIntelligenceQueryVariables>;
+export const CustomerBrokerIntelligenceDocument = {"__meta__":{"kind":"query","name":"CustomerBrokerIntelligence","hash":"sha256:e580d85127d41169a17b28b4dd012d95d9b651d01b53df6fc1ff51468688bf8e"}} as unknown as TypedDocumentString<CustomerBrokerIntelligenceQuery, CustomerBrokerIntelligenceQueryVariables>;
+export const UpdateCarrierIntelControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateCarrierIntelControl","hash":"sha256:e3f55ef2a5ede39a95644905617d163f4e4c2e019e6cfcab34da57afe0bac2f1"}} as unknown as TypedDocumentString<UpdateCarrierIntelControlMutation, UpdateCarrierIntelControlMutationVariables>;
+export const SwitchCarrierIntelProviderDocument = {"__meta__":{"kind":"mutation","name":"SwitchCarrierIntelProvider","hash":"sha256:723a5cd553858cad5da942f19e5d6021cfbe5d54d86674e10339d7a88c4b396b"}} as unknown as TypedDocumentString<SwitchCarrierIntelProviderMutation, SwitchCarrierIntelProviderMutationVariables>;
+export const ResumeCarrierIntelMonitoringDocument = {"__meta__":{"kind":"mutation","name":"ResumeCarrierIntelMonitoring","hash":"sha256:327c11fd2f21367fabeb0b8eb49272d8e0149687c0f51c8150d6d376a3a0242d"}} as unknown as TypedDocumentString<ResumeCarrierIntelMonitoringMutation, ResumeCarrierIntelMonitoringMutationVariables>;
+export const VetCarrierDocument = {"__meta__":{"kind":"mutation","name":"VetCarrier","hash":"sha256:d1dc1ccbf9067a3fea18db23538bb331c18987c65ea7d71382ecf805b9955b18"}} as unknown as TypedDocumentString<VetCarrierMutation, VetCarrierMutationVariables>;
+export const VetCustomerBrokerDocument = {"__meta__":{"kind":"mutation","name":"VetCustomerBroker","hash":"sha256:53f5da838d98378f75ca8d890a7fded20d8f0413d59fb9e6d8bbf57a21d1bd9b"}} as unknown as TypedDocumentString<VetCustomerBrokerMutation, VetCustomerBrokerMutationVariables>;
+export const SetCarrierMonitoringDocument = {"__meta__":{"kind":"mutation","name":"SetCarrierMonitoring","hash":"sha256:a202dd10a8fcd1b45c96d158c90e6b07a335a1d5a8bffe0979f631964ba06bb9"}} as unknown as TypedDocumentString<SetCarrierMonitoringMutation, SetCarrierMonitoringMutationVariables>;
+export const AcknowledgeCarrierIntelEventsDocument = {"__meta__":{"kind":"mutation","name":"AcknowledgeCarrierIntelEvents","hash":"sha256:702b3d2e949cbc7981298ea6cc38fb3c388804fb0e566b4b3f311cb3ed67630d"}} as unknown as TypedDocumentString<AcknowledgeCarrierIntelEventsMutation, AcknowledgeCarrierIntelEventsMutationVariables>;
+export const ResolveCarrierIntelEventDocument = {"__meta__":{"kind":"mutation","name":"ResolveCarrierIntelEvent","hash":"sha256:c9e3b27a6c005da7ed4267cd04a3f5f31bbd3d8bec6196603184a2bd729646d4"}} as unknown as TypedDocumentString<ResolveCarrierIntelEventMutation, ResolveCarrierIntelEventMutationVariables>;
+export const MarkCarrierIntelReviewedDocument = {"__meta__":{"kind":"mutation","name":"MarkCarrierIntelReviewed","hash":"sha256:622231042e033a37223f902d909c3f8dd8b9a36a312a1a59d82447a43af2ad16"}} as unknown as TypedDocumentString<MarkCarrierIntelReviewedMutation, MarkCarrierIntelReviewedMutationVariables>;
+export const GrantCarrierIntelOverrideDocument = {"__meta__":{"kind":"mutation","name":"GrantCarrierIntelOverride","hash":"sha256:6bb9445b54e17e0c8d35e2254ef80433bf95606a3b24c28c173b9b116657ad7f"}} as unknown as TypedDocumentString<GrantCarrierIntelOverrideMutation, GrantCarrierIntelOverrideMutationVariables>;
+export const RevokeCarrierIntelOverrideDocument = {"__meta__":{"kind":"mutation","name":"RevokeCarrierIntelOverride","hash":"sha256:3c6d56353cb759f14c5952c47dbb365fa4c2bb3bf9bfcdac2d2d34cb26d8f4d4"}} as unknown as TypedDocumentString<RevokeCarrierIntelOverrideMutation, RevokeCarrierIntelOverrideMutationVariables>;
+export const ApplyCarrierIntelSuggestionsDocument = {"__meta__":{"kind":"mutation","name":"ApplyCarrierIntelSuggestions","hash":"sha256:3d32308b93946a626406c61eb2646af1953adb150fe1a60a0f98e4757aaa1a31"}} as unknown as TypedDocumentString<ApplyCarrierIntelSuggestionsMutation, ApplyCarrierIntelSuggestionsMutationVariables>;
+export const ImportSourcedCarrierDocument = {"__meta__":{"kind":"mutation","name":"ImportSourcedCarrier","hash":"sha256:c83acc84d982058724eba61629020a194b6bf84efa6e5f5bf00f5b950700ae69"}} as unknown as TypedDocumentString<ImportSourcedCarrierMutation, ImportSourcedCarrierMutationVariables>;
+export const VerifyCarrierEquipmentDocument = {"__meta__":{"kind":"mutation","name":"VerifyCarrierEquipment","hash":"sha256:3e26885e9458fc1311df9a73395de853e9e4f40893c567a4fc642bdf3fb54289"}} as unknown as TypedDocumentString<VerifyCarrierEquipmentMutation, VerifyCarrierEquipmentMutationVariables>;
+export const OverrideCarrierEquipmentVerificationDocument = {"__meta__":{"kind":"mutation","name":"OverrideCarrierEquipmentVerification","hash":"sha256:e64e53b407a5369a1bcc91b6b60d5ef7e5051c62e9d55d7e78ee1f8b3a701132"}} as unknown as TypedDocumentString<OverrideCarrierEquipmentVerificationMutation, OverrideCarrierEquipmentVerificationMutationVariables>;
 export const CarrierSettlementTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementTable","hash":"sha256:eadf21c42815fc3a90fbd8614c13a9e4960c83698f4cc6a50395a0232c35a5d1"}} as unknown as TypedDocumentString<CarrierSettlementTableQuery, CarrierSettlementTableQueryVariables>;
 export const CarrierSettlementDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementDetail","hash":"sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90"}} as unknown as TypedDocumentString<CarrierSettlementDetailQuery, CarrierSettlementDetailQueryVariables>;
 export const CarrierSettlementBatchTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchTable","hash":"sha256:073382253e84d646f0909341ebf8fa4421b0830503743352686b6e3e2faee5bc"}} as unknown as TypedDocumentString<CarrierSettlementBatchTableQuery, CarrierSettlementBatchTableQueryVariables>;
@@ -16946,7 +18261,7 @@ export const CreateCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation",
 export const AcceptCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation","name":"AcceptCarrierInvoiceMatch","hash":"sha256:a2d49f45f44e726172c1f4e35fa621fa4c98082208b56b31a29ac4beb9f28a76"}} as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchMutation, AcceptCarrierInvoiceMatchMutationVariables>;
 export const AcceptCarrierInvoiceMatchWithVarianceDocument = {"__meta__":{"kind":"mutation","name":"AcceptCarrierInvoiceMatchWithVariance","hash":"sha256:060f67125969b0df8bd23b2d406141579141403904677fcf383e944aae0c9349"}} as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchWithVarianceMutation, AcceptCarrierInvoiceMatchWithVarianceMutationVariables>;
 export const RejectCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation","name":"RejectCarrierInvoiceMatch","hash":"sha256:9afe5a46af162af1d29113765c8b1107deee2246b7294f54301c3b2884169ea1"}} as unknown as TypedDocumentString<RejectCarrierInvoiceMatchMutation, RejectCarrierInvoiceMatchMutationVariables>;
-export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:ac478c9f580a938e561cbf61ba1416f2413126aa194b2de52cb8b6836e859a23"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
+export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
 export const CommodityTableDocument = {"__meta__":{"kind":"query","name":"CommodityTable","hash":"sha256:02239b2db6c74085ddc074c2c20f287e0c6b1e42c2eeb5efdc2a731076b2a042"}} as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
 export const CostingControlPageDocument = {"__meta__":{"kind":"query","name":"CostingControlPage","hash":"sha256:a85cccb870b7669eca888497e484d84fee24b403957e9d3bbf4ff03b337551ea"}} as unknown as TypedDocumentString<CostingControlPageQuery, CostingControlPageQueryVariables>;
 export const ResolvedCostProfilePageDocument = {"__meta__":{"kind":"query","name":"ResolvedCostProfilePage","hash":"sha256:0b2352614b5935706f571748ef919218386d7f44cee104d0a0382467511caf67"}} as unknown as TypedDocumentString<ResolvedCostProfilePageQuery, ResolvedCostProfilePageQueryVariables>;
@@ -16983,7 +18298,7 @@ export const DispatchDriverMovesDocument = {"__meta__":{"kind":"query","name":"D
 export const DispatchAssignmentPreviewDocument = {"__meta__":{"kind":"query","name":"DispatchAssignmentPreview","hash":"sha256:0ef23657908b270b5e8b0364d038b26a3d1b953f2d37de39dffc2696e4cd1361"}} as unknown as TypedDocumentString<DispatchAssignmentPreviewQuery, DispatchAssignmentPreviewQueryVariables>;
 export const DispatchAssignMovesDocument = {"__meta__":{"kind":"mutation","name":"DispatchAssignMoves","hash":"sha256:42f79a523ad939739ca9bdf31d4accd65bb426270dc846d2d28c60123919ab4f"}} as unknown as TypedDocumentString<DispatchAssignMovesMutation, DispatchAssignMovesMutationVariables>;
 export const DispatchUnassignMovesDocument = {"__meta__":{"kind":"mutation","name":"DispatchUnassignMoves","hash":"sha256:efe06714ee634572b3eb36d985bd6cd8fdf400b9e481e3107da70d9b105dcc22"}} as unknown as TypedDocumentString<DispatchUnassignMovesMutation, DispatchUnassignMovesMutationVariables>;
-export const DispatchCarrierAssignmentPreviewDocument = {"__meta__":{"kind":"query","name":"DispatchCarrierAssignmentPreview","hash":"sha256:ad34207e4c1e5cb8720cd75fce163dcebd3ea29c87474c4d3ae3e0d06308ab56"}} as unknown as TypedDocumentString<DispatchCarrierAssignmentPreviewQuery, DispatchCarrierAssignmentPreviewQueryVariables>;
+export const DispatchCarrierAssignmentPreviewDocument = {"__meta__":{"kind":"query","name":"DispatchCarrierAssignmentPreview","hash":"sha256:057780090effa92f5c9502ee1d31efa753c5e6b4e4d480208d97ee37c7cc8bf7"}} as unknown as TypedDocumentString<DispatchCarrierAssignmentPreviewQuery, DispatchCarrierAssignmentPreviewQueryVariables>;
 export const DispatchAssignMoveToCarrierDocument = {"__meta__":{"kind":"mutation","name":"DispatchAssignMoveToCarrier","hash":"sha256:47fbec559e3836ac2dd0e05df0e991e451bba80b3bfcf67cfb81eacd83671f8f"}} as unknown as TypedDocumentString<DispatchAssignMoveToCarrierMutation, DispatchAssignMoveToCarrierMutationVariables>;
 export const DispatchCancelCarrierAssignmentDocument = {"__meta__":{"kind":"mutation","name":"DispatchCancelCarrierAssignment","hash":"sha256:d4293d76cf90c0647e0c816ecf938b39da7165270b1ca6a05b9e7b4cd49e49ad"}} as unknown as TypedDocumentString<DispatchCancelCarrierAssignmentMutation, DispatchCancelCarrierAssignmentMutationVariables>;
 export const DispatchPlanAutoAssignDocument = {"__meta__":{"kind":"mutation","name":"DispatchPlanAutoAssign","hash":"sha256:cf7f6fb258631ab19ef6b06110fede4dbb790462eca8c29f3842f316227ff2e4"}} as unknown as TypedDocumentString<DispatchPlanAutoAssignMutation, DispatchPlanAutoAssignMutationVariables>;

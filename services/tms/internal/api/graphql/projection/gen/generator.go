@@ -524,17 +524,19 @@ func selectionForModelOverride(
 }
 
 func fieldMapCoversStruct(fieldMap *fieldMapRegistration, st *goStruct) bool {
+	columns := 0
 	for _, field := range st.Fields {
 		if !field.IsColumn {
 			continue
 		}
+		columns++
 		if column, exists := fieldMap.Values[field.JSONName]; !exists ||
 			column != field.ColumnName {
 			return false
 		}
 	}
 
-	return true
+	return columns > 0
 }
 
 func synthesizeFieldMap(st goStruct) (fieldMapRegistration, bool) {

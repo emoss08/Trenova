@@ -68,6 +68,9 @@ fragment CarrierTableRowFields on Carrier {
   email
   externalId
   notes
+  intelRiskLevel
+  intelReviewRequired
+  intelBlockingCount
   version
   createdAt
   updatedAt

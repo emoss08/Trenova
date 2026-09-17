@@ -1,0 +1,813 @@
+fragment CarrierIntelFindingFields on CarrierIntelFinding {
+  code
+  category
+  action
+  severity
+  message
+  unverifiable
+  unconfirmed
+  overridden
+  overrideId
+  overrideExpiresAt
+}
+
+fragment CarrierIntelAddressFields on CarrierIntelAddress {
+  line1
+  city
+  state
+  postalCode
+  country
+  undelivered
+}
+
+fragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {
+  status
+  pending
+  underReview
+  revocationPending
+  grantedAt
+  ageDays
+}
+
+fragment CarrierIntelProfileFields on CarrierIntelProfile {
+  coverage
+  identity {
+    dotNumber
+    docketPrefix
+    docketNumber
+    legalName
+    dbaName
+    ein
+    usdotStatus
+    entityType
+    carrierOperation
+    dotAddedAt
+    dotAgeDays
+    physicalAddress {
+      ...CarrierIntelAddressFields
+    }
+    mailingAddress {
+      ...CarrierIntelAddressFields
+    }
+  }
+  authority {
+    common {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    contract {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    broker {
+      ...CarrierIntelAuthorityGrantFields
+    }
+    totalRevocations
+    lastRevocationAt
+    history {
+      authorityType
+      action
+      servedAt
+      effectiveAt
+    }
+  }
+  insurance {
+    bipdOnFile
+    bipdRequired
+    cargoOnFile
+    cargoRequired
+    bondOnFile
+    bondRequired
+    pendingCancelAt
+    lastCanceledAt
+    cancelCount
+    filings {
+      type
+      insurerName
+      policyNumber
+      coverage
+      effectiveAt
+      cancelEffectiveAt
+      cancelMethod
+    }
+  }
+  safety {
+    rating
+    ratingDate
+    issValue
+    issRecommendation
+    riskScore
+    riskProbability
+    safetyScore
+    outOfServiceOrder
+    outOfServiceAt
+    latestReviewType
+    latestReviewAt
+  }
+  basics {
+    basic
+    measure
+    percentile
+    threshold
+    alert
+    roadsideAlert
+    acIndicator
+  }
+  inspections {
+    total
+    driver
+    vehicle
+    hazmat
+    driverOos
+    vehicleOos
+    hazmatOos
+    driverOosRate
+    vehicleOosRate
+    hazmatOosRate
+    nationalDriverOosRate
+    nationalVehicleOosRate
+    nationalHazmatOosRate
+    lastInspectionAt
+  }
+  crashes {
+    total
+    fatal
+    injury
+    tow
+    lastCrashAt
+  }
+  fleet {
+    powerUnits
+    drivers
+    cdlDrivers
+    ownedTractors
+    termLeasedTractors
+    ownedTrailers
+    termLeasedTrailers
+    trailers
+    trucks
+  }
+  equipment {
+    vin
+    unitType
+    category
+    make
+    model
+    year
+    plateNumber
+    plateState
+    unitNumber
+  }
+  contacts {
+    phone
+    cellphone
+    fax
+    email
+    primaryContact
+    secondaryContact
+  }
+  operations {
+    classification
+    cargoCarried
+    hazmatCarrier
+    mcs150At
+    mcs150Mileage
+    boc3OnFile
+    boc3Agent
+    smartWay
+    carbCompliant
+    phmsa
+  }
+  changeHistory {
+    nameChanges
+    nameLastChangedAt
+    emailChanges
+    emailLastChangedAt
+    phoneChanges
+    phoneLastChangedAt
+    addressChanges
+    addressLastChangedAt
+    contactChanges
+    contactLastChangedAt
+  }
+  network {
+    sharedAddresses
+    sharedPhones
+    sharedEmails
+    sharedEins
+    sharedEquipment
+    links {
+      kind
+      dotNumber
+      legalName
+      value
+      status
+    }
+  }
+  lanes {
+    totalLoads
+    ftlPercent
+    ltlPercent
+    deadheadPercent
+    firstLoadAt
+    lastLoadAt
+    preferred {
+      originCity
+      originState
+      destinationCity
+      destinationState
+      loads
+    }
+  }
+  benchmarks {
+    anyAnomaly
+    inspectionMileageAnomaly
+    inspectedUnitsAnomaly
+    powerUnitMileageAnomaly
+  }
+}
+
+fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {
+  id
+  subjectType
+  subjectId
+  carrierId
+  dotNumber
+  docketNumber
+  provider
+  depth
+  source
+  notFound
+  riskLevel
+  reviewState
+  reviewedAt
+  reviewNote
+  blockingCodes
+  advisoryCodes
+  fetchedAt
+  confirmedAt
+  effectiveAsOf
+  hasRawPayload
+  findings {
+    ...CarrierIntelFindingFields
+  }
+}
+
+fragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {
+  ...CarrierIntelSnapshotSummaryFields
+  providerRef
+  policyVersion
+  sourceAsOf
+  reviewedById
+  profile {
+    ...CarrierIntelProfileFields
+  }
+}
+
+fragment CarrierIntelEventFields on CarrierIntelEvent {
+  id
+  subjectType
+  subjectId
+  carrierId
+  dotNumber
+  subjectName
+  provider
+  source
+  category
+  fieldPath
+  ruleCode
+  severity
+  action
+  priorValue
+  currentValue
+  summary
+  vendorChangedAt
+  detectedAt
+  status
+  acknowledgedById
+  acknowledgedAt
+  resolvedById
+  resolvedAt
+  resolution
+  resolutionNote
+  snapshotId
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CarrierMonitoringEnrollmentFields on CarrierMonitoringEnrollment {
+  id
+  subjectType
+  subjectId
+  carrierId
+  subjectName
+  dotNumber
+  docketNumber
+  provider
+  providerRef
+  mode
+  desiredState
+  vendorState
+  reason
+  ownedByTrenova
+  enrolledAt
+  unenrolledAt
+  lastSyncedAt
+  lastConfirmedAt
+  lastUsedAt
+  failureCount
+  lastError
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CarrierIntelOverrideFields on CarrierIntelOverride {
+  id
+  carrierId
+  ruleCode
+  reason
+  grantedById
+  grantedAt
+  expiresAt
+  revokedById
+  revokedAt
+  revokeReason
+  active
+  version
+  createdAt
+}
+
+fragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {
+  id
+  carrierAssignmentId
+  shipmentMoveId
+  carrierId
+  expectedDotNumber
+  unitType
+  vin
+  plateNumber
+  plateState
+  unitNumber
+  result
+  matchedDotNumbers
+  matchedLegalName
+  mismatchReason
+  provider
+  verifiedById
+  verifiedAt
+  overrideById
+  overrideReason
+  overriddenAt
+  cleared
+  createdAt
+  detail {
+    vin
+    unitType
+    category
+    make
+    model
+    year
+    plateNumber
+    plateState
+    unitNumber
+  }
+}
+
+fragment CarrierIntelControlFields on CarrierIntelControl {
+  id
+  primaryProvider
+  fallbackProvider
+  enrollmentPolicy
+  recentUsageDays
+  includeOpenTenders
+  autoEnrollOnCreate
+  autoUnenrollOnInactive
+  exclusiveWatchlist
+  pollIntervalMinutes
+  snapshotTtlHours
+  fullProfileTtlDays
+  preTenderRefreshEnabled
+  preTenderMaxAgeHours
+  hardMaxAgeHours
+  confirmBlockingChanges
+  outagePolicy
+  autoDisqualifyOnBlock
+  autoApplySafetyRating
+  rules {
+    code
+    action
+    params {
+      key
+      value
+    }
+  }
+  autoSyncFields
+  monthlySpendCap
+  softCapPercent
+  dailyFullProfileCap
+  rawRetentionDays
+  snapshotHistoryLimit
+  selfMonitoringEnabled
+  policyVersion
+  version
+  updatedAt
+}
+
+fragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {
+  configured
+  provider
+  fallbackProvider
+  capabilities
+  sections
+}
+
+fragment CarrierIntelFieldUpdateFields on CarrierIntelFieldUpdate {
+  field
+  current
+  proposed
+  reason
+}
+
+fragment CarrierIntelInsuranceChangeFields on CarrierIntelInsuranceChange {
+  kind
+  policyId
+  policyType
+  policyNumber
+  providerName
+  currentCoverage
+  proposedCoverage
+  currentExpirationDate
+  proposedExpirationDate
+  effectiveDate
+  reason
+}
+
+query CarrierIntelSettings {
+  carrierIntelControl {
+    ...CarrierIntelControlFields
+  }
+  carrierIntelProvider {
+    ...CarrierIntelProviderInfoFields
+  }
+  carrierIntelRuleCatalog {
+    code
+    label
+    description
+    category
+    defaultAction
+    recommendedAction
+    requiredSections
+    subjects
+    gateRelevant
+    params {
+      key
+      label
+      type
+      default
+      min
+      max
+      options
+      helpText
+    }
+  }
+}
+
+query CarrierIntelCostEstimate(
+  $policy: CarrierIntelEnrollmentPolicy!
+  $recentUsageDays: Int
+  $includeOpenTenders: Boolean
+) {
+  carrierIntelCostEstimate(
+    policy: $policy
+    recentUsageDays: $recentUsageDays
+    includeOpenTenders: $includeOpenTenders
+  ) {
+    provider
+    policy
+    subjectCount
+    monthlyMonitoring
+    perSubject
+  }
+}
+
+query CarrierIntelUsage($month: Timestamp) {
+  carrierIntelUsage(month: $month) {
+    monthStart
+    monthToDate
+    cap
+    softCapPercent
+    byEndpoint {
+      provider
+      endpoint
+      calls
+      billableUnits
+      estimatedCost
+    }
+    daily {
+      day
+      endpoint
+      calls
+      billableUnits
+      estimatedCost
+    }
+  }
+}
+
+query CarrierIntelMonitoringStatus {
+  carrierIntelMonitoringStatus {
+    provider {
+      ...CarrierIntelProviderInfoFields
+    }
+    enrollmentCounts {
+      desired
+      active
+      pending
+      failed
+    }
+    eventCounts {
+      open
+      acknowledged
+      bySeverity {
+        severity
+        count
+      }
+    }
+    feeds {
+      provider
+      feedType
+      lastPolledAt
+      lastSuccessAt
+      nextPollAfter
+      pausedReason
+      pausedAt
+      failureCount
+      lastError
+    }
+    reviewQueueCount
+  }
+}
+
+query CarrierIntelEventTable(
+  $input: DataTableConnectionInput!
+  $filter: CarrierIntelEventFilterInput
+) {
+  carrierIntelEvents(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...CarrierIntelEventFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query CarrierMonitoringEnrollmentTable(
+  $input: DataTableConnectionInput!
+  $filter: CarrierMonitoringEnrollmentFilterInput
+) {
+  carrierMonitoringEnrollments(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...CarrierMonitoringEnrollmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query CarrierIntelReviewQueue($limit: Int) {
+  carrierIntelReviewQueue(limit: $limit) {
+    ...CarrierIntelSnapshotSummaryFields
+  }
+}
+
+query CarrierIntelligence($carrierId: ID!) {
+  carrier(id: $carrierId) {
+    id
+    name
+    dotNumber
+    mcNumber
+    intelRiskLevel
+    intelReviewRequired
+    intelBlockingCount
+    openIntelEventCount
+    intelligence {
+      ...CarrierIntelSnapshotFields
+    }
+    monitoringEnrollment {
+      ...CarrierMonitoringEnrollmentFields
+    }
+  }
+  carrierIntelProvider {
+    ...CarrierIntelProviderInfoFields
+  }
+}
+
+query CarrierIntelSnapshotHistory($carrierId: ID!, $limit: Int) {
+  carrierIntelSnapshotHistory(carrierId: $carrierId, limit: $limit) {
+    ...CarrierIntelSnapshotSummaryFields
+  }
+}
+
+query CarrierIntelSyncPlan($carrierId: ID!) {
+  carrierIntelSyncPlan(carrierId: $carrierId) {
+    autoApply {
+      ...CarrierIntelFieldUpdateFields
+    }
+    suggestions {
+      ...CarrierIntelFieldUpdateFields
+    }
+    insuranceAutoApply {
+      ...CarrierIntelInsuranceChangeFields
+    }
+    insuranceSuggestions {
+      ...CarrierIntelInsuranceChangeFields
+    }
+  }
+}
+
+query CarrierIntelOverrides($carrierId: ID!) {
+  carrierIntelOverrides(carrierId: $carrierId) {
+    ...CarrierIntelOverrideFields
+  }
+}
+
+query CarrierIntelRawPayload($carrierId: ID!, $snapshotId: ID!) {
+  carrierIntelRawPayload(carrierId: $carrierId, snapshotId: $snapshotId)
+}
+
+query CarrierIntelLookup($input: CarrierIntelLookupInput!) {
+  carrierIntelLookup(input: $input) {
+    existingCarrierId
+    snapshot {
+      ...CarrierIntelSnapshotFields
+    }
+  }
+}
+
+query CarrierSourcingSearch($input: CarrierSourcingSearchInput!) {
+  carrierSourcingSearch(input: $input) {
+    total
+    provider
+    items {
+      providerRef
+      dotNumber
+      legalName
+      existingCarrierId
+      laneMatches
+      riskLevel
+      score
+      findings {
+        ...CarrierIntelFindingFields
+      }
+      profile {
+        ...CarrierIntelProfileFields
+      }
+    }
+  }
+}
+
+query CarrierSourcingAutocomplete($query: String!, $limit: Int) {
+  carrierSourcingAutocomplete(query: $query, limit: $limit) {
+    dotNumber
+    legalName
+    dbaName
+    city
+    state
+  }
+}
+
+query CarrierEquipmentVerifications($carrierAssignmentId: ID!) {
+  carrierEquipmentVerifications(carrierAssignmentId: $carrierAssignmentId) {
+    ...CarrierEquipmentVerificationFields
+  }
+}
+
+query MyCarrierIntelligence($refresh: Boolean) {
+  myCarrierIntelligence(refresh: $refresh) {
+    configured
+    dotNumber
+    snapshot {
+      ...CarrierIntelSnapshotFields
+    }
+  }
+}
+
+query CustomerBrokerIntelligence($customerId: ID!) {
+  customer(id: $customerId) {
+    id
+    name
+    dotNumber
+    mcNumber
+    brokerVettingEnabled
+    brokerIntelligence {
+      ...CarrierIntelSnapshotFields
+    }
+  }
+}
+
+mutation UpdateCarrierIntelControl($input: CarrierIntelControlPatchInput!) {
+  updateCarrierIntelControl(input: $input) {
+    ...CarrierIntelControlFields
+  }
+}
+
+mutation SwitchCarrierIntelProvider($provider: String!) {
+  switchCarrierIntelProvider(provider: $provider) {
+    ...CarrierIntelControlFields
+  }
+}
+
+mutation ResumeCarrierIntelMonitoring {
+  resumeCarrierIntelMonitoring
+}
+
+mutation VetCarrier($carrierId: ID!, $depth: CarrierIntelDepth, $force: Boolean) {
+  vetCarrier(carrierId: $carrierId, depth: $depth, force: $force) {
+    fromCache
+    usedFallback
+    raisedCount
+    changeCount
+    snapshot {
+      ...CarrierIntelSnapshotFields
+    }
+  }
+}
+
+mutation VetCustomerBroker($customerId: ID!, $force: Boolean) {
+  vetCustomerBroker(customerId: $customerId, force: $force) {
+    fromCache
+    usedFallback
+    raisedCount
+    changeCount
+    snapshot {
+      ...CarrierIntelSnapshotFields
+    }
+  }
+}
+
+mutation SetCarrierMonitoring($carrierIds: [ID!]!, $enabled: Boolean!) {
+  setCarrierMonitoring(carrierIds: $carrierIds, enabled: $enabled)
+}
+
+mutation AcknowledgeCarrierIntelEvents($ids: [ID!]!) {
+  acknowledgeCarrierIntelEvents(ids: $ids)
+}
+
+mutation ResolveCarrierIntelEvent($input: ResolveCarrierIntelEventInput!) {
+  resolveCarrierIntelEvent(input: $input) {
+    ...CarrierIntelEventFields
+  }
+}
+
+mutation MarkCarrierIntelReviewed($carrierId: ID!, $note: String!) {
+  markCarrierIntelReviewed(carrierId: $carrierId, note: $note)
+}
+
+mutation GrantCarrierIntelOverride($input: GrantCarrierIntelOverrideInput!) {
+  grantCarrierIntelOverride(input: $input) {
+    ...CarrierIntelOverrideFields
+  }
+}
+
+mutation RevokeCarrierIntelOverride($id: ID!, $reason: String!) {
+  revokeCarrierIntelOverride(id: $id, reason: $reason) {
+    ...CarrierIntelOverrideFields
+  }
+}
+
+mutation ApplyCarrierIntelSuggestions($input: ApplyCarrierIntelSuggestionsInput!) {
+  applyCarrierIntelSuggestions(input: $input)
+}
+
+mutation ImportSourcedCarrier($input: ImportSourcedCarrierInput!) {
+  importSourcedCarrier(input: $input) {
+    id
+    code
+    name
+    dotNumber
+    mcNumber
+    status
+    complianceStatus
+  }
+}
+
+mutation VerifyCarrierEquipment($input: VerifyCarrierEquipmentInput!) {
+  verifyCarrierEquipment(input: $input) {
+    ...CarrierEquipmentVerificationFields
+  }
+}
+
+mutation OverrideCarrierEquipmentVerification($id: ID!, $reason: String!) {
+  overrideCarrierEquipmentVerification(id: $id, reason: $reason) {
+    ...CarrierEquipmentVerificationFields
+  }
+}

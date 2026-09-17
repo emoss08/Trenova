@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -37,11 +38,28 @@ type ResolverRoot interface {
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
+	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
+	CarrierEquipmentVerification() CarrierEquipmentVerificationResolver
 	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
+	CarrierIntelControl() CarrierIntelControlResolver
+	CarrierIntelEquipment() CarrierIntelEquipmentResolver
+	CarrierIntelEvent() CarrierIntelEventResolver
+	CarrierIntelFeedState() CarrierIntelFeedStateResolver
+	CarrierIntelFinding() CarrierIntelFindingResolver
+	CarrierIntelInsurance() CarrierIntelInsuranceResolver
+	CarrierIntelInsuranceChange() CarrierIntelInsuranceChangeResolver
+	CarrierIntelInsuranceFiling() CarrierIntelInsuranceFilingResolver
+	CarrierIntelOverride() CarrierIntelOverrideResolver
+	CarrierIntelRuleDefinition() CarrierIntelRuleDefinitionResolver
+	CarrierIntelSafety() CarrierIntelSafetyResolver
+	CarrierIntelSnapshot() CarrierIntelSnapshotResolver
+	CarrierMonitoringEnrollment() CarrierMonitoringEnrollmentResolver
+	CarrierSourcingResult() CarrierSourcingResultResolver
 	ChargeAllocation() ChargeAllocationResolver
 	Commodity() CommodityResolver
+	Customer() CustomerResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
@@ -902,51 +920,57 @@ type ComplexityRoot struct {
 	}
 
 	Carrier struct {
-		AddressLine1       func(childComplexity int) int
-		AddressLine2       func(childComplexity int) int
-		BusinessUnit       func(childComplexity int) int
-		BusinessUnitID     func(childComplexity int) int
-		CarrierType        func(childComplexity int) int
-		City               func(childComplexity int) int
-		Code               func(childComplexity int) int
-		ComplianceStatus   func(childComplexity int) int
-		Contacts           func(childComplexity int) int
-		CreatedAt          func(childComplexity int) int
-		DBAName            func(childComplexity int) int
-		DOTNumber          func(childComplexity int) int
-		DisqualifiedReason func(childComplexity int) int
-		Email              func(childComplexity int) int
-		ExternalID         func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		InsurancePolicies  func(childComplexity int) int
-		Is1099Eligible     func(childComplexity int) int
-		MCNumber           func(childComplexity int) int
-		Name               func(childComplexity int) int
-		Notes              func(childComplexity int) int
-		Organization       func(childComplexity int) int
-		OrganizationID     func(childComplexity int) int
-		PaymentMethod      func(childComplexity int) int
-		PaymentTermDays    func(childComplexity int) int
-		Phone              func(childComplexity int) int
-		PostalCode         func(childComplexity int) int
-		QualifiedAt        func(childComplexity int) int
-		RemitAddressLine1  func(childComplexity int) int
-		RemitAddressLine2  func(childComplexity int) int
-		RemitCity          func(childComplexity int) int
-		RemitPostalCode    func(childComplexity int) int
-		RemitState         func(childComplexity int) int
-		RemitStateID       func(childComplexity int) int
-		RemitToName        func(childComplexity int) int
-		SCAC               func(childComplexity int) int
-		SafetyRating       func(childComplexity int) int
-		State              func(childComplexity int) int
-		StateID            func(childComplexity int) int
-		Status             func(childComplexity int) int
-		TaxID              func(childComplexity int) int
-		TaxIDType          func(childComplexity int) int
-		UpdatedAt          func(childComplexity int) int
-		Version            func(childComplexity int) int
-		W9OnFile           func(childComplexity int) int
+		AddressLine1         func(childComplexity int) int
+		AddressLine2         func(childComplexity int) int
+		BusinessUnit         func(childComplexity int) int
+		BusinessUnitID       func(childComplexity int) int
+		CarrierType          func(childComplexity int) int
+		City                 func(childComplexity int) int
+		Code                 func(childComplexity int) int
+		ComplianceStatus     func(childComplexity int) int
+		Contacts             func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		DBAName              func(childComplexity int) int
+		DOTNumber            func(childComplexity int) int
+		DisqualifiedReason   func(childComplexity int) int
+		Email                func(childComplexity int) int
+		ExternalID           func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		InsurancePolicies    func(childComplexity int) int
+		IntelBlockingCount   func(childComplexity int) int
+		IntelReviewRequired  func(childComplexity int) int
+		IntelRiskLevel       func(childComplexity int) int
+		Intelligence         func(childComplexity int) int
+		Is1099Eligible       func(childComplexity int) int
+		MCNumber             func(childComplexity int) int
+		MonitoringEnrollment func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		Notes                func(childComplexity int) int
+		OpenIntelEventCount  func(childComplexity int) int
+		Organization         func(childComplexity int) int
+		OrganizationID       func(childComplexity int) int
+		PaymentMethod        func(childComplexity int) int
+		PaymentTermDays      func(childComplexity int) int
+		Phone                func(childComplexity int) int
+		PostalCode           func(childComplexity int) int
+		QualifiedAt          func(childComplexity int) int
+		RemitAddressLine1    func(childComplexity int) int
+		RemitAddressLine2    func(childComplexity int) int
+		RemitCity            func(childComplexity int) int
+		RemitPostalCode      func(childComplexity int) int
+		RemitState           func(childComplexity int) int
+		RemitStateID         func(childComplexity int) int
+		RemitToName          func(childComplexity int) int
+		SCAC                 func(childComplexity int) int
+		SafetyRating         func(childComplexity int) int
+		State                func(childComplexity int) int
+		StateID              func(childComplexity int) int
+		Status               func(childComplexity int) int
+		TaxID                func(childComplexity int) int
+		TaxIDType            func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Version              func(childComplexity int) int
+		W9OnFile             func(childComplexity int) int
 	}
 
 	CarrierAssignment struct {
@@ -1055,6 +1079,32 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	CarrierEquipmentVerification struct {
+		CarrierAssignmentID func(childComplexity int) int
+		CarrierID           func(childComplexity int) int
+		Cleared             func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Detail              func(childComplexity int) int
+		ExpectedDOTNumber   func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		MatchedDOTNumbers   func(childComplexity int) int
+		MatchedLegalName    func(childComplexity int) int
+		MismatchReason      func(childComplexity int) int
+		OverriddenAt        func(childComplexity int) int
+		OverrideByID        func(childComplexity int) int
+		OverrideReason      func(childComplexity int) int
+		PlateNumber         func(childComplexity int) int
+		PlateState          func(childComplexity int) int
+		Provider            func(childComplexity int) int
+		Result              func(childComplexity int) int
+		ShipmentMoveID      func(childComplexity int) int
+		UnitNumber          func(childComplexity int) int
+		UnitType            func(childComplexity int) int
+		VIN                 func(childComplexity int) int
+		VerifiedAt          func(childComplexity int) int
+		VerifiedByID        func(childComplexity int) int
+	}
+
 	CarrierInsurancePolicy struct {
 		BusinessUnitID func(childComplexity int) int
 		CarrierID      func(childComplexity int) int
@@ -1070,6 +1120,547 @@ type ComplexityRoot struct {
 		ProviderName   func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 		Version        func(childComplexity int) int
+	}
+
+	CarrierIntelAddress struct {
+		City        func(childComplexity int) int
+		Country     func(childComplexity int) int
+		Line1       func(childComplexity int) int
+		PostalCode  func(childComplexity int) int
+		State       func(childComplexity int) int
+		Undelivered func(childComplexity int) int
+	}
+
+	CarrierIntelAuthority struct {
+		Broker           func(childComplexity int) int
+		Common           func(childComplexity int) int
+		Contract         func(childComplexity int) int
+		History          func(childComplexity int) int
+		LastRevocationAt func(childComplexity int) int
+		TotalRevocations func(childComplexity int) int
+	}
+
+	CarrierIntelAuthorityGrant struct {
+		AgeDays           func(childComplexity int) int
+		GrantedAt         func(childComplexity int) int
+		Pending           func(childComplexity int) int
+		RevocationPending func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UnderReview       func(childComplexity int) int
+	}
+
+	CarrierIntelAuthorityHistoryEntry struct {
+		Action        func(childComplexity int) int
+		AuthorityType func(childComplexity int) int
+		EffectiveAt   func(childComplexity int) int
+		ServedAt      func(childComplexity int) int
+	}
+
+	CarrierIntelBasicMeasure struct {
+		ACIndicator   func(childComplexity int) int
+		Alert         func(childComplexity int) int
+		Basic         func(childComplexity int) int
+		Measure       func(childComplexity int) int
+		Percentile    func(childComplexity int) int
+		RoadsideAlert func(childComplexity int) int
+		Threshold     func(childComplexity int) int
+	}
+
+	CarrierIntelBenchmarks struct {
+		AnyAnomaly               func(childComplexity int) int
+		InspectedUnitsAnomaly    func(childComplexity int) int
+		InspectionMileageAnomaly func(childComplexity int) int
+		PowerUnitMileageAnomaly  func(childComplexity int) int
+	}
+
+	CarrierIntelChangeHistory struct {
+		AddressChanges      func(childComplexity int) int
+		AddressLastChangeAt func(childComplexity int) int
+		ContactChanges      func(childComplexity int) int
+		ContactLastChangeAt func(childComplexity int) int
+		EmailChanges        func(childComplexity int) int
+		EmailLastChangedAt  func(childComplexity int) int
+		NameChanges         func(childComplexity int) int
+		NameLastChangedAt   func(childComplexity int) int
+		PhoneChanges        func(childComplexity int) int
+		PhoneLastChangedAt  func(childComplexity int) int
+	}
+
+	CarrierIntelContacts struct {
+		Cellphone        func(childComplexity int) int
+		Email            func(childComplexity int) int
+		Fax              func(childComplexity int) int
+		Phone            func(childComplexity int) int
+		PrimaryContact   func(childComplexity int) int
+		SecondaryContact func(childComplexity int) int
+	}
+
+	CarrierIntelControl struct {
+		AutoApplySafetyRating   func(childComplexity int) int
+		AutoDisqualifyOnBlock   func(childComplexity int) int
+		AutoEnrollOnCreate      func(childComplexity int) int
+		AutoSyncFields          func(childComplexity int) int
+		AutoUnenrollOnInactive  func(childComplexity int) int
+		ConfirmBlockingChanges  func(childComplexity int) int
+		DailyFullProfileCap     func(childComplexity int) int
+		EnrollmentPolicy        func(childComplexity int) int
+		ExclusiveWatchlist      func(childComplexity int) int
+		FallbackProvider        func(childComplexity int) int
+		FullProfileTTLDays      func(childComplexity int) int
+		HardMaxAgeHours         func(childComplexity int) int
+		ID                      func(childComplexity int) int
+		IncludeOpenTenders      func(childComplexity int) int
+		MonthlySpendCap         func(childComplexity int) int
+		OutagePolicy            func(childComplexity int) int
+		PolicyVersion           func(childComplexity int) int
+		PollIntervalMinutes     func(childComplexity int) int
+		PreTenderMaxAgeHours    func(childComplexity int) int
+		PreTenderRefreshEnabled func(childComplexity int) int
+		PrimaryProvider         func(childComplexity int) int
+		RawRetentionDays        func(childComplexity int) int
+		RecentUsageDays         func(childComplexity int) int
+		Rules                   func(childComplexity int) int
+		SelfMonitoringEnabled   func(childComplexity int) int
+		SnapshotHistoryLimit    func(childComplexity int) int
+		SnapshotTTLHours        func(childComplexity int) int
+		SoftCapPercent          func(childComplexity int) int
+		UpdatedAt               func(childComplexity int) int
+		Version                 func(childComplexity int) int
+	}
+
+	CarrierIntelCostEstimate struct {
+		MonthlyMonitoring func(childComplexity int) int
+		PerSubject        func(childComplexity int) int
+		Policy            func(childComplexity int) int
+		Provider          func(childComplexity int) int
+		SubjectCount      func(childComplexity int) int
+	}
+
+	CarrierIntelCrashes struct {
+		Fatal       func(childComplexity int) int
+		Injury      func(childComplexity int) int
+		LastCrashAt func(childComplexity int) int
+		Total       func(childComplexity int) int
+		Tow         func(childComplexity int) int
+	}
+
+	CarrierIntelEnrollmentCounts struct {
+		Active  func(childComplexity int) int
+		Desired func(childComplexity int) int
+		Failed  func(childComplexity int) int
+		Pending func(childComplexity int) int
+	}
+
+	CarrierIntelEquipment struct {
+		Category    func(childComplexity int) int
+		Make        func(childComplexity int) int
+		Model       func(childComplexity int) int
+		PlateNumber func(childComplexity int) int
+		PlateState  func(childComplexity int) int
+		UnitNumber  func(childComplexity int) int
+		UnitType    func(childComplexity int) int
+		VIN         func(childComplexity int) int
+		Year        func(childComplexity int) int
+	}
+
+	CarrierIntelEvent struct {
+		AcknowledgedAt   func(childComplexity int) int
+		AcknowledgedByID func(childComplexity int) int
+		Action           func(childComplexity int) int
+		CarrierID        func(childComplexity int) int
+		Category         func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		CurrentValue     func(childComplexity int) int
+		DOTNumber        func(childComplexity int) int
+		DetectedAt       func(childComplexity int) int
+		FieldPath        func(childComplexity int) int
+		ID               func(childComplexity int) int
+		PriorValue       func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		Resolution       func(childComplexity int) int
+		ResolutionNote   func(childComplexity int) int
+		ResolvedAt       func(childComplexity int) int
+		ResolvedByID     func(childComplexity int) int
+		RuleCode         func(childComplexity int) int
+		Severity         func(childComplexity int) int
+		SnapshotID       func(childComplexity int) int
+		Source           func(childComplexity int) int
+		Status           func(childComplexity int) int
+		SubjectID        func(childComplexity int) int
+		SubjectName      func(childComplexity int) int
+		SubjectType      func(childComplexity int) int
+		Summary          func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		VendorChangedAt  func(childComplexity int) int
+		Version          func(childComplexity int) int
+	}
+
+	CarrierIntelEventConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CarrierIntelEventCounts struct {
+		Acknowledged func(childComplexity int) int
+		BySeverity   func(childComplexity int) int
+		Open         func(childComplexity int) int
+	}
+
+	CarrierIntelEventEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	CarrierIntelFeedState struct {
+		FailureCount  func(childComplexity int) int
+		FeedType      func(childComplexity int) int
+		LastError     func(childComplexity int) int
+		LastPolledAt  func(childComplexity int) int
+		LastSuccessAt func(childComplexity int) int
+		NextPollAfter func(childComplexity int) int
+		PausedAt      func(childComplexity int) int
+		PausedReason  func(childComplexity int) int
+		Provider      func(childComplexity int) int
+	}
+
+	CarrierIntelFetchResult struct {
+		ChangeCount  func(childComplexity int) int
+		FromCache    func(childComplexity int) int
+		RaisedCount  func(childComplexity int) int
+		Snapshot     func(childComplexity int) int
+		UsedFallback func(childComplexity int) int
+	}
+
+	CarrierIntelFieldUpdate struct {
+		Current  func(childComplexity int) int
+		Field    func(childComplexity int) int
+		Proposed func(childComplexity int) int
+		Reason   func(childComplexity int) int
+	}
+
+	CarrierIntelFinding struct {
+		Action            func(childComplexity int) int
+		Category          func(childComplexity int) int
+		Code              func(childComplexity int) int
+		Message           func(childComplexity int) int
+		Overridden        func(childComplexity int) int
+		OverrideExpiresAt func(childComplexity int) int
+		OverrideID        func(childComplexity int) int
+		Severity          func(childComplexity int) int
+		Unconfirmed       func(childComplexity int) int
+		Unverifiable      func(childComplexity int) int
+	}
+
+	CarrierIntelFleet struct {
+		CDLDrivers         func(childComplexity int) int
+		Drivers            func(childComplexity int) int
+		OwnedTractors      func(childComplexity int) int
+		OwnedTrailers      func(childComplexity int) int
+		PowerUnits         func(childComplexity int) int
+		TermLeasedTractors func(childComplexity int) int
+		TermLeasedTrailers func(childComplexity int) int
+		Trailers           func(childComplexity int) int
+		Trucks             func(childComplexity int) int
+	}
+
+	CarrierIntelIdentity struct {
+		CarrierOperation func(childComplexity int) int
+		DBAName          func(childComplexity int) int
+		DOTAddedAt       func(childComplexity int) int
+		DOTAgeDays       func(childComplexity int) int
+		DOTNumber        func(childComplexity int) int
+		DocketNumber     func(childComplexity int) int
+		DocketPrefix     func(childComplexity int) int
+		EIN              func(childComplexity int) int
+		EntityType       func(childComplexity int) int
+		LegalName        func(childComplexity int) int
+		MailingAddress   func(childComplexity int) int
+		PhysicalAddress  func(childComplexity int) int
+		USDOTStatus      func(childComplexity int) int
+	}
+
+	CarrierIntelInspections struct {
+		Driver                func(childComplexity int) int
+		DriverOOS             func(childComplexity int) int
+		DriverOOSRate         func(childComplexity int) int
+		Hazmat                func(childComplexity int) int
+		HazmatOOS             func(childComplexity int) int
+		HazmatOOSRate         func(childComplexity int) int
+		LastInspectionAt      func(childComplexity int) int
+		NationalDriverOOSRate func(childComplexity int) int
+		NationalHazmatOOSRate func(childComplexity int) int
+		NationalVehicleOOS    func(childComplexity int) int
+		Total                 func(childComplexity int) int
+		Vehicle               func(childComplexity int) int
+		VehicleOOS            func(childComplexity int) int
+		VehicleOOSRate        func(childComplexity int) int
+	}
+
+	CarrierIntelInsurance struct {
+		BIPDOnFile      func(childComplexity int) int
+		BIPDRequired    func(childComplexity int) int
+		BondOnFile      func(childComplexity int) int
+		BondRequired    func(childComplexity int) int
+		CancelCount     func(childComplexity int) int
+		CargoOnFile     func(childComplexity int) int
+		CargoRequired   func(childComplexity int) int
+		Filings         func(childComplexity int) int
+		LastCanceledAt  func(childComplexity int) int
+		PendingCancelAt func(childComplexity int) int
+	}
+
+	CarrierIntelInsuranceChange struct {
+		CurrentCoverage        func(childComplexity int) int
+		CurrentExpirationDate  func(childComplexity int) int
+		EffectiveDate          func(childComplexity int) int
+		Kind                   func(childComplexity int) int
+		PolicyID               func(childComplexity int) int
+		PolicyNumber           func(childComplexity int) int
+		PolicyType             func(childComplexity int) int
+		ProposedCoverage       func(childComplexity int) int
+		ProposedExpirationDate func(childComplexity int) int
+		ProviderName           func(childComplexity int) int
+		Reason                 func(childComplexity int) int
+	}
+
+	CarrierIntelInsuranceFiling struct {
+		CancelEffectiveAt func(childComplexity int) int
+		CancelMethod      func(childComplexity int) int
+		Coverage          func(childComplexity int) int
+		EffectiveAt       func(childComplexity int) int
+		InsurerName       func(childComplexity int) int
+		PolicyNumber      func(childComplexity int) int
+		Type              func(childComplexity int) int
+	}
+
+	CarrierIntelLane struct {
+		DestinationCity  func(childComplexity int) int
+		DestinationState func(childComplexity int) int
+		Loads            func(childComplexity int) int
+		OriginCity       func(childComplexity int) int
+		OriginState      func(childComplexity int) int
+	}
+
+	CarrierIntelLanes struct {
+		DeadheadPercent func(childComplexity int) int
+		FTLPercent      func(childComplexity int) int
+		FirstLoadAt     func(childComplexity int) int
+		LTLPercent      func(childComplexity int) int
+		LastLoadAt      func(childComplexity int) int
+		Preferred       func(childComplexity int) int
+		TotalLoads      func(childComplexity int) int
+	}
+
+	CarrierIntelMonitoringStatus struct {
+		EnrollmentCounts func(childComplexity int) int
+		EventCounts      func(childComplexity int) int
+		Feeds            func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		ReviewQueueCount func(childComplexity int) int
+	}
+
+	CarrierIntelNetwork struct {
+		Links           func(childComplexity int) int
+		SharedAddresses func(childComplexity int) int
+		SharedEINs      func(childComplexity int) int
+		SharedEmails    func(childComplexity int) int
+		SharedEquipment func(childComplexity int) int
+		SharedPhones    func(childComplexity int) int
+	}
+
+	CarrierIntelNetworkLink struct {
+		DOTNumber func(childComplexity int) int
+		Kind      func(childComplexity int) int
+		LegalName func(childComplexity int) int
+		Status    func(childComplexity int) int
+		Value     func(childComplexity int) int
+	}
+
+	CarrierIntelOperations struct {
+		BOC3Agent      func(childComplexity int) int
+		BOC3OnFile     func(childComplexity int) int
+		CARBCompliant  func(childComplexity int) int
+		CargoCarried   func(childComplexity int) int
+		Classification func(childComplexity int) int
+		HazmatCarrier  func(childComplexity int) int
+		MCS150At       func(childComplexity int) int
+		MCS150Mileage  func(childComplexity int) int
+		PHMSA          func(childComplexity int) int
+		SmartWay       func(childComplexity int) int
+	}
+
+	CarrierIntelOverride struct {
+		Active       func(childComplexity int) int
+		CarrierID    func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+		GrantedAt    func(childComplexity int) int
+		GrantedByID  func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Reason       func(childComplexity int) int
+		RevokeReason func(childComplexity int) int
+		RevokedAt    func(childComplexity int) int
+		RevokedByID  func(childComplexity int) int
+		RuleCode     func(childComplexity int) int
+		Version      func(childComplexity int) int
+	}
+
+	CarrierIntelProfile struct {
+		Authority     func(childComplexity int) int
+		Basics        func(childComplexity int) int
+		Benchmarks    func(childComplexity int) int
+		ChangeHistory func(childComplexity int) int
+		Contacts      func(childComplexity int) int
+		Coverage      func(childComplexity int) int
+		Crashes       func(childComplexity int) int
+		Equipment     func(childComplexity int) int
+		Fleet         func(childComplexity int) int
+		Identity      func(childComplexity int) int
+		Inspections   func(childComplexity int) int
+		Insurance     func(childComplexity int) int
+		Lanes         func(childComplexity int) int
+		Network       func(childComplexity int) int
+		Operations    func(childComplexity int) int
+		Safety        func(childComplexity int) int
+	}
+
+	CarrierIntelProspectLookup struct {
+		ExistingCarrierID func(childComplexity int) int
+		Snapshot          func(childComplexity int) int
+	}
+
+	CarrierIntelProviderInfo struct {
+		Capabilities     func(childComplexity int) int
+		Configured       func(childComplexity int) int
+		FallbackProvider func(childComplexity int) int
+		Provider         func(childComplexity int) int
+		Sections         func(childComplexity int) int
+	}
+
+	CarrierIntelRuleDefinition struct {
+		Category          func(childComplexity int) int
+		Code              func(childComplexity int) int
+		DefaultAction     func(childComplexity int) int
+		Description       func(childComplexity int) int
+		GateRelevant      func(childComplexity int) int
+		Label             func(childComplexity int) int
+		Params            func(childComplexity int) int
+		RecommendedAction func(childComplexity int) int
+		RequiredSections  func(childComplexity int) int
+		Subjects          func(childComplexity int) int
+	}
+
+	CarrierIntelRuleParam struct {
+		Default  func(childComplexity int) int
+		HelpText func(childComplexity int) int
+		Key      func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Max      func(childComplexity int) int
+		Min      func(childComplexity int) int
+		Options  func(childComplexity int) int
+		Type     func(childComplexity int) int
+	}
+
+	CarrierIntelRuleSetting struct {
+		Action func(childComplexity int) int
+		Code   func(childComplexity int) int
+		Params func(childComplexity int) int
+	}
+
+	CarrierIntelRuleSettingParam struct {
+		Key   func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
+	CarrierIntelSafety struct {
+		ISSRecommendation func(childComplexity int) int
+		ISSValue          func(childComplexity int) int
+		LatestReviewAt    func(childComplexity int) int
+		LatestReviewType  func(childComplexity int) int
+		OutOfServiceAt    func(childComplexity int) int
+		OutOfServiceOrder func(childComplexity int) int
+		Rating            func(childComplexity int) int
+		RatingDate        func(childComplexity int) int
+		RiskProbability   func(childComplexity int) int
+		RiskScore         func(childComplexity int) int
+		SafetyScore       func(childComplexity int) int
+	}
+
+	CarrierIntelSeverityCount struct {
+		Count    func(childComplexity int) int
+		Severity func(childComplexity int) int
+	}
+
+	CarrierIntelSnapshot struct {
+		AdvisoryCodes func(childComplexity int) int
+		BlockingCodes func(childComplexity int) int
+		CarrierID     func(childComplexity int) int
+		ConfirmedAt   func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		DOTNumber     func(childComplexity int) int
+		Depth         func(childComplexity int) int
+		DocketNumber  func(childComplexity int) int
+		EffectiveAsOf func(childComplexity int) int
+		FetchedAt     func(childComplexity int) int
+		Findings      func(childComplexity int) int
+		HasRawPayload func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IsCurrent     func(childComplexity int) int
+		NotFound      func(childComplexity int) int
+		PolicyVersion func(childComplexity int) int
+		Profile       func(childComplexity int) int
+		Provider      func(childComplexity int) int
+		ProviderRef   func(childComplexity int) int
+		ReviewNote    func(childComplexity int) int
+		ReviewState   func(childComplexity int) int
+		ReviewedAt    func(childComplexity int) int
+		ReviewedByID  func(childComplexity int) int
+		RiskLevel     func(childComplexity int) int
+		Source        func(childComplexity int) int
+		SourceAsOf    func(childComplexity int) int
+		SubjectID     func(childComplexity int) int
+		SubjectType   func(childComplexity int) int
+	}
+
+	CarrierIntelSuggestion struct {
+		City      func(childComplexity int) int
+		DBAName   func(childComplexity int) int
+		DOTNumber func(childComplexity int) int
+		LegalName func(childComplexity int) int
+		State     func(childComplexity int) int
+	}
+
+	CarrierIntelSyncPlan struct {
+		AutoApply            func(childComplexity int) int
+		InsuranceAutoApply   func(childComplexity int) int
+		InsuranceSuggestions func(childComplexity int) int
+		Suggestions          func(childComplexity int) int
+	}
+
+	CarrierIntelUsageDay struct {
+		BillableUnits func(childComplexity int) int
+		Calls         func(childComplexity int) int
+		Day           func(childComplexity int) int
+		Endpoint      func(childComplexity int) int
+		EstimatedCost func(childComplexity int) int
+	}
+
+	CarrierIntelUsageRow struct {
+		BillableUnits func(childComplexity int) int
+		Calls         func(childComplexity int) int
+		Endpoint      func(childComplexity int) int
+		EstimatedCost func(childComplexity int) int
+		Provider      func(childComplexity int) int
+	}
+
+	CarrierIntelUsageSummary struct {
+		ByEndpoint     func(childComplexity int) int
+		Cap            func(childComplexity int) int
+		Daily          func(childComplexity int) int
+		MonthStart     func(childComplexity int) int
+		MonthToDate    func(childComplexity int) int
+		SoftCapPercent func(childComplexity int) int
 	}
 
 	CarrierInvoiceMatch struct {
@@ -1121,6 +1712,44 @@ type ComplexityRoot struct {
 		SourceObjectID      func(childComplexity int) int
 		SourceObjectType    func(childComplexity int) int
 		TransactionDate     func(childComplexity int) int
+	}
+
+	CarrierMonitoringEnrollment struct {
+		CarrierID       func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		DOTNumber       func(childComplexity int) int
+		DesiredState    func(childComplexity int) int
+		DocketNumber    func(childComplexity int) int
+		EnrolledAt      func(childComplexity int) int
+		FailureCount    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		LastConfirmedAt func(childComplexity int) int
+		LastError       func(childComplexity int) int
+		LastSyncedAt    func(childComplexity int) int
+		LastUsedAt      func(childComplexity int) int
+		Mode            func(childComplexity int) int
+		OwnedByTrenova  func(childComplexity int) int
+		Provider        func(childComplexity int) int
+		ProviderRef     func(childComplexity int) int
+		Reason          func(childComplexity int) int
+		SubjectID       func(childComplexity int) int
+		SubjectName     func(childComplexity int) int
+		SubjectType     func(childComplexity int) int
+		UnenrolledAt    func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		VendorState     func(childComplexity int) int
+		Version         func(childComplexity int) int
+	}
+
+	CarrierMonitoringEnrollmentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CarrierMonitoringEnrollmentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	CarrierSettlement struct {
@@ -1265,6 +1894,24 @@ type ComplexityRoot struct {
 		PostedCount          func(childComplexity int) int
 		TotalGrossMinor      func(childComplexity int) int
 		TotalNetMinor        func(childComplexity int) int
+	}
+
+	CarrierSourcingPage struct {
+		Items    func(childComplexity int) int
+		Provider func(childComplexity int) int
+		Total    func(childComplexity int) int
+	}
+
+	CarrierSourcingResult struct {
+		DOTNumber         func(childComplexity int) int
+		ExistingCarrierID func(childComplexity int) int
+		Findings          func(childComplexity int) int
+		LaneMatches       func(childComplexity int) int
+		LegalName         func(childComplexity int) int
+		Profile           func(childComplexity int) int
+		ProviderRef       func(childComplexity int) int
+		RiskLevel         func(childComplexity int) int
+		Score             func(childComplexity int) int
 	}
 
 	CategoryCostLine struct {
@@ -1469,12 +2116,15 @@ type ComplexityRoot struct {
 		AddressLine2           func(childComplexity int) int
 		AllowConsolidation     func(childComplexity int) int
 		BillingProfile         func(childComplexity int) int
+		BrokerIntelligence     func(childComplexity int) int
+		BrokerVettingEnabled   func(childComplexity int) int
 		BusinessUnit           func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
 		City                   func(childComplexity int) int
 		Code                   func(childComplexity int) int
 		ConsolidationPriority  func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
+		DOTNumber              func(childComplexity int) int
 		EmailProfile           func(childComplexity int) int
 		ExclusiveConsolidation func(childComplexity int) int
 		ExternalID             func(childComplexity int) int
@@ -1482,6 +2132,7 @@ type ComplexityRoot struct {
 		IsGeocoded             func(childComplexity int) int
 		Latitude               func(childComplexity int) int
 		Longitude              func(childComplexity int) int
+		MCNumber               func(childComplexity int) int
 		Name                   func(childComplexity int) int
 		Organization           func(childComplexity int) int
 		OrganizationID         func(childComplexity int) int
@@ -2268,8 +2919,18 @@ type ComplexityRoot struct {
 	}
 
 	DispatchCarrierEligibility struct {
-		Blockers func(childComplexity int) int
-		Warnings func(childComplexity int) int
+		Advisories func(childComplexity int) int
+		Blockers   func(childComplexity int) int
+		Findings   func(childComplexity int) int
+		Warnings   func(childComplexity int) int
+	}
+
+	DispatchCarrierEligibilityFinding struct {
+		Code             func(childComplexity int) int
+		Message          func(childComplexity int) int
+		RequiresOverride func(childComplexity int) int
+		Severity         func(childComplexity int) int
+		Source           func(childComplexity int) int
 	}
 
 	DispatchCommitment struct {
@@ -5114,6 +5775,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
 		AcceptCarrierInvoiceMatchWithVariance func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
+		AcknowledgeCarrierIntelEvents         func(childComplexity int, ids []string) int
 		AcknowledgeMyDisciplinaryAction       func(childComplexity int, id string, comment *string) int
 		AcknowledgeMyPolicy                   func(childComplexity int, input gqlmodel.AcknowledgeMyPolicyInput) int
 		AcknowledgeMyReview                   func(childComplexity int, id string, comment *string) int
@@ -5127,6 +5789,7 @@ type ComplexityRoot struct {
 		AdjustWorkerPTOBalance                func(childComplexity int, input gqlmodel.AdjustWorkerPTOBalanceInput) int
 		AmendIFTAReturn                       func(childComplexity int, id string, reason string) int
 		AmendWorkerEmploymentEvent            func(childComplexity int, input gqlmodel.AmendWorkerEmploymentEventInput) int
+		ApplyCarrierIntelSuggestions          func(childComplexity int, input gqlmodel.ApplyCarrierIntelSuggestionsInput) int
 		ApplyCreditMemo                       func(childComplexity int, input gqlmodel.ApplyCreditMemoInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
@@ -5301,7 +5964,9 @@ type ComplexityRoot struct {
 		GeneratePayrollExport                 func(childComplexity int, input gqlmodel.GeneratePayrollExportInput) int
 		GenerateSettlementBatch               func(childComplexity int, input gqlmodel.GenerateSettlementBatchInput) int
 		GiveWorkerRecognition                 func(childComplexity int, input gqlmodel.WorkerRecognitionInput) int
+		GrantCarrierIntelOverride             func(childComplexity int, input gqlmodel.GrantCarrierIntelOverrideInput) int
 		HoldDriverPayEvent                    func(childComplexity int, input gqlmodel.HoldPayEventInput) int
+		ImportSourcedCarrier                  func(childComplexity int, input gqlmodel.ImportSourcedCarrierInput) int
 		InviteWorkerToPortal                  func(childComplexity int, input gqlmodel.InviteWorkerToPortalInput) int
 		IssueDisciplinaryAction               func(childComplexity int, input gqlmodel.IssueDisciplinaryActionInput) int
 		IssuePayAdvance                       func(childComplexity int, input gqlmodel.IssuePayAdvanceInput) int
@@ -5310,6 +5975,7 @@ type ComplexityRoot struct {
 		LocateTrailer                         func(childComplexity int, input gqlmodel.LocateTrailerInput) int
 		MarkAllMyNotificationsRead            func(childComplexity int) int
 		MarkAllNotificationsRead              func(childComplexity int) int
+		MarkCarrierIntelReviewed              func(childComplexity int, carrierID string, note string) int
 		MarkCarrierSettlementPaid             func(childComplexity int, input gqlmodel.MarkCarrierSettlementPaidInput) int
 		MarkDriverSettlementPaid              func(childComplexity int, input gqlmodel.MarkDriverSettlementPaidInput) int
 		MarkEmploymentVerificationRequested   func(childComplexity int, id string) int
@@ -5322,6 +5988,7 @@ type ComplexityRoot struct {
 		OpenEscrowAccount                     func(childComplexity int, input gqlmodel.OpenEscrowAccountInput) int
 		OpenInvoiceDispute                    func(childComplexity int, input gqlmodel.OpenInvoiceDisputeInput) int
 		OpenLeaveCase                         func(childComplexity int, input gqlmodel.OpenLeaveCaseInput) int
+		OverrideCarrierEquipmentVerification  func(childComplexity int, id string, reason string) int
 		PatchEquipmentManufacturer            func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerPatchInput) int
 		PatchEquipmentType                    func(childComplexity int, id string, input gqlmodel.EquipmentTypePatchInput) int
 		PatchTableConfiguration               func(childComplexity int, id string, input gqlmodel.TableConfigurationPatchInput) int
@@ -5374,6 +6041,7 @@ type ComplexityRoot struct {
 		ResetCannedFork                       func(childComplexity int, id string) int
 		ResetHomeLayout                       func(childComplexity int) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
+		ResolveCarrierIntelEvent              func(childComplexity int, input gqlmodel.ResolveCarrierIntelEventInput) int
 		ResolveFuelPurchaseImportRows         func(childComplexity int, id string, version int) int
 		ResolveInvoiceDispute                 func(childComplexity int, input gqlmodel.ResolveInvoiceDisputeInput) int
 		ResolveSettlementDispute              func(childComplexity int, input gqlmodel.ResolveSettlementDisputeInput) int
@@ -5387,10 +6055,12 @@ type ComplexityRoot struct {
 		RestoreTrainingCourse                 func(childComplexity int, id string, version *int) int
 		RestoreWorkerChecklistTemplate        func(childComplexity int, id string, version *int) int
 		RestoreWorkerCredentialType           func(childComplexity int, id string, version *int) int
+		ResumeCarrierIntelMonitoring          func(childComplexity int) int
 		ReverseCustomerPayment                func(childComplexity int, input gqlmodel.ReverseCustomerPaymentInput) int
 		ReviewDriverExpense                   func(childComplexity int, input gqlmodel.ReviewDriverExpenseInput) int
 		ReviewWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		RevokeApprovalDelegation              func(childComplexity int, id string) int
+		RevokeCarrierIntelOverride            func(childComplexity int, id string, reason string) int
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
@@ -5401,6 +6071,7 @@ type ComplexityRoot struct {
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
+		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
 		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
@@ -5415,6 +6086,7 @@ type ComplexityRoot struct {
 		SubmitDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		SubmitMyExpense                       func(childComplexity int, input gqlmodel.SubmitMyExpenseInput) int
 		SubmitPerformanceReview               func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
+		SwitchCarrierIntelProvider            func(childComplexity int, provider string) int
 		SyncFuelCardFeed                      func(childComplexity int, provider fuelpurchase.CardProvider) int
 		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
@@ -5430,6 +6102,7 @@ type ComplexityRoot struct {
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
 		UpdateBenefitPlan                     func(childComplexity int, input gqlmodel.UpdateBenefitPlanInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
+		UpdateCarrierIntelControl             func(childComplexity int, input gqlmodel.CarrierIntelControlPatchInput) int
 		UpdateCarrierSettlementControl        func(childComplexity int, input gqlmodel.UpdateCarrierSettlementControlInput) int
 		UpdateCostCategory                    func(childComplexity int, input gqlmodel.CostCategoryUpdateInput) int
 		UpdateCostingControl                  func(childComplexity int, input gqlmodel.CostingControlInput) int
@@ -5490,7 +6163,10 @@ type ComplexityRoot struct {
 		UpdateWorkerPolicy                    func(childComplexity int, id string, input gqlmodel.WorkerPolicyInput) int
 		UpdateWorkerSafetyEvent               func(childComplexity int, input gqlmodel.UpdateWorkerSafetyEventInput) int
 		UpsertIFTATaxRates                    func(childComplexity int, input []*gqlmodel.IFTATaxRateInput) int
+		VerifyCarrierEquipment                func(childComplexity int, input gqlmodel.VerifyCarrierEquipmentInput) int
 		VerifyWorkerCredential                func(childComplexity int, id string, version *int) int
+		VetCarrier                            func(childComplexity int, carrierID string, depth *carrierintel.LookupDepth, force *bool) int
+		VetCustomerBroker                     func(childComplexity int, customerID string, force *bool) int
 		VoidCarrierSettlement                 func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		VoidDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		VoidInvoice                           func(childComplexity int, input gqlmodel.VoidInvoiceInput) int
@@ -5501,6 +6177,12 @@ type ComplexityRoot struct {
 		WithdrawMyProfileChange               func(childComplexity int, id string) int
 		WithdrawSettlementDispute             func(childComplexity int, id string) int
 		WriteOffPayAdvance                    func(childComplexity int, input gqlmodel.WriteOffPayAdvanceInput) int
+	}
+
+	MyCarrierIntelligence struct {
+		Configured func(childComplexity int) int
+		DOTNumber  func(childComplexity int) int
+		Snapshot   func(childComplexity int) int
 	}
 
 	MyPTOBalance struct {
@@ -6379,14 +7061,31 @@ type ComplexityRoot struct {
 		CannedReports                       func(childComplexity int) int
 		Carrier                             func(childComplexity int, id string) int
 		CarrierCostEvents                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		CarrierEquipmentVerifications       func(childComplexity int, carrierAssignmentID string) int
+		CarrierIntelControl                 func(childComplexity int) int
+		CarrierIntelCostEstimate            func(childComplexity int, policy carrierintel.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) int
+		CarrierIntelEvents                  func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierIntelEventFilterInput) int
+		CarrierIntelLookup                  func(childComplexity int, input gqlmodel.CarrierIntelLookupInput) int
+		CarrierIntelMonitoringStatus        func(childComplexity int) int
+		CarrierIntelOverrides               func(childComplexity int, carrierID string) int
+		CarrierIntelProvider                func(childComplexity int) int
+		CarrierIntelRawPayload              func(childComplexity int, carrierID string, snapshotID string) int
+		CarrierIntelReviewQueue             func(childComplexity int, limit *int) int
+		CarrierIntelRuleCatalog             func(childComplexity int) int
+		CarrierIntelSnapshotHistory         func(childComplexity int, carrierID string, limit *int) int
+		CarrierIntelSyncPlan                func(childComplexity int, carrierID string) int
+		CarrierIntelUsage                   func(childComplexity int, month *int) int
 		CarrierInvoiceMatches               func(childComplexity int, status *carriersettlement.InvoiceMatchStatus, carrierID *string, limit *int, offset *int) int
 		CarrierLedgerEntries                func(childComplexity int, carrierID string, limit *int) int
+		CarrierMonitoringEnrollments        func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierMonitoringEnrollmentFilterInput) int
 		CarrierSettlement                   func(childComplexity int, id string) int
 		CarrierSettlementBatch              func(childComplexity int, id string) int
 		CarrierSettlementBatches            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		CarrierSettlementControl            func(childComplexity int) int
 		CarrierSettlementWorkspaceSummary   func(childComplexity int, periodStart *int, periodEnd *int) int
 		CarrierSettlements                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		CarrierSourcingAutocomplete         func(childComplexity int, query string, limit *int) int
+		CarrierSourcingSearch               func(childComplexity int, input gqlmodel.CarrierSourcingSearchInput) int
 		Carriers                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		Commodities                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		Commodity                           func(childComplexity int, id string) int
@@ -6543,6 +7242,7 @@ type ComplexityRoot struct {
 		MatchRoutingGuide                   func(childComplexity int, input gqlmodel.MatchRoutingGuideInput) int
 		MyAdvances                          func(childComplexity int) int
 		MyAvailability                      func(childComplexity int) int
+		MyCarrierIntelligence               func(childComplexity int, refresh *bool) int
 		MyComplianceProfile                 func(childComplexity int) int
 		MyCredentials                       func(childComplexity int) int
 		MyDisciplinaryActions               func(childComplexity int) int
@@ -13814,6 +14514,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Carrier.InsurancePolicies(childComplexity), true
+	case "Carrier.intelBlockingCount":
+		if e.ComplexityRoot.Carrier.IntelBlockingCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.IntelBlockingCount(childComplexity), true
+	case "Carrier.intelReviewRequired":
+		if e.ComplexityRoot.Carrier.IntelReviewRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.IntelReviewRequired(childComplexity), true
+	case "Carrier.intelRiskLevel":
+		if e.ComplexityRoot.Carrier.IntelRiskLevel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.IntelRiskLevel(childComplexity), true
+	case "Carrier.intelligence":
+		if e.ComplexityRoot.Carrier.Intelligence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Intelligence(childComplexity), true
 	case "Carrier.is1099Eligible":
 		if e.ComplexityRoot.Carrier.Is1099Eligible == nil {
 			break
@@ -13826,6 +14550,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Carrier.MCNumber(childComplexity), true
+	case "Carrier.monitoringEnrollment":
+		if e.ComplexityRoot.Carrier.MonitoringEnrollment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.MonitoringEnrollment(childComplexity), true
 	case "Carrier.name":
 		if e.ComplexityRoot.Carrier.Name == nil {
 			break
@@ -13838,6 +14568,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Carrier.Notes(childComplexity), true
+	case "Carrier.openIntelEventCount":
+		if e.ComplexityRoot.Carrier.OpenIntelEventCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.OpenIntelEventCount(childComplexity), true
 	case "Carrier.organization":
 		if e.ComplexityRoot.Carrier.Organization == nil {
 			break
@@ -14483,6 +15219,145 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CarrierEdge.Node(childComplexity), true
 
+	case "CarrierEquipmentVerification.carrierAssignmentId":
+		if e.ComplexityRoot.CarrierEquipmentVerification.CarrierAssignmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.CarrierAssignmentID(childComplexity), true
+	case "CarrierEquipmentVerification.carrierId":
+		if e.ComplexityRoot.CarrierEquipmentVerification.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.CarrierID(childComplexity), true
+	case "CarrierEquipmentVerification.cleared":
+		if e.ComplexityRoot.CarrierEquipmentVerification.Cleared == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.Cleared(childComplexity), true
+	case "CarrierEquipmentVerification.createdAt":
+		if e.ComplexityRoot.CarrierEquipmentVerification.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.CreatedAt(childComplexity), true
+	case "CarrierEquipmentVerification.detail":
+		if e.ComplexityRoot.CarrierEquipmentVerification.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.Detail(childComplexity), true
+	case "CarrierEquipmentVerification.expectedDotNumber":
+		if e.ComplexityRoot.CarrierEquipmentVerification.ExpectedDOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.ExpectedDOTNumber(childComplexity), true
+	case "CarrierEquipmentVerification.id":
+		if e.ComplexityRoot.CarrierEquipmentVerification.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.ID(childComplexity), true
+	case "CarrierEquipmentVerification.matchedDotNumbers":
+		if e.ComplexityRoot.CarrierEquipmentVerification.MatchedDOTNumbers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.MatchedDOTNumbers(childComplexity), true
+	case "CarrierEquipmentVerification.matchedLegalName":
+		if e.ComplexityRoot.CarrierEquipmentVerification.MatchedLegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.MatchedLegalName(childComplexity), true
+	case "CarrierEquipmentVerification.mismatchReason":
+		if e.ComplexityRoot.CarrierEquipmentVerification.MismatchReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.MismatchReason(childComplexity), true
+	case "CarrierEquipmentVerification.overriddenAt":
+		if e.ComplexityRoot.CarrierEquipmentVerification.OverriddenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.OverriddenAt(childComplexity), true
+	case "CarrierEquipmentVerification.overrideById":
+		if e.ComplexityRoot.CarrierEquipmentVerification.OverrideByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.OverrideByID(childComplexity), true
+	case "CarrierEquipmentVerification.overrideReason":
+		if e.ComplexityRoot.CarrierEquipmentVerification.OverrideReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.OverrideReason(childComplexity), true
+	case "CarrierEquipmentVerification.plateNumber":
+		if e.ComplexityRoot.CarrierEquipmentVerification.PlateNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.PlateNumber(childComplexity), true
+	case "CarrierEquipmentVerification.plateState":
+		if e.ComplexityRoot.CarrierEquipmentVerification.PlateState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.PlateState(childComplexity), true
+	case "CarrierEquipmentVerification.provider":
+		if e.ComplexityRoot.CarrierEquipmentVerification.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.Provider(childComplexity), true
+	case "CarrierEquipmentVerification.result":
+		if e.ComplexityRoot.CarrierEquipmentVerification.Result == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.Result(childComplexity), true
+	case "CarrierEquipmentVerification.shipmentMoveId":
+		if e.ComplexityRoot.CarrierEquipmentVerification.ShipmentMoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.ShipmentMoveID(childComplexity), true
+	case "CarrierEquipmentVerification.unitNumber":
+		if e.ComplexityRoot.CarrierEquipmentVerification.UnitNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.UnitNumber(childComplexity), true
+	case "CarrierEquipmentVerification.unitType":
+		if e.ComplexityRoot.CarrierEquipmentVerification.UnitType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.UnitType(childComplexity), true
+	case "CarrierEquipmentVerification.vin":
+		if e.ComplexityRoot.CarrierEquipmentVerification.VIN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.VIN(childComplexity), true
+	case "CarrierEquipmentVerification.verifiedAt":
+		if e.ComplexityRoot.CarrierEquipmentVerification.VerifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.VerifiedAt(childComplexity), true
+	case "CarrierEquipmentVerification.verifiedById":
+		if e.ComplexityRoot.CarrierEquipmentVerification.VerifiedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEquipmentVerification.VerifiedByID(childComplexity), true
+
 	case "CarrierInsurancePolicy.businessUnitId":
 		if e.ComplexityRoot.CarrierInsurancePolicy.BusinessUnitID == nil {
 			break
@@ -14567,6 +15442,2419 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierInsurancePolicy.Version(childComplexity), true
+
+	case "CarrierIntelAddress.city":
+		if e.ComplexityRoot.CarrierIntelAddress.City == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.City(childComplexity), true
+	case "CarrierIntelAddress.country":
+		if e.ComplexityRoot.CarrierIntelAddress.Country == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.Country(childComplexity), true
+	case "CarrierIntelAddress.line1":
+		if e.ComplexityRoot.CarrierIntelAddress.Line1 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.Line1(childComplexity), true
+	case "CarrierIntelAddress.postalCode":
+		if e.ComplexityRoot.CarrierIntelAddress.PostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.PostalCode(childComplexity), true
+	case "CarrierIntelAddress.state":
+		if e.ComplexityRoot.CarrierIntelAddress.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.State(childComplexity), true
+	case "CarrierIntelAddress.undelivered":
+		if e.ComplexityRoot.CarrierIntelAddress.Undelivered == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAddress.Undelivered(childComplexity), true
+
+	case "CarrierIntelAuthority.broker":
+		if e.ComplexityRoot.CarrierIntelAuthority.Broker == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.Broker(childComplexity), true
+	case "CarrierIntelAuthority.common":
+		if e.ComplexityRoot.CarrierIntelAuthority.Common == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.Common(childComplexity), true
+	case "CarrierIntelAuthority.contract":
+		if e.ComplexityRoot.CarrierIntelAuthority.Contract == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.Contract(childComplexity), true
+	case "CarrierIntelAuthority.history":
+		if e.ComplexityRoot.CarrierIntelAuthority.History == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.History(childComplexity), true
+	case "CarrierIntelAuthority.lastRevocationAt":
+		if e.ComplexityRoot.CarrierIntelAuthority.LastRevocationAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.LastRevocationAt(childComplexity), true
+	case "CarrierIntelAuthority.totalRevocations":
+		if e.ComplexityRoot.CarrierIntelAuthority.TotalRevocations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthority.TotalRevocations(childComplexity), true
+
+	case "CarrierIntelAuthorityGrant.ageDays":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.AgeDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.AgeDays(childComplexity), true
+	case "CarrierIntelAuthorityGrant.grantedAt":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.GrantedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.GrantedAt(childComplexity), true
+	case "CarrierIntelAuthorityGrant.pending":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.Pending(childComplexity), true
+	case "CarrierIntelAuthorityGrant.revocationPending":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.RevocationPending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.RevocationPending(childComplexity), true
+	case "CarrierIntelAuthorityGrant.status":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.Status(childComplexity), true
+	case "CarrierIntelAuthorityGrant.underReview":
+		if e.ComplexityRoot.CarrierIntelAuthorityGrant.UnderReview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityGrant.UnderReview(childComplexity), true
+
+	case "CarrierIntelAuthorityHistoryEntry.action":
+		if e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.Action == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.Action(childComplexity), true
+	case "CarrierIntelAuthorityHistoryEntry.authorityType":
+		if e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.AuthorityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.AuthorityType(childComplexity), true
+	case "CarrierIntelAuthorityHistoryEntry.effectiveAt":
+		if e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.EffectiveAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.EffectiveAt(childComplexity), true
+	case "CarrierIntelAuthorityHistoryEntry.servedAt":
+		if e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.ServedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelAuthorityHistoryEntry.ServedAt(childComplexity), true
+
+	case "CarrierIntelBasicMeasure.acIndicator":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.ACIndicator == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.ACIndicator(childComplexity), true
+	case "CarrierIntelBasicMeasure.alert":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Alert == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Alert(childComplexity), true
+	case "CarrierIntelBasicMeasure.basic":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Basic == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Basic(childComplexity), true
+	case "CarrierIntelBasicMeasure.measure":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Measure == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Measure(childComplexity), true
+	case "CarrierIntelBasicMeasure.percentile":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Percentile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Percentile(childComplexity), true
+	case "CarrierIntelBasicMeasure.roadsideAlert":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.RoadsideAlert == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.RoadsideAlert(childComplexity), true
+	case "CarrierIntelBasicMeasure.threshold":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Threshold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Threshold(childComplexity), true
+
+	case "CarrierIntelBenchmarks.anyAnomaly":
+		if e.ComplexityRoot.CarrierIntelBenchmarks.AnyAnomaly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBenchmarks.AnyAnomaly(childComplexity), true
+	case "CarrierIntelBenchmarks.inspectedUnitsAnomaly":
+		if e.ComplexityRoot.CarrierIntelBenchmarks.InspectedUnitsAnomaly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBenchmarks.InspectedUnitsAnomaly(childComplexity), true
+	case "CarrierIntelBenchmarks.inspectionMileageAnomaly":
+		if e.ComplexityRoot.CarrierIntelBenchmarks.InspectionMileageAnomaly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBenchmarks.InspectionMileageAnomaly(childComplexity), true
+	case "CarrierIntelBenchmarks.powerUnitMileageAnomaly":
+		if e.ComplexityRoot.CarrierIntelBenchmarks.PowerUnitMileageAnomaly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBenchmarks.PowerUnitMileageAnomaly(childComplexity), true
+
+	case "CarrierIntelChangeHistory.addressChanges":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.AddressChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.AddressChanges(childComplexity), true
+	case "CarrierIntelChangeHistory.addressLastChangedAt":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.AddressLastChangeAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.AddressLastChangeAt(childComplexity), true
+	case "CarrierIntelChangeHistory.contactChanges":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.ContactChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.ContactChanges(childComplexity), true
+	case "CarrierIntelChangeHistory.contactLastChangedAt":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.ContactLastChangeAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.ContactLastChangeAt(childComplexity), true
+	case "CarrierIntelChangeHistory.emailChanges":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.EmailChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.EmailChanges(childComplexity), true
+	case "CarrierIntelChangeHistory.emailLastChangedAt":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.EmailLastChangedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.EmailLastChangedAt(childComplexity), true
+	case "CarrierIntelChangeHistory.nameChanges":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.NameChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.NameChanges(childComplexity), true
+	case "CarrierIntelChangeHistory.nameLastChangedAt":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.NameLastChangedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.NameLastChangedAt(childComplexity), true
+	case "CarrierIntelChangeHistory.phoneChanges":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.PhoneChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.PhoneChanges(childComplexity), true
+	case "CarrierIntelChangeHistory.phoneLastChangedAt":
+		if e.ComplexityRoot.CarrierIntelChangeHistory.PhoneLastChangedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelChangeHistory.PhoneLastChangedAt(childComplexity), true
+
+	case "CarrierIntelContacts.cellphone":
+		if e.ComplexityRoot.CarrierIntelContacts.Cellphone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.Cellphone(childComplexity), true
+	case "CarrierIntelContacts.email":
+		if e.ComplexityRoot.CarrierIntelContacts.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.Email(childComplexity), true
+	case "CarrierIntelContacts.fax":
+		if e.ComplexityRoot.CarrierIntelContacts.Fax == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.Fax(childComplexity), true
+	case "CarrierIntelContacts.phone":
+		if e.ComplexityRoot.CarrierIntelContacts.Phone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.Phone(childComplexity), true
+	case "CarrierIntelContacts.primaryContact":
+		if e.ComplexityRoot.CarrierIntelContacts.PrimaryContact == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.PrimaryContact(childComplexity), true
+	case "CarrierIntelContacts.secondaryContact":
+		if e.ComplexityRoot.CarrierIntelContacts.SecondaryContact == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelContacts.SecondaryContact(childComplexity), true
+
+	case "CarrierIntelControl.autoApplySafetyRating":
+		if e.ComplexityRoot.CarrierIntelControl.AutoApplySafetyRating == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.AutoApplySafetyRating(childComplexity), true
+	case "CarrierIntelControl.autoDisqualifyOnBlock":
+		if e.ComplexityRoot.CarrierIntelControl.AutoDisqualifyOnBlock == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.AutoDisqualifyOnBlock(childComplexity), true
+	case "CarrierIntelControl.autoEnrollOnCreate":
+		if e.ComplexityRoot.CarrierIntelControl.AutoEnrollOnCreate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.AutoEnrollOnCreate(childComplexity), true
+	case "CarrierIntelControl.autoSyncFields":
+		if e.ComplexityRoot.CarrierIntelControl.AutoSyncFields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.AutoSyncFields(childComplexity), true
+	case "CarrierIntelControl.autoUnenrollOnInactive":
+		if e.ComplexityRoot.CarrierIntelControl.AutoUnenrollOnInactive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.AutoUnenrollOnInactive(childComplexity), true
+	case "CarrierIntelControl.confirmBlockingChanges":
+		if e.ComplexityRoot.CarrierIntelControl.ConfirmBlockingChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.ConfirmBlockingChanges(childComplexity), true
+	case "CarrierIntelControl.dailyFullProfileCap":
+		if e.ComplexityRoot.CarrierIntelControl.DailyFullProfileCap == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.DailyFullProfileCap(childComplexity), true
+	case "CarrierIntelControl.enrollmentPolicy":
+		if e.ComplexityRoot.CarrierIntelControl.EnrollmentPolicy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.EnrollmentPolicy(childComplexity), true
+	case "CarrierIntelControl.exclusiveWatchlist":
+		if e.ComplexityRoot.CarrierIntelControl.ExclusiveWatchlist == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.ExclusiveWatchlist(childComplexity), true
+	case "CarrierIntelControl.fallbackProvider":
+		if e.ComplexityRoot.CarrierIntelControl.FallbackProvider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.FallbackProvider(childComplexity), true
+	case "CarrierIntelControl.fullProfileTtlDays":
+		if e.ComplexityRoot.CarrierIntelControl.FullProfileTTLDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.FullProfileTTLDays(childComplexity), true
+	case "CarrierIntelControl.hardMaxAgeHours":
+		if e.ComplexityRoot.CarrierIntelControl.HardMaxAgeHours == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.HardMaxAgeHours(childComplexity), true
+	case "CarrierIntelControl.id":
+		if e.ComplexityRoot.CarrierIntelControl.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.ID(childComplexity), true
+	case "CarrierIntelControl.includeOpenTenders":
+		if e.ComplexityRoot.CarrierIntelControl.IncludeOpenTenders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.IncludeOpenTenders(childComplexity), true
+	case "CarrierIntelControl.monthlySpendCap":
+		if e.ComplexityRoot.CarrierIntelControl.MonthlySpendCap == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.MonthlySpendCap(childComplexity), true
+	case "CarrierIntelControl.outagePolicy":
+		if e.ComplexityRoot.CarrierIntelControl.OutagePolicy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.OutagePolicy(childComplexity), true
+	case "CarrierIntelControl.policyVersion":
+		if e.ComplexityRoot.CarrierIntelControl.PolicyVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.PolicyVersion(childComplexity), true
+	case "CarrierIntelControl.pollIntervalMinutes":
+		if e.ComplexityRoot.CarrierIntelControl.PollIntervalMinutes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.PollIntervalMinutes(childComplexity), true
+	case "CarrierIntelControl.preTenderMaxAgeHours":
+		if e.ComplexityRoot.CarrierIntelControl.PreTenderMaxAgeHours == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.PreTenderMaxAgeHours(childComplexity), true
+	case "CarrierIntelControl.preTenderRefreshEnabled":
+		if e.ComplexityRoot.CarrierIntelControl.PreTenderRefreshEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.PreTenderRefreshEnabled(childComplexity), true
+	case "CarrierIntelControl.primaryProvider":
+		if e.ComplexityRoot.CarrierIntelControl.PrimaryProvider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.PrimaryProvider(childComplexity), true
+	case "CarrierIntelControl.rawRetentionDays":
+		if e.ComplexityRoot.CarrierIntelControl.RawRetentionDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.RawRetentionDays(childComplexity), true
+	case "CarrierIntelControl.recentUsageDays":
+		if e.ComplexityRoot.CarrierIntelControl.RecentUsageDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.RecentUsageDays(childComplexity), true
+	case "CarrierIntelControl.rules":
+		if e.ComplexityRoot.CarrierIntelControl.Rules == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.Rules(childComplexity), true
+	case "CarrierIntelControl.selfMonitoringEnabled":
+		if e.ComplexityRoot.CarrierIntelControl.SelfMonitoringEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.SelfMonitoringEnabled(childComplexity), true
+	case "CarrierIntelControl.snapshotHistoryLimit":
+		if e.ComplexityRoot.CarrierIntelControl.SnapshotHistoryLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.SnapshotHistoryLimit(childComplexity), true
+	case "CarrierIntelControl.snapshotTtlHours":
+		if e.ComplexityRoot.CarrierIntelControl.SnapshotTTLHours == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.SnapshotTTLHours(childComplexity), true
+	case "CarrierIntelControl.softCapPercent":
+		if e.ComplexityRoot.CarrierIntelControl.SoftCapPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.SoftCapPercent(childComplexity), true
+	case "CarrierIntelControl.updatedAt":
+		if e.ComplexityRoot.CarrierIntelControl.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.UpdatedAt(childComplexity), true
+	case "CarrierIntelControl.version":
+		if e.ComplexityRoot.CarrierIntelControl.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelControl.Version(childComplexity), true
+
+	case "CarrierIntelCostEstimate.monthlyMonitoring":
+		if e.ComplexityRoot.CarrierIntelCostEstimate.MonthlyMonitoring == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCostEstimate.MonthlyMonitoring(childComplexity), true
+	case "CarrierIntelCostEstimate.perSubject":
+		if e.ComplexityRoot.CarrierIntelCostEstimate.PerSubject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCostEstimate.PerSubject(childComplexity), true
+	case "CarrierIntelCostEstimate.policy":
+		if e.ComplexityRoot.CarrierIntelCostEstimate.Policy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCostEstimate.Policy(childComplexity), true
+	case "CarrierIntelCostEstimate.provider":
+		if e.ComplexityRoot.CarrierIntelCostEstimate.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCostEstimate.Provider(childComplexity), true
+	case "CarrierIntelCostEstimate.subjectCount":
+		if e.ComplexityRoot.CarrierIntelCostEstimate.SubjectCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCostEstimate.SubjectCount(childComplexity), true
+
+	case "CarrierIntelCrashes.fatal":
+		if e.ComplexityRoot.CarrierIntelCrashes.Fatal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCrashes.Fatal(childComplexity), true
+	case "CarrierIntelCrashes.injury":
+		if e.ComplexityRoot.CarrierIntelCrashes.Injury == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCrashes.Injury(childComplexity), true
+	case "CarrierIntelCrashes.lastCrashAt":
+		if e.ComplexityRoot.CarrierIntelCrashes.LastCrashAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCrashes.LastCrashAt(childComplexity), true
+	case "CarrierIntelCrashes.total":
+		if e.ComplexityRoot.CarrierIntelCrashes.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCrashes.Total(childComplexity), true
+	case "CarrierIntelCrashes.tow":
+		if e.ComplexityRoot.CarrierIntelCrashes.Tow == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelCrashes.Tow(childComplexity), true
+
+	case "CarrierIntelEnrollmentCounts.active":
+		if e.ComplexityRoot.CarrierIntelEnrollmentCounts.Active == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEnrollmentCounts.Active(childComplexity), true
+	case "CarrierIntelEnrollmentCounts.desired":
+		if e.ComplexityRoot.CarrierIntelEnrollmentCounts.Desired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEnrollmentCounts.Desired(childComplexity), true
+	case "CarrierIntelEnrollmentCounts.failed":
+		if e.ComplexityRoot.CarrierIntelEnrollmentCounts.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEnrollmentCounts.Failed(childComplexity), true
+	case "CarrierIntelEnrollmentCounts.pending":
+		if e.ComplexityRoot.CarrierIntelEnrollmentCounts.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEnrollmentCounts.Pending(childComplexity), true
+
+	case "CarrierIntelEquipment.category":
+		if e.ComplexityRoot.CarrierIntelEquipment.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.Category(childComplexity), true
+	case "CarrierIntelEquipment.make":
+		if e.ComplexityRoot.CarrierIntelEquipment.Make == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.Make(childComplexity), true
+	case "CarrierIntelEquipment.model":
+		if e.ComplexityRoot.CarrierIntelEquipment.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.Model(childComplexity), true
+	case "CarrierIntelEquipment.plateNumber":
+		if e.ComplexityRoot.CarrierIntelEquipment.PlateNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.PlateNumber(childComplexity), true
+	case "CarrierIntelEquipment.plateState":
+		if e.ComplexityRoot.CarrierIntelEquipment.PlateState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.PlateState(childComplexity), true
+	case "CarrierIntelEquipment.unitNumber":
+		if e.ComplexityRoot.CarrierIntelEquipment.UnitNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.UnitNumber(childComplexity), true
+	case "CarrierIntelEquipment.unitType":
+		if e.ComplexityRoot.CarrierIntelEquipment.UnitType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.UnitType(childComplexity), true
+	case "CarrierIntelEquipment.vin":
+		if e.ComplexityRoot.CarrierIntelEquipment.VIN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.VIN(childComplexity), true
+	case "CarrierIntelEquipment.year":
+		if e.ComplexityRoot.CarrierIntelEquipment.Year == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEquipment.Year(childComplexity), true
+
+	case "CarrierIntelEvent.acknowledgedAt":
+		if e.ComplexityRoot.CarrierIntelEvent.AcknowledgedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.AcknowledgedAt(childComplexity), true
+	case "CarrierIntelEvent.acknowledgedById":
+		if e.ComplexityRoot.CarrierIntelEvent.AcknowledgedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.AcknowledgedByID(childComplexity), true
+	case "CarrierIntelEvent.action":
+		if e.ComplexityRoot.CarrierIntelEvent.Action == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Action(childComplexity), true
+	case "CarrierIntelEvent.carrierId":
+		if e.ComplexityRoot.CarrierIntelEvent.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.CarrierID(childComplexity), true
+	case "CarrierIntelEvent.category":
+		if e.ComplexityRoot.CarrierIntelEvent.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Category(childComplexity), true
+	case "CarrierIntelEvent.createdAt":
+		if e.ComplexityRoot.CarrierIntelEvent.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.CreatedAt(childComplexity), true
+	case "CarrierIntelEvent.currentValue":
+		if e.ComplexityRoot.CarrierIntelEvent.CurrentValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.CurrentValue(childComplexity), true
+	case "CarrierIntelEvent.dotNumber":
+		if e.ComplexityRoot.CarrierIntelEvent.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.DOTNumber(childComplexity), true
+	case "CarrierIntelEvent.detectedAt":
+		if e.ComplexityRoot.CarrierIntelEvent.DetectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.DetectedAt(childComplexity), true
+	case "CarrierIntelEvent.fieldPath":
+		if e.ComplexityRoot.CarrierIntelEvent.FieldPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.FieldPath(childComplexity), true
+	case "CarrierIntelEvent.id":
+		if e.ComplexityRoot.CarrierIntelEvent.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.ID(childComplexity), true
+	case "CarrierIntelEvent.priorValue":
+		if e.ComplexityRoot.CarrierIntelEvent.PriorValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.PriorValue(childComplexity), true
+	case "CarrierIntelEvent.provider":
+		if e.ComplexityRoot.CarrierIntelEvent.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Provider(childComplexity), true
+	case "CarrierIntelEvent.resolution":
+		if e.ComplexityRoot.CarrierIntelEvent.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Resolution(childComplexity), true
+	case "CarrierIntelEvent.resolutionNote":
+		if e.ComplexityRoot.CarrierIntelEvent.ResolutionNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.ResolutionNote(childComplexity), true
+	case "CarrierIntelEvent.resolvedAt":
+		if e.ComplexityRoot.CarrierIntelEvent.ResolvedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.ResolvedAt(childComplexity), true
+	case "CarrierIntelEvent.resolvedById":
+		if e.ComplexityRoot.CarrierIntelEvent.ResolvedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.ResolvedByID(childComplexity), true
+	case "CarrierIntelEvent.ruleCode":
+		if e.ComplexityRoot.CarrierIntelEvent.RuleCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.RuleCode(childComplexity), true
+	case "CarrierIntelEvent.severity":
+		if e.ComplexityRoot.CarrierIntelEvent.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Severity(childComplexity), true
+	case "CarrierIntelEvent.snapshotId":
+		if e.ComplexityRoot.CarrierIntelEvent.SnapshotID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.SnapshotID(childComplexity), true
+	case "CarrierIntelEvent.source":
+		if e.ComplexityRoot.CarrierIntelEvent.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Source(childComplexity), true
+	case "CarrierIntelEvent.status":
+		if e.ComplexityRoot.CarrierIntelEvent.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Status(childComplexity), true
+	case "CarrierIntelEvent.subjectId":
+		if e.ComplexityRoot.CarrierIntelEvent.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.SubjectID(childComplexity), true
+	case "CarrierIntelEvent.subjectName":
+		if e.ComplexityRoot.CarrierIntelEvent.SubjectName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.SubjectName(childComplexity), true
+	case "CarrierIntelEvent.subjectType":
+		if e.ComplexityRoot.CarrierIntelEvent.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.SubjectType(childComplexity), true
+	case "CarrierIntelEvent.summary":
+		if e.ComplexityRoot.CarrierIntelEvent.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Summary(childComplexity), true
+	case "CarrierIntelEvent.updatedAt":
+		if e.ComplexityRoot.CarrierIntelEvent.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.UpdatedAt(childComplexity), true
+	case "CarrierIntelEvent.vendorChangedAt":
+		if e.ComplexityRoot.CarrierIntelEvent.VendorChangedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.VendorChangedAt(childComplexity), true
+	case "CarrierIntelEvent.version":
+		if e.ComplexityRoot.CarrierIntelEvent.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.Version(childComplexity), true
+
+	case "CarrierIntelEventConnection.edges":
+		if e.ComplexityRoot.CarrierIntelEventConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventConnection.Edges(childComplexity), true
+	case "CarrierIntelEventConnection.pageInfo":
+		if e.ComplexityRoot.CarrierIntelEventConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventConnection.PageInfo(childComplexity), true
+	case "CarrierIntelEventConnection.totalCount":
+		if e.ComplexityRoot.CarrierIntelEventConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventConnection.TotalCount(childComplexity), true
+
+	case "CarrierIntelEventCounts.acknowledged":
+		if e.ComplexityRoot.CarrierIntelEventCounts.Acknowledged == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventCounts.Acknowledged(childComplexity), true
+	case "CarrierIntelEventCounts.bySeverity":
+		if e.ComplexityRoot.CarrierIntelEventCounts.BySeverity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventCounts.BySeverity(childComplexity), true
+	case "CarrierIntelEventCounts.open":
+		if e.ComplexityRoot.CarrierIntelEventCounts.Open == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventCounts.Open(childComplexity), true
+
+	case "CarrierIntelEventEdge.cursor":
+		if e.ComplexityRoot.CarrierIntelEventEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventEdge.Cursor(childComplexity), true
+	case "CarrierIntelEventEdge.node":
+		if e.ComplexityRoot.CarrierIntelEventEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEventEdge.Node(childComplexity), true
+
+	case "CarrierIntelFeedState.failureCount":
+		if e.ComplexityRoot.CarrierIntelFeedState.FailureCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.FailureCount(childComplexity), true
+	case "CarrierIntelFeedState.feedType":
+		if e.ComplexityRoot.CarrierIntelFeedState.FeedType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.FeedType(childComplexity), true
+	case "CarrierIntelFeedState.lastError":
+		if e.ComplexityRoot.CarrierIntelFeedState.LastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.LastError(childComplexity), true
+	case "CarrierIntelFeedState.lastPolledAt":
+		if e.ComplexityRoot.CarrierIntelFeedState.LastPolledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.LastPolledAt(childComplexity), true
+	case "CarrierIntelFeedState.lastSuccessAt":
+		if e.ComplexityRoot.CarrierIntelFeedState.LastSuccessAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.LastSuccessAt(childComplexity), true
+	case "CarrierIntelFeedState.nextPollAfter":
+		if e.ComplexityRoot.CarrierIntelFeedState.NextPollAfter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.NextPollAfter(childComplexity), true
+	case "CarrierIntelFeedState.pausedAt":
+		if e.ComplexityRoot.CarrierIntelFeedState.PausedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.PausedAt(childComplexity), true
+	case "CarrierIntelFeedState.pausedReason":
+		if e.ComplexityRoot.CarrierIntelFeedState.PausedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.PausedReason(childComplexity), true
+	case "CarrierIntelFeedState.provider":
+		if e.ComplexityRoot.CarrierIntelFeedState.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFeedState.Provider(childComplexity), true
+
+	case "CarrierIntelFetchResult.changeCount":
+		if e.ComplexityRoot.CarrierIntelFetchResult.ChangeCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFetchResult.ChangeCount(childComplexity), true
+	case "CarrierIntelFetchResult.fromCache":
+		if e.ComplexityRoot.CarrierIntelFetchResult.FromCache == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFetchResult.FromCache(childComplexity), true
+	case "CarrierIntelFetchResult.raisedCount":
+		if e.ComplexityRoot.CarrierIntelFetchResult.RaisedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFetchResult.RaisedCount(childComplexity), true
+	case "CarrierIntelFetchResult.snapshot":
+		if e.ComplexityRoot.CarrierIntelFetchResult.Snapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFetchResult.Snapshot(childComplexity), true
+	case "CarrierIntelFetchResult.usedFallback":
+		if e.ComplexityRoot.CarrierIntelFetchResult.UsedFallback == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFetchResult.UsedFallback(childComplexity), true
+
+	case "CarrierIntelFieldUpdate.current":
+		if e.ComplexityRoot.CarrierIntelFieldUpdate.Current == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFieldUpdate.Current(childComplexity), true
+	case "CarrierIntelFieldUpdate.field":
+		if e.ComplexityRoot.CarrierIntelFieldUpdate.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFieldUpdate.Field(childComplexity), true
+	case "CarrierIntelFieldUpdate.proposed":
+		if e.ComplexityRoot.CarrierIntelFieldUpdate.Proposed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFieldUpdate.Proposed(childComplexity), true
+	case "CarrierIntelFieldUpdate.reason":
+		if e.ComplexityRoot.CarrierIntelFieldUpdate.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFieldUpdate.Reason(childComplexity), true
+
+	case "CarrierIntelFinding.action":
+		if e.ComplexityRoot.CarrierIntelFinding.Action == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Action(childComplexity), true
+	case "CarrierIntelFinding.category":
+		if e.ComplexityRoot.CarrierIntelFinding.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Category(childComplexity), true
+	case "CarrierIntelFinding.code":
+		if e.ComplexityRoot.CarrierIntelFinding.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Code(childComplexity), true
+	case "CarrierIntelFinding.message":
+		if e.ComplexityRoot.CarrierIntelFinding.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Message(childComplexity), true
+	case "CarrierIntelFinding.overridden":
+		if e.ComplexityRoot.CarrierIntelFinding.Overridden == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Overridden(childComplexity), true
+	case "CarrierIntelFinding.overrideExpiresAt":
+		if e.ComplexityRoot.CarrierIntelFinding.OverrideExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.OverrideExpiresAt(childComplexity), true
+	case "CarrierIntelFinding.overrideId":
+		if e.ComplexityRoot.CarrierIntelFinding.OverrideID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.OverrideID(childComplexity), true
+	case "CarrierIntelFinding.severity":
+		if e.ComplexityRoot.CarrierIntelFinding.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Severity(childComplexity), true
+	case "CarrierIntelFinding.unconfirmed":
+		if e.ComplexityRoot.CarrierIntelFinding.Unconfirmed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Unconfirmed(childComplexity), true
+	case "CarrierIntelFinding.unverifiable":
+		if e.ComplexityRoot.CarrierIntelFinding.Unverifiable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFinding.Unverifiable(childComplexity), true
+
+	case "CarrierIntelFleet.cdlDrivers":
+		if e.ComplexityRoot.CarrierIntelFleet.CDLDrivers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.CDLDrivers(childComplexity), true
+	case "CarrierIntelFleet.drivers":
+		if e.ComplexityRoot.CarrierIntelFleet.Drivers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.Drivers(childComplexity), true
+	case "CarrierIntelFleet.ownedTractors":
+		if e.ComplexityRoot.CarrierIntelFleet.OwnedTractors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.OwnedTractors(childComplexity), true
+	case "CarrierIntelFleet.ownedTrailers":
+		if e.ComplexityRoot.CarrierIntelFleet.OwnedTrailers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.OwnedTrailers(childComplexity), true
+	case "CarrierIntelFleet.powerUnits":
+		if e.ComplexityRoot.CarrierIntelFleet.PowerUnits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.PowerUnits(childComplexity), true
+	case "CarrierIntelFleet.termLeasedTractors":
+		if e.ComplexityRoot.CarrierIntelFleet.TermLeasedTractors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.TermLeasedTractors(childComplexity), true
+	case "CarrierIntelFleet.termLeasedTrailers":
+		if e.ComplexityRoot.CarrierIntelFleet.TermLeasedTrailers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.TermLeasedTrailers(childComplexity), true
+	case "CarrierIntelFleet.trailers":
+		if e.ComplexityRoot.CarrierIntelFleet.Trailers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.Trailers(childComplexity), true
+	case "CarrierIntelFleet.trucks":
+		if e.ComplexityRoot.CarrierIntelFleet.Trucks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelFleet.Trucks(childComplexity), true
+
+	case "CarrierIntelIdentity.carrierOperation":
+		if e.ComplexityRoot.CarrierIntelIdentity.CarrierOperation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.CarrierOperation(childComplexity), true
+	case "CarrierIntelIdentity.dbaName":
+		if e.ComplexityRoot.CarrierIntelIdentity.DBAName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DBAName(childComplexity), true
+	case "CarrierIntelIdentity.dotAddedAt":
+		if e.ComplexityRoot.CarrierIntelIdentity.DOTAddedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DOTAddedAt(childComplexity), true
+	case "CarrierIntelIdentity.dotAgeDays":
+		if e.ComplexityRoot.CarrierIntelIdentity.DOTAgeDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DOTAgeDays(childComplexity), true
+	case "CarrierIntelIdentity.dotNumber":
+		if e.ComplexityRoot.CarrierIntelIdentity.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DOTNumber(childComplexity), true
+	case "CarrierIntelIdentity.docketNumber":
+		if e.ComplexityRoot.CarrierIntelIdentity.DocketNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DocketNumber(childComplexity), true
+	case "CarrierIntelIdentity.docketPrefix":
+		if e.ComplexityRoot.CarrierIntelIdentity.DocketPrefix == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.DocketPrefix(childComplexity), true
+	case "CarrierIntelIdentity.ein":
+		if e.ComplexityRoot.CarrierIntelIdentity.EIN == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.EIN(childComplexity), true
+	case "CarrierIntelIdentity.entityType":
+		if e.ComplexityRoot.CarrierIntelIdentity.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.EntityType(childComplexity), true
+	case "CarrierIntelIdentity.legalName":
+		if e.ComplexityRoot.CarrierIntelIdentity.LegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.LegalName(childComplexity), true
+	case "CarrierIntelIdentity.mailingAddress":
+		if e.ComplexityRoot.CarrierIntelIdentity.MailingAddress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.MailingAddress(childComplexity), true
+	case "CarrierIntelIdentity.physicalAddress":
+		if e.ComplexityRoot.CarrierIntelIdentity.PhysicalAddress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.PhysicalAddress(childComplexity), true
+	case "CarrierIntelIdentity.usdotStatus":
+		if e.ComplexityRoot.CarrierIntelIdentity.USDOTStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelIdentity.USDOTStatus(childComplexity), true
+
+	case "CarrierIntelInspections.driver":
+		if e.ComplexityRoot.CarrierIntelInspections.Driver == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.Driver(childComplexity), true
+	case "CarrierIntelInspections.driverOos":
+		if e.ComplexityRoot.CarrierIntelInspections.DriverOOS == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.DriverOOS(childComplexity), true
+	case "CarrierIntelInspections.driverOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.DriverOOSRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.DriverOOSRate(childComplexity), true
+	case "CarrierIntelInspections.hazmat":
+		if e.ComplexityRoot.CarrierIntelInspections.Hazmat == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.Hazmat(childComplexity), true
+	case "CarrierIntelInspections.hazmatOos":
+		if e.ComplexityRoot.CarrierIntelInspections.HazmatOOS == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.HazmatOOS(childComplexity), true
+	case "CarrierIntelInspections.hazmatOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.HazmatOOSRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.HazmatOOSRate(childComplexity), true
+	case "CarrierIntelInspections.lastInspectionAt":
+		if e.ComplexityRoot.CarrierIntelInspections.LastInspectionAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.LastInspectionAt(childComplexity), true
+	case "CarrierIntelInspections.nationalDriverOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.NationalDriverOOSRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.NationalDriverOOSRate(childComplexity), true
+	case "CarrierIntelInspections.nationalHazmatOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.NationalHazmatOOSRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.NationalHazmatOOSRate(childComplexity), true
+	case "CarrierIntelInspections.nationalVehicleOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.NationalVehicleOOS == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.NationalVehicleOOS(childComplexity), true
+	case "CarrierIntelInspections.total":
+		if e.ComplexityRoot.CarrierIntelInspections.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.Total(childComplexity), true
+	case "CarrierIntelInspections.vehicle":
+		if e.ComplexityRoot.CarrierIntelInspections.Vehicle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.Vehicle(childComplexity), true
+	case "CarrierIntelInspections.vehicleOos":
+		if e.ComplexityRoot.CarrierIntelInspections.VehicleOOS == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.VehicleOOS(childComplexity), true
+	case "CarrierIntelInspections.vehicleOosRate":
+		if e.ComplexityRoot.CarrierIntelInspections.VehicleOOSRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInspections.VehicleOOSRate(childComplexity), true
+
+	case "CarrierIntelInsurance.bipdOnFile":
+		if e.ComplexityRoot.CarrierIntelInsurance.BIPDOnFile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.BIPDOnFile(childComplexity), true
+	case "CarrierIntelInsurance.bipdRequired":
+		if e.ComplexityRoot.CarrierIntelInsurance.BIPDRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.BIPDRequired(childComplexity), true
+	case "CarrierIntelInsurance.bondOnFile":
+		if e.ComplexityRoot.CarrierIntelInsurance.BondOnFile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.BondOnFile(childComplexity), true
+	case "CarrierIntelInsurance.bondRequired":
+		if e.ComplexityRoot.CarrierIntelInsurance.BondRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.BondRequired(childComplexity), true
+	case "CarrierIntelInsurance.cancelCount":
+		if e.ComplexityRoot.CarrierIntelInsurance.CancelCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.CancelCount(childComplexity), true
+	case "CarrierIntelInsurance.cargoOnFile":
+		if e.ComplexityRoot.CarrierIntelInsurance.CargoOnFile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.CargoOnFile(childComplexity), true
+	case "CarrierIntelInsurance.cargoRequired":
+		if e.ComplexityRoot.CarrierIntelInsurance.CargoRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.CargoRequired(childComplexity), true
+	case "CarrierIntelInsurance.filings":
+		if e.ComplexityRoot.CarrierIntelInsurance.Filings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.Filings(childComplexity), true
+	case "CarrierIntelInsurance.lastCanceledAt":
+		if e.ComplexityRoot.CarrierIntelInsurance.LastCanceledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.LastCanceledAt(childComplexity), true
+	case "CarrierIntelInsurance.pendingCancelAt":
+		if e.ComplexityRoot.CarrierIntelInsurance.PendingCancelAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsurance.PendingCancelAt(childComplexity), true
+
+	case "CarrierIntelInsuranceChange.currentCoverage":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.CurrentCoverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.CurrentCoverage(childComplexity), true
+	case "CarrierIntelInsuranceChange.currentExpirationDate":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.CurrentExpirationDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.CurrentExpirationDate(childComplexity), true
+	case "CarrierIntelInsuranceChange.effectiveDate":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.EffectiveDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.EffectiveDate(childComplexity), true
+	case "CarrierIntelInsuranceChange.kind":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.Kind(childComplexity), true
+	case "CarrierIntelInsuranceChange.policyId":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyID(childComplexity), true
+	case "CarrierIntelInsuranceChange.policyNumber":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyNumber(childComplexity), true
+	case "CarrierIntelInsuranceChange.policyType":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.PolicyType(childComplexity), true
+	case "CarrierIntelInsuranceChange.proposedCoverage":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.ProposedCoverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.ProposedCoverage(childComplexity), true
+	case "CarrierIntelInsuranceChange.proposedExpirationDate":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.ProposedExpirationDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.ProposedExpirationDate(childComplexity), true
+	case "CarrierIntelInsuranceChange.providerName":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.ProviderName(childComplexity), true
+	case "CarrierIntelInsuranceChange.reason":
+		if e.ComplexityRoot.CarrierIntelInsuranceChange.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceChange.Reason(childComplexity), true
+
+	case "CarrierIntelInsuranceFiling.cancelEffectiveAt":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.CancelEffectiveAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.CancelEffectiveAt(childComplexity), true
+	case "CarrierIntelInsuranceFiling.cancelMethod":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.CancelMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.CancelMethod(childComplexity), true
+	case "CarrierIntelInsuranceFiling.coverage":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.Coverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.Coverage(childComplexity), true
+	case "CarrierIntelInsuranceFiling.effectiveAt":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.EffectiveAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.EffectiveAt(childComplexity), true
+	case "CarrierIntelInsuranceFiling.insurerName":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.InsurerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.InsurerName(childComplexity), true
+	case "CarrierIntelInsuranceFiling.policyNumber":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.PolicyNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.PolicyNumber(childComplexity), true
+	case "CarrierIntelInsuranceFiling.type":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.Type(childComplexity), true
+
+	case "CarrierIntelLane.destinationCity":
+		if e.ComplexityRoot.CarrierIntelLane.DestinationCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLane.DestinationCity(childComplexity), true
+	case "CarrierIntelLane.destinationState":
+		if e.ComplexityRoot.CarrierIntelLane.DestinationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLane.DestinationState(childComplexity), true
+	case "CarrierIntelLane.loads":
+		if e.ComplexityRoot.CarrierIntelLane.Loads == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLane.Loads(childComplexity), true
+	case "CarrierIntelLane.originCity":
+		if e.ComplexityRoot.CarrierIntelLane.OriginCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLane.OriginCity(childComplexity), true
+	case "CarrierIntelLane.originState":
+		if e.ComplexityRoot.CarrierIntelLane.OriginState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLane.OriginState(childComplexity), true
+
+	case "CarrierIntelLanes.deadheadPercent":
+		if e.ComplexityRoot.CarrierIntelLanes.DeadheadPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.DeadheadPercent(childComplexity), true
+	case "CarrierIntelLanes.ftlPercent":
+		if e.ComplexityRoot.CarrierIntelLanes.FTLPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.FTLPercent(childComplexity), true
+	case "CarrierIntelLanes.firstLoadAt":
+		if e.ComplexityRoot.CarrierIntelLanes.FirstLoadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.FirstLoadAt(childComplexity), true
+	case "CarrierIntelLanes.ltlPercent":
+		if e.ComplexityRoot.CarrierIntelLanes.LTLPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.LTLPercent(childComplexity), true
+	case "CarrierIntelLanes.lastLoadAt":
+		if e.ComplexityRoot.CarrierIntelLanes.LastLoadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.LastLoadAt(childComplexity), true
+	case "CarrierIntelLanes.preferred":
+		if e.ComplexityRoot.CarrierIntelLanes.Preferred == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.Preferred(childComplexity), true
+	case "CarrierIntelLanes.totalLoads":
+		if e.ComplexityRoot.CarrierIntelLanes.TotalLoads == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.TotalLoads(childComplexity), true
+
+	case "CarrierIntelMonitoringStatus.enrollmentCounts":
+		if e.ComplexityRoot.CarrierIntelMonitoringStatus.EnrollmentCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelMonitoringStatus.EnrollmentCounts(childComplexity), true
+	case "CarrierIntelMonitoringStatus.eventCounts":
+		if e.ComplexityRoot.CarrierIntelMonitoringStatus.EventCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelMonitoringStatus.EventCounts(childComplexity), true
+	case "CarrierIntelMonitoringStatus.feeds":
+		if e.ComplexityRoot.CarrierIntelMonitoringStatus.Feeds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelMonitoringStatus.Feeds(childComplexity), true
+	case "CarrierIntelMonitoringStatus.provider":
+		if e.ComplexityRoot.CarrierIntelMonitoringStatus.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelMonitoringStatus.Provider(childComplexity), true
+	case "CarrierIntelMonitoringStatus.reviewQueueCount":
+		if e.ComplexityRoot.CarrierIntelMonitoringStatus.ReviewQueueCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelMonitoringStatus.ReviewQueueCount(childComplexity), true
+
+	case "CarrierIntelNetwork.links":
+		if e.ComplexityRoot.CarrierIntelNetwork.Links == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.Links(childComplexity), true
+	case "CarrierIntelNetwork.sharedAddresses":
+		if e.ComplexityRoot.CarrierIntelNetwork.SharedAddresses == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.SharedAddresses(childComplexity), true
+	case "CarrierIntelNetwork.sharedEins":
+		if e.ComplexityRoot.CarrierIntelNetwork.SharedEINs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.SharedEINs(childComplexity), true
+	case "CarrierIntelNetwork.sharedEmails":
+		if e.ComplexityRoot.CarrierIntelNetwork.SharedEmails == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.SharedEmails(childComplexity), true
+	case "CarrierIntelNetwork.sharedEquipment":
+		if e.ComplexityRoot.CarrierIntelNetwork.SharedEquipment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.SharedEquipment(childComplexity), true
+	case "CarrierIntelNetwork.sharedPhones":
+		if e.ComplexityRoot.CarrierIntelNetwork.SharedPhones == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetwork.SharedPhones(childComplexity), true
+
+	case "CarrierIntelNetworkLink.dotNumber":
+		if e.ComplexityRoot.CarrierIntelNetworkLink.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetworkLink.DOTNumber(childComplexity), true
+	case "CarrierIntelNetworkLink.kind":
+		if e.ComplexityRoot.CarrierIntelNetworkLink.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetworkLink.Kind(childComplexity), true
+	case "CarrierIntelNetworkLink.legalName":
+		if e.ComplexityRoot.CarrierIntelNetworkLink.LegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetworkLink.LegalName(childComplexity), true
+	case "CarrierIntelNetworkLink.status":
+		if e.ComplexityRoot.CarrierIntelNetworkLink.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetworkLink.Status(childComplexity), true
+	case "CarrierIntelNetworkLink.value":
+		if e.ComplexityRoot.CarrierIntelNetworkLink.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelNetworkLink.Value(childComplexity), true
+
+	case "CarrierIntelOperations.boc3Agent":
+		if e.ComplexityRoot.CarrierIntelOperations.BOC3Agent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.BOC3Agent(childComplexity), true
+	case "CarrierIntelOperations.boc3OnFile":
+		if e.ComplexityRoot.CarrierIntelOperations.BOC3OnFile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.BOC3OnFile(childComplexity), true
+	case "CarrierIntelOperations.carbCompliant":
+		if e.ComplexityRoot.CarrierIntelOperations.CARBCompliant == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.CARBCompliant(childComplexity), true
+	case "CarrierIntelOperations.cargoCarried":
+		if e.ComplexityRoot.CarrierIntelOperations.CargoCarried == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.CargoCarried(childComplexity), true
+	case "CarrierIntelOperations.classification":
+		if e.ComplexityRoot.CarrierIntelOperations.Classification == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.Classification(childComplexity), true
+	case "CarrierIntelOperations.hazmatCarrier":
+		if e.ComplexityRoot.CarrierIntelOperations.HazmatCarrier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.HazmatCarrier(childComplexity), true
+	case "CarrierIntelOperations.mcs150At":
+		if e.ComplexityRoot.CarrierIntelOperations.MCS150At == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.MCS150At(childComplexity), true
+	case "CarrierIntelOperations.mcs150Mileage":
+		if e.ComplexityRoot.CarrierIntelOperations.MCS150Mileage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.MCS150Mileage(childComplexity), true
+	case "CarrierIntelOperations.phmsa":
+		if e.ComplexityRoot.CarrierIntelOperations.PHMSA == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.PHMSA(childComplexity), true
+	case "CarrierIntelOperations.smartWay":
+		if e.ComplexityRoot.CarrierIntelOperations.SmartWay == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOperations.SmartWay(childComplexity), true
+
+	case "CarrierIntelOverride.active":
+		if e.ComplexityRoot.CarrierIntelOverride.Active == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.Active(childComplexity), true
+	case "CarrierIntelOverride.carrierId":
+		if e.ComplexityRoot.CarrierIntelOverride.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.CarrierID(childComplexity), true
+	case "CarrierIntelOverride.createdAt":
+		if e.ComplexityRoot.CarrierIntelOverride.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.CreatedAt(childComplexity), true
+	case "CarrierIntelOverride.expiresAt":
+		if e.ComplexityRoot.CarrierIntelOverride.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.ExpiresAt(childComplexity), true
+	case "CarrierIntelOverride.grantedAt":
+		if e.ComplexityRoot.CarrierIntelOverride.GrantedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.GrantedAt(childComplexity), true
+	case "CarrierIntelOverride.grantedById":
+		if e.ComplexityRoot.CarrierIntelOverride.GrantedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.GrantedByID(childComplexity), true
+	case "CarrierIntelOverride.id":
+		if e.ComplexityRoot.CarrierIntelOverride.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.ID(childComplexity), true
+	case "CarrierIntelOverride.reason":
+		if e.ComplexityRoot.CarrierIntelOverride.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.Reason(childComplexity), true
+	case "CarrierIntelOverride.revokeReason":
+		if e.ComplexityRoot.CarrierIntelOverride.RevokeReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.RevokeReason(childComplexity), true
+	case "CarrierIntelOverride.revokedAt":
+		if e.ComplexityRoot.CarrierIntelOverride.RevokedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.RevokedAt(childComplexity), true
+	case "CarrierIntelOverride.revokedById":
+		if e.ComplexityRoot.CarrierIntelOverride.RevokedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.RevokedByID(childComplexity), true
+	case "CarrierIntelOverride.ruleCode":
+		if e.ComplexityRoot.CarrierIntelOverride.RuleCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.RuleCode(childComplexity), true
+	case "CarrierIntelOverride.version":
+		if e.ComplexityRoot.CarrierIntelOverride.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelOverride.Version(childComplexity), true
+
+	case "CarrierIntelProfile.authority":
+		if e.ComplexityRoot.CarrierIntelProfile.Authority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Authority(childComplexity), true
+	case "CarrierIntelProfile.basics":
+		if e.ComplexityRoot.CarrierIntelProfile.Basics == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Basics(childComplexity), true
+	case "CarrierIntelProfile.benchmarks":
+		if e.ComplexityRoot.CarrierIntelProfile.Benchmarks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Benchmarks(childComplexity), true
+	case "CarrierIntelProfile.changeHistory":
+		if e.ComplexityRoot.CarrierIntelProfile.ChangeHistory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.ChangeHistory(childComplexity), true
+	case "CarrierIntelProfile.contacts":
+		if e.ComplexityRoot.CarrierIntelProfile.Contacts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Contacts(childComplexity), true
+	case "CarrierIntelProfile.coverage":
+		if e.ComplexityRoot.CarrierIntelProfile.Coverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Coverage(childComplexity), true
+	case "CarrierIntelProfile.crashes":
+		if e.ComplexityRoot.CarrierIntelProfile.Crashes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Crashes(childComplexity), true
+	case "CarrierIntelProfile.equipment":
+		if e.ComplexityRoot.CarrierIntelProfile.Equipment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Equipment(childComplexity), true
+	case "CarrierIntelProfile.fleet":
+		if e.ComplexityRoot.CarrierIntelProfile.Fleet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Fleet(childComplexity), true
+	case "CarrierIntelProfile.identity":
+		if e.ComplexityRoot.CarrierIntelProfile.Identity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Identity(childComplexity), true
+	case "CarrierIntelProfile.inspections":
+		if e.ComplexityRoot.CarrierIntelProfile.Inspections == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Inspections(childComplexity), true
+	case "CarrierIntelProfile.insurance":
+		if e.ComplexityRoot.CarrierIntelProfile.Insurance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Insurance(childComplexity), true
+	case "CarrierIntelProfile.lanes":
+		if e.ComplexityRoot.CarrierIntelProfile.Lanes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Lanes(childComplexity), true
+	case "CarrierIntelProfile.network":
+		if e.ComplexityRoot.CarrierIntelProfile.Network == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Network(childComplexity), true
+	case "CarrierIntelProfile.operations":
+		if e.ComplexityRoot.CarrierIntelProfile.Operations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Operations(childComplexity), true
+	case "CarrierIntelProfile.safety":
+		if e.ComplexityRoot.CarrierIntelProfile.Safety == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProfile.Safety(childComplexity), true
+
+	case "CarrierIntelProspectLookup.existingCarrierId":
+		if e.ComplexityRoot.CarrierIntelProspectLookup.ExistingCarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProspectLookup.ExistingCarrierID(childComplexity), true
+	case "CarrierIntelProspectLookup.snapshot":
+		if e.ComplexityRoot.CarrierIntelProspectLookup.Snapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProspectLookup.Snapshot(childComplexity), true
+
+	case "CarrierIntelProviderInfo.capabilities":
+		if e.ComplexityRoot.CarrierIntelProviderInfo.Capabilities == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProviderInfo.Capabilities(childComplexity), true
+	case "CarrierIntelProviderInfo.configured":
+		if e.ComplexityRoot.CarrierIntelProviderInfo.Configured == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProviderInfo.Configured(childComplexity), true
+	case "CarrierIntelProviderInfo.fallbackProvider":
+		if e.ComplexityRoot.CarrierIntelProviderInfo.FallbackProvider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProviderInfo.FallbackProvider(childComplexity), true
+	case "CarrierIntelProviderInfo.provider":
+		if e.ComplexityRoot.CarrierIntelProviderInfo.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProviderInfo.Provider(childComplexity), true
+	case "CarrierIntelProviderInfo.sections":
+		if e.ComplexityRoot.CarrierIntelProviderInfo.Sections == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelProviderInfo.Sections(childComplexity), true
+
+	case "CarrierIntelRuleDefinition.category":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Category(childComplexity), true
+	case "CarrierIntelRuleDefinition.code":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Code(childComplexity), true
+	case "CarrierIntelRuleDefinition.defaultAction":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.DefaultAction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.DefaultAction(childComplexity), true
+	case "CarrierIntelRuleDefinition.description":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Description(childComplexity), true
+	case "CarrierIntelRuleDefinition.gateRelevant":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.GateRelevant == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.GateRelevant(childComplexity), true
+	case "CarrierIntelRuleDefinition.label":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Label(childComplexity), true
+	case "CarrierIntelRuleDefinition.params":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Params == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Params(childComplexity), true
+	case "CarrierIntelRuleDefinition.recommendedAction":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.RecommendedAction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.RecommendedAction(childComplexity), true
+	case "CarrierIntelRuleDefinition.requiredSections":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.RequiredSections == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.RequiredSections(childComplexity), true
+	case "CarrierIntelRuleDefinition.subjects":
+		if e.ComplexityRoot.CarrierIntelRuleDefinition.Subjects == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleDefinition.Subjects(childComplexity), true
+
+	case "CarrierIntelRuleParam.default":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Default == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Default(childComplexity), true
+	case "CarrierIntelRuleParam.helpText":
+		if e.ComplexityRoot.CarrierIntelRuleParam.HelpText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.HelpText(childComplexity), true
+	case "CarrierIntelRuleParam.key":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Key(childComplexity), true
+	case "CarrierIntelRuleParam.label":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Label(childComplexity), true
+	case "CarrierIntelRuleParam.max":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Max == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Max(childComplexity), true
+	case "CarrierIntelRuleParam.min":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Min == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Min(childComplexity), true
+	case "CarrierIntelRuleParam.options":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Options == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Options(childComplexity), true
+	case "CarrierIntelRuleParam.type":
+		if e.ComplexityRoot.CarrierIntelRuleParam.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleParam.Type(childComplexity), true
+
+	case "CarrierIntelRuleSetting.action":
+		if e.ComplexityRoot.CarrierIntelRuleSetting.Action == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleSetting.Action(childComplexity), true
+	case "CarrierIntelRuleSetting.code":
+		if e.ComplexityRoot.CarrierIntelRuleSetting.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleSetting.Code(childComplexity), true
+	case "CarrierIntelRuleSetting.params":
+		if e.ComplexityRoot.CarrierIntelRuleSetting.Params == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleSetting.Params(childComplexity), true
+
+	case "CarrierIntelRuleSettingParam.key":
+		if e.ComplexityRoot.CarrierIntelRuleSettingParam.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleSettingParam.Key(childComplexity), true
+	case "CarrierIntelRuleSettingParam.value":
+		if e.ComplexityRoot.CarrierIntelRuleSettingParam.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelRuleSettingParam.Value(childComplexity), true
+
+	case "CarrierIntelSafety.issRecommendation":
+		if e.ComplexityRoot.CarrierIntelSafety.ISSRecommendation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.ISSRecommendation(childComplexity), true
+	case "CarrierIntelSafety.issValue":
+		if e.ComplexityRoot.CarrierIntelSafety.ISSValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.ISSValue(childComplexity), true
+	case "CarrierIntelSafety.latestReviewAt":
+		if e.ComplexityRoot.CarrierIntelSafety.LatestReviewAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.LatestReviewAt(childComplexity), true
+	case "CarrierIntelSafety.latestReviewType":
+		if e.ComplexityRoot.CarrierIntelSafety.LatestReviewType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.LatestReviewType(childComplexity), true
+	case "CarrierIntelSafety.outOfServiceAt":
+		if e.ComplexityRoot.CarrierIntelSafety.OutOfServiceAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.OutOfServiceAt(childComplexity), true
+	case "CarrierIntelSafety.outOfServiceOrder":
+		if e.ComplexityRoot.CarrierIntelSafety.OutOfServiceOrder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.OutOfServiceOrder(childComplexity), true
+	case "CarrierIntelSafety.rating":
+		if e.ComplexityRoot.CarrierIntelSafety.Rating == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.Rating(childComplexity), true
+	case "CarrierIntelSafety.ratingDate":
+		if e.ComplexityRoot.CarrierIntelSafety.RatingDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.RatingDate(childComplexity), true
+	case "CarrierIntelSafety.riskProbability":
+		if e.ComplexityRoot.CarrierIntelSafety.RiskProbability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.RiskProbability(childComplexity), true
+	case "CarrierIntelSafety.riskScore":
+		if e.ComplexityRoot.CarrierIntelSafety.RiskScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.RiskScore(childComplexity), true
+	case "CarrierIntelSafety.safetyScore":
+		if e.ComplexityRoot.CarrierIntelSafety.SafetyScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSafety.SafetyScore(childComplexity), true
+
+	case "CarrierIntelSeverityCount.count":
+		if e.ComplexityRoot.CarrierIntelSeverityCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSeverityCount.Count(childComplexity), true
+	case "CarrierIntelSeverityCount.severity":
+		if e.ComplexityRoot.CarrierIntelSeverityCount.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSeverityCount.Severity(childComplexity), true
+
+	case "CarrierIntelSnapshot.advisoryCodes":
+		if e.ComplexityRoot.CarrierIntelSnapshot.AdvisoryCodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.AdvisoryCodes(childComplexity), true
+	case "CarrierIntelSnapshot.blockingCodes":
+		if e.ComplexityRoot.CarrierIntelSnapshot.BlockingCodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.BlockingCodes(childComplexity), true
+	case "CarrierIntelSnapshot.carrierId":
+		if e.ComplexityRoot.CarrierIntelSnapshot.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.CarrierID(childComplexity), true
+	case "CarrierIntelSnapshot.confirmedAt":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ConfirmedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ConfirmedAt(childComplexity), true
+	case "CarrierIntelSnapshot.createdAt":
+		if e.ComplexityRoot.CarrierIntelSnapshot.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.CreatedAt(childComplexity), true
+	case "CarrierIntelSnapshot.dotNumber":
+		if e.ComplexityRoot.CarrierIntelSnapshot.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.DOTNumber(childComplexity), true
+	case "CarrierIntelSnapshot.depth":
+		if e.ComplexityRoot.CarrierIntelSnapshot.Depth == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.Depth(childComplexity), true
+	case "CarrierIntelSnapshot.docketNumber":
+		if e.ComplexityRoot.CarrierIntelSnapshot.DocketNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.DocketNumber(childComplexity), true
+	case "CarrierIntelSnapshot.effectiveAsOf":
+		if e.ComplexityRoot.CarrierIntelSnapshot.EffectiveAsOf == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.EffectiveAsOf(childComplexity), true
+	case "CarrierIntelSnapshot.fetchedAt":
+		if e.ComplexityRoot.CarrierIntelSnapshot.FetchedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.FetchedAt(childComplexity), true
+	case "CarrierIntelSnapshot.findings":
+		if e.ComplexityRoot.CarrierIntelSnapshot.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.Findings(childComplexity), true
+	case "CarrierIntelSnapshot.hasRawPayload":
+		if e.ComplexityRoot.CarrierIntelSnapshot.HasRawPayload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.HasRawPayload(childComplexity), true
+	case "CarrierIntelSnapshot.id":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ID(childComplexity), true
+	case "CarrierIntelSnapshot.isCurrent":
+		if e.ComplexityRoot.CarrierIntelSnapshot.IsCurrent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.IsCurrent(childComplexity), true
+	case "CarrierIntelSnapshot.notFound":
+		if e.ComplexityRoot.CarrierIntelSnapshot.NotFound == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.NotFound(childComplexity), true
+	case "CarrierIntelSnapshot.policyVersion":
+		if e.ComplexityRoot.CarrierIntelSnapshot.PolicyVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.PolicyVersion(childComplexity), true
+	case "CarrierIntelSnapshot.profile":
+		if e.ComplexityRoot.CarrierIntelSnapshot.Profile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.Profile(childComplexity), true
+	case "CarrierIntelSnapshot.provider":
+		if e.ComplexityRoot.CarrierIntelSnapshot.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.Provider(childComplexity), true
+	case "CarrierIntelSnapshot.providerRef":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ProviderRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ProviderRef(childComplexity), true
+	case "CarrierIntelSnapshot.reviewNote":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ReviewNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ReviewNote(childComplexity), true
+	case "CarrierIntelSnapshot.reviewState":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ReviewState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ReviewState(childComplexity), true
+	case "CarrierIntelSnapshot.reviewedAt":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ReviewedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ReviewedAt(childComplexity), true
+	case "CarrierIntelSnapshot.reviewedById":
+		if e.ComplexityRoot.CarrierIntelSnapshot.ReviewedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.ReviewedByID(childComplexity), true
+	case "CarrierIntelSnapshot.riskLevel":
+		if e.ComplexityRoot.CarrierIntelSnapshot.RiskLevel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.RiskLevel(childComplexity), true
+	case "CarrierIntelSnapshot.source":
+		if e.ComplexityRoot.CarrierIntelSnapshot.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.Source(childComplexity), true
+	case "CarrierIntelSnapshot.sourceAsOf":
+		if e.ComplexityRoot.CarrierIntelSnapshot.SourceAsOf == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.SourceAsOf(childComplexity), true
+	case "CarrierIntelSnapshot.subjectId":
+		if e.ComplexityRoot.CarrierIntelSnapshot.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.SubjectID(childComplexity), true
+	case "CarrierIntelSnapshot.subjectType":
+		if e.ComplexityRoot.CarrierIntelSnapshot.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.SubjectType(childComplexity), true
+
+	case "CarrierIntelSuggestion.city":
+		if e.ComplexityRoot.CarrierIntelSuggestion.City == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSuggestion.City(childComplexity), true
+	case "CarrierIntelSuggestion.dbaName":
+		if e.ComplexityRoot.CarrierIntelSuggestion.DBAName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSuggestion.DBAName(childComplexity), true
+	case "CarrierIntelSuggestion.dotNumber":
+		if e.ComplexityRoot.CarrierIntelSuggestion.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSuggestion.DOTNumber(childComplexity), true
+	case "CarrierIntelSuggestion.legalName":
+		if e.ComplexityRoot.CarrierIntelSuggestion.LegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSuggestion.LegalName(childComplexity), true
+	case "CarrierIntelSuggestion.state":
+		if e.ComplexityRoot.CarrierIntelSuggestion.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSuggestion.State(childComplexity), true
+
+	case "CarrierIntelSyncPlan.autoApply":
+		if e.ComplexityRoot.CarrierIntelSyncPlan.AutoApply == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSyncPlan.AutoApply(childComplexity), true
+	case "CarrierIntelSyncPlan.insuranceAutoApply":
+		if e.ComplexityRoot.CarrierIntelSyncPlan.InsuranceAutoApply == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSyncPlan.InsuranceAutoApply(childComplexity), true
+	case "CarrierIntelSyncPlan.insuranceSuggestions":
+		if e.ComplexityRoot.CarrierIntelSyncPlan.InsuranceSuggestions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSyncPlan.InsuranceSuggestions(childComplexity), true
+	case "CarrierIntelSyncPlan.suggestions":
+		if e.ComplexityRoot.CarrierIntelSyncPlan.Suggestions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSyncPlan.Suggestions(childComplexity), true
+
+	case "CarrierIntelUsageDay.billableUnits":
+		if e.ComplexityRoot.CarrierIntelUsageDay.BillableUnits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageDay.BillableUnits(childComplexity), true
+	case "CarrierIntelUsageDay.calls":
+		if e.ComplexityRoot.CarrierIntelUsageDay.Calls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageDay.Calls(childComplexity), true
+	case "CarrierIntelUsageDay.day":
+		if e.ComplexityRoot.CarrierIntelUsageDay.Day == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageDay.Day(childComplexity), true
+	case "CarrierIntelUsageDay.endpoint":
+		if e.ComplexityRoot.CarrierIntelUsageDay.Endpoint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageDay.Endpoint(childComplexity), true
+	case "CarrierIntelUsageDay.estimatedCost":
+		if e.ComplexityRoot.CarrierIntelUsageDay.EstimatedCost == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageDay.EstimatedCost(childComplexity), true
+
+	case "CarrierIntelUsageRow.billableUnits":
+		if e.ComplexityRoot.CarrierIntelUsageRow.BillableUnits == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageRow.BillableUnits(childComplexity), true
+	case "CarrierIntelUsageRow.calls":
+		if e.ComplexityRoot.CarrierIntelUsageRow.Calls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageRow.Calls(childComplexity), true
+	case "CarrierIntelUsageRow.endpoint":
+		if e.ComplexityRoot.CarrierIntelUsageRow.Endpoint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageRow.Endpoint(childComplexity), true
+	case "CarrierIntelUsageRow.estimatedCost":
+		if e.ComplexityRoot.CarrierIntelUsageRow.EstimatedCost == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageRow.EstimatedCost(childComplexity), true
+	case "CarrierIntelUsageRow.provider":
+		if e.ComplexityRoot.CarrierIntelUsageRow.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageRow.Provider(childComplexity), true
+
+	case "CarrierIntelUsageSummary.byEndpoint":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.ByEndpoint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.ByEndpoint(childComplexity), true
+	case "CarrierIntelUsageSummary.cap":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.Cap == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.Cap(childComplexity), true
+	case "CarrierIntelUsageSummary.daily":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.Daily == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.Daily(childComplexity), true
+	case "CarrierIntelUsageSummary.monthStart":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.MonthStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.MonthStart(childComplexity), true
+	case "CarrierIntelUsageSummary.monthToDate":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.MonthToDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.MonthToDate(childComplexity), true
+	case "CarrierIntelUsageSummary.softCapPercent":
+		if e.ComplexityRoot.CarrierIntelUsageSummary.SoftCapPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelUsageSummary.SoftCapPercent(childComplexity), true
 
 	case "CarrierInvoiceMatch.adjustmentCostEventId":
 		if e.ComplexityRoot.CarrierInvoiceMatch.AdjustmentCostEventID == nil {
@@ -14822,6 +18110,183 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierLedgerEntry.TransactionDate(childComplexity), true
+
+	case "CarrierMonitoringEnrollment.carrierId":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.CarrierID(childComplexity), true
+	case "CarrierMonitoringEnrollment.createdAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.CreatedAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.dotNumber":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.DOTNumber(childComplexity), true
+	case "CarrierMonitoringEnrollment.desiredState":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.DesiredState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.DesiredState(childComplexity), true
+	case "CarrierMonitoringEnrollment.docketNumber":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.DocketNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.DocketNumber(childComplexity), true
+	case "CarrierMonitoringEnrollment.enrolledAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.EnrolledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.EnrolledAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.failureCount":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.FailureCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.FailureCount(childComplexity), true
+	case "CarrierMonitoringEnrollment.id":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.ID(childComplexity), true
+	case "CarrierMonitoringEnrollment.lastConfirmedAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.LastConfirmedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.LastConfirmedAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.lastError":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.LastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.LastError(childComplexity), true
+	case "CarrierMonitoringEnrollment.lastSyncedAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.LastSyncedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.LastSyncedAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.lastUsedAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.LastUsedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.LastUsedAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.mode":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.Mode(childComplexity), true
+	case "CarrierMonitoringEnrollment.ownedByTrenova":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.OwnedByTrenova == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.OwnedByTrenova(childComplexity), true
+	case "CarrierMonitoringEnrollment.provider":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.Provider(childComplexity), true
+	case "CarrierMonitoringEnrollment.providerRef":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.ProviderRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.ProviderRef(childComplexity), true
+	case "CarrierMonitoringEnrollment.reason":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.Reason(childComplexity), true
+	case "CarrierMonitoringEnrollment.subjectId":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectID(childComplexity), true
+	case "CarrierMonitoringEnrollment.subjectName":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectName(childComplexity), true
+	case "CarrierMonitoringEnrollment.subjectType":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.SubjectType(childComplexity), true
+	case "CarrierMonitoringEnrollment.unenrolledAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.UnenrolledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.UnenrolledAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.updatedAt":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.UpdatedAt(childComplexity), true
+	case "CarrierMonitoringEnrollment.vendorState":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.VendorState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.VendorState(childComplexity), true
+	case "CarrierMonitoringEnrollment.version":
+		if e.ComplexityRoot.CarrierMonitoringEnrollment.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollment.Version(childComplexity), true
+
+	case "CarrierMonitoringEnrollmentConnection.edges":
+		if e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.Edges(childComplexity), true
+	case "CarrierMonitoringEnrollmentConnection.pageInfo":
+		if e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.PageInfo(childComplexity), true
+	case "CarrierMonitoringEnrollmentConnection.totalCount":
+		if e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollmentConnection.TotalCount(childComplexity), true
+
+	case "CarrierMonitoringEnrollmentEdge.cursor":
+		if e.ComplexityRoot.CarrierMonitoringEnrollmentEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollmentEdge.Cursor(childComplexity), true
+	case "CarrierMonitoringEnrollmentEdge.node":
+		if e.ComplexityRoot.CarrierMonitoringEnrollmentEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierMonitoringEnrollmentEdge.Node(childComplexity), true
 
 	case "CarrierSettlement.adjustmentsMinor":
 		if e.ComplexityRoot.CarrierSettlement.AdjustmentsMinor == nil {
@@ -15516,6 +18981,80 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierSettlementWorkspaceSummary.TotalNetMinor(childComplexity), true
+
+	case "CarrierSourcingPage.items":
+		if e.ComplexityRoot.CarrierSourcingPage.Items == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingPage.Items(childComplexity), true
+	case "CarrierSourcingPage.provider":
+		if e.ComplexityRoot.CarrierSourcingPage.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingPage.Provider(childComplexity), true
+	case "CarrierSourcingPage.total":
+		if e.ComplexityRoot.CarrierSourcingPage.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingPage.Total(childComplexity), true
+
+	case "CarrierSourcingResult.dotNumber":
+		if e.ComplexityRoot.CarrierSourcingResult.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.DOTNumber(childComplexity), true
+	case "CarrierSourcingResult.existingCarrierId":
+		if e.ComplexityRoot.CarrierSourcingResult.ExistingCarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.ExistingCarrierID(childComplexity), true
+	case "CarrierSourcingResult.findings":
+		if e.ComplexityRoot.CarrierSourcingResult.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.Findings(childComplexity), true
+	case "CarrierSourcingResult.laneMatches":
+		if e.ComplexityRoot.CarrierSourcingResult.LaneMatches == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.LaneMatches(childComplexity), true
+	case "CarrierSourcingResult.legalName":
+		if e.ComplexityRoot.CarrierSourcingResult.LegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.LegalName(childComplexity), true
+	case "CarrierSourcingResult.profile":
+		if e.ComplexityRoot.CarrierSourcingResult.Profile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.Profile(childComplexity), true
+	case "CarrierSourcingResult.providerRef":
+		if e.ComplexityRoot.CarrierSourcingResult.ProviderRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.ProviderRef(childComplexity), true
+	case "CarrierSourcingResult.riskLevel":
+		if e.ComplexityRoot.CarrierSourcingResult.RiskLevel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.RiskLevel(childComplexity), true
+	case "CarrierSourcingResult.score":
+		if e.ComplexityRoot.CarrierSourcingResult.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingResult.Score(childComplexity), true
 
 	case "CategoryCostLine.amount":
 		if e.ComplexityRoot.CategoryCostLine.Amount == nil {
@@ -16417,6 +19956,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Customer.BillingProfile(childComplexity), true
+	case "Customer.brokerIntelligence":
+		if e.ComplexityRoot.Customer.BrokerIntelligence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.BrokerIntelligence(childComplexity), true
+	case "Customer.brokerVettingEnabled":
+		if e.ComplexityRoot.Customer.BrokerVettingEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.BrokerVettingEnabled(childComplexity), true
 	case "Customer.businessUnit":
 		if e.ComplexityRoot.Customer.BusinessUnit == nil {
 			break
@@ -16453,6 +20004,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Customer.CreatedAt(childComplexity), true
+	case "Customer.dotNumber":
+		if e.ComplexityRoot.Customer.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.DOTNumber(childComplexity), true
 	case "Customer.emailProfile":
 		if e.ComplexityRoot.Customer.EmailProfile == nil {
 			break
@@ -16495,6 +20052,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Customer.Longitude(childComplexity), true
+	case "Customer.mcNumber":
+		if e.ComplexityRoot.Customer.MCNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Customer.MCNumber(childComplexity), true
 	case "Customer.name":
 		if e.ComplexityRoot.Customer.Name == nil {
 			break
@@ -20446,18 +24009,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.DispatchCandidate.WorkerName(childComplexity), true
 
+	case "DispatchCarrierEligibility.advisories":
+		if e.ComplexityRoot.DispatchCarrierEligibility.Advisories == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibility.Advisories(childComplexity), true
 	case "DispatchCarrierEligibility.blockers":
 		if e.ComplexityRoot.DispatchCarrierEligibility.Blockers == nil {
 			break
 		}
 
 		return e.ComplexityRoot.DispatchCarrierEligibility.Blockers(childComplexity), true
+	case "DispatchCarrierEligibility.findings":
+		if e.ComplexityRoot.DispatchCarrierEligibility.Findings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibility.Findings(childComplexity), true
 	case "DispatchCarrierEligibility.warnings":
 		if e.ComplexityRoot.DispatchCarrierEligibility.Warnings == nil {
 			break
 		}
 
 		return e.ComplexityRoot.DispatchCarrierEligibility.Warnings(childComplexity), true
+
+	case "DispatchCarrierEligibilityFinding.code":
+		if e.ComplexityRoot.DispatchCarrierEligibilityFinding.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibilityFinding.Code(childComplexity), true
+	case "DispatchCarrierEligibilityFinding.message":
+		if e.ComplexityRoot.DispatchCarrierEligibilityFinding.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibilityFinding.Message(childComplexity), true
+	case "DispatchCarrierEligibilityFinding.requiresOverride":
+		if e.ComplexityRoot.DispatchCarrierEligibilityFinding.RequiresOverride == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibilityFinding.RequiresOverride(childComplexity), true
+	case "DispatchCarrierEligibilityFinding.severity":
+		if e.ComplexityRoot.DispatchCarrierEligibilityFinding.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibilityFinding.Severity(childComplexity), true
+	case "DispatchCarrierEligibilityFinding.source":
+		if e.ComplexityRoot.DispatchCarrierEligibilityFinding.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchCarrierEligibilityFinding.Source(childComplexity), true
 
 	case "DispatchCommitment.destinationCity":
 		if e.ComplexityRoot.DispatchCommitment.DestinationCity == nil {
@@ -33542,6 +37148,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AcceptCarrierInvoiceMatchWithVariance(childComplexity, args["input"].(gqlmodel.CarrierInvoiceMatchActionInput)), true
+	case "Mutation.acknowledgeCarrierIntelEvents":
+		if e.ComplexityRoot.Mutation.AcknowledgeCarrierIntelEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acknowledgeCarrierIntelEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AcknowledgeCarrierIntelEvents(childComplexity, args["ids"].([]string)), true
 	case "Mutation.acknowledgeMyDisciplinaryAction":
 		if e.ComplexityRoot.Mutation.AcknowledgeMyDisciplinaryAction == nil {
 			break
@@ -33685,6 +37302,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AmendWorkerEmploymentEvent(childComplexity, args["input"].(gqlmodel.AmendWorkerEmploymentEventInput)), true
+	case "Mutation.applyCarrierIntelSuggestions":
+		if e.ComplexityRoot.Mutation.ApplyCarrierIntelSuggestions == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_applyCarrierIntelSuggestions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApplyCarrierIntelSuggestions(childComplexity, args["input"].(gqlmodel.ApplyCarrierIntelSuggestionsInput)), true
 	case "Mutation.applyCreditMemo":
 		if e.ComplexityRoot.Mutation.ApplyCreditMemo == nil {
 			break
@@ -35599,6 +39227,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.GiveWorkerRecognition(childComplexity, args["input"].(gqlmodel.WorkerRecognitionInput)), true
+	case "Mutation.grantCarrierIntelOverride":
+		if e.ComplexityRoot.Mutation.GrantCarrierIntelOverride == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_grantCarrierIntelOverride_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.GrantCarrierIntelOverride(childComplexity, args["input"].(gqlmodel.GrantCarrierIntelOverrideInput)), true
 	case "Mutation.holdDriverPayEvent":
 		if e.ComplexityRoot.Mutation.HoldDriverPayEvent == nil {
 			break
@@ -35610,6 +39249,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.HoldDriverPayEvent(childComplexity, args["input"].(gqlmodel.HoldPayEventInput)), true
+	case "Mutation.importSourcedCarrier":
+		if e.ComplexityRoot.Mutation.ImportSourcedCarrier == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_importSourcedCarrier_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ImportSourcedCarrier(childComplexity, args["input"].(gqlmodel.ImportSourcedCarrierInput)), true
 	case "Mutation.inviteWorkerToPortal":
 		if e.ComplexityRoot.Mutation.InviteWorkerToPortal == nil {
 			break
@@ -35688,6 +39338,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkAllNotificationsRead(childComplexity), true
+	case "Mutation.markCarrierIntelReviewed":
+		if e.ComplexityRoot.Mutation.MarkCarrierIntelReviewed == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markCarrierIntelReviewed_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkCarrierIntelReviewed(childComplexity, args["carrierId"].(string), args["note"].(string)), true
 	case "Mutation.markCarrierSettlementPaid":
 		if e.ComplexityRoot.Mutation.MarkCarrierSettlementPaid == nil {
 			break
@@ -35820,6 +39481,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.OpenLeaveCase(childComplexity, args["input"].(gqlmodel.OpenLeaveCaseInput)), true
+	case "Mutation.overrideCarrierEquipmentVerification":
+		if e.ComplexityRoot.Mutation.OverrideCarrierEquipmentVerification == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_overrideCarrierEquipmentVerification_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.OverrideCarrierEquipmentVerification(childComplexity, args["id"].(string), args["reason"].(string)), true
 	case "Mutation.patchEquipmentManufacturer":
 		if e.ComplexityRoot.Mutation.PatchEquipmentManufacturer == nil {
 			break
@@ -36387,6 +40059,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResolveAgentException(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentExceptionResolveInput)), true
+	case "Mutation.resolveCarrierIntelEvent":
+		if e.ComplexityRoot.Mutation.ResolveCarrierIntelEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveCarrierIntelEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResolveCarrierIntelEvent(childComplexity, args["input"].(gqlmodel.ResolveCarrierIntelEventInput)), true
 	case "Mutation.resolveFuelPurchaseImportRows":
 		if e.ComplexityRoot.Mutation.ResolveFuelPurchaseImportRows == nil {
 			break
@@ -36530,6 +40213,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RestoreWorkerCredentialType(childComplexity, args["id"].(string), args["version"].(*int)), true
+	case "Mutation.resumeCarrierIntelMonitoring":
+		if e.ComplexityRoot.Mutation.ResumeCarrierIntelMonitoring == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.ResumeCarrierIntelMonitoring(childComplexity), true
 	case "Mutation.reverseCustomerPayment":
 		if e.ComplexityRoot.Mutation.ReverseCustomerPayment == nil {
 			break
@@ -36574,6 +40263,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RevokeApprovalDelegation(childComplexity, args["id"].(string)), true
+	case "Mutation.revokeCarrierIntelOverride":
+		if e.ComplexityRoot.Mutation.RevokeCarrierIntelOverride == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeCarrierIntelOverride_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RevokeCarrierIntelOverride(childComplexity, args["id"].(string), args["reason"].(string)), true
 	case "Mutation.revokeWorkerPortalAccess":
 		if e.ComplexityRoot.Mutation.RevokeWorkerPortalAccess == nil {
 			break
@@ -36684,6 +40384,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
+	case "Mutation.setCarrierMonitoring":
+		if e.ComplexityRoot.Mutation.SetCarrierMonitoring == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setCarrierMonitoring_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetCarrierMonitoring(childComplexity, args["carrierIds"].([]string), args["enabled"].(bool)), true
 	case "Mutation.setDefaultTableConfiguration":
 		if e.ComplexityRoot.Mutation.SetDefaultTableConfiguration == nil {
 			break
@@ -36838,6 +40549,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SubmitPerformanceReview(childComplexity, args["input"].(gqlmodel.PerformanceReviewStatusInput)), true
+	case "Mutation.switchCarrierIntelProvider":
+		if e.ComplexityRoot.Mutation.SwitchCarrierIntelProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_switchCarrierIntelProvider_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SwitchCarrierIntelProvider(childComplexity, args["provider"].(string)), true
 	case "Mutation.syncFuelCardFeed":
 		if e.ComplexityRoot.Mutation.SyncFuelCardFeed == nil {
 			break
@@ -37003,6 +40725,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateBillingQueueStatus(childComplexity, args["id"].(string), args["input"].(gqlmodel.BillingQueueUpdateStatusInput)), true
+	case "Mutation.updateCarrierIntelControl":
+		if e.ComplexityRoot.Mutation.UpdateCarrierIntelControl == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCarrierIntelControl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateCarrierIntelControl(childComplexity, args["input"].(gqlmodel.CarrierIntelControlPatchInput)), true
 	case "Mutation.updateCarrierSettlementControl":
 		if e.ComplexityRoot.Mutation.UpdateCarrierSettlementControl == nil {
 			break
@@ -37663,6 +41396,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpsertIFTATaxRates(childComplexity, args["input"].([]*gqlmodel.IFTATaxRateInput)), true
+	case "Mutation.verifyCarrierEquipment":
+		if e.ComplexityRoot.Mutation.VerifyCarrierEquipment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyCarrierEquipment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.VerifyCarrierEquipment(childComplexity, args["input"].(gqlmodel.VerifyCarrierEquipmentInput)), true
 	case "Mutation.verifyWorkerCredential":
 		if e.ComplexityRoot.Mutation.VerifyWorkerCredential == nil {
 			break
@@ -37674,6 +41418,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.VerifyWorkerCredential(childComplexity, args["id"].(string), args["version"].(*int)), true
+	case "Mutation.vetCarrier":
+		if e.ComplexityRoot.Mutation.VetCarrier == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_vetCarrier_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.VetCarrier(childComplexity, args["carrierId"].(string), args["depth"].(*carrierintel.LookupDepth), args["force"].(*bool)), true
+	case "Mutation.vetCustomerBroker":
+		if e.ComplexityRoot.Mutation.VetCustomerBroker == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_vetCustomerBroker_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.VetCustomerBroker(childComplexity, args["customerId"].(string), args["force"].(*bool)), true
 	case "Mutation.voidCarrierSettlement":
 		if e.ComplexityRoot.Mutation.VoidCarrierSettlement == nil {
 			break
@@ -37784,6 +41550,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.WriteOffPayAdvance(childComplexity, args["input"].(gqlmodel.WriteOffPayAdvanceInput)), true
+
+	case "MyCarrierIntelligence.configured":
+		if e.ComplexityRoot.MyCarrierIntelligence.Configured == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyCarrierIntelligence.Configured(childComplexity), true
+	case "MyCarrierIntelligence.dotNumber":
+		if e.ComplexityRoot.MyCarrierIntelligence.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyCarrierIntelligence.DOTNumber(childComplexity), true
+	case "MyCarrierIntelligence.snapshot":
+		if e.ComplexityRoot.MyCarrierIntelligence.Snapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyCarrierIntelligence.Snapshot(childComplexity), true
 
 	case "MyPTOBalance.accruedYtdDays":
 		if e.ComplexityRoot.MyPTOBalance.AccruedYtdDays == nil {
@@ -42030,6 +45815,140 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CarrierCostEvents(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.carrierEquipmentVerifications":
+		if e.ComplexityRoot.Query.CarrierEquipmentVerifications == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierEquipmentVerifications_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierEquipmentVerifications(childComplexity, args["carrierAssignmentId"].(string)), true
+	case "Query.carrierIntelControl":
+		if e.ComplexityRoot.Query.CarrierIntelControl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelControl(childComplexity), true
+	case "Query.carrierIntelCostEstimate":
+		if e.ComplexityRoot.Query.CarrierIntelCostEstimate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelCostEstimate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelCostEstimate(childComplexity, args["policy"].(carrierintel.EnrollmentPolicy), args["recentUsageDays"].(*int), args["includeOpenTenders"].(*bool)), true
+	case "Query.carrierIntelEvents":
+		if e.ComplexityRoot.Query.CarrierIntelEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelEvents(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["filter"].(*gqlmodel.CarrierIntelEventFilterInput)), true
+	case "Query.carrierIntelLookup":
+		if e.ComplexityRoot.Query.CarrierIntelLookup == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelLookup_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelLookup(childComplexity, args["input"].(gqlmodel.CarrierIntelLookupInput)), true
+	case "Query.carrierIntelMonitoringStatus":
+		if e.ComplexityRoot.Query.CarrierIntelMonitoringStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelMonitoringStatus(childComplexity), true
+	case "Query.carrierIntelOverrides":
+		if e.ComplexityRoot.Query.CarrierIntelOverrides == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelOverrides_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelOverrides(childComplexity, args["carrierId"].(string)), true
+	case "Query.carrierIntelProvider":
+		if e.ComplexityRoot.Query.CarrierIntelProvider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelProvider(childComplexity), true
+	case "Query.carrierIntelRawPayload":
+		if e.ComplexityRoot.Query.CarrierIntelRawPayload == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelRawPayload_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelRawPayload(childComplexity, args["carrierId"].(string), args["snapshotId"].(string)), true
+	case "Query.carrierIntelReviewQueue":
+		if e.ComplexityRoot.Query.CarrierIntelReviewQueue == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelReviewQueue_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelReviewQueue(childComplexity, args["limit"].(*int)), true
+	case "Query.carrierIntelRuleCatalog":
+		if e.ComplexityRoot.Query.CarrierIntelRuleCatalog == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelRuleCatalog(childComplexity), true
+	case "Query.carrierIntelSnapshotHistory":
+		if e.ComplexityRoot.Query.CarrierIntelSnapshotHistory == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelSnapshotHistory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelSnapshotHistory(childComplexity, args["carrierId"].(string), args["limit"].(*int)), true
+	case "Query.carrierIntelSyncPlan":
+		if e.ComplexityRoot.Query.CarrierIntelSyncPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelSyncPlan_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelSyncPlan(childComplexity, args["carrierId"].(string)), true
+	case "Query.carrierIntelUsage":
+		if e.ComplexityRoot.Query.CarrierIntelUsage == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelUsage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelUsage(childComplexity, args["month"].(*int)), true
 	case "Query.carrierInvoiceMatches":
 		if e.ComplexityRoot.Query.CarrierInvoiceMatches == nil {
 			break
@@ -42052,6 +45971,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CarrierLedgerEntries(childComplexity, args["carrierId"].(string), args["limit"].(*int)), true
+	case "Query.carrierMonitoringEnrollments":
+		if e.ComplexityRoot.Query.CarrierMonitoringEnrollments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierMonitoringEnrollments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierMonitoringEnrollments(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["filter"].(*gqlmodel.CarrierMonitoringEnrollmentFilterInput)), true
 	case "Query.carrierSettlement":
 		if e.ComplexityRoot.Query.CarrierSettlement == nil {
 			break
@@ -42113,6 +46043,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CarrierSettlements(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.carrierSourcingAutocomplete":
+		if e.ComplexityRoot.Query.CarrierSourcingAutocomplete == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierSourcingAutocomplete_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierSourcingAutocomplete(childComplexity, args["query"].(string), args["limit"].(*int)), true
+	case "Query.carrierSourcingSearch":
+		if e.ComplexityRoot.Query.CarrierSourcingSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierSourcingSearch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierSourcingSearch(childComplexity, args["input"].(gqlmodel.CarrierSourcingSearchInput)), true
 	case "Query.carriers":
 		if e.ComplexityRoot.Query.Carriers == nil {
 			break
@@ -43730,6 +47682,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyAvailability(childComplexity), true
+	case "Query.myCarrierIntelligence":
+		if e.ComplexityRoot.Query.MyCarrierIntelligence == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myCarrierIntelligence_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyCarrierIntelligence(childComplexity, args["refresh"].(*bool)), true
 	case "Query.myComplianceProfile":
 		if e.ComplexityRoot.Query.MyComplianceProfile == nil {
 			break
@@ -63522,6 +67485,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentExceptionResolveInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
+		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
 		ec.unmarshalInputApplyCreditMemoInput,
 		ec.unmarshalInputApplyCustomerPaymentInput,
 		ec.unmarshalInputArchiveWorkerCredentialInput,
@@ -63548,8 +67512,15 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCancelFuelCardInput,
 		ec.unmarshalInputCancelWorkerChecklistInput,
 		ec.unmarshalInputCancelWorkerTrainingInput,
+		ec.unmarshalInputCarrierIntelControlPatchInput,
+		ec.unmarshalInputCarrierIntelEventFilterInput,
+		ec.unmarshalInputCarrierIntelLookupInput,
+		ec.unmarshalInputCarrierIntelRuleParamInput,
+		ec.unmarshalInputCarrierIntelRuleSettingInput,
 		ec.unmarshalInputCarrierInvoiceMatchActionInput,
+		ec.unmarshalInputCarrierMonitoringEnrollmentFilterInput,
 		ec.unmarshalInputCarrierSettlementActionInput,
+		ec.unmarshalInputCarrierSourcingSearchInput,
 		ec.unmarshalInputChargeAllocationInput,
 		ec.unmarshalInputClockInput,
 		ec.unmarshalInputCompleteClearinghouseQueryInput,
@@ -63628,6 +67599,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGenerateFuelTableInput,
 		ec.unmarshalInputGeneratePayrollExportInput,
 		ec.unmarshalInputGenerateSettlementBatchInput,
+		ec.unmarshalInputGrantCarrierIntelOverrideInput,
 		ec.unmarshalInputHoldPayEventInput,
 		ec.unmarshalInputHomeLayoutInput,
 		ec.unmarshalInputHomeWidgetConfigInput,
@@ -63638,6 +67610,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIFTAReturnsInput,
 		ec.unmarshalInputIFTATaxRateInput,
 		ec.unmarshalInputIFTATaxRatesInput,
+		ec.unmarshalInputImportSourcedCarrierInput,
 		ec.unmarshalInputInviteWorkerToPortalInput,
 		ec.unmarshalInputInvoiceAdjustmentApprovalsInput,
 		ec.unmarshalInputIssueDisciplinaryActionInput,
@@ -63715,6 +67688,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReportTransformInput,
 		ec.unmarshalInputRequestMyPtoInput,
 		ec.unmarshalInputRescindDisciplinaryActionInput,
+		ec.unmarshalInputResolveCarrierIntelEventInput,
 		ec.unmarshalInputResolveInvoiceDisputeInput,
 		ec.unmarshalInputResolveSettlementDisputeInput,
 		ec.unmarshalInputRespondToMyAssignmentInput,
@@ -63815,6 +67789,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateWorkerInjuryInput,
 		ec.unmarshalInputUpdateWorkerPTOInput,
 		ec.unmarshalInputUpdateWorkerSafetyEventInput,
+		ec.unmarshalInputVerifyCarrierEquipmentInput,
 		ec.unmarshalInputVoidInvoiceInput,
 		ec.unmarshalInputVoidPayrollExportInput,
 		ec.unmarshalInputWaiveWorkerTrainingInput,
@@ -65122,6 +69097,1016 @@ type CarrierConnection {
 extend type Query {
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   carrier(id: ID!): Carrier
+}
+`, BuiltIn: false},
+	{Name: "../schema/carrier_intelligence.graphqls", Input: `enum CarrierIntelSection {
+  Identity
+  Authority
+  Insurance
+  Safety
+  Basics
+  Inspections
+  Crashes
+  Fleet
+  Equipment
+  Contacts
+  Operations
+  ChangeHistory
+  Network
+  Lanes
+  Benchmarks
+}
+
+enum CarrierIntelRuleAction {
+  Block
+  Warn
+  Notify
+  Off
+}
+
+enum CarrierIntelSeverity {
+  Critical
+  High
+  Medium
+  Low
+  Info
+}
+
+enum CarrierIntelRiskLevel {
+  Low
+  Moderate
+  Elevated
+  High
+  VeryHigh
+  Unknown
+}
+
+enum CarrierIntelReviewState {
+  None
+  NeedsReview
+  Reviewed
+}
+
+enum CarrierIntelDepth {
+  FMCSA
+  Lite
+  Full
+}
+
+enum CarrierIntelSubjectType {
+  Carrier
+  Organization
+  Customer
+  Prospect
+}
+
+enum CarrierIntelEventStatus {
+  Open
+  Acknowledged
+  Resolved
+  Dismissed
+}
+
+enum CarrierIntelEventResolution {
+  CarrierUpdated
+  CarrierBlocked
+  OverrideGranted
+  NoActionRequired
+  FalsePositive
+}
+
+enum CarrierIntelEventSource {
+  NativeChangeFeed
+  SnapshotDiff
+  RuleEvaluation
+  EquipmentVerification
+  Enrollment
+  ProviderError
+  Override
+}
+
+enum CarrierIntelEnrollmentPolicy {
+  AllActive
+  RecentlyUsed
+  Manual
+}
+
+enum CarrierIntelOutagePolicy {
+  FailOpen
+  FailClosed
+}
+
+enum CarrierIntelEnrollmentMode {
+  Native
+  SnapshotDiff
+}
+
+enum CarrierIntelDesiredState {
+  Enrolled
+  NotEnrolled
+}
+
+enum CarrierIntelVendorState {
+  Unknown
+  PendingAdd
+  Active
+  PendingRemove
+  Removed
+  Failed
+}
+
+enum CarrierIntelEnrollmentReason {
+  PolicyAllActive
+  PolicyRecentUse
+  AssignedOrTendered
+  Manual
+  SelfMonitor
+  CustomerBroker
+}
+
+enum CarrierIntelAuthorityStatus {
+  Active
+  Inactive
+  Revoked
+  None
+  Unknown
+}
+
+enum CarrierIntelInsuranceFilingType {
+  BIPD
+  Cargo
+  Bond
+  Other
+}
+
+enum CarrierIntelNetworkKind {
+  Address
+  Phone
+  Email
+  EIN
+  Equipment
+}
+
+enum CarrierIntelUnitType {
+  Tractor
+  Trailer
+  Straight
+}
+
+enum CarrierEquipmentVerificationResult {
+  Match
+  Mismatch
+  NotFound
+  Unverifiable
+  ProviderError
+}
+
+enum CarrierIntelFeedType {
+  ChangeFeed
+  SnapshotRefresh
+}
+
+enum CarrierIntelSyncField {
+  safetyRating
+  mcNumber
+  name
+  dbaName
+  addressLine1
+  city
+  postalCode
+  phone
+  email
+}
+
+enum CarrierIntelInsuranceChangeKind {
+  ShortenExpiration
+  CoverageChanged
+  NewFiling
+}
+
+enum CarrierIntelRuleParamType {
+  Integer
+  Decimal
+  Number
+  Select
+  MultiSelect
+}
+
+type CarrierIntelAddress {
+  line1: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  undelivered: Boolean
+}
+
+type CarrierIntelIdentity {
+  dotNumber: String!
+  docketPrefix: String
+  docketNumber: String
+  legalName: String
+  dbaName: String
+  ein: String
+  usdotStatus: String
+  entityType: String
+  carrierOperation: String
+  dotAddedAt: Timestamp
+  dotAgeDays: Int
+  physicalAddress: CarrierIntelAddress
+  mailingAddress: CarrierIntelAddress
+}
+
+type CarrierIntelAuthorityGrant {
+  status: CarrierIntelAuthorityStatus!
+  pending: Boolean!
+  underReview: Boolean!
+  revocationPending: Boolean!
+  grantedAt: Timestamp
+  ageDays: Int
+}
+
+type CarrierIntelAuthorityHistoryEntry {
+  authorityType: String!
+  action: String!
+  servedAt: Timestamp
+  effectiveAt: Timestamp
+}
+
+type CarrierIntelAuthority {
+  common: CarrierIntelAuthorityGrant
+  contract: CarrierIntelAuthorityGrant
+  broker: CarrierIntelAuthorityGrant
+  totalRevocations: Int
+  lastRevocationAt: Timestamp
+  history: [CarrierIntelAuthorityHistoryEntry!]
+}
+
+type CarrierIntelInsuranceFiling {
+  type: CarrierIntelInsuranceFilingType!
+  insurerName: String
+  policyNumber: String
+  coverage: Decimal
+  effectiveAt: Timestamp
+  cancelEffectiveAt: Timestamp
+  cancelMethod: String
+}
+
+type CarrierIntelInsurance {
+  bipdOnFile: Decimal
+  bipdRequired: Decimal
+  cargoOnFile: Decimal
+  cargoRequired: Decimal
+  bondOnFile: Decimal
+  bondRequired: Decimal
+  pendingCancelAt: Timestamp
+  lastCanceledAt: Timestamp
+  cancelCount: Int
+  filings: [CarrierIntelInsuranceFiling!]
+}
+
+type CarrierIntelSafety {
+  rating: String
+  ratingDate: Timestamp
+  issValue: Int
+  issRecommendation: String
+  riskScore: String
+  riskProbability: Float
+  safetyScore: Float
+  outOfServiceOrder: Boolean
+  outOfServiceAt: Timestamp
+  latestReviewType: String
+  latestReviewAt: Timestamp
+}
+
+type CarrierIntelBasicMeasure {
+  basic: CSABasic!
+  measure: Float
+  percentile: Float
+  threshold: Float
+  alert: Boolean!
+  roadsideAlert: Boolean!
+  acIndicator: Boolean!
+}
+
+type CarrierIntelInspections {
+  total: Int
+  driver: Int
+  vehicle: Int
+  hazmat: Int
+  driverOos: Int
+  vehicleOos: Int
+  hazmatOos: Int
+  driverOosRate: Float
+  vehicleOosRate: Float
+  hazmatOosRate: Float
+  nationalDriverOosRate: Float
+  nationalVehicleOosRate: Float
+  nationalHazmatOosRate: Float
+  lastInspectionAt: Timestamp
+}
+
+type CarrierIntelCrashes {
+  total: Int
+  fatal: Int
+  injury: Int
+  tow: Int
+  lastCrashAt: Timestamp
+}
+
+type CarrierIntelFleet {
+  powerUnits: Int
+  drivers: Int
+  cdlDrivers: Int
+  ownedTractors: Int
+  termLeasedTractors: Int
+  ownedTrailers: Int
+  termLeasedTrailers: Int
+  trailers: Int
+  trucks: Int
+}
+
+type CarrierIntelEquipment {
+  vin: String
+  unitType: String
+  category: String
+  make: String
+  model: String
+  year: Int
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+}
+
+type CarrierIntelContacts {
+  phone: String
+  cellphone: String
+  fax: String
+  email: String
+  primaryContact: String
+  secondaryContact: String
+}
+
+type CarrierIntelOperations {
+  classification: [String!]
+  cargoCarried: [String!]
+  hazmatCarrier: Boolean
+  mcs150At: Timestamp
+  mcs150Mileage: Int
+  boc3OnFile: Boolean
+  boc3Agent: String
+  smartWay: Boolean
+  carbCompliant: Boolean
+  phmsa: Boolean
+}
+
+type CarrierIntelChangeHistory {
+  nameChanges: Int
+  nameLastChangedAt: Timestamp
+  emailChanges: Int
+  emailLastChangedAt: Timestamp
+  phoneChanges: Int
+  phoneLastChangedAt: Timestamp
+  addressChanges: Int
+  addressLastChangedAt: Timestamp
+  contactChanges: Int
+  contactLastChangedAt: Timestamp
+}
+
+type CarrierIntelNetworkLink {
+  kind: CarrierIntelNetworkKind!
+  dotNumber: String
+  legalName: String
+  value: String
+  status: String
+}
+
+type CarrierIntelNetwork {
+  sharedAddresses: Int
+  sharedPhones: Int
+  sharedEmails: Int
+  sharedEins: Int
+  sharedEquipment: Int
+  links: [CarrierIntelNetworkLink!]
+}
+
+type CarrierIntelLane {
+  originCity: String
+  originState: String
+  destinationCity: String
+  destinationState: String
+  loads: Int
+}
+
+type CarrierIntelLanes {
+  totalLoads: Int
+  ftlPercent: Float
+  ltlPercent: Float
+  deadheadPercent: Float
+  firstLoadAt: Timestamp
+  lastLoadAt: Timestamp
+  preferred: [CarrierIntelLane!]
+}
+
+type CarrierIntelBenchmarks {
+  anyAnomaly: Boolean
+  inspectionMileageAnomaly: Boolean
+  inspectedUnitsAnomaly: Boolean
+  powerUnitMileageAnomaly: Boolean
+}
+
+type CarrierIntelProfile {
+  identity: CarrierIntelIdentity
+  authority: CarrierIntelAuthority
+  insurance: CarrierIntelInsurance
+  safety: CarrierIntelSafety
+  basics: [CarrierIntelBasicMeasure!]
+  inspections: CarrierIntelInspections
+  crashes: CarrierIntelCrashes
+  fleet: CarrierIntelFleet
+  equipment: [CarrierIntelEquipment!]
+  contacts: CarrierIntelContacts
+  operations: CarrierIntelOperations
+  changeHistory: CarrierIntelChangeHistory
+  network: CarrierIntelNetwork
+  lanes: CarrierIntelLanes
+  benchmarks: CarrierIntelBenchmarks
+  coverage: [CarrierIntelSection!]!
+}
+
+type CarrierIntelFinding {
+  code: String!
+  category: CarrierIntelSection!
+  action: CarrierIntelRuleAction!
+  severity: CarrierIntelSeverity!
+  message: String!
+  unverifiable: Boolean!
+  unconfirmed: Boolean!
+  overridden: Boolean!
+  overrideId: ID
+  overrideExpiresAt: Timestamp
+}
+
+type CarrierIntelSnapshot {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  dotNumber: String!
+  docketNumber: String
+  provider: String!
+  providerRef: String
+  depth: CarrierIntelDepth!
+  source: String!
+  isCurrent: Boolean!
+  notFound: Boolean!
+  profile: CarrierIntelProfile!
+  findings: [CarrierIntelFinding!]!
+  blockingCodes: [String!]!
+  advisoryCodes: [String!]!
+  riskLevel: CarrierIntelRiskLevel!
+  reviewState: CarrierIntelReviewState!
+  reviewedById: ID
+  reviewedAt: Timestamp
+  reviewNote: String
+  policyVersion: Int!
+  fetchedAt: Timestamp!
+  sourceAsOf: Timestamp
+  confirmedAt: Timestamp
+  effectiveAsOf: Timestamp!
+  hasRawPayload: Boolean!
+  createdAt: Timestamp!
+}
+
+type CarrierIntelEvent {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  dotNumber: String!
+  subjectName: String
+  provider: String!
+  source: CarrierIntelEventSource!
+  category: CarrierIntelSection!
+  fieldPath: String
+  ruleCode: String
+  severity: CarrierIntelSeverity!
+  action: CarrierIntelRuleAction
+  priorValue: String
+  currentValue: String
+  summary: String!
+  vendorChangedAt: Timestamp
+  detectedAt: Timestamp!
+  status: CarrierIntelEventStatus!
+  acknowledgedById: ID
+  acknowledgedAt: Timestamp
+  resolvedById: ID
+  resolvedAt: Timestamp
+  resolution: CarrierIntelEventResolution
+  resolutionNote: String
+  snapshotId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CarrierIntelEventEdge {
+  node: CarrierIntelEvent!
+  cursor: String!
+}
+
+type CarrierIntelEventConnection {
+  edges: [CarrierIntelEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierMonitoringEnrollment {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  subjectName: String
+  dotNumber: String!
+  docketNumber: String
+  provider: String!
+  providerRef: String
+  mode: CarrierIntelEnrollmentMode!
+  desiredState: CarrierIntelDesiredState!
+  vendorState: CarrierIntelVendorState!
+  reason: CarrierIntelEnrollmentReason!
+  ownedByTrenova: Boolean!
+  enrolledAt: Timestamp
+  unenrolledAt: Timestamp
+  lastSyncedAt: Timestamp
+  lastConfirmedAt: Timestamp
+  lastUsedAt: Timestamp
+  failureCount: Int!
+  lastError: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CarrierMonitoringEnrollmentEdge {
+  node: CarrierMonitoringEnrollment!
+  cursor: String!
+}
+
+type CarrierMonitoringEnrollmentConnection {
+  edges: [CarrierMonitoringEnrollmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierIntelOverride {
+  id: ID!
+  carrierId: ID!
+  ruleCode: String!
+  reason: String!
+  grantedById: ID!
+  grantedAt: Timestamp!
+  expiresAt: Timestamp!
+  revokedById: ID
+  revokedAt: Timestamp
+  revokeReason: String
+  active: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+}
+
+type CarrierEquipmentVerification {
+  id: ID!
+  carrierAssignmentId: ID!
+  shipmentMoveId: ID
+  carrierId: ID!
+  expectedDotNumber: String
+  unitType: CarrierIntelUnitType!
+  vin: String
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+  result: CarrierEquipmentVerificationResult!
+  matchedDotNumbers: [String!]!
+  matchedLegalName: String
+  detail: CarrierIntelEquipment
+  mismatchReason: String
+  provider: String
+  verifiedById: ID!
+  verifiedAt: Timestamp!
+  overrideById: ID
+  overrideReason: String
+  overriddenAt: Timestamp
+  cleared: Boolean!
+  createdAt: Timestamp!
+}
+
+type CarrierIntelRuleSettingParam {
+  key: String!
+  value: String!
+}
+
+type CarrierIntelRuleSetting {
+  code: String!
+  action: CarrierIntelRuleAction!
+  params: [CarrierIntelRuleSettingParam!]!
+}
+
+type CarrierIntelControl {
+  id: ID!
+  primaryProvider: String
+  fallbackProvider: String
+  enrollmentPolicy: CarrierIntelEnrollmentPolicy!
+  recentUsageDays: Int!
+  includeOpenTenders: Boolean!
+  autoEnrollOnCreate: Boolean!
+  autoUnenrollOnInactive: Boolean!
+  exclusiveWatchlist: Boolean!
+  pollIntervalMinutes: Int!
+  snapshotTtlHours: Int!
+  fullProfileTtlDays: Int!
+  preTenderRefreshEnabled: Boolean!
+  preTenderMaxAgeHours: Int!
+  hardMaxAgeHours: Int!
+  confirmBlockingChanges: Boolean!
+  outagePolicy: CarrierIntelOutagePolicy!
+  autoDisqualifyOnBlock: Boolean!
+  autoApplySafetyRating: Boolean!
+  rules: [CarrierIntelRuleSetting!]!
+  autoSyncFields: [CarrierIntelSyncField!]!
+  monthlySpendCap: Decimal
+  softCapPercent: Int!
+  dailyFullProfileCap: Int
+  rawRetentionDays: Int!
+  snapshotHistoryLimit: Int!
+  selfMonitoringEnabled: Boolean!
+  policyVersion: Int!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type CarrierIntelRuleParam {
+  key: String!
+  label: String!
+  type: CarrierIntelRuleParamType!
+  default: String!
+  min: Float
+  max: Float
+  options: [String!]
+  helpText: String
+}
+
+type CarrierIntelRuleDefinition {
+  code: String!
+  label: String!
+  description: String!
+  category: CarrierIntelSection!
+  defaultAction: CarrierIntelRuleAction!
+  recommendedAction: CarrierIntelRuleAction!
+  requiredSections: [CarrierIntelSection!]!
+  params: [CarrierIntelRuleParam!]!
+  subjects: [CarrierIntelSubjectType!]!
+  gateRelevant: Boolean!
+}
+
+type CarrierIntelProviderInfo {
+  configured: Boolean!
+  provider: String
+  fallbackProvider: String
+  capabilities: [String!]!
+  sections: [CarrierIntelSection!]!
+}
+
+type CarrierIntelUsageRow {
+  provider: String!
+  endpoint: String!
+  calls: Int!
+  billableUnits: Int!
+  estimatedCost: Decimal!
+}
+
+type CarrierIntelUsageDay {
+  day: Int!
+  endpoint: String!
+  calls: Int!
+  billableUnits: Int!
+  estimatedCost: Decimal!
+}
+
+type CarrierIntelUsageSummary {
+  monthStart: Timestamp!
+  monthToDate: Decimal!
+  cap: Decimal
+  softCapPercent: Int!
+  byEndpoint: [CarrierIntelUsageRow!]!
+  daily: [CarrierIntelUsageDay!]!
+}
+
+type CarrierIntelCostEstimate {
+  provider: String!
+  policy: CarrierIntelEnrollmentPolicy!
+  subjectCount: Int!
+  monthlyMonitoring: Decimal!
+  perSubject: Decimal!
+}
+
+type CarrierIntelFetchResult {
+  snapshot: CarrierIntelSnapshot!
+  fromCache: Boolean!
+  usedFallback: Boolean!
+  raisedCount: Int!
+  changeCount: Int!
+}
+
+type CarrierIntelProspectLookup {
+  snapshot: CarrierIntelSnapshot!
+  existingCarrierId: ID
+}
+
+type CarrierSourcingResult {
+  profile: CarrierIntelProfile!
+  providerRef: String
+  dotNumber: String!
+  legalName: String
+  existingCarrierId: ID
+  laneMatches: Int!
+  findings: [CarrierIntelFinding!]!
+  riskLevel: CarrierIntelRiskLevel!
+  score: Float!
+}
+
+type CarrierSourcingPage {
+  items: [CarrierSourcingResult!]!
+  total: Int!
+  provider: String!
+}
+
+type CarrierIntelSuggestion {
+  dotNumber: String!
+  legalName: String
+  dbaName: String
+  city: String
+  state: String
+}
+
+type CarrierIntelFieldUpdate {
+  field: CarrierIntelSyncField!
+  current: String!
+  proposed: String!
+  reason: String!
+}
+
+type CarrierIntelInsuranceChange {
+  kind: CarrierIntelInsuranceChangeKind!
+  policyId: ID
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  currentCoverage: Decimal
+  proposedCoverage: Decimal
+  currentExpirationDate: Timestamp
+  proposedExpirationDate: Timestamp
+  effectiveDate: Timestamp
+  reason: String!
+}
+
+type CarrierIntelSyncPlan {
+  autoApply: [CarrierIntelFieldUpdate!]!
+  suggestions: [CarrierIntelFieldUpdate!]!
+  insuranceAutoApply: [CarrierIntelInsuranceChange!]!
+  insuranceSuggestions: [CarrierIntelInsuranceChange!]!
+}
+
+type CarrierIntelSeverityCount {
+  severity: CarrierIntelSeverity!
+  count: Int!
+}
+
+type CarrierIntelEventCounts {
+  open: Int!
+  acknowledged: Int!
+  bySeverity: [CarrierIntelSeverityCount!]!
+}
+
+type CarrierIntelEnrollmentCounts {
+  desired: Int!
+  active: Int!
+  pending: Int!
+  failed: Int!
+}
+
+type CarrierIntelFeedState {
+  provider: String!
+  feedType: CarrierIntelFeedType!
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
+  nextPollAfter: Timestamp
+  pausedReason: String
+  pausedAt: Timestamp
+  failureCount: Int!
+  lastError: String
+}
+
+type CarrierIntelMonitoringStatus {
+  provider: CarrierIntelProviderInfo!
+  enrollmentCounts: CarrierIntelEnrollmentCounts!
+  eventCounts: CarrierIntelEventCounts!
+  feeds: [CarrierIntelFeedState!]!
+  reviewQueueCount: Int!
+}
+
+type MyCarrierIntelligence {
+  configured: Boolean!
+  dotNumber: String
+  snapshot: CarrierIntelSnapshot
+}
+
+type DispatchCarrierEligibilityFinding {
+  code: String!
+  source: String!
+  severity: String!
+  message: String!
+  requiresOverride: Boolean!
+}
+
+extend type DispatchCarrierEligibility {
+  advisories: [String!]!
+  findings: [DispatchCarrierEligibilityFinding!]!
+}
+
+extend type Carrier {
+  intelRiskLevel: String
+  intelReviewRequired: Boolean!
+  intelBlockingCount: Int!
+  intelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+  openIntelEventCount: Int! @goField(forceResolver: true)
+  monitoringEnrollment: CarrierMonitoringEnrollment @goField(forceResolver: true)
+}
+
+extend type Customer {
+  dotNumber: String
+  mcNumber: String
+  brokerVettingEnabled: Boolean!
+  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+}
+
+input CarrierIntelEventFilterInput {
+  statuses: [CarrierIntelEventStatus!]
+  severities: [CarrierIntelSeverity!]
+  categories: [CarrierIntelSection!]
+  carrierId: ID
+  subjectType: CarrierIntelSubjectType
+  subjectId: String
+  openOnly: Boolean
+}
+
+input CarrierMonitoringEnrollmentFilterInput {
+  desiredState: CarrierIntelDesiredState
+  vendorStates: [CarrierIntelVendorState!]
+}
+
+input CarrierIntelRuleParamInput {
+  key: String!
+  value: String!
+}
+
+input CarrierIntelRuleSettingInput {
+  code: String!
+  action: CarrierIntelRuleAction!
+  params: [CarrierIntelRuleParamInput!]
+}
+
+input CarrierIntelControlPatchInput {
+  version: Int
+  enrollmentPolicy: CarrierIntelEnrollmentPolicy @goField(omittable: true)
+  recentUsageDays: Int @goField(omittable: true)
+  includeOpenTenders: Boolean @goField(omittable: true)
+  autoEnrollOnCreate: Boolean @goField(omittable: true)
+  autoUnenrollOnInactive: Boolean @goField(omittable: true)
+  exclusiveWatchlist: Boolean @goField(omittable: true)
+  pollIntervalMinutes: Int @goField(omittable: true)
+  snapshotTtlHours: Int @goField(omittable: true)
+  fullProfileTtlDays: Int @goField(omittable: true)
+  preTenderRefreshEnabled: Boolean @goField(omittable: true)
+  preTenderMaxAgeHours: Int @goField(omittable: true)
+  hardMaxAgeHours: Int @goField(omittable: true)
+  confirmBlockingChanges: Boolean @goField(omittable: true)
+  outagePolicy: CarrierIntelOutagePolicy @goField(omittable: true)
+  autoDisqualifyOnBlock: Boolean @goField(omittable: true)
+  autoApplySafetyRating: Boolean @goField(omittable: true)
+  rules: [CarrierIntelRuleSettingInput!] @goField(omittable: true)
+  autoSyncFields: [CarrierIntelSyncField!] @goField(omittable: true)
+  monthlySpendCap: Decimal @goField(omittable: true)
+  softCapPercent: Int @goField(omittable: true)
+  dailyFullProfileCap: Int @goField(omittable: true)
+  rawRetentionDays: Int @goField(omittable: true)
+  snapshotHistoryLimit: Int @goField(omittable: true)
+  selfMonitoringEnabled: Boolean @goField(omittable: true)
+  confirmEstimatedCost: Boolean
+}
+
+input ResolveCarrierIntelEventInput {
+  id: ID!
+  resolution: CarrierIntelEventResolution!
+  note: String
+}
+
+input GrantCarrierIntelOverrideInput {
+  carrierId: ID!
+  ruleCode: String!
+  reason: String!
+  expiresAt: Timestamp
+}
+
+input ApplyCarrierIntelSuggestionsInput {
+  carrierId: ID!
+  fields: [CarrierIntelSyncField!]
+  policyIds: [ID!]
+}
+
+input CarrierIntelLookupInput {
+  dotNumber: String
+  docketNumber: String
+  depth: CarrierIntelDepth
+}
+
+input CarrierSourcingSearchInput {
+  text: String
+  state: String
+  originState: String
+  destinationState: String
+  minPowerUnits: Int
+  maxPowerUnits: Int
+  minAuthorityAgeDays: Int
+  hazmatOnly: Boolean
+  excludeBlocking: Boolean
+  excludeExistingCarriers: Boolean
+  limit: Int
+  offset: Int
+}
+
+input ImportSourcedCarrierInput {
+  dotNumber: String!
+  code: String
+  enrollMonitoring: Boolean
+}
+
+input VerifyCarrierEquipmentInput {
+  carrierAssignmentId: ID!
+  unitType: CarrierIntelUnitType!
+  vin: String
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+}
+
+extend type Query {
+  carrierIntelControl: CarrierIntelControl!
+  carrierIntelProvider: CarrierIntelProviderInfo!
+  carrierIntelRuleCatalog: [CarrierIntelRuleDefinition!]!
+  carrierIntelEvents(
+    input: DataTableConnectionInput!
+    filter: CarrierIntelEventFilterInput
+  ): CarrierIntelEventConnection!
+  carrierIntelMonitoringStatus: CarrierIntelMonitoringStatus!
+  carrierMonitoringEnrollments(
+    input: DataTableConnectionInput!
+    filter: CarrierMonitoringEnrollmentFilterInput
+  ): CarrierMonitoringEnrollmentConnection!
+  carrierIntelReviewQueue(limit: Int): [CarrierIntelSnapshot!]!
+  carrierIntelSnapshotHistory(carrierId: ID!, limit: Int): [CarrierIntelSnapshot!]!
+  carrierIntelUsage(month: Timestamp): CarrierIntelUsageSummary!
+  carrierIntelCostEstimate(
+    policy: CarrierIntelEnrollmentPolicy!
+    recentUsageDays: Int
+    includeOpenTenders: Boolean
+  ): CarrierIntelCostEstimate!
+  carrierIntelSyncPlan(carrierId: ID!): CarrierIntelSyncPlan!
+  carrierIntelOverrides(carrierId: ID!): [CarrierIntelOverride!]!
+  carrierIntelRawPayload(carrierId: ID!, snapshotId: ID!): JSON
+  carrierIntelLookup(input: CarrierIntelLookupInput!): CarrierIntelProspectLookup!
+  carrierSourcingSearch(input: CarrierSourcingSearchInput!): CarrierSourcingPage!
+  carrierSourcingAutocomplete(query: String!, limit: Int): [CarrierIntelSuggestion!]!
+  carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
+  myCarrierIntelligence(refresh: Boolean): MyCarrierIntelligence!
+}
+
+extend type Mutation {
+  updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
+  switchCarrierIntelProvider(provider: String!): CarrierIntelControl!
+  resumeCarrierIntelMonitoring: Boolean!
+  vetCarrier(carrierId: ID!, depth: CarrierIntelDepth, force: Boolean): CarrierIntelFetchResult!
+  vetCustomerBroker(customerId: ID!, force: Boolean): CarrierIntelFetchResult!
+  setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
+  acknowledgeCarrierIntelEvents(ids: [ID!]!): Int!
+  resolveCarrierIntelEvent(input: ResolveCarrierIntelEventInput!): CarrierIntelEvent!
+  markCarrierIntelReviewed(carrierId: ID!, note: String!): Boolean!
+  grantCarrierIntelOverride(input: GrantCarrierIntelOverrideInput!): CarrierIntelOverride!
+  revokeCarrierIntelOverride(id: ID!, reason: String!): CarrierIntelOverride!
+  applyCarrierIntelSuggestions(input: ApplyCarrierIntelSuggestionsInput!): Int!
+  importSourcedCarrier(input: ImportSourcedCarrierInput!): Carrier!
+  verifyCarrierEquipment(input: VerifyCarrierEquipmentInput!): CarrierEquipmentVerification!
+  overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier_settlement.graphqls", Input: `enum CarrierSettlementStatus {
@@ -84507,6 +89492,18 @@ func (ec *executionContext) childFields_Carrier(ctx context.Context, field graph
 		return ec.fieldContext_Carrier_contacts(ctx, field)
 	case "insurancePolicies":
 		return ec.fieldContext_Carrier_insurancePolicies(ctx, field)
+	case "intelRiskLevel":
+		return ec.fieldContext_Carrier_intelRiskLevel(ctx, field)
+	case "intelReviewRequired":
+		return ec.fieldContext_Carrier_intelReviewRequired(ctx, field)
+	case "intelBlockingCount":
+		return ec.fieldContext_Carrier_intelBlockingCount(ctx, field)
+	case "intelligence":
+		return ec.fieldContext_Carrier_intelligence(ctx, field)
+	case "openIntelEventCount":
+		return ec.fieldContext_Carrier_openIntelEventCount(ctx, field)
+	case "monitoringEnrollment":
+		return ec.fieldContext_Carrier_monitoringEnrollment(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Carrier", field.Name)
 }
@@ -84723,6 +89720,58 @@ func (ec *executionContext) childFields_CarrierEdge(ctx context.Context, field g
 	return nil, fmt.Errorf("no field named %q was found under type CarrierEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_CarrierEquipmentVerification(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierEquipmentVerification_id(ctx, field)
+	case "carrierAssignmentId":
+		return ec.fieldContext_CarrierEquipmentVerification_carrierAssignmentId(ctx, field)
+	case "shipmentMoveId":
+		return ec.fieldContext_CarrierEquipmentVerification_shipmentMoveId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierEquipmentVerification_carrierId(ctx, field)
+	case "expectedDotNumber":
+		return ec.fieldContext_CarrierEquipmentVerification_expectedDotNumber(ctx, field)
+	case "unitType":
+		return ec.fieldContext_CarrierEquipmentVerification_unitType(ctx, field)
+	case "vin":
+		return ec.fieldContext_CarrierEquipmentVerification_vin(ctx, field)
+	case "plateNumber":
+		return ec.fieldContext_CarrierEquipmentVerification_plateNumber(ctx, field)
+	case "plateState":
+		return ec.fieldContext_CarrierEquipmentVerification_plateState(ctx, field)
+	case "unitNumber":
+		return ec.fieldContext_CarrierEquipmentVerification_unitNumber(ctx, field)
+	case "result":
+		return ec.fieldContext_CarrierEquipmentVerification_result(ctx, field)
+	case "matchedDotNumbers":
+		return ec.fieldContext_CarrierEquipmentVerification_matchedDotNumbers(ctx, field)
+	case "matchedLegalName":
+		return ec.fieldContext_CarrierEquipmentVerification_matchedLegalName(ctx, field)
+	case "detail":
+		return ec.fieldContext_CarrierEquipmentVerification_detail(ctx, field)
+	case "mismatchReason":
+		return ec.fieldContext_CarrierEquipmentVerification_mismatchReason(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierEquipmentVerification_provider(ctx, field)
+	case "verifiedById":
+		return ec.fieldContext_CarrierEquipmentVerification_verifiedById(ctx, field)
+	case "verifiedAt":
+		return ec.fieldContext_CarrierEquipmentVerification_verifiedAt(ctx, field)
+	case "overrideById":
+		return ec.fieldContext_CarrierEquipmentVerification_overrideById(ctx, field)
+	case "overrideReason":
+		return ec.fieldContext_CarrierEquipmentVerification_overrideReason(ctx, field)
+	case "overriddenAt":
+		return ec.fieldContext_CarrierEquipmentVerification_overriddenAt(ctx, field)
+	case "cleared":
+		return ec.fieldContext_CarrierEquipmentVerification_cleared(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierEquipmentVerification_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierEquipmentVerification", field.Name)
+}
+
 func (ec *executionContext) childFields_CarrierInsurancePolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -84755,6 +89804,1088 @@ func (ec *executionContext) childFields_CarrierInsurancePolicy(ctx context.Conte
 		return ec.fieldContext_CarrierInsurancePolicy_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CarrierInsurancePolicy", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelAddress(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "line1":
+		return ec.fieldContext_CarrierIntelAddress_line1(ctx, field)
+	case "city":
+		return ec.fieldContext_CarrierIntelAddress_city(ctx, field)
+	case "state":
+		return ec.fieldContext_CarrierIntelAddress_state(ctx, field)
+	case "postalCode":
+		return ec.fieldContext_CarrierIntelAddress_postalCode(ctx, field)
+	case "country":
+		return ec.fieldContext_CarrierIntelAddress_country(ctx, field)
+	case "undelivered":
+		return ec.fieldContext_CarrierIntelAddress_undelivered(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelAddress", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelAuthority(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "common":
+		return ec.fieldContext_CarrierIntelAuthority_common(ctx, field)
+	case "contract":
+		return ec.fieldContext_CarrierIntelAuthority_contract(ctx, field)
+	case "broker":
+		return ec.fieldContext_CarrierIntelAuthority_broker(ctx, field)
+	case "totalRevocations":
+		return ec.fieldContext_CarrierIntelAuthority_totalRevocations(ctx, field)
+	case "lastRevocationAt":
+		return ec.fieldContext_CarrierIntelAuthority_lastRevocationAt(ctx, field)
+	case "history":
+		return ec.fieldContext_CarrierIntelAuthority_history(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelAuthority", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelAuthorityGrant(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "status":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_status(ctx, field)
+	case "pending":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_pending(ctx, field)
+	case "underReview":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_underReview(ctx, field)
+	case "revocationPending":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_revocationPending(ctx, field)
+	case "grantedAt":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_grantedAt(ctx, field)
+	case "ageDays":
+		return ec.fieldContext_CarrierIntelAuthorityGrant_ageDays(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelAuthorityGrant", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelAuthorityHistoryEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "authorityType":
+		return ec.fieldContext_CarrierIntelAuthorityHistoryEntry_authorityType(ctx, field)
+	case "action":
+		return ec.fieldContext_CarrierIntelAuthorityHistoryEntry_action(ctx, field)
+	case "servedAt":
+		return ec.fieldContext_CarrierIntelAuthorityHistoryEntry_servedAt(ctx, field)
+	case "effectiveAt":
+		return ec.fieldContext_CarrierIntelAuthorityHistoryEntry_effectiveAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelAuthorityHistoryEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelBasicMeasure(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "basic":
+		return ec.fieldContext_CarrierIntelBasicMeasure_basic(ctx, field)
+	case "measure":
+		return ec.fieldContext_CarrierIntelBasicMeasure_measure(ctx, field)
+	case "percentile":
+		return ec.fieldContext_CarrierIntelBasicMeasure_percentile(ctx, field)
+	case "threshold":
+		return ec.fieldContext_CarrierIntelBasicMeasure_threshold(ctx, field)
+	case "alert":
+		return ec.fieldContext_CarrierIntelBasicMeasure_alert(ctx, field)
+	case "roadsideAlert":
+		return ec.fieldContext_CarrierIntelBasicMeasure_roadsideAlert(ctx, field)
+	case "acIndicator":
+		return ec.fieldContext_CarrierIntelBasicMeasure_acIndicator(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelBasicMeasure", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelBenchmarks(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "anyAnomaly":
+		return ec.fieldContext_CarrierIntelBenchmarks_anyAnomaly(ctx, field)
+	case "inspectionMileageAnomaly":
+		return ec.fieldContext_CarrierIntelBenchmarks_inspectionMileageAnomaly(ctx, field)
+	case "inspectedUnitsAnomaly":
+		return ec.fieldContext_CarrierIntelBenchmarks_inspectedUnitsAnomaly(ctx, field)
+	case "powerUnitMileageAnomaly":
+		return ec.fieldContext_CarrierIntelBenchmarks_powerUnitMileageAnomaly(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelBenchmarks", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelChangeHistory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "nameChanges":
+		return ec.fieldContext_CarrierIntelChangeHistory_nameChanges(ctx, field)
+	case "nameLastChangedAt":
+		return ec.fieldContext_CarrierIntelChangeHistory_nameLastChangedAt(ctx, field)
+	case "emailChanges":
+		return ec.fieldContext_CarrierIntelChangeHistory_emailChanges(ctx, field)
+	case "emailLastChangedAt":
+		return ec.fieldContext_CarrierIntelChangeHistory_emailLastChangedAt(ctx, field)
+	case "phoneChanges":
+		return ec.fieldContext_CarrierIntelChangeHistory_phoneChanges(ctx, field)
+	case "phoneLastChangedAt":
+		return ec.fieldContext_CarrierIntelChangeHistory_phoneLastChangedAt(ctx, field)
+	case "addressChanges":
+		return ec.fieldContext_CarrierIntelChangeHistory_addressChanges(ctx, field)
+	case "addressLastChangedAt":
+		return ec.fieldContext_CarrierIntelChangeHistory_addressLastChangedAt(ctx, field)
+	case "contactChanges":
+		return ec.fieldContext_CarrierIntelChangeHistory_contactChanges(ctx, field)
+	case "contactLastChangedAt":
+		return ec.fieldContext_CarrierIntelChangeHistory_contactLastChangedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelChangeHistory", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelContacts(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "phone":
+		return ec.fieldContext_CarrierIntelContacts_phone(ctx, field)
+	case "cellphone":
+		return ec.fieldContext_CarrierIntelContacts_cellphone(ctx, field)
+	case "fax":
+		return ec.fieldContext_CarrierIntelContacts_fax(ctx, field)
+	case "email":
+		return ec.fieldContext_CarrierIntelContacts_email(ctx, field)
+	case "primaryContact":
+		return ec.fieldContext_CarrierIntelContacts_primaryContact(ctx, field)
+	case "secondaryContact":
+		return ec.fieldContext_CarrierIntelContacts_secondaryContact(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelContacts", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelControl(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierIntelControl_id(ctx, field)
+	case "primaryProvider":
+		return ec.fieldContext_CarrierIntelControl_primaryProvider(ctx, field)
+	case "fallbackProvider":
+		return ec.fieldContext_CarrierIntelControl_fallbackProvider(ctx, field)
+	case "enrollmentPolicy":
+		return ec.fieldContext_CarrierIntelControl_enrollmentPolicy(ctx, field)
+	case "recentUsageDays":
+		return ec.fieldContext_CarrierIntelControl_recentUsageDays(ctx, field)
+	case "includeOpenTenders":
+		return ec.fieldContext_CarrierIntelControl_includeOpenTenders(ctx, field)
+	case "autoEnrollOnCreate":
+		return ec.fieldContext_CarrierIntelControl_autoEnrollOnCreate(ctx, field)
+	case "autoUnenrollOnInactive":
+		return ec.fieldContext_CarrierIntelControl_autoUnenrollOnInactive(ctx, field)
+	case "exclusiveWatchlist":
+		return ec.fieldContext_CarrierIntelControl_exclusiveWatchlist(ctx, field)
+	case "pollIntervalMinutes":
+		return ec.fieldContext_CarrierIntelControl_pollIntervalMinutes(ctx, field)
+	case "snapshotTtlHours":
+		return ec.fieldContext_CarrierIntelControl_snapshotTtlHours(ctx, field)
+	case "fullProfileTtlDays":
+		return ec.fieldContext_CarrierIntelControl_fullProfileTtlDays(ctx, field)
+	case "preTenderRefreshEnabled":
+		return ec.fieldContext_CarrierIntelControl_preTenderRefreshEnabled(ctx, field)
+	case "preTenderMaxAgeHours":
+		return ec.fieldContext_CarrierIntelControl_preTenderMaxAgeHours(ctx, field)
+	case "hardMaxAgeHours":
+		return ec.fieldContext_CarrierIntelControl_hardMaxAgeHours(ctx, field)
+	case "confirmBlockingChanges":
+		return ec.fieldContext_CarrierIntelControl_confirmBlockingChanges(ctx, field)
+	case "outagePolicy":
+		return ec.fieldContext_CarrierIntelControl_outagePolicy(ctx, field)
+	case "autoDisqualifyOnBlock":
+		return ec.fieldContext_CarrierIntelControl_autoDisqualifyOnBlock(ctx, field)
+	case "autoApplySafetyRating":
+		return ec.fieldContext_CarrierIntelControl_autoApplySafetyRating(ctx, field)
+	case "rules":
+		return ec.fieldContext_CarrierIntelControl_rules(ctx, field)
+	case "autoSyncFields":
+		return ec.fieldContext_CarrierIntelControl_autoSyncFields(ctx, field)
+	case "monthlySpendCap":
+		return ec.fieldContext_CarrierIntelControl_monthlySpendCap(ctx, field)
+	case "softCapPercent":
+		return ec.fieldContext_CarrierIntelControl_softCapPercent(ctx, field)
+	case "dailyFullProfileCap":
+		return ec.fieldContext_CarrierIntelControl_dailyFullProfileCap(ctx, field)
+	case "rawRetentionDays":
+		return ec.fieldContext_CarrierIntelControl_rawRetentionDays(ctx, field)
+	case "snapshotHistoryLimit":
+		return ec.fieldContext_CarrierIntelControl_snapshotHistoryLimit(ctx, field)
+	case "selfMonitoringEnabled":
+		return ec.fieldContext_CarrierIntelControl_selfMonitoringEnabled(ctx, field)
+	case "policyVersion":
+		return ec.fieldContext_CarrierIntelControl_policyVersion(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierIntelControl_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CarrierIntelControl_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelControl", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelCostEstimate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "provider":
+		return ec.fieldContext_CarrierIntelCostEstimate_provider(ctx, field)
+	case "policy":
+		return ec.fieldContext_CarrierIntelCostEstimate_policy(ctx, field)
+	case "subjectCount":
+		return ec.fieldContext_CarrierIntelCostEstimate_subjectCount(ctx, field)
+	case "monthlyMonitoring":
+		return ec.fieldContext_CarrierIntelCostEstimate_monthlyMonitoring(ctx, field)
+	case "perSubject":
+		return ec.fieldContext_CarrierIntelCostEstimate_perSubject(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelCostEstimate", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelCrashes(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "total":
+		return ec.fieldContext_CarrierIntelCrashes_total(ctx, field)
+	case "fatal":
+		return ec.fieldContext_CarrierIntelCrashes_fatal(ctx, field)
+	case "injury":
+		return ec.fieldContext_CarrierIntelCrashes_injury(ctx, field)
+	case "tow":
+		return ec.fieldContext_CarrierIntelCrashes_tow(ctx, field)
+	case "lastCrashAt":
+		return ec.fieldContext_CarrierIntelCrashes_lastCrashAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelCrashes", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEnrollmentCounts(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "desired":
+		return ec.fieldContext_CarrierIntelEnrollmentCounts_desired(ctx, field)
+	case "active":
+		return ec.fieldContext_CarrierIntelEnrollmentCounts_active(ctx, field)
+	case "pending":
+		return ec.fieldContext_CarrierIntelEnrollmentCounts_pending(ctx, field)
+	case "failed":
+		return ec.fieldContext_CarrierIntelEnrollmentCounts_failed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEnrollmentCounts", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEquipment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "vin":
+		return ec.fieldContext_CarrierIntelEquipment_vin(ctx, field)
+	case "unitType":
+		return ec.fieldContext_CarrierIntelEquipment_unitType(ctx, field)
+	case "category":
+		return ec.fieldContext_CarrierIntelEquipment_category(ctx, field)
+	case "make":
+		return ec.fieldContext_CarrierIntelEquipment_make(ctx, field)
+	case "model":
+		return ec.fieldContext_CarrierIntelEquipment_model(ctx, field)
+	case "year":
+		return ec.fieldContext_CarrierIntelEquipment_year(ctx, field)
+	case "plateNumber":
+		return ec.fieldContext_CarrierIntelEquipment_plateNumber(ctx, field)
+	case "plateState":
+		return ec.fieldContext_CarrierIntelEquipment_plateState(ctx, field)
+	case "unitNumber":
+		return ec.fieldContext_CarrierIntelEquipment_unitNumber(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEquipment", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierIntelEvent_id(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_CarrierIntelEvent_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_CarrierIntelEvent_subjectId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierIntelEvent_carrierId(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_CarrierIntelEvent_dotNumber(ctx, field)
+	case "subjectName":
+		return ec.fieldContext_CarrierIntelEvent_subjectName(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierIntelEvent_provider(ctx, field)
+	case "source":
+		return ec.fieldContext_CarrierIntelEvent_source(ctx, field)
+	case "category":
+		return ec.fieldContext_CarrierIntelEvent_category(ctx, field)
+	case "fieldPath":
+		return ec.fieldContext_CarrierIntelEvent_fieldPath(ctx, field)
+	case "ruleCode":
+		return ec.fieldContext_CarrierIntelEvent_ruleCode(ctx, field)
+	case "severity":
+		return ec.fieldContext_CarrierIntelEvent_severity(ctx, field)
+	case "action":
+		return ec.fieldContext_CarrierIntelEvent_action(ctx, field)
+	case "priorValue":
+		return ec.fieldContext_CarrierIntelEvent_priorValue(ctx, field)
+	case "currentValue":
+		return ec.fieldContext_CarrierIntelEvent_currentValue(ctx, field)
+	case "summary":
+		return ec.fieldContext_CarrierIntelEvent_summary(ctx, field)
+	case "vendorChangedAt":
+		return ec.fieldContext_CarrierIntelEvent_vendorChangedAt(ctx, field)
+	case "detectedAt":
+		return ec.fieldContext_CarrierIntelEvent_detectedAt(ctx, field)
+	case "status":
+		return ec.fieldContext_CarrierIntelEvent_status(ctx, field)
+	case "acknowledgedById":
+		return ec.fieldContext_CarrierIntelEvent_acknowledgedById(ctx, field)
+	case "acknowledgedAt":
+		return ec.fieldContext_CarrierIntelEvent_acknowledgedAt(ctx, field)
+	case "resolvedById":
+		return ec.fieldContext_CarrierIntelEvent_resolvedById(ctx, field)
+	case "resolvedAt":
+		return ec.fieldContext_CarrierIntelEvent_resolvedAt(ctx, field)
+	case "resolution":
+		return ec.fieldContext_CarrierIntelEvent_resolution(ctx, field)
+	case "resolutionNote":
+		return ec.fieldContext_CarrierIntelEvent_resolutionNote(ctx, field)
+	case "snapshotId":
+		return ec.fieldContext_CarrierIntelEvent_snapshotId(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierIntelEvent_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierIntelEvent_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CarrierIntelEvent_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEventConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_CarrierIntelEventConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_CarrierIntelEventConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_CarrierIntelEventConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEventConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEventCounts(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "open":
+		return ec.fieldContext_CarrierIntelEventCounts_open(ctx, field)
+	case "acknowledged":
+		return ec.fieldContext_CarrierIntelEventCounts_acknowledged(ctx, field)
+	case "bySeverity":
+		return ec.fieldContext_CarrierIntelEventCounts_bySeverity(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEventCounts", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelEventEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_CarrierIntelEventEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_CarrierIntelEventEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelEventEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelFeedState(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "provider":
+		return ec.fieldContext_CarrierIntelFeedState_provider(ctx, field)
+	case "feedType":
+		return ec.fieldContext_CarrierIntelFeedState_feedType(ctx, field)
+	case "lastPolledAt":
+		return ec.fieldContext_CarrierIntelFeedState_lastPolledAt(ctx, field)
+	case "lastSuccessAt":
+		return ec.fieldContext_CarrierIntelFeedState_lastSuccessAt(ctx, field)
+	case "nextPollAfter":
+		return ec.fieldContext_CarrierIntelFeedState_nextPollAfter(ctx, field)
+	case "pausedReason":
+		return ec.fieldContext_CarrierIntelFeedState_pausedReason(ctx, field)
+	case "pausedAt":
+		return ec.fieldContext_CarrierIntelFeedState_pausedAt(ctx, field)
+	case "failureCount":
+		return ec.fieldContext_CarrierIntelFeedState_failureCount(ctx, field)
+	case "lastError":
+		return ec.fieldContext_CarrierIntelFeedState_lastError(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelFeedState", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelFetchResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "snapshot":
+		return ec.fieldContext_CarrierIntelFetchResult_snapshot(ctx, field)
+	case "fromCache":
+		return ec.fieldContext_CarrierIntelFetchResult_fromCache(ctx, field)
+	case "usedFallback":
+		return ec.fieldContext_CarrierIntelFetchResult_usedFallback(ctx, field)
+	case "raisedCount":
+		return ec.fieldContext_CarrierIntelFetchResult_raisedCount(ctx, field)
+	case "changeCount":
+		return ec.fieldContext_CarrierIntelFetchResult_changeCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelFetchResult", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelFieldUpdate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "field":
+		return ec.fieldContext_CarrierIntelFieldUpdate_field(ctx, field)
+	case "current":
+		return ec.fieldContext_CarrierIntelFieldUpdate_current(ctx, field)
+	case "proposed":
+		return ec.fieldContext_CarrierIntelFieldUpdate_proposed(ctx, field)
+	case "reason":
+		return ec.fieldContext_CarrierIntelFieldUpdate_reason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelFieldUpdate", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelFinding(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_CarrierIntelFinding_code(ctx, field)
+	case "category":
+		return ec.fieldContext_CarrierIntelFinding_category(ctx, field)
+	case "action":
+		return ec.fieldContext_CarrierIntelFinding_action(ctx, field)
+	case "severity":
+		return ec.fieldContext_CarrierIntelFinding_severity(ctx, field)
+	case "message":
+		return ec.fieldContext_CarrierIntelFinding_message(ctx, field)
+	case "unverifiable":
+		return ec.fieldContext_CarrierIntelFinding_unverifiable(ctx, field)
+	case "unconfirmed":
+		return ec.fieldContext_CarrierIntelFinding_unconfirmed(ctx, field)
+	case "overridden":
+		return ec.fieldContext_CarrierIntelFinding_overridden(ctx, field)
+	case "overrideId":
+		return ec.fieldContext_CarrierIntelFinding_overrideId(ctx, field)
+	case "overrideExpiresAt":
+		return ec.fieldContext_CarrierIntelFinding_overrideExpiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelFinding", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelFleet(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "powerUnits":
+		return ec.fieldContext_CarrierIntelFleet_powerUnits(ctx, field)
+	case "drivers":
+		return ec.fieldContext_CarrierIntelFleet_drivers(ctx, field)
+	case "cdlDrivers":
+		return ec.fieldContext_CarrierIntelFleet_cdlDrivers(ctx, field)
+	case "ownedTractors":
+		return ec.fieldContext_CarrierIntelFleet_ownedTractors(ctx, field)
+	case "termLeasedTractors":
+		return ec.fieldContext_CarrierIntelFleet_termLeasedTractors(ctx, field)
+	case "ownedTrailers":
+		return ec.fieldContext_CarrierIntelFleet_ownedTrailers(ctx, field)
+	case "termLeasedTrailers":
+		return ec.fieldContext_CarrierIntelFleet_termLeasedTrailers(ctx, field)
+	case "trailers":
+		return ec.fieldContext_CarrierIntelFleet_trailers(ctx, field)
+	case "trucks":
+		return ec.fieldContext_CarrierIntelFleet_trucks(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelFleet", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelIdentity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "dotNumber":
+		return ec.fieldContext_CarrierIntelIdentity_dotNumber(ctx, field)
+	case "docketPrefix":
+		return ec.fieldContext_CarrierIntelIdentity_docketPrefix(ctx, field)
+	case "docketNumber":
+		return ec.fieldContext_CarrierIntelIdentity_docketNumber(ctx, field)
+	case "legalName":
+		return ec.fieldContext_CarrierIntelIdentity_legalName(ctx, field)
+	case "dbaName":
+		return ec.fieldContext_CarrierIntelIdentity_dbaName(ctx, field)
+	case "ein":
+		return ec.fieldContext_CarrierIntelIdentity_ein(ctx, field)
+	case "usdotStatus":
+		return ec.fieldContext_CarrierIntelIdentity_usdotStatus(ctx, field)
+	case "entityType":
+		return ec.fieldContext_CarrierIntelIdentity_entityType(ctx, field)
+	case "carrierOperation":
+		return ec.fieldContext_CarrierIntelIdentity_carrierOperation(ctx, field)
+	case "dotAddedAt":
+		return ec.fieldContext_CarrierIntelIdentity_dotAddedAt(ctx, field)
+	case "dotAgeDays":
+		return ec.fieldContext_CarrierIntelIdentity_dotAgeDays(ctx, field)
+	case "physicalAddress":
+		return ec.fieldContext_CarrierIntelIdentity_physicalAddress(ctx, field)
+	case "mailingAddress":
+		return ec.fieldContext_CarrierIntelIdentity_mailingAddress(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelIdentity", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelInspections(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "total":
+		return ec.fieldContext_CarrierIntelInspections_total(ctx, field)
+	case "driver":
+		return ec.fieldContext_CarrierIntelInspections_driver(ctx, field)
+	case "vehicle":
+		return ec.fieldContext_CarrierIntelInspections_vehicle(ctx, field)
+	case "hazmat":
+		return ec.fieldContext_CarrierIntelInspections_hazmat(ctx, field)
+	case "driverOos":
+		return ec.fieldContext_CarrierIntelInspections_driverOos(ctx, field)
+	case "vehicleOos":
+		return ec.fieldContext_CarrierIntelInspections_vehicleOos(ctx, field)
+	case "hazmatOos":
+		return ec.fieldContext_CarrierIntelInspections_hazmatOos(ctx, field)
+	case "driverOosRate":
+		return ec.fieldContext_CarrierIntelInspections_driverOosRate(ctx, field)
+	case "vehicleOosRate":
+		return ec.fieldContext_CarrierIntelInspections_vehicleOosRate(ctx, field)
+	case "hazmatOosRate":
+		return ec.fieldContext_CarrierIntelInspections_hazmatOosRate(ctx, field)
+	case "nationalDriverOosRate":
+		return ec.fieldContext_CarrierIntelInspections_nationalDriverOosRate(ctx, field)
+	case "nationalVehicleOosRate":
+		return ec.fieldContext_CarrierIntelInspections_nationalVehicleOosRate(ctx, field)
+	case "nationalHazmatOosRate":
+		return ec.fieldContext_CarrierIntelInspections_nationalHazmatOosRate(ctx, field)
+	case "lastInspectionAt":
+		return ec.fieldContext_CarrierIntelInspections_lastInspectionAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelInspections", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelInsurance(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "bipdOnFile":
+		return ec.fieldContext_CarrierIntelInsurance_bipdOnFile(ctx, field)
+	case "bipdRequired":
+		return ec.fieldContext_CarrierIntelInsurance_bipdRequired(ctx, field)
+	case "cargoOnFile":
+		return ec.fieldContext_CarrierIntelInsurance_cargoOnFile(ctx, field)
+	case "cargoRequired":
+		return ec.fieldContext_CarrierIntelInsurance_cargoRequired(ctx, field)
+	case "bondOnFile":
+		return ec.fieldContext_CarrierIntelInsurance_bondOnFile(ctx, field)
+	case "bondRequired":
+		return ec.fieldContext_CarrierIntelInsurance_bondRequired(ctx, field)
+	case "pendingCancelAt":
+		return ec.fieldContext_CarrierIntelInsurance_pendingCancelAt(ctx, field)
+	case "lastCanceledAt":
+		return ec.fieldContext_CarrierIntelInsurance_lastCanceledAt(ctx, field)
+	case "cancelCount":
+		return ec.fieldContext_CarrierIntelInsurance_cancelCount(ctx, field)
+	case "filings":
+		return ec.fieldContext_CarrierIntelInsurance_filings(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelInsurance", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelInsuranceChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_CarrierIntelInsuranceChange_kind(ctx, field)
+	case "policyId":
+		return ec.fieldContext_CarrierIntelInsuranceChange_policyId(ctx, field)
+	case "policyType":
+		return ec.fieldContext_CarrierIntelInsuranceChange_policyType(ctx, field)
+	case "policyNumber":
+		return ec.fieldContext_CarrierIntelInsuranceChange_policyNumber(ctx, field)
+	case "providerName":
+		return ec.fieldContext_CarrierIntelInsuranceChange_providerName(ctx, field)
+	case "currentCoverage":
+		return ec.fieldContext_CarrierIntelInsuranceChange_currentCoverage(ctx, field)
+	case "proposedCoverage":
+		return ec.fieldContext_CarrierIntelInsuranceChange_proposedCoverage(ctx, field)
+	case "currentExpirationDate":
+		return ec.fieldContext_CarrierIntelInsuranceChange_currentExpirationDate(ctx, field)
+	case "proposedExpirationDate":
+		return ec.fieldContext_CarrierIntelInsuranceChange_proposedExpirationDate(ctx, field)
+	case "effectiveDate":
+		return ec.fieldContext_CarrierIntelInsuranceChange_effectiveDate(ctx, field)
+	case "reason":
+		return ec.fieldContext_CarrierIntelInsuranceChange_reason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelInsuranceChange", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelInsuranceFiling(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_type(ctx, field)
+	case "insurerName":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_insurerName(ctx, field)
+	case "policyNumber":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_policyNumber(ctx, field)
+	case "coverage":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_coverage(ctx, field)
+	case "effectiveAt":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_effectiveAt(ctx, field)
+	case "cancelEffectiveAt":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_cancelEffectiveAt(ctx, field)
+	case "cancelMethod":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_cancelMethod(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelInsuranceFiling", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelLane(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "originCity":
+		return ec.fieldContext_CarrierIntelLane_originCity(ctx, field)
+	case "originState":
+		return ec.fieldContext_CarrierIntelLane_originState(ctx, field)
+	case "destinationCity":
+		return ec.fieldContext_CarrierIntelLane_destinationCity(ctx, field)
+	case "destinationState":
+		return ec.fieldContext_CarrierIntelLane_destinationState(ctx, field)
+	case "loads":
+		return ec.fieldContext_CarrierIntelLane_loads(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelLane", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelLanes(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "totalLoads":
+		return ec.fieldContext_CarrierIntelLanes_totalLoads(ctx, field)
+	case "ftlPercent":
+		return ec.fieldContext_CarrierIntelLanes_ftlPercent(ctx, field)
+	case "ltlPercent":
+		return ec.fieldContext_CarrierIntelLanes_ltlPercent(ctx, field)
+	case "deadheadPercent":
+		return ec.fieldContext_CarrierIntelLanes_deadheadPercent(ctx, field)
+	case "firstLoadAt":
+		return ec.fieldContext_CarrierIntelLanes_firstLoadAt(ctx, field)
+	case "lastLoadAt":
+		return ec.fieldContext_CarrierIntelLanes_lastLoadAt(ctx, field)
+	case "preferred":
+		return ec.fieldContext_CarrierIntelLanes_preferred(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelLanes", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelMonitoringStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "provider":
+		return ec.fieldContext_CarrierIntelMonitoringStatus_provider(ctx, field)
+	case "enrollmentCounts":
+		return ec.fieldContext_CarrierIntelMonitoringStatus_enrollmentCounts(ctx, field)
+	case "eventCounts":
+		return ec.fieldContext_CarrierIntelMonitoringStatus_eventCounts(ctx, field)
+	case "feeds":
+		return ec.fieldContext_CarrierIntelMonitoringStatus_feeds(ctx, field)
+	case "reviewQueueCount":
+		return ec.fieldContext_CarrierIntelMonitoringStatus_reviewQueueCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelMonitoringStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelNetwork(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "sharedAddresses":
+		return ec.fieldContext_CarrierIntelNetwork_sharedAddresses(ctx, field)
+	case "sharedPhones":
+		return ec.fieldContext_CarrierIntelNetwork_sharedPhones(ctx, field)
+	case "sharedEmails":
+		return ec.fieldContext_CarrierIntelNetwork_sharedEmails(ctx, field)
+	case "sharedEins":
+		return ec.fieldContext_CarrierIntelNetwork_sharedEins(ctx, field)
+	case "sharedEquipment":
+		return ec.fieldContext_CarrierIntelNetwork_sharedEquipment(ctx, field)
+	case "links":
+		return ec.fieldContext_CarrierIntelNetwork_links(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelNetwork", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelNetworkLink(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_CarrierIntelNetworkLink_kind(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_CarrierIntelNetworkLink_dotNumber(ctx, field)
+	case "legalName":
+		return ec.fieldContext_CarrierIntelNetworkLink_legalName(ctx, field)
+	case "value":
+		return ec.fieldContext_CarrierIntelNetworkLink_value(ctx, field)
+	case "status":
+		return ec.fieldContext_CarrierIntelNetworkLink_status(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelNetworkLink", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelOperations(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "classification":
+		return ec.fieldContext_CarrierIntelOperations_classification(ctx, field)
+	case "cargoCarried":
+		return ec.fieldContext_CarrierIntelOperations_cargoCarried(ctx, field)
+	case "hazmatCarrier":
+		return ec.fieldContext_CarrierIntelOperations_hazmatCarrier(ctx, field)
+	case "mcs150At":
+		return ec.fieldContext_CarrierIntelOperations_mcs150At(ctx, field)
+	case "mcs150Mileage":
+		return ec.fieldContext_CarrierIntelOperations_mcs150Mileage(ctx, field)
+	case "boc3OnFile":
+		return ec.fieldContext_CarrierIntelOperations_boc3OnFile(ctx, field)
+	case "boc3Agent":
+		return ec.fieldContext_CarrierIntelOperations_boc3Agent(ctx, field)
+	case "smartWay":
+		return ec.fieldContext_CarrierIntelOperations_smartWay(ctx, field)
+	case "carbCompliant":
+		return ec.fieldContext_CarrierIntelOperations_carbCompliant(ctx, field)
+	case "phmsa":
+		return ec.fieldContext_CarrierIntelOperations_phmsa(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelOperations", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelOverride(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierIntelOverride_id(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierIntelOverride_carrierId(ctx, field)
+	case "ruleCode":
+		return ec.fieldContext_CarrierIntelOverride_ruleCode(ctx, field)
+	case "reason":
+		return ec.fieldContext_CarrierIntelOverride_reason(ctx, field)
+	case "grantedById":
+		return ec.fieldContext_CarrierIntelOverride_grantedById(ctx, field)
+	case "grantedAt":
+		return ec.fieldContext_CarrierIntelOverride_grantedAt(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_CarrierIntelOverride_expiresAt(ctx, field)
+	case "revokedById":
+		return ec.fieldContext_CarrierIntelOverride_revokedById(ctx, field)
+	case "revokedAt":
+		return ec.fieldContext_CarrierIntelOverride_revokedAt(ctx, field)
+	case "revokeReason":
+		return ec.fieldContext_CarrierIntelOverride_revokeReason(ctx, field)
+	case "active":
+		return ec.fieldContext_CarrierIntelOverride_active(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierIntelOverride_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierIntelOverride_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelOverride", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "identity":
+		return ec.fieldContext_CarrierIntelProfile_identity(ctx, field)
+	case "authority":
+		return ec.fieldContext_CarrierIntelProfile_authority(ctx, field)
+	case "insurance":
+		return ec.fieldContext_CarrierIntelProfile_insurance(ctx, field)
+	case "safety":
+		return ec.fieldContext_CarrierIntelProfile_safety(ctx, field)
+	case "basics":
+		return ec.fieldContext_CarrierIntelProfile_basics(ctx, field)
+	case "inspections":
+		return ec.fieldContext_CarrierIntelProfile_inspections(ctx, field)
+	case "crashes":
+		return ec.fieldContext_CarrierIntelProfile_crashes(ctx, field)
+	case "fleet":
+		return ec.fieldContext_CarrierIntelProfile_fleet(ctx, field)
+	case "equipment":
+		return ec.fieldContext_CarrierIntelProfile_equipment(ctx, field)
+	case "contacts":
+		return ec.fieldContext_CarrierIntelProfile_contacts(ctx, field)
+	case "operations":
+		return ec.fieldContext_CarrierIntelProfile_operations(ctx, field)
+	case "changeHistory":
+		return ec.fieldContext_CarrierIntelProfile_changeHistory(ctx, field)
+	case "network":
+		return ec.fieldContext_CarrierIntelProfile_network(ctx, field)
+	case "lanes":
+		return ec.fieldContext_CarrierIntelProfile_lanes(ctx, field)
+	case "benchmarks":
+		return ec.fieldContext_CarrierIntelProfile_benchmarks(ctx, field)
+	case "coverage":
+		return ec.fieldContext_CarrierIntelProfile_coverage(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelProspectLookup(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "snapshot":
+		return ec.fieldContext_CarrierIntelProspectLookup_snapshot(ctx, field)
+	case "existingCarrierId":
+		return ec.fieldContext_CarrierIntelProspectLookup_existingCarrierId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelProspectLookup", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelProviderInfo(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "configured":
+		return ec.fieldContext_CarrierIntelProviderInfo_configured(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierIntelProviderInfo_provider(ctx, field)
+	case "fallbackProvider":
+		return ec.fieldContext_CarrierIntelProviderInfo_fallbackProvider(ctx, field)
+	case "capabilities":
+		return ec.fieldContext_CarrierIntelProviderInfo_capabilities(ctx, field)
+	case "sections":
+		return ec.fieldContext_CarrierIntelProviderInfo_sections(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelProviderInfo", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelRuleDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_CarrierIntelRuleDefinition_code(ctx, field)
+	case "label":
+		return ec.fieldContext_CarrierIntelRuleDefinition_label(ctx, field)
+	case "description":
+		return ec.fieldContext_CarrierIntelRuleDefinition_description(ctx, field)
+	case "category":
+		return ec.fieldContext_CarrierIntelRuleDefinition_category(ctx, field)
+	case "defaultAction":
+		return ec.fieldContext_CarrierIntelRuleDefinition_defaultAction(ctx, field)
+	case "recommendedAction":
+		return ec.fieldContext_CarrierIntelRuleDefinition_recommendedAction(ctx, field)
+	case "requiredSections":
+		return ec.fieldContext_CarrierIntelRuleDefinition_requiredSections(ctx, field)
+	case "params":
+		return ec.fieldContext_CarrierIntelRuleDefinition_params(ctx, field)
+	case "subjects":
+		return ec.fieldContext_CarrierIntelRuleDefinition_subjects(ctx, field)
+	case "gateRelevant":
+		return ec.fieldContext_CarrierIntelRuleDefinition_gateRelevant(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelRuleDefinition", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelRuleParam(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_CarrierIntelRuleParam_key(ctx, field)
+	case "label":
+		return ec.fieldContext_CarrierIntelRuleParam_label(ctx, field)
+	case "type":
+		return ec.fieldContext_CarrierIntelRuleParam_type(ctx, field)
+	case "default":
+		return ec.fieldContext_CarrierIntelRuleParam_default(ctx, field)
+	case "min":
+		return ec.fieldContext_CarrierIntelRuleParam_min(ctx, field)
+	case "max":
+		return ec.fieldContext_CarrierIntelRuleParam_max(ctx, field)
+	case "options":
+		return ec.fieldContext_CarrierIntelRuleParam_options(ctx, field)
+	case "helpText":
+		return ec.fieldContext_CarrierIntelRuleParam_helpText(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelRuleParam", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelRuleSetting(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_CarrierIntelRuleSetting_code(ctx, field)
+	case "action":
+		return ec.fieldContext_CarrierIntelRuleSetting_action(ctx, field)
+	case "params":
+		return ec.fieldContext_CarrierIntelRuleSetting_params(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelRuleSetting", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelRuleSettingParam(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_CarrierIntelRuleSettingParam_key(ctx, field)
+	case "value":
+		return ec.fieldContext_CarrierIntelRuleSettingParam_value(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelRuleSettingParam", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelSafety(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "rating":
+		return ec.fieldContext_CarrierIntelSafety_rating(ctx, field)
+	case "ratingDate":
+		return ec.fieldContext_CarrierIntelSafety_ratingDate(ctx, field)
+	case "issValue":
+		return ec.fieldContext_CarrierIntelSafety_issValue(ctx, field)
+	case "issRecommendation":
+		return ec.fieldContext_CarrierIntelSafety_issRecommendation(ctx, field)
+	case "riskScore":
+		return ec.fieldContext_CarrierIntelSafety_riskScore(ctx, field)
+	case "riskProbability":
+		return ec.fieldContext_CarrierIntelSafety_riskProbability(ctx, field)
+	case "safetyScore":
+		return ec.fieldContext_CarrierIntelSafety_safetyScore(ctx, field)
+	case "outOfServiceOrder":
+		return ec.fieldContext_CarrierIntelSafety_outOfServiceOrder(ctx, field)
+	case "outOfServiceAt":
+		return ec.fieldContext_CarrierIntelSafety_outOfServiceAt(ctx, field)
+	case "latestReviewType":
+		return ec.fieldContext_CarrierIntelSafety_latestReviewType(ctx, field)
+	case "latestReviewAt":
+		return ec.fieldContext_CarrierIntelSafety_latestReviewAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelSafety", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelSeverityCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "severity":
+		return ec.fieldContext_CarrierIntelSeverityCount_severity(ctx, field)
+	case "count":
+		return ec.fieldContext_CarrierIntelSeverityCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelSeverityCount", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelSnapshot(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierIntelSnapshot_id(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_CarrierIntelSnapshot_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_CarrierIntelSnapshot_subjectId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierIntelSnapshot_carrierId(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_CarrierIntelSnapshot_dotNumber(ctx, field)
+	case "docketNumber":
+		return ec.fieldContext_CarrierIntelSnapshot_docketNumber(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierIntelSnapshot_provider(ctx, field)
+	case "providerRef":
+		return ec.fieldContext_CarrierIntelSnapshot_providerRef(ctx, field)
+	case "depth":
+		return ec.fieldContext_CarrierIntelSnapshot_depth(ctx, field)
+	case "source":
+		return ec.fieldContext_CarrierIntelSnapshot_source(ctx, field)
+	case "isCurrent":
+		return ec.fieldContext_CarrierIntelSnapshot_isCurrent(ctx, field)
+	case "notFound":
+		return ec.fieldContext_CarrierIntelSnapshot_notFound(ctx, field)
+	case "profile":
+		return ec.fieldContext_CarrierIntelSnapshot_profile(ctx, field)
+	case "findings":
+		return ec.fieldContext_CarrierIntelSnapshot_findings(ctx, field)
+	case "blockingCodes":
+		return ec.fieldContext_CarrierIntelSnapshot_blockingCodes(ctx, field)
+	case "advisoryCodes":
+		return ec.fieldContext_CarrierIntelSnapshot_advisoryCodes(ctx, field)
+	case "riskLevel":
+		return ec.fieldContext_CarrierIntelSnapshot_riskLevel(ctx, field)
+	case "reviewState":
+		return ec.fieldContext_CarrierIntelSnapshot_reviewState(ctx, field)
+	case "reviewedById":
+		return ec.fieldContext_CarrierIntelSnapshot_reviewedById(ctx, field)
+	case "reviewedAt":
+		return ec.fieldContext_CarrierIntelSnapshot_reviewedAt(ctx, field)
+	case "reviewNote":
+		return ec.fieldContext_CarrierIntelSnapshot_reviewNote(ctx, field)
+	case "policyVersion":
+		return ec.fieldContext_CarrierIntelSnapshot_policyVersion(ctx, field)
+	case "fetchedAt":
+		return ec.fieldContext_CarrierIntelSnapshot_fetchedAt(ctx, field)
+	case "sourceAsOf":
+		return ec.fieldContext_CarrierIntelSnapshot_sourceAsOf(ctx, field)
+	case "confirmedAt":
+		return ec.fieldContext_CarrierIntelSnapshot_confirmedAt(ctx, field)
+	case "effectiveAsOf":
+		return ec.fieldContext_CarrierIntelSnapshot_effectiveAsOf(ctx, field)
+	case "hasRawPayload":
+		return ec.fieldContext_CarrierIntelSnapshot_hasRawPayload(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierIntelSnapshot_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelSnapshot", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelSuggestion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "dotNumber":
+		return ec.fieldContext_CarrierIntelSuggestion_dotNumber(ctx, field)
+	case "legalName":
+		return ec.fieldContext_CarrierIntelSuggestion_legalName(ctx, field)
+	case "dbaName":
+		return ec.fieldContext_CarrierIntelSuggestion_dbaName(ctx, field)
+	case "city":
+		return ec.fieldContext_CarrierIntelSuggestion_city(ctx, field)
+	case "state":
+		return ec.fieldContext_CarrierIntelSuggestion_state(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelSuggestion", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelSyncPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "autoApply":
+		return ec.fieldContext_CarrierIntelSyncPlan_autoApply(ctx, field)
+	case "suggestions":
+		return ec.fieldContext_CarrierIntelSyncPlan_suggestions(ctx, field)
+	case "insuranceAutoApply":
+		return ec.fieldContext_CarrierIntelSyncPlan_insuranceAutoApply(ctx, field)
+	case "insuranceSuggestions":
+		return ec.fieldContext_CarrierIntelSyncPlan_insuranceSuggestions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelSyncPlan", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelUsageDay(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "day":
+		return ec.fieldContext_CarrierIntelUsageDay_day(ctx, field)
+	case "endpoint":
+		return ec.fieldContext_CarrierIntelUsageDay_endpoint(ctx, field)
+	case "calls":
+		return ec.fieldContext_CarrierIntelUsageDay_calls(ctx, field)
+	case "billableUnits":
+		return ec.fieldContext_CarrierIntelUsageDay_billableUnits(ctx, field)
+	case "estimatedCost":
+		return ec.fieldContext_CarrierIntelUsageDay_estimatedCost(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelUsageDay", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelUsageRow(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "provider":
+		return ec.fieldContext_CarrierIntelUsageRow_provider(ctx, field)
+	case "endpoint":
+		return ec.fieldContext_CarrierIntelUsageRow_endpoint(ctx, field)
+	case "calls":
+		return ec.fieldContext_CarrierIntelUsageRow_calls(ctx, field)
+	case "billableUnits":
+		return ec.fieldContext_CarrierIntelUsageRow_billableUnits(ctx, field)
+	case "estimatedCost":
+		return ec.fieldContext_CarrierIntelUsageRow_estimatedCost(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelUsageRow", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierIntelUsageSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "monthStart":
+		return ec.fieldContext_CarrierIntelUsageSummary_monthStart(ctx, field)
+	case "monthToDate":
+		return ec.fieldContext_CarrierIntelUsageSummary_monthToDate(ctx, field)
+	case "cap":
+		return ec.fieldContext_CarrierIntelUsageSummary_cap(ctx, field)
+	case "softCapPercent":
+		return ec.fieldContext_CarrierIntelUsageSummary_softCapPercent(ctx, field)
+	case "byEndpoint":
+		return ec.fieldContext_CarrierIntelUsageSummary_byEndpoint(ctx, field)
+	case "daily":
+		return ec.fieldContext_CarrierIntelUsageSummary_daily(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelUsageSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_CarrierInvoiceMatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -84857,6 +90988,82 @@ func (ec *executionContext) childFields_CarrierLedgerEntry(ctx context.Context, 
 		return ec.fieldContext_CarrierLedgerEntry_createdAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CarrierLedgerEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierMonitoringEnrollment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierMonitoringEnrollment_id(ctx, field)
+	case "subjectType":
+		return ec.fieldContext_CarrierMonitoringEnrollment_subjectType(ctx, field)
+	case "subjectId":
+		return ec.fieldContext_CarrierMonitoringEnrollment_subjectId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierMonitoringEnrollment_carrierId(ctx, field)
+	case "subjectName":
+		return ec.fieldContext_CarrierMonitoringEnrollment_subjectName(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_CarrierMonitoringEnrollment_dotNumber(ctx, field)
+	case "docketNumber":
+		return ec.fieldContext_CarrierMonitoringEnrollment_docketNumber(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierMonitoringEnrollment_provider(ctx, field)
+	case "providerRef":
+		return ec.fieldContext_CarrierMonitoringEnrollment_providerRef(ctx, field)
+	case "mode":
+		return ec.fieldContext_CarrierMonitoringEnrollment_mode(ctx, field)
+	case "desiredState":
+		return ec.fieldContext_CarrierMonitoringEnrollment_desiredState(ctx, field)
+	case "vendorState":
+		return ec.fieldContext_CarrierMonitoringEnrollment_vendorState(ctx, field)
+	case "reason":
+		return ec.fieldContext_CarrierMonitoringEnrollment_reason(ctx, field)
+	case "ownedByTrenova":
+		return ec.fieldContext_CarrierMonitoringEnrollment_ownedByTrenova(ctx, field)
+	case "enrolledAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_enrolledAt(ctx, field)
+	case "unenrolledAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_unenrolledAt(ctx, field)
+	case "lastSyncedAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_lastSyncedAt(ctx, field)
+	case "lastConfirmedAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_lastConfirmedAt(ctx, field)
+	case "lastUsedAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_lastUsedAt(ctx, field)
+	case "failureCount":
+		return ec.fieldContext_CarrierMonitoringEnrollment_failureCount(ctx, field)
+	case "lastError":
+		return ec.fieldContext_CarrierMonitoringEnrollment_lastError(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierMonitoringEnrollment_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CarrierMonitoringEnrollment_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierMonitoringEnrollment", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierMonitoringEnrollmentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_CarrierMonitoringEnrollmentConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_CarrierMonitoringEnrollmentConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_CarrierMonitoringEnrollmentConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierMonitoringEnrollmentConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierMonitoringEnrollmentEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_CarrierMonitoringEnrollmentEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_CarrierMonitoringEnrollmentEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierMonitoringEnrollmentEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_CarrierSettlement(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -85145,6 +91352,42 @@ func (ec *executionContext) childFields_CarrierSettlementWorkspaceSummary(ctx co
 		return ec.fieldContext_CarrierSettlementWorkspaceSummary_openBatchId(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CarrierSettlementWorkspaceSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierSourcingPage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "items":
+		return ec.fieldContext_CarrierSourcingPage_items(ctx, field)
+	case "total":
+		return ec.fieldContext_CarrierSourcingPage_total(ctx, field)
+	case "provider":
+		return ec.fieldContext_CarrierSourcingPage_provider(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierSourcingPage", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierSourcingResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "profile":
+		return ec.fieldContext_CarrierSourcingResult_profile(ctx, field)
+	case "providerRef":
+		return ec.fieldContext_CarrierSourcingResult_providerRef(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_CarrierSourcingResult_dotNumber(ctx, field)
+	case "legalName":
+		return ec.fieldContext_CarrierSourcingResult_legalName(ctx, field)
+	case "existingCarrierId":
+		return ec.fieldContext_CarrierSourcingResult_existingCarrierId(ctx, field)
+	case "laneMatches":
+		return ec.fieldContext_CarrierSourcingResult_laneMatches(ctx, field)
+	case "findings":
+		return ec.fieldContext_CarrierSourcingResult_findings(ctx, field)
+	case "riskLevel":
+		return ec.fieldContext_CarrierSourcingResult_riskLevel(ctx, field)
+	case "score":
+		return ec.fieldContext_CarrierSourcingResult_score(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierSourcingResult", field.Name)
 }
 
 func (ec *executionContext) childFields_CategoryCostLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -85597,6 +91840,14 @@ func (ec *executionContext) childFields_Customer(ctx context.Context, field grap
 		return ec.fieldContext_Customer_billingProfile(ctx, field)
 	case "emailProfile":
 		return ec.fieldContext_Customer_emailProfile(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_Customer_dotNumber(ctx, field)
+	case "mcNumber":
+		return ec.fieldContext_Customer_mcNumber(ctx, field)
+	case "brokerVettingEnabled":
+		return ec.fieldContext_Customer_brokerVettingEnabled(ctx, field)
+	case "brokerIntelligence":
+		return ec.fieldContext_Customer_brokerIntelligence(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Customer", field.Name)
 }
@@ -87153,8 +93404,28 @@ func (ec *executionContext) childFields_DispatchCarrierEligibility(ctx context.C
 		return ec.fieldContext_DispatchCarrierEligibility_blockers(ctx, field)
 	case "warnings":
 		return ec.fieldContext_DispatchCarrierEligibility_warnings(ctx, field)
+	case "advisories":
+		return ec.fieldContext_DispatchCarrierEligibility_advisories(ctx, field)
+	case "findings":
+		return ec.fieldContext_DispatchCarrierEligibility_findings(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DispatchCarrierEligibility", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchCarrierEligibilityFinding(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_DispatchCarrierEligibilityFinding_code(ctx, field)
+	case "source":
+		return ec.fieldContext_DispatchCarrierEligibilityFinding_source(ctx, field)
+	case "severity":
+		return ec.fieldContext_DispatchCarrierEligibilityFinding_severity(ctx, field)
+	case "message":
+		return ec.fieldContext_DispatchCarrierEligibilityFinding_message(ctx, field)
+	case "requiresOverride":
+		return ec.fieldContext_DispatchCarrierEligibilityFinding_requiresOverride(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchCarrierEligibilityFinding", field.Name)
 }
 
 func (ec *executionContext) childFields_DispatchCommitment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -92833,6 +99104,18 @@ func (ec *executionContext) childFields_ManualJournalEdge(ctx context.Context, f
 		return ec.fieldContext_ManualJournalEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ManualJournalEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_MyCarrierIntelligence(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "configured":
+		return ec.fieldContext_MyCarrierIntelligence_configured(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_MyCarrierIntelligence_dotNumber(ctx, field)
+	case "snapshot":
+		return ec.fieldContext_MyCarrierIntelligence_snapshot(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type MyCarrierIntelligence", field.Name)
 }
 
 func (ec *executionContext) childFields_MyPTOBalance(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

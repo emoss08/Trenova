@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -250,6 +251,12 @@ type APIKeyConnection struct {
 type APIKeyEdge struct {
 	Node   *apikey.Key `json:"node"`
 	Cursor string      `json:"cursor"`
+}
+
+type ApplyCarrierIntelSuggestionsInput struct {
+	CarrierID string                   `json:"carrierId"`
+	Fields    []carrierintel.SyncField `json:"fields,omitempty"`
+	PolicyIds []string                 `json:"policyIds,omitempty"`
 }
 
 type ApplyCreditMemoInput struct {
@@ -528,6 +535,164 @@ type CarrierEdge struct {
 	Cursor string           `json:"cursor"`
 }
 
+type CarrierIntelControlPatchInput struct {
+	Version                 *int                                               `json:"version,omitempty"`
+	EnrollmentPolicy        graphql.Omittable[*carrierintel.EnrollmentPolicy]  `json:"enrollmentPolicy,omitempty"`
+	RecentUsageDays         graphql.Omittable[*int]                            `json:"recentUsageDays,omitempty"`
+	IncludeOpenTenders      graphql.Omittable[*bool]                           `json:"includeOpenTenders,omitempty"`
+	AutoEnrollOnCreate      graphql.Omittable[*bool]                           `json:"autoEnrollOnCreate,omitempty"`
+	AutoUnenrollOnInactive  graphql.Omittable[*bool]                           `json:"autoUnenrollOnInactive,omitempty"`
+	ExclusiveWatchlist      graphql.Omittable[*bool]                           `json:"exclusiveWatchlist,omitempty"`
+	PollIntervalMinutes     graphql.Omittable[*int]                            `json:"pollIntervalMinutes,omitempty"`
+	SnapshotTTLHours        graphql.Omittable[*int]                            `json:"snapshotTtlHours,omitempty"`
+	FullProfileTTLDays      graphql.Omittable[*int]                            `json:"fullProfileTtlDays,omitempty"`
+	PreTenderRefreshEnabled graphql.Omittable[*bool]                           `json:"preTenderRefreshEnabled,omitempty"`
+	PreTenderMaxAgeHours    graphql.Omittable[*int]                            `json:"preTenderMaxAgeHours,omitempty"`
+	HardMaxAgeHours         graphql.Omittable[*int]                            `json:"hardMaxAgeHours,omitempty"`
+	ConfirmBlockingChanges  graphql.Omittable[*bool]                           `json:"confirmBlockingChanges,omitempty"`
+	OutagePolicy            graphql.Omittable[*carrierintel.OutagePolicy]      `json:"outagePolicy,omitempty"`
+	AutoDisqualifyOnBlock   graphql.Omittable[*bool]                           `json:"autoDisqualifyOnBlock,omitempty"`
+	AutoApplySafetyRating   graphql.Omittable[*bool]                           `json:"autoApplySafetyRating,omitempty"`
+	Rules                   graphql.Omittable[[]*CarrierIntelRuleSettingInput] `json:"rules,omitempty"`
+	AutoSyncFields          graphql.Omittable[[]carrierintel.SyncField]        `json:"autoSyncFields,omitempty"`
+	MonthlySpendCap         graphql.Omittable[*string]                         `json:"monthlySpendCap,omitempty"`
+	SoftCapPercent          graphql.Omittable[*int]                            `json:"softCapPercent,omitempty"`
+	DailyFullProfileCap     graphql.Omittable[*int]                            `json:"dailyFullProfileCap,omitempty"`
+	RawRetentionDays        graphql.Omittable[*int]                            `json:"rawRetentionDays,omitempty"`
+	SnapshotHistoryLimit    graphql.Omittable[*int]                            `json:"snapshotHistoryLimit,omitempty"`
+	SelfMonitoringEnabled   graphql.Omittable[*bool]                           `json:"selfMonitoringEnabled,omitempty"`
+	ConfirmEstimatedCost    *bool                                              `json:"confirmEstimatedCost,omitempty"`
+}
+
+type CarrierIntelCostEstimate struct {
+	Provider          string                        `json:"provider"`
+	Policy            carrierintel.EnrollmentPolicy `json:"policy"`
+	SubjectCount      int                           `json:"subjectCount"`
+	MonthlyMonitoring string                        `json:"monthlyMonitoring"`
+	PerSubject        string                        `json:"perSubject"`
+}
+
+type CarrierIntelEnrollmentCounts struct {
+	Desired int `json:"desired"`
+	Active  int `json:"active"`
+	Pending int `json:"pending"`
+	Failed  int `json:"failed"`
+}
+
+type CarrierIntelEventConnection struct {
+	Edges      []*CarrierIntelEventEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type CarrierIntelEventCounts struct {
+	Open         int                          `json:"open"`
+	Acknowledged int                          `json:"acknowledged"`
+	BySeverity   []*CarrierIntelSeverityCount `json:"bySeverity"`
+}
+
+type CarrierIntelEventEdge struct {
+	Node   *carrierintel.CarrierIntelEvent `json:"node"`
+	Cursor string                          `json:"cursor"`
+}
+
+type CarrierIntelEventFilterInput struct {
+	Statuses    []carrierintel.EventStatus `json:"statuses,omitempty"`
+	Severities  []carrierintel.Severity    `json:"severities,omitempty"`
+	Categories  []carrierintel.Section     `json:"categories,omitempty"`
+	CarrierID   *string                    `json:"carrierId,omitempty"`
+	SubjectType *carrierintel.SubjectType  `json:"subjectType,omitempty"`
+	SubjectID   *string                    `json:"subjectId,omitempty"`
+	OpenOnly    *bool                      `json:"openOnly,omitempty"`
+}
+
+type CarrierIntelFetchResult struct {
+	Snapshot     *carrierintel.CarrierIntelSnapshot `json:"snapshot"`
+	FromCache    bool                               `json:"fromCache"`
+	UsedFallback bool                               `json:"usedFallback"`
+	RaisedCount  int                                `json:"raisedCount"`
+	ChangeCount  int                                `json:"changeCount"`
+}
+
+type CarrierIntelLookupInput struct {
+	DOTNumber    *string                   `json:"dotNumber,omitempty"`
+	DocketNumber *string                   `json:"docketNumber,omitempty"`
+	Depth        *carrierintel.LookupDepth `json:"depth,omitempty"`
+}
+
+type CarrierIntelMonitoringStatus struct {
+	Provider         *CarrierIntelProviderInfo             `json:"provider"`
+	EnrollmentCounts *CarrierIntelEnrollmentCounts         `json:"enrollmentCounts"`
+	EventCounts      *CarrierIntelEventCounts              `json:"eventCounts"`
+	Feeds            []*carrierintel.CarrierIntelFeedState `json:"feeds"`
+	ReviewQueueCount int                                   `json:"reviewQueueCount"`
+}
+
+type CarrierIntelProspectLookup struct {
+	Snapshot          *carrierintel.CarrierIntelSnapshot `json:"snapshot"`
+	ExistingCarrierID *string                            `json:"existingCarrierId,omitempty"`
+}
+
+type CarrierIntelProviderInfo struct {
+	Configured       bool                   `json:"configured"`
+	Provider         *string                `json:"provider,omitempty"`
+	FallbackProvider *string                `json:"fallbackProvider,omitempty"`
+	Capabilities     []string               `json:"capabilities"`
+	Sections         []carrierintel.Section `json:"sections"`
+}
+
+type CarrierIntelRuleParamInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type CarrierIntelRuleSetting struct {
+	Code   string                          `json:"code"`
+	Action carrierintel.RuleAction         `json:"action"`
+	Params []*CarrierIntelRuleSettingParam `json:"params"`
+}
+
+type CarrierIntelRuleSettingInput struct {
+	Code   string                        `json:"code"`
+	Action carrierintel.RuleAction       `json:"action"`
+	Params []*CarrierIntelRuleParamInput `json:"params,omitempty"`
+}
+
+type CarrierIntelRuleSettingParam struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type CarrierIntelSeverityCount struct {
+	Severity carrierintel.Severity `json:"severity"`
+	Count    int                   `json:"count"`
+}
+
+type CarrierIntelUsageDay struct {
+	Day           int    `json:"day"`
+	Endpoint      string `json:"endpoint"`
+	Calls         int    `json:"calls"`
+	BillableUnits int    `json:"billableUnits"`
+	EstimatedCost string `json:"estimatedCost"`
+}
+
+type CarrierIntelUsageRow struct {
+	Provider      string `json:"provider"`
+	Endpoint      string `json:"endpoint"`
+	Calls         int    `json:"calls"`
+	BillableUnits int    `json:"billableUnits"`
+	EstimatedCost string `json:"estimatedCost"`
+}
+
+type CarrierIntelUsageSummary struct {
+	MonthStart     int                     `json:"monthStart"`
+	MonthToDate    string                  `json:"monthToDate"`
+	Cap            *string                 `json:"cap,omitempty"`
+	SoftCapPercent int                     `json:"softCapPercent"`
+	ByEndpoint     []*CarrierIntelUsageRow `json:"byEndpoint"`
+	Daily          []*CarrierIntelUsageDay `json:"daily"`
+}
+
 type CarrierInvoiceMatchActionInput struct {
 	MatchID string  `json:"matchId"`
 	Note    *string `json:"note,omitempty"`
@@ -536,6 +701,22 @@ type CarrierInvoiceMatchActionInput struct {
 type CarrierInvoiceMatchList struct {
 	Items      []*carriersettlement.InvoiceMatch `json:"items"`
 	TotalCount int                               `json:"totalCount"`
+}
+
+type CarrierMonitoringEnrollmentConnection struct {
+	Edges      []*CarrierMonitoringEnrollmentEdge `json:"edges"`
+	PageInfo   *PageInfo                          `json:"pageInfo"`
+	TotalCount *int                               `json:"totalCount,omitempty"`
+}
+
+type CarrierMonitoringEnrollmentEdge struct {
+	Node   *carrierintel.CarrierMonitoringEnrollment `json:"node"`
+	Cursor string                                    `json:"cursor"`
+}
+
+type CarrierMonitoringEnrollmentFilterInput struct {
+	DesiredState *carrierintel.DesiredState `json:"desiredState,omitempty"`
+	VendorStates []carrierintel.VendorState `json:"vendorStates,omitempty"`
 }
 
 type CarrierSettlementActionInput struct {
@@ -563,6 +744,21 @@ type CarrierSettlementConnection struct {
 type CarrierSettlementEdge struct {
 	Node   *carriersettlement.CarrierSettlement `json:"node"`
 	Cursor string                               `json:"cursor"`
+}
+
+type CarrierSourcingSearchInput struct {
+	Text                    *string `json:"text,omitempty"`
+	State                   *string `json:"state,omitempty"`
+	OriginState             *string `json:"originState,omitempty"`
+	DestinationState        *string `json:"destinationState,omitempty"`
+	MinPowerUnits           *int    `json:"minPowerUnits,omitempty"`
+	MaxPowerUnits           *int    `json:"maxPowerUnits,omitempty"`
+	MinAuthorityAgeDays     *int    `json:"minAuthorityAgeDays,omitempty"`
+	HazmatOnly              *bool   `json:"hazmatOnly,omitempty"`
+	ExcludeBlocking         *bool   `json:"excludeBlocking,omitempty"`
+	ExcludeExistingCarriers *bool   `json:"excludeExistingCarriers,omitempty"`
+	Limit                   *int    `json:"limit,omitempty"`
+	Offset                  *int    `json:"offset,omitempty"`
 }
 
 type CategoryCostLine struct {
@@ -1608,8 +1804,18 @@ type DispatchCarrierAssignmentPreviewInput struct {
 }
 
 type DispatchCarrierEligibility struct {
-	Blockers []string `json:"blockers"`
-	Warnings []string `json:"warnings"`
+	Blockers   []string                             `json:"blockers"`
+	Warnings   []string                             `json:"warnings"`
+	Advisories []string                             `json:"advisories"`
+	Findings   []*DispatchCarrierEligibilityFinding `json:"findings"`
+}
+
+type DispatchCarrierEligibilityFinding struct {
+	Code             string `json:"code"`
+	Source           string `json:"source"`
+	Severity         string `json:"severity"`
+	Message          string `json:"message"`
+	RequiresOverride bool   `json:"requiresOverride"`
 }
 
 // An assignment a driver already holds inside the planning horizon. The console draws these
@@ -2785,6 +2991,13 @@ type GeneratedFuelTableRow struct {
 	Value    string  `json:"value"`
 }
 
+type GrantCarrierIntelOverrideInput struct {
+	CarrierID string `json:"carrierId"`
+	RuleCode  string `json:"ruleCode"`
+	Reason    string `json:"reason"`
+	ExpiresAt *int   `json:"expiresAt,omitempty"`
+}
+
 type HazardousMaterialConnection struct {
 	Edges      []*HazardousMaterialEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -3052,6 +3265,12 @@ type IFTATaxRatesInput struct {
 	FuelType       *domaintypes.IFTAFuelType `json:"fuelType,omitempty"`
 }
 
+type ImportSourcedCarrierInput struct {
+	DOTNumber        string  `json:"dotNumber"`
+	Code             *string `json:"code,omitempty"`
+	EnrollMonitoring *bool   `json:"enrollMonitoring,omitempty"`
+}
+
 type InviteWorkerToPortalInput struct {
 	WorkerID string `json:"workerId"`
 	// Overrides the email on the worker record when provided.
@@ -3268,6 +3487,12 @@ type MemoLineInput struct {
 }
 
 type Mutation struct {
+}
+
+type MyCarrierIntelligence struct {
+	Configured bool                               `json:"configured"`
+	DOTNumber  *string                            `json:"dotNumber,omitempty"`
+	Snapshot   *carrierintel.CarrierIntelSnapshot `json:"snapshot,omitempty"`
 }
 
 type MySettlementList struct {
@@ -4488,6 +4713,12 @@ type RescindDisciplinaryActionInput struct {
 	ID      string `json:"id"`
 	Reason  string `json:"reason"`
 	Version *int   `json:"version,omitempty"`
+}
+
+type ResolveCarrierIntelEventInput struct {
+	ID         string                       `json:"id"`
+	Resolution carrierintel.EventResolution `json:"resolution"`
+	Note       *string                      `json:"note,omitempty"`
 }
 
 type ResolveInvoiceDisputeInput struct {
@@ -7411,6 +7642,15 @@ type VehiclePosition struct {
 	ReceivedAt        int      `json:"receivedAt"`
 	PrimaryWorkerID   *string  `json:"primaryWorkerId,omitempty"`
 	PrimaryWorkerName *string  `json:"primaryWorkerName,omitempty"`
+}
+
+type VerifyCarrierEquipmentInput struct {
+	CarrierAssignmentID string                `json:"carrierAssignmentId"`
+	UnitType            carrierintel.UnitType `json:"unitType"`
+	Vin                 *string               `json:"vin,omitempty"`
+	PlateNumber         *string               `json:"plateNumber,omitempty"`
+	PlateState          *string               `json:"plateState,omitempty"`
+	UnitNumber          *string               `json:"unitNumber,omitempty"`
 }
 
 type VoidInvoiceInput struct {

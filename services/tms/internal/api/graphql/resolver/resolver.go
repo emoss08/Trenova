@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
@@ -128,6 +129,7 @@ type Params struct {
 	RoutingGuideService          *routingguideservice.Service
 	TenderService                *tenderservice.Service
 	CarrierService               *carrierservice.Service
+	CarrierIntelService          *carrierintelservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
 	FleetCodeService             *fleetcodeservice.Service
@@ -269,6 +271,7 @@ type Resolver struct {
 	routingGuideService          *routingguideservice.Service
 	tenderService                *tenderservice.Service
 	carrierService               *carrierservice.Service
+	carrierIntelService          *carrierintelservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
 	fleetCodeService             *fleetcodeservice.Service
@@ -412,6 +415,7 @@ func New(p Params) *Resolver {
 		routingGuideService:          p.RoutingGuideService,
 		tenderService:                p.TenderService,
 		carrierService:               p.CarrierService,
+		carrierIntelService:          p.CarrierIntelService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
 		fleetCodeService:             p.FleetCodeService,

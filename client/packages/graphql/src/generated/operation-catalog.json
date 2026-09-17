@@ -1,6 +1,6 @@
 {
-  "operationCount": 722,
-  "fragmentCount": 180,
+  "operationCount": 755,
+  "fragmentCount": 194,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -97,6 +97,26 @@
       ],
       "usages": [],
       "sdl": "query AccountTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accountTypes(input: $input) {\n    edges {\n      node {\n        ...AccountTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AccountTypeTableRowFields on AccountType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  name\n  description\n  category\n  color\n  isSystem\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AcknowledgeCarrierIntelEvents",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:702b3d2e949cbc7981298ea6cc38fb3c388804fb0e566b4b3f311cb3ed67630d",
+      "rootFields": [
+        "acknowledgeCarrierIntelEvents"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AcknowledgeCarrierIntelEvents($ids: [ID!]!) {\n  acknowledgeCarrierIntelEvents(ids: $ids)\n}"
     },
     {
       "name": "AcknowledgeMyDisciplinaryAction",
@@ -789,6 +809,26 @@
       ],
       "usages": [],
       "sdl": "query ApiKeyTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  apiKeys(input: $input) {\n    edges {\n      node {\n        ...ApiKeyTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment ApiKeyTableRowFields on ApiKey {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  keyPrefix\n  status\n  expiresAt\n  lastUsedAt\n  permissionScope\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "ApplyCarrierIntelSuggestions",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:3d32308b93946a626406c61eb2646af1953adb150fe1a60a0f98e4757aaa1a31",
+      "rootFields": [
+        "applyCarrierIntelSuggestions"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ApplyCarrierIntelSuggestionsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ApplyCarrierIntelSuggestions($input: ApplyCarrierIntelSuggestionsInput!) {\n  applyCarrierIntelSuggestions(input: $input)\n}"
     },
     {
       "name": "ApplyCreditMemo",
@@ -2416,6 +2456,318 @@
       "sdl": "query CarrierCostEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  carrierCostEvents(input: $input) {\n    edges {\n      node {\n        id\n        carrierId\n        carrierAssignmentId\n        shipmentId\n        moveId\n        settlementId\n        eventType\n        status\n        eventDate\n        amountMinor\n        currencyCode\n        description\n        proNumber\n        assignmentVersion\n        voidedAt\n        voidReason\n        version\n        createdAt\n        updatedAt\n        carrier {\n          id\n          code\n          name\n          scac\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "CarrierEquipmentVerifications",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:b7c3a7a3998b4c9ae9c57ef470e6e0e8c062cdf612bf080726ad1341f719480a",
+      "rootFields": [
+        "carrierEquipmentVerifications"
+      ],
+      "variables": [
+        {
+          "name": "carrierAssignmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierEquipmentVerificationFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierEquipmentVerifications($carrierAssignmentId: ID!) {\n  carrierEquipmentVerifications(carrierAssignmentId: $carrierAssignmentId) {\n    ...CarrierEquipmentVerificationFields\n  }\n}\n\nfragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {\n  id\n  carrierAssignmentId\n  shipmentMoveId\n  carrierId\n  expectedDotNumber\n  unitType\n  vin\n  plateNumber\n  plateState\n  unitNumber\n  result\n  matchedDotNumbers\n  matchedLegalName\n  mismatchReason\n  provider\n  verifiedById\n  verifiedAt\n  overrideById\n  overrideReason\n  overriddenAt\n  cleared\n  createdAt\n  detail {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelCostEstimate",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79",
+      "rootFields": [
+        "carrierIntelCostEstimate"
+      ],
+      "variables": [
+        {
+          "name": "policy",
+          "type": "CarrierIntelEnrollmentPolicy!",
+          "defaultValue": null
+        },
+        {
+          "name": "recentUsageDays",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "includeOpenTenders",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierIntelCostEstimate($policy: CarrierIntelEnrollmentPolicy!, $recentUsageDays: Int, $includeOpenTenders: Boolean) {\n  carrierIntelCostEstimate(\n    policy: $policy\n    recentUsageDays: $recentUsageDays\n    includeOpenTenders: $includeOpenTenders\n  ) {\n    provider\n    policy\n    subjectCount\n    monthlyMonitoring\n    perSubject\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelEventTable",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:b4e5f0c26a0e088c988e4984ee37fddebd4020861b1d3d6adc46d3990512df32",
+      "rootFields": [
+        "carrierIntelEvents"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "CarrierIntelEventFilterInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelEventFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelEventTable($input: DataTableConnectionInput!, $filter: CarrierIntelEventFilterInput) {\n  carrierIntelEvents(input: $input, filter: $filter) {\n    edges {\n      node {\n        ...CarrierIntelEventFields\n      }\n    }\n    totalCount\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment CarrierIntelEventFields on CarrierIntelEvent {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  subjectName\n  provider\n  source\n  category\n  fieldPath\n  ruleCode\n  severity\n  action\n  priorValue\n  currentValue\n  summary\n  vendorChangedAt\n  detectedAt\n  status\n  acknowledgedById\n  acknowledgedAt\n  resolvedById\n  resolvedAt\n  resolution\n  resolutionNote\n  snapshotId\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierIntelligence",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:457900c7502bc63c6891bdc7bf43d077e0a9865074da807ff3c64de14300e826",
+      "rootFields": [
+        "carrier",
+        "carrierIntelProvider"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelProviderInfoFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields",
+        "CarrierMonitoringEnrollmentFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelligence($carrierId: ID!) {\n  carrier(id: $carrierId) {\n    id\n    name\n    dotNumber\n    mcNumber\n    intelRiskLevel\n    intelReviewRequired\n    intelBlockingCount\n    openIntelEventCount\n    intelligence {\n      ...CarrierIntelSnapshotFields\n    }\n    monitoringEnrollment {\n      ...CarrierMonitoringEnrollmentFields\n    }\n  }\n  carrierIntelProvider {\n    ...CarrierIntelProviderInfoFields\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {\n  configured\n  provider\n  fallbackProvider\n  capabilities\n  sections\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}\n\nfragment CarrierMonitoringEnrollmentFields on CarrierMonitoringEnrollment {\n  id\n  subjectType\n  subjectId\n  carrierId\n  subjectName\n  dotNumber\n  docketNumber\n  provider\n  providerRef\n  mode\n  desiredState\n  vendorState\n  reason\n  ownedByTrenova\n  enrolledAt\n  unenrolledAt\n  lastSyncedAt\n  lastConfirmedAt\n  lastUsedAt\n  failureCount\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierIntelLookup",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:fc626e3797730774daa76327a5067a500a84dd4000590ce564555a2747ccb682",
+      "rootFields": [
+        "carrierIntelLookup"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierIntelLookupInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelLookup($input: CarrierIntelLookupInput!) {\n  carrierIntelLookup(input: $input) {\n    existingCarrierId\n    snapshot {\n      ...CarrierIntelSnapshotFields\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelMonitoringStatus",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:a4dbfbac4b61159f3f86de41a083e889afb58c0ff1fe7aa087a4d2b8288f0c23",
+      "rootFields": [
+        "carrierIntelMonitoringStatus"
+      ],
+      "variables": [],
+      "fragments": [
+        "CarrierIntelProviderInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelMonitoringStatus {\n  carrierIntelMonitoringStatus {\n    provider {\n      ...CarrierIntelProviderInfoFields\n    }\n    enrollmentCounts {\n      desired\n      active\n      pending\n      failed\n    }\n    eventCounts {\n      open\n      acknowledged\n      bySeverity {\n        severity\n        count\n      }\n    }\n    feeds {\n      provider\n      feedType\n      lastPolledAt\n      lastSuccessAt\n      nextPollAfter\n      pausedReason\n      pausedAt\n      failureCount\n      lastError\n    }\n    reviewQueueCount\n  }\n}\n\nfragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {\n  configured\n  provider\n  fallbackProvider\n  capabilities\n  sections\n}"
+    },
+    {
+      "name": "CarrierIntelOverrides",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:16c8e0c11b5bfeb3e928eb8c71abd24cfb2751883f5457ca309cea01a95d1a51",
+      "rootFields": [
+        "carrierIntelOverrides"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelOverrideFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelOverrides($carrierId: ID!) {\n  carrierIntelOverrides(carrierId: $carrierId) {\n    ...CarrierIntelOverrideFields\n  }\n}\n\nfragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
+    },
+    {
+      "name": "CarrierIntelRawPayload",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:676eb1c365c28819fc1fa43b5023acc49131d5127716cd98c6a492d96949a300",
+      "rootFields": [
+        "carrierIntelRawPayload"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "snapshotId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierIntelRawPayload($carrierId: ID!, $snapshotId: ID!) {\n  carrierIntelRawPayload(carrierId: $carrierId, snapshotId: $snapshotId)\n}"
+    },
+    {
+      "name": "CarrierIntelReviewQueue",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:760539d290ea5a47f3b90c4d9c4c8cb1b8426d4df47e3f1ef5f9803a548db392",
+      "rootFields": [
+        "carrierIntelReviewQueue"
+      ],
+      "variables": [
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelFindingFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelReviewQueue($limit: Int) {\n  carrierIntelReviewQueue(limit: $limit) {\n    ...CarrierIntelSnapshotSummaryFields\n  }\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelSettings",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6",
+      "rootFields": [
+        "carrierIntelControl",
+        "carrierIntelProvider",
+        "carrierIntelRuleCatalog"
+      ],
+      "variables": [],
+      "fragments": [
+        "CarrierIntelControlFields",
+        "CarrierIntelProviderInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelSettings {\n  carrierIntelControl {\n    ...CarrierIntelControlFields\n  }\n  carrierIntelProvider {\n    ...CarrierIntelProviderInfoFields\n  }\n  carrierIntelRuleCatalog {\n    code\n    label\n    description\n    category\n    defaultAction\n    recommendedAction\n    requiredSections\n    subjects\n    gateRelevant\n    params {\n      key\n      label\n      type\n      default\n      min\n      max\n      options\n      helpText\n    }\n  }\n}\n\nfragment CarrierIntelControlFields on CarrierIntelControl {\n  id\n  primaryProvider\n  fallbackProvider\n  enrollmentPolicy\n  recentUsageDays\n  includeOpenTenders\n  autoEnrollOnCreate\n  autoUnenrollOnInactive\n  exclusiveWatchlist\n  pollIntervalMinutes\n  snapshotTtlHours\n  fullProfileTtlDays\n  preTenderRefreshEnabled\n  preTenderMaxAgeHours\n  hardMaxAgeHours\n  confirmBlockingChanges\n  outagePolicy\n  autoDisqualifyOnBlock\n  autoApplySafetyRating\n  rules {\n    code\n    action\n    params {\n      key\n      value\n    }\n  }\n  autoSyncFields\n  monthlySpendCap\n  softCapPercent\n  dailyFullProfileCap\n  rawRetentionDays\n  snapshotHistoryLimit\n  selfMonitoringEnabled\n  policyVersion\n  version\n  updatedAt\n}\n\nfragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {\n  configured\n  provider\n  fallbackProvider\n  capabilities\n  sections\n}"
+    },
+    {
+      "name": "CarrierIntelSnapshotHistory",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:2ebec1591f8a1bc497376284b07dc87e34ecce2f917603ae18f732cf97ee736e",
+      "rootFields": [
+        "carrierIntelSnapshotHistory"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelFindingFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelSnapshotHistory($carrierId: ID!, $limit: Int) {\n  carrierIntelSnapshotHistory(carrierId: $carrierId, limit: $limit) {\n    ...CarrierIntelSnapshotSummaryFields\n  }\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelSyncPlan",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:caf6f7f1f6d0cfea386d56d3187421dbf327db320a0618a4340907367d043109",
+      "rootFields": [
+        "carrierIntelSyncPlan"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelFieldUpdateFields",
+        "CarrierIntelInsuranceChangeFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierIntelSyncPlan($carrierId: ID!) {\n  carrierIntelSyncPlan(carrierId: $carrierId) {\n    autoApply {\n      ...CarrierIntelFieldUpdateFields\n    }\n    suggestions {\n      ...CarrierIntelFieldUpdateFields\n    }\n    insuranceAutoApply {\n      ...CarrierIntelInsuranceChangeFields\n    }\n    insuranceSuggestions {\n      ...CarrierIntelInsuranceChangeFields\n    }\n  }\n}\n\nfragment CarrierIntelFieldUpdateFields on CarrierIntelFieldUpdate {\n  field\n  current\n  proposed\n  reason\n}\n\nfragment CarrierIntelInsuranceChangeFields on CarrierIntelInsuranceChange {\n  kind\n  policyId\n  policyType\n  policyNumber\n  providerName\n  currentCoverage\n  proposedCoverage\n  currentExpirationDate\n  proposedExpirationDate\n  effectiveDate\n  reason\n}"
+    },
+    {
+      "name": "CarrierIntelUsage",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63",
+      "rootFields": [
+        "carrierIntelUsage"
+      ],
+      "variables": [
+        {
+          "name": "month",
+          "type": "Timestamp",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierIntelUsage($month: Timestamp) {\n  carrierIntelUsage(month: $month) {\n    monthStart\n    monthToDate\n    cap\n    softCapPercent\n    byEndpoint {\n      provider\n      endpoint\n      calls\n      billableUnits\n      estimatedCost\n    }\n    daily {\n      day\n      endpoint\n      calls\n      billableUnits\n      estimatedCost\n    }\n  }\n}"
+    },
+    {
       "name": "CarrierInvoiceMatches",
       "kind": "query",
       "domain": "carrier-settlement",
@@ -2474,6 +2826,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CarrierLedgerEntries($carrierId: ID!, $limit: Int) {\n  carrierLedgerEntries(carrierId: $carrierId, limit: $limit) {\n    id\n    carrierId\n    entryType\n    sourceObjectType\n    sourceObjectId\n    sourceEventType\n    relatedSettlementId\n    journalBatchId\n    documentNumber\n    transactionDate\n    lineNumber\n    amountMinor\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "CarrierMonitoringEnrollmentTable",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:966e86c6af06277bdb504e96822d13c2c369fa33477e017b07bcee357f8a6253",
+      "rootFields": [
+        "carrierMonitoringEnrollments"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "CarrierMonitoringEnrollmentFilterInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierMonitoringEnrollmentFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierMonitoringEnrollmentTable($input: DataTableConnectionInput!, $filter: CarrierMonitoringEnrollmentFilterInput) {\n  carrierMonitoringEnrollments(input: $input, filter: $filter) {\n    edges {\n      node {\n        ...CarrierMonitoringEnrollmentFields\n      }\n    }\n    totalCount\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment CarrierMonitoringEnrollmentFields on CarrierMonitoringEnrollment {\n  id\n  subjectType\n  subjectId\n  carrierId\n  subjectName\n  dotNumber\n  docketNumber\n  provider\n  providerRef\n  mode\n  desiredState\n  vendorState\n  reason\n  ownedByTrenova\n  enrolledAt\n  unenrolledAt\n  lastSyncedAt\n  lastConfirmedAt\n  lastUsedAt\n  failureCount\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CarrierSettlementBatchDetail",
@@ -2609,11 +2988,61 @@
       "sdl": "query CarrierSettlementWorkspaceSummary($periodStart: Timestamp, $periodEnd: Timestamp) {\n  carrierSettlementWorkspaceSummary(\n    periodStart: $periodStart\n    periodEnd: $periodEnd\n  ) {\n    periodStart\n    periodEnd\n    payDate\n    draftCount\n    pendingApprovalCount\n    approvedCount\n    postedCount\n    paidCount\n    totalNetMinor\n    totalGrossMinor\n    pendingEventCount\n    pendingAmountMinor\n    pendingCarrierCount\n    openBatchId\n  }\n}"
     },
     {
+      "name": "CarrierSourcingAutocomplete",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:92dd91c7327cceb37c632be3185e2f041304310eb67b3eceb101b07d16cd11d8",
+      "rootFields": [
+        "carrierSourcingAutocomplete"
+      ],
+      "variables": [
+        {
+          "name": "query",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierSourcingAutocomplete($query: String!, $limit: Int) {\n  carrierSourcingAutocomplete(query: $query, limit: $limit) {\n    dotNumber\n    legalName\n    dbaName\n    city\n    state\n  }\n}"
+    },
+    {
+      "name": "CarrierSourcingSearch",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:c4a51cec3985478f74820cad530001af74dfb093ae31d0e55079aeb49942eb54",
+      "rootFields": [
+        "carrierSourcingSearch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSourcingSearchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierSourcingSearch($input: CarrierSourcingSearchInput!) {\n  carrierSourcingSearch(input: $input) {\n    total\n    provider\n    items {\n      providerRef\n      dotNumber\n      legalName\n      existingCarrierId\n      laneMatches\n      riskLevel\n      score\n      findings {\n        ...CarrierIntelFindingFields\n      }\n      profile {\n        ...CarrierIntelProfileFields\n      }\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}"
+    },
+    {
       "name": "CarrierTable",
       "kind": "query",
       "domain": "carrier",
       "sourceFile": "src/operations/carrier/table.graphql",
-      "hash": "sha256:ac478c9f580a938e561cbf61ba1416f2413126aa194b2de52cb8b6836e859a23",
+      "hash": "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
       "rootFields": [
         "carriers"
       ],
@@ -2636,7 +3065,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query CarrierTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  carriers(input: $input) {\n    edges {\n      node {\n        ...CarrierTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query CarrierTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  carriers(input: $input) {\n    edges {\n      node {\n        ...CarrierTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  intelRiskLevel\n  intelReviewRequired\n  intelBlockingCount\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "CertifyOshaSummary",
@@ -3963,6 +4392,33 @@
       "sdl": "query CurrentSettlementPeriod {\n  currentSettlementPeriod {\n    periodStart\n    periodEnd\n    payDate\n  }\n}"
     },
     {
+      "name": "CustomerBrokerIntelligence",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:e580d85127d41169a17b28b4dd012d95d9b651d01b53df6fc1ff51468688bf8e",
+      "rootFields": [
+        "customer"
+      ],
+      "variables": [
+        {
+          "name": "customerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query CustomerBrokerIntelligence($customerId: ID!) {\n  customer(id: $customerId) {\n    id\n    name\n    dotNumber\n    mcNumber\n    brokerVettingEnabled\n    brokerIntelligence {\n      ...CarrierIntelSnapshotFields\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
       "name": "CustomerPaymentDetail",
       "kind": "query",
       "domain": "customer-payment",
@@ -5200,7 +5656,7 @@
       "kind": "query",
       "domain": "dispatch-console",
       "sourceFile": "src/operations/dispatch-console/page.graphql",
-      "hash": "sha256:ad34207e4c1e5cb8720cd75fce163dcebd3ea29c87474c4d3ae3e0d06308ab56",
+      "hash": "sha256:057780090effa92f5c9502ee1d31efa753c5e6b4e4d480208d97ee37c7cc8bf7",
       "rootFields": [
         "dispatchCarrierAssignmentPreview"
       ],
@@ -5213,7 +5669,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query DispatchCarrierAssignmentPreview($input: DispatchCarrierAssignmentPreviewInput!) {\n  dispatchCarrierAssignmentPreview(input: $input) {\n    blockers\n    warnings\n  }\n}"
+      "sdl": "query DispatchCarrierAssignmentPreview($input: DispatchCarrierAssignmentPreviewInput!) {\n  dispatchCarrierAssignmentPreview(input: $input) {\n    blockers\n    warnings\n    advisories\n    findings {\n      code\n      source\n      severity\n      message\n      requiresOverride\n    }\n  }\n}"
     },
     {
       "name": "DispatchDriverMoves",
@@ -7074,6 +7530,28 @@
       "sdl": "mutation GiveWorkerRecognition($input: WorkerRecognitionInput!) {\n  giveWorkerRecognition(input: $input) {\n    ...WorkerRecognitionFields\n  }\n}\n\nfragment WorkerRecognitionFields on WorkerRecognition {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  title\n  message\n  occurredAt\n  awardedById\n  awardedBy {\n    id\n    name\n  }\n  visibleToWorker\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "GrantCarrierIntelOverride",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:6bb9445b54e17e0c8d35e2254ef80433bf95606a3b24c28c173b9b116657ad7f",
+      "rootFields": [
+        "grantCarrierIntelOverride"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "GrantCarrierIntelOverrideInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelOverrideFields"
+      ],
+      "usages": [],
+      "sdl": "mutation GrantCarrierIntelOverride($input: GrantCarrierIntelOverrideInput!) {\n  grantCarrierIntelOverride(input: $input) {\n    ...CarrierIntelOverrideFields\n  }\n}\n\nfragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
+    },
+    {
       "name": "HazardousMaterialTable",
       "kind": "query",
       "domain": "hazardous-material",
@@ -7530,6 +8008,26 @@
       ],
       "usages": [],
       "sdl": "query IftaTaxRateTable($input: IFTATaxRatesInput!, $includeTotalCount: Boolean = true) {\n  iftaTaxRates(input: $input) {\n    edges {\n      node {\n        ...IftaTaxRateFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment IftaTaxRateFields on IFTATaxRate {\n  id\n  jurisdictionId\n  year\n  quarter\n  fuelType\n  ratePerGallon\n  surchargeRatePerGallon\n  sourceNote\n  sourceUrl\n  version\n  createdAt\n  updatedAt\n  jurisdiction {\n    id\n    countryCode\n    code\n    name\n    hasSurcharge\n    isIftaMember\n  }\n}"
+    },
+    {
+      "name": "ImportSourcedCarrier",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:c83acc84d982058724eba61629020a194b6bf84efa6e5f5bf00f5b950700ae69",
+      "rootFields": [
+        "importSourcedCarrier"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ImportSourcedCarrierInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ImportSourcedCarrier($input: ImportSourcedCarrierInput!) {\n  importSourcedCarrier(input: $input) {\n    id\n    code\n    name\n    dotNumber\n    mcNumber\n    status\n    complianceStatus\n  }\n}"
     },
     {
       "name": "InviteWorkerToPortal",
@@ -8161,6 +8659,31 @@
       "sdl": "mutation MarkAllNotificationsRead {\n  markAllNotificationsRead\n}"
     },
     {
+      "name": "MarkCarrierIntelReviewed",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:622231042e033a37223f902d909c3f8dd8b9a36a312a1a59d82447a43af2ad16",
+      "rootFields": [
+        "markCarrierIntelReviewed"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "note",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation MarkCarrierIntelReviewed($carrierId: ID!, $note: String!) {\n  markCarrierIntelReviewed(carrierId: $carrierId, note: $note)\n}"
+    },
+    {
       "name": "MarkCarrierSettlementPaid",
       "kind": "mutation",
       "domain": "carrier-settlement",
@@ -8393,6 +8916,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyAvailability {\n  myAvailability {\n    id\n    dayOfWeek\n    preference\n    note\n  }\n}"
+    },
+    {
+      "name": "MyCarrierIntelligence",
+      "kind": "query",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:04e3321004b5cb7dc18559dd98307032e4ac47dc70f9dd5caf41450314530ef7",
+      "rootFields": [
+        "myCarrierIntelligence"
+      ],
+      "variables": [
+        {
+          "name": "refresh",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "query MyCarrierIntelligence($refresh: Boolean) {\n  myCarrierIntelligence(refresh: $refresh) {\n    configured\n    dotNumber\n    snapshot {\n      ...CarrierIntelSnapshotFields\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
     },
     {
       "name": "MyComplianceProfile",
@@ -9328,6 +9878,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query OutstandingEmploymentVerifications {\n  outstandingEmploymentVerifications {\n    id\n    workerId\n    employerName\n    status\n    method\n    requestedAt\n    lastFollowUpAt\n    followUpCount\n    version\n  }\n}"
+    },
+    {
+      "name": "OverrideCarrierEquipmentVerification",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:e64e53b407a5369a1bcc91b6b60d5ef7e5051c62e9d55d7e78ee1f8b3a701132",
+      "rootFields": [
+        "overrideCarrierEquipmentVerification"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierEquipmentVerificationFields"
+      ],
+      "usages": [],
+      "sdl": "mutation OverrideCarrierEquipmentVerification($id: ID!, $reason: String!) {\n  overrideCarrierEquipmentVerification(id: $id, reason: $reason) {\n    ...CarrierEquipmentVerificationFields\n  }\n}\n\nfragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {\n  id\n  carrierAssignmentId\n  shipmentMoveId\n  carrierId\n  expectedDotNumber\n  unitType\n  vin\n  plateNumber\n  plateState\n  unitNumber\n  result\n  matchedDotNumbers\n  matchedLegalName\n  mismatchReason\n  provider\n  verifiedById\n  verifiedAt\n  overrideById\n  overrideReason\n  overriddenAt\n  cleared\n  createdAt\n  detail {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n}"
     },
     {
       "name": "PatchEquipmentType",
@@ -11208,6 +11785,28 @@
       "sdl": "mutation ResolveAgentException($id: ID!, $input: AgentExceptionResolveInput!) {\n  resolveAgentException(id: $id, input: $input) {\n    id\n    resolutionState\n    resolutionNotes\n    version\n    updatedAt\n  }\n}"
     },
     {
+      "name": "ResolveCarrierIntelEvent",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:c9e3b27a6c005da7ed4267cd04a3f5f31bbd3d8bec6196603184a2bd729646d4",
+      "rootFields": [
+        "resolveCarrierIntelEvent"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ResolveCarrierIntelEventInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelEventFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ResolveCarrierIntelEvent($input: ResolveCarrierIntelEventInput!) {\n  resolveCarrierIntelEvent(input: $input) {\n    ...CarrierIntelEventFields\n  }\n}\n\nfragment CarrierIntelEventFields on CarrierIntelEvent {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  subjectName\n  provider\n  source\n  category\n  fieldPath\n  ruleCode\n  severity\n  action\n  priorValue\n  currentValue\n  summary\n  vendorChangedAt\n  detectedAt\n  status\n  acknowledgedById\n  acknowledgedAt\n  resolvedById\n  resolvedAt\n  resolution\n  resolutionNote\n  snapshotId\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ResolvedCostProfilePage",
       "kind": "query",
       "domain": "cost-control",
@@ -11543,6 +12142,20 @@
       "sdl": "mutation RestoreWorkerCredentialType($id: ID!, $version: Int) {\n  restoreWorkerCredentialType(id: $id, version: $version) {\n    ...WorkerCredentialTypeFields\n  }\n}\n\nfragment WorkerCredentialTypeFields on WorkerCredentialType {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  category\n  status\n  isRequired\n  requiredForDriverTypes\n  renewalWindowDays\n  validityMonths\n  requiresNumber\n  requiresDocument\n  profileField\n  isSystem\n  sortOrder\n  activeCredentialCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ResumeCarrierIntelMonitoring",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:327c11fd2f21367fabeb0b8eb49272d8e0149687c0f51c8150d6d376a3a0242d",
+      "rootFields": [
+        "resumeCarrierIntelMonitoring"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ResumeCarrierIntelMonitoring {\n  resumeCarrierIntelMonitoring\n}"
+    },
+    {
       "name": "ReverseCustomerPayment",
       "kind": "mutation",
       "domain": "customer-payment",
@@ -11623,6 +12236,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation RevokeApprovalDelegation($id: ID!) {\n  revokeApprovalDelegation(id: $id) {\n    id\n    revokedAt\n    version\n  }\n}"
+    },
+    {
+      "name": "RevokeCarrierIntelOverride",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:3c6d56353cb759f14c5952c47dbb365fa4c2bb3bf9bfcdac2d2d34cb26d8f4d4",
+      "rootFields": [
+        "revokeCarrierIntelOverride"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelOverrideFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RevokeCarrierIntelOverride($id: ID!, $reason: String!) {\n  revokeCarrierIntelOverride(id: $id, reason: $reason) {\n    ...CarrierIntelOverrideFields\n  }\n}\n\nfragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
     },
     {
       "name": "RevokeWorkerPortalAccess",
@@ -12036,6 +12676,31 @@
       ],
       "usages": [],
       "sdl": "query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  serviceTypes(input: $input) {\n    edges {\n      node {\n        ...ServiceTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ServiceTypeTableRowFields on ServiceType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  color\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SetCarrierMonitoring",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:a202dd10a8fcd1b45c96d158c90e6b07a335a1d5a8bffe0979f631964ba06bb9",
+      "rootFields": [
+        "setCarrierMonitoring"
+      ],
+      "variables": [
+        {
+          "name": "carrierIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "enabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation SetCarrierMonitoring($carrierIds: [ID!]!, $enabled: Boolean!) {\n  setCarrierMonitoring(carrierIds: $carrierIds, enabled: $enabled)\n}"
     },
     {
       "name": "SetDefaultTableConfiguration",
@@ -13072,6 +13737,28 @@
       "sdl": "query SuggestCarrierForEdiInvoice($invoiceId: ID!) {\n  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {\n    id\n    code\n    name\n    scac\n    dotNumber\n  }\n}"
     },
     {
+      "name": "SwitchCarrierIntelProvider",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:723a5cd553858cad5da942f19e5d6021cfbe5d54d86674e10339d7a88c4b396b",
+      "rootFields": [
+        "switchCarrierIntelProvider"
+      ],
+      "variables": [
+        {
+          "name": "provider",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelControlFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SwitchCarrierIntelProvider($provider: String!) {\n  switchCarrierIntelProvider(provider: $provider) {\n    ...CarrierIntelControlFields\n  }\n}\n\nfragment CarrierIntelControlFields on CarrierIntelControl {\n  id\n  primaryProvider\n  fallbackProvider\n  enrollmentPolicy\n  recentUsageDays\n  includeOpenTenders\n  autoEnrollOnCreate\n  autoUnenrollOnInactive\n  exclusiveWatchlist\n  pollIntervalMinutes\n  snapshotTtlHours\n  fullProfileTtlDays\n  preTenderRefreshEnabled\n  preTenderMaxAgeHours\n  hardMaxAgeHours\n  confirmBlockingChanges\n  outagePolicy\n  autoDisqualifyOnBlock\n  autoApplySafetyRating\n  rules {\n    code\n    action\n    params {\n      key\n      value\n    }\n  }\n  autoSyncFields\n  monthlySpendCap\n  softCapPercent\n  dailyFullProfileCap\n  rawRetentionDays\n  snapshotHistoryLimit\n  selfMonitoringEnabled\n  policyVersion\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "SyncFuelCardFeed",
       "kind": "mutation",
       "domain": "fuel-card",
@@ -13859,6 +14546,28 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateBillingQueueStatus($id: ID!, $input: BillingQueueUpdateStatusInput!) {\n  updateBillingQueueStatus(id: $id, input: $input) {\n    ...BillingQueueActionFields\n  }\n}\n\nfragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  billToCustomerId\n  allocatedTotalAmount\n  billToCustomer {\n    id\n    name\n    code\n  }\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateCarrierIntelControl",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:e3f55ef2a5ede39a95644905617d163f4e4c2e019e6cfcab34da57afe0bac2f1",
+      "rootFields": [
+        "updateCarrierIntelControl"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierIntelControlPatchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelControlFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateCarrierIntelControl($input: CarrierIntelControlPatchInput!) {\n  updateCarrierIntelControl(input: $input) {\n    ...CarrierIntelControlFields\n  }\n}\n\nfragment CarrierIntelControlFields on CarrierIntelControl {\n  id\n  primaryProvider\n  fallbackProvider\n  enrollmentPolicy\n  recentUsageDays\n  includeOpenTenders\n  autoEnrollOnCreate\n  autoUnenrollOnInactive\n  exclusiveWatchlist\n  pollIntervalMinutes\n  snapshotTtlHours\n  fullProfileTtlDays\n  preTenderRefreshEnabled\n  preTenderMaxAgeHours\n  hardMaxAgeHours\n  confirmBlockingChanges\n  outagePolicy\n  autoDisqualifyOnBlock\n  autoApplySafetyRating\n  rules {\n    code\n    action\n    params {\n      key\n      value\n    }\n  }\n  autoSyncFields\n  monthlySpendCap\n  softCapPercent\n  dailyFullProfileCap\n  rawRetentionDays\n  snapshotHistoryLimit\n  selfMonitoringEnabled\n  policyVersion\n  version\n  updatedAt\n}"
     },
     {
       "name": "UpdateCarrierSettlementControl",
@@ -15237,6 +15946,28 @@
       "sdl": "query VehiclePositions($maxAgeSeconds: Int) {\n  vehiclePositions(maxAgeSeconds: $maxAgeSeconds) {\n    tractorId\n    tractorCode\n    provider\n    providerVehicleId\n    latitude\n    longitude\n    headingDegrees\n    speedMph\n    engineState\n    fuelPercent\n    odometerMeters\n    formattedLocation\n    recordedAt\n    receivedAt\n    primaryWorkerId\n    primaryWorkerName\n  }\n}"
     },
     {
+      "name": "VerifyCarrierEquipment",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:3e26885e9458fc1311df9a73395de853e9e4f40893c567a4fc642bdf3fb54289",
+      "rootFields": [
+        "verifyCarrierEquipment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "VerifyCarrierEquipmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierEquipmentVerificationFields"
+      ],
+      "usages": [],
+      "sdl": "mutation VerifyCarrierEquipment($input: VerifyCarrierEquipmentInput!) {\n  verifyCarrierEquipment(input: $input) {\n    ...CarrierEquipmentVerificationFields\n  }\n}\n\nfragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {\n  id\n  carrierAssignmentId\n  shipmentMoveId\n  carrierId\n  expectedDotNumber\n  unitType\n  vin\n  plateNumber\n  plateState\n  unitNumber\n  result\n  matchedDotNumbers\n  matchedLegalName\n  mismatchReason\n  provider\n  verifiedById\n  verifiedAt\n  overrideById\n  overrideReason\n  overriddenAt\n  cleared\n  createdAt\n  detail {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n}"
+    },
+    {
       "name": "VerifyWorkerCredential",
       "kind": "mutation",
       "domain": "worker-credential",
@@ -15262,6 +15993,75 @@
       ],
       "usages": [],
       "sdl": "mutation VerifyWorkerCredential($id: ID!, $version: Int) {\n  verifyWorkerCredential(id: $id, version: $version) {\n    ...WorkerCredentialFields\n  }\n}\n\nfragment WorkerCredentialFields on WorkerCredential {\n  id\n  workerId\n  credentialTypeId\n  status\n  number\n  issuingAuthority\n  issuedAt\n  expiresAt\n  documentId\n  notes\n  verifiedById\n  verifiedAt\n  archivedById\n  archivedAt\n  archiveReason\n  health\n  daysUntilExpiry\n  version\n  createdAt\n  updatedAt\n  credentialType {\n    id\n    code\n    name\n    category\n    isRequired\n    renewalWindowDays\n    validityMonths\n    requiresNumber\n    requiresDocument\n    profileField\n    isSystem\n    sortOrder\n  }\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  verifiedBy {\n    id\n    name\n  }\n}"
+    },
+    {
+      "name": "VetCarrier",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:d1dc1ccbf9067a3fea18db23538bb331c18987c65ea7d71382ecf805b9955b18",
+      "rootFields": [
+        "vetCarrier"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "depth",
+          "type": "CarrierIntelDepth",
+          "defaultValue": null
+        },
+        {
+          "name": "force",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation VetCarrier($carrierId: ID!, $depth: CarrierIntelDepth, $force: Boolean) {\n  vetCarrier(carrierId: $carrierId, depth: $depth, force: $force) {\n    fromCache\n    usedFallback\n    raisedCount\n    changeCount\n    snapshot {\n      ...CarrierIntelSnapshotFields\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
+      "name": "VetCustomerBroker",
+      "kind": "mutation",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "hash": "sha256:53f5da838d98378f75ca8d890a7fded20d8f0413d59fb9e6d8bbf57a21d1bd9b",
+      "rootFields": [
+        "vetCustomerBroker"
+      ],
+      "variables": [
+        {
+          "name": "customerId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "force",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usages": [],
+      "sdl": "mutation VetCustomerBroker($customerId: ID!, $force: Boolean) {\n  vetCustomerBroker(customerId: $customerId, force: $force) {\n    fromCache\n    usedFallback\n    raisedCount\n    changeCount\n    snapshot {\n      ...CarrierIntelSnapshotFields\n    }\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
     },
     {
       "name": "VoidCarrierSettlement",
@@ -16704,6 +17504,20 @@
       "sdl": "fragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "CarrierEquipmentVerificationFields",
+      "typeCondition": "CarrierEquipmentVerification",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierEquipmentVerifications",
+        "OverrideCarrierEquipmentVerification",
+        "VerifyCarrierEquipment"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierEquipmentVerificationFields on CarrierEquipmentVerification {\n  id\n  carrierAssignmentId\n  shipmentMoveId\n  carrierId\n  expectedDotNumber\n  unitType\n  vin\n  plateNumber\n  plateState\n  unitNumber\n  result\n  matchedDotNumbers\n  matchedLegalName\n  mismatchReason\n  provider\n  verifiedById\n  verifiedAt\n  overrideById\n  overrideReason\n  overriddenAt\n  cleared\n  createdAt\n  detail {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n}"
+    },
+    {
       "name": "CarrierInsurancePolicyFields",
       "typeCondition": "CarrierInsurancePolicy",
       "domain": "carrier",
@@ -16714,6 +17528,219 @@
       ],
       "usages": [],
       "sdl": "fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierIntelAddressFields",
+      "typeCondition": "CarrierIntelAddress",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CarrierSourcingSearch",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}"
+    },
+    {
+      "name": "CarrierIntelAuthorityGrantFields",
+      "typeCondition": "CarrierIntelAuthorityGrant",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CarrierSourcingSearch",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}"
+    },
+    {
+      "name": "CarrierIntelControlFields",
+      "typeCondition": "CarrierIntelControl",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelSettings",
+        "SwitchCarrierIntelProvider",
+        "UpdateCarrierIntelControl"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelControlFields on CarrierIntelControl {\n  id\n  primaryProvider\n  fallbackProvider\n  enrollmentPolicy\n  recentUsageDays\n  includeOpenTenders\n  autoEnrollOnCreate\n  autoUnenrollOnInactive\n  exclusiveWatchlist\n  pollIntervalMinutes\n  snapshotTtlHours\n  fullProfileTtlDays\n  preTenderRefreshEnabled\n  preTenderMaxAgeHours\n  hardMaxAgeHours\n  confirmBlockingChanges\n  outagePolicy\n  autoDisqualifyOnBlock\n  autoApplySafetyRating\n  rules {\n    code\n    action\n    params {\n      key\n      value\n    }\n  }\n  autoSyncFields\n  monthlySpendCap\n  softCapPercent\n  dailyFullProfileCap\n  rawRetentionDays\n  snapshotHistoryLimit\n  selfMonitoringEnabled\n  policyVersion\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierIntelEventFields",
+      "typeCondition": "CarrierIntelEvent",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelEventTable",
+        "ResolveCarrierIntelEvent"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelEventFields on CarrierIntelEvent {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  subjectName\n  provider\n  source\n  category\n  fieldPath\n  ruleCode\n  severity\n  action\n  priorValue\n  currentValue\n  summary\n  vendorChangedAt\n  detectedAt\n  status\n  acknowledgedById\n  acknowledgedAt\n  resolvedById\n  resolvedAt\n  resolution\n  resolutionNote\n  snapshotId\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierIntelFieldUpdateFields",
+      "typeCondition": "CarrierIntelFieldUpdate",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelSyncPlan"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelFieldUpdateFields on CarrierIntelFieldUpdate {\n  field\n  current\n  proposed\n  reason\n}"
+    },
+    {
+      "name": "CarrierIntelFindingFields",
+      "typeCondition": "CarrierIntelFinding",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CarrierIntelReviewQueue",
+        "CarrierIntelSnapshotHistory",
+        "CarrierSourcingSearch",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}"
+    },
+    {
+      "name": "CarrierIntelInsuranceChangeFields",
+      "typeCondition": "CarrierIntelInsuranceChange",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelSyncPlan"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelInsuranceChangeFields on CarrierIntelInsuranceChange {\n  kind\n  policyId\n  policyType\n  policyNumber\n  providerName\n  currentCoverage\n  proposedCoverage\n  currentExpirationDate\n  proposedExpirationDate\n  effectiveDate\n  reason\n}"
+    },
+    {
+      "name": "CarrierIntelOverrideFields",
+      "typeCondition": "CarrierIntelOverride",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelOverrides",
+        "GrantCarrierIntelOverride",
+        "RevokeCarrierIntelOverride"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
+    },
+    {
+      "name": "CarrierIntelProfileFields",
+      "typeCondition": "CarrierIntelProfile",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields"
+      ],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CarrierSourcingSearch",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}"
+    },
+    {
+      "name": "CarrierIntelProviderInfoFields",
+      "typeCondition": "CarrierIntelProviderInfo",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelMonitoringStatus",
+        "CarrierIntelSettings"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelProviderInfoFields on CarrierIntelProviderInfo {\n  configured\n  provider\n  fallbackProvider\n  capabilities\n  sections\n}"
+    },
+    {
+      "name": "CarrierIntelSnapshotFields",
+      "typeCondition": "CarrierIntelSnapshot",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [
+        "CarrierIntelAddressFields",
+        "CarrierIntelAuthorityGrantFields",
+        "CarrierIntelFindingFields",
+        "CarrierIntelProfileFields",
+        "CarrierIntelSnapshotSummaryFields"
+      ],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelSnapshotFields on CarrierIntelSnapshot {\n  ...CarrierIntelSnapshotSummaryFields\n  providerRef\n  policyVersion\n  sourceAsOf\n  reviewedById\n  profile {\n    ...CarrierIntelProfileFields\n  }\n}\n\nfragment CarrierIntelAddressFields on CarrierIntelAddress {\n  line1\n  city\n  state\n  postalCode\n  country\n  undelivered\n}\n\nfragment CarrierIntelAuthorityGrantFields on CarrierIntelAuthorityGrant {\n  status\n  pending\n  underReview\n  revocationPending\n  grantedAt\n  ageDays\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}\n\nfragment CarrierIntelProfileFields on CarrierIntelProfile {\n  coverage\n  identity {\n    dotNumber\n    docketPrefix\n    docketNumber\n    legalName\n    dbaName\n    ein\n    usdotStatus\n    entityType\n    carrierOperation\n    dotAddedAt\n    dotAgeDays\n    physicalAddress {\n      ...CarrierIntelAddressFields\n    }\n    mailingAddress {\n      ...CarrierIntelAddressFields\n    }\n  }\n  authority {\n    common {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    contract {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    broker {\n      ...CarrierIntelAuthorityGrantFields\n    }\n    totalRevocations\n    lastRevocationAt\n    history {\n      authorityType\n      action\n      servedAt\n      effectiveAt\n    }\n  }\n  insurance {\n    bipdOnFile\n    bipdRequired\n    cargoOnFile\n    cargoRequired\n    bondOnFile\n    bondRequired\n    pendingCancelAt\n    lastCanceledAt\n    cancelCount\n    filings {\n      type\n      insurerName\n      policyNumber\n      coverage\n      effectiveAt\n      cancelEffectiveAt\n      cancelMethod\n    }\n  }\n  safety {\n    rating\n    ratingDate\n    issValue\n    issRecommendation\n    riskScore\n    riskProbability\n    safetyScore\n    outOfServiceOrder\n    outOfServiceAt\n    latestReviewType\n    latestReviewAt\n  }\n  basics {\n    basic\n    measure\n    percentile\n    threshold\n    alert\n    roadsideAlert\n    acIndicator\n  }\n  inspections {\n    total\n    driver\n    vehicle\n    hazmat\n    driverOos\n    vehicleOos\n    hazmatOos\n    driverOosRate\n    vehicleOosRate\n    hazmatOosRate\n    nationalDriverOosRate\n    nationalVehicleOosRate\n    nationalHazmatOosRate\n    lastInspectionAt\n  }\n  crashes {\n    total\n    fatal\n    injury\n    tow\n    lastCrashAt\n  }\n  fleet {\n    powerUnits\n    drivers\n    cdlDrivers\n    ownedTractors\n    termLeasedTractors\n    ownedTrailers\n    termLeasedTrailers\n    trailers\n    trucks\n  }\n  equipment {\n    vin\n    unitType\n    category\n    make\n    model\n    year\n    plateNumber\n    plateState\n    unitNumber\n  }\n  contacts {\n    phone\n    cellphone\n    fax\n    email\n    primaryContact\n    secondaryContact\n  }\n  operations {\n    classification\n    cargoCarried\n    hazmatCarrier\n    mcs150At\n    mcs150Mileage\n    boc3OnFile\n    boc3Agent\n    smartWay\n    carbCompliant\n    phmsa\n  }\n  changeHistory {\n    nameChanges\n    nameLastChangedAt\n    emailChanges\n    emailLastChangedAt\n    phoneChanges\n    phoneLastChangedAt\n    addressChanges\n    addressLastChangedAt\n    contactChanges\n    contactLastChangedAt\n  }\n  network {\n    sharedAddresses\n    sharedPhones\n    sharedEmails\n    sharedEins\n    sharedEquipment\n    links {\n      kind\n      dotNumber\n      legalName\n      value\n      status\n    }\n  }\n  lanes {\n    totalLoads\n    ftlPercent\n    ltlPercent\n    deadheadPercent\n    firstLoadAt\n    lastLoadAt\n    preferred {\n      originCity\n      originState\n      destinationCity\n      destinationState\n      loads\n    }\n  }\n  benchmarks {\n    anyAnomaly\n    inspectionMileageAnomaly\n    inspectedUnitsAnomaly\n    powerUnitMileageAnomaly\n  }\n}\n\nfragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}"
+    },
+    {
+      "name": "CarrierIntelSnapshotSummaryFields",
+      "typeCondition": "CarrierIntelSnapshot",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [
+        "CarrierIntelFindingFields"
+      ],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierIntelLookup",
+        "CarrierIntelReviewQueue",
+        "CarrierIntelSnapshotHistory",
+        "CustomerBrokerIntelligence",
+        "MyCarrierIntelligence",
+        "VetCarrier",
+        "VetCustomerBroker"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {\n  id\n  subjectType\n  subjectId\n  carrierId\n  dotNumber\n  docketNumber\n  provider\n  depth\n  source\n  notFound\n  riskLevel\n  reviewState\n  reviewedAt\n  reviewNote\n  blockingCodes\n  advisoryCodes\n  fetchedAt\n  confirmedAt\n  effectiveAsOf\n  hasRawPayload\n  findings {\n    ...CarrierIntelFindingFields\n  }\n}\n\nfragment CarrierIntelFindingFields on CarrierIntelFinding {\n  code\n  category\n  action\n  severity\n  message\n  unverifiable\n  unconfirmed\n  overridden\n  overrideId\n  overrideExpiresAt\n}"
+    },
+    {
+      "name": "CarrierMonitoringEnrollmentFields",
+      "typeCondition": "CarrierMonitoringEnrollment",
+      "domain": "carrier-intelligence",
+      "sourceFile": "src/operations/carrier-intelligence/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierIntelligence",
+        "CarrierMonitoringEnrollmentTable"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierMonitoringEnrollmentFields on CarrierMonitoringEnrollment {\n  id\n  subjectType\n  subjectId\n  carrierId\n  subjectName\n  dotNumber\n  docketNumber\n  provider\n  providerRef\n  mode\n  desiredState\n  vendorState\n  reason\n  ownedByTrenova\n  enrolledAt\n  unenrolledAt\n  lastSyncedAt\n  lastConfirmedAt\n  lastUsedAt\n  failureCount\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CarrierTableRowFields",
@@ -16728,7 +17755,7 @@
         "CarrierTable"
       ],
       "usages": [],
-      "sdl": "fragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  intelRiskLevel\n  intelReviewRequired\n  intelBlockingCount\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ChargeAllocationFields",
@@ -19485,6 +20512,27 @@
       ],
       "sdl": "input AmendWorkerEmploymentEventInput {\n  amendmentNote: String!\n  documentId: ID\n  effectiveAt: Timestamp\n  id: ID!\n  notes: String\n  reason: String\n  version: Int\n}"
     },
+    "ApplyCarrierIntelSuggestionsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "fields",
+          "type": "[CarrierIntelSyncField!]",
+          "defaultValue": null
+        },
+        {
+          "name": "policyIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ApplyCarrierIntelSuggestionsInput {\n  carrierId: ID!\n  fields: [CarrierIntelSyncField!]\n  policyIds: [ID!]\n}"
+    },
     "ApplyCreditMemoInput": {
       "kind": "input",
       "fields": [
@@ -20048,6 +21096,222 @@
       ],
       "sdl": "input CancelWorkerTrainingInput {\n  id: ID!\n  reason: String\n  version: Int\n}"
     },
+    "CarrierIntelControlPatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "autoApplySafetyRating",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "autoDisqualifyOnBlock",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "autoEnrollOnCreate",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "autoSyncFields",
+          "type": "[CarrierIntelSyncField!]",
+          "defaultValue": null
+        },
+        {
+          "name": "autoUnenrollOnInactive",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "confirmBlockingChanges",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "confirmEstimatedCost",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "dailyFullProfileCap",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "enrollmentPolicy",
+          "type": "CarrierIntelEnrollmentPolicy",
+          "defaultValue": null
+        },
+        {
+          "name": "exclusiveWatchlist",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "fullProfileTtlDays",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "hardMaxAgeHours",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "includeOpenTenders",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "monthlySpendCap",
+          "type": "Decimal",
+          "defaultValue": null
+        },
+        {
+          "name": "outagePolicy",
+          "type": "CarrierIntelOutagePolicy",
+          "defaultValue": null
+        },
+        {
+          "name": "pollIntervalMinutes",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "preTenderMaxAgeHours",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "preTenderRefreshEnabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "rawRetentionDays",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "recentUsageDays",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "rules",
+          "type": "[CarrierIntelRuleSettingInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "selfMonitoringEnabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "snapshotHistoryLimit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "snapshotTtlHours",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "softCapPercent",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierIntelControlPatchInput {\n  autoApplySafetyRating: Boolean @goField(omittable: true)\n  autoDisqualifyOnBlock: Boolean @goField(omittable: true)\n  autoEnrollOnCreate: Boolean @goField(omittable: true)\n  autoSyncFields: [CarrierIntelSyncField!] @goField(omittable: true)\n  autoUnenrollOnInactive: Boolean @goField(omittable: true)\n  confirmBlockingChanges: Boolean @goField(omittable: true)\n  confirmEstimatedCost: Boolean\n  dailyFullProfileCap: Int @goField(omittable: true)\n  enrollmentPolicy: CarrierIntelEnrollmentPolicy @goField(omittable: true)\n  exclusiveWatchlist: Boolean @goField(omittable: true)\n  fullProfileTtlDays: Int @goField(omittable: true)\n  hardMaxAgeHours: Int @goField(omittable: true)\n  includeOpenTenders: Boolean @goField(omittable: true)\n  monthlySpendCap: Decimal @goField(omittable: true)\n  outagePolicy: CarrierIntelOutagePolicy @goField(omittable: true)\n  pollIntervalMinutes: Int @goField(omittable: true)\n  preTenderMaxAgeHours: Int @goField(omittable: true)\n  preTenderRefreshEnabled: Boolean @goField(omittable: true)\n  rawRetentionDays: Int @goField(omittable: true)\n  recentUsageDays: Int @goField(omittable: true)\n  rules: [CarrierIntelRuleSettingInput!] @goField(omittable: true)\n  selfMonitoringEnabled: Boolean @goField(omittable: true)\n  snapshotHistoryLimit: Int @goField(omittable: true)\n  snapshotTtlHours: Int @goField(omittable: true)\n  softCapPercent: Int @goField(omittable: true)\n  version: Int\n}"
+    },
+    "CarrierIntelDepth": {
+      "kind": "enum",
+      "values": [
+        "FMCSA",
+        "Full",
+        "Lite"
+      ],
+      "sdl": "enum CarrierIntelDepth {\n  FMCSA\n  Full\n  Lite\n}"
+    },
+    "CarrierIntelEnrollmentPolicy": {
+      "kind": "enum",
+      "values": [
+        "AllActive",
+        "Manual",
+        "RecentlyUsed"
+      ],
+      "sdl": "enum CarrierIntelEnrollmentPolicy {\n  AllActive\n  Manual\n  RecentlyUsed\n}"
+    },
+    "CarrierIntelEventFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "categories",
+          "type": "[CarrierIntelSection!]",
+          "defaultValue": null
+        },
+        {
+          "name": "openOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "severities",
+          "type": "[CarrierIntelSeverity!]",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[CarrierIntelEventStatus!]",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectId",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectType",
+          "type": "CarrierIntelSubjectType",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierIntelEventFilterInput {\n  carrierId: ID\n  categories: [CarrierIntelSection!]\n  openOnly: Boolean\n  severities: [CarrierIntelSeverity!]\n  statuses: [CarrierIntelEventStatus!]\n  subjectId: String\n  subjectType: CarrierIntelSubjectType\n}"
+    },
+    "CarrierIntelLookupInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "depth",
+          "type": "CarrierIntelDepth",
+          "defaultValue": null
+        },
+        {
+          "name": "docketNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "dotNumber",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierIntelLookupInput {\n  depth: CarrierIntelDepth\n  docketNumber: String\n  dotNumber: String\n}"
+    },
     "CarrierInvoiceMatchActionInput": {
       "kind": "input",
       "fields": [
@@ -20075,6 +21339,22 @@
       ],
       "sdl": "enum CarrierInvoiceMatchStatus {\n  Matched\n  Rejected\n  Resolved\n  Suggested\n  Variance\n}"
     },
+    "CarrierMonitoringEnrollmentFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "desiredState",
+          "type": "CarrierIntelDesiredState",
+          "defaultValue": null
+        },
+        {
+          "name": "vendorStates",
+          "type": "[CarrierIntelVendorState!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierMonitoringEnrollmentFilterInput {\n  desiredState: CarrierIntelDesiredState\n  vendorStates: [CarrierIntelVendorState!]\n}"
+    },
     "CarrierSettlementActionInput": {
       "kind": "input",
       "fields": [
@@ -20090,6 +21370,72 @@
         }
       ],
       "sdl": "input CarrierSettlementActionInput {\n  reason: String\n  settlementId: ID!\n}"
+    },
+    "CarrierSourcingSearchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "destinationState",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "excludeBlocking",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "excludeExistingCarriers",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "hazmatOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "maxPowerUnits",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "minAuthorityAgeDays",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "minPowerUnits",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "originState",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierSourcingSearchInput {\n  destinationState: String\n  excludeBlocking: Boolean\n  excludeExistingCarriers: Boolean\n  hazmatOnly: Boolean\n  limit: Int\n  maxPowerUnits: Int\n  minAuthorityAgeDays: Int\n  minPowerUnits: Int\n  offset: Int\n  originState: String\n  state: String\n  text: String\n}"
     },
     "ChargeAllocationInput": {
       "kind": "input",
@@ -22835,6 +24181,32 @@
       ],
       "sdl": "input GenerateSettlementBatchInput {\n  name: String\n  notes: String\n  periodEnd: Timestamp\n  periodStart: Timestamp\n}"
     },
+    "GrantCarrierIntelOverrideInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "ruleCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input GrantCarrierIntelOverrideInput {\n  carrierId: ID!\n  expiresAt: Timestamp\n  reason: String!\n  ruleCode: String!\n}"
+    },
     "HoldPayEventInput": {
       "kind": "input",
       "fields": [
@@ -23152,6 +24524,27 @@
         }
       ],
       "sdl": "input IFTATaxRatesInput {\n  after: String\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  first: Int = 20\n  fuelType: IFTAFuelType\n  jurisdictionId: ID\n  period: IFTAPeriodInput\n  query: String\n  sort: [SortFieldInput!]\n}"
+    },
+    "ImportSourcedCarrierInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "code",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "dotNumber",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "enrollMonitoring",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ImportSourcedCarrierInput {\n  code: String\n  dotNumber: String!\n  enrollMonitoring: Boolean\n}"
     },
     "InspectionResult": {
       "kind": "enum",
@@ -25128,6 +26521,27 @@
         }
       ],
       "sdl": "input RescindDisciplinaryActionInput {\n  id: ID!\n  reason: String!\n  version: Int\n}"
+    },
+    "ResolveCarrierIntelEventInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "resolution",
+          "type": "CarrierIntelEventResolution!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ResolveCarrierIntelEventInput {\n  id: ID!\n  note: String\n  resolution: CarrierIntelEventResolution!\n}"
     },
     "ResolveInvoiceDisputeInput": {
       "kind": "input",
@@ -28696,6 +30110,42 @@
       ],
       "sdl": "input UpdateWorkerSafetyEventInput {\n  costAmount: Decimal\n  description: String!\n  documentId: ID\n  fineAmount: Decimal\n  id: ID!\n  inspectionLevel: Int\n  inspectionResult: InspectionResult\n  kind: SafetyEventKind!\n  location: String\n  occurredAt: Timestamp!\n  outOfService: Boolean\n  points: Int!\n  pointsExpireAt: Timestamp\n  preventable: Boolean\n  referenceNumber: String\n  resolution: String\n  severity: SafetySeverity!\n  shipmentId: ID\n  version: Int!\n}"
     },
+    "VerifyCarrierEquipmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierAssignmentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "plateNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "plateState",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "unitNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "unitType",
+          "type": "CarrierIntelUnitType!",
+          "defaultValue": null
+        },
+        {
+          "name": "vin",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input VerifyCarrierEquipmentInput {\n  carrierAssignmentId: ID!\n  plateNumber: String\n  plateState: String\n  unitNumber: String\n  unitType: CarrierIntelUnitType!\n  vin: String\n}"
+    },
     "VoidInvoiceInput": {
       "kind": "input",
       "fields": [
@@ -29504,6 +30954,21 @@
       ],
       "sdl": "enum AgentDecisionType {\n  Accepted\n  Modified\n  Rejected\n}"
     },
+    "CarrierIntelSyncField": {
+      "kind": "enum",
+      "values": [
+        "addressLine1",
+        "city",
+        "dbaName",
+        "email",
+        "mcNumber",
+        "name",
+        "phone",
+        "postalCode",
+        "safetyRating"
+      ],
+      "sdl": "enum CarrierIntelSyncField {\n  addressLine1\n  city\n  dbaName\n  email\n  mcNumber\n  name\n  phone\n  postalCode\n  safetyRating\n}"
+    },
     "CreditMemoApplicationInput": {
       "kind": "input",
       "fields": [
@@ -29642,6 +31107,107 @@
         "Reject"
       ],
       "sdl": "enum WorkerPTOBulkAction {\n  Approve\n  Cancel\n  Reject\n}"
+    },
+    "CarrierIntelOutagePolicy": {
+      "kind": "enum",
+      "values": [
+        "FailClosed",
+        "FailOpen"
+      ],
+      "sdl": "enum CarrierIntelOutagePolicy {\n  FailClosed\n  FailOpen\n}"
+    },
+    "CarrierIntelRuleSettingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "action",
+          "type": "CarrierIntelRuleAction!",
+          "defaultValue": null
+        },
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "params",
+          "type": "[CarrierIntelRuleParamInput!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierIntelRuleSettingInput {\n  action: CarrierIntelRuleAction!\n  code: String!\n  params: [CarrierIntelRuleParamInput!]\n}"
+    },
+    "CarrierIntelSection": {
+      "kind": "enum",
+      "values": [
+        "Authority",
+        "Basics",
+        "Benchmarks",
+        "ChangeHistory",
+        "Contacts",
+        "Crashes",
+        "Equipment",
+        "Fleet",
+        "Identity",
+        "Inspections",
+        "Insurance",
+        "Lanes",
+        "Network",
+        "Operations",
+        "Safety"
+      ],
+      "sdl": "enum CarrierIntelSection {\n  Authority\n  Basics\n  Benchmarks\n  ChangeHistory\n  Contacts\n  Crashes\n  Equipment\n  Fleet\n  Identity\n  Inspections\n  Insurance\n  Lanes\n  Network\n  Operations\n  Safety\n}"
+    },
+    "CarrierIntelSeverity": {
+      "kind": "enum",
+      "values": [
+        "Critical",
+        "High",
+        "Info",
+        "Low",
+        "Medium"
+      ],
+      "sdl": "enum CarrierIntelSeverity {\n  Critical\n  High\n  Info\n  Low\n  Medium\n}"
+    },
+    "CarrierIntelEventStatus": {
+      "kind": "enum",
+      "values": [
+        "Acknowledged",
+        "Dismissed",
+        "Open",
+        "Resolved"
+      ],
+      "sdl": "enum CarrierIntelEventStatus {\n  Acknowledged\n  Dismissed\n  Open\n  Resolved\n}"
+    },
+    "CarrierIntelSubjectType": {
+      "kind": "enum",
+      "values": [
+        "Carrier",
+        "Customer",
+        "Organization",
+        "Prospect"
+      ],
+      "sdl": "enum CarrierIntelSubjectType {\n  Carrier\n  Customer\n  Organization\n  Prospect\n}"
+    },
+    "CarrierIntelDesiredState": {
+      "kind": "enum",
+      "values": [
+        "Enrolled",
+        "NotEnrolled"
+      ],
+      "sdl": "enum CarrierIntelDesiredState {\n  Enrolled\n  NotEnrolled\n}"
+    },
+    "CarrierIntelVendorState": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Failed",
+        "PendingAdd",
+        "PendingRemove",
+        "Removed",
+        "Unknown"
+      ],
+      "sdl": "enum CarrierIntelVendorState {\n  Active\n  Failed\n  PendingAdd\n  PendingRemove\n  Removed\n  Unknown\n}"
     },
     "ChargeAllocationMethod": {
       "kind": "enum",
@@ -31003,6 +32569,17 @@
       ],
       "sdl": "enum PortalPtoType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
+    "CarrierIntelEventResolution": {
+      "kind": "enum",
+      "values": [
+        "CarrierBlocked",
+        "CarrierUpdated",
+        "FalsePositive",
+        "NoActionRequired",
+        "OverrideGranted"
+      ],
+      "sdl": "enum CarrierIntelEventResolution {\n  CarrierBlocked\n  CarrierUpdated\n  FalsePositive\n  NoActionRequired\n  OverrideGranted\n}"
+    },
     "InvoiceDisputeResolution": {
       "kind": "enum",
       "values": [
@@ -31742,6 +33319,15 @@
       ],
       "sdl": "enum InjuryCaseStatus {\n  Closed\n  Open\n}"
     },
+    "CarrierIntelUnitType": {
+      "kind": "enum",
+      "values": [
+        "Straight",
+        "Tractor",
+        "Trailer"
+      ],
+      "sdl": "enum CarrierIntelUnitType {\n  Straight\n  Tractor\n  Trailer\n}"
+    },
     "InvoiceVoidDisposition": {
       "kind": "enum",
       "values": [
@@ -31861,6 +33447,32 @@
         "Tenure"
       ],
       "sdl": "enum RecognitionKind {\n  CustomerPraise\n  Other\n  Performance\n  SafetyMilestone\n  TeamPlayer\n  Tenure\n}"
+    },
+    "CarrierIntelRuleAction": {
+      "kind": "enum",
+      "values": [
+        "Block",
+        "Notify",
+        "Off",
+        "Warn"
+      ],
+      "sdl": "enum CarrierIntelRuleAction {\n  Block\n  Notify\n  Off\n  Warn\n}"
+    },
+    "CarrierIntelRuleParamInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "key",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "value",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierIntelRuleParamInput {\n  key: String!\n  value: String!\n}"
     },
     "PayMileageBandInput": {
       "kind": "input",

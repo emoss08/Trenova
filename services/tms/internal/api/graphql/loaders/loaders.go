@@ -3,6 +3,7 @@ package loaders
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -74,6 +75,10 @@ type FactoryParams struct {
 	InvoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
 	LateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	InvoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
+	CarrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
+	CarrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
+	CarrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
+	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 }
 
 type Factory struct {
@@ -115,6 +120,10 @@ type Factory struct {
 	invoiceDisputesByInvoiceID                *InvoiceDisputesByInvoiceIDLoaderFactory
 	lateChargeAssessmentsByInvoiceID          *LateChargeAssessmentsByInvoiceIDLoaderFactory
 	invoiceEDISendPlanByInvoiceID             *InvoiceEDISendPlanByInvoiceIDLoaderFactory
+	carrierIntelSnapshotByCarrierID           *CarrierIntelSnapshotByCarrierIDLoaderFactory
+	carrierIntelSnapshotByCustomerID          *CarrierIntelSnapshotByCustomerIDLoaderFactory
+	carrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
+	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 }
 
 type Loaders struct {
@@ -156,6 +165,10 @@ type Loaders struct {
 	InvoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
 	LateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
 	InvoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *services.InvoiceEDISendPlan]
+	CarrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
+	CarrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
+	CarrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
+	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -198,6 +211,10 @@ func NewFactory(p FactoryParams) *Factory {
 		invoiceDisputesByInvoiceID:                p.InvoiceDisputesByInvoiceID,
 		lateChargeAssessmentsByInvoiceID:          p.LateChargeAssessmentsByInvoiceID,
 		invoiceEDISendPlanByInvoiceID:             p.InvoiceEDISendPlanByInvoiceID,
+		carrierIntelSnapshotByCarrierID:           p.CarrierIntelSnapshotByCarrierID,
+		carrierIntelSnapshotByCustomerID:          p.CarrierIntelSnapshotByCustomerID,
+		carrierIntelOpenEventCount:                p.CarrierIntelOpenEventCount,
+		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
 	}
 }
 
@@ -241,6 +258,10 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		InvoiceDisputesByInvoiceID:                f.invoiceDisputesByInvoiceID.NewForTenant(tenantInfo),
 		LateChargeAssessmentsByInvoiceID:          f.lateChargeAssessmentsByInvoiceID.NewForTenant(tenantInfo),
 		InvoiceEDISendPlanByInvoiceID:             f.invoiceEDISendPlanByInvoiceID.NewForTenant(tenantInfo),
+		CarrierIntelSnapshotByCarrierID:           f.carrierIntelSnapshotByCarrierID.NewForTenant(tenantInfo),
+		CarrierIntelSnapshotByCustomerID:          f.carrierIntelSnapshotByCustomerID.NewForTenant(tenantInfo),
+		CarrierIntelOpenEventCount:                f.carrierIntelOpenEventCount.NewForTenant(tenantInfo),
+		CarrierMonitoringEnrollmentByCarrierID:    f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(tenantInfo),
 	}
 }
 

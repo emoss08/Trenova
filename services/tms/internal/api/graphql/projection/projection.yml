@@ -73,6 +73,22 @@ virtuals:
     - openRuns
   AIProvider:
     - hasApiKey
+  Carrier:
+    - intelligence
+    - openIntelEventCount
+    - monitoringEnrollment
+  Customer:
+    - brokerIntelligence
+  CarrierIntelSnapshot:
+    - effectiveAsOf
+    - hasRawPayload
+  CarrierIntelOverride:
+    - active
+  CarrierEquipmentVerification:
+    - cleared
+  DispatchCarrierEligibilityFinding:
+    - source
+    - requiresOverride
   Invoice:
     - relatedInvoices
     - shipperCustomer
