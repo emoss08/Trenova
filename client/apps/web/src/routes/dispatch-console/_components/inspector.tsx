@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { VerifyEquipmentDialog } from "@/components/carrier-assignment/verify-equipment-dialog";
 import { PermissionGate } from "@/components/permission-gate";
 import { isTypingTarget } from "@/lib/dom";
 import type {
@@ -25,7 +26,7 @@ import {
 } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { Building2Icon, SendIcon } from "lucide-react";
+import { Building2Icon, ScanLineIcon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
@@ -124,6 +125,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
 
   const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
   const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
+  const [verifyOpen, setVerifyOpen] = useState(false);
 
   return (
     <div className="bg-muted/30 flex flex-col gap-1.5 border-b px-2.5 py-2">
@@ -161,6 +163,19 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
             {t("Replace carrier")}
           </Button>
         </CapabilityGate>
+        {move.carrierAssignmentId && (
+          <PermissionGate resource={Resource.EquipmentVerification} operation={Operation.Create}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setVerifyOpen(true)}
+            >
+              <ScanLineIcon className="size-3" aria-hidden />
+              {t("Verify equipment")}
+            </Button>
+          </PermissionGate>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -170,6 +185,14 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
           {t("Cancel carrier assignment")}
         </Button>
       </div>
+      {verifyOpen && move.carrierAssignmentId ? (
+        <VerifyEquipmentDialog
+          carrierAssignmentId={move.carrierAssignmentId}
+          carrierName={move.assignedCarrierName ?? null}
+          open
+          onOpenChange={setVerifyOpen}
+        />
+      ) : null}
     </div>
   );
 }

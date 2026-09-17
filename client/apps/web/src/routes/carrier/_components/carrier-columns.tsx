@@ -5,8 +5,13 @@ import {
   CarrierComplianceStatusBadge,
   CarrierSafetyRatingBadge,
 } from "@trenova/shared/components/status-badge";
+import { ReviewRequiredBadge } from "@/components/carrier-intelligence/review-state-badge";
+import { RiskLevelBadge } from "@/components/carrier-intelligence/risk-level-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   carrierComplianceStatusChoices,
+  carrierIntelReviewRequiredChoices,
+  carrierIntelRiskLevelChoices,
   carrierSafetyRatingChoices,
   carrierStatusChoices,
   carrierTypeChoices,
@@ -197,6 +202,61 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
         filterType: "select",
         filterOptions: carrierSafetyRatingChoices,
         defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "intelRiskLevel",
+      header: t("Risk"),
+      cell: ({ row }) => <RiskLevelBadge level={row.original.intelRiskLevel} />,
+      size: 130,
+      minSize: 110,
+      maxSize: 160,
+      meta: {
+        apiField: "intelRiskLevel",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: carrierIntelRiskLevelChoices,
+        defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "intelReviewRequired",
+      header: t("Intel Review"),
+      cell: ({ row }) => <ReviewRequiredBadge required={row.original.intelReviewRequired} />,
+      size: 140,
+      minSize: 110,
+      maxSize: 170,
+      meta: {
+        apiField: "intelReviewRequired",
+        filterable: true,
+        sortable: true,
+        filterType: "boolean",
+        filterOptions: carrierIntelReviewRequiredChoices,
+        defaultFilterOperator: "eq",
+        exportValue: (row: CarrierRow) => (row.intelReviewRequired ? "Review required" : ""),
+      },
+    },
+    {
+      accessorKey: "intelBlockingCount",
+      header: t("Blockers"),
+      cell: ({ row }) =>
+        row.original.intelBlockingCount > 0 ? (
+          <Badge variant="inactive" className="max-h-5 tabular-nums">
+            {row.original.intelBlockingCount}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">0</span>
+        ),
+      size: 100,
+      minSize: 80,
+      maxSize: 130,
+      meta: {
+        apiField: "intelBlockingCount",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "gte",
       },
     },
     {

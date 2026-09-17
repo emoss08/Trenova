@@ -208,6 +208,14 @@ export const customerSchema = z
     latitude: z.number().nullable().optional(),
     placeId: nullableStringSchema,
     externalId: nullableStringSchema,
+    dotNumber: nullableStringSchema.refine(
+      (value) => value == null || /^[0-9]{1,12}$/.test(value),
+      { error: "DOT number must contain only digits (12 max)" },
+    ),
+    mcNumber: nullableStringSchema.refine((value) => value == null || /^[0-9]{1,12}$/.test(value), {
+      error: "MC number must contain only digits (12 max)",
+    }),
+    brokerVettingEnabled: z.boolean().default(false),
     allowConsolidation: z.boolean().default(true),
     exclusiveConsolidation: z.boolean().default(false),
     consolidationPriority: z.number().int().min(1).default(1),
@@ -226,7 +234,11 @@ export const customerSchema = z
       path: ["allowConsolidation"],
       message: "Allow consolidation is required when exclusive consolidation is true",
     },
-  );
+  )
+  .refine((data) => !data.brokerVettingEnabled || !!data.dotNumber, {
+    path: ["dotNumber"],
+    message: "A DOT number is required to vet this customer as a broker",
+  });
 
 export type Customer = z.infer<typeof customerSchema>;
 

@@ -335,6 +335,15 @@ export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
   overrideMarginFloor: false,
 };
 
+export const carrierEligibilityFindingSchema = z.object({
+  code: z.string(),
+  source: z.string(),
+  severity: z.string(),
+  message: z.string(),
+  requiresOverride: z.boolean().default(false),
+});
+export type CarrierEligibilityFinding = z.infer<typeof carrierEligibilityFindingSchema>;
+
 export const carrierEligibilitySchema = z.object({
   blockers: z
     .array(z.string())
@@ -342,6 +351,14 @@ export const carrierEligibilitySchema = z.object({
     .transform((value) => value ?? []),
   warnings: z
     .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  advisories: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  findings: z
+    .array(carrierEligibilityFindingSchema)
     .nullish()
     .transform((value) => value ?? []),
 });

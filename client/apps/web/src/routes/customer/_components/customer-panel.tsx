@@ -26,6 +26,9 @@ const DEFAULT_VALUES: Customer = {
   latitude: null,
   placeId: null,
   externalId: null,
+  dotNumber: null,
+  mcNumber: null,
+  brokerVettingEnabled: false,
   allowConsolidation: true,
   exclusiveConsolidation: false,
   consolidationPriority: 1,
@@ -123,7 +126,7 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         title={t("Customer")}
         fieldKey="name"
         size="lg"
-        formComponent={<CustomerTabbedForm />}
+        formComponent={<CustomerTabbedForm customerId={row?.id} />}
         titleComponent={(currentRecord) => {
           return (
             <div className="flex flex-col gap-0.5">

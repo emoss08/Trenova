@@ -87,6 +87,7 @@ import type {
   ServiceFailureReasonCategory,
   ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
+import type { CarrierIntelRiskLevel } from "@trenova/graphql/generated/graphql";
 import type { AccessorialChargeMethod, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import type {
@@ -380,6 +381,20 @@ export const carrierSafetyRatingChoices = [
   { label: "Unsatisfactory", value: "Unsatisfactory", color: "#dc2626" },
   { label: "Not Rated", value: "NotRated", color: "#6b7280" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierSafetyRating>>;
+
+export const carrierIntelRiskLevelChoices = [
+  { label: "Low", value: "Low", color: "#15803d" },
+  { label: "Moderate", value: "Moderate", color: "#2563eb" },
+  { label: "Elevated", value: "Elevated", color: "#f59e0b" },
+  { label: "High", value: "High", color: "#f97316" },
+  { label: "Very High", value: "VeryHigh", color: "#dc2626" },
+  { label: "Unknown", value: "Unknown", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierIntelRiskLevel>>;
+
+export const carrierIntelReviewRequiredChoices = [
+  { label: "Review required", value: true, color: "#f59e0b" },
+  { label: "No review required", value: false, color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<boolean>>;
 
 export const carrierTaxIdTypeChoices = [
   { label: "EIN", value: "EIN" },

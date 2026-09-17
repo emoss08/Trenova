@@ -32,6 +32,10 @@ import {
   integrationCatalogSearchParamsParser,
   integrationModalTypes,
 } from "../integration-marketplace-state";
+import {
+  CarrierOKIntegrationModal,
+  FMCSAQCMobileIntegrationModal,
+} from "./carrier-intelligence/carrier-intelligence-modal";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { EIAFuelPricesIntegrationModal } from "./eia/eia-integration-modal";
@@ -443,6 +447,14 @@ export function IntegrationCatalogCard() {
       <RampFuelIntegrationModal
         open={searchParams.type === "RampFuel"}
         onOpenChange={setModalOpen("RampFuel")}
+      />
+      <CarrierOKIntegrationModal
+        open={searchParams.type === "CarrierOK"}
+        onOpenChange={setModalOpen("CarrierOK")}
+      />
+      <FMCSAQCMobileIntegrationModal
+        open={searchParams.type === "FMCSAQCMobile"}
+        onOpenChange={setModalOpen("FMCSAQCMobile")}
       />
     </>
   );

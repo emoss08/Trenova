@@ -513,7 +513,11 @@ function CarrierAssignmentTab({
   const carrierId = useWatch({ control, name: "carrierId" });
   const overrideInsuranceWarning = useWatch({ control, name: "overrideInsuranceWarning" });
 
-  const { data: eligibility, isLoading: isPreviewLoading } = useQuery({
+  const {
+    data: eligibility,
+    isLoading: isPreviewLoading,
+    refetch: refetchEligibility,
+  } = useQuery({
     queryKey: ["carrier-assignment-preview", moveId, carrierId],
     queryFn: () => apiService.carrierAssignmentService.preview(moveId, carrierId),
     enabled: !!carrierId,
@@ -577,6 +581,8 @@ function CarrierAssignmentTab({
             control={control}
             eligibility={carrierId ? eligibility : undefined}
             isLoading={!!carrierId && isPreviewLoading}
+            carrierId={carrierId || undefined}
+            onEligibilityChanged={() => void refetchEligibility()}
           />
           {/* Shopping needs a shipment to price. A move dialog opened without
               one still assigns; it just cannot compare carriers. */}

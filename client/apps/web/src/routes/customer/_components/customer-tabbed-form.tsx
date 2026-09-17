@@ -1,13 +1,18 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { CreditCardIcon, MailIcon, UserIcon } from "lucide-react";
+import { CreditCardIcon, MailIcon, RadarIcon, UserIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
+import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerForm } from "./customer-form";
 
-export function CustomerTabbedForm() {
+export type CustomerTabbedFormProps = {
+  customerId?: string;
+};
+
+export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
   const t = useT();
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
@@ -32,6 +37,12 @@ export function CustomerTabbedForm() {
             <MailIcon className="size-4" />
             {t("Email Profile")}
           </TabsTab>
+          {customerId ? (
+            <TabsTab value="broker-vetting">
+              <RadarIcon className="size-4" />
+              {t("Broker Vetting")}
+            </TabsTab>
+          ) : null}
         </TabsList>
       </div>
       <ScrollArea className="flex-1">
@@ -46,6 +57,11 @@ export function CustomerTabbedForm() {
         <TabsContent value="email" className="p-4">
           <CustomerEmailProfileForm />
         </TabsContent>
+        {customerId ? (
+          <TabsContent value="broker-vetting" className="p-4">
+            <CustomerBrokerIntelligence customerId={customerId} />
+          </TabsContent>
+        ) : null}
       </ScrollArea>
     </Tabs>
   );

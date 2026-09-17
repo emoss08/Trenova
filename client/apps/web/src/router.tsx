@@ -1419,6 +1419,29 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dispatch/carrier-monitoring",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierIntelligence),
+            ),
+            async lazy() {
+              const { CarrierMonitoringPage } = await import("@/routes/carrier-monitoring/page");
+              return { Component: CarrierMonitoringPage };
+            },
+          },
+          {
+            path: "/dispatch/carrier-sourcing",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierSourcing),
+            ),
+            async lazy() {
+              const { CarrierSourcingPage } = await import("@/routes/carrier-sourcing/page");
+              return { Component: CarrierSourcingPage };
+            },
+          },
+          {
             path: "/dispatch/routing-guides",
             loader: combineLoaders(
               protectedLoader,

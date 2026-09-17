@@ -84,7 +84,11 @@ export function CarrierAssignDialog({
   const carrierId = useWatch({ control, name: "carrierId" });
   const overrideInsuranceWarning = useWatch({ control, name: "overrideInsuranceWarning" });
 
-  const { data: eligibility, isLoading: isPreviewLoading } = useQuery({
+  const {
+    data: eligibility,
+    isLoading: isPreviewLoading,
+    refetch: refetchEligibility,
+  } = useQuery({
     ...dispatchConsoleQueries.carrierAssignmentPreview({ carrierId }),
     enabled: !!carrierId,
   });
@@ -130,6 +134,8 @@ export function CarrierAssignDialog({
                 control={control}
                 eligibility={carrierId ? eligibility : undefined}
                 isLoading={!!carrierId && isPreviewLoading}
+                carrierId={carrierId || undefined}
+                onEligibilityChanged={() => void refetchEligibility()}
               />
               <CarrierAssignmentFields form={form} />
             </div>

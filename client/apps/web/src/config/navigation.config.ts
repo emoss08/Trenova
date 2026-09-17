@@ -145,6 +145,19 @@ const dispatchModule: NavModule = {
       capability: OrganizationCapability.Brokerage,
     },
     {
+      id: "carrier-monitoring",
+      label: "Carrier Monitoring",
+      path: "/dispatch/carrier-monitoring",
+      resource: Resource.CarrierIntelligence,
+    },
+    {
+      id: "carrier-sourcing",
+      label: "Carrier Sourcing",
+      path: "/dispatch/carrier-sourcing",
+      resource: Resource.CarrierSourcing,
+      capability: OrganizationCapability.Brokerage,
+    },
+    {
       id: "routing-guides",
       label: "Routing Guides",
       path: "/dispatch/routing-guides",

@@ -94,6 +94,38 @@ describe("carrierEligibilitySchema", () => {
     expect(parsed.blockers).toEqual(["Carrier is inactive"]);
     expect(parsed.warnings).toEqual(["Cargo insurance below load value"]);
   });
+
+  it("normalizes absent advisories and findings to empty arrays", () => {
+    const parsed = carrierEligibilitySchema.parse({ advisories: null });
+    expect(parsed.advisories).toEqual([]);
+    expect(parsed.findings).toEqual([]);
+  });
+
+  it("keeps structured findings with their source and override requirement", () => {
+    const parsed = carrierEligibilitySchema.parse({
+      blockers: ["Operating authority is revoked"],
+      warnings: [],
+      advisories: ["Carrier intelligence has not been refreshed recently"],
+      findings: [
+        {
+          code: "authority.revoked",
+          source: "Intelligence",
+          severity: "Blocker",
+          message: "Operating authority is revoked",
+          requiresOverride: false,
+        },
+        {
+          code: "intel.snapshot_stale",
+          source: "Intelligence",
+          severity: "Advisory",
+          message: "Carrier intelligence has not been refreshed recently",
+        },
+      ],
+    });
+    expect(parsed.findings).toHaveLength(2);
+    expect(parsed.findings[0]?.source).toBe("Intelligence");
+    expect(parsed.findings[1]?.requiresOverride).toBe(false);
+  });
 });
 
 describe("moveCoverageTypeSchema", () => {

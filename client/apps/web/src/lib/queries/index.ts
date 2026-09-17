@@ -56,6 +56,7 @@ import { worker } from "./worker";
 import { exchangeRate } from "./exchange-rate";
 import { fuelSurcharge } from "./fuel-surcharge";
 import { costControl } from "./cost-control";
+import { carrierIntelSettings } from "./carrier-intel-settings";
 import { telematics } from "./telematics";
 
 const financialQueries = mergeQueryKeys(
@@ -119,6 +120,7 @@ const workspaceQueries = mergeQueryKeys(
   aiProvider,
   assistant,
   insight,
+  carrierIntelSettings,
   attention,
   audit,
   notification,
