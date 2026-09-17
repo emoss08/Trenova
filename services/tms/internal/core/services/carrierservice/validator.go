@@ -36,8 +36,8 @@ func NewValidator(p ValidatorParams) *Validator {
 				func(c *carrier.Carrier) any { return c.Code },
 			).
 			WithUniqueField(
-				"dot_number",
 				"dotNumber",
+				"dot_number",
 				"Carrier with this DOT number already exists in your organization",
 				func(c *carrier.Carrier) any { return c.DOTNumber },
 			).
