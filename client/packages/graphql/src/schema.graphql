@@ -468,6 +468,10 @@ An organization's own agent: who it is, which tools it may call, how much it
 may do on its own, and when it runs.
 """
 type AgentDefinition {
+  """
+  Chosen accent name; empty falls back to an accent derived from the agent id.
+  """
+  accent: String!
   autonomyCeiling: AgentAutonomyTier!
   businessUnitId: ID!
   contextProviders: [AgentContextProvider!]!
@@ -480,6 +484,10 @@ type AgentDefinition {
   endsAt: Timestamp
   eventKinds: [String!]!
   guardrails: [String!]!
+  """
+  Chosen icon name; empty falls back to the icon the starter template implies.
+  """
+  icon: String!
   id: ID!
   instructions: String!
   intervalSeconds: Int!

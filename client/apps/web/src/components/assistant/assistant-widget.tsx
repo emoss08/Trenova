@@ -6,10 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AnimatePresence, m } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { AssistantLauncher } from "./assistant-launcher";
+import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { AssistantPanel } from "./assistant-panel";
 
 const OPEN_PARAM = "assistant";
@@ -21,6 +22,7 @@ const OPEN_PARAM = "assistant";
  */
 export function AssistantWidget() {
   const t = useT();
+  const reduceMotion = useReducedMotion();
   const { allowed } = usePermission(Resource.Assistant, Operation.Read);
   const { allowed: canSeeProposals } = usePermission(Resource.AgentProposal, Operation.Read);
 
@@ -74,44 +76,46 @@ export function AssistantWidget() {
   }
 
   return (
-    <>
-      <AnimatePresence>
-        {!open && (
-          <AssistantLauncher
-            key="launcher"
-            pendingCount={pendingQuery.data ?? 0}
-            onClick={openWidget}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {open && (
-          <m.section
-            key="panel"
-            role="dialog"
-            aria-label={t("Assistant")}
-            aria-modal={expanded}
-            layout
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ type: "spring", stiffness: 380, damping: 32 }}
-            className={cn(
-              "bg-background/95 border-border fixed z-50 flex flex-col overflow-hidden rounded-2xl border shadow-2xl shadow-black/25 backdrop-blur-sm",
-              expanded
-                ? "inset-4 md:inset-x-[max(1rem,calc((100vw-1100px)/2))] md:inset-y-4"
-                : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",
-            )}
+    <AnimatePresence initial={false} mode="popLayout">
+      {open ? (
+        <m.section
+          key="panel"
+          role="dialog"
+          aria-label={t("Assistant")}
+          aria-modal={expanded}
+          layout
+          layoutId={ASSISTANT_SURFACE_ID}
+          style={{ borderRadius: 16 }}
+          transition={
+            reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }
+          }
+          className={cn(
+            "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden shadow-xl shadow-black/15 ring-1 backdrop-blur-sm",
+            expanded
+              ? "inset-4 md:inset-x-[max(1rem,calc((100vw-1100px)/2))] md:inset-y-4"
+              : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",
+          )}
+        >
+          <m.div
+            className="flex min-h-0 flex-1 flex-col"
+            initial={reduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.12, delay: 0.08 }}
           >
             <AssistantPanel
               expanded={expanded}
               onToggleExpanded={toggleExpanded}
               onClose={closeWidget}
             />
-          </m.section>
-        )}
-      </AnimatePresence>
-    </>
+          </m.div>
+        </m.section>
+      ) : (
+        <AssistantLauncher
+          key="launcher"
+          pendingCount={pendingQuery.data ?? 0}
+          onClick={openWidget}
+        />
+      )}
+    </AnimatePresence>
   );
 }

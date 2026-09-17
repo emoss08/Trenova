@@ -33,6 +33,8 @@ type SaveAgentDefinitionRequest struct {
 	MaxConcurrentRuns      int
 	RunTimeoutSeconds      int
 	MaxToolCalls           int
+	Icon                   string
+	Accent                 string
 	ContextProviders       []agentdefinition.ContextProvider
 	OutputMode             agentdefinition.OutputMode
 	PreferredProviderID    pulid.ID

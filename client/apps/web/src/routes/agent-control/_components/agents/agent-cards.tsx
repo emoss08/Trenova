@@ -10,7 +10,6 @@ import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AgentTemplate, TriggerMode } from "@/types/assistant";
 import {
   BoltIcon,
-  BotIcon,
   CalendarClockIcon,
   EyeOffIcon,
   InboxIcon,
@@ -22,7 +21,7 @@ import {
   Trash2Icon,
   WrenchIcon,
 } from "lucide-react";
-import { TEMPLATE_ICONS } from "./template-picker";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
 
 const TRIGGER_META: Record<
   TriggerMode,
@@ -71,7 +70,6 @@ export function AgentCard({
   const t = useT();
   const trigger = TRIGGER_META[agent.triggerMode];
   const TriggerIcon = trigger.icon;
-  const Icon = agent.template ? (TEMPLATE_ICONS[agent.template] ?? BotIcon) : BotIcon;
   const templateLabel = templates.find((entry) => entry.template === agent.template)?.label;
   const isSystem = agent.systemKey !== "";
 
@@ -79,21 +77,16 @@ export function AgentCard({
     <Card
       size="sm"
       className={cn(
-        "hover:border-primary/40 gap-3 px-3 transition-colors",
+        "hover:border-foreground/15 gap-3 px-3 transition-colors",
         !agent.enabled && "opacity-75",
       )}
     >
       <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg",
-            agent.enabled
-              ? "from-primary bg-gradient-to-br to-violet-500 text-white"
-              : "bg-muted text-muted-foreground",
-          )}
-        >
-          <Icon className="size-5" />
-        </span>
+        <AgentTile
+          agent={agent}
+          size="xl"
+          className={cn(!agent.enabled && "opacity-60 grayscale")}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <button
@@ -164,7 +157,7 @@ export function AgentCard({
         <p className="text-muted-foreground line-clamp-2 text-xs">{agent.description}</p>
       )}
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <span className="inline-flex items-center gap-1">
           <WrenchIcon className="size-3" />
           {agent.toolNames.length === 0
@@ -175,7 +168,7 @@ export function AgentCard({
       </div>
 
       <div className="border-border mt-auto flex items-center justify-between gap-2 border-t pt-3">
-        <div className="flex min-w-0 items-center gap-2 text-[11px]">
+        <div className="flex min-w-0 items-center gap-2 text-xs">
           {agent.pendingProposals > 0 ? (
             <Badge variant="warning" className="gap-1">
               <InboxIcon className="size-3" />
@@ -239,12 +232,12 @@ export function AgentCard({
                       className="text-muted-foreground hover:text-destructive"
                       disabled={isSystem}
                       onClick={onDelete}
-                    />
+                    >
+                      <Trash2Icon className="size-3.5" />
+                    </Button>
                   </span>
                 }
-              >
-                <Trash2Icon className="size-3.5" />
-              </TooltipTrigger>
+              />
               <TooltipContent>
                 {isSystem ? t("System agents cannot be removed") : t("Remove agent")}
               </TooltipContent>

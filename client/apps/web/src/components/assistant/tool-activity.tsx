@@ -9,14 +9,7 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  CircleAlertIcon,
-  CodeIcon,
-  SearchIcon,
-  ShieldQuestionIcon,
-} from "lucide-react";
+import { ChevronRightIcon, CircleAlertIcon, CodeIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { argumentRows } from "./proposal-state";
@@ -54,32 +47,28 @@ export function ToolTimeline({ steps, live = false }: { steps: ToolStep[]; live?
         ? t("{0, plural, one {# lookup failed} other {# lookups failed}}", failed)
         : t("{0, plural, one {Looked up # record} other {Looked up # records}}", steps.length);
 
+  const expanded = open || failed > 0;
+
   return (
-    <Collapsible
-      open={open || (live && failed > 0)}
-      onOpenChange={setOpen}
-      className="border-border/70 bg-card/60 max-w-[92%] overflow-hidden rounded-xl border"
-    >
-      <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors">
+    <Collapsible open={expanded} onOpenChange={setOpen} className="min-w-0">
+      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full items-center gap-1.5 py-0.5 text-left text-xs transition-colors">
         {running > 0 ? (
-          <Spinner className="size-3.5 shrink-0" />
+          <Spinner className="size-3 shrink-0" />
         ) : failed > 0 ? (
-          <CircleAlertIcon className="text-destructive size-3.5 shrink-0" />
-        ) : (
-          <SearchIcon className="text-muted-foreground size-3.5 shrink-0" />
-        )}
-        <span className="text-muted-foreground min-w-0 flex-1 truncate font-medium">{summary}</span>
-        <ChevronDownIcon
+          <CircleAlertIcon className="text-destructive size-3 shrink-0" />
+        ) : null}
+        <span className="min-w-0 flex-1 truncate">{summary}</span>
+        <ChevronRightIcon
           className={cn(
-            "text-muted-foreground size-3.5 shrink-0 transition-transform",
-            (open || (live && failed > 0)) && "rotate-180",
+            "size-3 shrink-0 transition-transform duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+            expanded && "rotate-90",
           )}
         />
       </CollapsibleTrigger>
-      <CollapsibleContent className="border-border/70 border-t">
-        <ol className="flex flex-col px-3 py-2">
-          {steps.map((step, index) => (
-            <ToolStepRow key={step.id} step={step} last={index === steps.length - 1} live={live} />
+      <CollapsibleContent>
+        <ol className="border-border/70 mt-1 ml-1 flex flex-col gap-1.5 border-l pl-3">
+          {steps.map((step) => (
+            <ToolStepRow key={step.id} step={step} live={live} />
           ))}
         </ol>
       </CollapsibleContent>
@@ -87,41 +76,41 @@ export function ToolTimeline({ steps, live = false }: { steps: ToolStep[]; live?
   );
 }
 
-function ToolStepRow({ step, last, live }: { step: ToolStep; last: boolean; live: boolean }) {
+function ToolStepRow({ step, live }: { step: ToolStep; live: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
 
   const description = describeToolCall(step.name, step.arguments);
-  const expanded = open || (live && step.status === "failed");
+  const failed = step.status === "failed";
+  const expanded = open || failed;
 
   return (
     <m.li
-      initial={live ? { opacity: 0, y: 4 } : false}
+      initial={live ? { opacity: 0, y: 2 } : false}
       animate={{ opacity: 1, y: 0 }}
-      className="relative flex gap-2.5 pb-2 last:pb-0"
+      className="min-w-0"
     >
-      <span className="flex flex-col items-center">
-        <StatusDot status={step.status} />
-        {!last && <span aria-hidden className="bg-border mt-1 w-px flex-1" />}
-      </span>
-      <div className="min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={expanded}
-          aria-label={t("Show details for {0}", description.title)}
-          className="flex w-full items-center gap-2 text-left text-xs"
-        >
-          <span className="min-w-0 flex-1 truncate">
-            <span className="font-medium">{description.title}</span>
-            {description.subject !== "" && (
-              <span className="text-muted-foreground"> · {description.subject}</span>
-            )}
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={expanded}
+        aria-label={t("Show details for {0}", description.title)}
+        className="flex w-full items-center gap-1.5 text-left text-xs"
+      >
+        {failed && <CircleAlertIcon className="text-destructive size-3 shrink-0" />}
+        <span className="min-w-0 flex-1 truncate">
+          <span className={cn("font-medium", failed ? "text-destructive" : "text-foreground")}>
+            {description.title}
           </span>
-          <StatusLabel status={step.status} />
-        </button>
-        {expanded && <ToolStepDetails step={step} />}
-      </div>
+          {description.subject !== "" && (
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-px font-mono text-[10px]">
+              {description.subject}
+            </span>
+          )}
+        </span>
+        <StatusLabel status={step.status} />
+      </button>
+      {expanded && <ToolStepDetails step={step} />}
     </m.li>
   );
 }
@@ -136,7 +125,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
   );
 
   return (
-    <div className="bg-muted/30 mt-1.5 flex flex-col gap-2.5 rounded-lg px-2.5 py-2 text-xs">
+    <div className="mt-1.5 flex flex-col gap-2 text-xs">
       {rows.length > 0 && (
         <section className="flex flex-col gap-1">
           <h4 className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
@@ -286,48 +275,14 @@ function RecordSummary({ value }: { value: unknown }) {
   );
 }
 
-function StatusDot({ status }: { status: ToolActivityStatus }) {
-  const base = "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full";
-  switch (status) {
-    case "running":
-      return (
-        <span className={cn(base, "bg-primary/15 text-primary")}>
-          <Spinner className="size-2.5" />
-        </span>
-      );
-    case "failed":
-      return (
-        <span className={cn(base, "bg-destructive/15 text-destructive")}>
-          <CircleAlertIcon className="size-2.5" />
-        </span>
-      );
-    case "proposed":
-      return (
-        <span className={cn(base, "bg-warning/20 text-warning")}>
-          <ShieldQuestionIcon className="size-2.5" />
-        </span>
-      );
-    default:
-      return (
-        <span className={cn(base, "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400")}>
-          <CheckIcon className="size-2.5" />
-        </span>
-      );
-  }
-}
-
 function StatusLabel({ status }: { status: ToolActivityStatus }) {
   const t = useT();
 
   switch (status) {
     case "running":
-      return <span className="text-muted-foreground shrink-0 text-[11px]">{t("Running…")}</span>;
+      return <span className="text-muted-foreground shrink-0 text-xs">{t("Running…")}</span>;
     case "failed":
-      return (
-        <Badge variant="inactive" className="h-4 shrink-0 px-1 text-[10px]">
-          {t("Failed")}
-        </Badge>
-      );
+      return null;
     case "proposed":
       return (
         <Badge variant="warning" className="h-4 shrink-0 px-1 text-[10px]">

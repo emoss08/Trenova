@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AssistantTrigger } from "@/components/navigation/assistant-trigger";
 import { NotificationSheet } from "@/components/notification-center/notification-sheet";
 import {
   Breadcrumb,
@@ -95,7 +94,6 @@ function NavActions() {
   return (
     <div className="ml-auto flex items-center gap-1 px-3 text-center">
       <SystemInformation />
-      <AssistantTrigger />
       <NotificationSheet />
       <FavoriteToggle />
     </div>

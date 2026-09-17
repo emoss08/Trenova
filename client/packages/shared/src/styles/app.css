@@ -37,6 +37,19 @@
   --warning-foreground: var(--color-yellow-900);
   --invert: var(--color-zinc-900);
   --invert-foreground: var(--color-zinc-50);
+
+  /* An agent's face. Eight accents with matched lightness, so a tinted tile
+     reads the same weight whichever one an organization picks. They carry no
+     meaning: the semantic tones above do that, and reusing them here would say
+     an agent is a warning. */
+  --agent-indigo: oklch(0.55 0.2 274);
+  --agent-teal: oklch(0.58 0.12 195);
+  --agent-amber: oklch(0.62 0.15 70);
+  --agent-rose: oklch(0.58 0.18 12);
+  --agent-emerald: oklch(0.56 0.14 160);
+  --agent-sky: oklch(0.57 0.14 236);
+  --agent-violet: oklch(0.56 0.2 305);
+  --agent-slate: oklch(0.5 0.03 255);
   --destructive: oklch(0.577 0.245 27.325);
   --highlight: oklch(0.8 0.16 86);
   --border: oklch(0.922 0 0);
@@ -105,6 +118,15 @@
   --warning-foreground: var(--color-yellow-600);
   --invert: var(--color-zinc-700);
   --invert-foreground: var(--color-zinc-50);
+
+  --agent-indigo: oklch(0.72 0.16 274);
+  --agent-teal: oklch(0.75 0.11 195);
+  --agent-amber: oklch(0.79 0.14 78);
+  --agent-rose: oklch(0.73 0.16 12);
+  --agent-emerald: oklch(0.74 0.13 160);
+  --agent-sky: oklch(0.74 0.12 236);
+  --agent-violet: oklch(0.73 0.16 305);
+  --agent-slate: oklch(0.72 0.02 255);
   --border: oklch(0.26 0 0);
   --input: oklch(0.32 0 0);
   --ring: oklch(0.72 0 0);
@@ -179,6 +201,14 @@
   --color-chart-4: var(--chart-4);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-agent-indigo: var(--agent-indigo);
+  --color-agent-teal: var(--agent-teal);
+  --color-agent-amber: var(--agent-amber);
+  --color-agent-rose: var(--agent-rose);
+  --color-agent-emerald: var(--agent-emerald);
+  --color-agent-sky: var(--agent-sky);
+  --color-agent-violet: var(--agent-violet);
+  --color-agent-slate: var(--agent-slate);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
@@ -940,22 +970,15 @@
   }
 }
 
-@keyframes assistant-pulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent);
-  }
+/* An agent's mark. One class so the tint, the glyph and the hairline all track a
+   single accent variable, and light and dark flip by token rather than by a
+   variant on every call site. */
+.agent-tile {
+  --agent-tile-color: var(--agent-slate);
 
-  70% {
-    box-shadow: 0 0 0 10px color-mix(in oklch, var(--primary) 0%, transparent);
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 0%, transparent);
-  }
-}
-
-.assistant-pulse {
-  animation: assistant-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: color-mix(in oklch, var(--agent-tile-color) 14%, transparent);
+  color: var(--agent-tile-color);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--agent-tile-color) 24%, transparent);
 }
 
 @keyframes assistant-caret {
@@ -973,9 +996,53 @@
   animation: assistant-caret 900ms steps(2, start) infinite;
 }
 
+/* The stop control while a reply streams: a slow breath rather than a spinner,
+   so the one control in the composer reads as live without competing with the
+   text arriving above it. */
+@keyframes assistant-stop {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.assistant-stop {
+  animation: assistant-stop 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+/* The composer's focus ring draws on rather than appearing, which is the one
+   moment the accent is allowed to move. */
+@keyframes assistant-focus-ring {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--brand) 0%, transparent);
+  }
+
+  to {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--brand) 18%, transparent);
+  }
+}
+
+.assistant-focus-ring:focus-within {
+  animation: assistant-focus-ring 180ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .assistant-pulse,
-  .assistant-caret {
+  .assistant-caret,
+  .assistant-stop,
+  .assistant-focus-ring:focus-within {
     animation: none;
+  }
+
+  .assistant-focus-ring:focus-within {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--brand) 18%, transparent);
+  }
+
+  /* BorderBeam sets its animation name inline, so only a forced rule reaches it. */
+  .assistant-beam {
+    animation: none !important;
   }
 }

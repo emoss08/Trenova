@@ -11,10 +11,11 @@ import {
 } from "@trenova/shared/components/ui/message";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { useAssistantAgent } from "@/components/agent-identity/agent-context";
+import { AgentTile, type AgentTileSize } from "@/components/agent-identity/agent-tile";
 import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "@/types/assistant";
-import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
 import { ProposalCard } from "./proposal-card";
 import type { ThreadEntry } from "./thread-view";
@@ -23,18 +24,16 @@ import { ToolTimeline, type ToolStep } from "./tool-activity";
 const TIME_FORMAT = { hour: "numeric", minute: "2-digit" } as const;
 
 /** The agent's face in the thread: one mark, used everywhere it speaks. */
-export function AgentAvatar({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn(
-        "from-primary flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br to-violet-500 text-white shadow-sm",
-        className,
-      )}
-      aria-hidden
-    >
-      <SparklesIcon className="size-3.5" />
-    </span>
-  );
+export function AgentAvatar({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: AgentTileSize;
+}) {
+  const agent = useAssistantAgent();
+
+  return <AgentTile agent={agent} size={size} className={className} />;
 }
 
 function UserAvatar() {
@@ -67,7 +66,7 @@ export function PageContextChip({ context }: { context: AssistantPageContext | n
     <Tooltip>
       <TooltipTrigger
         render={
-          <span className="text-muted-foreground inline-flex max-w-full items-center gap-1 text-[11px]">
+          <span className="text-muted-foreground inline-flex max-w-full items-center gap-1 text-xs">
             <MapPinIcon className="size-3 shrink-0" />
             <span className="truncate">
               {t("Asked from {0}", context.title || record || context.path)}
@@ -75,7 +74,7 @@ export function PageContextChip({ context }: { context: AssistantPageContext | n
           </span>
         }
       />
-      <TooltipContent className="max-w-xs font-mono text-[11px]">
+      <TooltipContent className="max-w-xs font-mono text-xs">
         {context.path}
         {record ? ` · ${record}` : ""}
       </TooltipContent>
@@ -99,7 +98,7 @@ export function UserBubble({
         <UserAvatar />
       </MessageAvatar>
       <MessageContent className="items-end">
-        <div className="from-primary text-primary-foreground max-w-[85%] rounded-2xl rounded-tr-md bg-gradient-to-br to-violet-600 px-3.5 py-2.5 text-sm whitespace-pre-wrap shadow-sm">
+        <div className="bg-secondary text-secondary-foreground border-border/60 max-w-[85%] rounded-2xl rounded-tr-md border px-3.5 py-2 text-sm whitespace-pre-wrap">
           {content}
         </div>
         {(sentAt !== undefined || pageContext) && (
@@ -120,15 +119,19 @@ export function AssistantFrame({ children, footer }: { children: ReactNode; foot
       <MessageAvatar className="self-start bg-transparent">
         <AgentAvatar />
       </MessageAvatar>
-      <MessageContent>
+      <MessageContent className="gap-3">
         {children}
-        {footer && <MessageFooter className="px-1">{footer}</MessageFooter>}
+        {footer && <MessageFooter className="px-0.5">{footer}</MessageFooter>}
       </MessageContent>
     </Message>
   );
 }
 
-/** Prose from the assistant, in the same card its history uses. */
+/**
+ * Prose from the assistant. No bubble: an answer that runs the width of the
+ * panel reads as a tool doing work, where a coloured bubble reads as a chat
+ * partner, and this one is looking at the organization's freight.
+ */
 export function AssistantProse({
   content,
   streaming = false,
@@ -137,12 +140,12 @@ export function AssistantProse({
   streaming?: boolean;
 }) {
   return (
-    <div className="bg-card border-border/70 max-w-[92%] rounded-2xl rounded-tl-md border px-3.5 py-2.5 shadow-xs">
+    <div className="min-w-0 text-sm">
       <AiMarkdown content={content} />
       {streaming && (
         <span
           aria-hidden
-          className="assistant-caret bg-primary ml-0.5 inline-block h-[1em] w-[2px] rounded-full align-text-bottom"
+          className="assistant-caret bg-foreground ml-0.5 inline-block h-[1em] w-[2px] rounded-full align-text-bottom"
         />
       )}
     </div>

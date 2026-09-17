@@ -88,9 +88,9 @@ export function AssistantHome({
           <DecorIcon position="bottom-right" />
           <div
             aria-hidden
-            className="from-primary/25 pointer-events-none absolute -top-10 -right-10 size-32 rounded-full bg-gradient-to-br to-violet-500/10 blur-2xl"
+            className="pointer-events-none absolute -top-10 -right-10 size-32 rounded-full bg-muted/40 blur-2xl"
           />
-          <span className="from-primary flex size-9 items-center justify-center rounded-xl bg-gradient-to-br to-violet-500 text-white shadow-sm">
+          <span className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-xl">
             <SparklesIcon className="size-4.5" />
           </span>
           <p className="mt-3 text-sm font-semibold">{t("Ask about anything you can see")}</p>
@@ -102,9 +102,7 @@ export function AssistantHome({
         </m.div>
 
         <section className="flex flex-col gap-2">
-          <h3 className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-            {t("Agents")}
-          </h3>
+          <h3 className="text-muted-foreground text-xs font-medium">{t("Agents")}</h3>
           {isLoading ? (
             <div className="flex flex-col gap-2">
               <Skeleton className="h-14" />
@@ -121,7 +119,7 @@ export function AssistantHome({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: 0.04 * index }}
-                  className="border-border/70 bg-card hover:border-primary/40 hover:bg-muted/40 focus-visible:ring-ring/50 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-[3px] disabled:opacity-60"
+                  className="border-border/70 bg-card hover:border-border hover:bg-muted/40 hover:bg-muted/40 focus-visible:ring-ring/50 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-[3px] disabled:opacity-60"
                 >
                   <AgentAvatar className="size-8 rounded-lg" />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -148,7 +146,7 @@ export function AssistantHome({
 
         {recent.length > 0 && (
           <section className="flex flex-col gap-2">
-            <h3 className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+            <h3 className="text-muted-foreground text-xs font-medium">
               {t("Pick up where you left off")}
             </h3>
             <div className="flex flex-col gap-0.5">
@@ -165,7 +163,7 @@ export function AssistantHome({
                       <span className="block truncate text-sm">
                         {thread.title || t("Untitled conversation")}
                       </span>
-                      <span className="text-muted-foreground block text-[11px]">
+                      <span className="text-muted-foreground block text-xs">
                         {formatSecondsAgo(now - touched)}
                       </span>
                     </span>

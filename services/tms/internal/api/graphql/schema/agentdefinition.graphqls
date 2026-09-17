@@ -61,6 +61,10 @@ type AgentDefinition {
   maxToolCalls: Int!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
+  "Chosen icon name; empty falls back to the icon the starter template implies."
+  icon: String!
+  "Chosen accent name; empty falls back to an accent derived from the agent id."
+  accent: String!
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!

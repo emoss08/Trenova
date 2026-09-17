@@ -75,6 +75,9 @@ type Definition struct {
 	RunTimeoutSeconds int               `json:"runTimeoutSeconds" bun:"run_timeout_seconds,type:INTEGER,notnull"`
 	MaxToolCalls      int               `json:"maxToolCalls"      bun:"max_tool_calls,type:INTEGER,notnull"`
 
+	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
+	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
+
 	ContextProviders    []ContextProvider `json:"contextProviders"    bun:"context_providers,type:TEXT[],array,nullzero"`
 	OutputMode          OutputMode        `json:"outputMode"          bun:"output_mode,type:VARCHAR(20),notnull"`
 	PreferredProviderID pulid.ID          `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
@@ -314,6 +317,24 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.SystemKey,
 			validation.Length(0, maxSystemKeyLength).
 				Error("System key cannot be longer than 50 characters"),
+		),
+		validation.Field(&d.Icon,
+			validation.By(func(any) error {
+				if d.Icon != "" && !IsKnownIcon(d.Icon) {
+					return errIconUnknown
+				}
+
+				return nil
+			}),
+		),
+		validation.Field(&d.Accent,
+			validation.By(func(any) error {
+				if d.Accent != "" && !IsKnownAccent(d.Accent) {
+					return errAccentUnknown
+				}
+
+				return nil
+			}),
 		),
 	))
 

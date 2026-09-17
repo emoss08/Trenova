@@ -449,7 +449,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/definitions.graphql",
-      "hash": "sha256:0b756a4283eb5513469808ddd21b67ce7ad8cf8905bb8398959c0a716c97c8cb",
+      "hash": "sha256:7e4bafaa4d601d1b126fa08f80b02c4a21dba2eaafe7c3dfa14b9560d70410c8",
       "rootFields": [
         "agentDefinitions"
       ],
@@ -470,7 +470,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentDefinitionCount",
@@ -17356,7 +17356,7 @@
         "AgentDefinitionCards"
       ],
       "usages": [],
-      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentEvidenceRefFields",

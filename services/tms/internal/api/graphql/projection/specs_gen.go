@@ -958,6 +958,14 @@ func init() {
 				FieldMapKey: "outputMode",
 			},
 			{
+				Name:        "icon",
+				FieldMapKey: "icon",
+			},
+			{
+				Name:        "accent",
+				FieldMapKey: "accent",
+			},
+			{
 				Name:        "preferredProviderId",
 				FieldMapKey: "preferredProviderId",
 			},

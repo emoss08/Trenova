@@ -38,6 +38,11 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
     [catalog?.kinds, kind],
   );
 
+  const selectedPreset = useMemo(
+    () => catalog?.presets.find((entry) => entry.key === preset),
+    [catalog?.presets, preset],
+  );
+
   const applyPreset = useCallback(
     (picked: AIProviderPreset | null) => {
       if (!picked) {
@@ -87,11 +92,14 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
         )}
       >
         <PresetPicker
+          control={control}
           presets={catalog?.presets ?? []}
-          value={preset}
           isLoading={catalogQuery.isLoading}
           onSelect={applyPreset}
         />
+        {selectedPreset?.notes && (
+          <p className="text-muted-foreground max-w-prose text-xs">{selectedPreset.notes}</p>
+        )}
       </FormSection>
 
       <FormSection

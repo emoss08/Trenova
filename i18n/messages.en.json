@@ -12803,6 +12803,15 @@
       "api/handlers"
     ]
   },
+  "Amber": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Amend": {
     "sites": 1,
     "scope": [
@@ -15882,11 +15891,12 @@
     ]
   },
   "Approve": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/agent-control",
       "routes/billing-queue",
@@ -16013,12 +16023,11 @@
     ]
   },
   "Approve and run": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -17023,6 +17032,15 @@
       "routes/admin"
     ]
   },
+  "Ask a different agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.": {
     "sites": 1,
     "scope": [
@@ -17891,7 +17909,7 @@
     ]
   },
   "Assistant": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -21642,6 +21660,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Bell": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Below the DOT minimum": {
@@ -28947,6 +28974,15 @@
       "routes/customer-ledger"
     ]
   },
+  "Choose a deployment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose a dispute reason": {
     "sites": 1,
     "scope": [
@@ -30897,6 +30933,15 @@
       "service/organizationservice"
     ]
   },
+  "Clipboard": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Clock": {
     "sites": 3,
     "scope": [
@@ -32095,11 +32140,12 @@
     ]
   },
   "Colour": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/scheduling"
     ]
   },
@@ -32834,6 +32880,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Compass": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Compile, execute, render, and deliver a report run": {
@@ -40109,14 +40164,13 @@
     ]
   },
   "Custom": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
-      "routes/agent-control",
       "routes/fuel-management"
     ]
   },
@@ -40246,6 +40300,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Custom endpoint": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Custom field definition is required": {
@@ -45658,6 +45721,15 @@
       "routes/shipment"
     ]
   },
+  "Deployment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Deprecated": {
     "sites": 1,
     "scope": [
@@ -48805,7 +48877,7 @@
     ]
   },
   "Document": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -48813,6 +48885,7 @@
       "apps/web/components",
       "packages/shared/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/shipment",
@@ -54265,6 +54338,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Emerald": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Emergency": {
@@ -61264,6 +61346,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Face": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Facility": {
     "sites": 3,
     "scope": [
@@ -61340,7 +61431,7 @@
     ]
   },
   "Failed": {
-    "sites": 24,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -67824,6 +67915,15 @@
       "routes/hold-reason"
     ]
   },
+  "Gauge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Gender": {
     "sites": 1,
     "scope": [
@@ -69946,6 +70046,15 @@
       "domain/insight"
     ]
   },
+  "Headset": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Healthy": {
     "sites": 3,
     "scope": [
@@ -70893,15 +71002,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Hosted API": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Hour": {
@@ -71901,6 +72001,15 @@
       "routes/agent-control"
     ]
   },
+  "How this agent is recognized in chat and in AI Control. Leave it and Trenova picks one that stays the same for the life of the agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How this charge was calculated": {
     "sites": 2,
     "scope": [
@@ -72353,6 +72462,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Icon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Idaho (ID)": {
@@ -73746,6 +73864,15 @@
       "routes/formula-template"
     ]
   },
+  "Include what you are looking at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Included": {
     "sites": 2,
     "scope": [
@@ -73946,6 +74073,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Indigo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Individual bank receipts to import in this batch": {
@@ -78859,12 +78995,13 @@
     ]
   },
   "Key": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/review-template"
     ]
   },
@@ -82829,6 +82966,15 @@
     "areas": [
       "apps/web/components",
       "packages/shared/components"
+    ]
+  },
+  "Loading deployments…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading document preview": {
@@ -107593,6 +107739,15 @@
       "apps/web/lib"
     ]
   },
+  "Package": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Packaging, such as Pallets.": {
     "sites": 1,
     "scope": [
@@ -114016,15 +114171,6 @@
       "routes/admin"
     ]
   },
-  "PostGIS spatial queries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Postal Code": {
     "sites": 11,
     "scope": [
@@ -114194,24 +114340,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "PostgreSQL": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Postgres full-text search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Posting Accounts": {
@@ -114638,14 +114766,13 @@
     ]
   },
   "Preset": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Preset name": {
@@ -116406,12 +116533,11 @@
     ]
   },
   "Proposed change": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -118238,11 +118364,12 @@
     ]
   },
   "Radar": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -120401,6 +120528,15 @@
       "service/formula"
     ]
   },
+  "Reads only what you can already see. Changes wait for your approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean": {
     "sites": 1,
     "scope": [
@@ -121211,11 +121347,12 @@
     ]
   },
   "Receipt": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/driver-expense"
     ]
   },
@@ -130516,6 +130653,15 @@
       "domain/worker"
     ]
   },
+  "Robot": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Role": {
     "sites": 7,
     "scope": [
@@ -130762,6 +130908,15 @@
     ],
     "areas": [
       "domain/invoiceadjustment"
+    ]
+  },
+  "Rose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Roster": {
@@ -131185,13 +131340,14 @@
     ]
   },
   "Route": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/edi",
       "routes/invoice",
@@ -132633,15 +132789,6 @@
       "routes/edi"
     ]
   },
-  "SELECT ... FOR UPDATE row locking": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "SFTP Endpoint": {
     "sites": 1,
     "scope": [
@@ -132730,15 +132877,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "SQLite": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "SSN": {
@@ -134884,12 +135022,13 @@
     ]
   },
   "Search": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -138272,15 +138411,6 @@
       "routes/dash-control"
     ]
   },
-  "Self-hosted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Self-service is not available": {
     "sites": 1,
     "scope": [
@@ -141172,6 +141302,15 @@
     ],
     "areas": [
       "template/invoice.share.email"
+    ]
+  },
+  "Shield": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Shift": {
@@ -144086,6 +144225,15 @@
       "routes/carrier"
     ]
   },
+  "Sky": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Slack between the projected arrival and the pickup appointment.": {
     "sites": 1,
     "scope": [
@@ -144102,6 +144250,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Slate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Sleeper": {
@@ -145255,6 +145412,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Spark": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Special Provisions": {
@@ -147187,7 +147353,7 @@
     ]
   },
   "Stop": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -150009,6 +150175,15 @@
       "routes/ifta-return"
     ]
   },
+  "Teal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Team": {
     "sites": 1,
     "scope": [
@@ -152260,6 +152435,15 @@
       "routes/shipment"
     ]
   },
+  "The assistant can see this page. Click to leave it out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The assistant cannot answer yet": {
     "sites": 1,
     "scope": [
@@ -152279,15 +152463,6 @@
     ]
   },
   "The assistant proposed a change that could not be saved for approval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "The assistant reads only records you can already see, and never changes anything without your approval.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -161351,6 +161526,15 @@
       "domain/carrierintel"
     ]
   },
+  "This page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This page is under construction": {
     "sites": 1,
     "scope": [
@@ -165996,11 +166180,12 @@
     ]
   },
   "Truck": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/load-detail.tsx"
     ]
   },
@@ -172799,6 +172984,15 @@
       "routes/worker"
     ]
   },
+  "Violet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Virginia (VA)": {
     "sites": 1,
     "scope": [
@@ -173460,6 +173654,15 @@
     "areas": [
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Wallet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Warehouse": {
@@ -180463,15 +180666,6 @@
       "routes/scheduling"
     ]
   },
-  "advisory locks": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -180730,15 +180924,6 @@
       "template/report.delivery.email"
     ]
   },
-  "concurrent index creation": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "confirmed by {0}": {
     "sites": 1,
     "scope": [
@@ -180811,15 +180996,6 @@
       "go/other"
     ]
   },
-  "database session diagnostics": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "date range cannot exceed 366 days": {
     "sites": 1,
     "scope": [
@@ -180854,15 +181030,6 @@
     ],
     "areas": [
       "routes/recurring-shipment"
-    ]
-  },
-  "declarative table partitioning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "did not apply.": {
@@ -182972,15 +183139,6 @@
       "routes/agent-control"
     ]
   },
-  "exact decimal arithmetic": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "example.com, subsidiary.com": {
     "sites": 1,
     "scope": [
@@ -183015,15 +183173,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "exclusion constraints": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -183432,15 +183581,6 @@
       "service/samsarasyncservice"
     ]
   },
-  "logical-replication change data capture": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "mapped Samsara driver is deactivated": {
     "sites": 1,
     "scope": [
@@ -183466,15 +183606,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "materialized views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -184699,15 +184830,6 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
-    ]
-  },
-  "trigram similarity search": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity": {

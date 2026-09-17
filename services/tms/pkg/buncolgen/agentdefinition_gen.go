@@ -72,6 +72,8 @@ var DefinitionColumns = struct {
 	MaxConcurrentRuns      Column // "max_concurrent_runs" → qualified: "agdef.max_concurrent_runs"
 	RunTimeoutSeconds      Column // "run_timeout_seconds" → qualified: "agdef.run_timeout_seconds"
 	MaxToolCalls           Column // "max_tool_calls" → qualified: "agdef.max_tool_calls"
+	Icon                   Column // "icon" → qualified: "agdef.icon"
+	Accent                 Column // "accent" → qualified: "agdef.accent"
 	ContextProviders       Column // "context_providers" → qualified: "agdef.context_providers"
 	OutputMode             Column // "output_mode" → qualified: "agdef.output_mode"
 	PreferredProviderID    Column // "preferred_provider_id" → qualified: "agdef.preferred_provider_id"
@@ -105,6 +107,8 @@ var DefinitionColumns = struct {
 	MaxConcurrentRuns:      NewColumn("max_concurrent_runs", "agdef"),
 	RunTimeoutSeconds:      NewColumn("run_timeout_seconds", "agdef"),
 	MaxToolCalls:           NewColumn("max_tool_calls", "agdef"),
+	Icon:                   NewColumn("icon", "agdef"),
+	Accent:                 NewColumn("accent", "agdef"),
 	ContextProviders:       NewColumn("context_providers", "agdef"),
 	OutputMode:             NewColumn("output_mode", "agdef"),
 	PreferredProviderID:    NewColumn("preferred_provider_id", "agdef"),
@@ -144,6 +148,8 @@ var DefinitionFieldMap = map[string]string{
 	"maxConcurrentRuns":      "max_concurrent_runs",
 	"runTimeoutSeconds":      "run_timeout_seconds",
 	"maxToolCalls":           "max_tool_calls",
+	"icon":                   "icon",
+	"accent":                 "accent",
 	"contextProviders":       "context_providers",
 	"outputMode":             "output_mode",
 	"preferredProviderId":    "preferred_provider_id",
@@ -181,6 +187,8 @@ var DefinitionInsertableColumns = []string{
 	"max_concurrent_runs",
 	"run_timeout_seconds",
 	"max_tool_calls",
+	"icon",
+	"accent",
 	"context_providers",
 	"output_mode",
 	"preferred_provider_id",
@@ -278,6 +286,8 @@ var DefinitionFilter = struct {
 	MaxConcurrentRuns      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrentRuns" → DB: "max_concurrent_runs"
 	RunTimeoutSeconds      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runTimeoutSeconds" → DB: "run_timeout_seconds"
 	MaxToolCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxToolCalls" → DB: "max_tool_calls"
+	Icon                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "icon" → DB: "icon"
+	Accent                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accent" → DB: "accent"
 	ContextProviders       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextProviders" → DB: "context_providers"
 	OutputMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputMode" → DB: "output_mode"
 	PreferredProviderID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
@@ -356,6 +366,12 @@ var DefinitionFilter = struct {
 	},
 	MaxToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxToolCalls", op, value)
+	},
+	Icon: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("icon", op, value)
+	},
+	Accent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accent", op, value)
 	},
 	ContextProviders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("contextProviders", op, value)

@@ -1,107 +1,133 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { SelectField } from "@/components/fields/select-field";
 import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
+import type { SelectOptionGroup } from "@trenova/shared/types/fields";
 import type { AIProviderPreset } from "@/types/ai-provider";
-import { CheckIcon, SlidersHorizontalIcon } from "lucide-react";
+import { SlidersHorizontalIcon } from "lucide-react";
+import { useCallback, useMemo } from "react";
+import type { Control } from "react-hook-form";
+import type { ProviderFormValues } from "./build-save-payload";
+import {
+  CUSTOM_PRESET_VALUE,
+  findPreset,
+  groupPresets,
+  presetDisplayName,
+  presetHint,
+} from "./preset-options";
 
 type PresetPickerProps = {
+  control: Control<ProviderFormValues>;
   presets: readonly AIProviderPreset[];
-  value: string;
   isLoading?: boolean;
   onSelect: (preset: AIProviderPreset | null) => void;
 };
 
-/**
- * A grid of known deployments. Picking one fills in the endpoint and output
- * settings; nothing is locked, and "Custom" keeps whatever is already typed.
- */
-export function PresetPicker({ presets, value, isLoading = false, onSelect }: PresetPickerProps) {
-  const t = useT();
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-16" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      role="radiogroup"
-      aria-label={t("Preset")}
-      className="grid grid-cols-2 gap-2 md:grid-cols-3"
-    >
-      <PresetTile
-        selected={value === ""}
-        onClick={() => onSelect(null)}
-        logo={
-          <span className="bg-muted text-muted-foreground ring-border flex size-8 items-center justify-center rounded-lg ring-1">
-            <SlidersHorizontalIcon className="size-4" />
-          </span>
-        }
-        label={t("Custom")}
-        caption={t("Any OpenAI-compatible server")}
-      />
-      {presets.map((preset) => (
-        <PresetTile
-          key={preset.key}
-          selected={value === preset.key}
-          onClick={() => onSelect(preset)}
-          logo={<BrandLogo domain={preset.domain} name={preset.label} size={32} />}
-          label={preset.label.replace(/\s*\(self-hosted\)$/i, "")}
-          caption={preset.selfHosted ? t("Self-hosted") : preset.exampleModel || t("Hosted API")}
-          badge={preset.selfHosted ? t("Local") : undefined}
-        />
-      ))}
-    </div>
-  );
-}
-
-type PresetTileProps = {
-  selected: boolean;
-  onClick: () => void;
-  logo: React.ReactNode;
-  label: string;
-  caption: string;
-  badge?: string;
+const GROUP_LABEL: Record<string, string> = {
+  hosted: "Hosted endpoints",
+  selfHosted: "Run it yourself",
 };
 
-function PresetTile({ selected, onClick, logo, label, caption, badge }: PresetTileProps) {
+/**
+ * One field rather than a wall of tiles. Picking a deployment fills in the
+ * endpoint and output settings; nothing is locked, and Custom keeps whatever is
+ * already typed.
+ */
+export function PresetPicker({ control, presets, isLoading = false, onSelect }: PresetPickerProps) {
+  const t = useT();
+
+  const byKey = useMemo(() => {
+    const map = new Map<string, AIProviderPreset>();
+    for (const preset of presets) {
+      map.set(preset.key, preset);
+    }
+
+    return map;
+  }, [presets]);
+
+  const groups = useMemo<SelectOptionGroup[]>(() => {
+    const custom: SelectOptionGroup = {
+      label: "",
+      options: [
+        {
+          value: CUSTOM_PRESET_VALUE,
+          label: "Custom endpoint",
+          description: "Any OpenAI-compatible server",
+          icon: (
+            <span className="bg-muted text-muted-foreground ring-border flex size-5 shrink-0 items-center justify-center rounded-md ring-1">
+              <SlidersHorizontalIcon className="size-3" />
+            </span>
+          ),
+        },
+      ],
+    };
+
+    return [
+      custom,
+      ...groupPresets(presets).map((group) => ({
+        label: GROUP_LABEL[group.key] ?? "",
+        options: group.presets.map((preset) => ({
+          value: preset.key,
+          label: presetDisplayName(preset),
+          description: preset.exampleModel || preset.baseUrl,
+          icon: (
+            <BrandLogo
+              presetKey={preset.key}
+              domain={preset.domain}
+              name={preset.label}
+              size={20}
+              className="rounded-md"
+            />
+          ),
+        })),
+      })),
+    ];
+  }, [presets]);
+
+  const handleChange = useCallback(
+    (value: string) => onSelect(findPreset(presets, value)),
+    [onSelect, presets],
+  );
+
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onClick}
-      className={cn(
-        "bg-card hover:bg-muted/50 focus-visible:ring-ring/50 relative flex items-center gap-2.5 rounded-lg border p-2.5 text-left transition-colors outline-none focus-visible:ring-[3px]",
-        selected ? "border-primary ring-primary/20 ring-2" : "border-border",
-      )}
-    >
-      {logo}
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-medium">{label}</span>
-          {badge && (
-            <Badge variant="outline" className="h-4 px-1 text-[10px]">
-              {badge}
-            </Badge>
-          )}
-        </span>
-        <span className="text-muted-foreground block truncate font-mono text-[11px]">
-          {caption}
-        </span>
-      </span>
-      {selected && (
-        <span className="bg-primary text-primary-foreground absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full">
-          <CheckIcon className="size-3" />
-        </span>
-      )}
-    </button>
+    <SelectField
+      control={control}
+      name="preset"
+      label={t("Deployment")}
+      placeholder={isLoading ? t("Loading deployments…") : t("Choose a deployment")}
+      isReadOnly={isLoading}
+      groups={groups}
+      onValueChange={handleChange}
+      renderOption={(option) => {
+        const preset = byKey.get(String(option.value));
+        const hint = preset ? presetHint(preset) : "none";
+
+        return (
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            {option.icon}
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate font-medium">{t(option.label)}</span>
+                {hint === "local" && (
+                  <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                    {t("Local")}
+                  </Badge>
+                )}
+                {hint === "key" && (
+                  <Badge variant="inactive" className="h-4 px-1 text-[10px]">
+                    {t("Key")}
+                  </Badge>
+                )}
+              </span>
+              {option.description && (
+                <span className="text-muted-foreground block truncate font-mono text-[10px]">
+                  {option.description}
+                </span>
+              )}
+            </span>
+          </span>
+        );
+      }}
+    />
   );
 }

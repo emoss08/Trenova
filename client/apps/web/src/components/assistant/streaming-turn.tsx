@@ -57,7 +57,7 @@ export function StreamingTurn({
 
       {turn.status === "error" && (
         <AssistantFrame>
-          <Alert variant="destructive" className="max-w-[92%]">
+          <Alert variant="destructive" className="">
             <CircleAlertIcon className="size-4" />
             <AlertTitle>{t("The assistant could not finish")}</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
@@ -90,7 +90,7 @@ function StatusLine({ turn }: { turn: TurnState }) {
 
   if (turn.status === "guarding") {
     return (
-      <TextShimmer as="span" className="text-xs">
+      <TextShimmer as="span" className="text-muted-foreground text-xs">
         {t("Checking the question…")}
       </TextShimmer>
     );
@@ -110,14 +110,14 @@ function StatusLine({ turn }: { turn: TurnState }) {
         ? `${description.title} · ${description.subject}…`
         : `${description.title}…`;
     return (
-      <TextShimmer as="span" className="text-xs">
+      <TextShimmer as="span" className="text-muted-foreground text-xs">
         {label}
       </TextShimmer>
     );
   }
 
   return (
-    <TextShimmer as="span" className="text-xs">
+    <TextShimmer as="span" className="text-muted-foreground text-xs">
       {t("Thinking…")}
     </TextShimmer>
   );

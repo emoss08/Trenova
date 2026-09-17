@@ -53,6 +53,10 @@ export const agentDefinitionSchema = z.object({
   description: z.string().optional().default(""),
   /** The starter this agent began from. It carries no restriction. */
   template: nullableEnum(agentTemplateKindSchema),
+  /** Chosen icon name; empty means the client derives one. */
+  icon: optionalId,
+  /** Chosen accent name; empty means the client derives one. */
+  accent: optionalId,
   /** Organization-authored instructions, placed after Trenova's safety preamble. */
   instructions: z.string().optional().default(""),
   guardrails: nullableList(z.string()),
@@ -135,6 +139,8 @@ export const saveAgentDefinitionRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional().default(""),
   template: agentTemplateKindSchema.nullable().default(null),
+  icon: z.string().optional().default(""),
+  accent: z.string().optional().default(""),
   instructions: z
     .string()
     .max(20000, "Instructions cannot be longer than 20000 characters")

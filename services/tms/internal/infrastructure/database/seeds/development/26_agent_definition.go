@@ -96,6 +96,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           SeedAgentDispatchName,
+			Icon:           agentdefinition.IconTruck,
+			Accent:         agentdefinition.AccentIndigo,
 			Description:    "Looks up shipments and drivers for the dispatch team.",
 			Template:       agentdefinition.TemplateDispatchAssistant,
 			Instructions: agentdefinition.TemplateDispatchAssistant.StarterInstructions() + "\n\n" +
@@ -111,6 +113,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           SeedAgentBillingName,
+			Icon:           agentdefinition.IconReceipt,
+			Accent:         agentdefinition.AccentAmber,
 			Description:    "Works blocked billing queue items and proposes what to do about them.",
 			Template:       agentdefinition.TemplateBillingAssistant,
 			Instructions: agentdefinition.TemplateBillingAssistant.StarterInstructions() + "\n\n" +
@@ -130,6 +134,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           "Compliance desk",
+			Icon:           agentdefinition.IconShield,
+			Accent:         agentdefinition.AccentTeal,
 			Description:    "Answers questions about driver qualification and what is expiring.",
 			Template:       agentdefinition.TemplateComplianceAssistant,
 			Instructions: agentdefinition.TemplateComplianceAssistant.StarterInstructions() + "\n\n" +
@@ -143,6 +149,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
 			Name:            "Customer service",
+			Icon:            agentdefinition.IconHeadset,
+			Accent:          agentdefinition.AccentRose,
 			Description:     "Shipment status for the customer-facing team. Off until reviewed.",
 			Template:        agentdefinition.TemplateCustomerAssistant,
 			Instructions:    agentdefinition.TemplateCustomerAssistant.StarterInstructions(),
@@ -155,6 +163,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,
 			Name:            "Help",
+			Icon:            agentdefinition.IconSparkle,
+			Accent:          agentdefinition.AccentSlate,
 			Description:     "Explains how to do things in Trenova. Cannot read or change records.",
 			Template:        agentdefinition.TemplateGeneralAssistant,
 			Instructions:    agentdefinition.TemplateGeneralAssistant.StarterInstructions(),
@@ -166,6 +176,8 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			Name:           "Morning operations digest",
+			Icon:           agentdefinition.IconGauge,
+			Accent:         agentdefinition.AccentSky,
 			Description:    "A weekday summary of what is stuck, late or unassigned, ready before the desk opens.",
 			Instructions: "Each weekday morning, review shipments that are late, moves without a driver, " +
 				"and billing items that are blocked. Write a short digest grouped by urgency with the " +

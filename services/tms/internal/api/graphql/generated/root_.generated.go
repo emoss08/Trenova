@@ -537,6 +537,7 @@ type ComplexityRoot struct {
 	}
 
 	AgentDefinition struct {
+		Accent                 func(childComplexity int) int
 		AutonomyCeiling        func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
 		ContextProviders       func(childComplexity int) int
@@ -550,6 +551,7 @@ type ComplexityRoot struct {
 		EventKinds             func(childComplexity int) int
 		Guardrails             func(childComplexity int) int
 		ID                     func(childComplexity int) int
+		Icon                   func(childComplexity int) int
 		Instructions           func(childComplexity int) int
 		IntervalSeconds        func(childComplexity int) int
 		LastRunAt              func(childComplexity int) int
@@ -12692,6 +12694,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentDecision.Version(childComplexity), true
 
+	case "AgentDefinition.accent":
+		if e.ComplexityRoot.AgentDefinition.Accent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Accent(childComplexity), true
 	case "AgentDefinition.autonomyCeiling":
 		if e.ComplexityRoot.AgentDefinition.AutonomyCeiling == nil {
 			break
@@ -12770,6 +12778,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.ID(childComplexity), true
+	case "AgentDefinition.icon":
+		if e.ComplexityRoot.AgentDefinition.Icon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Icon(childComplexity), true
 	case "AgentDefinition.instructions":
 		if e.ComplexityRoot.AgentDefinition.Instructions == nil {
 			break
@@ -68518,6 +68532,10 @@ type AgentDefinition {
   maxToolCalls: Int!
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
+  "Chosen icon name; empty falls back to the icon the starter template implies."
+  icon: String!
+  "Chosen accent name; empty falls back to an accent derived from the agent id."
+  accent: String!
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
   systemKey: String!
@@ -88686,6 +88704,10 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_contextProviders(ctx, field)
 	case "outputMode":
 		return ec.fieldContext_AgentDefinition_outputMode(ctx, field)
+	case "icon":
+		return ec.fieldContext_AgentDefinition_icon(ctx, field)
+	case "accent":
+		return ec.fieldContext_AgentDefinition_accent(ctx, field)
 	case "preferredProviderId":
 		return ec.fieldContext_AgentDefinition_preferredProviderId(ctx, field)
 	case "systemKey":

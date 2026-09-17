@@ -298,6 +298,8 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.MaxConcurrentRuns = req.MaxConcurrentRuns
 	definition.RunTimeoutSeconds = req.RunTimeoutSeconds
 	definition.MaxToolCalls = req.MaxToolCalls
+	definition.Icon = strings.TrimSpace(req.Icon)
+	definition.Accent = strings.TrimSpace(req.Accent)
 	definition.ContextProviders = req.ContextProviders
 	definition.OutputMode = req.OutputMode
 	definition.PreferredProviderID = req.PreferredProviderID

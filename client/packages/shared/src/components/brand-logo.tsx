@@ -1,19 +1,46 @@
+import { brandMarkFor } from "@trenova/shared/components/ui/logos/registry";
 import { brandfetchLogoUrl } from "@trenova/shared/lib/brandfetch";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 
 type BrandLogoProps = {
-  /** Vendor web domain, e.g. "openai.com". Without one the monogram renders. */
+  /** Vendor web domain, e.g. "openai.com". */
   domain?: string | null;
+  /** Provider preset key, which resolves a bundled mark without a domain lookup. */
+  presetKey?: string | null;
   /** Used for the monogram fallback and the accessible name. */
   name: string;
-  /** Rendered size in CSS pixels; the image is requested at 2x for sharp tiles. */
+  /** Rendered size in CSS pixels; a remote image is requested at 2x for sharp tiles. */
   size?: number;
   className?: string;
 };
 
-export function BrandLogo({ domain, name, size = 32, className }: BrandLogoProps) {
+/**
+ * A provider's mark, resolved in three steps: a mark we ship, then the Brandfetch
+ * CDN when a client id is configured, then initials.
+ *
+ * The bundled step comes first on purpose. It is the only one that works offline,
+ * costs no request and cannot shift the layout, so the common vendors always look
+ * right even in an install that never sets VITE_BRANDFETCH_CLIENT_ID.
+ */
+export function BrandLogo({ domain, presetKey, name, size = 32, className }: BrandLogoProps) {
   const [failedDomain, setFailedDomain] = useState<string | null>(null);
+
+  const Mark = brandMarkFor({ presetKey, domain });
+  if (Mark) {
+    return (
+      <span
+        aria-hidden
+        className={cn(
+          "bg-background ring-border text-foreground flex shrink-0 items-center justify-center rounded-lg ring-1",
+          className,
+        )}
+        style={{ width: size, height: size }}
+      >
+        <Mark className="size-[62%]" />
+      </span>
+    );
+  }
 
   const src =
     domain && failedDomain !== domain ? brandfetchLogoUrl(domain, { width: size * 2 }) : null;
@@ -50,10 +77,10 @@ export function BrandMonogram({
     <span
       aria-hidden
       className={cn(
-        "bg-muted text-muted-foreground ring-border flex shrink-0 items-center justify-center rounded-lg font-semibold ring-1 select-none",
+        "bg-muted text-muted-foreground ring-border flex shrink-0 items-center justify-center rounded-lg font-semibold tracking-tight ring-1 select-none",
         className,
       )}
-      style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.38)) }}
+      style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.36)) }}
     >
       {getNameInitials(name, "AI", { maxLength: 2 })}
     </span>

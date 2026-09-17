@@ -4,7 +4,6 @@ import {
   HistoryNavigation,
   SidebarToggle,
 } from "@/components/header";
-import { AssistantTrigger } from "@/components/navigation/assistant-trigger";
 import { ModulesMenu } from "@/components/navigation/modules-menu";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
 import { SearchTrigger } from "@/components/navigation/sidebar-chrome";
@@ -83,7 +82,6 @@ export function WorkspaceHeader() {
       </div>
 
       <div className="flex min-w-0 items-center justify-end gap-1.5">
-        <AssistantTrigger />
         <NotificationSheet />
         <UserMenu compact />
       </div>

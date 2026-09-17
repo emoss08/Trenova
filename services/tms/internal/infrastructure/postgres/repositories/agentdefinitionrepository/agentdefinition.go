@@ -339,6 +339,8 @@ func (r *repository) Update(
 		Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
 		Set(cols.RunTimeoutSeconds.Set(), entity.RunTimeoutSeconds).
 		Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
+		Set(cols.Icon.Set(), entity.Icon).
+		Set(cols.Accent.Set(), entity.Accent).
 		Set(cols.ContextProviders.Set(), entity.ContextProviders).
 		Set(cols.OutputMode.Set(), entity.OutputMode).
 		Set(cols.PreferredProviderID.Set(), entity.PreferredProviderID).

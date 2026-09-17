@@ -17,7 +17,6 @@ import {
   CircleSlashIcon,
   LoaderIcon,
   RotateCcwIcon,
-  ShieldQuestionIcon,
   XIcon,
 } from "lucide-react";
 import { m } from "motion/react";
@@ -70,32 +69,18 @@ export function ProposalCard({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "bg-card max-w-[92%] overflow-hidden rounded-xl border shadow-xs",
-        awaiting ? "border-warning/50" : "border-border/70",
+        "bg-card border-border/70 overflow-hidden rounded-xl border",
+        awaiting && "border-l-warning border-l-2",
       )}
     >
-      <div
-        className={cn(
-          "flex items-start gap-3 px-3.5 py-3",
-          awaiting && "from-warning/10 bg-gradient-to-r to-transparent",
-        )}
-      >
-        <span
-          className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-lg",
-            awaiting ? "bg-warning/20 text-warning" : "bg-muted text-muted-foreground",
-          )}
-        >
-          <ShieldQuestionIcon className="size-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-            {t("Proposed change")}
-          </p>
-          <p className="text-sm font-semibold">{view.title}</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">{view.summary}</p>
+      <div className="flex flex-col gap-1 px-3.5 py-3">
+        <div className="flex items-start justify-between gap-2">
+          {/* The sentence leads. A person deciding needs to read what will happen,
+              not decode a table of arguments to work it out. */}
+          <p className="min-w-0 flex-1 text-sm">{view.summary}</p>
+          <ProposalStatusBadge proposal={proposal} />
         </div>
-        <ProposalStatusBadge proposal={proposal} />
+        <p className="text-muted-foreground text-xs">{view.title}</p>
       </div>
 
       {view.facts.length > 0 && (
@@ -111,9 +96,7 @@ export function ProposalCard({
 
       {view.longText && (
         <div className="border-border/70 border-t px-3.5 py-2.5 text-xs">
-          <p className="text-muted-foreground mb-1 text-[10px] font-medium tracking-wider uppercase">
-            {view.longText.label}
-          </p>
+          <p className="text-muted-foreground mb-1 text-xs font-medium">{view.longText.label}</p>
           <p className="whitespace-pre-wrap">{view.longText.value}</p>
         </div>
       )}
@@ -121,7 +104,7 @@ export function ProposalCard({
       {(proposal.rationale !== "" || awaiting) && (
         <div className="border-border/70 flex flex-col gap-2 border-t px-3.5 py-2.5 text-xs">
           {proposal.rationale !== "" && (
-            <p className="text-muted-foreground border-primary/40 border-l-2 pl-2.5 whitespace-pre-wrap">
+            <p className="text-muted-foreground border-border border-l-2 pl-2.5 whitespace-pre-wrap">
               {proposal.rationale}
             </p>
           )}
@@ -150,7 +133,7 @@ export function ProposalCard({
             isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
           >
             <CheckIcon className="size-3.5" />
-            {t("Approve and run")}
+            {t("Approve")}
           </Button>
           <Button
             size="sm"
@@ -202,7 +185,7 @@ function ProposalOutcome({ proposal }: { proposal: AssistantProposal }) {
 
   if (presentation === "done") {
     return line(
-      <CircleCheckIcon className="size-3.5 text-emerald-600 dark:text-emerald-400" />,
+      <CircleCheckIcon className="size-3.5" />,
       proposal.executedAt
         ? t("Ran on {0}", generateDateTimeStringFromUnixTimestamp(proposal.executedAt))
         : t("This change has been made."),

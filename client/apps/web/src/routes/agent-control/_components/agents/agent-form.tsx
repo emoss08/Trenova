@@ -30,6 +30,7 @@ import { useController, useFormContext, useWatch } from "react-hook-form";
 import { toSaveRequest, type AgentFormValues } from "./agent-form-schema";
 import { PromptPreviewSheet } from "./prompt-preview-sheet";
 import { applyTemplateStarter } from "./template-fill";
+import { IdentityPicker } from "./identity-picker";
 import { TemplatePicker } from "./template-picker";
 import { ToolPicker } from "./tool-picker";
 
@@ -57,6 +58,9 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   const providersQuery = useQuery(queries.aiProvider.list());
 
   const template = useWatch({ control, name: "template" });
+  const name = useWatch({ control, name: "name" });
+  const icon = useWatch({ control, name: "icon" });
+  const accent = useWatch({ control, name: "accent" });
   const triggerMode = useWatch({ control, name: "triggerMode" });
   const ceiling = useWatch({ control, name: "autonomyCeiling" });
   const toolNames = useWatch({ control, name: "toolNames" });
@@ -155,6 +159,21 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
             />
           </FormControl>
         </FormGroup>
+        <FieldWrapper
+          label={t("Face")}
+          description={t(
+            "How this agent is recognized in chat and in AI Control. Leave it and Trenova picks one that stays the same for the life of the agent.",
+          )}
+        >
+          <IdentityPicker
+            name={name}
+            template={template}
+            icon={icon}
+            accent={accent}
+            onIconChange={(value) => setValue("icon", value, { shouldDirty: true })}
+            onAccentChange={(value) => setValue("accent", value, { shouldDirty: true })}
+          />
+        </FieldWrapper>
         {mode === "create" && (
           <FieldWrapper
             label={t("Start from a template")}

@@ -5,6 +5,8 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   name
   description
   template
+  icon
+  accent
   instructions
   guardrails
   toolNames

@@ -161,6 +161,8 @@ type saveAgentRequest struct {
 	Enabled                bool                              `json:"enabled"`
 	ShadowMode             bool                              `json:"shadowMode"`
 	DecisionTimeoutSeconds int                               `json:"decisionTimeoutSeconds"`
+	Icon                   string                            `json:"icon"`
+	Accent                 string                            `json:"accent"`
 	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
 	CronExpression         string                            `json:"cronExpression"`
 	CronTimezone           string                            `json:"cronTimezone"`
@@ -193,6 +195,8 @@ func (r *saveAgentRequest) toServiceRequest(
 		Enabled:                r.Enabled,
 		ShadowMode:             r.ShadowMode,
 		DecisionTimeoutSeconds: r.DecisionTimeoutSeconds,
+		Icon:                   r.Icon,
+		Accent:                 r.Accent,
 		TriggerMode:            r.TriggerMode,
 		CronExpression:         r.CronExpression,
 		CronTimezone:           r.CronTimezone,

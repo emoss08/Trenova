@@ -82,11 +82,11 @@ export function AssistantHeader({
                 <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
               )}
             </span>
-            <span className="text-muted-foreground truncate text-[11px]">{subtitle}</span>
+            <span className="text-muted-foreground truncate text-xs">{subtitle}</span>
           </span>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-80 p-1.5">
-          <p className="text-muted-foreground px-2 py-1 text-[10px] font-medium tracking-wider uppercase">
+          <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
             {t("Start a conversation with")}
           </p>
           <ScrollArea className="max-h-72">
@@ -151,7 +151,7 @@ export function AssistantHeader({
               <TooltipContent>{t("Conversations")}</TooltipContent>
             </Tooltip>
             <PopoverContent align="end" className="w-80 p-1.5">
-              <p className="text-muted-foreground px-2 py-1 text-[10px] font-medium tracking-wider uppercase">
+              <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
                 {t("Recent conversations")}
               </p>
               {threads.length === 0 ? (
@@ -184,7 +184,7 @@ export function AssistantHeader({
                             <span className="block truncate text-sm">
                               {thread.title || t("Untitled conversation")}
                             </span>
-                            <span className="text-muted-foreground block text-[11px]">
+                            <span className="text-muted-foreground block text-xs">
                               {formatSecondsAgo(now - touched)}
                             </span>
                           </button>
