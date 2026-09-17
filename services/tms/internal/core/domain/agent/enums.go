@@ -9,11 +9,12 @@ const (
 	// assistant. Its runs are opened inline, since the reasoning happened in the
 	// request rather than in a workflow.
 	TypeAssistantChat = Type("AssistantChat")
+	TypeGeneral       = Type("General")
 )
 
 func (t Type) IsValid() bool {
 	switch t {
-	case TypeBillingException, TypeDispatchAssignment, TypeAssistantChat:
+	case TypeBillingException, TypeDispatchAssignment, TypeAssistantChat, TypeGeneral:
 		return true
 	default:
 		return false
@@ -26,11 +27,38 @@ const (
 	SubjectBillingQueueItem = SubjectType("BillingQueueItem")
 	SubjectShipmentMove     = SubjectType("ShipmentMove")
 	SubjectAssistantThread  = SubjectType("AssistantThread")
+	SubjectShipment         = SubjectType("Shipment")
+	SubjectDocument         = SubjectType("Document")
+	SubjectOrganization     = SubjectType("Organization")
 )
+
+type RunTrigger string
+
+const (
+	RunTriggerManual     = RunTrigger("Manual")
+	RunTriggerChat       = RunTrigger("Chat")
+	RunTriggerScheduled  = RunTrigger("Scheduled")
+	RunTriggerEvent      = RunTrigger("Event")
+	RunTriggerContinuous = RunTrigger("Continuous")
+)
+
+func (t RunTrigger) IsValid() bool {
+	switch t {
+	case RunTriggerManual, RunTriggerChat, RunTriggerScheduled, RunTriggerEvent, RunTriggerContinuous:
+		return true
+	default:
+		return false
+	}
+}
 
 func (s SubjectType) IsValid() bool {
 	switch s {
-	case SubjectBillingQueueItem, SubjectShipmentMove, SubjectAssistantThread:
+	case SubjectBillingQueueItem,
+		SubjectShipmentMove,
+		SubjectAssistantThread,
+		SubjectShipment,
+		SubjectDocument,
+		SubjectOrganization:
 		return true
 	default:
 		return false

@@ -18,9 +18,21 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-proposals", threadId],
     queryFn: () => apiService.assistantService.listProposals(threadId),
   }),
-  agents: (enabledOnly: boolean) => ({
-    queryKey: ["agent-definitions", enabledOnly],
-    queryFn: () => apiService.agentDefinitionService.list(enabledOnly),
+  agents: (enabledOnly: boolean, chatOnly = false) => ({
+    queryKey: ["agent-definitions", enabledOnly, chatOnly],
+    queryFn: () => apiService.agentDefinitionService.list(enabledOnly, chatOnly),
+  }),
+  systemAgent: (systemKey: string) => ({
+    queryKey: ["agent-definition-system", systemKey],
+    queryFn: () => apiService.agentDefinitionService.getBySystemKey(systemKey),
+  }),
+  toolCatalog: () => ({
+    queryKey: ["agent-tool-catalog"],
+    queryFn: () => apiService.agentDefinitionService.tools(),
+  }),
+  eventKinds: () => ({
+    queryKey: ["agent-event-kinds"],
+    queryFn: () => apiService.agentDefinitionService.eventKinds(),
   }),
   agent: (id: string) => ({
     queryKey: ["agent-definition", id],

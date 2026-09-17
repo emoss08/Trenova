@@ -42,6 +42,7 @@ type FactoryParams struct {
 	ShipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
 	EDIPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	FormulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
+	AgentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
 	PayProfileActiveAssignmentCount           *PayProfileActiveAssignmentCountLoaderFactory
 	PTOPolicyOpenAssignmentCount              *PTOPolicyOpenAssignmentCountLoaderFactory
 	ShiftTemplateActiveAssignmentCount        *ShiftTemplateActiveAssignmentCountLoaderFactory
@@ -82,6 +83,7 @@ type Factory struct {
 	shipmentProfitabilityByID                 *ShipmentProfitabilityLoaderFactory
 	ediPartnerByCustomerID                    *EDIPartnerByCustomerIDLoaderFactory
 	formulaTemplateStatsByID                  *FormulaTemplateStatsLoaderFactory
+	agentDefinitionStatsByID                  *AgentDefinitionStatsLoaderFactory
 	payProfileActiveAssignmentCount           *PayProfileActiveAssignmentCountLoaderFactory
 	pTOPolicyOpenAssignmentCount              *PTOPolicyOpenAssignmentCountLoaderFactory
 	shiftTemplateActiveAssignmentCount        *ShiftTemplateActiveAssignmentCountLoaderFactory
@@ -122,6 +124,7 @@ type Loaders struct {
 	ShipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
 	EDIPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
 	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, repositories.TemplateStats]
+	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, repositories.AgentDefinitionStats]
 	PayProfileActiveAssignmentCount           *dataloadgen.Loader[string, int]
 	PTOPolicyOpenAssignmentCount              *dataloadgen.Loader[string, int]
 	ShiftTemplateActiveAssignmentCount        *dataloadgen.Loader[string, int]
@@ -163,6 +166,7 @@ func NewFactory(p FactoryParams) *Factory {
 		shipmentProfitabilityByID:                 p.ShipmentProfitabilityByID,
 		ediPartnerByCustomerID:                    p.EDIPartnerByCustomerID,
 		formulaTemplateStatsByID:                  p.FormulaTemplateStatsByID,
+		agentDefinitionStatsByID:                  p.AgentDefinitionStatsByID,
 		payProfileActiveAssignmentCount:           p.PayProfileActiveAssignmentCount,
 		pTOPolicyOpenAssignmentCount:              p.PTOPolicyOpenAssignmentCount,
 		shiftTemplateActiveAssignmentCount:        p.ShiftTemplateActiveAssignmentCount,
@@ -205,6 +209,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		ShipmentProfitabilityByID:                 f.shipmentProfitabilityByID.NewForTenant(tenantInfo),
 		EDIPartnerByCustomerID:                    f.ediPartnerByCustomerID.NewForTenant(tenantInfo),
 		FormulaTemplateStatsByID:                  f.formulaTemplateStatsByID.NewForTenant(tenantInfo),
+		AgentDefinitionStatsByID:                  f.agentDefinitionStatsByID.NewForTenant(tenantInfo),
 		PayProfileActiveAssignmentCount:           f.payProfileActiveAssignmentCount.NewForTenant(tenantInfo),
 		PTOPolicyOpenAssignmentCount:              f.pTOPolicyOpenAssignmentCount.NewForTenant(tenantInfo),
 		ShiftTemplateActiveAssignmentCount:        f.shiftTemplateActiveAssignmentCount.NewForTenant(tenantInfo),

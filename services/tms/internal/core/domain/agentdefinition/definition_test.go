@@ -3,6 +3,7 @@ package agentdefinition_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -13,15 +14,19 @@ import (
 )
 
 func validDefinition() *agentdefinition.Definition {
-	return &agentdefinition.Definition{
+	d := &agentdefinition.Definition{
 		OrganizationID:  pulid.MustNew("org_"),
 		BusinessUnitID:  pulid.MustNew("bu_"),
 		Name:            "Night dispatch helper",
-		Kind:            agentdefinition.KindDispatchAssistant,
+		Instructions:    "You help the night dispatch desk. Check hours of service first.",
 		AutonomyCeiling: agent.TierPropose,
-		ToolNames:       []string{"flag_for_manual_review"},
+		ToolNames:       []string{"get_shipment", "flag_for_manual_review"},
+		TriggerMode:     agentdefinition.TriggerChat,
 		Enabled:         true,
 	}
+	d.ApplyDefaults()
+
+	return d
 }
 
 func fieldErrors(t *testing.T, d *agentdefinition.Definition) map[string]bool {
@@ -46,25 +51,56 @@ func TestValidate_AcceptsAWellFormedDefinition(t *testing.T) {
 	require.False(t, multiErr.HasErrors(), "unexpected errors: %v", multiErr.Errors)
 }
 
-func TestValidate_RejectsAnOverlongFocusNote(t *testing.T) {
+func TestValidate_AcceptsADefinitionWithoutATemplate(t *testing.T) {
 	t.Parallel()
 
-	// A very long focus note is usually an attempt to write a system prompt in
-	// disguise, and it is sent on every turn either way.
 	d := validDefinition()
-	d.Focus = strings.Repeat("a", 2001)
+	d.Template = ""
 
-	assert.True(t, fieldErrors(t, d)["focus"])
+	assert.Empty(t, fieldErrors(t, d))
 }
 
-func TestValidate_RejectsToolsOnAReadOnlyKind(t *testing.T) {
+func TestValidate_RejectsAnUnknownTemplate(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.Kind = agentdefinition.KindGeneralAssistant
+	d.Template = agentdefinition.Template("Bogus")
+
+	assert.True(t, fieldErrors(t, d)["template"])
+}
+
+func TestValidate_BoundsInstructionsAndGuardrails(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.Instructions = strings.Repeat("a", 20001)
+	assert.True(t, fieldErrors(t, d)["instructions"])
+
+	d = validDefinition()
+	d.Guardrails = []string{"Never quote a rate", "   "}
+	assert.True(t, fieldErrors(t, d)["guardrails[1]"], "a blank guardrail is reported by index")
+
+	d = validDefinition()
+	d.Guardrails = []string{strings.Repeat("x", 301)}
+	assert.True(t, fieldErrors(t, d)["guardrails[0]"])
+
+	d = validDefinition()
+	d.Guardrails = make([]string, 21)
+	for i := range d.Guardrails {
+		d.Guardrails[i] = "rule"
+	}
+	assert.True(t, fieldErrors(t, d)["guardrails"])
+}
+
+func TestValidate_AllowsToolsOnAnyTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.Template = agentdefinition.TemplateGeneralAssistant
 	d.ToolNames = []string{"correct_charge_code"}
 
-	assert.True(t, fieldErrors(t, d)["toolNames"])
+	assert.False(t, fieldErrors(t, d)["toolNames"],
+		"a template is a starting point, not a bound on what an organization may enable")
 }
 
 func TestValidate_RejectsDuplicateAndEmptyTools(t *testing.T) {
@@ -82,51 +118,143 @@ func TestValidate_RejectsTooManyTools(t *testing.T) {
 	t.Parallel()
 
 	d := validDefinition()
-	d.ToolNames = make([]string, 0, 33)
-	for i := range 33 {
+	d.ToolNames = make([]string, 0, 65)
+	for i := range 65 {
 		d.ToolNames = append(d.ToolNames, string(rune('a'+i%26))+string(rune('0'+i/26)))
 	}
 
 	assert.True(t, fieldErrors(t, d)["toolNames"])
 }
 
-// The ceiling exists to restrict. A configuration that could raise a tool's tier
-// would let an administrator promote a propose-only tool into one that writes on
-// its own, which is precisely what the tier is there to prevent.
-func TestEffectiveTier_OnlyEverRestricts(t *testing.T) {
+func TestValidate_RejectsToolTiersForToolsNotEnabled(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.ToolTiers = map[string]agent.AutonomyTier{
+		"get_shipment": agent.TierAutoExecute,
+		"assign_move":  agent.TierPropose,
+	}
+
+	errs := fieldErrors(t, d)
+	assert.True(t, errs["toolTiers.assign_move"], "a tier for a tool the agent cannot use is a mistake")
+	assert.False(t, errs["toolTiers.get_shipment"])
+
+	d = validDefinition()
+	d.ToolTiers = map[string]agent.AutonomyTier{"get_shipment": agent.AutonomyTier("Whenever")}
+	assert.True(t, fieldErrors(t, d)["toolTiers.get_shipment"])
+}
+
+func TestValidate_ScheduledNeedsAValidCronAndTimezone(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerScheduled
+	assert.True(t, fieldErrors(t, d)["cronExpression"], "a schedule with no cron cannot fire")
+
+	d.CronExpression = "every day at noon"
+	assert.True(t, fieldErrors(t, d)["cronExpression"])
+
+	d.CronExpression = "0 6 * * 1-5"
+	d.CronTimezone = "Mars/Olympus"
+	assert.True(t, fieldErrors(t, d)["cronTimezone"])
+
+	d.CronTimezone = "America/Chicago"
+	assert.Empty(t, fieldErrors(t, d))
+}
+
+func TestValidate_EventNeedsAtLeastOneKnownEvent(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerEvent
+	assert.True(t, fieldErrors(t, d)["eventKinds"])
+
+	d.EventKinds = []agent.EventKind{"shipment.teleported"}
+	assert.True(t, fieldErrors(t, d)["eventKinds[0]"])
+
+	d.EventKinds = []agent.EventKind{agent.EventBillingQueueItemException}
+	assert.Empty(t, fieldErrors(t, d))
+}
+
+func TestValidate_ContinuousNeedsAnIntervalOfAtLeastAMinute(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerContinuous
+	d.IntervalSeconds = 30
+	assert.True(t, fieldErrors(t, d)["intervalSeconds"])
+
+	d.IntervalSeconds = 300
+	assert.Empty(t, fieldErrors(t, d))
+}
+
+func TestValidate_BoundsRunLimits(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.DecisionTimeoutSeconds = 10
+	assert.True(t, fieldErrors(t, d)["decisionTimeoutSeconds"])
+
+	d = validDefinition()
+	d.MaxToolCalls = 0
+	assert.True(t, fieldErrors(t, d)["maxToolCalls"])
+
+	d = validDefinition()
+	d.MaxToolCalls = 65
+	assert.True(t, fieldErrors(t, d)["maxToolCalls"])
+
+	d = validDefinition()
+	d.MaxConcurrentRuns = 0
+	assert.True(t, fieldErrors(t, d)["maxConcurrentRuns"])
+
+	d = validDefinition()
+	d.RunTimeoutSeconds = 5
+	assert.True(t, fieldErrors(t, d)["runTimeoutSeconds"])
+
+	d = validDefinition()
+	d.ContextProviders = []agentdefinition.ContextProvider{"Weather"}
+	assert.True(t, fieldErrors(t, d)["contextProviders[0]"])
+
+	d = validDefinition()
+	d.OutputMode = agentdefinition.OutputMode("Poem")
+	assert.True(t, fieldErrors(t, d)["outputMode"])
+}
+
+func TestApplyDefaults_FillsWhatAnOlderRowOrRequestLeftUnset(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{}
+	d.ApplyDefaults()
+
+	assert.Equal(t, agentdefinition.TriggerChat, d.TriggerMode)
+	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)
+	assert.Equal(t, agentdefinition.DefaultDecisionTimeoutSeconds, d.DecisionTimeoutSeconds)
+	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
+	assert.Equal(t, agentdefinition.DefaultRunTimeoutSeconds, d.RunTimeoutSeconds)
+	assert.Equal(t, 1, d.MaxConcurrentRuns)
+	assert.Equal(t, "UTC", d.CronTimezone)
+}
+
+// The ceiling exists to restrict. A per-tool tier lets an organization choose how
+// much it trusts each tool, but nothing it writes can lift a tool above the
+// ceiling.
+func TestEffectiveTier_HonoursOverridesUnderTheCeiling(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		name     string
 		ceiling  agent.AutonomyTier
+		override agent.AutonomyTier
 		toolTier agent.AutonomyTier
 		want     agent.AutonomyTier
 	}{
-		{"ceiling lowers auto-execute", agent.TierPropose, agent.TierAutoExecute, agent.TierPropose},
-		{
-			"ceiling lowers approval tier",
-			agent.TierPropose,
-			agent.TierActWithApproval,
-			agent.TierPropose,
-		},
-		{
-			"ceiling cannot raise propose",
-			agent.TierAutoExecute,
-			agent.TierPropose,
-			agent.TierPropose,
-		},
-		{
-			"ceiling cannot raise approval tier",
-			agent.TierAutoExecute,
-			agent.TierActWithApproval,
-			agent.TierActWithApproval,
-		},
-		{
-			"equal tiers are unchanged",
-			agent.TierActWithApproval,
-			agent.TierActWithApproval,
-			agent.TierActWithApproval,
-		},
+		{"ceiling lowers auto-execute", agent.TierPropose, "", agent.TierAutoExecute, agent.TierPropose},
+		{"ceiling lowers approval tier", agent.TierPropose, "", agent.TierActWithApproval, agent.TierPropose},
+		{"tool default kept when it is under the ceiling", agent.TierAutoExecute, "", agent.TierPropose, agent.TierPropose},
+		{"override lowers a tool", agent.TierAutoExecute, agent.TierPropose, agent.TierAutoExecute, agent.TierPropose},
+		{"override raises a tool up to the ceiling", agent.TierAutoExecute, agent.TierAutoExecute, agent.TierPropose, agent.TierAutoExecute},
+		{"override cannot pass the ceiling", agent.TierActWithApproval, agent.TierAutoExecute, agent.TierPropose, agent.TierActWithApproval},
+		{"equal tiers are unchanged", agent.TierActWithApproval, "", agent.TierActWithApproval, agent.TierActWithApproval},
 	}
 
 	for _, tc := range cases {
@@ -134,8 +262,11 @@ func TestEffectiveTier_OnlyEverRestricts(t *testing.T) {
 			t.Parallel()
 			d := validDefinition()
 			d.AutonomyCeiling = tc.ceiling
+			if tc.override != "" {
+				d.ToolTiers = map[string]agent.AutonomyTier{"flag_for_manual_review": tc.override}
+			}
 
-			assert.Equal(t, tc.want, d.EffectiveTier(tc.toolTier))
+			assert.Equal(t, tc.want, d.EffectiveTier("flag_for_manual_review", tc.toolTier))
 		})
 	}
 }
@@ -145,26 +276,90 @@ func TestAllowsTool(t *testing.T) {
 
 	d := validDefinition()
 	assert.True(t, d.AllowsTool("flag_for_manual_review"))
+	assert.True(t, d.AllowsTool("get_shipment"), "read tools are enabled the same way write tools are")
 	assert.False(t, d.AllowsTool("correct_charge_code"))
 }
 
-func TestKindAllowedResources_NarrowsByRole(t *testing.T) {
+func TestIsSystem_And_EffectiveShadow(t *testing.T) {
 	t.Parallel()
 
-	// A customer assistant must not be able to hold billing tools, whatever the
-	// administrator writes in the focus note.
-	customer := agentdefinition.KindCustomerAssistant.AllowedResources()
-	for _, resource := range customer {
-		assert.NotEqual(t, "billing_queue", resource.String())
+	d := validDefinition()
+	assert.False(t, d.IsSystem())
+	d.SystemKey = "billing_exception"
+	assert.True(t, d.IsSystem())
+
+	assert.False(t, d.EffectiveShadow(false))
+	assert.True(t, d.EffectiveShadow(true), "an organization-wide pause wins")
+	d.ShadowMode = true
+	assert.True(t, d.EffectiveShadow(false))
+}
+
+func TestComputeNextRun_FollowsTheCronInTheDefinitionsTimezone(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerScheduled
+	d.CronExpression = "0 6 * * *"
+	d.CronTimezone = "America/Chicago"
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	from := time.Date(2026, time.September, 16, 7, 0, 0, 0, chicago)
+
+	next, err := d.ComputeNextRun(from.Unix())
+	require.NoError(t, err)
+	assert.Equal(t, time.Date(2026, time.September, 17, 6, 0, 0, 0, chicago).Unix(), next)
+}
+
+func TestComputeNextRun_ContinuousAddsTheInterval(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerContinuous
+	d.IntervalSeconds = 600
+
+	next, err := d.ComputeNextRun(1_000)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1_600), next)
+}
+
+func TestIsDue(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.TriggerMode = agentdefinition.TriggerScheduled
+	assert.False(t, d.IsDue(500), "no next run recorded means nothing is due yet")
+
+	next := int64(400)
+	d.NextRunAt = &next
+	assert.True(t, d.IsDue(500))
+	assert.False(t, d.IsDue(300))
+
+	ends := int64(450)
+	d.EndsAt = &ends
+	assert.False(t, d.IsDue(500), "a definition past its end never fires")
+
+	d.Enabled = false
+	d.EndsAt = nil
+	assert.False(t, d.IsDue(500))
+
+	chat := validDefinition()
+	chat.NextRunAt = &next
+	assert.False(t, chat.IsDue(500), "a chat agent is never due")
+}
+
+func TestTemplates_DescribeEveryStarter(t *testing.T) {
+	t.Parallel()
+
+	for _, template := range agentdefinition.AllTemplates() {
+		assert.True(t, template.IsValid())
+		assert.NotEmpty(t, template.Label())
+		assert.NotEmpty(t, template.Description())
+		assert.NotEmpty(t, template.StarterInstructions())
+		assert.True(t, template.StarterTrigger().IsValid())
 	}
 
-	assert.True(t, agentdefinition.KindDispatchAssistant.MutatingAllowed())
-	assert.False(t, agentdefinition.KindGeneralAssistant.MutatingAllowed())
-	assert.Empty(t, agentdefinition.KindGeneralAssistant.AllowedResources())
-
-	for _, kind := range agentdefinition.AllKinds() {
-		assert.True(t, kind.IsValid())
-		assert.NotEmpty(t, kind.Label())
-		assert.NotEmpty(t, kind.Description())
-	}
+	assert.Equal(t, agentdefinition.TriggerEvent, agentdefinition.TemplateBillingException.StarterTrigger())
+	assert.Contains(t, agentdefinition.TemplateBillingException.StarterEvents(), agent.EventBillingQueueItemException)
+	assert.Empty(t, agentdefinition.TemplateGeneralAssistant.StarterTools())
 }

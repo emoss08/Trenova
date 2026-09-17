@@ -45,6 +45,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
 	api.GET("/templates/", h.pm.RequirePermission(resource, permission.OpRead), h.templates)
+	api.GET("/tools/", h.pm.RequirePermission(resource, permission.OpRead), h.tools)
+	api.GET("/event-kinds/", h.pm.RequirePermission(resource, permission.OpRead), h.eventKinds)
+	api.POST("/preview-prompt/", h.pm.RequirePermission(resource, permission.OpRead), h.previewPrompt)
+	api.GET("/system/:systemKey/", h.pm.RequirePermission(resource, permission.OpRead), h.getBySystemKey)
 	api.GET("/:agentID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:agentID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
@@ -64,8 +68,9 @@ func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.Requ
 
 func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 	return pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
 	}
 }
 
@@ -73,8 +78,8 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	// The chat picker asks for enabled agents only; the admin list wants all.
 	enabledOnly := c.Query("enabledOnly") == "true"
+	chatOnly := c.Query("chatOnly") == "true"
 
 	pagination.List(
 		c,
@@ -84,6 +89,7 @@ func (h *Handler) list(c *gin.Context) {
 			return h.service.List(c.Request.Context(), &repositories.ListAgentDefinitionRequest{
 				Filter:      req,
 				EnabledOnly: enabledOnly,
+				ChatOnly:    chatOnly,
 			})
 		},
 	)
@@ -91,6 +97,14 @@ func (h *Handler) list(c *gin.Context) {
 
 func (h *Handler) templates(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"templates": h.service.Templates()})
+}
+
+func (h *Handler) tools(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"tools": h.service.ToolCatalog()})
+}
+
+func (h *Handler) eventKinds(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"events": h.service.EventKinds()})
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -117,17 +131,49 @@ func (h *Handler) get(c *gin.Context) {
 	c.JSON(http.StatusOK, definition)
 }
 
-// saveAgentRequest deliberately has no system-prompt field; see the
-// agentdefinition domain for why.
+func (h *Handler) getBySystemKey(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	definition, err := h.service.GetBySystemKey(
+		c.Request.Context(),
+		repositories.GetAgentDefinitionBySystemKeyRequest{
+			SystemKey:  c.Param("systemKey"),
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, definition)
+}
+
 type saveAgentRequest struct {
-	Name            string               `json:"name"`
-	Description     string               `json:"description"`
-	Kind            agentdefinition.Kind `json:"kind"`
-	Focus           string               `json:"focus"`
-	ToolNames       []string             `json:"toolNames"`
-	AutonomyCeiling agent.AutonomyTier   `json:"autonomyCeiling"`
-	Enabled         bool                 `json:"enabled"`
-	Version         int64                `json:"version"`
+	Name                   string                            `json:"name"`
+	Description            string                            `json:"description"`
+	Template               agentdefinition.Template          `json:"template"`
+	Instructions           string                            `json:"instructions"`
+	Guardrails             []string                          `json:"guardrails"`
+	ToolNames              []string                          `json:"toolNames"`
+	ToolTiers              map[string]agent.AutonomyTier     `json:"toolTiers"`
+	AutonomyCeiling        agent.AutonomyTier                `json:"autonomyCeiling"`
+	Enabled                bool                              `json:"enabled"`
+	ShadowMode             bool                              `json:"shadowMode"`
+	DecisionTimeoutSeconds int                               `json:"decisionTimeoutSeconds"`
+	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
+	CronExpression         string                            `json:"cronExpression"`
+	CronTimezone           string                            `json:"cronTimezone"`
+	EventKinds             []agent.EventKind                 `json:"eventKinds"`
+	IntervalSeconds        int                               `json:"intervalSeconds"`
+	EndsAt                 *int64                            `json:"endsAt"`
+	MaxConcurrentRuns      int                               `json:"maxConcurrentRuns"`
+	RunTimeoutSeconds      int                               `json:"runTimeoutSeconds"`
+	MaxToolCalls           int                               `json:"maxToolCalls"`
+	ContextProviders       []agentdefinition.ContextProvider `json:"contextProviders"`
+	OutputMode             agentdefinition.OutputMode        `json:"outputMode"`
+	PreferredProviderID    pulid.ID                          `json:"preferredProviderId"`
+	Version                int64                             `json:"version"`
 }
 
 func (r *saveAgentRequest) toServiceRequest(
@@ -135,16 +181,32 @@ func (r *saveAgentRequest) toServiceRequest(
 	tenantInfo pagination.TenantInfo,
 ) *serviceports.SaveAgentDefinitionRequest {
 	return &serviceports.SaveAgentDefinitionRequest{
-		ID:              id,
-		Name:            r.Name,
-		Description:     r.Description,
-		Kind:            r.Kind,
-		Focus:           r.Focus,
-		ToolNames:       r.ToolNames,
-		AutonomyCeiling: r.AutonomyCeiling,
-		Enabled:         r.Enabled,
-		Version:         r.Version,
-		TenantInfo:      tenantInfo,
+		ID:                     id,
+		Name:                   r.Name,
+		Description:            r.Description,
+		Template:               r.Template,
+		Instructions:           r.Instructions,
+		Guardrails:             r.Guardrails,
+		ToolNames:              r.ToolNames,
+		ToolTiers:              r.ToolTiers,
+		AutonomyCeiling:        r.AutonomyCeiling,
+		Enabled:                r.Enabled,
+		ShadowMode:             r.ShadowMode,
+		DecisionTimeoutSeconds: r.DecisionTimeoutSeconds,
+		TriggerMode:            r.TriggerMode,
+		CronExpression:         r.CronExpression,
+		CronTimezone:           r.CronTimezone,
+		EventKinds:             r.EventKinds,
+		IntervalSeconds:        r.IntervalSeconds,
+		EndsAt:                 r.EndsAt,
+		MaxConcurrentRuns:      r.MaxConcurrentRuns,
+		RunTimeoutSeconds:      r.RunTimeoutSeconds,
+		MaxToolCalls:           r.MaxToolCalls,
+		ContextProviders:       r.ContextProviders,
+		OutputMode:             r.OutputMode,
+		PreferredProviderID:    r.PreferredProviderID,
+		Version:                r.Version,
+		TenantInfo:             tenantInfo,
 	}
 }
 
@@ -198,6 +260,28 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updated)
+}
+
+func (h *Handler) previewPrompt(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var body saveAgentRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	actor := requestActorFromAuthContext(authCtx)
+	prompt, err := h.service.PreviewPrompt(c.Request.Context(), &serviceports.PreviewPromptRequest{
+		Definition: body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
+		Actor:      &actor,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"prompt": prompt})
 }
 
 func (h *Handler) remove(c *gin.Context) {

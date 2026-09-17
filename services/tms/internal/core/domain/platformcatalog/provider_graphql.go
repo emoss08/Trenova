@@ -46,6 +46,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"formula_template.graphqls",
 		"fuel_surcharge.graphqls",
 		"invoice.graphqls",
+		"invoice_adjustment.graphqls",
 		"invoice_dispute.graphqls",
 		"late_charge.graphqls",
 		"rate.graphqls",
@@ -135,6 +136,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	},
 	FeatureAgentAutomation: {
 		"agent.graphqls",
+		"agentdefinition.graphqls",
 	},
 }
 

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,18 +98,18 @@ func newProposalService(
 ) *Service {
 	return &Service{
 		logger:        zap.NewNop(),
-		runs:          runs,
+		recorder:      proposalrecorder.NewWithStores(zap.NewNop(), runs, proposals),
 		proposals:     proposals,
 		conversations: conversations,
 	}
 }
 
-func proposalTestParams(actions []PendingAction, saved []conversation.Message) persistProposalsParams {
+func proposalTestParams(actions []serviceports.PendingAction, saved []conversation.Message) persistProposalsParams {
 	return persistProposalsParams{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Dispatch helper",
-			Kind:            agentdefinition.KindDispatchAssistant,
+			Template:        agentdefinition.TemplateDispatchAssistant,
 			AutonomyCeiling: agent.TierPropose,
 			Version:         3,
 		},
@@ -142,7 +144,7 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 
-	params := proposalTestParams([]PendingAction{
+	params := proposalTestParams([]serviceports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Driver is out of hours", Tier: agent.TierPropose},
 		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierPropose},
 	}, nil)
@@ -155,6 +157,8 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	assert.Equal(t, agent.TypeAssistantChat, run.AgentType)
 	assert.Equal(t, agent.SubjectAssistantThread, run.SubjectType)
 	assert.Equal(t, params.Thread.ID, run.SubjectID)
+	assert.Equal(t, agent.RunTriggerChat, run.Trigger)
+	assert.Equal(t, params.Definition.ID, run.AgentDefinitionID)
 	assert.Equal(t, "test-model", run.ModelIdentifier)
 	assert.NotEmpty(t, run.InputContextHash)
 
@@ -173,7 +177,7 @@ func TestPersistProposals_RecordsThePendingStatusAndTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -209,7 +213,7 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	_, err := svc.persistProposals(t.Context(), proposalTestParams(
-		[]PendingAction{
+		[]serviceports.PendingAction{
 			{ToolName: "hold_shipment", Rationale: "Consignee closed", ToolCallID: "call_2"},
 			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_1"},
 		},
@@ -234,7 +238,7 @@ func TestPersistProposals_StoresEmptyArgumentsAsAnObject(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
 		{ToolName: "close_period", Rationale: "Month end"},
 	}, nil))
 	require.NoError(t, err)
@@ -252,7 +256,7 @@ func TestPersistProposals_FallsBackToTheMostRestrictiveTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours"},
 	}, nil))
 	require.NoError(t, err)
@@ -276,7 +280,7 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	params := proposalTestParams(
-		[]PendingAction{{
+		[]serviceports.PendingAction{{
 			ToolName:   "reassign_move",
 			Rationale:  "Out of hours",
 			Tier:       agent.TierPropose,
@@ -305,7 +309,7 @@ func TestPersistProposals_CitesOnlyTheThreadWhenTheMessageIsUnknown(t *testing.T
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
 	}, nil))
 	require.NoError(t, err)
@@ -326,7 +330,7 @@ func TestPersistProposals_FailsWhenTheRunCannotBeOpened(t *testing.T) {
 		&stubConversationRepo{},
 	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours"},
 	}, nil))
 
@@ -385,41 +389,4 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Empty(t, proposals.lastList.ThreadID, "the proposal query must not run at all")
-}
-
-func TestProposalRationale_UsesTheModelsOwnWordsWhenItGaveAny(t *testing.T) {
-	t.Parallel()
-
-	rationale := proposalRationale(
-		"  Reassigning to the Dallas terminal because the driver is out of hours.  ",
-		"reassign_move",
-	)
-
-	assert.Equal(
-		t,
-		"Reassigning to the Dallas terminal because the driver is out of hours.",
-		rationale,
-	)
-}
-
-func TestProposalRationale_SaysSoWhenTheModelExplainedNothing(t *testing.T) {
-	t.Parallel()
-
-	rationale := proposalRationale("   ", "reassign_move")
-
-	assert.Contains(t, rationale, "reassign_move")
-	assert.Contains(t, rationale, "without explaining why")
-}
-
-func TestProposalRationale_TruncatesNarration(t *testing.T) {
-	t.Parallel()
-
-	long := make([]rune, maxRationaleChars*2)
-	for i := range long {
-		long[i] = 'a'
-	}
-
-	rationale := proposalRationale(string(long), "reassign_move")
-
-	assert.LessOrEqual(t, len([]rune(rationale)), maxRationaleChars+1)
 }

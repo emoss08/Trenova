@@ -205,6 +205,7 @@ type Params struct {
 	InvoiceDisputeService        services.InvoiceDisputeService
 	LateChargeService            services.LateChargeService
 	AgentRunService              services.AgentRunService
+	AgentDefinitionService       services.AgentDefinitionService
 	AgentProposalService         services.AgentProposalService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
@@ -345,6 +346,7 @@ type Resolver struct {
 	invoiceDisputeService        services.InvoiceDisputeService
 	lateChargeService            services.LateChargeService
 	agentRunService              services.AgentRunService
+	agentDefinitionService       services.AgentDefinitionService
 	agentProposalService         services.AgentProposalService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
@@ -486,6 +488,7 @@ func New(p Params) *Resolver {
 		invoiceDisputeService:        p.InvoiceDisputeService,
 		lateChargeService:            p.LateChargeService,
 		agentRunService:              p.AgentRunService,
+		agentDefinitionService:       p.AgentDefinitionService,
 		agentProposalService:         p.AgentProposalService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,

@@ -7,84 +7,59 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
-type fakeTool struct {
-	name     string
-	resource permission.Resource
-	tier     agent.AutonomyTier
-}
-
-func (f fakeTool) Name() string                              { return f.name }
-func (f fakeTool) Description() string                       { return "fake" }
-func (f fakeTool) ParamSchema() map[string]any               { return map[string]any{} }
-func (f fakeTool) Reversible() bool                          { return true }
-func (f fakeTool) PermissionResource() permission.Resource   { return f.resource }
-func (f fakeTool) PermissionOperation() permission.Operation { return permission.OpUpdate }
-func (f fakeTool) RequiresIdempotencyKey() bool              { return false }
-func (f fakeTool) DefaultAutonomyTier() agent.AutonomyTier   { return f.tier }
-func (f fakeTool) Execute(_ context.Context, _ serviceports.ToolExecuteParams) error {
-	return nil
-}
-
-type fakeRegistry struct {
-	tools []serviceports.AgentTool
-}
-
-func (r fakeRegistry) Get(name string) (serviceports.AgentTool, bool) {
-	for _, tool := range r.tools {
-		if tool.Name() == name {
-			return tool, true
-		}
-	}
-
-	return nil, false
-}
-
-func (r fakeRegistry) All() []serviceports.AgentTool { return r.tools }
-
-func (r fakeRegistry) Descriptors() []serviceports.AgentToolDescriptor {
-	return nil
-}
-
-func testRegistry() fakeRegistry {
-	return fakeRegistry{tools: []serviceports.AgentTool{
-		fakeTool{
-			name:     "reassign_move",
-			resource: permission.ResourceShipmentMove,
-			tier:     agent.TierPropose,
+func testRegistries() (*agentruntimetest.StubActionRegistry, *agentruntimetest.StubQueryRegistry) {
+	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+		&agentruntimetest.StubActionTool{
+			ToolName: "reassign_move",
+			Resource: permission.ResourceShipmentMove,
+			Tier:     agent.TierPropose,
 		},
-		fakeTool{
-			name:     "correct_charge_code",
-			resource: permission.ResourceBillingQueue,
-			tier:     agent.TierPropose,
+		&agentruntimetest.StubActionTool{
+			ToolName: "correct_charge_code",
+			Resource: permission.ResourceBillingQueue,
+			Tier:     agent.TierPropose,
 		},
-		fakeTool{
-			name:     "update_customer",
-			resource: permission.ResourceCustomer,
-			tier:     agent.TierActWithApproval,
+		&agentruntimetest.StubActionTool{
+			ToolName: "update_customer",
+			Resource: permission.ResourceCustomer,
+			Tier:     agent.TierActWithApproval,
 		},
 	}}
+	queries := &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		&agentruntimetest.StubQueryTool{ToolName: "get_shipment", Resource: permission.ResourceShipment},
+	}}
+
+	return actions, queries
 }
 
-func definition(kind agentdefinition.Kind, tools ...string) *agentdefinition.Definition {
-	return &agentdefinition.Definition{
+func definition(template agentdefinition.Template, tools ...string) *agentdefinition.Definition {
+	d := &agentdefinition.Definition{
 		Name:            "Test",
-		Kind:            kind,
+		Template:        template,
 		AutonomyCeiling: agent.TierPropose,
 		ToolNames:       tools,
 	}
+	d.ApplyDefaults()
+
+	return d
 }
 
 func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 	t.Helper()
 
+	actions, queries := testRegistries()
 	multiErr := errortypes.NewMultiError()
-	validateToolSelection(d, testRegistry(), multiErr)
+	validateToolSelection(d, actions, queries, multiErr)
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
@@ -94,41 +69,20 @@ func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 	return fields
 }
 
-func TestValidateToolSelection_AcceptsToolsInsideTheTemplateBound(t *testing.T) {
+// A template is a starting point. An organization may hand any agent any tool
+// the system provides, whatever template it began from.
+func TestValidateToolSelection_AcceptsAnyRegisteredToolOnAnyTemplate(t *testing.T) {
 	t.Parallel()
 
-	errs := validate(t, definition(agentdefinition.KindDispatchAssistant, "reassign_move"))
-	assert.Empty(t, errs)
-}
-
-// The narrowing rule: a template's bound is an outer limit, and no configuration
-// reaches past it.
-func TestValidateToolSelection_RefusesToolsOutsideTheTemplateBound(t *testing.T) {
-	t.Parallel()
-
-	t.Run("customer assistant cannot hold a billing tool", func(t *testing.T) {
-		t.Parallel()
-		errs := validate(t, definition(agentdefinition.KindCustomerAssistant, "correct_charge_code"))
-		assert.True(t, errs["toolNames[0]"])
-	})
-
-	t.Run("dispatch assistant cannot hold a customer tool", func(t *testing.T) {
-		t.Parallel()
-		errs := validate(t, definition(agentdefinition.KindDispatchAssistant, "update_customer"))
-		assert.True(t, errs["toolNames[0]"])
-	})
-
-	t.Run("billing assistant cannot hold a move tool", func(t *testing.T) {
-		t.Parallel()
-		errs := validate(t, definition(agentdefinition.KindBillingAssistant, "reassign_move"))
-		assert.True(t, errs["toolNames[0]"])
-	})
+	assert.Empty(t, validate(t, definition(agentdefinition.TemplateCustomerAssistant, "correct_charge_code")))
+	assert.Empty(t, validate(t, definition(agentdefinition.TemplateGeneralAssistant, "reassign_move", "get_shipment")))
+	assert.Empty(t, validate(t, definition("", "update_customer")))
 }
 
 func TestValidateToolSelection_RefusesUnknownTools(t *testing.T) {
 	t.Parallel()
 
-	errs := validate(t, definition(agentdefinition.KindDispatchAssistant, "exec_shell"))
+	errs := validate(t, definition(agentdefinition.TemplateDispatchAssistant, "exec_shell"))
 	assert.True(t, errs["toolNames[0]"], "a tool that does not exist cannot be configured")
 }
 
@@ -136,34 +90,115 @@ func TestValidateToolSelection_ReportsEachOffendingToolByIndex(t *testing.T) {
 	t.Parallel()
 
 	errs := validate(t, definition(
-		agentdefinition.KindDispatchAssistant,
+		agentdefinition.TemplateDispatchAssistant,
 		"reassign_move",
-		"correct_charge_code",
+		"get_shipment",
 		"exec_shell",
+		"run_sql",
 	))
 
-	assert.False(t, errs["toolNames[0]"], "the permitted tool should not be reported")
-	assert.True(t, errs["toolNames[1]"])
+	assert.False(t, errs["toolNames[0]"])
+	assert.False(t, errs["toolNames[1]"])
 	assert.True(t, errs["toolNames[2]"])
+	assert.True(t, errs["toolNames[3]"])
 }
 
-func TestAvailableTools_OffersOnlyThePermittedSet(t *testing.T) {
+func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 	t.Parallel()
 
-	dispatch := AvailableTools(agentdefinition.KindDispatchAssistant, testRegistry())
-	require.Len(t, dispatch, 1)
-	assert.Equal(t, "reassign_move", dispatch[0].Name)
+	actions, queries := testRegistries()
+	catalog := buildToolCatalog(actions, queries)
 
-	billing := AvailableTools(agentdefinition.KindBillingAssistant, testRegistry())
-	require.Len(t, billing, 1)
-	assert.Equal(t, "correct_charge_code", billing[0].Name)
+	require.Len(t, catalog, 4)
+	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
+	for _, entry := range catalog {
+		byName[entry.Name] = entry
+	}
+
+	assert.Equal(t, serviceports.ToolCatalogKindQuery, byName["get_shipment"].Kind)
+	assert.Equal(t, permission.OpRead, byName["get_shipment"].Operation)
+	assert.Equal(t, serviceports.ToolCatalogKindAction, byName["update_customer"].Kind)
+	assert.Equal(t, agent.TierActWithApproval, byName["update_customer"].DefaultAutonomyTier)
+	assert.Equal(t, permission.ResourceCustomer, byName["update_customer"].Resource)
 }
 
-// A read-only template is offered nothing, so the configuration UI cannot present
-// a choice that would then be refused on save.
-func TestAvailableTools_OffersNothingForAReadOnlyTemplate(t *testing.T) {
+func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, AvailableTools(agentdefinition.KindGeneralAssistant, testRegistry()))
-	assert.Empty(t, AvailableTools(agentdefinition.Kind("Bogus"), testRegistry()))
+	actions, queries := testRegistries()
+	tools := registeredStarterTools(agentdefinition.TemplateDispatchAssistant, actions, queries)
+
+	assert.Equal(t, []string{"get_shipment"}, tools,
+		"starter tools that no registry provides are not offered")
+}
+
+type stubDefinitionRepo struct {
+	repositories.AgentDefinitionRepository
+
+	existing *agentdefinition.Definition
+	deleted  []pulid.ID
+}
+
+func (r *stubDefinitionRepo) GetByID(
+	_ context.Context,
+	_ repositories.GetAgentDefinitionByIDRequest,
+) (*agentdefinition.Definition, error) {
+	return r.existing, nil
+}
+
+func (r *stubDefinitionRepo) Delete(
+	_ context.Context,
+	req repositories.DeleteAgentDefinitionRequest,
+) error {
+	r.deleted = append(r.deleted, req.ID)
+
+	return nil
+}
+
+type stubAudit struct{ serviceports.AuditService }
+
+func (stubAudit) LogAction(_ *serviceports.LogActionParams, _ ...serviceports.LogOption) error {
+	return nil
+}
+
+// A system agent is what the platform's own events fire; deleting it would
+// leave an event with nothing to run. Disabling it is the supported way to
+// switch it off.
+func TestDelete_RefusesASystemAgent(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubDefinitionRepo{existing: &agentdefinition.Definition{
+		ID:        pulid.MustNew("agdef_"),
+		Name:      "Billing exceptions",
+		SystemKey: "billing_exception",
+	}}
+	svc := &Service{l: zap.NewNop(), repo: repo, audit: stubAudit{}}
+
+	err := svc.Delete(t.Context(), repositories.DeleteAgentDefinitionRequest{ID: repo.existing.ID}, nil)
+
+	require.Error(t, err)
+	assert.Empty(t, repo.deleted)
+}
+
+func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{}
+	apply(d, &serviceports.SaveAgentDefinitionRequest{
+		Name:            " Night desk ",
+		TriggerMode:     agentdefinition.TriggerEvent,
+		CronExpression:  "* * * * *",
+		IntervalSeconds: 300,
+		EventKinds:      []agent.EventKind{agent.EventShipmentCreated},
+		ToolNames:       []string{" get_shipment "},
+		ToolTiers:       map[string]agent.AutonomyTier{"get_shipment": agent.TierAutoExecute},
+	})
+
+	assert.Equal(t, "Night desk", d.Name)
+	assert.Empty(t, d.CronExpression)
+	assert.Zero(t, d.IntervalSeconds)
+	assert.Equal(t, []agent.EventKind{agent.EventShipmentCreated}, d.EventKinds)
+	assert.Equal(t, []string{"get_shipment"}, d.ToolNames)
+	assert.Equal(t, agentdefinition.DefaultMaxToolCalls, d.MaxToolCalls)
+	assert.Equal(t, agentdefinition.OutputConversational, d.OutputMode)
 }

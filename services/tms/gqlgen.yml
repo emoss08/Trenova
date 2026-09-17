@@ -1536,6 +1536,32 @@ models:
   AgentRun:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRun
+  AgentDefinition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Definition
+    fields:
+      template:
+        resolver: true
+      eventKinds:
+        resolver: true
+      toolTiers:
+        resolver: true
+      pendingProposals:
+        resolver: true
+      openRuns:
+        resolver: true
+  AgentTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Template
+  AgentTriggerMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.TriggerMode
+  AgentOutputMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.OutputMode
+  AgentContextProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.ContextProvider
   AgentProposal:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentProposal

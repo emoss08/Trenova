@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -69,6 +70,8 @@ func (s *Service) runChat(
 			"No AI provider is configured for {0}", string(aiprovider.TaskAssistantChat),
 		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
+
+	usable = preferFirst(usable, req.PreferredProviderID)
 
 	var lastErr error
 	for _, provider := range usable {
@@ -213,4 +216,28 @@ func (s *Service) executeStreamWithRetry(
 	}
 
 	return nil, emitted, lastErr
+}
+
+func preferFirst(providers []*aiprovider.Provider, preferred pulid.ID) []*aiprovider.Provider {
+	if preferred.IsNil() {
+		return providers
+	}
+
+	for idx, provider := range providers {
+		if provider.ID != preferred {
+			continue
+		}
+		if idx == 0 {
+			return providers
+		}
+
+		ordered := make([]*aiprovider.Provider, 0, len(providers))
+		ordered = append(ordered, provider)
+		ordered = append(ordered, providers[:idx]...)
+		ordered = append(ordered, providers[idx+1:]...)
+
+		return ordered
+	}
+
+	return providers
 }

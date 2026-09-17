@@ -184,7 +184,7 @@ func (s *Service) SendMessageStream(
 		Thread:     thread,
 		Actor:      actor,
 		Saved:      saved,
-		Actions:    turn.Proposals,
+		Actions:    turn.Actions,
 		Model:      turn.Model,
 		Input:      content,
 	})

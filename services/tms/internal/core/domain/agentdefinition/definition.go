@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -19,44 +22,66 @@ import (
 const (
 	maxNameLength        = 100
 	maxDescriptionLength = 500
-	maxFocusLength       = 2000
-	maxTools             = 32
+	maxInstructionsRunes = 20000
+	maxGuardrails        = 20
+	maxGuardrailRunes    = 300
+	maxTools             = 64
+	maxSystemKeyLength   = 50
+	maxCronLength        = 100
+	minIntervalSeconds   = 60
+	minDecisionTimeout   = 60
+	maxDecisionTimeout   = 30 * 24 * 60 * 60
+	minRunTimeoutSeconds = 60
+	maxRunTimeoutSeconds = 3600
+	maxToolCallsCeiling  = 64
+	maxConcurrentRuns    = 10
+
+	DefaultDecisionTimeoutSeconds = 86400
+	DefaultRunTimeoutSeconds      = 600
+	DefaultMaxToolCalls           = 12
+	DefaultCronTimezone           = "UTC"
 )
 
-// Definition is an organization's configuration of a Trenova agent template.
-//
-// There is deliberately no system-prompt field. An organization that could write
-// one could write "you are a general coding assistant" and undo every boundary
-// the product depends on. What it configures instead is composition: which
-// template, which subset of that template's tools, how much autonomy, and a
-// bounded focus note that is delivered to the model as data rather than as
-// instruction.
 type Definition struct {
 	bun.BaseModel `bun:"table:agent_definitions,alias:agdef" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 
-	Name        string `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
-	Kind        Kind   `json:"kind"        bun:"kind,type:VARCHAR(50),notnull"`
+	Name         string   `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
+	Description  string   `json:"description"  bun:"description,type:TEXT,nullzero"`
+	Template     Template `json:"template"     bun:"template,type:VARCHAR(50),nullzero"`
+	Instructions string   `json:"instructions" bun:"instructions,type:TEXT,nullzero"`
+	Guardrails   []string `json:"guardrails"   bun:"guardrails,type:TEXT[],array,nullzero"`
 
-	// Focus is the organization's own guidance — "we prioritise reefer loads",
-	// "always check the detention policy first". It is never concatenated into the
-	// system prompt; see BuildFocusSection.
-	Focus string `json:"focus" bun:"focus,type:TEXT,nullzero"`
+	ToolNames       []string                      `json:"toolNames"       bun:"tool_names,type:TEXT[],array,nullzero"`
+	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       bun:"tool_tiers,type:JSONB,nullzero"`
+	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" bun:"autonomy_ceiling,type:VARCHAR(50),notnull"`
 
-	// ToolNames is the subset of the kind's tools this agent may use. Empty means
-	// the agent can only answer, not act.
-	ToolNames []string `json:"toolNames" bun:"tool_names,type:TEXT[],array,nullzero"`
+	Enabled                bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
+	ShadowMode             bool `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
+	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
 
-	// AutonomyCeiling caps every tool's autonomy. It can only lower a tool's own
-	// tier, never raise it, so a configuration cannot promote a propose-only tool
-	// into one that executes on its own.
-	AutonomyCeiling agent.AutonomyTier `json:"autonomyCeiling" bun:"autonomy_ceiling,type:VARCHAR(50),notnull"`
+	TriggerMode       TriggerMode       `json:"triggerMode"       bun:"trigger_mode,type:VARCHAR(20),notnull"`
+	CronExpression    string            `json:"cronExpression"    bun:"cron_expression,type:VARCHAR(100),nullzero"`
+	CronTimezone      string            `json:"cronTimezone"      bun:"cron_timezone,type:VARCHAR(100),nullzero"`
+	EventKinds        []agent.EventKind `json:"eventKinds"        bun:"event_kinds,type:TEXT[],array,nullzero"`
+	IntervalSeconds   int               `json:"intervalSeconds"   bun:"interval_seconds,type:INTEGER,nullzero"`
+	EndsAt            *int64            `json:"endsAt"            bun:"ends_at,type:BIGINT,nullzero"`
+	MaxConcurrentRuns int               `json:"maxConcurrentRuns" bun:"max_concurrent_runs,type:INTEGER,notnull"`
+	RunTimeoutSeconds int               `json:"runTimeoutSeconds" bun:"run_timeout_seconds,type:INTEGER,notnull"`
+	MaxToolCalls      int               `json:"maxToolCalls"      bun:"max_tool_calls,type:INTEGER,notnull"`
 
-	Enabled bool `json:"enabled" bun:"enabled,type:BOOLEAN,notnull"`
+	ContextProviders    []ContextProvider `json:"contextProviders"    bun:"context_providers,type:TEXT[],array,nullzero"`
+	OutputMode          OutputMode        `json:"outputMode"          bun:"output_mode,type:VARCHAR(20),notnull"`
+	PreferredProviderID pulid.ID          `json:"preferredProviderId" bun:"preferred_provider_id,type:VARCHAR(100),nullzero"`
+	SystemKey           string            `json:"systemKey"           bun:"system_key,type:VARCHAR(50),nullzero"`
+
+	LastRunAt *int64 `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
+	NextRunAt *int64 `json:"nextRunAt" bun:"next_run_at,type:BIGINT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -74,6 +99,7 @@ func (d *Definition) BeforeAppendModel(_ context.Context, query bun.Query) error
 		if d.ID.IsNil() {
 			d.ID = pulid.MustNew("agdef_")
 		}
+		d.ApplyDefaults()
 		d.CreatedAt = now
 		d.UpdatedAt = now
 	case *bun.UpdateQuery:
@@ -85,6 +111,8 @@ func (d *Definition) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 func (d *Definition) GetID() pulid.ID { return d.ID }
 
+func (d *Definition) GetCreatedAt() int64 { return d.CreatedAt }
+
 func (d *Definition) GetTableName() string { return "agent_definitions" }
 
 func (d *Definition) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
@@ -93,19 +121,53 @@ func (d *Definition) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText},
-			{Name: "kind", Type: domaintypes.FieldTypeEnum},
+			{Name: "template", Type: domaintypes.FieldTypeEnum},
+			{Name: "trigger_mode", Type: domaintypes.FieldTypeEnum},
 		},
 	}
 }
 
-// EffectiveTier applies the ceiling to a tool's own tier, returning whichever is
-// more restrictive.
-func (d *Definition) EffectiveTier(toolTier agent.AutonomyTier) agent.AutonomyTier {
-	if tierRank(d.AutonomyCeiling) < tierRank(toolTier) {
+func (d *Definition) ApplyDefaults() {
+	if d.TriggerMode == "" {
+		d.TriggerMode = TriggerChat
+	}
+	if d.OutputMode == "" {
+		d.OutputMode = OutputConversational
+	}
+	if d.AutonomyCeiling == "" {
+		d.AutonomyCeiling = agent.TierPropose
+	}
+	if d.DecisionTimeoutSeconds == 0 {
+		d.DecisionTimeoutSeconds = DefaultDecisionTimeoutSeconds
+	}
+	if d.RunTimeoutSeconds == 0 {
+		d.RunTimeoutSeconds = DefaultRunTimeoutSeconds
+	}
+	if d.MaxToolCalls == 0 {
+		d.MaxToolCalls = DefaultMaxToolCalls
+	}
+	if d.MaxConcurrentRuns == 0 {
+		d.MaxConcurrentRuns = 1
+	}
+	if strings.TrimSpace(d.CronTimezone) == "" {
+		d.CronTimezone = DefaultCronTimezone
+	}
+}
+
+func (d *Definition) EffectiveTier(tool string, toolTier agent.AutonomyTier) agent.AutonomyTier {
+	requested := toolTier
+	if override, ok := d.ToolTiers[tool]; ok && override.IsValid() {
+		requested = override
+	}
+	if requested == "" {
+		requested = agent.TierPropose
+	}
+
+	if tierRank(d.AutonomyCeiling) < tierRank(requested) {
 		return d.AutonomyCeiling
 	}
 
-	return toolTier
+	return requested
 }
 
 func tierRank(tier agent.AutonomyTier) int {
@@ -121,10 +183,73 @@ func tierRank(tier agent.AutonomyTier) int {
 	}
 }
 
-// AllowsTool reports whether a tool name is among those configured.
 func (d *Definition) AllowsTool(name string) bool {
 	for _, tool := range d.ToolNames {
 		if tool == name {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d *Definition) IsSystem() bool {
+	return strings.TrimSpace(d.SystemKey) != ""
+}
+
+func (d *Definition) EffectiveShadow(organizationShadow bool) bool {
+	return organizationShadow || d.ShadowMode
+}
+
+func (d *Definition) IsBackground() bool {
+	switch d.TriggerMode {
+	case TriggerScheduled, TriggerContinuous, TriggerEvent:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d *Definition) IsDue(now int64) bool {
+	if !d.Enabled || d.NextRunAt == nil {
+		return false
+	}
+	if d.TriggerMode != TriggerScheduled && d.TriggerMode != TriggerContinuous {
+		return false
+	}
+	if d.EndsAt != nil && *d.EndsAt <= now {
+		return false
+	}
+
+	return *d.NextRunAt <= now
+}
+
+func (d *Definition) ComputeNextRun(now int64) (int64, error) {
+	switch d.TriggerMode {
+	case TriggerScheduled:
+		timezone := d.CronTimezone
+		if strings.TrimSpace(timezone) == "" {
+			timezone = DefaultCronTimezone
+		}
+
+		return cronutils.NextRun(d.CronExpression, timezone, now)
+	case TriggerContinuous:
+		if d.IntervalSeconds < minIntervalSeconds {
+			return 0, fmt.Errorf("interval of %d seconds is below the minimum", d.IntervalSeconds)
+		}
+
+		return now + int64(d.IntervalSeconds), nil
+	default:
+		return 0, fmt.Errorf("a %s agent has no schedule", d.TriggerMode)
+	}
+}
+
+func (d *Definition) HasContextProvider(provider ContextProvider) bool {
+	if len(d.ContextProviders) == 0 {
+		return true
+	}
+	for _, configured := range d.ContextProviders {
+		if configured == provider {
 			return true
 		}
 	}
@@ -149,23 +274,79 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, maxDescriptionLength).
 				Error("Description cannot be longer than 500 characters"),
 		),
-		validation.Field(&d.Kind,
-			validation.Required.Error("Kind is required"),
-			domainvalidation.ValidEnum[Kind]("Kind is not an agent template this system offers"),
+		validation.Field(&d.Template,
+			validation.When(d.Template != "",
+				domainvalidation.ValidEnum[Template]("Template is not one this system offers"),
+			),
 		),
-		// Bounded because the focus note is sent on every turn, and because a very
-		// long one is usually an attempt to write a system prompt in disguise.
-		validation.Field(&d.Focus,
-			validation.Length(0, maxFocusLength).
-				Error("Focus cannot be longer than 2000 characters"),
+		validation.Field(&d.Instructions,
+			validation.RuneLength(0, maxInstructionsRunes).
+				Error("Instructions cannot be longer than 20000 characters"),
 		),
 		validation.Field(&d.AutonomyCeiling,
 			validation.Required.Error("Autonomy ceiling is required"),
 			domainvalidation.ValidEnum[agent.AutonomyTier]("Autonomy ceiling is invalid"),
 		),
+		validation.Field(&d.TriggerMode,
+			validation.Required.Error("Trigger mode is required"),
+			domainvalidation.ValidEnum[TriggerMode]("Trigger mode is invalid"),
+		),
+		validation.Field(&d.OutputMode,
+			validation.Required.Error("Output mode is required"),
+			domainvalidation.ValidEnum[OutputMode]("Output mode is invalid"),
+		),
+		validation.Field(&d.DecisionTimeoutSeconds,
+			validation.Min(minDecisionTimeout).Error("Decision timeout must be at least one minute"),
+			validation.Max(maxDecisionTimeout).Error("Decision timeout cannot exceed 30 days"),
+		),
+		validation.Field(&d.RunTimeoutSeconds,
+			validation.Min(minRunTimeoutSeconds).Error("Run timeout must be at least one minute"),
+			validation.Max(maxRunTimeoutSeconds).Error("Run timeout cannot exceed one hour"),
+		),
+		validation.Field(&d.MaxToolCalls,
+			validation.Min(1).Error("An agent needs at least one tool call per run"),
+			validation.Max(maxToolCallsCeiling).Error("An agent cannot make more than 64 tool calls per run"),
+		),
+		validation.Field(&d.MaxConcurrentRuns,
+			validation.Min(1).Error("At least one concurrent run is required"),
+			validation.Max(maxConcurrentRuns).Error("At most 10 concurrent runs are allowed"),
+		),
+		validation.Field(&d.SystemKey,
+			validation.Length(0, maxSystemKeyLength).
+				Error("System key cannot be longer than 50 characters"),
+		),
 	))
 
+	d.validateGuardrails(multiErr)
 	d.validateTools(multiErr)
+	d.validateTrigger(multiErr)
+	d.validateContextProviders(multiErr)
+}
+
+func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {
+	if len(d.Guardrails) > maxGuardrails {
+		multiErr.Add(
+			"guardrails",
+			errortypes.ErrInvalid,
+			"An agent cannot have more than 20 guardrails",
+		)
+	}
+
+	for idx, rule := range d.Guardrails {
+		field := fmt.Sprintf("guardrails[%d]", idx)
+		trimmed := strings.TrimSpace(rule)
+		if trimmed == "" {
+			multiErr.Add(field, errortypes.ErrInvalid, "A guardrail cannot be empty")
+			continue
+		}
+		if len([]rune(trimmed)) > maxGuardrailRunes {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"A guardrail cannot be longer than 300 characters",
+			)
+		}
+	}
 }
 
 func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
@@ -173,7 +354,7 @@ func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"toolNames",
 			errortypes.ErrInvalid,
-			"An agent cannot be given more than 32 tools",
+			"An agent cannot be given more than 64 tools",
 		)
 	}
 
@@ -198,11 +379,97 @@ func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
 		seen[trimmed] = struct{}{}
 	}
 
-	if d.Kind.IsValid() && !d.Kind.MutatingAllowed() && len(d.ToolNames) > 0 {
-		multiErr.Add(
-			"toolNames",
-			errortypes.ErrInvalid,
-			"A general assistant answers questions only and cannot be given tools",
-		)
+	for tool, tier := range d.ToolTiers {
+		field := "toolTiers." + tool
+		if _, enabled := seen[tool]; !enabled {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not one of this agent's tools", tool),
+			)
+			continue
+		}
+		if !tier.IsValid() {
+			multiErr.Add(field, errortypes.ErrInvalid, "Autonomy tier is invalid")
+		}
+	}
+}
+
+func (d *Definition) validateTrigger(multiErr *errortypes.MultiError) {
+	switch d.TriggerMode {
+	case TriggerScheduled:
+		expression := strings.TrimSpace(d.CronExpression)
+		switch {
+		case expression == "":
+			multiErr.Add(
+				"cronExpression",
+				errortypes.ErrRequired,
+				"A scheduled agent needs a cron expression",
+			)
+		case len(expression) > maxCronLength:
+			multiErr.Add(
+				"cronExpression",
+				errortypes.ErrInvalid,
+				"Cron expression cannot be longer than 100 characters",
+			)
+		case cronutils.Validate(expression) != nil:
+			multiErr.Add(
+				"cronExpression",
+				errortypes.ErrInvalid,
+				"Cron expression must have five fields: minute, hour, day of month, month, day of week",
+			)
+		}
+
+		if timezone := strings.TrimSpace(d.CronTimezone); timezone != "" {
+			if _, err := time.LoadLocation(timezone); err != nil {
+				multiErr.Add(
+					"cronTimezone",
+					errortypes.ErrInvalid,
+					"Timezone must be a valid IANA name such as America/Chicago",
+				)
+			}
+		}
+	case TriggerEvent:
+		if len(d.EventKinds) == 0 {
+			multiErr.Add(
+				"eventKinds",
+				errortypes.ErrRequired,
+				"An event-triggered agent needs at least one event",
+			)
+		}
+		for idx, kind := range d.EventKinds {
+			if !kind.IsValid() {
+				multiErr.Add(
+					fmt.Sprintf("eventKinds[%d]", idx),
+					errortypes.ErrInvalid,
+					fmt.Sprintf("%q is not an event this system raises", kind),
+				)
+			}
+		}
+	case TriggerContinuous:
+		if d.IntervalSeconds < minIntervalSeconds {
+			multiErr.Add(
+				"intervalSeconds",
+				errortypes.ErrInvalid,
+				"A continuous agent must wait at least one minute between runs",
+			)
+		}
+	case TriggerChat:
+	}
+
+	if d.EndsAt != nil && *d.EndsAt <= 0 {
+		multiErr.Add("endsAt", errortypes.ErrInvalid, "End time is invalid")
+	}
+}
+
+func (d *Definition) validateContextProviders(multiErr *errortypes.MultiError) {
+	for idx, provider := range d.ContextProviders {
+		if !provider.IsValid() {
+			multiErr.Add(
+				fmt.Sprintf("contextProviders[%d]", idx),
+				errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not a context this system can provide", provider),
+			)
+		}
 	}
 }

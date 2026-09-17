@@ -12,6 +12,8 @@ var AgentControlSpec TypeSpec
 
 var AgentDecisionSpec TypeSpec
 
+var AgentDefinitionSpec TypeSpec
+
 var AgentExceptionSpec TypeSpec
 
 var AgentProposalSpec TypeSpec
@@ -718,6 +720,153 @@ func init() {
 			{
 				Name:        "reasonCode",
 				FieldMapKey: "reasonCode",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentDefinitionSpec = TypeSpec{
+		TypeName: "AgentDefinition",
+		FieldMap: buncolgen.DefinitionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "template",
+				FieldMapKey: "template",
+			},
+			{
+				Name:        "instructions",
+				FieldMapKey: "instructions",
+			},
+			{
+				Name:        "guardrails",
+				FieldMapKey: "guardrails",
+			},
+			{
+				Name:        "toolNames",
+				FieldMapKey: "toolNames",
+			},
+			{
+				Name:        "toolTiers",
+				FieldMapKey: "toolTiers",
+			},
+			{
+				Name:        "autonomyCeiling",
+				FieldMapKey: "autonomyCeiling",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "shadowMode",
+				FieldMapKey: "shadowMode",
+			},
+			{
+				Name:        "decisionTimeoutSeconds",
+				FieldMapKey: "decisionTimeoutSeconds",
+			},
+			{
+				Name:        "triggerMode",
+				FieldMapKey: "triggerMode",
+			},
+			{
+				Name:        "cronExpression",
+				FieldMapKey: "cronExpression",
+			},
+			{
+				Name:        "cronTimezone",
+				FieldMapKey: "cronTimezone",
+			},
+			{
+				Name:        "eventKinds",
+				FieldMapKey: "eventKinds",
+			},
+			{
+				Name:        "intervalSeconds",
+				FieldMapKey: "intervalSeconds",
+			},
+			{
+				Name:        "endsAt",
+				FieldMapKey: "endsAt",
+			},
+			{
+				Name:        "maxConcurrentRuns",
+				FieldMapKey: "maxConcurrentRuns",
+			},
+			{
+				Name:        "runTimeoutSeconds",
+				FieldMapKey: "runTimeoutSeconds",
+			},
+			{
+				Name:        "maxToolCalls",
+				FieldMapKey: "maxToolCalls",
+			},
+			{
+				Name:        "contextProviders",
+				FieldMapKey: "contextProviders",
+			},
+			{
+				Name:        "outputMode",
+				FieldMapKey: "outputMode",
+			},
+			{
+				Name:        "preferredProviderId",
+				FieldMapKey: "preferredProviderId",
+			},
+			{
+				Name:        "systemKey",
+				FieldMapKey: "systemKey",
+			},
+			{
+				Name:        "lastRunAt",
+				FieldMapKey: "lastRunAt",
+			},
+			{
+				Name:        "nextRunAt",
+				FieldMapKey: "nextRunAt",
+			},
+			{
+				Name:    "pendingProposals",
+				Special: "pendingProposals",
+			},
+			{
+				Name:    "openRuns",
+				Special: "openRuns",
 			},
 			{
 				Name:        "version",

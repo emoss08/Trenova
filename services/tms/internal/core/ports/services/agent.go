@@ -25,6 +25,7 @@ type StartInlineAgentRunRequest struct {
 	SubjectID     pulid.ID
 	PromptVersion string
 	Summary       string
+	Trigger       agent.RunTrigger
 	TenantInfo    pagination.TenantInfo
 }
 

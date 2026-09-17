@@ -366,6 +366,7 @@ func (s *Service) recordPlan(
 			"Dispatch auto-assign proposed coverage for %d move(s)",
 			len(plan.Assignments),
 		),
+		Trigger:    agent.RunTriggerScheduled,
 		TenantInfo: req.TenantInfo,
 	}, actorFor(req))
 	if err != nil {

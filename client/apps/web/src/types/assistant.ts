@@ -1,18 +1,37 @@
+import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import { z } from "zod";
 
-export const agentKindSchema = z.enum([
+export const agentTemplateKindSchema = z.enum([
   "DispatchAssistant",
   "BillingAssistant",
   "ComplianceAssistant",
   "CustomerAssistant",
   "GeneralAssistant",
+  "BillingException",
+  "DispatchAssignment",
+  "ImportAssistant",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
 
+export const triggerModeSchema = z.enum(["Chat", "Scheduled", "Event", "Continuous"]);
+
+export const outputModeSchema = z.enum(["Conversational", "Report"]);
+
+export const contextProviderSchema = z.enum(["Organization", "Clock", "User", "Page", "Tools"]);
+
 export const messageRoleSchema = z.enum(["User", "Assistant", "Tool"]);
 
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
+
+/** Server-side `nullzero` arrays arrive as null when empty; every list here reads as []. */
+const nullableList = <T extends z.ZodType>(item: T) =>
+  z.preprocess((value) => value ?? [], z.array(item));
+
+const toolTiersSchema = z.preprocess(
+  (value) => value ?? {},
+  z.record(z.string(), autonomyTierSchema),
+);
 
 export const agentDefinitionSchema = z.object({
   id: z.string(),
@@ -20,45 +39,116 @@ export const agentDefinitionSchema = z.object({
   organizationId: z.string(),
   name: z.string(),
   description: z.string().optional().default(""),
-  kind: agentKindSchema,
-  /** Organization guidance. Delivered to the model as data, never as instruction. */
-  focus: z.string().optional().default(""),
-  /** `[]string` with nullzero on the server: an agent that only answers arrives as null. */
-  toolNames: z.preprocess((value) => value ?? [], z.array(z.string())),
+  /** The starter this agent began from. It carries no restriction. */
+  template: agentTemplateKindSchema.nullish(),
+  /** Organization-authored instructions, placed after Trenova's safety preamble. */
+  instructions: z.string().optional().default(""),
+  guardrails: nullableList(z.string()),
+  toolNames: nullableList(z.string()),
+  toolTiers: toolTiersSchema,
   autonomyCeiling: autonomyTierSchema,
   enabled: z.boolean().default(false),
+  shadowMode: z.boolean().default(false),
+  decisionTimeoutSeconds: z.number().default(86400),
+  triggerMode: triggerModeSchema.default("Chat"),
+  cronExpression: z.string().optional().default(""),
+  cronTimezone: z.string().optional().default(""),
+  eventKinds: nullableList(z.string()),
+  intervalSeconds: z.number().default(0),
+  endsAt: z.number().nullish(),
+  maxConcurrentRuns: z.number().default(1),
+  runTimeoutSeconds: z.number().default(600),
+  maxToolCalls: z.number().default(12),
+  contextProviders: nullableList(contextProviderSchema),
+  outputMode: outputModeSchema.default("Conversational"),
+  preferredProviderId: z.string().optional().default(""),
+  systemKey: z.string().optional().default(""),
+  lastRunAt: z.number().nullish(),
+  nextRunAt: z.number().nullish(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
 
-export const agentToolDescriptorSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  parameters: z.record(z.string(), z.unknown()).nullish(),
-  autonomyTier: autonomyTierSchema.optional(),
-});
+export const agentDefinitionListSchema = createLimitOffsetResponse(agentDefinitionSchema);
 
 export const agentTemplateSchema = z.object({
-  kind: agentKindSchema,
+  template: agentTemplateKindSchema,
   label: z.string(),
   description: z.string(),
-  mutatingAllowed: z.boolean().default(false),
-  availableTools: z.array(agentToolDescriptorSchema).optional().default([]),
+  starterInstructions: z.string().optional().default(""),
+  starterTools: nullableList(z.string()),
+  starterTrigger: triggerModeSchema,
+  starterEvents: nullableList(z.string()),
+  starterCron: z.string().optional().default(""),
+  starterCeiling: autonomyTierSchema,
+  starterOutput: outputModeSchema,
+  systemKey: z.string().optional().default(""),
+  contextProviders: nullableList(contextProviderSchema),
 });
 
 export const agentTemplateListSchema = z.object({
   templates: z.array(agentTemplateSchema),
 });
 
+export const toolCatalogEntrySchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  parameters: z.record(z.string(), z.unknown()).nullish(),
+  kind: z.enum(["query", "action"]),
+  resource: z.string(),
+  operation: z.string(),
+  defaultAutonomyTier: z.string().optional().default(""),
+  reversible: z.boolean().default(false),
+});
+
+export const toolCatalogSchema = z.object({
+  tools: z.array(toolCatalogEntrySchema),
+});
+
+export const agentEventDescriptorSchema = z.object({
+  kind: z.string(),
+  subjectType: z.string(),
+  label: z.string(),
+  description: z.string(),
+});
+
+export const agentEventListSchema = z.object({
+  events: z.array(agentEventDescriptorSchema),
+});
+
+export const previewPromptResponseSchema = z.object({
+  prompt: z.string(),
+});
+
 export const saveAgentDefinitionRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional().default(""),
-  kind: agentKindSchema,
-  focus: z.string().max(2000, "Focus cannot be longer than 2000 characters").optional().default(""),
+  template: agentTemplateKindSchema.nullable().default(null),
+  instructions: z
+    .string()
+    .max(20000, "Instructions cannot be longer than 20000 characters")
+    .optional()
+    .default(""),
+  guardrails: z.array(z.string()).default([]),
   toolNames: z.array(z.string()).default([]),
+  toolTiers: z.record(z.string(), autonomyTierSchema).default({}),
   autonomyCeiling: autonomyTierSchema,
   enabled: z.boolean().default(true),
+  shadowMode: z.boolean().default(false),
+  decisionTimeoutSeconds: z.number().min(60).default(86400),
+  triggerMode: triggerModeSchema.default("Chat"),
+  cronExpression: z.string().optional().default(""),
+  cronTimezone: z.string().optional().default(""),
+  eventKinds: z.array(z.string()).default([]),
+  intervalSeconds: z.number().min(0).default(0),
+  endsAt: z.number().nullable().default(null),
+  maxConcurrentRuns: z.number().min(1).max(10).default(1),
+  runTimeoutSeconds: z.number().min(60).max(3600).default(600),
+  maxToolCalls: z.number().min(1).max(64).default(12),
+  contextProviders: z.array(contextProviderSchema).default([]),
+  outputMode: outputModeSchema.default("Conversational"),
+  preferredProviderId: z.string().optional().default(""),
   version: z.number().default(0),
 });
 
@@ -245,11 +335,15 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
   }
 }
 
-export type AgentKind = z.infer<typeof agentKindSchema>;
+export type AgentTemplateKind = z.infer<typeof agentTemplateKindSchema>;
 export type AutonomyTier = z.infer<typeof autonomyTierSchema>;
+export type TriggerMode = z.infer<typeof triggerModeSchema>;
+export type OutputMode = z.infer<typeof outputModeSchema>;
+export type ContextProvider = z.infer<typeof contextProviderSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 export type AgentTemplate = z.infer<typeof agentTemplateSchema>;
-export type AgentToolDescriptor = z.infer<typeof agentToolDescriptorSchema>;
+export type ToolCatalogEntry = z.infer<typeof toolCatalogEntrySchema>;
+export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;

@@ -9,10 +9,18 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { AgentDefinition, AgentTemplate, SaveAgentDefinitionRequest } from "@/types/assistant";
+import {
+  saveAgentDefinitionRequestSchema,
+  type AgentDefinition,
+  type AgentTemplate,
+  type AgentTemplateKind,
+  type SaveAgentDefinitionRequest,
+} from "@/types/assistant";
 import { describeToolCall } from "@/routes/assistant/_components/tool-presentation";
-import { InfoIcon, ShieldAlertIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ShieldAlertIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -28,54 +36,80 @@ type FormValues = Omit<SaveAgentDefinitionRequest, "toolNames"> & {
   toolNames: string[] | null;
 };
 
+function toFormValues(agent: AgentDefinition | null): FormValues {
+  const base = saveAgentDefinitionRequestSchema.parse({
+    name: agent?.name ?? "",
+    description: agent?.description ?? "",
+    template: agent?.template ?? null,
+    instructions: agent?.instructions ?? "",
+    guardrails: agent?.guardrails ?? [],
+    toolNames: agent?.toolNames ?? [],
+    toolTiers: agent?.toolTiers ?? {},
+    autonomyCeiling: agent?.autonomyCeiling ?? "Propose",
+    enabled: agent?.enabled ?? true,
+    shadowMode: agent?.shadowMode ?? false,
+    decisionTimeoutSeconds: agent?.decisionTimeoutSeconds ?? 86400,
+    triggerMode: agent?.triggerMode ?? "Chat",
+    cronExpression: agent?.cronExpression ?? "",
+    cronTimezone: agent?.cronTimezone ?? "",
+    eventKinds: agent?.eventKinds ?? [],
+    intervalSeconds: agent?.intervalSeconds ?? 0,
+    endsAt: agent?.endsAt ?? null,
+    maxConcurrentRuns: agent?.maxConcurrentRuns ?? 1,
+    runTimeoutSeconds: agent?.runTimeoutSeconds ?? 600,
+    maxToolCalls: agent?.maxToolCalls ?? 12,
+    contextProviders: agent?.contextProviders ?? [],
+    outputMode: agent?.outputMode ?? "Conversational",
+    preferredProviderId: agent?.preferredProviderId ?? "",
+    version: agent?.version ?? 0,
+  });
+
+  return { ...base, toolNames: base.toolNames.length > 0 ? base.toolNames : null };
+}
+
 export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps) {
   const t = useT();
+  const catalogQuery = useQuery(queries.assistant.toolCatalog());
 
-  const form = useForm<FormValues>({
-    defaultValues: agent
-      ? {
-          name: agent.name,
-          description: agent.description,
-          kind: agent.kind,
-          focus: agent.focus,
-          toolNames: agent.toolNames.length > 0 ? agent.toolNames : null,
-          autonomyCeiling: agent.autonomyCeiling,
-          enabled: agent.enabled,
-          version: agent.version,
-        }
-      : {
-          name: "",
-          description: "",
-          kind: "GeneralAssistant",
-          focus: "",
-          toolNames: null,
-          autonomyCeiling: "Propose",
-          enabled: true,
-          version: 0,
-        },
-  });
-  const { control, handleSubmit, setValue } = form;
+  const form = useForm<FormValues>({ defaultValues: toFormValues(agent) });
+  const { control, handleSubmit, setValue, getValues } = form;
 
-  const kind = useWatch({ control, name: "kind" });
-  const template = useMemo(() => templates.find((item) => item.kind === kind), [templates, kind]);
+  const templateKind = useWatch({ control, name: "template" });
+  const template = useMemo(
+    () => templates.find((item) => item.template === templateKind),
+    [templates, templateKind],
+  );
 
-  // Switching template invalidates the tool selection, since a tool permitted by
-  // one template is rejected by another. Clearing it here avoids a save that
-  // fails with errors the person did not cause.
-  const onKindChange = useCallback(() => {
-    setValue("toolNames", null, { shouldDirty: true });
-  }, [setValue]);
+  // A template is a starting point: picking one fills instructions and tools
+  // that are still blank, and never overwrites what a person already wrote.
+  const onTemplateChange = useCallback(
+    (value: string) => {
+      const picked = templates.find((item) => item.template === (value as AgentTemplateKind));
+      if (!picked) {
+        return;
+      }
+      if (getValues("instructions").trim() === "") {
+        setValue("instructions", picked.starterInstructions, { shouldDirty: true });
+      }
+      if ((getValues("toolNames") ?? []).length === 0 && picked.starterTools.length > 0) {
+        setValue("toolNames", picked.starterTools, { shouldDirty: true });
+      }
+      setValue("autonomyCeiling", picked.starterCeiling, { shouldDirty: true });
+    },
+    [getValues, setValue, templates],
+  );
 
-  // A tool is shown by what it does, with its identifier alongside so the row
-  // still matches what appears in a conversation's activity log.
   const toolOptions = useMemo(
     () =>
-      (template?.availableTools ?? []).map((tool) => ({
+      (catalogQuery.data?.tools ?? []).map((tool) => ({
         label: `${describeToolCall(tool.name, null).title} · ${tool.name}`,
         value: tool.name,
-        description: tool.description,
+        description:
+          tool.kind === "query"
+            ? `${tool.description} ${t("Reads only.")}`
+            : `${tool.description} ${t("Changes data.")}`,
       })),
-    [template?.availableTools],
+    [catalogQuery.data?.tools, t],
   );
 
   const saveMutation = useApiMutation({
@@ -98,8 +132,6 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
     },
   });
 
-  const readOnlyTemplate = template !== undefined && !template.mutatingAllowed;
-
   return (
     <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
       <FormGroup cols={2}>
@@ -116,12 +148,16 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
 
         <FormControl>
           <SelectField
-            name="kind"
+            name="template"
             control={control}
-            label={t("Template")}
-            options={templates.map((item) => ({ label: item.label, value: item.kind }))}
-            description={template?.description}
-            onValueChange={onKindChange}
+            label={t("Start from a template")}
+            options={templates.map((item) => ({ label: item.label, value: item.template }))}
+            description={
+              template?.description ??
+              t("Optional. A template fills in instructions and tools you can change freely.")
+            }
+            onValueChange={onTemplateChange}
+            isClearable
           />
         </FormControl>
 
@@ -139,42 +175,32 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
 
         <FormControl cols="full">
           <TextareaField
-            name="focus"
+            name="instructions"
             control={control}
-            label={t("Organization note (optional)")}
-            placeholder={t("We prioritise reefer loads out of Laredo.")}
+            label={t("Instructions")}
+            placeholder={t(
+              "You support the night dispatch desk. Check hours of service before assigning anyone…",
+            )}
             description={t(
-              "Background preference for this agent. It can narrow what the agent focuses on, but it cannot grant capabilities or override the assistant's rules.",
+              "Who this agent is, what it prioritises, the policies it follows and how it should talk. These instructions are authoritative; Trenova only adds its tenant and safety boundaries in front of them.",
             )}
           />
         </FormControl>
       </FormGroup>
 
-      {readOnlyTemplate ? (
-        <Alert variant="info">
-          <InfoIcon className="size-4" />
-          <AlertTitle>{t("This template answers questions only")}</AlertTitle>
-          <AlertDescription>
-            {t(
-              "A general assistant can look records up but cannot be given tools that change anything.",
+      <FormGroup cols={1}>
+        <FormControl cols="full">
+          <MultiCheckboxField
+            name="toolNames"
+            control={control}
+            label={t("Tools this agent may use")}
+            description={t(
+              "Any tool the system provides can be enabled. Leaving them all unchecked gives an agent that only answers from what it is told.",
             )}
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <FormGroup cols={1}>
-          <FormControl cols="full">
-            <MultiCheckboxField
-              name="toolNames"
-              control={control}
-              label={t("Tools this agent may use")}
-              description={t(
-                "Only the tools this template permits are listed. Leaving them all unchecked gives an agent that answers questions without changing anything.",
-              )}
-              options={toolOptions}
-            />
-          </FormControl>
-        </FormGroup>
-      )}
+            options={toolOptions}
+          />
+        </FormControl>
+      </FormGroup>
 
       <FormGroup cols={2}>
         <FormControl>
@@ -188,7 +214,7 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
               { label: t("Act automatically"), value: "AutoExecute" },
             ]}
             description={t(
-              "A cap, not a grant. Each tool keeps its own limit if that limit is stricter.",
+              "The most any tool may do on its own. Each tool can be held below it, never above it.",
             )}
           />
         </FormControl>
@@ -206,10 +232,12 @@ export function AgentForm({ agent, templates, onClose, onSaved }: AgentFormProps
 
       <Alert variant="info">
         <ShieldAlertIcon className="size-4" />
-        <AlertTitle>{t("Writes always wait for a person")}</AlertTitle>
+        <AlertTitle>
+          {t("Every tool call is checked against the person using the agent")}
+        </AlertTitle>
         <AlertDescription>
           {t(
-            "In a conversation, a tool that changes data is recorded as a proposal rather than run. Someone reviews it before anything happens.",
+            "The agent can only read or change what the person talking to it could read or change themselves. Below the automatic tier, a change becomes a proposal someone reviews first.",
           )}
         </AlertDescription>
       </Alert>

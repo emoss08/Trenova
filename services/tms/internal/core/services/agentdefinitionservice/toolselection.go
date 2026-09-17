@@ -2,6 +2,7 @@ package agentdefinitionservice
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -9,91 +10,88 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-// validateToolSelection is the enforcement behind the narrowing rule. The domain
-// checks the shape of a tool list; this checks its membership, because only the
-// live registry knows what a tool name actually resolves to.
-//
-// Three things are refused: a tool that does not exist, a tool whose resource
-// falls outside the template's bound, and any tool at all on a read-only
-// template. Together they mean an organization can only ever hand an agent a
-// subset of what its template already permits.
 func validateToolSelection(
 	definition *agentdefinition.Definition,
-	registry serviceports.AgentToolRegistry,
+	actions serviceports.AgentToolRegistry,
+	queries serviceports.AgentQueryToolRegistry,
 	multiErr *errortypes.MultiError,
 ) {
-	if !definition.Kind.IsValid() || len(definition.ToolNames) == 0 {
-		return
-	}
-
-	if !definition.Kind.MutatingAllowed() {
-		// The domain already reports this; repeating the membership walk would
-		// produce a second, noisier error for the same cause.
-		return
-	}
-
-	allowed := make(map[permission.Resource]struct{})
-	for _, resource := range definition.Kind.AllowedResources() {
-		allowed[resource] = struct{}{}
-	}
-
 	for idx, name := range definition.ToolNames {
-		field := fmt.Sprintf("toolNames[%d]", idx)
-
-		tool, ok := registry.Get(name)
-		if !ok {
-			multiErr.Add(
-				field,
-				errortypes.ErrInvalid,
-				fmt.Sprintf("%q is not a tool this system provides", name),
-			)
+		if _, ok := queries.Get(name); ok {
+			continue
+		}
+		if _, ok := actions.Get(name); ok {
 			continue
 		}
 
-		if _, permitted := allowed[tool.PermissionResource()]; !permitted {
-			multiErr.Add(
-				field,
-				errortypes.ErrInvalid,
-				fmt.Sprintf(
-					"A %s cannot be given %q, which acts on %s",
-					definition.Kind.Label(),
-					name,
-					tool.PermissionResource().String(),
-				),
-			)
-		}
+		multiErr.Add(
+			fmt.Sprintf("toolNames[%d]", idx),
+			errortypes.ErrInvalid,
+			fmt.Sprintf("%q is not a tool this system provides", name),
+		)
 	}
 }
 
-// AvailableTools lists the tools an organization may choose for a template, so
-// the configuration UI offers exactly the permitted set rather than the whole
-// registry.
-func AvailableTools(
-	kind agentdefinition.Kind,
-	registry serviceports.AgentToolRegistry,
-) []serviceports.AgentToolDescriptor {
-	if !kind.IsValid() || !kind.MutatingAllowed() {
-		return []serviceports.AgentToolDescriptor{}
-	}
+func buildToolCatalog(
+	actions serviceports.AgentToolRegistry,
+	queries serviceports.AgentQueryToolRegistry,
+) []serviceports.ToolCatalogEntry {
+	queryTools := queries.All()
+	actionTools := actions.All()
+	entries := make([]serviceports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
 
-	allowed := make(map[permission.Resource]struct{})
-	for _, resource := range kind.AllowedResources() {
-		allowed[resource] = struct{}{}
-	}
-
-	tools := registry.All()
-	descriptors := make([]serviceports.AgentToolDescriptor, 0, len(tools))
-	for _, tool := range tools {
-		if _, permitted := allowed[tool.PermissionResource()]; !permitted {
-			continue
-		}
-		descriptors = append(descriptors, serviceports.AgentToolDescriptor{
-			Name:         tool.Name(),
-			Description:  tool.Description(),
-			Parameters:   tool.ParamSchema(),
-			AutonomyTier: tool.DefaultAutonomyTier(),
+	for _, tool := range queryTools {
+		entries = append(entries, serviceports.ToolCatalogEntry{
+			Name:        tool.Name(),
+			Description: tool.Description(),
+			Parameters:  tool.ParamSchema(),
+			Kind:        serviceports.ToolCatalogKindQuery,
+			Resource:    tool.PermissionResource(),
+			Operation:   permission.OpRead,
+			Reversible:  true,
 		})
 	}
 
-	return descriptors
+	for _, tool := range actionTools {
+		entries = append(entries, serviceports.ToolCatalogEntry{
+			Name:                tool.Name(),
+			Description:         tool.Description(),
+			Parameters:          tool.ParamSchema(),
+			Kind:                serviceports.ToolCatalogKindAction,
+			Resource:            tool.PermissionResource(),
+			Operation:           tool.PermissionOperation(),
+			DefaultAutonomyTier: tool.DefaultAutonomyTier(),
+			Reversible:          tool.Reversible(),
+		})
+	}
+
+	sort.SliceStable(entries, func(i, j int) bool {
+		if entries[i].Resource != entries[j].Resource {
+			return entries[i].Resource < entries[j].Resource
+		}
+
+		return entries[i].Name < entries[j].Name
+	})
+
+	return entries
+}
+
+func registeredStarterTools(
+	template agentdefinition.Template,
+	actions serviceports.AgentToolRegistry,
+	queries serviceports.AgentQueryToolRegistry,
+) []string {
+	starters := template.StarterTools()
+	tools := make([]string, 0, len(starters))
+	for _, name := range starters {
+		if _, ok := queries.Get(name); ok {
+			tools = append(tools, name)
+			continue
+		}
+		if _, ok := actions.Get(name); ok {
+			tools = append(tools, name)
+		}
+	}
+
+	return tools
 }

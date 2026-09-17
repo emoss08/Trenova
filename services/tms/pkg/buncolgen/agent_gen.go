@@ -736,41 +736,47 @@ var AgentRunTable = TableInfo{
 //	q.Where(AgentRunColumns.ID.Eq(), id)           // WHERE ar.id = ?
 //	q.Order(AgentRunColumns.CreatedAt.OrderDesc())  // ORDER BY ar.created_at DESC
 var AgentRunColumns = struct {
-	ID               Column // "id" → qualified: "ar.id"
-	BusinessUnitID   Column // "business_unit_id" → qualified: "ar.business_unit_id"
-	OrganizationID   Column // "organization_id" → qualified: "ar.organization_id"
-	AgentType        Column // "agent_type" → qualified: "ar.agent_type"
-	SubjectType      Column // "subject_type" → qualified: "ar.subject_type"
-	SubjectID        Column // "subject_id" → qualified: "ar.subject_id"
-	Status           Column // "status" → qualified: "ar.status"
-	WorkflowID       Column // "workflow_id" → qualified: "ar.workflow_id"
-	ModelIdentifier  Column // "model_identifier" → qualified: "ar.model_identifier"
-	PromptVersion    Column // "prompt_version" → qualified: "ar.prompt_version"
-	InputContextHash Column // "input_context_hash" → qualified: "ar.input_context_hash"
-	StartedAt        Column // "started_at" → qualified: "ar.started_at"
-	CompletedAt      Column // "completed_at" → qualified: "ar.completed_at"
-	ErrorMessage     Column // "error_message" → qualified: "ar.error_message"
-	Version          Column // "version" → qualified: "ar.version"
-	CreatedAt        Column // "created_at" → qualified: "ar.created_at"
-	UpdatedAt        Column // "updated_at" → qualified: "ar.updated_at"
+	ID                Column // "id" → qualified: "ar.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "ar.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "ar.organization_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "ar.agent_definition_id"
+	Trigger           Column // "trigger" → qualified: "ar.trigger"
+	Summary           Column // "summary" → qualified: "ar.summary"
+	AgentType         Column // "agent_type" → qualified: "ar.agent_type"
+	SubjectType       Column // "subject_type" → qualified: "ar.subject_type"
+	SubjectID         Column // "subject_id" → qualified: "ar.subject_id"
+	Status            Column // "status" → qualified: "ar.status"
+	WorkflowID        Column // "workflow_id" → qualified: "ar.workflow_id"
+	ModelIdentifier   Column // "model_identifier" → qualified: "ar.model_identifier"
+	PromptVersion     Column // "prompt_version" → qualified: "ar.prompt_version"
+	InputContextHash  Column // "input_context_hash" → qualified: "ar.input_context_hash"
+	StartedAt         Column // "started_at" → qualified: "ar.started_at"
+	CompletedAt       Column // "completed_at" → qualified: "ar.completed_at"
+	ErrorMessage      Column // "error_message" → qualified: "ar.error_message"
+	Version           Column // "version" → qualified: "ar.version"
+	CreatedAt         Column // "created_at" → qualified: "ar.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "ar.updated_at"
 }{
-	ID:               NewColumn("id", "ar"),
-	BusinessUnitID:   NewColumn("business_unit_id", "ar"),
-	OrganizationID:   NewColumn("organization_id", "ar"),
-	AgentType:        NewColumn("agent_type", "ar"),
-	SubjectType:      NewColumn("subject_type", "ar"),
-	SubjectID:        NewColumn("subject_id", "ar"),
-	Status:           NewColumn("status", "ar"),
-	WorkflowID:       NewColumn("workflow_id", "ar"),
-	ModelIdentifier:  NewColumn("model_identifier", "ar"),
-	PromptVersion:    NewColumn("prompt_version", "ar"),
-	InputContextHash: NewColumn("input_context_hash", "ar"),
-	StartedAt:        NewColumn("started_at", "ar"),
-	CompletedAt:      NewColumn("completed_at", "ar"),
-	ErrorMessage:     NewColumn("error_message", "ar"),
-	Version:          NewColumn("version", "ar"),
-	CreatedAt:        NewColumn("created_at", "ar"),
-	UpdatedAt:        NewColumn("updated_at", "ar"),
+	ID:                NewColumn("id", "ar"),
+	BusinessUnitID:    NewColumn("business_unit_id", "ar"),
+	OrganizationID:    NewColumn("organization_id", "ar"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "ar"),
+	Trigger:           NewColumn("trigger", "ar"),
+	Summary:           NewColumn("summary", "ar"),
+	AgentType:         NewColumn("agent_type", "ar"),
+	SubjectType:       NewColumn("subject_type", "ar"),
+	SubjectID:         NewColumn("subject_id", "ar"),
+	Status:            NewColumn("status", "ar"),
+	WorkflowID:        NewColumn("workflow_id", "ar"),
+	ModelIdentifier:   NewColumn("model_identifier", "ar"),
+	PromptVersion:     NewColumn("prompt_version", "ar"),
+	InputContextHash:  NewColumn("input_context_hash", "ar"),
+	StartedAt:         NewColumn("started_at", "ar"),
+	CompletedAt:       NewColumn("completed_at", "ar"),
+	ErrorMessage:      NewColumn("error_message", "ar"),
+	Version:           NewColumn("version", "ar"),
+	CreatedAt:         NewColumn("created_at", "ar"),
+	UpdatedAt:         NewColumn("updated_at", "ar"),
 }
 
 // AgentRunFieldMap maps JSON API field names to database column names.
@@ -778,23 +784,26 @@ var AgentRunColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentRun.GetStaticFieldMap().
 var AgentRunFieldMap = map[string]string{
-	"id":               "id",
-	"businessUnitId":   "business_unit_id",
-	"organizationId":   "organization_id",
-	"agentType":        "agent_type",
-	"subjectType":      "subject_type",
-	"subjectId":        "subject_id",
-	"status":           "status",
-	"workflowId":       "workflow_id",
-	"modelIdentifier":  "model_identifier",
-	"promptVersion":    "prompt_version",
-	"inputContextHash": "input_context_hash",
-	"startedAt":        "started_at",
-	"completedAt":      "completed_at",
-	"errorMessage":     "error_message",
-	"version":          "version",
-	"createdAt":        "created_at",
-	"updatedAt":        "updated_at",
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"agentDefinitionId": "agent_definition_id",
+	"trigger":           "trigger",
+	"summary":           "summary",
+	"agentType":         "agent_type",
+	"subjectType":       "subject_type",
+	"subjectId":         "subject_id",
+	"status":            "status",
+	"workflowId":        "workflow_id",
+	"modelIdentifier":   "model_identifier",
+	"promptVersion":     "prompt_version",
+	"inputContextHash":  "input_context_hash",
+	"startedAt":         "started_at",
+	"completedAt":       "completed_at",
+	"errorMessage":      "error_message",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
 }
 
 // AgentRunInsertableColumns lists column names suitable for INSERT statements on the "agent_runs" table.
@@ -803,6 +812,9 @@ var AgentRunInsertableColumns = []string{
 	"id",
 	"business_unit_id",
 	"organization_id",
+	"agent_definition_id",
+	"trigger",
+	"summary",
 	"agent_type",
 	"subject_type",
 	"subject_id",
@@ -882,23 +894,26 @@ func AgentRunApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	AgentRunFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentRunFilter = struct {
-	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	AgentType        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentType" → DB: "agent_type"
-	SubjectType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
-	SubjectID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
-	Status           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	WorkflowID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
-	ModelIdentifier  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelIdentifier" → DB: "model_identifier"
-	PromptVersion    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promptVersion" → DB: "prompt_version"
-	InputContextHash func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputContextHash" → DB: "input_context_hash"
-	StartedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
-	CompletedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
-	ErrorMessage     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
-	Version          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Trigger           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
+	Summary           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	AgentType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentType" → DB: "agent_type"
+	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	WorkflowID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
+	ModelIdentifier   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelIdentifier" → DB: "model_identifier"
+	PromptVersion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promptVersion" → DB: "prompt_version"
+	InputContextHash  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputContextHash" → DB: "input_context_hash"
+	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	CompletedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
+	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -908,6 +923,15 @@ var AgentRunFilter = struct {
 	},
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Trigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trigger", op, value)
+	},
+	Summary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("summary", op, value)
 	},
 	AgentType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("agentType", op, value)

@@ -1245,6 +1245,15 @@
       "service/billingqueueservice"
     ]
   },
+  "A billing queue item entered the exception state and cannot be invoiced as it stands.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A billing queue item must be attached to a shipment, an order, a source invoice or a bill-to customer": {
     "sites": 1,
     "scope": [
@@ -1252,6 +1261,15 @@
     ],
     "areas": [
       "domain/billingqueue"
+    ]
+  },
+  "A billing queue item was put on hold by a person or a rule.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A break cannot be negative": {
@@ -1406,15 +1424,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "A cap, not a grant. Each tool keeps its own limit if that limit is stricter.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "A card cannot be created already cancelled; create it and cancel it with a reason": {
@@ -1926,6 +1935,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "A continuous agent must wait at least one minute between runs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "A course with this code already exists": {
@@ -2697,24 +2715,6 @@
       "domain/driverpay"
     ]
   },
-  "A general assistant answers questions only and cannot be given tools": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/agentdefinition"
-    ]
-  },
-  "A general assistant can look records up but cannot be given tools that change anything.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "A generated document must name the render that produced it": {
     "sites": 1,
     "scope": [
@@ -2749,6 +2749,24 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "A guardrail cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "A guardrail cannot be longer than 300 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "A guardrail moved the total to {0}, but the lines still add up to the raw {1}. An invoice built from these lines would not match the charge.": {
@@ -3154,6 +3172,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "A new shipment was entered, whether by hand, by import, or by an integration.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A note from an administrator, pinned to everyone assigned this home screen": {
@@ -4223,6 +4250,15 @@
       "domain/report"
     ]
   },
+  "A scheduled agent needs a cron expression": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "A scheduled run must record the billing cycle that produced it": {
     "sites": 1,
     "scope": [
@@ -4358,6 +4394,15 @@
     ],
     "areas": [
       "service/ratequoteservice"
+    ]
+  },
+  "A shipment move was created or lost its assignment and has nobody to run it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -10674,6 +10719,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent definition stats loader is not configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Agent exceptions raised for human review": {
     "sites": 1,
     "scope": [
@@ -12769,7 +12823,34 @@
       "routes/assistant"
     ]
   },
-  "An agent cannot be given more than 32 tools": {
+  "An agent cannot be given more than 64 tools": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "An agent cannot have more than 20 guardrails": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "An agent cannot make more than 64 tool calls per run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "An agent needs at least one tool call per run": {
     "sites": 1,
     "scope": [
       "go"
@@ -13275,6 +13356,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "An event-triggered agent needs at least one event": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "An excluded shipment must record why it was pulled off the invoice": {
@@ -14094,6 +14184,15 @@
     ],
     "areas": [
       "routes/hazardous-material"
+    ]
+  },
+  "Any tool the system provides can be enabled. Leaving them all unchecked gives an agent that only answers from what it is told.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Any value — or comma-separated choices": {
@@ -17311,6 +17410,15 @@
       "go/other"
     ]
   },
+  "At least one concurrent run is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "At least one day": {
     "sites": 1,
     "scope": [
@@ -17576,6 +17684,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At most 10 concurrent runs are allowed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "At most the open balance of {0}": {
@@ -19078,6 +19195,15 @@
       "domain/agentdefinition"
     ]
   },
+  "Autonomy tier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Autonomy tier is required": {
     "sites": 1,
     "scope": [
@@ -19693,15 +19819,6 @@
     ],
     "areas": [
       "service/distancecalculationservice"
-    ]
-  },
-  "Background preference for this agent. It can narrow what the agent focuses on, but it cannot grant capabilities or override the assistant's rules.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Backtest": {
@@ -21629,11 +21746,13 @@
     ]
   },
   "Billing exception agent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/agentdefinition",
       "routes/agent-control"
     ]
   },
@@ -21698,6 +21817,24 @@
     ],
     "areas": [
       "domain/detention"
+    ]
+  },
+  "Billing item blocked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Billing item placed on hold": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Billing policy and workflow control configuration": {
@@ -26249,6 +26386,15 @@
     "areas": [
       "routes/admin",
       "routes/rate-agreement"
+    ]
+  },
+  "Changes data.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Changes drivers ask to make to their own record from the portal": {
@@ -37336,6 +37482,15 @@
       "routes/billing-control"
     ]
   },
+  "Cron expression cannot be longer than 100 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Cron expression is required": {
     "sites": 1,
     "scope": [
@@ -37343,6 +37498,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "Cron expression must have five fields: minute, hour, day of month, month, day of week": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Crop Organization Logo": {
@@ -37988,13 +38152,14 @@
     ]
   },
   "Custom": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
+      "routes/agent-control",
       "routes/fuel-management"
     ]
   },
@@ -40653,6 +40818,15 @@
       "domain/formulatemplate"
     ]
   },
+  "Decision timeout cannot exceed 30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Decision timeout is required": {
     "sites": 1,
     "scope": [
@@ -40669,6 +40843,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "Decision timeout must be at least one minute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Decisions must be attributed to a human user": {
@@ -45427,6 +45610,15 @@
       "apps/dash/_components"
     ]
   },
+  "Dispatch coverage agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Dispatch has been notified. If plans changed, call your dispatcher.": {
     "sites": 1,
     "scope": [
@@ -46840,6 +47032,15 @@
       "domain/permission"
     ]
   },
+  "Document intelligence finished extracting a document's contents.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Document is invalid": {
     "sites": 20,
     "scope": [
@@ -46997,6 +47198,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Document read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Document request is required": {
@@ -52736,6 +52946,15 @@
       "service/benefitsservice"
     ]
   },
+  "End time is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "End today": {
     "sites": 1,
     "scope": [
@@ -55411,6 +55630,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "Every tool call is checked against the person using the agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every tracked balance valued against its policy's termination rule. Liability is what the organisation would owe if everyone left {0}.": {
@@ -62112,15 +62340,6 @@
     ],
     "areas": [
       "apps/web/hooks"
-    ]
-  },
-  "Focus cannot be longer than 2000 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/agentdefinition"
     ]
   },
   "Follow-up": {
@@ -69663,15 +69882,6 @@
       "routes/formula-template"
     ]
   },
-  "In a conversation, a tool that changes data is recorded as a proposal rather than run. Someone reviews it before anything happens.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "In force": {
     "sites": 3,
     "scope": [
@@ -70970,12 +71180,14 @@
     ]
   },
   "Instructions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/agent-control"
     ]
   },
   "Instructions and contact information for safe handling and emergency response.": {
@@ -70985,6 +71197,15 @@
     ],
     "areas": [
       "routes/hazardous-material"
+    ]
+  },
+  "Instructions cannot be longer than 20000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Instructor, session, certificate number": {
@@ -75337,12 +75558,11 @@
     ]
   },
   "Kind is required": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/agentdefinition",
       "domain/aiprovider",
       "domain/edi",
       "domain/invoiceadjustment",
@@ -85565,6 +85785,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "Move needs a driver": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Move not found on this shipment": {
@@ -97661,15 +97890,6 @@
       "service/ediservice"
     ]
   },
-  "Only the tools this template permits are listed. Leaving them all unchecked gives an agent that answers questions without changing anything.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Only the user who requested a report run can cancel it": {
     "sites": 1,
     "scope": [
@@ -99534,6 +99754,15 @@
       "routes/worker"
     ]
   },
+  "Optional. A template fills in instructions and tools you can change freely.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Optional. Specify a record ID to only watch a single record.": {
     "sites": 1,
     "scope": [
@@ -100191,15 +100420,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Organization note (optional)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Organization settings": {
@@ -100887,6 +101107,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Output mode is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Output tokens cannot be negative": {
@@ -114169,6 +114398,15 @@
       "service/formula"
     ]
   },
+  "Reads only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean": {
     "sites": 1,
     "scope": [
@@ -125278,6 +125516,24 @@
       "routes/reports"
     ]
   },
+  "Run timeout cannot exceed one hour": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
+  "Run timeout must be at least one minute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Run voided — the weeks in it are back to approved": {
     "sites": 1,
     "scope": [
@@ -134630,12 +134886,13 @@
     ]
   },
   "Shipment created": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/agent",
       "routes/shipment",
       "service/shipmenteventservice"
     ]
@@ -134912,6 +135169,15 @@
     ],
     "areas": [
       "service/shipmentholdservice"
+    ]
+  },
+  "Shipment import assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Shipment is invalid": {
@@ -138641,6 +138907,15 @@
       "routes/formula-template"
     ]
   },
+  "Start from a template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Start over": {
     "sites": 1,
     "scope": [
@@ -141462,6 +141737,15 @@
       "service/documenttypeservice"
     ]
   },
+  "System key cannot be longer than 50 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "System pay codes keep their code; rename the display name or create a custom code instead": {
     "sites": 1,
     "scope": [
@@ -142532,13 +142816,12 @@
     ]
   },
   "Template": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -144281,6 +144564,15 @@
     ],
     "areas": [
       "service/invoicedisputeservice"
+    ]
+  },
+  "The agent can only read or change what the person talking to it could read or change themselves. Below the automatic tier, a change becomes a proposal someone reviews first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The agreed fuel surcharge amount.": {
@@ -147977,6 +148269,15 @@
       "routes/pay-advance"
     ]
   },
+  "The most any tool may do on its own. Each tool can be held below it, never above it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The most fuel this contract can ever be billed on one shipment": {
     "sites": 1,
     "scope": [
@@ -149646,6 +149947,15 @@
     ],
     "areas": [
       "domain/ratesimulation"
+    ]
+  },
+  "The schedule could not be computed: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
     ]
   },
   "The schedule runs and shipments generate on their own.": {
@@ -153559,15 +153869,6 @@
       "domain/aiprovider"
     ]
   },
-  "This template answers questions only": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "This template does not render yet, so there is nothing to send. {0}": {
     "sites": 1,
     "scope": [
@@ -154727,6 +155028,15 @@
     ],
     "areas": [
       "domain/location"
+    ]
+  },
+  "Timezone must be a valid IANA name such as America/Chicago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Timezone must be a valid IANA timezone": {
@@ -157362,15 +157672,25 @@
     ]
   },
   "Trigger is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agent",
       "domain/jurisdictionrule",
       "domain/recurringshipment",
       "domain/report",
       "domain/worker"
+    ]
+  },
+  "Trigger mode is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Trim": {
@@ -164659,15 +164979,6 @@
       "routes/jurisdiction-rule-override"
     ]
   },
-  "We prioritise reefer loads out of Laredo.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "We're working at lightning speed to get things ready. If this takes longer than a coffee break (10 seconds), please check your internet connection.": {
     "sites": 1,
     "scope": [
@@ -165309,6 +165620,15 @@
       "packages/shared/lib"
     ]
   },
+  "What can you do?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "What changed across the organization, newest first": {
     "sites": 1,
     "scope": [
@@ -165542,6 +165862,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "What needs attention?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
     ]
   },
   "What one week of the entitlement converts to when leave is taken in hours.": {
@@ -166683,6 +167012,15 @@
       "routes/assistant"
     ]
   },
+  "Where is a shipment?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/assistant"
+    ]
+  },
   "Where it happened": {
     "sites": 1,
     "scope": [
@@ -167680,6 +168018,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Who this agent is, what it prioritises, the policies it follows and how it should talk. These instructions are authoritative; Trenova only adds its tenant and safety boundaries in front of them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Who this checklist is for and what done looks like": {
@@ -169344,15 +169691,6 @@
       "routes/pay-advance"
     ]
   },
-  "Writes always wait for a person": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Written Off": {
     "sites": 1,
     "scope": [
@@ -170064,6 +170402,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "You support the night dispatch desk. Check hours of service before assigning anyone…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "You're all caught up. Load assignments, settlements, and pay updates land here.": {
@@ -177263,6 +177610,15 @@
     ],
     "areas": [
       "service/documenttemplateservice"
+    ]
+  },
+  "{0} is a system agent. Disable it instead of deleting it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
     ]
   },
   "{0} is billed on a {1} statement. Invoicing this freight on its own takes it off that statement — say why to continue.": {

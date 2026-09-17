@@ -48,7 +48,7 @@ export function AgentPicker({ open, onOpenChange, agents, isPending, onSelect }:
         </DialogHeader>
         <div className="flex flex-col gap-2">
           {agents.map((agent) => {
-            const templateLabel = templates.find((item) => item.kind === agent.kind)?.label;
+            const templateLabel = templates.find((item) => item.template === agent.template)?.label;
             const busy = isPending && pendingId === agent.id;
 
             return (

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,22 +24,28 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         repositories.AgentDefinitionRepository
 	Tools        services.AgentToolRegistry
+	QueryTools   services.AgentQueryToolRegistry
+	Contexts     services.RuntimeContextBuilder
 	AuditService services.AuditService
 }
 
 type Service struct {
-	l     *zap.Logger
-	repo  repositories.AgentDefinitionRepository
-	tools services.AgentToolRegistry
-	audit services.AuditService
+	l          *zap.Logger
+	repo       repositories.AgentDefinitionRepository
+	tools      services.AgentToolRegistry
+	queryTools services.AgentQueryToolRegistry
+	contexts   services.RuntimeContextBuilder
+	audit      services.AuditService
 }
 
 func New(p Params) services.AgentDefinitionService {
 	return &Service{
-		l:     p.Logger.Named("service.agentdefinition"),
-		repo:  p.Repo,
-		tools: p.Tools,
-		audit: p.AuditService,
+		l:          p.Logger.Named("service.agentdefinition"),
+		repo:       p.Repo,
+		tools:      p.Tools,
+		queryTools: p.QueryTools,
+		contexts:   p.Contexts,
+		audit:      p.AuditService,
 	}
 }
 
@@ -48,11 +56,25 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAgentDefinitionConnectionRequest,
+) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetBySystemKey(
+	ctx context.Context,
+	req repositories.GetAgentDefinitionBySystemKeyRequest,
+) (*agentdefinition.Definition, error) {
+	return s.repo.GetBySystemKey(ctx, req)
 }
 
 func (s *Service) Create(
@@ -67,6 +89,9 @@ func (s *Service) Create(
 	apply(definition, req)
 
 	if err := s.validate(definition); err != nil {
+		return nil, err
+	}
+	if err := s.schedule(definition); err != nil {
 		return nil, err
 	}
 
@@ -101,6 +126,11 @@ func (s *Service) Update(
 	if err = s.validate(&updated); err != nil {
 		return nil, err
 	}
+	if scheduleChanged(&previous, &updated) {
+		if err = s.schedule(&updated); err != nil {
+			return nil, err
+		}
+	}
 
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
@@ -125,6 +155,12 @@ func (s *Service) Delete(
 		return err
 	}
 
+	if existing.IsSystem() {
+		return errortypes.NewBusinessError(
+			"{0} is a system agent. Disable it instead of deleting it.", existing.Name,
+		)
+	}
+
 	if err = s.repo.Delete(ctx, req); err != nil {
 		return err
 	}
@@ -135,28 +171,76 @@ func (s *Service) Delete(
 }
 
 func (s *Service) Templates() []services.AgentTemplateDescriptor {
-	kinds := agentdefinition.AllKinds()
-	descriptors := make([]services.AgentTemplateDescriptor, 0, len(kinds))
+	templates := agentdefinition.AllTemplates()
+	descriptors := make([]services.AgentTemplateDescriptor, 0, len(templates))
 
-	for _, kind := range kinds {
+	for _, template := range templates {
 		descriptors = append(descriptors, services.AgentTemplateDescriptor{
-			Kind:            kind,
-			Label:           kind.Label(),
-			Description:     kind.Description(),
-			MutatingAllowed: kind.MutatingAllowed(),
-			AvailableTools:  AvailableTools(kind, s.tools),
+			Template:            template,
+			Label:               template.Label(),
+			Description:         template.Description(),
+			StarterInstructions: template.StarterInstructions(),
+			StarterTools:        registeredStarterTools(template, s.tools, s.queryTools),
+			StarterTrigger:      template.StarterTrigger(),
+			StarterEvents:       template.StarterEvents(),
+			StarterCron:         template.StarterCron(),
+			StarterCeiling:      template.StarterCeiling(),
+			StarterOutput:       starterOutput(template),
+			ContextProviders:    agentdefinition.AllContextProviders(),
 		})
 	}
 
 	return descriptors
 }
 
-// validate runs the domain rules and then the membership check, which needs the
-// live registry and so cannot live in the domain.
+func starterOutput(template agentdefinition.Template) agentdefinition.OutputMode {
+	if template.StarterTrigger() == agentdefinition.TriggerChat {
+		return agentdefinition.OutputConversational
+	}
+
+	return agentdefinition.OutputReport
+}
+
+func (s *Service) ToolCatalog() []services.ToolCatalogEntry {
+	return buildToolCatalog(s.tools, s.queryTools)
+}
+
+func (s *Service) EventKinds() []agent.EventDescriptor {
+	return agent.KnownEvents()
+}
+
+func (s *Service) PreviewPrompt(
+	ctx context.Context,
+	req *services.PreviewPromptRequest,
+) (string, error) {
+	definition := &agentdefinition.Definition{
+		OrganizationID: req.Definition.TenantInfo.OrgID,
+		BusinessUnitID: req.Definition.TenantInfo.BuID,
+	}
+	apply(definition, req.Definition)
+
+	runtimeContext := agentdefinition.RuntimeContext{
+		Trigger: definition.TriggerMode.RunTrigger(),
+	}
+	if s.contexts != nil {
+		built, err := s.contexts.Build(ctx, &services.RuntimeContextRequest{
+			Definition: definition,
+			Actor:      req.Actor,
+			Trigger:    definition.TriggerMode.RunTrigger(),
+		})
+		if err != nil {
+			return "", err
+		}
+		runtimeContext = built
+	}
+
+	return definition.BuildSystemPrompt(runtimeContext), nil
+}
+
 func (s *Service) validate(definition *agentdefinition.Definition) error {
 	multiErr := errortypes.NewMultiError()
 	definition.Validate(multiErr)
-	validateToolSelection(definition, s.tools, multiErr)
+	validateToolSelection(definition, s.tools, s.queryTools, multiErr)
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -165,14 +249,95 @@ func (s *Service) validate(definition *agentdefinition.Definition) error {
 	return nil
 }
 
+func (s *Service) schedule(definition *agentdefinition.Definition) error {
+	switch definition.TriggerMode {
+	case agentdefinition.TriggerScheduled, agentdefinition.TriggerContinuous:
+		if !definition.Enabled {
+			definition.NextRunAt = nil
+			return nil
+		}
+		next, err := definition.ComputeNextRun(timeutils.NowUnix())
+		if err != nil {
+			return errortypes.NewBusinessError("The schedule could not be computed: {0}", err.Error())
+		}
+		definition.NextRunAt = &next
+	default:
+		definition.NextRunAt = nil
+	}
+
+	return nil
+}
+
+func scheduleChanged(previous, updated *agentdefinition.Definition) bool {
+	return previous.TriggerMode != updated.TriggerMode ||
+		previous.CronExpression != updated.CronExpression ||
+		previous.CronTimezone != updated.CronTimezone ||
+		previous.IntervalSeconds != updated.IntervalSeconds ||
+		previous.Enabled != updated.Enabled ||
+		updated.NextRunAt == nil
+}
+
 func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefinitionRequest) {
 	definition.Name = strings.TrimSpace(req.Name)
 	definition.Description = strings.TrimSpace(req.Description)
-	definition.Kind = req.Kind
-	definition.Focus = strings.TrimSpace(req.Focus)
-	definition.ToolNames = req.ToolNames
+	definition.Template = req.Template
+	definition.Instructions = strings.TrimSpace(req.Instructions)
+	definition.Guardrails = trimAll(req.Guardrails)
+	definition.ToolNames = trimAll(req.ToolNames)
+	definition.ToolTiers = copyTiers(req.ToolTiers)
 	definition.AutonomyCeiling = req.AutonomyCeiling
 	definition.Enabled = req.Enabled
+	definition.ShadowMode = req.ShadowMode
+	definition.DecisionTimeoutSeconds = req.DecisionTimeoutSeconds
+	definition.TriggerMode = req.TriggerMode
+	definition.CronExpression = strings.TrimSpace(req.CronExpression)
+	definition.CronTimezone = strings.TrimSpace(req.CronTimezone)
+	definition.EventKinds = req.EventKinds
+	definition.IntervalSeconds = req.IntervalSeconds
+	definition.EndsAt = req.EndsAt
+	definition.MaxConcurrentRuns = req.MaxConcurrentRuns
+	definition.RunTimeoutSeconds = req.RunTimeoutSeconds
+	definition.MaxToolCalls = req.MaxToolCalls
+	definition.ContextProviders = req.ContextProviders
+	definition.OutputMode = req.OutputMode
+	definition.PreferredProviderID = req.PreferredProviderID
+	definition.ApplyDefaults()
+
+	if definition.TriggerMode != agentdefinition.TriggerScheduled {
+		definition.CronExpression = ""
+	}
+	if definition.TriggerMode != agentdefinition.TriggerEvent {
+		definition.EventKinds = nil
+	}
+	if definition.TriggerMode != agentdefinition.TriggerContinuous {
+		definition.IntervalSeconds = 0
+	}
+}
+
+func trimAll(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		out = append(out, strings.TrimSpace(value))
+	}
+
+	return out
+}
+
+func copyTiers(tiers map[string]agent.AutonomyTier) map[string]agent.AutonomyTier {
+	if len(tiers) == 0 {
+		return nil
+	}
+
+	out := make(map[string]agent.AutonomyTier, len(tiers))
+	for tool, tier := range tiers {
+		out[strings.TrimSpace(tool)] = tier
+	}
+
+	return out
 }
 
 func (s *Service) logAudit(

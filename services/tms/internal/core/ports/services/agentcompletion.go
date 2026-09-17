@@ -92,6 +92,10 @@ type ChatCompletionRequest struct {
 	Messages   []Message
 	Tools      []ToolSpec
 	MaxTokens  int
+	// PreferredProviderID asks for one configured provider first. It is honoured
+	// only when that provider is enabled and serves the task; otherwise the usual
+	// priority order applies, so a deleted preference never strands an agent.
+	PreferredProviderID pulid.ID
 }
 
 // ChatCompletionResult is a turn's reply, which may ask for tools, say

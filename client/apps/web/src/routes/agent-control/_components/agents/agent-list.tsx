@@ -103,7 +103,9 @@ export function AgentList() {
                   key={agent.id}
                   agent={agent}
                   templateLabel={
-                    templates.find((template) => template.kind === agent.kind)?.label ?? agent.kind
+                    templates.find((template) => template.template === agent.template)?.label ??
+                    agent.template ??
+                    t("Custom")
                   }
                   onEdit={() => {
                     setEditing(agent);

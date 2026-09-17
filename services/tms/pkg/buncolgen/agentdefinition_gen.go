@@ -49,33 +49,71 @@ var DefinitionTable = TableInfo{
 //	q.Where(DefinitionColumns.ID.Eq(), id)           // WHERE agdef.id = ?
 //	q.Order(DefinitionColumns.CreatedAt.OrderDesc())  // ORDER BY agdef.created_at DESC
 var DefinitionColumns = struct {
-	ID              Column // "id" → qualified: "agdef.id"
-	BusinessUnitID  Column // "business_unit_id" → qualified: "agdef.business_unit_id"
-	OrganizationID  Column // "organization_id" → qualified: "agdef.organization_id"
-	Name            Column // "name" → qualified: "agdef.name"
-	Description     Column // "description" → qualified: "agdef.description"
-	Kind            Column // "kind" → qualified: "agdef.kind"
-	Focus           Column // "focus" → qualified: "agdef.focus"
-	ToolNames       Column // "tool_names" → qualified: "agdef.tool_names"
-	AutonomyCeiling Column // "autonomy_ceiling" → qualified: "agdef.autonomy_ceiling"
-	Enabled         Column // "enabled" → qualified: "agdef.enabled"
-	Version         Column // "version" → qualified: "agdef.version"
-	CreatedAt       Column // "created_at" → qualified: "agdef.created_at"
-	UpdatedAt       Column // "updated_at" → qualified: "agdef.updated_at"
+	ID                     Column // "id" → qualified: "agdef.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "agdef.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "agdef.organization_id"
+	Name                   Column // "name" → qualified: "agdef.name"
+	Description            Column // "description" → qualified: "agdef.description"
+	Template               Column // "template" → qualified: "agdef.template"
+	Instructions           Column // "instructions" → qualified: "agdef.instructions"
+	Guardrails             Column // "guardrails" → qualified: "agdef.guardrails"
+	ToolNames              Column // "tool_names" → qualified: "agdef.tool_names"
+	ToolTiers              Column // "tool_tiers" → qualified: "agdef.tool_tiers"
+	AutonomyCeiling        Column // "autonomy_ceiling" → qualified: "agdef.autonomy_ceiling"
+	Enabled                Column // "enabled" → qualified: "agdef.enabled"
+	ShadowMode             Column // "shadow_mode" → qualified: "agdef.shadow_mode"
+	DecisionTimeoutSeconds Column // "decision_timeout_seconds" → qualified: "agdef.decision_timeout_seconds"
+	TriggerMode            Column // "trigger_mode" → qualified: "agdef.trigger_mode"
+	CronExpression         Column // "cron_expression" → qualified: "agdef.cron_expression"
+	CronTimezone           Column // "cron_timezone" → qualified: "agdef.cron_timezone"
+	EventKinds             Column // "event_kinds" → qualified: "agdef.event_kinds"
+	IntervalSeconds        Column // "interval_seconds" → qualified: "agdef.interval_seconds"
+	EndsAt                 Column // "ends_at" → qualified: "agdef.ends_at"
+	MaxConcurrentRuns      Column // "max_concurrent_runs" → qualified: "agdef.max_concurrent_runs"
+	RunTimeoutSeconds      Column // "run_timeout_seconds" → qualified: "agdef.run_timeout_seconds"
+	MaxToolCalls           Column // "max_tool_calls" → qualified: "agdef.max_tool_calls"
+	ContextProviders       Column // "context_providers" → qualified: "agdef.context_providers"
+	OutputMode             Column // "output_mode" → qualified: "agdef.output_mode"
+	PreferredProviderID    Column // "preferred_provider_id" → qualified: "agdef.preferred_provider_id"
+	SystemKey              Column // "system_key" → qualified: "agdef.system_key"
+	LastRunAt              Column // "last_run_at" → qualified: "agdef.last_run_at"
+	NextRunAt              Column // "next_run_at" → qualified: "agdef.next_run_at"
+	Version                Column // "version" → qualified: "agdef.version"
+	CreatedAt              Column // "created_at" → qualified: "agdef.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "agdef.updated_at"
 }{
-	ID:              NewColumn("id", "agdef"),
-	BusinessUnitID:  NewColumn("business_unit_id", "agdef"),
-	OrganizationID:  NewColumn("organization_id", "agdef"),
-	Name:            NewColumn("name", "agdef"),
-	Description:     NewColumn("description", "agdef"),
-	Kind:            NewColumn("kind", "agdef"),
-	Focus:           NewColumn("focus", "agdef"),
-	ToolNames:       NewColumn("tool_names", "agdef"),
-	AutonomyCeiling: NewColumn("autonomy_ceiling", "agdef"),
-	Enabled:         NewColumn("enabled", "agdef"),
-	Version:         NewColumn("version", "agdef"),
-	CreatedAt:       NewColumn("created_at", "agdef"),
-	UpdatedAt:       NewColumn("updated_at", "agdef"),
+	ID:                     NewColumn("id", "agdef"),
+	BusinessUnitID:         NewColumn("business_unit_id", "agdef"),
+	OrganizationID:         NewColumn("organization_id", "agdef"),
+	Name:                   NewColumn("name", "agdef"),
+	Description:            NewColumn("description", "agdef"),
+	Template:               NewColumn("template", "agdef"),
+	Instructions:           NewColumn("instructions", "agdef"),
+	Guardrails:             NewColumn("guardrails", "agdef"),
+	ToolNames:              NewColumn("tool_names", "agdef"),
+	ToolTiers:              NewColumn("tool_tiers", "agdef"),
+	AutonomyCeiling:        NewColumn("autonomy_ceiling", "agdef"),
+	Enabled:                NewColumn("enabled", "agdef"),
+	ShadowMode:             NewColumn("shadow_mode", "agdef"),
+	DecisionTimeoutSeconds: NewColumn("decision_timeout_seconds", "agdef"),
+	TriggerMode:            NewColumn("trigger_mode", "agdef"),
+	CronExpression:         NewColumn("cron_expression", "agdef"),
+	CronTimezone:           NewColumn("cron_timezone", "agdef"),
+	EventKinds:             NewColumn("event_kinds", "agdef"),
+	IntervalSeconds:        NewColumn("interval_seconds", "agdef"),
+	EndsAt:                 NewColumn("ends_at", "agdef"),
+	MaxConcurrentRuns:      NewColumn("max_concurrent_runs", "agdef"),
+	RunTimeoutSeconds:      NewColumn("run_timeout_seconds", "agdef"),
+	MaxToolCalls:           NewColumn("max_tool_calls", "agdef"),
+	ContextProviders:       NewColumn("context_providers", "agdef"),
+	OutputMode:             NewColumn("output_mode", "agdef"),
+	PreferredProviderID:    NewColumn("preferred_provider_id", "agdef"),
+	SystemKey:              NewColumn("system_key", "agdef"),
+	LastRunAt:              NewColumn("last_run_at", "agdef"),
+	NextRunAt:              NewColumn("next_run_at", "agdef"),
+	Version:                NewColumn("version", "agdef"),
+	CreatedAt:              NewColumn("created_at", "agdef"),
+	UpdatedAt:              NewColumn("updated_at", "agdef"),
 }
 
 // DefinitionFieldMap maps JSON API field names to database column names.
@@ -83,19 +121,38 @@ var DefinitionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Definition.GetStaticFieldMap().
 var DefinitionFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"name":            "name",
-	"description":     "description",
-	"kind":            "kind",
-	"focus":           "focus",
-	"toolNames":       "tool_names",
-	"autonomyCeiling": "autonomy_ceiling",
-	"enabled":         "enabled",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"name":                   "name",
+	"description":            "description",
+	"template":               "template",
+	"instructions":           "instructions",
+	"guardrails":             "guardrails",
+	"toolNames":              "tool_names",
+	"toolTiers":              "tool_tiers",
+	"autonomyCeiling":        "autonomy_ceiling",
+	"enabled":                "enabled",
+	"shadowMode":             "shadow_mode",
+	"decisionTimeoutSeconds": "decision_timeout_seconds",
+	"triggerMode":            "trigger_mode",
+	"cronExpression":         "cron_expression",
+	"cronTimezone":           "cron_timezone",
+	"eventKinds":             "event_kinds",
+	"intervalSeconds":        "interval_seconds",
+	"endsAt":                 "ends_at",
+	"maxConcurrentRuns":      "max_concurrent_runs",
+	"runTimeoutSeconds":      "run_timeout_seconds",
+	"maxToolCalls":           "max_tool_calls",
+	"contextProviders":       "context_providers",
+	"outputMode":             "output_mode",
+	"preferredProviderId":    "preferred_provider_id",
+	"systemKey":              "system_key",
+	"lastRunAt":              "last_run_at",
+	"nextRunAt":              "next_run_at",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // DefinitionInsertableColumns lists column names suitable for INSERT statements on the "agent_definitions" table.
@@ -106,11 +163,30 @@ var DefinitionInsertableColumns = []string{
 	"organization_id",
 	"name",
 	"description",
-	"kind",
-	"focus",
+	"template",
+	"instructions",
+	"guardrails",
 	"tool_names",
+	"tool_tiers",
 	"autonomy_ceiling",
 	"enabled",
+	"shadow_mode",
+	"decision_timeout_seconds",
+	"trigger_mode",
+	"cron_expression",
+	"cron_timezone",
+	"event_kinds",
+	"interval_seconds",
+	"ends_at",
+	"max_concurrent_runs",
+	"run_timeout_seconds",
+	"max_tool_calls",
+	"context_providers",
+	"output_mode",
+	"preferred_provider_id",
+	"system_key",
+	"last_run_at",
+	"next_run_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -179,19 +255,38 @@ func DefinitionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun
 //	DefinitionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var DefinitionFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Name            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Kind            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	Focus           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "focus" → DB: "focus"
-	ToolNames       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolNames" → DB: "tool_names"
-	AutonomyCeiling func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyCeiling" → DB: "autonomy_ceiling"
-	Enabled         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Template               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "template" → DB: "template"
+	Instructions           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "instructions" → DB: "instructions"
+	Guardrails             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "guardrails" → DB: "guardrails"
+	ToolNames              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolNames" → DB: "tool_names"
+	ToolTiers              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolTiers" → DB: "tool_tiers"
+	AutonomyCeiling        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyCeiling" → DB: "autonomy_ceiling"
+	Enabled                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	ShadowMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
+	DecisionTimeoutSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionTimeoutSeconds" → DB: "decision_timeout_seconds"
+	TriggerMode            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "triggerMode" → DB: "trigger_mode"
+	CronExpression         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cronExpression" → DB: "cron_expression"
+	CronTimezone           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cronTimezone" → DB: "cron_timezone"
+	EventKinds             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "eventKinds" → DB: "event_kinds"
+	IntervalSeconds        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intervalSeconds" → DB: "interval_seconds"
+	EndsAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "endsAt" → DB: "ends_at"
+	MaxConcurrentRuns      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrentRuns" → DB: "max_concurrent_runs"
+	RunTimeoutSeconds      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runTimeoutSeconds" → DB: "run_timeout_seconds"
+	MaxToolCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxToolCalls" → DB: "max_tool_calls"
+	ContextProviders       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextProviders" → DB: "context_providers"
+	OutputMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputMode" → DB: "output_mode"
+	PreferredProviderID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
+	SystemKey              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "systemKey" → DB: "system_key"
+	LastRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
+	NextRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nextRunAt" → DB: "next_run_at"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -208,20 +303,77 @@ var DefinitionFilter = struct {
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("description", op, value)
 	},
-	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("kind", op, value)
+	Template: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("template", op, value)
 	},
-	Focus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("focus", op, value)
+	Instructions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("instructions", op, value)
+	},
+	Guardrails: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("guardrails", op, value)
 	},
 	ToolNames: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toolNames", op, value)
+	},
+	ToolTiers: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolTiers", op, value)
 	},
 	AutonomyCeiling: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autonomyCeiling", op, value)
 	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enabled", op, value)
+	},
+	ShadowMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shadowMode", op, value)
+	},
+	DecisionTimeoutSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decisionTimeoutSeconds", op, value)
+	},
+	TriggerMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("triggerMode", op, value)
+	},
+	CronExpression: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cronExpression", op, value)
+	},
+	CronTimezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cronTimezone", op, value)
+	},
+	EventKinds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("eventKinds", op, value)
+	},
+	IntervalSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("intervalSeconds", op, value)
+	},
+	EndsAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("endsAt", op, value)
+	},
+	MaxConcurrentRuns: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxConcurrentRuns", op, value)
+	},
+	RunTimeoutSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runTimeoutSeconds", op, value)
+	},
+	MaxToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxToolCalls", op, value)
+	},
+	ContextProviders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("contextProviders", op, value)
+	},
+	OutputMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("outputMode", op, value)
+	},
+	PreferredProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("preferredProviderId", op, value)
+	},
+	SystemKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("systemKey", op, value)
+	},
+	LastRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunAt", op, value)
+	},
+	NextRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("nextRunAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

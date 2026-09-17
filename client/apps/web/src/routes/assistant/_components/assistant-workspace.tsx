@@ -37,7 +37,7 @@ export function AssistantWorkspace() {
 
   const threadsQuery = useQuery(queries.assistant.threads());
   // Only enabled agents can hold a conversation, so the picker asks for those.
-  const agentsQuery = useQuery(queries.assistant.agents(true));
+  const agentsQuery = useQuery(queries.assistant.agents(true, true));
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = threadsQuery.data?.items ?? [];

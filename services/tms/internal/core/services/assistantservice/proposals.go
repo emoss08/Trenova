@@ -12,24 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-// chatRunOpener and chatProposalStore are the slices of the agent run and
-// proposal repositories a conversation actually needs.
-//
-// A chat turn opens a run and records proposals against it. It has no business
-// advancing a run's status or resolving a proposal — those belong to the
-// decision service — so the dependency says only what this service may do.
-type chatRunOpener interface {
-	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
-}
-
 type chatProposalStore interface {
-	Create(ctx context.Context, entity *agent.AgentProposal) (*agent.AgentProposal, error)
 	ListByThread(
 		ctx context.Context,
 		req repositories.ListAgentProposalsByThreadRequest,
@@ -45,10 +33,7 @@ const (
 	evidenceTypeMessage = "AssistantMessage"
 )
 
-// chatPromptVersion identifies the prompt shape a chat run used. Agent runs
-// require one so a later change in how agents are prompted can be told apart
-// from a change in the model.
-const chatPromptVersion = "assistant-chat/v1"
+const chatPromptVersion = "assistant-chat/v2"
 
 // persistProposalsParams groups what turning a turn's pending actions into
 // durable proposals needs.
@@ -59,7 +44,7 @@ type persistProposalsParams struct {
 	// Saved are the messages as persisted, used to tie each proposal to the
 	// assistant turn that asked for it.
 	Saved   []conversation.Message
-	Actions []PendingAction
+	Actions []services.PendingAction
 	Model   string
 	Input   string
 }
@@ -80,77 +65,35 @@ func (s *Service) persistProposals(
 		return nil, nil
 	}
 
-	run, err := s.openChatRun(ctx, params)
+	recorded, err := s.recorder.Record(ctx, &proposalrecorder.RecordRequest{
+		Actor:      params.Actor,
+		Definition: params.Definition,
+		Open: &proposalrecorder.OpenRunRequest{
+			AgentType:        agent.TypeAssistantChat,
+			SubjectType:      agent.SubjectAssistantThread,
+			SubjectID:        params.Thread.ID,
+			Trigger:          agent.RunTriggerChat,
+			Status:           agent.RunStatusCompleted,
+			Model:            params.Model,
+			PromptVersion:    chatPromptVersion,
+			InputContextHash: hashChatContext(params.Definition, params.Input),
+		},
+		Actions:          params.Actions,
+		SourceMessageIDs: sourceMessageIndex(params.Saved),
+		Evidence: func(_ services.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
+			return chatEvidence(params.Thread, sourceMessageID)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	sourceByToolCall := sourceMessageIndex(params.Saved)
-	persisted := make([]services.AssistantProposal, 0, len(params.Actions))
-
-	for _, action := range params.Actions {
-		proposal := &agent.AgentProposal{
-			OrganizationID:  params.Actor.OrganizationID,
-			BusinessUnitID:  params.Actor.BusinessUnitID,
-			RunID:           run.ID,
-			ToolName:        action.ToolName,
-			ToolParams:      nonNilParams(action.Arguments),
-			Rationale:       action.Rationale,
-			AutonomyTier:    proposalTier(action.Tier),
-			Status:          agent.ProposalStatusPending,
-			SourceMessageID: sourceByToolCall[action.ToolCallID],
-			Evidence:        chatEvidence(params.Thread, sourceByToolCall[action.ToolCallID]),
-		}
-
-		multiErr := errortypes.NewMultiError()
-		proposal.Validate(multiErr)
-		if multiErr.HasErrors() {
-			return nil, multiErr
-		}
-
-		created, cErr := s.proposals.Create(ctx, proposal)
-		if cErr != nil {
-			return nil, cErr
-		}
-
-		persisted = append(persisted, toAssistantProposal(created))
+	persisted := make([]services.AssistantProposal, 0, len(recorded.Proposals))
+	for _, proposal := range recorded.Proposals {
+		persisted = append(persisted, toAssistantProposal(proposal))
 	}
 
 	return persisted, nil
-}
-
-// openChatRun creates the run a conversation turn's proposals hang from.
-//
-// The run is completed immediately rather than left open: unlike the billing
-// agent, a chat turn has already finished thinking by the time its proposals
-// exist, and the proposals carry their own pending status. Leaving the run
-// awaiting a decision would make every answered thread look like unfinished
-// work on the agent runs screen.
-func (s *Service) openChatRun(
-	ctx context.Context,
-	params persistProposalsParams,
-) (*agent.AgentRun, error) {
-	now := timeutils.NowUnix()
-	run := &agent.AgentRun{
-		OrganizationID:   params.Actor.OrganizationID,
-		BusinessUnitID:   params.Actor.BusinessUnitID,
-		AgentType:        agent.TypeAssistantChat,
-		SubjectType:      agent.SubjectAssistantThread,
-		SubjectID:        params.Thread.ID,
-		Status:           agent.RunStatusAwaitingDecision,
-		ModelIdentifier:  params.Model,
-		PromptVersion:    chatPromptVersion,
-		InputContextHash: hashChatContext(params.Definition, params.Input),
-		StartedAt:        now,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	run.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	return s.runs.Create(ctx, run)
 }
 
 // hashChatContext fingerprints what the model was asked, so two runs can be
@@ -179,21 +122,6 @@ func sourceMessageIndex(saved []conversation.Message) map[string]pulid.ID {
 	}
 
 	return index
-}
-
-// proposalTier fills in a tier the dispatcher did not set.
-//
-// The fallback is the most restrictive tier there is, so a missing value can only
-// ever ask for more human involvement rather than less. Dropping the proposal
-// instead would lose the one record that tells an approver something was asked
-// for, and defaulting the other way would be a way for an unset field to grant
-// autonomy nobody configured.
-func proposalTier(tier agent.AutonomyTier) agent.AutonomyTier {
-	if tier == "" {
-		return agent.TierPropose
-	}
-
-	return tier
 }
 
 // chatEvidence cites the conversation a proposal came out of.
@@ -226,17 +154,6 @@ func threadEvidenceNote(thread *conversation.Thread) string {
 	}
 
 	return "Proposed during an assistant conversation"
-}
-
-// nonNilParams keeps a proposal's parameters a JSON object rather than null. A
-// tool taking no arguments is legitimate, and `null` would fail the column's
-// not-null constraint for no reason.
-func nonNilParams(params map[string]any) map[string]any {
-	if params == nil {
-		return map[string]any{}
-	}
-
-	return params
 }
 
 // logProposalPersistFailure reports proposals that could not be saved.

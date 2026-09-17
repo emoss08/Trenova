@@ -3,8 +3,12 @@ import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
 import {
+  agentDefinitionListSchema,
   agentDefinitionSchema,
+  agentEventListSchema,
   agentTemplateListSchema,
+  previewPromptResponseSchema,
+  toolCatalogSchema,
   assistantMessageListSchema,
   assistantProposalListSchema,
   assistantThreadListSchema,
@@ -19,7 +23,6 @@ import {
   type ProposalDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
 /** Where a stream that never opened went wrong, for the reader. */
 export class AssistantStreamError extends Error {
@@ -31,8 +34,6 @@ export class AssistantStreamError extends Error {
     this.status = status;
   }
 }
-
-const agentDefinitionListSchema = createLimitOffsetResponse(agentDefinitionSchema);
 
 export class AssistantService {
   public async listThreads(limit = 50, offset = 0) {
@@ -161,10 +162,38 @@ async function streamFailureMessage(response: Response): Promise<string> {
 }
 
 export class AgentDefinitionService {
-  public async list(enabledOnly = false) {
-    const suffix = enabledOnly ? "?enabledOnly=true" : "";
-    const response = await api.get(`/agent-definitions/${suffix}`);
+  public async list(enabledOnly = false, chatOnly = false) {
+    const params = new URLSearchParams();
+    if (enabledOnly) {
+      params.set("enabledOnly", "true");
+    }
+    if (chatOnly) {
+      params.set("chatOnly", "true");
+    }
+    const query = params.toString();
+    const response = await api.get(`/agent-definitions/${query ? `?${query}` : ""}`);
     return safeParse(agentDefinitionListSchema, response, "Agent");
+  }
+
+  public async getBySystemKey(systemKey: string) {
+    const response = await api.get(`/agent-definitions/system/${systemKey}/`);
+    return safeParse(agentDefinitionSchema, response, "Agent");
+  }
+
+  public async tools() {
+    const response = await api.get("/agent-definitions/tools/");
+    return safeParse(toolCatalogSchema, response, "Agent Tool");
+  }
+
+  public async eventKinds() {
+    const response = await api.get("/agent-definitions/event-kinds/");
+    return safeParse(agentEventListSchema, response, "Agent Event");
+  }
+
+  public async previewPrompt(payload: SaveAgentDefinitionRequest) {
+    const request = saveAgentDefinitionRequestSchema.parse(payload);
+    const response = await api.post("/agent-definitions/preview-prompt/", request);
+    return safeParse(previewPromptResponseSchema, response, "Agent Prompt");
   }
 
   public async get(id: AgentDefinition["id"]) {

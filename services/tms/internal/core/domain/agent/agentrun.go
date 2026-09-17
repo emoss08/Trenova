@@ -31,17 +31,20 @@ type AgentRun struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
-	AgentType        Type        `json:"agentType"        bun:"agent_type,type:agent_type_enum,notnull"`
-	SubjectType      SubjectType `json:"subjectType"      bun:"subject_type,type:agent_subject_type_enum,notnull"`
-	SubjectID        pulid.ID    `json:"subjectId"        bun:"subject_id,type:VARCHAR(100),notnull"`
-	Status           RunStatus   `json:"status"           bun:"status,type:agent_run_status_enum,notnull,default:'Pending'"`
-	WorkflowID       string      `json:"workflowId"       bun:"workflow_id,type:VARCHAR(255),nullzero"`
-	ModelIdentifier  string      `json:"modelIdentifier"  bun:"model_identifier,type:VARCHAR(255),nullzero"`
-	PromptVersion    string      `json:"promptVersion"    bun:"prompt_version,type:VARCHAR(100),notnull"`
-	InputContextHash string      `json:"inputContextHash" bun:"input_context_hash,type:VARCHAR(64),notnull"`
-	StartedAt        int64       `json:"startedAt"        bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt      *int64      `json:"completedAt"      bun:"completed_at,type:BIGINT,nullzero"`
-	ErrorMessage     string      `json:"errorMessage"     bun:"error_message,type:TEXT,nullzero"`
+	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
+	Trigger           RunTrigger  `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull,default:'Manual'"`
+	Summary           string      `json:"summary"           bun:"summary,type:TEXT,nullzero"`
+	AgentType         Type        `json:"agentType"        bun:"agent_type,type:agent_type_enum,notnull"`
+	SubjectType       SubjectType `json:"subjectType"      bun:"subject_type,type:agent_subject_type_enum,notnull"`
+	SubjectID         pulid.ID    `json:"subjectId"        bun:"subject_id,type:VARCHAR(100),notnull"`
+	Status            RunStatus   `json:"status"           bun:"status,type:agent_run_status_enum,notnull,default:'Pending'"`
+	WorkflowID        string      `json:"workflowId"       bun:"workflow_id,type:VARCHAR(255),nullzero"`
+	ModelIdentifier   string      `json:"modelIdentifier"  bun:"model_identifier,type:VARCHAR(255),nullzero"`
+	PromptVersion     string      `json:"promptVersion"    bun:"prompt_version,type:VARCHAR(100),notnull"`
+	InputContextHash  string      `json:"inputContextHash" bun:"input_context_hash,type:VARCHAR(64),notnull"`
+	StartedAt         int64       `json:"startedAt"        bun:"started_at,type:BIGINT,nullzero"`
+	CompletedAt       *int64      `json:"completedAt"      bun:"completed_at,type:BIGINT,nullzero"`
+	ErrorMessage      string      `json:"errorMessage"     bun:"error_message,type:TEXT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -63,6 +66,10 @@ func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[SubjectType]("Invalid subject type"),
 		),
 		validation.Field(&r.SubjectID, validation.Required.Error("Subject id is required")),
+		validation.Field(&r.Trigger,
+			validation.Required.Error("Trigger is required"),
+			domainvalidation.ValidEnum[RunTrigger]("Invalid trigger"),
+		),
 		validation.Field(&r.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[RunStatus]("Invalid status"),
@@ -117,6 +124,9 @@ func (r *AgentRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	case *bun.InsertQuery:
 		if r.ID.IsNil() {
 			r.ID = pulid.MustNew("ar_")
+		}
+		if r.Trigger == "" {
+			r.Trigger = RunTriggerManual
 		}
 		r.CreatedAt = now
 	case *bun.UpdateQuery:

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
@@ -115,6 +117,8 @@ func Options() fx.Option {
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agentguard.Module,
+		agentruntime.Module,
+		proposalrecorder.Module,
 		fx.Provide(assistantservice.New),
 		completionrouter.Module,
 		recurringshipmentjobs.Module,

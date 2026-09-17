@@ -162,7 +162,7 @@ function ThreadHeader({
   const t = useT();
   const templatesQuery = useQuery(queries.assistant.agentTemplates());
   const templateLabel = templatesQuery.data?.templates.find(
-    (item) => item.kind === agent?.kind,
+    (item) => item.template === agent?.template,
   )?.label;
 
   return (
@@ -224,7 +224,7 @@ function EmptyThread({
   onSuggest: (prompt: string) => void;
 }) {
   const t = useT();
-  const suggestions = agent ? suggestionsFor(agent.kind) : [];
+  const suggestions = agent ? suggestionsFor(agent.template) : [];
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">

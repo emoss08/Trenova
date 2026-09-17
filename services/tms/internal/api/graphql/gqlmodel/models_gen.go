@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -161,6 +162,17 @@ type AgentControlInput struct {
 	ShadowMode             bool `json:"shadowMode"`
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds"`
+}
+
+type AgentDefinitionConnection struct {
+	Edges      []*AgentDefinitionEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type AgentDefinitionEdge struct {
+	Node   *agentdefinition.Definition `json:"node"`
+	Cursor string                      `json:"cursor"`
 }
 
 type AgentExceptionConnection struct {

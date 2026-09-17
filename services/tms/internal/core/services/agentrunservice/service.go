@@ -86,6 +86,7 @@ func (s *Service) Start(
 		SubjectType:      req.SubjectType,
 		SubjectID:        req.SubjectID,
 		Status:           agent.RunStatusPending,
+		Trigger:          runTrigger(actor),
 		PromptVersion:    agentPromptVersion,
 		InputContextHash: provisionalHash,
 	}
@@ -173,6 +174,7 @@ func (s *Service) StartInline(
 		SubjectType:      req.SubjectType,
 		SubjectID:        req.SubjectID,
 		Status:           agent.RunStatusAwaitingDecision,
+		Trigger:          inlineTrigger(req.Trigger, actor),
 		PromptVersion:    promptVersion,
 		InputContextHash: provisionalHash,
 		StartedAt:        timeutils.NowUnix(),
@@ -222,4 +224,20 @@ func (s *Service) GetByID(
 	req repositories.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func inlineTrigger(requested agent.RunTrigger, actor *services.RequestActor) agent.RunTrigger {
+	if requested != "" {
+		return requested
+	}
+
+	return runTrigger(actor)
+}
+
+func runTrigger(actor *services.RequestActor) agent.RunTrigger {
+	if actor != nil && actor.IsUser() {
+		return agent.RunTriggerManual
+	}
+
+	return agent.RunTriggerEvent
 }

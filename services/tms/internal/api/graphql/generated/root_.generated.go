@@ -32,6 +32,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	AccessorialCharge() AccessorialChargeResolver
+	AgentDefinition() AgentDefinitionResolver
 	AgentProposal() AgentProposalResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
@@ -471,6 +472,54 @@ type ComplexityRoot struct {
 		ReasonCode      func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 		Version         func(childComplexity int) int
+	}
+
+	AgentDefinition struct {
+		AutonomyCeiling        func(childComplexity int) int
+		BusinessUnitID         func(childComplexity int) int
+		ContextProviders       func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		CronExpression         func(childComplexity int) int
+		CronTimezone           func(childComplexity int) int
+		DecisionTimeoutSeconds func(childComplexity int) int
+		Description            func(childComplexity int) int
+		Enabled                func(childComplexity int) int
+		EndsAt                 func(childComplexity int) int
+		EventKinds             func(childComplexity int) int
+		Guardrails             func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		Instructions           func(childComplexity int) int
+		IntervalSeconds        func(childComplexity int) int
+		LastRunAt              func(childComplexity int) int
+		MaxConcurrentRuns      func(childComplexity int) int
+		MaxToolCalls           func(childComplexity int) int
+		Name                   func(childComplexity int) int
+		NextRunAt              func(childComplexity int) int
+		OpenRuns               func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		OutputMode             func(childComplexity int) int
+		PendingProposals       func(childComplexity int) int
+		PreferredProviderID    func(childComplexity int) int
+		RunTimeoutSeconds      func(childComplexity int) int
+		ShadowMode             func(childComplexity int) int
+		SystemKey              func(childComplexity int) int
+		Template               func(childComplexity int) int
+		ToolNames              func(childComplexity int) int
+		ToolTiers              func(childComplexity int) int
+		TriggerMode            func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		Version                func(childComplexity int) int
+	}
+
+	AgentDefinitionConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentDefinitionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	AgentEvidenceRef struct {
@@ -6248,6 +6297,8 @@ type ComplexityRoot struct {
 		ActiveWorkerChecklistTemplates      func(childComplexity int) int
 		ActiveWorkerCredentialTypes         func(childComplexity int) int
 		AgentControl                        func(childComplexity int) int
+		AgentDefinition                     func(childComplexity int, id string) int
+		AgentDefinitions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentException                      func(childComplexity int, id string) int
 		AgentExceptions                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
@@ -11695,6 +11746,243 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDecision.Version(childComplexity), true
+
+	case "AgentDefinition.autonomyCeiling":
+		if e.ComplexityRoot.AgentDefinition.AutonomyCeiling == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.AutonomyCeiling(childComplexity), true
+	case "AgentDefinition.businessUnitId":
+		if e.ComplexityRoot.AgentDefinition.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.BusinessUnitID(childComplexity), true
+	case "AgentDefinition.contextProviders":
+		if e.ComplexityRoot.AgentDefinition.ContextProviders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ContextProviders(childComplexity), true
+	case "AgentDefinition.createdAt":
+		if e.ComplexityRoot.AgentDefinition.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.CreatedAt(childComplexity), true
+	case "AgentDefinition.cronExpression":
+		if e.ComplexityRoot.AgentDefinition.CronExpression == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.CronExpression(childComplexity), true
+	case "AgentDefinition.cronTimezone":
+		if e.ComplexityRoot.AgentDefinition.CronTimezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.CronTimezone(childComplexity), true
+	case "AgentDefinition.decisionTimeoutSeconds":
+		if e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds(childComplexity), true
+	case "AgentDefinition.description":
+		if e.ComplexityRoot.AgentDefinition.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Description(childComplexity), true
+	case "AgentDefinition.enabled":
+		if e.ComplexityRoot.AgentDefinition.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Enabled(childComplexity), true
+	case "AgentDefinition.endsAt":
+		if e.ComplexityRoot.AgentDefinition.EndsAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.EndsAt(childComplexity), true
+	case "AgentDefinition.eventKinds":
+		if e.ComplexityRoot.AgentDefinition.EventKinds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.EventKinds(childComplexity), true
+	case "AgentDefinition.guardrails":
+		if e.ComplexityRoot.AgentDefinition.Guardrails == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Guardrails(childComplexity), true
+	case "AgentDefinition.id":
+		if e.ComplexityRoot.AgentDefinition.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ID(childComplexity), true
+	case "AgentDefinition.instructions":
+		if e.ComplexityRoot.AgentDefinition.Instructions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Instructions(childComplexity), true
+	case "AgentDefinition.intervalSeconds":
+		if e.ComplexityRoot.AgentDefinition.IntervalSeconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.IntervalSeconds(childComplexity), true
+	case "AgentDefinition.lastRunAt":
+		if e.ComplexityRoot.AgentDefinition.LastRunAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.LastRunAt(childComplexity), true
+	case "AgentDefinition.maxConcurrentRuns":
+		if e.ComplexityRoot.AgentDefinition.MaxConcurrentRuns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.MaxConcurrentRuns(childComplexity), true
+	case "AgentDefinition.maxToolCalls":
+		if e.ComplexityRoot.AgentDefinition.MaxToolCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.MaxToolCalls(childComplexity), true
+	case "AgentDefinition.name":
+		if e.ComplexityRoot.AgentDefinition.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Name(childComplexity), true
+	case "AgentDefinition.nextRunAt":
+		if e.ComplexityRoot.AgentDefinition.NextRunAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.NextRunAt(childComplexity), true
+	case "AgentDefinition.openRuns":
+		if e.ComplexityRoot.AgentDefinition.OpenRuns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.OpenRuns(childComplexity), true
+	case "AgentDefinition.organizationId":
+		if e.ComplexityRoot.AgentDefinition.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.OrganizationID(childComplexity), true
+	case "AgentDefinition.outputMode":
+		if e.ComplexityRoot.AgentDefinition.OutputMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.OutputMode(childComplexity), true
+	case "AgentDefinition.pendingProposals":
+		if e.ComplexityRoot.AgentDefinition.PendingProposals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.PendingProposals(childComplexity), true
+	case "AgentDefinition.preferredProviderId":
+		if e.ComplexityRoot.AgentDefinition.PreferredProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.PreferredProviderID(childComplexity), true
+	case "AgentDefinition.runTimeoutSeconds":
+		if e.ComplexityRoot.AgentDefinition.RunTimeoutSeconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.RunTimeoutSeconds(childComplexity), true
+	case "AgentDefinition.shadowMode":
+		if e.ComplexityRoot.AgentDefinition.ShadowMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ShadowMode(childComplexity), true
+	case "AgentDefinition.systemKey":
+		if e.ComplexityRoot.AgentDefinition.SystemKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.SystemKey(childComplexity), true
+	case "AgentDefinition.template":
+		if e.ComplexityRoot.AgentDefinition.Template == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Template(childComplexity), true
+	case "AgentDefinition.toolNames":
+		if e.ComplexityRoot.AgentDefinition.ToolNames == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ToolNames(childComplexity), true
+	case "AgentDefinition.toolTiers":
+		if e.ComplexityRoot.AgentDefinition.ToolTiers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.ToolTiers(childComplexity), true
+	case "AgentDefinition.triggerMode":
+		if e.ComplexityRoot.AgentDefinition.TriggerMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.TriggerMode(childComplexity), true
+	case "AgentDefinition.updatedAt":
+		if e.ComplexityRoot.AgentDefinition.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.UpdatedAt(childComplexity), true
+	case "AgentDefinition.version":
+		if e.ComplexityRoot.AgentDefinition.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.Version(childComplexity), true
+
+	case "AgentDefinitionConnection.edges":
+		if e.ComplexityRoot.AgentDefinitionConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinitionConnection.Edges(childComplexity), true
+	case "AgentDefinitionConnection.pageInfo":
+		if e.ComplexityRoot.AgentDefinitionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinitionConnection.PageInfo(childComplexity), true
+	case "AgentDefinitionConnection.totalCount":
+		if e.ComplexityRoot.AgentDefinitionConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinitionConnection.TotalCount(childComplexity), true
+
+	case "AgentDefinitionEdge.cursor":
+		if e.ComplexityRoot.AgentDefinitionEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinitionEdge.Cursor(childComplexity), true
+	case "AgentDefinitionEdge.node":
+		if e.ComplexityRoot.AgentDefinitionEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinitionEdge.Node(childComplexity), true
 
 	case "AgentEvidenceRef.id":
 		if e.ComplexityRoot.AgentEvidenceRef.ID == nil {
@@ -41114,6 +41402,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentControl(childComplexity), true
+	case "Query.agentDefinition":
+		if e.ComplexityRoot.Query.AgentDefinition == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentDefinition_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentDefinition(childComplexity, args["id"].(string)), true
+	case "Query.agentDefinitions":
+		if e.ComplexityRoot.Query.AgentDefinitions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentDefinitions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentDefinitions(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.agentException":
 		if e.ComplexityRoot.Query.AgentException == nil {
 			break
@@ -63861,6 +64171,99 @@ extend type Mutation {
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }
 `, BuiltIn: false},
+	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {
+  DispatchAssistant
+  BillingAssistant
+  ComplianceAssistant
+  CustomerAssistant
+  GeneralAssistant
+  BillingException
+  DispatchAssignment
+  ImportAssistant
+}
+
+enum AgentTriggerMode {
+  Chat
+  Scheduled
+  Event
+  Continuous
+}
+
+enum AgentOutputMode {
+  Conversational
+  Report
+}
+
+enum AgentContextProvider {
+  Organization
+  Clock
+  User
+  Page
+  Tools
+}
+
+"""
+An organization's own agent: who it is, which tools it may call, how much it
+may do on its own, and when it runs.
+"""
+type AgentDefinition {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  "The starter this agent was created from, if any. It carries no restriction."
+  template: AgentTemplate
+  instructions: String!
+  guardrails: [String!]!
+  toolNames: [String!]!
+  "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  endsAt: Timestamp
+  maxConcurrentRuns: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  contextProviders: [AgentContextProvider!]!
+  outputMode: AgentOutputMode!
+  preferredProviderId: ID!
+  "Set on the agents the platform itself creates and fires; they cannot be deleted."
+  systemKey: String!
+  lastRunAt: Timestamp
+  nextRunAt: Timestamp
+  "Proposals raised by this agent that still await a person's decision."
+  pendingProposals: Int!
+  "Runs of this agent that have not finished."
+  openRuns: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentDefinitionEdge {
+  node: AgentDefinition!
+  cursor: String!
+}
+
+type AgentDefinitionConnection {
+  edges: [AgentDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  agentDefinition(id: ID!): AgentDefinition
+}
+`, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {
   id: ID!
   businessUnitId: ID!
@@ -82769,6 +83172,102 @@ func (ec *executionContext) childFields_AgentDecision(ctx context.Context, field
 		return ec.fieldContext_AgentDecision_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentDecision", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentDefinition_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentDefinition_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentDefinition_businessUnitId(ctx, field)
+	case "name":
+		return ec.fieldContext_AgentDefinition_name(ctx, field)
+	case "description":
+		return ec.fieldContext_AgentDefinition_description(ctx, field)
+	case "template":
+		return ec.fieldContext_AgentDefinition_template(ctx, field)
+	case "instructions":
+		return ec.fieldContext_AgentDefinition_instructions(ctx, field)
+	case "guardrails":
+		return ec.fieldContext_AgentDefinition_guardrails(ctx, field)
+	case "toolNames":
+		return ec.fieldContext_AgentDefinition_toolNames(ctx, field)
+	case "toolTiers":
+		return ec.fieldContext_AgentDefinition_toolTiers(ctx, field)
+	case "autonomyCeiling":
+		return ec.fieldContext_AgentDefinition_autonomyCeiling(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AgentDefinition_enabled(ctx, field)
+	case "shadowMode":
+		return ec.fieldContext_AgentDefinition_shadowMode(ctx, field)
+	case "decisionTimeoutSeconds":
+		return ec.fieldContext_AgentDefinition_decisionTimeoutSeconds(ctx, field)
+	case "triggerMode":
+		return ec.fieldContext_AgentDefinition_triggerMode(ctx, field)
+	case "cronExpression":
+		return ec.fieldContext_AgentDefinition_cronExpression(ctx, field)
+	case "cronTimezone":
+		return ec.fieldContext_AgentDefinition_cronTimezone(ctx, field)
+	case "eventKinds":
+		return ec.fieldContext_AgentDefinition_eventKinds(ctx, field)
+	case "intervalSeconds":
+		return ec.fieldContext_AgentDefinition_intervalSeconds(ctx, field)
+	case "endsAt":
+		return ec.fieldContext_AgentDefinition_endsAt(ctx, field)
+	case "maxConcurrentRuns":
+		return ec.fieldContext_AgentDefinition_maxConcurrentRuns(ctx, field)
+	case "runTimeoutSeconds":
+		return ec.fieldContext_AgentDefinition_runTimeoutSeconds(ctx, field)
+	case "maxToolCalls":
+		return ec.fieldContext_AgentDefinition_maxToolCalls(ctx, field)
+	case "contextProviders":
+		return ec.fieldContext_AgentDefinition_contextProviders(ctx, field)
+	case "outputMode":
+		return ec.fieldContext_AgentDefinition_outputMode(ctx, field)
+	case "preferredProviderId":
+		return ec.fieldContext_AgentDefinition_preferredProviderId(ctx, field)
+	case "systemKey":
+		return ec.fieldContext_AgentDefinition_systemKey(ctx, field)
+	case "lastRunAt":
+		return ec.fieldContext_AgentDefinition_lastRunAt(ctx, field)
+	case "nextRunAt":
+		return ec.fieldContext_AgentDefinition_nextRunAt(ctx, field)
+	case "pendingProposals":
+		return ec.fieldContext_AgentDefinition_pendingProposals(ctx, field)
+	case "openRuns":
+		return ec.fieldContext_AgentDefinition_openRuns(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentDefinition_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentDefinition_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentDefinition_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentDefinition", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentDefinitionConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentDefinitionConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentDefinitionConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentDefinitionConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentDefinitionConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentDefinitionEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentDefinitionEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentDefinitionEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentDefinitionEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentEvidenceRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

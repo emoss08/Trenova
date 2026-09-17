@@ -1,0 +1,92 @@
+enum AgentTemplate {
+  DispatchAssistant
+  BillingAssistant
+  ComplianceAssistant
+  CustomerAssistant
+  GeneralAssistant
+  BillingException
+  DispatchAssignment
+  ImportAssistant
+}
+
+enum AgentTriggerMode {
+  Chat
+  Scheduled
+  Event
+  Continuous
+}
+
+enum AgentOutputMode {
+  Conversational
+  Report
+}
+
+enum AgentContextProvider {
+  Organization
+  Clock
+  User
+  Page
+  Tools
+}
+
+"""
+An organization's own agent: who it is, which tools it may call, how much it
+may do on its own, and when it runs.
+"""
+type AgentDefinition {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  "The starter this agent was created from, if any. It carries no restriction."
+  template: AgentTemplate
+  instructions: String!
+  guardrails: [String!]!
+  toolNames: [String!]!
+  "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
+  toolTiers: JSON!
+  autonomyCeiling: AgentAutonomyTier!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  endsAt: Timestamp
+  maxConcurrentRuns: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  contextProviders: [AgentContextProvider!]!
+  outputMode: AgentOutputMode!
+  preferredProviderId: ID!
+  "Set on the agents the platform itself creates and fires; they cannot be deleted."
+  systemKey: String!
+  lastRunAt: Timestamp
+  nextRunAt: Timestamp
+  "Proposals raised by this agent that still await a person's decision."
+  pendingProposals: Int!
+  "Runs of this agent that have not finished."
+  openRuns: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentDefinitionEdge {
+  node: AgentDefinition!
+  cursor: String!
+}
+
+type AgentDefinitionConnection {
+  edges: [AgentDefinitionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  agentDefinition(id: ID!): AgentDefinition
+}

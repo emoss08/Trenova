@@ -65,6 +65,9 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AgentDefinition:
+    - pendingProposals
+    - openRuns
   Invoice:
     - relatedInvoices
     - shipperCustomer
