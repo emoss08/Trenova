@@ -49,89 +49,95 @@ var CarrierTable = TableInfo{
 //	q.Where(CarrierColumns.ID.Eq(), id)           // WHERE carr.id = ?
 //	q.Order(CarrierColumns.CreatedAt.OrderDesc())  // ORDER BY carr.created_at DESC
 var CarrierColumns = struct {
-	ID                 Column // "id" → qualified: "carr.id"
-	BusinessUnitID     Column // "business_unit_id" → qualified: "carr.business_unit_id"
-	OrganizationID     Column // "organization_id" → qualified: "carr.organization_id"
-	StateID            Column // "state_id" → qualified: "carr.state_id"
-	RemitStateID       Column // "remit_state_id" → qualified: "carr.remit_state_id"
-	Status             Column // "status" → qualified: "carr.status"
-	Code               Column // "code" → qualified: "carr.code"
-	Name               Column // "name" → qualified: "carr.name"
-	DBAName            Column // "dba_name" → qualified: "carr.dba_name"
-	CarrierType        Column // "carrier_type" → qualified: "carr.carrier_type"
-	DOTNumber          Column // "dot_number" → qualified: "carr.dot_number"
-	MCNumber           Column // "mc_number" → qualified: "carr.mc_number"
-	SCAC               Column // "scac" → qualified: "carr.scac"
-	ComplianceStatus   Column // "compliance_status" → qualified: "carr.compliance_status"
-	SafetyRating       Column // "safety_rating" → qualified: "carr.safety_rating"
-	QualifiedAt        Column // "qualified_at" → qualified: "carr.qualified_at"
-	DisqualifiedReason Column // "disqualified_reason" → qualified: "carr.disqualified_reason"
-	TaxID              Column // "tax_id" → qualified: "carr.tax_id"
-	TaxIDType          Column // "tax_id_type" → qualified: "carr.tax_id_type"
-	W9OnFile           Column // "w9_on_file" → qualified: "carr.w9_on_file"
-	Is1099Eligible     Column // "is_1099_eligible" → qualified: "carr.is_1099_eligible"
-	PaymentMethod      Column // "payment_method" → qualified: "carr.payment_method"
-	PaymentTermDays    Column // "payment_term_days" → qualified: "carr.payment_term_days"
-	RemitToName        Column // "remit_to_name" → qualified: "carr.remit_to_name"
-	RemitAddressLine1  Column // "remit_address_line_1" → qualified: "carr.remit_address_line_1"
-	RemitAddressLine2  Column // "remit_address_line_2" → qualified: "carr.remit_address_line_2"
-	RemitCity          Column // "remit_city" → qualified: "carr.remit_city"
-	RemitPostalCode    Column // "remit_postal_code" → qualified: "carr.remit_postal_code"
-	AddressLine1       Column // "address_line_1" → qualified: "carr.address_line_1"
-	AddressLine2       Column // "address_line_2" → qualified: "carr.address_line_2"
-	City               Column // "city" → qualified: "carr.city"
-	PostalCode         Column // "postal_code" → qualified: "carr.postal_code"
-	Phone              Column // "phone" → qualified: "carr.phone"
-	Email              Column // "email" → qualified: "carr.email"
-	ExternalID         Column // "external_id" → qualified: "carr.external_id"
-	Notes              Column // "notes" → qualified: "carr.notes"
-	SearchVector       Column // "search_vector" → qualified: "carr.search_vector"
-	Rank               Column // "rank" → qualified: "carr.rank"
-	Version            Column // "version" → qualified: "carr.version"
-	CreatedAt          Column // "created_at" → qualified: "carr.created_at"
-	UpdatedAt          Column // "updated_at" → qualified: "carr.updated_at"
+	ID                  Column // "id" → qualified: "carr.id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "carr.business_unit_id"
+	OrganizationID      Column // "organization_id" → qualified: "carr.organization_id"
+	StateID             Column // "state_id" → qualified: "carr.state_id"
+	RemitStateID        Column // "remit_state_id" → qualified: "carr.remit_state_id"
+	Status              Column // "status" → qualified: "carr.status"
+	Code                Column // "code" → qualified: "carr.code"
+	Name                Column // "name" → qualified: "carr.name"
+	DBAName             Column // "dba_name" → qualified: "carr.dba_name"
+	CarrierType         Column // "carrier_type" → qualified: "carr.carrier_type"
+	DOTNumber           Column // "dot_number" → qualified: "carr.dot_number"
+	MCNumber            Column // "mc_number" → qualified: "carr.mc_number"
+	SCAC                Column // "scac" → qualified: "carr.scac"
+	ComplianceStatus    Column // "compliance_status" → qualified: "carr.compliance_status"
+	SafetyRating        Column // "safety_rating" → qualified: "carr.safety_rating"
+	QualifiedAt         Column // "qualified_at" → qualified: "carr.qualified_at"
+	DisqualifiedReason  Column // "disqualified_reason" → qualified: "carr.disqualified_reason"
+	TaxID               Column // "tax_id" → qualified: "carr.tax_id"
+	TaxIDType           Column // "tax_id_type" → qualified: "carr.tax_id_type"
+	W9OnFile            Column // "w9_on_file" → qualified: "carr.w9_on_file"
+	Is1099Eligible      Column // "is_1099_eligible" → qualified: "carr.is_1099_eligible"
+	PaymentMethod       Column // "payment_method" → qualified: "carr.payment_method"
+	PaymentTermDays     Column // "payment_term_days" → qualified: "carr.payment_term_days"
+	RemitToName         Column // "remit_to_name" → qualified: "carr.remit_to_name"
+	RemitAddressLine1   Column // "remit_address_line_1" → qualified: "carr.remit_address_line_1"
+	RemitAddressLine2   Column // "remit_address_line_2" → qualified: "carr.remit_address_line_2"
+	RemitCity           Column // "remit_city" → qualified: "carr.remit_city"
+	RemitPostalCode     Column // "remit_postal_code" → qualified: "carr.remit_postal_code"
+	AddressLine1        Column // "address_line_1" → qualified: "carr.address_line_1"
+	AddressLine2        Column // "address_line_2" → qualified: "carr.address_line_2"
+	City                Column // "city" → qualified: "carr.city"
+	PostalCode          Column // "postal_code" → qualified: "carr.postal_code"
+	Phone               Column // "phone" → qualified: "carr.phone"
+	Email               Column // "email" → qualified: "carr.email"
+	ExternalID          Column // "external_id" → qualified: "carr.external_id"
+	Notes               Column // "notes" → qualified: "carr.notes"
+	IntelRiskLevel      Column // "intel_risk_level" → qualified: "carr.intel_risk_level"
+	IntelReviewRequired Column // "intel_review_required" → qualified: "carr.intel_review_required"
+	IntelBlockingCount  Column // "intel_blocking_count" → qualified: "carr.intel_blocking_count"
+	SearchVector        Column // "search_vector" → qualified: "carr.search_vector"
+	Rank                Column // "rank" → qualified: "carr.rank"
+	Version             Column // "version" → qualified: "carr.version"
+	CreatedAt           Column // "created_at" → qualified: "carr.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "carr.updated_at"
 }{
-	ID:                 NewColumn("id", "carr"),
-	BusinessUnitID:     NewColumn("business_unit_id", "carr"),
-	OrganizationID:     NewColumn("organization_id", "carr"),
-	StateID:            NewColumn("state_id", "carr"),
-	RemitStateID:       NewColumn("remit_state_id", "carr"),
-	Status:             NewColumn("status", "carr"),
-	Code:               NewColumn("code", "carr"),
-	Name:               NewColumn("name", "carr"),
-	DBAName:            NewColumn("dba_name", "carr"),
-	CarrierType:        NewColumn("carrier_type", "carr"),
-	DOTNumber:          NewColumn("dot_number", "carr"),
-	MCNumber:           NewColumn("mc_number", "carr"),
-	SCAC:               NewColumn("scac", "carr"),
-	ComplianceStatus:   NewColumn("compliance_status", "carr"),
-	SafetyRating:       NewColumn("safety_rating", "carr"),
-	QualifiedAt:        NewColumn("qualified_at", "carr"),
-	DisqualifiedReason: NewColumn("disqualified_reason", "carr"),
-	TaxID:              NewColumn("tax_id", "carr"),
-	TaxIDType:          NewColumn("tax_id_type", "carr"),
-	W9OnFile:           NewColumn("w9_on_file", "carr"),
-	Is1099Eligible:     NewColumn("is_1099_eligible", "carr"),
-	PaymentMethod:      NewColumn("payment_method", "carr"),
-	PaymentTermDays:    NewColumn("payment_term_days", "carr"),
-	RemitToName:        NewColumn("remit_to_name", "carr"),
-	RemitAddressLine1:  NewColumn("remit_address_line_1", "carr"),
-	RemitAddressLine2:  NewColumn("remit_address_line_2", "carr"),
-	RemitCity:          NewColumn("remit_city", "carr"),
-	RemitPostalCode:    NewColumn("remit_postal_code", "carr"),
-	AddressLine1:       NewColumn("address_line_1", "carr"),
-	AddressLine2:       NewColumn("address_line_2", "carr"),
-	City:               NewColumn("city", "carr"),
-	PostalCode:         NewColumn("postal_code", "carr"),
-	Phone:              NewColumn("phone", "carr"),
-	Email:              NewColumn("email", "carr"),
-	ExternalID:         NewColumn("external_id", "carr"),
-	Notes:              NewColumn("notes", "carr"),
-	SearchVector:       NewColumn("search_vector", "carr"),
-	Rank:               NewColumn("rank", "carr"),
-	Version:            NewColumn("version", "carr"),
-	CreatedAt:          NewColumn("created_at", "carr"),
-	UpdatedAt:          NewColumn("updated_at", "carr"),
+	ID:                  NewColumn("id", "carr"),
+	BusinessUnitID:      NewColumn("business_unit_id", "carr"),
+	OrganizationID:      NewColumn("organization_id", "carr"),
+	StateID:             NewColumn("state_id", "carr"),
+	RemitStateID:        NewColumn("remit_state_id", "carr"),
+	Status:              NewColumn("status", "carr"),
+	Code:                NewColumn("code", "carr"),
+	Name:                NewColumn("name", "carr"),
+	DBAName:             NewColumn("dba_name", "carr"),
+	CarrierType:         NewColumn("carrier_type", "carr"),
+	DOTNumber:           NewColumn("dot_number", "carr"),
+	MCNumber:            NewColumn("mc_number", "carr"),
+	SCAC:                NewColumn("scac", "carr"),
+	ComplianceStatus:    NewColumn("compliance_status", "carr"),
+	SafetyRating:        NewColumn("safety_rating", "carr"),
+	QualifiedAt:         NewColumn("qualified_at", "carr"),
+	DisqualifiedReason:  NewColumn("disqualified_reason", "carr"),
+	TaxID:               NewColumn("tax_id", "carr"),
+	TaxIDType:           NewColumn("tax_id_type", "carr"),
+	W9OnFile:            NewColumn("w9_on_file", "carr"),
+	Is1099Eligible:      NewColumn("is_1099_eligible", "carr"),
+	PaymentMethod:       NewColumn("payment_method", "carr"),
+	PaymentTermDays:     NewColumn("payment_term_days", "carr"),
+	RemitToName:         NewColumn("remit_to_name", "carr"),
+	RemitAddressLine1:   NewColumn("remit_address_line_1", "carr"),
+	RemitAddressLine2:   NewColumn("remit_address_line_2", "carr"),
+	RemitCity:           NewColumn("remit_city", "carr"),
+	RemitPostalCode:     NewColumn("remit_postal_code", "carr"),
+	AddressLine1:        NewColumn("address_line_1", "carr"),
+	AddressLine2:        NewColumn("address_line_2", "carr"),
+	City:                NewColumn("city", "carr"),
+	PostalCode:          NewColumn("postal_code", "carr"),
+	Phone:               NewColumn("phone", "carr"),
+	Email:               NewColumn("email", "carr"),
+	ExternalID:          NewColumn("external_id", "carr"),
+	Notes:               NewColumn("notes", "carr"),
+	IntelRiskLevel:      NewColumn("intel_risk_level", "carr"),
+	IntelReviewRequired: NewColumn("intel_review_required", "carr"),
+	IntelBlockingCount:  NewColumn("intel_blocking_count", "carr"),
+	SearchVector:        NewColumn("search_vector", "carr"),
+	Rank:                NewColumn("rank", "carr"),
+	Version:             NewColumn("version", "carr"),
+	CreatedAt:           NewColumn("created_at", "carr"),
+	UpdatedAt:           NewColumn("updated_at", "carr"),
 }
 
 // CarrierFieldMap maps JSON API field names to database column names.
@@ -139,45 +145,48 @@ var CarrierColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Carrier.GetStaticFieldMap().
 var CarrierFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"stateId":            "state_id",
-	"remitStateId":       "remit_state_id",
-	"status":             "status",
-	"code":               "code",
-	"name":               "name",
-	"dbaName":            "dba_name",
-	"carrierType":        "carrier_type",
-	"dotNumber":          "dot_number",
-	"mcNumber":           "mc_number",
-	"scac":               "scac",
-	"complianceStatus":   "compliance_status",
-	"safetyRating":       "safety_rating",
-	"qualifiedAt":        "qualified_at",
-	"disqualifiedReason": "disqualified_reason",
-	"taxId":              "tax_id",
-	"taxIdType":          "tax_id_type",
-	"w9OnFile":           "w9_on_file",
-	"is1099Eligible":     "is_1099_eligible",
-	"paymentMethod":      "payment_method",
-	"paymentTermDays":    "payment_term_days",
-	"remitToName":        "remit_to_name",
-	"remitAddressLine1":  "remit_address_line_1",
-	"remitAddressLine2":  "remit_address_line_2",
-	"remitCity":          "remit_city",
-	"remitPostalCode":    "remit_postal_code",
-	"addressLine1":       "address_line_1",
-	"addressLine2":       "address_line_2",
-	"city":               "city",
-	"postalCode":         "postal_code",
-	"phone":              "phone",
-	"email":              "email",
-	"externalId":         "external_id",
-	"notes":              "notes",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"stateId":             "state_id",
+	"remitStateId":        "remit_state_id",
+	"status":              "status",
+	"code":                "code",
+	"name":                "name",
+	"dbaName":             "dba_name",
+	"carrierType":         "carrier_type",
+	"dotNumber":           "dot_number",
+	"mcNumber":            "mc_number",
+	"scac":                "scac",
+	"complianceStatus":    "compliance_status",
+	"safetyRating":        "safety_rating",
+	"qualifiedAt":         "qualified_at",
+	"disqualifiedReason":  "disqualified_reason",
+	"taxId":               "tax_id",
+	"taxIdType":           "tax_id_type",
+	"w9OnFile":            "w9_on_file",
+	"is1099Eligible":      "is_1099_eligible",
+	"paymentMethod":       "payment_method",
+	"paymentTermDays":     "payment_term_days",
+	"remitToName":         "remit_to_name",
+	"remitAddressLine1":   "remit_address_line_1",
+	"remitAddressLine2":   "remit_address_line_2",
+	"remitCity":           "remit_city",
+	"remitPostalCode":     "remit_postal_code",
+	"addressLine1":        "address_line_1",
+	"addressLine2":        "address_line_2",
+	"city":                "city",
+	"postalCode":          "postal_code",
+	"phone":               "phone",
+	"email":               "email",
+	"externalId":          "external_id",
+	"notes":               "notes",
+	"intelRiskLevel":      "intel_risk_level",
+	"intelReviewRequired": "intel_review_required",
+	"intelBlockingCount":  "intel_blocking_count",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
 }
 
 // CarrierInsertableColumns lists column names suitable for INSERT statements on the "carriers" table.
@@ -219,6 +228,9 @@ var CarrierInsertableColumns = []string{
 	"email",
 	"external_id",
 	"notes",
+	"intel_risk_level",
+	"intel_review_required",
+	"intel_blocking_count",
 	"version",
 	"created_at",
 	"updated_at",
@@ -297,45 +309,48 @@ func CarrierApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Se
 //	CarrierFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var CarrierFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	StateID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
-	RemitStateID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitStateId" → DB: "remit_state_id"
-	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Code               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	DBAName            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dbaName" → DB: "dba_name"
-	CarrierType        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierType" → DB: "carrier_type"
-	DOTNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
-	MCNumber           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
-	SCAC               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scac" → DB: "scac"
-	ComplianceStatus   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceStatus" → DB: "compliance_status"
-	SafetyRating       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "safetyRating" → DB: "safety_rating"
-	QualifiedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "qualifiedAt" → DB: "qualified_at"
-	DisqualifiedReason func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disqualifiedReason" → DB: "disqualified_reason"
-	TaxID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
-	TaxIDType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxIdType" → DB: "tax_id_type"
-	W9OnFile           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "w9OnFile" → DB: "w9_on_file"
-	Is1099Eligible     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "is1099Eligible" → DB: "is_1099_eligible"
-	PaymentMethod      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
-	PaymentTermDays    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTermDays" → DB: "payment_term_days"
-	RemitToName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitToName" → DB: "remit_to_name"
-	RemitAddressLine1  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitAddressLine1" → DB: "remit_address_line_1"
-	RemitAddressLine2  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitAddressLine2" → DB: "remit_address_line_2"
-	RemitCity          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitCity" → DB: "remit_city"
-	RemitPostalCode    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitPostalCode" → DB: "remit_postal_code"
-	AddressLine1       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
-	AddressLine2       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
-	City               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
-	PostalCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
-	Phone              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "phone" → DB: "phone"
-	Email              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "email" → DB: "email"
-	ExternalID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
-	Notes              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	StateID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
+	RemitStateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitStateId" → DB: "remit_state_id"
+	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	DBAName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dbaName" → DB: "dba_name"
+	CarrierType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierType" → DB: "carrier_type"
+	DOTNumber           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
+	MCNumber            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
+	SCAC                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scac" → DB: "scac"
+	ComplianceStatus    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceStatus" → DB: "compliance_status"
+	SafetyRating        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "safetyRating" → DB: "safety_rating"
+	QualifiedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "qualifiedAt" → DB: "qualified_at"
+	DisqualifiedReason  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disqualifiedReason" → DB: "disqualified_reason"
+	TaxID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
+	TaxIDType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxIdType" → DB: "tax_id_type"
+	W9OnFile            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "w9OnFile" → DB: "w9_on_file"
+	Is1099Eligible      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "is1099Eligible" → DB: "is_1099_eligible"
+	PaymentMethod       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
+	PaymentTermDays     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTermDays" → DB: "payment_term_days"
+	RemitToName         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitToName" → DB: "remit_to_name"
+	RemitAddressLine1   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitAddressLine1" → DB: "remit_address_line_1"
+	RemitAddressLine2   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitAddressLine2" → DB: "remit_address_line_2"
+	RemitCity           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitCity" → DB: "remit_city"
+	RemitPostalCode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remitPostalCode" → DB: "remit_postal_code"
+	AddressLine1        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
+	AddressLine2        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
+	City                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
+	PostalCode          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	Phone               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "phone" → DB: "phone"
+	Email               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "email" → DB: "email"
+	ExternalID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	Notes               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	IntelRiskLevel      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intelRiskLevel" → DB: "intel_risk_level"
+	IntelReviewRequired func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intelReviewRequired" → DB: "intel_review_required"
+	IntelBlockingCount  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "intelBlockingCount" → DB: "intel_blocking_count"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -444,6 +459,15 @@ var CarrierFilter = struct {
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("notes", op, value)
+	},
+	IntelRiskLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("intelRiskLevel", op, value)
+	},
+	IntelReviewRequired: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("intelReviewRequired", op, value)
+	},
+	IntelBlockingCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("intelBlockingCount", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

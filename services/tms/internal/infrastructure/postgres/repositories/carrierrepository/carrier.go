@@ -567,8 +567,14 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
+		cols := buncolgen.CarrierColumns
 		results, uErr := r.db.DBForContext(c).NewUpdate().
 			Model(entity).
+			ExcludeColumn(
+				cols.IntelRiskLevel.Bare(),
+				cols.IntelReviewRequired.Bare(),
+				cols.IntelBlockingCount.Bare(),
+			).
 			WherePK().
 			Where("version = ?", ov).
 			Returning("*").

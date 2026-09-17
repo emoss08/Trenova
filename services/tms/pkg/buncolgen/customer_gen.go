@@ -65,6 +65,9 @@ var CustomerColumns = struct {
 	Latitude               Column // "latitude" → qualified: "cus.latitude"
 	PlaceID                Column // "place_id" → qualified: "cus.place_id"
 	ExternalID             Column // "external_id" → qualified: "cus.external_id"
+	DOTNumber              Column // "dot_number" → qualified: "cus.dot_number"
+	MCNumber               Column // "mc_number" → qualified: "cus.mc_number"
+	BrokerVettingEnabled   Column // "broker_vetting_enabled" → qualified: "cus.broker_vetting_enabled"
 	Geom                   Column // "geom" → qualified: "cus.geom"
 	AllowConsolidation     Column // "allow_consolidation" → qualified: "cus.allow_consolidation"
 	ExclusiveConsolidation Column // "exclusive_consolidation" → qualified: "cus.exclusive_consolidation"
@@ -91,6 +94,9 @@ var CustomerColumns = struct {
 	Latitude:               NewColumn("latitude", "cus"),
 	PlaceID:                NewColumn("place_id", "cus"),
 	ExternalID:             NewColumn("external_id", "cus"),
+	DOTNumber:              NewColumn("dot_number", "cus"),
+	MCNumber:               NewColumn("mc_number", "cus"),
+	BrokerVettingEnabled:   NewColumn("broker_vetting_enabled", "cus"),
 	Geom:                   NewColumn("geom", "cus"),
 	AllowConsolidation:     NewColumn("allow_consolidation", "cus"),
 	ExclusiveConsolidation: NewColumn("exclusive_consolidation", "cus"),
@@ -123,6 +129,9 @@ var CustomerFieldMap = map[string]string{
 	"latitude":               "latitude",
 	"placeId":                "place_id",
 	"externalId":             "external_id",
+	"dotNumber":              "dot_number",
+	"mcNumber":               "mc_number",
+	"brokerVettingEnabled":   "broker_vetting_enabled",
 	"allowConsolidation":     "allow_consolidation",
 	"exclusiveConsolidation": "exclusive_consolidation",
 	"consolidationPriority":  "consolidation_priority",
@@ -150,6 +159,9 @@ var CustomerInsertableColumns = []string{
 	"latitude",
 	"place_id",
 	"external_id",
+	"dot_number",
+	"mc_number",
+	"broker_vetting_enabled",
 	"allow_consolidation",
 	"exclusive_consolidation",
 	"consolidation_priority",
@@ -243,6 +255,9 @@ var CustomerFilter = struct {
 	Latitude               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latitude" → DB: "latitude"
 	PlaceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
 	ExternalID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	DOTNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
+	MCNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mcNumber" → DB: "mc_number"
+	BrokerVettingEnabled   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerVettingEnabled" → DB: "broker_vetting_enabled"
 	AllowConsolidation     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowConsolidation" → DB: "allow_consolidation"
 	ExclusiveConsolidation func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exclusiveConsolidation" → DB: "exclusive_consolidation"
 	ConsolidationPriority  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPriority" → DB: "consolidation_priority"
@@ -297,6 +312,15 @@ var CustomerFilter = struct {
 	},
 	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalId", op, value)
+	},
+	DOTNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dotNumber", op, value)
+	},
+	MCNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("mcNumber", op, value)
+	},
+	BrokerVettingEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("brokerVettingEnabled", op, value)
 	},
 	AllowConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("allowConsolidation", op, value)

@@ -2772,6 +2772,91 @@ func (r *Registry) registerCarrierResources() {
 		ParentResource:     ResourceCarrier.String(),
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrierIntelligence.String(),
+		DisplayName: "Carrier Intelligence",
+		Description: "Vetting, monitoring and compliance findings from carrier intelligence providers",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View carrier intelligence, findings and monitoring events",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Vet and refresh carriers, acknowledge events and apply suggested updates",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Grant and revoke overrides of blocking findings",
+			},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Configure rules, monitoring enrollment, providers and spend caps",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Download raw provider payloads",
+			},
+		},
+		FieldSensitivities: map[string]FieldSensitivity{
+			"rawPayload": SensitivityConfidential,
+			"contacts":   SensitivityRestricted,
+			"network":    SensitivityRestricted,
+			"equipment":  SensitivityRestricted,
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrierSourcing.String(),
+		DisplayName: "Carrier Sourcing",
+		Description: "Search carrier intelligence providers for new capacity and import prospects",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "Search for carriers"},
+			{
+				Operation:   OpImport,
+				DisplayName: "Import",
+				Description: "Import sourced carriers as pending carriers",
+			},
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceEquipmentVerification.String(),
+		DisplayName: "Equipment Verification",
+		Description: "Driver-at-dock checks that arriving equipment belongs to the assigned carrier",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View equipment verifications"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Verify a VIN, plate or unit number",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Override a failed equipment verification",
+			},
+		},
+		FieldSensitivities: map[string]FieldSensitivity{
+			"vin":         SensitivityRestricted,
+			"plateNumber": SensitivityRestricted,
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerLocationResources() {

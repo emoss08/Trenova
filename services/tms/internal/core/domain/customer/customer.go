@@ -2,6 +2,7 @@ package customer
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -15,6 +16,8 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
+
+var digitsPattern = regexp.MustCompile(`^[0-9]*$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*Customer)(nil)
@@ -43,6 +46,9 @@ type Customer struct {
 	Latitude               *float64           `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
 	PlaceID                string             `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
 	ExternalID             string             `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
+	DOTNumber              string             `json:"dotNumber"              bun:"dot_number,type:VARCHAR(12),nullzero"`
+	MCNumber               string             `json:"mcNumber"               bun:"mc_number,type:VARCHAR(12),nullzero"`
+	BrokerVettingEnabled   bool               `json:"brokerVettingEnabled"   bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
 	Geom                   *postgis.Point     `json:"-"                      bun:"geom,type:geography,scanonly"`
 	AllowConsolidation     bool               `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN"`
 	ExclusiveConsolidation bool               `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
@@ -95,6 +101,17 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.PostalCode,
 			validation.Required.Error("Postal code is required"),
 			validation.By(domaintypes.ValidatePostalCode),
+		),
+		validation.Field(&c.DOTNumber,
+			validation.Length(0, 12).Error("DOT number must be at most 12 characters"),
+			validation.Match(digitsPattern).Error("DOT number must contain only digits"),
+			validation.When(c.BrokerVettingEnabled,
+				validation.Required.Error("A DOT number is required to vet this customer as a broker"),
+			),
+		),
+		validation.Field(&c.MCNumber,
+			validation.Length(0, 12).Error("MC number must be at most 12 characters"),
+			validation.Match(digitsPattern).Error("MC number must contain only digits"),
 		),
 	))
 
