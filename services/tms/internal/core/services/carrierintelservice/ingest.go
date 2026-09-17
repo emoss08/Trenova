@@ -33,71 +33,6 @@ type ingestInput struct {
 	purpose carrierintel.Purpose
 }
 
-func mergeProfile(
-	current *carrierintel.CarrierIntelSnapshot,
-	incoming *carrierintel.Profile,
-	incomingDepth carrierintel.LookupDepth,
-	control *carrierintel.CarrierIntelControl,
-	now int64,
-) (*carrierintel.Profile, carrierintel.LookupDepth, error) {
-	incoming.NormalizeCoverage()
-	if current == nil || current.NotFound || current.Profile == nil ||
-		incomingDepth.Rank() >= current.Depth.Rank() ||
-		now-current.FetchedAt > control.FullProfileTTLSeconds() {
-		return incoming, incomingDepth, nil
-	}
-
-	merged, err := current.Profile.Clone()
-	if err != nil {
-		return nil, "", err
-	}
-	for _, section := range incoming.Coverage {
-		copySection(merged, incoming, section)
-	}
-	merged.Coverage = nil
-	for _, section := range carrierintel.AllSections() {
-		if incoming.Covers(section) || current.Profile.Covers(section) {
-			merged.Coverage = append(merged.Coverage, section)
-		}
-	}
-	return merged, current.Depth, nil
-}
-
-func copySection(dst, src *carrierintel.Profile, section carrierintel.Section) {
-	switch section {
-	case carrierintel.SectionIdentity:
-		dst.Identity = src.Identity
-	case carrierintel.SectionAuthority:
-		dst.Authority = src.Authority
-	case carrierintel.SectionInsurance:
-		dst.Insurance = src.Insurance
-	case carrierintel.SectionSafety:
-		dst.Safety = src.Safety
-	case carrierintel.SectionBasics:
-		dst.Basics = src.Basics
-	case carrierintel.SectionInspections:
-		dst.Inspections = src.Inspections
-	case carrierintel.SectionCrashes:
-		dst.Crashes = src.Crashes
-	case carrierintel.SectionFleet:
-		dst.Fleet = src.Fleet
-	case carrierintel.SectionEquipment:
-		dst.Equipment = src.Equipment
-	case carrierintel.SectionContacts:
-		dst.Contacts = src.Contacts
-	case carrierintel.SectionOperations:
-		dst.Operations = src.Operations
-	case carrierintel.SectionChangeHistory:
-		dst.ChangeHistory = src.ChangeHistory
-	case carrierintel.SectionNetwork:
-		dst.Network = src.Network
-	case carrierintel.SectionLanes:
-		dst.Lanes = src.Lanes
-	case carrierintel.SectionBenchmarks:
-		dst.Benchmarks = src.Benchmarks
-	}
-}
-
 func (s *Service) evaluateSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -138,17 +73,22 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 		current = nil
 	}
 
-	profile := result.Profile
-	depth := result.Depth
-	if result.NotFound || profile == nil {
-		profile = &carrierintel.Profile{Coverage: []carrierintel.Section{}}
-	} else {
-		var err error
-		profile, depth, err = mergeProfile(current, profile, result.Depth, in.control, now)
-		if err != nil {
-			return nil, err
-		}
+	resolved := carrierintel.ProfileMergeResult{
+		Profile:        &carrierintel.Profile{Coverage: []carrierintel.Section{}},
+		Depth:          result.Depth,
+		DepthFetchedAt: now,
 	}
+	if !result.NotFound && result.Profile != nil {
+		resolved = carrierintel.ResolveIncomingProfile(&carrierintel.ProfileMergeInput{
+			Current:       current,
+			Incoming:      result.Profile,
+			IncomingDepth: result.Depth,
+			Control:       in.control,
+			Now:           now,
+		})
+	}
+	profile := resolved.Profile
+	depth := resolved.Depth
 
 	hash, err := profile.ContentHash()
 	if err != nil {
@@ -177,7 +117,11 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 	if current != nil {
 		priorFindings = current.Findings
 		if !current.NotFound && !result.NotFound {
-			changes, err = carrierintel.DiffProfiles(current.Profile, profile)
+			changes, err = carrierintel.DiffProfiles(
+				current.Profile,
+				profile,
+				carrierintel.DiffOptionsForDepths(current.Depth, result.Depth),
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -203,6 +147,8 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 		Profile:        profile,
 		ContentHash:    hash,
 		FetchedAt:      now,
+		FetchedDepth:   result.Depth,
+		DepthFetchedAt: resolved.DepthFetchedAt,
 		SourceAsOf:     result.SourceAsOf,
 	}
 	snapshot.ApplyFindings(findings, in.control.PolicyVersion)
@@ -219,7 +165,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 				Provider:       in.bound.provider,
 				Endpoint:       result.Endpoint.String(),
 				DOTNumber:      snapshot.DOTNumber,
-				Payload:        string(result.Raw),
+				Payload:        jsonutils.RawJSON(result.Raw),
 				FetchedAt:      now,
 				ExpiresAt:      now + int64(in.control.RawRetentionDays)*timeutils.SecondsPerDay,
 			})
@@ -260,6 +206,11 @@ func (s *Service) confirmUnchanged(
 	findings []carrierintel.Finding,
 	now int64,
 ) (*FetchResult, error) {
+	current.DepthFetchedAt = current.DepthAsOf()
+	if in.result.Depth.Satisfies(current.Depth) {
+		current.DepthFetchedAt = now
+	}
+	current.FetchedDepth = in.result.Depth
 	current.ConfirmedAt = &now
 	raised := carrierintel.NewlyRaised(current.Findings, findings)
 	priorFindings := current.Findings
@@ -451,7 +402,9 @@ func (s *Service) buildEvents(
 		event.PriorValue = change.Prior
 		event.CurrentValue = change.Current
 		event.Summary = fmt.Sprintf("%s changed from %s to %s",
-			change.Label, displayValue(change.Prior), displayValue(change.Current))
+			change.Label,
+			carrierintel.FormatFieldValue(change.Path, change.Prior),
+			carrierintel.FormatFieldValue(change.Path, change.Current))
 		event.Fingerprint = carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
 			Provider:    in.bound.provider,
 			SubjectType: in.subject.SubjectType,
@@ -475,7 +428,6 @@ func (s *Service) buildEvents(
 		event.RuleCode = finding.Code
 		event.Action = finding.Action
 		event.Severity = finding.Severity
-		event.CurrentValue = finding.Message
 		event.Summary = finding.Message
 		event.Fingerprint = carrierintel.EventFingerprint(carrierintel.EventFingerprintInput{
 			Provider:    in.bound.provider,
@@ -513,27 +465,6 @@ func (s *Service) buildEvents(
 	}
 
 	return events
-}
-
-func displayValue(v any) string {
-	switch typed := v.(type) {
-	case nil:
-		return "none"
-	case string:
-		if typed == "" {
-			return "none"
-		}
-		return typed
-	case bool:
-		if typed {
-			return "yes"
-		}
-		return "no"
-	case float64:
-		return strings.TrimSuffix(strings.TrimRight(fmt.Sprintf("%.4f", typed), "0"), ".")
-	default:
-		return fmt.Sprintf("%v", typed)
-	}
 }
 
 func (s *Service) updateCarrierSummary(

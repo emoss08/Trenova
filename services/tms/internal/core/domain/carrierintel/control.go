@@ -288,6 +288,13 @@ func (c *CarrierIntelControl) FullProfileTTLSeconds() int64 {
 	return int64(c.FullProfileTTLDays) * 86400
 }
 
+func (c *CarrierIntelControl) TTLSecondsForDepth(depth LookupDepth) int64 {
+	if depth == LookupDepthFull {
+		return c.FullProfileTTLSeconds()
+	}
+	return c.SnapshotTTLSeconds()
+}
+
 func (c *CarrierIntelControl) PreTenderMaxAgeSeconds() int64 {
 	return int64(c.PreTenderMaxAgeHours) * 3600
 }

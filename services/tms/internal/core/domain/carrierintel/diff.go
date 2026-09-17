@@ -99,6 +99,8 @@ var fieldCatalog = map[string]fieldMeta{
 	"changeHistory.addressChanges": {"Address changes", SeverityMedium},
 }
 
+var ignoredBasicFields = []string{"measuredAt"}
+
 var ignoredDiffPaths = []string{
 	"identity.dotAgeDays",
 	"authority.common.ageDays",
@@ -190,7 +192,7 @@ func flattenBasics(flat map[string]any, value any) {
 			continue
 		}
 		for field, fieldValue := range entry {
-			if field == "basic" {
+			if field == "basic" || slices.Contains(ignoredBasicFields, field) {
 				continue
 			}
 			flat["basics."+basic+"."+field] = fieldValue
@@ -239,7 +241,15 @@ func addressString(m map[string]any) string {
 	return strings.Join(parts, ", ")
 }
 
-func DiffProfiles(prior, current *Profile) ([]FieldChange, error) {
+type DiffOptions struct {
+	IgnoreMissing bool
+}
+
+func DiffOptionsForDepths(prior, current LookupDepth) DiffOptions {
+	return DiffOptions{IgnoreMissing: prior != current}
+}
+
+func DiffProfiles(prior, current *Profile, opts DiffOptions) ([]FieldChange, error) {
 	if prior == nil || current == nil {
 		return nil, nil
 	}
@@ -271,6 +281,9 @@ func DiffProfiles(prior, current *Profile) ([]FieldChange, error) {
 		}
 		before, hadBefore := priorFlat[path]
 		after, hasAfter := currentFlat[path]
+		if opts.IgnoreMissing && (isMissing(before, hadBefore) || isMissing(after, hasAfter)) {
+			continue
+		}
 		if valuesEqual(before, hadBefore, after, hasAfter) {
 			continue
 		}
@@ -292,6 +305,10 @@ func nilIfMissing(v any, present bool) any {
 		return nil
 	}
 	return v
+}
+
+func isMissing(v any, present bool) bool {
+	return !present || v == nil
 }
 
 func isEmptyValue(v any, present bool) bool {

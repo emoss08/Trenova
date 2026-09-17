@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,6 +49,8 @@ type CarrierIntelSnapshot struct {
 	RawPayloadID   pulid.ID         `json:"rawPayloadId"   bun:"raw_payload_id,type:VARCHAR(100),nullzero"`
 	ContentHash    string           `json:"contentHash"    bun:"content_hash,type:VARCHAR(64),notnull"`
 	FetchedAt      int64            `json:"fetchedAt"      bun:"fetched_at,type:BIGINT,notnull"`
+	FetchedDepth   LookupDepth      `json:"fetchedDepth"   bun:"fetched_depth,type:VARCHAR(10),notnull"`
+	DepthFetchedAt int64            `json:"depthFetchedAt" bun:"depth_fetched_at,type:BIGINT,notnull"`
 	SourceAsOf     *int64           `json:"sourceAsOf"     bun:"source_as_of,type:BIGINT,nullzero"`
 	ConfirmedAt    *int64           `json:"confirmedAt"    bun:"confirmed_at,type:BIGINT,nullzero"`
 	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -92,6 +95,31 @@ func (s *CarrierIntelSnapshot) EffectiveAsOf() int64 {
 
 func (s *CarrierIntelSnapshot) IsFresh(now, maxAgeSeconds int64) bool {
 	return now-s.EffectiveAsOf() <= maxAgeSeconds
+}
+
+func (s *CarrierIntelSnapshot) DepthAsOf() int64 {
+	if s.DepthFetchedAt <= 0 {
+		return s.EffectiveAsOf()
+	}
+	if s.FetchedDepth.Satisfies(s.Depth) {
+		return max(s.DepthFetchedAt, s.EffectiveAsOf())
+	}
+	return s.DepthFetchedAt
+}
+
+func (s *CarrierIntelSnapshot) DepthIsFresh(now, maxAgeSeconds int64) bool {
+	return now-s.DepthAsOf() <= maxAgeSeconds
+}
+
+func (s *CarrierIntelSnapshot) AsOfForDepth(wanted LookupDepth) int64 {
+	if !s.FetchedDepth.IsValid() || s.FetchedDepth.Satisfies(wanted) {
+		return s.EffectiveAsOf()
+	}
+	return s.DepthAsOf()
+}
+
+func (s *CarrierIntelSnapshot) IsFreshForDepth(now, maxAgeSeconds int64, wanted LookupDepth) bool {
+	return now-s.AsOfForDepth(wanted) <= maxAgeSeconds
 }
 
 func (s *CarrierIntelSnapshot) BlockingFindings() []Finding {
@@ -143,6 +171,12 @@ func (s *CarrierIntelSnapshot) BeforeAppendModel(_ context.Context, query bun.Qu
 		if s.ReviewState == "" {
 			s.ReviewState = ReviewStateNone
 		}
+		if !s.FetchedDepth.IsValid() {
+			s.FetchedDepth = s.Depth
+		}
+		if s.DepthFetchedAt <= 0 {
+			s.DepthFetchedAt = s.FetchedAt
+		}
 		s.CreatedAt = now
 		s.UpdatedAt = now
 	case *bun.UpdateQuery:
@@ -155,17 +189,17 @@ func (s *CarrierIntelSnapshot) BeforeAppendModel(_ context.Context, query bun.Qu
 type CarrierIntelRawPayload struct {
 	bun.BaseModel `bun:"table:carrier_intel_raw_payloads,alias:ciraw" json:"-"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Provider       integration.Type `json:"provider"       bun:"provider,type:integration_type,notnull"`
-	Endpoint       string           `json:"endpoint"       bun:"endpoint,type:VARCHAR(64),notnull"`
-	DOTNumber      string           `json:"dotNumber"      bun:"dot_number,type:VARCHAR(12),nullzero"`
-	Payload        string           `json:"-"              bun:"payload,type:JSONB,notnull"`
-	ByteSize       int              `json:"byteSize"       bun:"byte_size,type:INTEGER,notnull"`
-	FetchedAt      int64            `json:"fetchedAt"      bun:"fetched_at,type:BIGINT,notnull"`
-	ExpiresAt      int64            `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID          `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	Provider       integration.Type  `json:"provider"       bun:"provider,type:integration_type,notnull"`
+	Endpoint       string            `json:"endpoint"       bun:"endpoint,type:VARCHAR(64),notnull"`
+	DOTNumber      string            `json:"dotNumber"      bun:"dot_number,type:VARCHAR(12),nullzero"`
+	Payload        jsonutils.RawJSON `json:"-"              bun:"payload,type:JSONB,notnull"`
+	ByteSize       int               `json:"byteSize"       bun:"byte_size,type:INTEGER,notnull"`
+	FetchedAt      int64             `json:"fetchedAt"      bun:"fetched_at,type:BIGINT,notnull"`
+	ExpiresAt      int64             `json:"expiresAt"      bun:"expires_at,type:BIGINT,notnull"`
+	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (r *CarrierIntelRawPayload) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -491,9 +491,11 @@ func sourcingQueryFromInput(
 		MinPowerUnits:          input.MinPowerUnits,
 		MaxPowerUnits:          input.MaxPowerUnits,
 		MinAuthorityAgeDays:    input.MinAuthorityAgeDays,
+		MaxAuthorityAgeDays:    input.MaxAuthorityAgeDays,
 		HazmatOnly:             boolValue(input.HazmatOnly),
 		ExcludeBlocking:        boolValue(input.ExcludeBlocking),
 		ExcludeExistingCarrier: boolValue(input.ExcludeExistingCarriers),
+		Sort:                   sourcingSortValue(input.Sort),
 		Limit:                  intValue(input.Limit),
 		Offset:                 intValue(input.Offset),
 	}
@@ -523,4 +525,31 @@ func (r *Resolver) carrierIntelProviderInfo(
 		return nil, err
 	}
 	return providerInfoToModel(provider.String(), fallback, descriptor, configured), nil
+}
+
+func sourcingSortValue(sort *carrierintelservice.SourcingSort) carrierintelservice.SourcingSort {
+	if sort == nil {
+		return carrierintelservice.SourcingSortBestMatch
+	}
+	return *sort
+}
+
+func carrierIntelEventFieldLabel(event *carrierintel.CarrierIntelEvent) *string {
+	if event.FieldPath == "" {
+		return nil
+	}
+	label, _ := carrierintel.DescribeField(event.FieldPath)
+	return &label
+}
+
+func carrierIntelEventRuleLabel(event *carrierintel.CarrierIntelEvent) *string {
+	if event.RuleCode == "" {
+		return nil
+	}
+	def, ok := carrierintel.RuleByCode(event.RuleCode)
+	if !ok {
+		return nil
+	}
+	label := def.Label
+	return &label
 }

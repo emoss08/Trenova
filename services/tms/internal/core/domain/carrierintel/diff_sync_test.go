@@ -31,7 +31,7 @@ func TestDiffProfiles_DetectsMeaningfulChanges(t *testing.T) {
 	current.Basics[0].Alert = true
 	current.Authority.Common.AgeDays = new(901)
 
-	changes, err := carrierintel.DiffProfiles(prior, current)
+	changes, err := carrierintel.DiffProfiles(prior, current, carrierintel.DiffOptions{})
 	require.NoError(t, err)
 
 	authority := changeByPath(changes, "authority.common.status")
@@ -62,7 +62,7 @@ func TestDiffProfiles_IgnoresSectionsNotCoveredByBoth(t *testing.T) {
 	current := healthyProfile()
 	current.Network.SharedPhones = new(4)
 
-	changes, err := carrierintel.DiffProfiles(prior, current)
+	changes, err := carrierintel.DiffProfiles(prior, current, carrierintel.DiffOptions{})
 	require.NoError(t, err)
 	assert.Nil(t, changeByPath(changes, "network.sharedPhones"))
 }
@@ -70,7 +70,11 @@ func TestDiffProfiles_IgnoresSectionsNotCoveredByBoth(t *testing.T) {
 func TestDiffProfiles_Identical(t *testing.T) {
 	t.Parallel()
 
-	changes, err := carrierintel.DiffProfiles(healthyProfile(), healthyProfile())
+	changes, err := carrierintel.DiffProfiles(
+		healthyProfile(),
+		healthyProfile(),
+		carrierintel.DiffOptions{},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, changes)
 
@@ -79,6 +83,75 @@ func TestDiffProfiles_Identical(t *testing.T) {
 	b, err := healthyProfile().ContentHash()
 	require.NoError(t, err)
 	assert.Equal(t, a, b)
+}
+
+func TestDiffOptionsForDepths(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, carrierintel.DiffOptionsForDepths(
+		carrierintel.LookupDepthFull, carrierintel.LookupDepthFull,
+	).IgnoreMissing)
+	assert.True(t, carrierintel.DiffOptionsForDepths(
+		carrierintel.LookupDepthLite, carrierintel.LookupDepthFull,
+	).IgnoreMissing)
+	assert.True(t, carrierintel.DiffOptionsForDepths(
+		carrierintel.LookupDepthFull, carrierintel.LookupDepthLite,
+	).IgnoreMissing)
+}
+
+func TestDiffProfiles_DepthChangeSkipsFieldsTheShallowerEndpointOmits(t *testing.T) {
+	t.Parallel()
+
+	lite := healthyProfile()
+	lite.Safety.Rating = ""
+	lite.Safety.RatingDate = nil
+	lite.Insurance.BIPDRequired = nil
+	lite.Identity.DOTAgeDays = nil
+
+	full := healthyProfile()
+	full.Safety.RatingDate = new(int64(843609600))
+	full.Insurance.BIPDRequired = dec(5_000_000)
+	full.Safety.ISSValue = new(69)
+
+	for _, pair := range [][2]*carrierintel.Profile{{lite, full}, {full, lite}} {
+		changes, err := carrierintel.DiffProfiles(
+			pair[0],
+			pair[1],
+			carrierintel.DiffOptionsForDepths(
+				carrierintel.LookupDepthLite,
+				carrierintel.LookupDepthFull,
+			),
+		)
+		require.NoError(t, err)
+
+		assert.Nil(t, changeByPath(changes, "safety.rating"))
+		assert.Nil(t, changeByPath(changes, "safety.ratingDate"))
+		assert.Nil(t, changeByPath(changes, "insurance.bipdRequired"))
+
+		iss := changeByPath(changes, "safety.issValue")
+		require.NotNil(t, iss, "a value present at both depths still produces a change")
+		assert.Len(t, changes, 1)
+	}
+
+	changes, err := carrierintel.DiffProfiles(lite, full, carrierintel.DiffOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, changeByPath(changes, "safety.ratingDate"))
+	assert.Nil(t, changeByPath(changes, "safety.ratingDate").Prior)
+}
+
+func TestDiffProfiles_IgnoresBasicMeasurementDates(t *testing.T) {
+	t.Parallel()
+
+	prior := healthyProfile()
+	prior.Basics[0].MeasuredAt = new(int64(1_700_000_000))
+	current := healthyProfile()
+	current.Basics[0].MeasuredAt = new(int64(1_710_000_000))
+	current.Basics[0].Violations = new(3)
+
+	changes, err := carrierintel.DiffProfiles(prior, current, carrierintel.DiffOptions{})
+	require.NoError(t, err)
+	assert.Nil(t, changeByPath(changes, "basics.UnsafeDriving.measuredAt"))
+	assert.NotNil(t, changeByPath(changes, "basics.UnsafeDriving.violations"))
 }
 
 func TestPlanCarrierSync(t *testing.T) {

@@ -1,6 +1,7 @@
 package carrierintelservice
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strings"
@@ -22,6 +23,25 @@ const (
 	maxAutocompleteLimit = 15
 )
 
+type SourcingSort string
+
+const (
+	SourcingSortBestMatch        = SourcingSort("BestMatch")
+	SourcingSortFleetSizeDesc    = SourcingSort("FleetSizeDesc")
+	SourcingSortAuthorityAgeDesc = SourcingSort("AuthorityAgeDesc")
+)
+
+func (s SourcingSort) String() string { return string(s) }
+
+func (s SourcingSort) IsValid() bool {
+	switch s {
+	case SourcingSortBestMatch, SourcingSortFleetSizeDesc, SourcingSortAuthorityAgeDesc:
+		return true
+	default:
+		return false
+	}
+}
+
 type SourcingQuery struct {
 	TenantInfo             pagination.TenantInfo
 	Text                   string
@@ -31,9 +51,11 @@ type SourcingQuery struct {
 	MinPowerUnits          *int
 	MaxPowerUnits          *int
 	MinAuthorityAgeDays    *int
+	MaxAuthorityAgeDays    *int
 	HazmatOnly             bool
 	ExcludeBlocking        bool
 	ExcludeExistingCarrier bool
+	Sort                   SourcingSort
 	Limit                  int
 	Offset                 int
 }
@@ -51,9 +73,10 @@ type SourcingResult struct {
 }
 
 type SourcingPage struct {
-	Items    []*SourcingResult
-	Total    int
-	Provider string
+	Items       []*SourcingResult
+	Total       int
+	FilteredOut int
+	Provider    string
 }
 
 func (s *Service) searchCapable(
@@ -82,6 +105,9 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	if text == "" && query.State == "" && query.OriginState == "" && query.DestinationState == "" {
 		return nil, errortypes.NewValidationError("text", errortypes.ErrRequired,
 			"Enter a name, EIN, VIN or choose a state to search")
+	}
+	if err := validateSourcingQuery(query); err != nil {
+		return nil, err
 	}
 	limit := query.Limit
 	if limit <= 0 {
@@ -139,6 +165,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	}
 
 	now := s.now()
+	filteredOut := 0
 	items := make([]*SourcingResult, 0, len(result.Items))
 	for _, hit := range result.Items {
 		profile := hit.Profile
@@ -157,9 +184,11 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 			entry.LegalName = profile.Identity.LegalName
 		}
 		if query.ExcludeExistingCarrier && entry.ExistingCarrierID.IsNotNil() {
+			filteredOut++
 			continue
 		}
 		if !matchesSourcingFilters(profile, query) {
+			filteredOut++
 			continue
 		}
 		entry.Findings = carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
@@ -169,6 +198,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 			Settings: control.Rules,
 		})
 		if query.ExcludeBlocking && len(carrierintel.BlockingCodes(entry.Findings)) > 0 {
+			filteredOut++
 			continue
 		}
 		entry.RiskLevel = profile.DeriveRiskLevel(entry.Findings)
@@ -177,18 +207,97 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 		items = append(items, entry)
 	}
 
-	slices.SortStableFunc(items, func(a, b *SourcingResult) int {
-		switch {
-		case a.Score > b.Score:
-			return -1
-		case a.Score < b.Score:
-			return 1
-		default:
-			return 0
-		}
-	})
+	sortSourcingResults(items, query.Sort)
 
-	return &SourcingPage{Items: items, Total: result.Total, Provider: bound.provider.String()}, nil
+	return &SourcingPage{
+		Items:       items,
+		Total:       result.Total,
+		FilteredOut: filteredOut,
+		Provider:    bound.provider.String(),
+	}, nil
+}
+
+func validateSourcingQuery(query *SourcingQuery) error {
+	multiErr := errortypes.NewMultiError()
+	if query.MinPowerUnits != nil && *query.MinPowerUnits < 0 {
+		multiErr.Add("minPowerUnits", errortypes.ErrInvalid,
+			"Minimum power units cannot be negative")
+	}
+	if query.MaxPowerUnits != nil && *query.MaxPowerUnits < 0 {
+		multiErr.Add("maxPowerUnits", errortypes.ErrInvalid,
+			"Maximum power units cannot be negative")
+	}
+	if query.MinPowerUnits != nil && query.MaxPowerUnits != nil &&
+		*query.MinPowerUnits > *query.MaxPowerUnits {
+		multiErr.Add("maxPowerUnits", errortypes.ErrInvalid,
+			"Maximum power units must be at least the minimum")
+	}
+	if query.MinAuthorityAgeDays != nil && *query.MinAuthorityAgeDays < 0 {
+		multiErr.Add("minAuthorityAgeDays", errortypes.ErrInvalid,
+			"Minimum authority age cannot be negative")
+	}
+	if query.MaxAuthorityAgeDays != nil && *query.MaxAuthorityAgeDays < 0 {
+		multiErr.Add("maxAuthorityAgeDays", errortypes.ErrInvalid,
+			"Maximum authority age cannot be negative")
+	}
+	if query.MinAuthorityAgeDays != nil && query.MaxAuthorityAgeDays != nil &&
+		*query.MinAuthorityAgeDays > *query.MaxAuthorityAgeDays {
+		multiErr.Add("maxAuthorityAgeDays", errortypes.ErrInvalid,
+			"Maximum authority age must be at least the minimum")
+	}
+	if query.Sort != "" && !query.Sort.IsValid() {
+		multiErr.Add("sort", errortypes.ErrInvalid, "Sort order is invalid")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+func sortSourcingResults(items []*SourcingResult, order SourcingSort) {
+	var key func(entry *SourcingResult) *int
+	switch order {
+	case SourcingSortFleetSizeDesc:
+		key = sourcingPowerUnits
+	case SourcingSortAuthorityAgeDesc:
+		key = sourcingAuthorityAge
+	}
+
+	slices.SortStableFunc(items, func(a, b *SourcingResult) int {
+		if key != nil {
+			if byKey := compareOptionalDesc(key(a), key(b)); byKey != 0 {
+				return byKey
+			}
+		}
+		return cmp.Compare(b.Score, a.Score)
+	})
+}
+
+func compareOptionalDesc(a, b *int) int {
+	switch {
+	case a == nil && b == nil:
+		return 0
+	case a == nil:
+		return 1
+	case b == nil:
+		return -1
+	default:
+		return cmp.Compare(*b, *a)
+	}
+}
+
+func sourcingPowerUnits(entry *SourcingResult) *int {
+	if entry.Profile == nil || entry.Profile.Fleet == nil {
+		return nil
+	}
+	return entry.Profile.Fleet.PowerUnits
+}
+
+func sourcingAuthorityAge(entry *SourcingResult) *int {
+	if entry.Profile == nil {
+		return nil
+	}
+	return entry.Profile.Authority.OldestActiveAgeDays()
 }
 
 func isVINLike(text string) bool {
@@ -215,9 +324,15 @@ func matchesSourcingFilters(profile *carrierintel.Profile, query *SourcingQuery)
 			return false
 		}
 	}
-	if query.MinAuthorityAgeDays != nil {
+	if query.MinAuthorityAgeDays != nil || query.MaxAuthorityAgeDays != nil {
 		age := profile.Authority.OldestActiveAgeDays()
-		if age == nil || *age < *query.MinAuthorityAgeDays {
+		if age == nil {
+			return false
+		}
+		if query.MinAuthorityAgeDays != nil && *age < *query.MinAuthorityAgeDays {
+			return false
+		}
+		if query.MaxAuthorityAgeDays != nil && *age > *query.MaxAuthorityAgeDays {
 			return false
 		}
 	}

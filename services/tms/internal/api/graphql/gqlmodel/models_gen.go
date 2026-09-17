@@ -72,6 +72,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
@@ -747,18 +748,20 @@ type CarrierSettlementEdge struct {
 }
 
 type CarrierSourcingSearchInput struct {
-	Text                    *string `json:"text,omitempty"`
-	State                   *string `json:"state,omitempty"`
-	OriginState             *string `json:"originState,omitempty"`
-	DestinationState        *string `json:"destinationState,omitempty"`
-	MinPowerUnits           *int    `json:"minPowerUnits,omitempty"`
-	MaxPowerUnits           *int    `json:"maxPowerUnits,omitempty"`
-	MinAuthorityAgeDays     *int    `json:"minAuthorityAgeDays,omitempty"`
-	HazmatOnly              *bool   `json:"hazmatOnly,omitempty"`
-	ExcludeBlocking         *bool   `json:"excludeBlocking,omitempty"`
-	ExcludeExistingCarriers *bool   `json:"excludeExistingCarriers,omitempty"`
-	Limit                   *int    `json:"limit,omitempty"`
-	Offset                  *int    `json:"offset,omitempty"`
+	Text                    *string                           `json:"text,omitempty"`
+	State                   *string                           `json:"state,omitempty"`
+	OriginState             *string                           `json:"originState,omitempty"`
+	DestinationState        *string                           `json:"destinationState,omitempty"`
+	MinPowerUnits           *int                              `json:"minPowerUnits,omitempty"`
+	MaxPowerUnits           *int                              `json:"maxPowerUnits,omitempty"`
+	MinAuthorityAgeDays     *int                              `json:"minAuthorityAgeDays,omitempty"`
+	MaxAuthorityAgeDays     *int                              `json:"maxAuthorityAgeDays,omitempty"`
+	HazmatOnly              *bool                             `json:"hazmatOnly,omitempty"`
+	ExcludeBlocking         *bool                             `json:"excludeBlocking,omitempty"`
+	ExcludeExistingCarriers *bool                             `json:"excludeExistingCarriers,omitempty"`
+	Sort                    *carrierintelservice.SourcingSort `json:"sort,omitempty"`
+	Limit                   *int                              `json:"limit,omitempty"`
+	Offset                  *int                              `json:"offset,omitempty"`
 }
 
 type CategoryCostLine struct {

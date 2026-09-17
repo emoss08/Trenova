@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
@@ -47,15 +48,19 @@ type CarrierIntelEventResolver interface {
 
 	Provider(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (string, error)
 
+	FieldLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
 	RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
+	RuleLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
 
 	Action(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.RuleAction, error)
 	PriorValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
 	CurrentValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
 
 	AcknowledgedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
+	AcknowledgedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
 
 	ResolvedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
+	ResolvedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
 
 	Resolution(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.EventResolution, error)
 
@@ -1371,6 +1376,75 @@ func (ec *executionContext) _CarrierIntelBasicMeasure_acIndicator(ctx context.Co
 }
 func (ec *executionContext) fieldContext_CarrierIntelBasicMeasure_acIndicator(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierIntelBasicMeasure", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelBasicMeasure_violations(ctx context.Context, field graphql.CollectedField, obj *carrierintel.BasicMeasure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelBasicMeasure_violations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Violations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelBasicMeasure_violations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelBasicMeasure", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelBasicMeasure_oosViolations(ctx context.Context, field graphql.CollectedField, obj *carrierintel.BasicMeasure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelBasicMeasure_oosViolations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OOSViolations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelBasicMeasure_oosViolations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelBasicMeasure", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelBasicMeasure_measuredAt(ctx context.Context, field graphql.CollectedField, obj *carrierintel.BasicMeasure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelBasicMeasure_measuredAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MeasuredAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelBasicMeasure_measuredAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelBasicMeasure", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
 func (ec *executionContext) _CarrierIntelBenchmarks_anyAnomaly(ctx context.Context, field graphql.CollectedField, obj *carrierintel.Benchmarks) (ret graphql.Marshaler) {
@@ -3291,6 +3365,29 @@ func (ec *executionContext) fieldContext_CarrierIntelEvent_fieldPath(_ context.C
 	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _CarrierIntelEvent_fieldLabel(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelEvent_fieldLabel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierIntelEvent().FieldLabel(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelEvent_fieldLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _CarrierIntelEvent_ruleCode(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3311,6 +3408,29 @@ func (ec *executionContext) _CarrierIntelEvent_ruleCode(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_CarrierIntelEvent_ruleCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelEvent_ruleLabel(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelEvent_ruleLabel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierIntelEvent().RuleLabel(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelEvent_ruleLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
@@ -3521,6 +3641,38 @@ func (ec *executionContext) fieldContext_CarrierIntelEvent_acknowledgedById(_ co
 	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, true, true, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _CarrierIntelEvent_acknowledgedBy(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelEvent_acknowledgedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierIntelEvent().AcknowledgedBy(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelEvent_acknowledgedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CarrierIntelEvent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CarrierIntelEvent_acknowledgedAt(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3565,6 +3717,38 @@ func (ec *executionContext) _CarrierIntelEvent_resolvedById(ctx context.Context,
 }
 func (ec *executionContext) fieldContext_CarrierIntelEvent_resolvedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierIntelEvent", field, true, true, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelEvent_resolvedBy(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelEvent_resolvedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierIntelEvent().ResolvedBy(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelEvent_resolvedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CarrierIntelEvent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _CarrierIntelEvent_resolvedAt(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelEvent) (ret graphql.Marshaler) {
@@ -5962,6 +6146,29 @@ func (ec *executionContext) fieldContext_CarrierIntelInsuranceFiling_type(_ cont
 	return graphql.NewScalarFieldContext("CarrierIntelInsuranceFiling", field, false, false, errors.New("field of type CarrierIntelInsuranceFilingType does not have child fields"))
 }
 
+func (ec *executionContext) _CarrierIntelInsuranceFiling_status(ctx context.Context, field graphql.CollectedField, obj *carrierintel.InsuranceFiling) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelInsuranceFiling_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelInsuranceFiling_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelInsuranceFiling", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _CarrierIntelInsuranceFiling_insurerName(ctx context.Context, field graphql.CollectedField, obj *carrierintel.InsuranceFiling) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6383,6 +6590,29 @@ func (ec *executionContext) fieldContext_CarrierIntelLanes_preferred(_ context.C
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _CarrierIntelLanes_preferredStates(ctx context.Context, field graphql.CollectedField, obj *carrierintel.Lanes) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelLanes_preferredStates(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreferredStates, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalOString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelLanes_preferredStates(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelLanes", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _CarrierIntelMonitoringStatus_provider(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierIntelMonitoringStatus) (ret graphql.Marshaler) {
@@ -9393,6 +9623,52 @@ func (ec *executionContext) fieldContext_CarrierIntelSnapshot_fetchedAt(_ contex
 	return graphql.NewScalarFieldContext("CarrierIntelSnapshot", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
+func (ec *executionContext) _CarrierIntelSnapshot_fetchedDepth(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelSnapshot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelSnapshot_fetchedDepth(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FetchedDepth, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrierintel.LookupDepth) graphql.Marshaler {
+			return ec.marshalNCarrierIntelDepth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierintelᚐLookupDepth(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelSnapshot_fetchedDepth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelSnapshot", field, false, false, errors.New("field of type CarrierIntelDepth does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierIntelSnapshot_depthFetchedAt(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelSnapshot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierIntelSnapshot_depthFetchedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DepthFetchedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierIntelSnapshot_depthFetchedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierIntelSnapshot", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _CarrierIntelSnapshot_sourceAsOf(ctx context.Context, field graphql.CollectedField, obj *carrierintel.CarrierIntelSnapshot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10886,6 +11162,29 @@ func (ec *executionContext) fieldContext_CarrierSourcingPage_total(_ context.Con
 	return graphql.NewScalarFieldContext("CarrierSourcingPage", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _CarrierSourcingPage_filteredOut(ctx context.Context, field graphql.CollectedField, obj *carrierintelservice.SourcingPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSourcingPage_filteredOut(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FilteredOut, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSourcingPage_filteredOut(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSourcingPage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _CarrierSourcingPage_provider(ctx context.Context, field graphql.CollectedField, obj *carrierintelservice.SourcingPage) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11825,7 +12124,7 @@ func (ec *executionContext) unmarshalInputCarrierSourcingSearchInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text", "state", "originState", "destinationState", "minPowerUnits", "maxPowerUnits", "minAuthorityAgeDays", "hazmatOnly", "excludeBlocking", "excludeExistingCarriers", "limit", "offset"}
+	fieldsInOrder := [...]string{"text", "state", "originState", "destinationState", "minPowerUnits", "maxPowerUnits", "minAuthorityAgeDays", "maxAuthorityAgeDays", "hazmatOnly", "excludeBlocking", "excludeExistingCarriers", "sort", "limit", "offset"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11881,6 +12180,13 @@ func (ec *executionContext) unmarshalInputCarrierSourcingSearchInput(ctx context
 				return it, err
 			}
 			it.MinAuthorityAgeDays = data
+		case "maxAuthorityAgeDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxAuthorityAgeDays"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxAuthorityAgeDays = data
 		case "hazmatOnly":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazmatOnly"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -11902,6 +12208,13 @@ func (ec *executionContext) unmarshalInputCarrierSourcingSearchInput(ctx context
 				return it, err
 			}
 			it.ExcludeExistingCarriers = data
+		case "sort":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+			data, err := ec.unmarshalOCarrierSourcingSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarrierintelserviceᚐSourcingSort(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sort = data
 		case "limit":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -12700,6 +13013,21 @@ func (ec *executionContext) _CarrierIntelBasicMeasure(ctx context.Context, sel a
 		case "acIndicator":
 			out.Values[i] = ec._CarrierIntelBasicMeasure_acIndicator(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "violations":
+			out.Values[i] = ec._CarrierIntelBasicMeasure_violations(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "oosViolations":
+			out.Values[i] = ec._CarrierIntelBasicMeasure_oosViolations(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "measuredAt":
+			out.Values[i] = ec._CarrierIntelBasicMeasure_measuredAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -13645,6 +13973,44 @@ func (ec *executionContext) _CarrierIntelEvent(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "fieldLabel":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierIntelEvent_fieldLabel(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "ruleCode":
 			field := field
 
@@ -13655,6 +14021,44 @@ func (ec *executionContext) _CarrierIntelEvent(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._CarrierIntelEvent_ruleCode(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ruleLabel":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierIntelEvent_ruleLabel(ctx, field, obj)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -13860,6 +14264,44 @@ func (ec *executionContext) _CarrierIntelEvent(ctx context.Context, sel ast.Sele
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "acknowledgedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierIntelEvent_acknowledgedBy(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "acknowledgedAt":
 			out.Values[i] = ec._CarrierIntelEvent_acknowledgedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -13875,6 +14317,44 @@ func (ec *executionContext) _CarrierIntelEvent(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._CarrierIntelEvent_resolvedById(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "resolvedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierIntelEvent_resolvedBy(ctx, field, obj)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -15332,6 +15812,11 @@ func (ec *executionContext) _CarrierIntelInsuranceFiling(ctx context.Context, se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "status":
+			out.Values[i] = ec._CarrierIntelInsuranceFiling_status(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "insurerName":
 			out.Values[i] = ec._CarrierIntelInsuranceFiling_insurerName(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -15518,6 +16003,11 @@ func (ec *executionContext) _CarrierIntelLanes(ctx context.Context, sel ast.Sele
 			}
 		case "preferred":
 			out.Values[i] = ec._CarrierIntelLanes_preferred(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "preferredStates":
+			out.Values[i] = ec._CarrierIntelLanes_preferredStates(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
@@ -16951,6 +17441,16 @@ func (ec *executionContext) _CarrierIntelSnapshot(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "fetchedDepth":
+			out.Values[i] = ec._CarrierIntelSnapshot_fetchedDepth(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "depthFetchedAt":
+			out.Values[i] = ec._CarrierIntelSnapshot_depthFetchedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "sourceAsOf":
 			out.Values[i] = ec._CarrierIntelSnapshot_sourceAsOf(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -17682,6 +18182,11 @@ func (ec *executionContext) _CarrierSourcingPage(ctx context.Context, sel ast.Se
 			}
 		case "total":
 			out.Values[i] = ec._CarrierSourcingPage_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "filteredOut":
+			out.Values[i] = ec._CarrierSourcingPage_filteredOut(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -19331,6 +19836,13 @@ func (ec *executionContext) marshalOCarrierIntelEquipment2ᚖgithubᚗcomᚋemos
 	return ec._CarrierIntelEquipment(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierintelᚐCarrierIntelEvent(ctx context.Context, sel ast.SelectionSet, v *carrierintel.CarrierIntelEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CarrierIntelEvent(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOCarrierIntelEventFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierIntelEventFilterInput(ctx context.Context, v any) (*gqlmodel.CarrierIntelEventFilterInput, error) {
 	if v == nil {
 		return nil, nil
@@ -19762,6 +20274,25 @@ func (ec *executionContext) unmarshalOCarrierMonitoringEnrollmentFilterInput2ᚖ
 	}
 	res, err := ec.unmarshalInputCarrierMonitoringEnrollmentFilterInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOCarrierSourcingSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarrierintelserviceᚐSourcingSort(ctx context.Context, v any) (*carrierintelservice.SourcingSort, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrierintelservice.SourcingSort(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCarrierSourcingSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarrierintelserviceᚐSourcingSort(ctx context.Context, sel ast.SelectionSet, v *carrierintelservice.SourcingSort) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 // endregion ***************************** type.gotpl *****************************

@@ -66,6 +66,14 @@ func Percent(v *jsonflex.Float) *float64 {
 	return &value
 }
 
+func FractionPercent(v *jsonflex.Float) *float64 {
+	if v == nil || v.Value() < 0 {
+		return nil
+	}
+	value := round(v.Value() * percentScale)
+	return &value
+}
+
 func Bool(v *jsonflex.Bool) *bool {
 	return v.Ptr()
 }

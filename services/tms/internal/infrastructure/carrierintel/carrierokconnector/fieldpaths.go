@@ -37,6 +37,7 @@ var vendorFieldPaths = map[string]string{
 	"authority_age_broker":          "authority.broker.ageDays",
 	"authority_start_common":        "authority.common.grantedAt",
 	"authority_start_contract":      "authority.contract.grantedAt",
+	"authority_start_broker":        "authority.broker.grantedAt",
 	"total_revocations":             "authority.totalRevocations",
 	"last_revocation_date":          "authority.lastRevocationAt",
 	"authority_history":             "authority.history",
@@ -77,7 +78,6 @@ var vendorFieldPaths = map[string]string{
 	"natl_avg_oos_driver":                    "inspections.nationalDriverOosRate",
 	"natl_avg_oos_vehicle":                   "inspections.nationalVehicleOosRate",
 	"natl_avg_oos_hazmat":                    "inspections.nationalHazmatOosRate",
-	"last_inspection_date":                   "inspections.lastInspectionAt",
 
 	"crashes_total":    "crashes.total",
 	"crash_fatalities": "crashes.fatal",
@@ -94,9 +94,7 @@ var vendorFieldPaths = map[string]string{
 	"term_leased_trailers": "fleet.termLeasedTrailers",
 	"total_trailers":       "fleet.trailers",
 	"total_trucks":         "fleet.trucks",
-	"equipment":            "equipment",
 	"equipment_history":    "equipment",
-	"vehicles":             "equipment",
 
 	"telephone_number":          "contacts.phone",
 	"cellphone_number":          "contacts.cellphone",
@@ -130,22 +128,26 @@ var vendorFieldPaths = map[string]string{
 	"network_graph_count_mailing_address":   "network.sharedAddresses",
 	"network_graph_count_telephone_numbers": "network.sharedPhones",
 	"network_graph_count_cellphone_numbers": "network.sharedPhones",
+	"network_graph_count_fax_numbers":       "network.sharedPhones",
 	"network_graph_count_email_address":     "network.sharedEmails",
 	"network_graph_count_ein":               "network.sharedEins",
-	"network_graph_count_equipment":         "network.sharedEquipment",
+	"network_graph_count_power_units":       "network.sharedEquipment",
+	"network_graph_count_trailers":          "network.sharedEquipment",
 	"network_graph_physical_address":        "network.links",
+	"network_graph_mailing_address":         "network.links",
 	"network_graph_telephone_number":        "network.links",
+	"network_graph_cellphone_number":        "network.links",
+	"network_graph_fax_number":              "network.links",
 	"network_graph_email":                   "network.links",
 	"network_graph_ein":                     "network.links",
 	"network_graph_equipment":               "network.links",
+	"network_graph_equipment_ext":           "network.links",
 
-	"total_loads":         "lanes.totalLoads",
-	"ftl_percentage":      "lanes.ftlPercent",
-	"ltl_percentage":      "lanes.ltlPercent",
-	"deadhead_percentage": "lanes.deadheadPercent",
-	"first_load_date":     "lanes.firstLoadAt",
-	"last_load_date":      "lanes.lastLoadAt",
-	"preferred_lanes":     "lanes.preferred",
+	"preferred_lanes":  "lanes.preferredStates",
+	"preferred_states": "lanes.preferredStates",
+
+	"undeliverable_physical_address": "identity.physicalAddress",
+	"undeliverable_mailing_address":  "identity.mailingAddress",
 
 	"indicator_industry_benchmarks":                   "benchmarks.anyAnomaly",
 	"indicator_benchmark_inspection_mileage_ratio":    "benchmarks.inspectionMileageAnomaly",
@@ -165,15 +167,12 @@ var basicFieldPrefixes = [...]struct {
 	prefix string
 	field  string
 }{
-	{prefix: "basic_roadside_alert_", field: "roadsideAlert"},
 	{prefix: "basic_ac_indicator_", field: "acIndicator"},
 	{prefix: "basic_measure_", field: "measure"},
-	{prefix: "basic_percentile_", field: "percentile"},
 	{prefix: "basic_alert_", field: "alert"},
-	{prefix: "intervention_threshold_", field: "threshold"},
+	{prefix: "violations_oos_", field: "oosViolations"},
+	{prefix: "violations_", field: "violations"},
 }
-
-const misspeltVehicleMaintenance = "vehicle_maintence"
 
 func vendorFieldPath(field string) string {
 	key := strings.ToLower(strings.TrimSpace(field))
@@ -190,13 +189,11 @@ func vendorFieldPath(field string) string {
 		if !found {
 			continue
 		}
-		if suffix == misspeltVehicleMaintenance {
-			suffix = string(carrierok.BasicVehicleMaintenance)
-		}
-		basic, known := basicCategories[carrierok.BasicCategory(suffix)]
+		category, known := carrierok.BasicCategoryForVendorKey(suffix)
 		if !known {
 			return ""
 		}
+		basic := basicCategories[category]
 		return "basics." + basic.String() + "." + entry.field
 	}
 	return ""

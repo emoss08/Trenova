@@ -279,3 +279,20 @@ func TestSafeToInt16(t *testing.T) {
 		"a value past the ceiling must stay past any valid bound, not wrap into range")
 	assert.Equal(t, int16(math.MinInt16), intutils.SafeToInt16(math.MinInt16-1))
 }
+
+func TestFormatWithCommas(t *testing.T) {
+	t.Parallel()
+
+	cases := map[int64]string{
+		0:          "0",
+		999:        "999",
+		1000:       "1,000",
+		5000000:    "5,000,000",
+		-500:       "-500",
+		-1500:      "-1,500",
+		-123456789: "-123,456,789",
+	}
+	for input, want := range cases {
+		assert.Equal(t, want, intutils.FormatWithCommas(input))
+	}
+}

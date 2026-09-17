@@ -59,6 +59,11 @@ aliases:
     commentVisibility: metadata
     commentPriority: metadata
     mentionedUserIds: metadata
+  CarrierIntelEvent:
+    fieldLabel: fieldPath
+    ruleLabel: ruleCode
+    acknowledgedBy: acknowledgedById
+    resolvedBy: resolvedById
   Tractor:
     equipmentStatus: status
   Trailer:

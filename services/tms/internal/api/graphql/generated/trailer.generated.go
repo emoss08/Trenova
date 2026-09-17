@@ -552,6 +552,7 @@ type QueryResolver interface {
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
 	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
 	CarrierIntelEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierIntelEventFilterInput) (*gqlmodel.CarrierIntelEventConnection, error)
+	CarrierIntelEvent(ctx context.Context, id string) (*carrierintel.CarrierIntelEvent, error)
 	CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error)
 	CarrierMonitoringEnrollments(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierMonitoringEnrollmentFilterInput) (*gqlmodel.CarrierMonitoringEnrollmentConnection, error)
 	CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error)
@@ -8085,6 +8086,20 @@ func (ec *executionContext) field_Query_carrierIntelCostEstimate_args(ctx contex
 		return nil, err
 	}
 	args["includeOpenTenders"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_carrierIntelEvent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -33573,6 +33588,50 @@ func (ec *executionContext) fieldContext_Query_carrierIntelEvents(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_carrierIntelEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_carrierIntelEvent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().CarrierIntelEvent(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrierintel.CarrierIntelEvent) graphql.Marshaler {
+			return ec.marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierintelᚐCarrierIntelEvent(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_carrierIntelEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CarrierIntelEvent(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_carrierIntelEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_carrierIntelMonitoringStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -56017,6 +56076,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_carrierIntelEvents(ctx, field)
 				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "carrierIntelEvent":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_carrierIntelEvent(ctx, field)
+				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res

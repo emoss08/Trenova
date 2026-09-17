@@ -146,9 +146,9 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 			return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 				Where(cols.DOTNumber.Eq(), dotNumber).
 				Where(cols.Depth.Eq(), carrierintel.LookupDepthFull).
-				Where(cols.FetchedAt.Gte(), since)
+				Where(cols.DepthFetchedAt.Gte(), since)
 		}).
-		Order(cols.FetchedAt.OrderDesc()).
+		Order(cols.DepthFetchedAt.OrderDesc()).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -253,6 +253,8 @@ func (r *snapshotRepository) UpdateEvaluation(
 			cols.ReviewState.Bare(),
 			cols.PolicyVersion.Bare(),
 			cols.ConfirmedAt.Bare(),
+			cols.FetchedDepth.Bare(),
+			cols.DepthFetchedAt.Bare(),
 			cols.UpdatedAt.Bare(),
 		).
 		WherePK().

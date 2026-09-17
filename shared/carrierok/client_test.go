@@ -107,17 +107,17 @@ func TestProfileSendsAuthAndExactQuery(t *testing.T) {
 	client := newTestClient(t, liveKey, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodGet, r.Method)
 		assert.Equal(t, "/v2/profile", r.URL.Path)
-		assert.Equal(t, "dot_number=818175", r.URL.RawQuery)
+		assert.Equal(t, "dot_number=265752", r.URL.RawQuery)
 		assert.Equal(t, "Bearer "+liveKey, r.Header.Get("Authorization"))
 		assert.Equal(t, "application/json", r.Header.Get("Accept"))
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	})
 
-	profile, err := client.Profile(t.Context(), carrierok.ProfileQuery{DOTNumber: " 818175 "})
+	profile, err := client.Profile(t.Context(), carrierok.ProfileQuery{DOTNumber: " 265752 "})
 	require.NoError(t, err)
 	require.NotNil(t, profile)
-	assert.Equal(t, "818175", profile.Identity.DOTNumber.Value())
-	assert.Equal(t, "818175-MC277621", profile.ProfileID())
+	assert.Equal(t, "265752", profile.Identity.DOTNumber.Value())
+	assert.Equal(t, "265752-MC179059", profile.ProfileID())
 	assert.NotEmpty(t, profile.Raw)
 }
 
@@ -167,7 +167,7 @@ func TestProfileQueryParameterNames(t *testing.T) {
 			client := newTestClient(t, liveKey, func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/v2/profile-lite", r.URL.Path)
 				assert.Equal(t, tt.want, r.URL.RawQuery)
-				writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+				writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 			})
 
 			_, err := client.ProfileLite(t.Context(), tt.query)
@@ -281,7 +281,7 @@ func TestProfileRateLimitedThenRetried(t *testing.T) {
 			writeJSON(w, http.StatusTooManyRequests, fixture(t, "error_429.json"))
 			return
 		}
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	}, carrierok.WithRetry(restx.RetryConfig{
 		Enabled:        true,
 		MaxAttempts:    2,
@@ -291,7 +291,7 @@ func TestProfileRateLimitedThenRetried(t *testing.T) {
 
 	profile, err := client.Profile(t.Context(), carrierok.ProfileQuery{DOTNumber: "818175"})
 	require.NoError(t, err)
-	assert.Equal(t, "SANDBOX FREIGHT LINES INC", profile.Identity.LegalName.Value())
+	assert.Equal(t, "FEDEX GROUND PACKAGE SYSTEM INC", profile.Identity.LegalName.Value())
 	assert.Equal(t, int32(2), calls.Load())
 }
 
@@ -300,7 +300,7 @@ func TestLimiterBucketsForLiveKey(t *testing.T) {
 
 	limiter := &recordingLimiter{}
 	client := newTestClient(t, liveKey, func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	}, carrierok.WithLimiter(limiter, "carrierok:org_1"))
 
 	_, err := client.Profile(t.Context(), carrierok.ProfileQuery{DOTNumber: "818175"})
@@ -320,7 +320,7 @@ func TestSandboxKeySkipsLimiter(t *testing.T) {
 	limiter := &recordingLimiter{}
 	client := newTestClient(t, sandboxKey, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "Bearer "+sandboxKey, r.Header.Get("Authorization"))
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	}, carrierok.WithLimiter(limiter, "carrierok:org_1"))
 
 	assert.True(t, client.Sandbox())

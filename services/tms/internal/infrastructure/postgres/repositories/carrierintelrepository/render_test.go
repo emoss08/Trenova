@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,4 +153,21 @@ func TestEnrollmentUpsertBumpsTheExistingRowVersion(t *testing.T) {
 	)
 	assert.Contains(t, sql, "version = cienr.version + 1", sql)
 	assert.Contains(t, sql, "desired_state = EXCLUDED.desired_state", sql)
+}
+
+func TestRawPayloadInsertStoresAJSONDocumentNotAString(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenant()
+	sql := renderDB().NewInsert().Model(&carrierintel.CarrierIntelRawPayload{
+		ID:             pulid.MustNew("ciraw_"),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Endpoint:       "profile",
+		DOTNumber:      "265752",
+		Payload:        jsonutils.RawJSON(`{"dot_number":"265752","dba_flag":true}`),
+	}).String()
+
+	assert.Contains(t, sql, `'{"dot_number":"265752","dba_flag":true}'`, sql)
+	assert.NotContains(t, sql, `\"dot_number\"`, sql)
 }

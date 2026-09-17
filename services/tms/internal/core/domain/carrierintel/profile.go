@@ -141,6 +141,7 @@ func (a *Authority) OldestActiveAgeDays() *int {
 
 type InsuranceFiling struct {
 	Type              InsuranceFilingType `json:"type"`
+	Status            string              `json:"status,omitempty"`
 	InsurerName       string              `json:"insurerName,omitempty"`
 	PolicyNumber      string              `json:"policyNumber,omitempty"`
 	Coverage          *decimal.Decimal    `json:"coverage,omitempty"`
@@ -184,6 +185,9 @@ type BasicMeasure struct {
 	Alert         bool            `json:"alert"`
 	RoadsideAlert bool            `json:"roadsideAlert"`
 	ACIndicator   bool            `json:"acIndicator"`
+	Violations    *int            `json:"violations,omitempty"`
+	OOSViolations *int            `json:"oosViolations,omitempty"`
+	MeasuredAt    *int64          `json:"measuredAt,omitempty"`
 }
 
 type Inspections struct {
@@ -355,6 +359,7 @@ type Lanes struct {
 	FirstLoadAt     *int64   `json:"firstLoadAt,omitempty"`
 	LastLoadAt      *int64   `json:"lastLoadAt,omitempty"`
 	Preferred       []Lane   `json:"preferred,omitempty"`
+	PreferredStates []string `json:"preferredStates,omitempty"`
 }
 
 type Benchmarks struct {
@@ -424,21 +429,6 @@ func (p *Profile) NormalizeCoverage() {
 		}
 	}
 	p.Coverage = coverage
-}
-
-func (p *Profile) Clone() (*Profile, error) {
-	if p == nil {
-		return nil, nil
-	}
-	raw, err := sonic.Marshal(p)
-	if err != nil {
-		return nil, err
-	}
-	out := new(Profile)
-	if err = sonic.Unmarshal(raw, out); err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (p *Profile) ContentHash() (string, error) {

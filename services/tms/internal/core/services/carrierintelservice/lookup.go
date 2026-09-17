@@ -84,12 +84,9 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 	if !req.Force && current != nil && current.Depth.Satisfies(wanted) {
 		maxAge := req.MaxAgeSeconds
 		if maxAge <= 0 {
-			maxAge = control.SnapshotTTLSeconds()
-			if wanted == carrierintel.LookupDepthFull {
-				maxAge = control.FullProfileTTLSeconds()
-			}
+			maxAge = control.TTLSecondsForDepth(wanted)
 		}
-		if current.IsFresh(s.now(), maxAge) {
+		if current.IsFreshForDepth(s.now(), maxAge, wanted) {
 			return &FetchResult{Snapshot: current, FromCache: true}, nil
 		}
 	}

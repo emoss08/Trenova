@@ -1164,6 +1164,9 @@ models:
   CarrierSourcingPage:
     model:
       - github.com/emoss08/trenova/internal/core/services/carrierintelservice.SourcingPage
+  CarrierSourcingSort:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carrierintelservice.SourcingSort
   CarrierIntelFeedState:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelFeedState

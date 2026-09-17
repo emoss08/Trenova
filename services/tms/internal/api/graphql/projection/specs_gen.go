@@ -2720,7 +2720,15 @@ func init() {
 				FieldMapKey: "fieldPath",
 			},
 			{
+				Name:        "fieldLabel",
+				FieldMapKey: "fieldPath",
+			},
+			{
 				Name:        "ruleCode",
+				FieldMapKey: "ruleCode",
+			},
+			{
+				Name:        "ruleLabel",
 				FieldMapKey: "ruleCode",
 			},
 			{
@@ -2760,11 +2768,19 @@ func init() {
 				FieldMapKey: "acknowledgedById",
 			},
 			{
+				Name:        "acknowledgedBy",
+				FieldMapKey: "acknowledgedById",
+			},
+			{
 				Name:        "acknowledgedAt",
 				FieldMapKey: "acknowledgedAt",
 			},
 			{
 				Name:        "resolvedById",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "resolvedBy",
 				FieldMapKey: "resolvedById",
 			},
 			{
@@ -3004,6 +3020,14 @@ func init() {
 			{
 				Name:        "fetchedAt",
 				FieldMapKey: "fetchedAt",
+			},
+			{
+				Name:        "fetchedDepth",
+				FieldMapKey: "fetchedDepth",
+			},
+			{
+				Name:        "depthFetchedAt",
+				FieldMapKey: "depthFetchedAt",
 			},
 			{
 				Name:        "sourceAsOf",

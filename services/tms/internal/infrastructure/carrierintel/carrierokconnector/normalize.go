@@ -1,8 +1,8 @@
 package carrierokconnector
 
 import (
-	"bytes"
-	"math"
+	"cmp"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
@@ -12,12 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonflex"
 )
 
-const (
-	daysPerYear = 365.25
-	riskKey     = "risk_score"
-)
-
-var riskKeyToken = []byte(`"` + riskKey + `"`)
+const riskFactorBOC3OnFile = "boc3_on_file"
 
 var basicCategories = map[carrierok.BasicCategory]worker.CSABasic{
 	carrierok.BasicUnsafeDriving:       worker.BasicUnsafeDriving,
@@ -31,10 +26,14 @@ var basicCategories = map[carrierok.BasicCategory]worker.CSABasic{
 
 var networkKinds = map[carrierok.NetworkLinkKind]carrierintel.NetworkKind{
 	carrierok.NetworkLinkPhysicalAddress: carrierintel.NetworkKindAddress,
+	carrierok.NetworkLinkMailingAddress:  carrierintel.NetworkKindAddress,
 	carrierok.NetworkLinkTelephone:       carrierintel.NetworkKindPhone,
+	carrierok.NetworkLinkCellphone:       carrierintel.NetworkKindPhone,
+	carrierok.NetworkLinkFax:             carrierintel.NetworkKindPhone,
 	carrierok.NetworkLinkEmail:           carrierintel.NetworkKindEmail,
 	carrierok.NetworkLinkEIN:             carrierintel.NetworkKindEIN,
 	carrierok.NetworkLinkEquipment:       carrierintel.NetworkKindEquipment,
+	carrierok.NetworkLinkEquipmentExt:    carrierintel.NetworkKindEquipment,
 }
 
 func normalizeProfile(p *carrierok.Profile) *carrierintel.Profile {
@@ -53,10 +52,10 @@ func normalizeProfile(p *carrierok.Profile) *carrierintel.Profile {
 		Fleet:         normalizeFleet(&p.Fleet),
 		Equipment:     normalizeEquipment(p.Fleet.Equipment),
 		Contacts:      normalizeContacts(&p.Contacts),
-		Operations:    normalizeOperations(&p.Operations),
+		Operations:    normalizeOperations(p),
 		ChangeHistory: normalizeChangeHistory(&p.ChangeHistory),
-		Network:       normalizeNetwork(&p.Network),
-		Lanes:         normalizeLanes(&p.Loads),
+		Network:       normalizeNetwork(&p.Network, intelkit.Text(p.Identity.DOTNumber)),
+		Lanes:         normalizeLanes(&p.Lanes),
 		Benchmarks:    normalizeBenchmarks(&p.Benchmarks),
 	}
 	profile.NormalizeCoverage()
@@ -92,7 +91,7 @@ func normalizeIdentity(p *carrierok.Profile) *carrierintel.Identity {
 		EntityType:       intelkit.Text(src.EntityType),
 		CarrierOperation: intelkit.Text(src.CarrierOperation),
 		DOTAddedAt:       intelkit.Unix(src.AddedDate),
-		DOTAgeDays:       yearsToDays(src.DOTAge),
+		DOTAgeDays:       intelkit.Int(src.DOTAgeDays),
 		PhysicalAddress:  normalizeAddress(&p.Addresses.Physical),
 		MailingAddress:   normalizeAddress(&p.Addresses.Mailing),
 	}
@@ -103,14 +102,6 @@ func normalizeIdentity(p *carrierok.Profile) *carrierintel.Identity {
 		return nil
 	}
 	return identity
-}
-
-func yearsToDays(years *jsonflex.Float) *int {
-	if years == nil || years.Value() < 0 {
-		return nil
-	}
-	days := int(math.Round(years.Value() * daysPerYear))
-	return &days
 }
 
 func normalizeAddress(src *carrierok.Address) *carrierintel.Address {
@@ -127,10 +118,10 @@ func normalizeAddress(src *carrierok.Address) *carrierintel.Address {
 
 type grantSource struct {
 	status     *jsonflex.String
-	pending    *jsonflex.String
-	review     *jsonflex.String
-	revocation *jsonflex.String
-	age        *jsonflex.Float
+	pending    *jsonflex.Bool
+	review     *jsonflex.Bool
+	revocation *jsonflex.Bool
+	ageDays    *jsonflex.Int
 	start      *jsonflex.Time
 }
 
@@ -141,7 +132,7 @@ func normalizeAuthority(src *carrierok.Authority) *carrierintel.Authority {
 			pending:    src.CommonPending,
 			review:     src.CommonReview,
 			revocation: src.CommonRevocation,
-			age:        src.AgeCommon,
+			ageDays:    src.AgeCommonDays,
 			start:      src.StartCommon,
 		}),
 		Contract: normalizeGrant(grantSource{
@@ -149,7 +140,7 @@ func normalizeAuthority(src *carrierok.Authority) *carrierintel.Authority {
 			pending:    src.ContractPending,
 			review:     src.ContractReview,
 			revocation: src.ContractRevocation,
-			age:        src.AgeContract,
+			ageDays:    src.AgeContractDays,
 			start:      src.StartContract,
 		}),
 		Broker: normalizeGrant(grantSource{
@@ -157,7 +148,8 @@ func normalizeAuthority(src *carrierok.Authority) *carrierintel.Authority {
 			pending:    src.BrokerPending,
 			review:     src.BrokerReview,
 			revocation: src.BrokerRevocation,
-			age:        src.AgeBroker,
+			ageDays:    src.AgeBrokerDays,
+			start:      src.StartBroker,
 		}),
 		TotalRevocations: intelkit.Int(src.TotalRevocations),
 		LastRevocationAt: intelkit.Unix(src.LastRevocationDate),
@@ -173,7 +165,7 @@ func normalizeAuthority(src *carrierok.Authority) *carrierintel.Authority {
 
 func normalizeGrant(src grantSource) *carrierintel.AuthorityGrant {
 	if src.status == nil && src.pending == nil && src.review == nil && src.revocation == nil &&
-		src.age == nil && src.start == nil {
+		src.ageDays == nil && src.start == nil {
 		return nil
 	}
 
@@ -181,18 +173,18 @@ func normalizeGrant(src grantSource) *carrierintel.AuthorityGrant {
 	if src.status == nil {
 		status = carrierintel.AuthorityStatusUnknown
 	}
-	revocationFlagged := intelkit.Truthy(src.revocation)
+	revocationFlagged := src.revocation.Value()
 	if revocationFlagged && status != carrierintel.AuthorityStatusActive {
 		status = carrierintel.AuthorityStatusRevoked
 	}
 
 	grant := &carrierintel.AuthorityGrant{
 		Status:            status,
-		Pending:           intelkit.Truthy(src.pending),
-		UnderReview:       intelkit.Truthy(src.review),
+		Pending:           src.pending.Value(),
+		UnderReview:       src.review.Value(),
 		RevocationPending: revocationFlagged && status == carrierintel.AuthorityStatusActive,
 		GrantedAt:         intelkit.Unix(src.start),
-		AgeDays:           intelkit.IntFromFloat(src.age),
+		AgeDays:           intelkit.Int(src.ageDays),
 	}
 	return grant
 }
@@ -203,24 +195,60 @@ func normalizeAuthorityHistory(
 	if len(events) == 0 {
 		return nil
 	}
-	history := make([]carrierintel.AuthorityHistoryEntry, 0, len(events))
+	history := make([]carrierintel.AuthorityHistoryEntry, 0, len(events)*2)
 	for idx := range events {
 		event := &events[idx]
-		entry := carrierintel.AuthorityHistoryEntry{
-			AuthorityType: strings.ToUpper(intelkit.Text(event.AuthorityType)),
-			Action:        strings.ToUpper(intelkit.Text(event.Action)),
-			ServedAt:      intelkit.Unix(event.ServedDate),
-			EffectiveAt:   intelkit.Unix(event.EffectiveDate),
-		}
-		if entry == (carrierintel.AuthorityHistoryEntry{}) {
-			continue
-		}
-		history = append(history, entry)
+		authorityType := strings.ToUpper(intelkit.Text(event.AuthorityType))
+		history = appendAuthorityEntry(
+			history,
+			authorityType,
+			event.OriginalAction,
+			event.OriginalServedDate,
+		)
+		history = appendAuthorityEntry(
+			history,
+			authorityType,
+			event.DispositionAction,
+			event.DispositionServedDate,
+		)
 	}
 	if len(history) == 0 {
 		return nil
 	}
+	slices.SortStableFunc(history, func(a, b carrierintel.AuthorityHistoryEntry) int {
+		return compareServedDesc(a.ServedAt, b.ServedAt)
+	})
 	return history
+}
+
+func appendAuthorityEntry(
+	history []carrierintel.AuthorityHistoryEntry,
+	authorityType string,
+	action *jsonflex.String,
+	served *jsonflex.Time,
+) []carrierintel.AuthorityHistoryEntry {
+	entry := carrierintel.AuthorityHistoryEntry{
+		AuthorityType: authorityType,
+		Action:        strings.ToUpper(intelkit.Text(action)),
+		ServedAt:      intelkit.Unix(served),
+	}
+	if entry.Action == "" && entry.ServedAt == nil {
+		return history
+	}
+	return append(history, entry)
+}
+
+func compareServedDesc(a, b *int64) int {
+	switch {
+	case a == nil && b == nil:
+		return 0
+	case a == nil:
+		return 1
+	case b == nil:
+		return -1
+	default:
+		return cmp.Compare(*b, *a)
+	}
 }
 
 func normalizeInsurance(src *carrierok.Insurance) *carrierintel.Insurance {
@@ -255,6 +283,7 @@ func normalizeFilings(policies []carrierok.InsurancePolicy) []carrierintel.Insur
 		policy := &policies[idx]
 		filings = append(filings, carrierintel.InsuranceFiling{
 			Type:              filingType(intelkit.Text(policy.Type)),
+			Status:            strings.ToUpper(intelkit.Text(policy.Status)),
 			InsurerName:       intelkit.Text(policy.Insurer),
 			PolicyNumber:      intelkit.Text(policy.PolicyNumber),
 			Coverage:          intelkit.Decimal(policy.Coverage),
@@ -286,9 +315,9 @@ func normalizeSafety(p *carrierok.Profile) *carrierintel.Safety {
 	src := &p.Safety
 	safety := &carrierintel.Safety{
 		RatingDate:        intelkit.Unix(src.SafetyRatingDate),
-		ISSValue:          intelkit.IntFromFloat(src.ISSValue),
+		ISSValue:          intelkit.Int(src.ISSValue),
 		ISSRecommendation: intelkit.Text(src.ISSRecommendation),
-		RiskScore:         riskLevel(p),
+		RiskScore:         riskLevel(intelkit.Text(src.RiskScore)),
 		RiskProbability:   intelkit.Float(src.RiskScoreProbability),
 		SafetyScore:       intelkit.Float(src.SafetyScore),
 		OutOfServiceOrder: intelkit.Bool(src.OutOfServiceFlag),
@@ -305,15 +334,8 @@ func normalizeSafety(p *carrierok.Profile) *carrierintel.Safety {
 	return safety
 }
 
-func riskLevel(p *carrierok.Profile) carrierintel.RiskLevel {
-	if p.Safety.RiskScore != nil || !bytes.Contains(p.Raw, riskKeyToken) {
-		return ""
-	}
-	obj, err := jsonflex.DecodeObject(p.Raw)
-	if err != nil {
-		return ""
-	}
-	label := strings.ToUpper(strings.Join(strings.Fields(obj.Text(riskKey)), ""))
+func riskLevel(value string) carrierintel.RiskLevel {
+	label := strings.ToUpper(strings.Join(strings.Fields(value), ""))
 	switch label {
 	case "LOW":
 		return carrierintel.RiskLevelLow
@@ -350,11 +372,11 @@ func normalizeBasics(
 		basics = append(basics, carrierintel.BasicMeasure{
 			Basic:         basic,
 			Measure:       intelkit.NonNegativeFloat(score.Measure),
-			Percentile:    intelkit.Percent(score.Percentile),
-			Threshold:     intelkit.Percent(score.InterventionThreshold),
 			Alert:         score.Alert.Value(),
-			RoadsideAlert: score.RoadsideAlert.Value(),
 			ACIndicator:   score.ACIndicator.Value(),
+			Violations:    intelkit.Int(score.Violations),
+			OOSViolations: intelkit.Int(score.OOSViolations),
+			MeasuredAt:    intelkit.Unix(score.MeasuredAt),
 		})
 	}
 	if len(basics) == 0 {
@@ -372,13 +394,12 @@ func normalizeInspections(src *carrierok.Inspections) *carrierintel.Inspections 
 		DriverOOS:             intelkit.Int(src.DriverOutOfService),
 		VehicleOOS:            intelkit.Int(src.VehicleOutOfService),
 		HazmatOOS:             intelkit.Int(src.HazmatOutOfService),
-		DriverOOSRate:         intelkit.Percent(src.DriverOutOfServicePct),
-		VehicleOOSRate:        intelkit.Percent(src.VehicleOutOfServicePct),
-		HazmatOOSRate:         intelkit.Percent(src.HazmatOutOfServicePct),
-		NationalDriverOOSRate: intelkit.Percent(src.NationalAvgOOSDriver),
-		NationalVehicleOOS:    intelkit.Percent(src.NationalAvgOOSVehicle),
-		NationalHazmatOOSRate: intelkit.Percent(src.NationalAvgOOSHazmat),
-		LastInspectionAt:      intelkit.Unix(src.LastInspectionDate),
+		DriverOOSRate:         intelkit.FractionPercent(src.DriverOutOfServiceRate),
+		VehicleOOSRate:        intelkit.FractionPercent(src.VehicleOutOfServiceRate),
+		HazmatOOSRate:         intelkit.FractionPercent(src.HazmatOutOfServiceRate),
+		NationalDriverOOSRate: intelkit.FractionPercent(src.NationalAvgOOSDriver),
+		NationalVehicleOOS:    intelkit.FractionPercent(src.NationalAvgOOSVehicle),
+		NationalHazmatOOSRate: intelkit.FractionPercent(src.NationalAvgOOSHazmat),
 	}
 	if *inspections == (carrierintel.Inspections{}) {
 		return nil
@@ -476,20 +497,22 @@ func normalizeContacts(src *carrierok.Contacts) *carrierintel.Contacts {
 	return contacts
 }
 
-func normalizeOperations(src *carrierok.Operations) *carrierintel.Operations {
+func normalizeOperations(p *carrierok.Profile) *carrierintel.Operations {
+	src := &p.Operations
 	operations := &carrierintel.Operations{
 		Classification: intelkit.SplitList(src.OperationClassification),
 		CargoCarried:   intelkit.SplitList(src.CargoCarried),
 		HazmatCarrier:  intelkit.Bool(src.HazardousMaterial),
 		MCS150At:       intelkit.Unix(src.MCS150Date),
 		MCS150Mileage:  intelkit.Int64(src.MCS150Mileage),
+		BOC3Agent:      intelkit.Text(src.BOC3CompanyName),
+		BOC3OnFile:     p.RiskFactor(riskFactorBOC3OnFile),
 		SmartWay:       intelkit.Bool(src.SmartWay),
 		CARBCompliant:  intelkit.Bool(src.CARBTRU),
 		PHMSA:          intelkit.Bool(src.PHMSA),
 	}
-	if agent := intelkit.Text(src.BOC3CompanyName); agent != "" {
+	if operations.BOC3OnFile == nil && operations.BOC3Agent != "" {
 		onFile := true
-		operations.BOC3Agent = agent
 		operations.BOC3OnFile = &onFile
 	}
 	if len(operations.Classification) == 0 && len(operations.CargoCarried) == 0 &&
@@ -520,14 +543,31 @@ func normalizeChangeHistory(src *carrierok.ChangeHistory) *carrierintel.ChangeHi
 	return history
 }
 
-func normalizeNetwork(src *carrierok.Network) *carrierintel.Network {
+func normalizeNetwork(src *carrierok.Network, ownDOT string) *carrierintel.Network {
+	links := normalizeNetworkLinks(src.Links, ownDOT)
 	network := &carrierintel.Network{
-		SharedAddresses: intelkit.SumInts(src.PhysicalAddressCount, src.MailingAddressCount),
-		SharedPhones:    intelkit.SumInts(src.TelephoneNumberCount, src.CellphoneNumberCount),
-		SharedEmails:    intelkit.Int(src.EmailAddressCount),
-		SharedEINs:      intelkit.Int(src.EINCount),
-		SharedEquipment: intelkit.Int(src.EquipmentCount),
-		Links:           normalizeNetworkLinks(src.Links),
+		SharedAddresses: sharedCount(
+			links,
+			carrierintel.NetworkKindAddress,
+			src.PhysicalAddressCount,
+			src.MailingAddressCount,
+		),
+		SharedPhones: sharedCount(
+			links,
+			carrierintel.NetworkKindPhone,
+			src.TelephoneNumberCount,
+			src.CellphoneNumberCount,
+			src.FaxNumberCount,
+		),
+		SharedEmails: sharedCount(links, carrierintel.NetworkKindEmail, src.EmailAddressCount),
+		SharedEINs:   sharedCount(links, carrierintel.NetworkKindEIN, src.EINCount),
+		SharedEquipment: sharedCount(
+			links,
+			carrierintel.NetworkKindEquipment,
+			src.PowerUnitsCount,
+			src.TrailersCount,
+		),
+		Links: links,
 	}
 	if network.SharedAddresses == nil && network.SharedPhones == nil &&
 		network.SharedEmails == nil && network.SharedEINs == nil &&
@@ -537,24 +577,22 @@ func normalizeNetwork(src *carrierok.Network) *carrierintel.Network {
 	return network
 }
 
-func normalizeNetworkLinks(src []carrierok.NetworkLink) []carrierintel.NetworkLink {
+func normalizeNetworkLinks(src []carrierok.NetworkLink, ownDOT string) []carrierintel.NetworkLink {
 	if len(src) == 0 {
 		return nil
 	}
 	links := make([]carrierintel.NetworkLink, 0, len(src))
 	for idx := range src {
-		link := &src[idx]
-		kind, ok := networkKinds[link.Kind]
-		if !ok {
+		kind, ok := networkKinds[src[idx].Kind]
+		dot := strings.TrimSpace(src[idx].DOTNumber)
+		if !ok || dot == "" || dot == ownDOT {
 			continue
 		}
-		links = append(links, carrierintel.NetworkLink{
-			Kind:      kind,
-			DOTNumber: link.DOTNumber,
-			LegalName: link.LegalName,
-			Value:     link.Value,
-			Status:    strings.ToUpper(link.Status),
-		})
+		link := carrierintel.NetworkLink{Kind: kind, DOTNumber: dot}
+		if slices.Contains(links, link) {
+			continue
+		}
+		links = append(links, link)
 	}
 	if len(links) == 0 {
 		return nil
@@ -562,74 +600,49 @@ func normalizeNetworkLinks(src []carrierok.NetworkLink) []carrierintel.NetworkLi
 	return links
 }
 
-func normalizeLanes(src *carrierok.Loads) *carrierintel.Lanes {
-	lanes := &carrierintel.Lanes{
-		TotalLoads:      intelkit.Int(src.Total),
-		FTLPercent:      intelkit.NonNegativeFloat(src.FTLPercentage),
-		LTLPercent:      intelkit.NonNegativeFloat(src.LTLPercentage),
-		DeadheadPercent: intelkit.NonNegativeFloat(src.DeadheadPercentage),
-		FirstLoadAt:     intelkit.Unix(src.FirstLoadDate),
-		LastLoadAt:      intelkit.Unix(src.LastLoadDate),
-		Preferred:       normalizePreferredLanes(src.PreferredLanes),
+func sharedCount(
+	links []carrierintel.NetworkLink,
+	kind carrierintel.NetworkKind,
+	vendorCounts ...*jsonflex.Int,
+) *int {
+	linked := 0
+	for idx := range links {
+		if links[idx].Kind == kind {
+			linked++
+		}
 	}
-	if lanes.TotalLoads == nil && lanes.FTLPercent == nil && lanes.LTLPercent == nil &&
-		lanes.DeadheadPercent == nil && lanes.FirstLoadAt == nil && lanes.LastLoadAt == nil &&
-		len(lanes.Preferred) == 0 {
-		return nil
+	if linked > 0 {
+		return &linked
 	}
-	return lanes
+	return intelkit.SumInts(vendorCounts...)
 }
 
-func normalizePreferredLanes(src []carrierok.Lane) []carrierintel.Lane {
-	if len(src) == 0 {
+func normalizeLanes(src *carrierok.Lanes) *carrierintel.Lanes {
+	if len(src.PreferredStates) == 0 {
 		return nil
 	}
-	lanes := make([]carrierintel.Lane, 0, len(src))
-	for idx := range src {
-		lane := &src[idx]
-		entry := carrierintel.Lane{
-			OriginCity:       intelkit.Text(lane.OriginCity),
-			OriginState:      strings.ToUpper(intelkit.Text(lane.OriginState)),
-			DestinationCity:  intelkit.Text(lane.DestinationCity),
-			DestinationState: strings.ToUpper(intelkit.Text(lane.DestinationState)),
-			Loads:            intelkit.Int(lane.Loads),
+	states := make([]string, 0, len(src.PreferredStates))
+	for _, state := range src.PreferredStates {
+		normalized := strings.ToUpper(strings.TrimSpace(state))
+		if normalized != "" && !slices.Contains(states, normalized) {
+			states = append(states, normalized)
 		}
-		if entry == (carrierintel.Lane{}) {
-			continue
-		}
-		lanes = append(lanes, entry)
 	}
-	if len(lanes) == 0 {
+	if len(states) == 0 {
 		return nil
 	}
-	return lanes
+	return &carrierintel.Lanes{PreferredStates: states}
 }
 
 func normalizeBenchmarks(src *carrierok.Benchmarks) *carrierintel.Benchmarks {
 	benchmarks := &carrierintel.Benchmarks{
-		AnyAnomaly:               anomaly(src.IndicatorIndustry),
-		InspectionMileageAnomaly: anomaly(src.InspectionMileageRatio),
-		InspectedUnitsAnomaly:    anomaly(src.InspectedPowerUnitsRatio),
-		PowerUnitMileageAnomaly:  anomaly(src.PowerUnitMileageRatio),
+		AnyAnomaly:               intelkit.Bool(src.IndicatorIndustry),
+		InspectionMileageAnomaly: intelkit.Bool(src.InspectionMileageRatio),
+		InspectedUnitsAnomaly:    intelkit.Bool(src.InspectedPowerUnitsRatio),
+		PowerUnitMileageAnomaly:  intelkit.Bool(src.PowerUnitMileageRatio),
 	}
 	if *benchmarks == (carrierintel.Benchmarks{}) {
 		return nil
 	}
 	return benchmarks
-}
-
-func anomaly(indicator *jsonflex.String) *bool {
-	if indicator == nil {
-		return nil
-	}
-	var flagged bool
-	switch strings.ToUpper(intelkit.Text(indicator)) {
-	case "GREEN", "N", "NO", "FALSE", "NORMAL", "OK":
-		flagged = false
-	case "YELLOW", "RED", "ORANGE", "Y", "YES", "TRUE", "ANOMALY", "ANOMALOUS":
-		flagged = true
-	default:
-		return nil
-	}
-	return &flagged
 }

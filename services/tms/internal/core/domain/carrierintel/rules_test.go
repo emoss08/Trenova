@@ -201,7 +201,31 @@ func TestEvaluateFindings_BIPDOrganizationMinimum(t *testing.T) {
 	})
 	finding := findingByCode(findings, carrierintel.RuleInsuranceBIPDBelow)
 	require.NotNil(t, finding)
-	assert.Contains(t, finding.Message, "$2000000")
+	assert.Contains(t, finding.Message, "$2,000,000")
+}
+
+func TestEvaluateFindings_PendingCancellationIgnoresPastFilingCancellations(t *testing.T) {
+	t.Parallel()
+
+	p := healthyProfile()
+	p.Insurance.Filings = []carrierintel.InsuranceFiling{
+		{
+			Type:              carrierintel.InsuranceFilingTypeBIPD,
+			Status:            "H",
+			CancelEffectiveAt: new(testNow - 400*timeutils.SecondsPerDay),
+		},
+		{
+			Type:              carrierintel.InsuranceFilingTypeCargo,
+			Status:            "A",
+			CancelEffectiveAt: new(testNow + 12*timeutils.SecondsPerDay),
+		},
+	}
+	finding := findingByCode(evaluate(p, nil), carrierintel.RuleInsurancePendingCancel)
+	require.NotNil(t, finding)
+	assert.Equal(t, "An insurance cancellation takes effect in 12 days", finding.Message)
+
+	p.Insurance.Filings = p.Insurance.Filings[:1]
+	assert.Nil(t, findingByCode(evaluate(p, nil), carrierintel.RuleInsurancePendingCancel))
 }
 
 func TestEvaluateFindings_PendingCancellationOutsideWindow(t *testing.T) {
@@ -252,7 +276,7 @@ func TestEvaluateFindings_BrokerAuthorityAndBond(t *testing.T) {
 	require.NotNil(t, findingByCode(findings, carrierintel.RuleAuthorityInactive))
 	bond := findingByCode(findings, carrierintel.RuleInsuranceBondBelow)
 	require.NotNil(t, bond)
-	assert.Contains(t, bond.Message, "$75000")
+	assert.Contains(t, bond.Message, "$75,000")
 	assert.Nil(t, findingByCode(findings, carrierintel.RuleInsuranceBIPDBelow))
 	assert.Nil(t, findingByCode(findings, carrierintel.RuleFraudNetworkSharing))
 }
