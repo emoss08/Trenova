@@ -1,55 +1,70 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import {
   DEFAULT_EXPIRED_AFTER_HOURS,
   DEFAULT_STALE_AFTER_HOURS,
+  carrierIntelDepthMerge,
   carrierIntelFreshness,
+  carrierIntelProviderLabel,
 } from "@/lib/carrier-intelligence";
+import type { CarrierIntelDepth } from "@trenova/graphql/generated/graphql";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ClockAlertIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
+import { StatusDot } from "./status-dot";
+import { useCarrierIntelLabels } from "./use-carrier-intel-labels";
 
 export type FreshnessIndicatorProps = {
-  fetchedAt: number;
-  confirmedAt?: number | null;
   effectiveAsOf: number;
+  fetchedAt?: number | null;
+  confirmedAt?: number | null;
   sourceAsOf?: number | null;
+  provider?: string | null;
+  depth?: CarrierIntelDepth | null;
+  depthFetchedAt?: number | null;
+  fetchedDepth?: CarrierIntelDepth | null;
   staleAfterHours?: number;
   expiredAfterHours?: number;
-  now?: number;
+  assessStaleness?: boolean;
   className?: string;
 };
 
-const FRESHNESS_CLASSES = {
-  fresh: "text-muted-foreground",
-  stale: "text-yellow-700 dark:text-yellow-400",
-  expired: "text-red-700 dark:text-red-400",
-} as const;
-
 export function FreshnessIndicator({
+  effectiveAsOf,
   fetchedAt,
   confirmedAt,
-  effectiveAsOf,
   sourceAsOf,
+  provider,
+  depth,
+  depthFetchedAt,
+  fetchedDepth,
   staleAfterHours = DEFAULT_STALE_AFTER_HOURS,
   expiredAfterHours = DEFAULT_EXPIRED_AFTER_HOURS,
-  now: nowOverride,
+  assessStaleness = true,
   className,
 }: FreshnessIndicatorProps) {
   const t = useT();
-  const clock = useNowSeconds();
-  const now = nowOverride ?? clock;
+  const labels = useCarrierIntelLabels();
+  const now = useNowSeconds();
+  const merge = carrierIntelDepthMerge({ depth, depthFetchedAt, fetchedDepth, fetchedAt });
+  const mergeNote = merge
+    ? t(
+        "{0} from {1}, refreshed with {2} {3}",
+        labels.depth[merge.held],
+        formatRelativeTime(merge.heldAt - now),
+        labels.depthSource[merge.fetched],
+        formatRelativeTime(merge.fetchedAt - now),
+      )
+    : null;
 
-  const state = carrierIntelFreshness({ effectiveAsOf, now, staleAfterHours, expiredAfterHours });
+  const state = assessStaleness
+    ? carrierIntelFreshness({ effectiveAsOf, now, staleAfterHours, expiredAfterHours })
+    : "fresh";
   const relative = formatRelativeTime(effectiveAsOf - now);
-  const Icon =
-    state === "fresh" ? ClockIcon : state === "stale" ? ClockAlertIcon : TriangleAlertIcon;
-
   const label =
     state === "fresh"
-      ? t("As of {0}", relative)
+      ? t("as of {0}", relative)
       : state === "stale"
         ? t("Stale · as of {0}", relative)
         : t("Out of date · as of {0}", relative);
@@ -60,31 +75,47 @@ export function FreshnessIndicator({
         render={
           <span
             className={cn(
-              "inline-flex cursor-help items-center gap-1 text-xs",
-              FRESHNESS_CLASSES[state],
+              "inline-flex cursor-default items-center gap-2 text-xs tabular-nums",
+              state === "fresh" ? "text-muted-foreground" : "text-foreground",
               className,
             )}
             data-freshness={state}
+            data-depth-merged={merge ? "true" : undefined}
           />
         }
       >
-        <Icon className="size-3.5" aria-hidden />
+        {state !== "fresh" ? <StatusDot tone={state === "stale" ? "medium" : "critical"} /> : null}
         {label}
       </TooltipTrigger>
       <TooltipContent className="max-w-80">
+        {mergeNote ? <p className="mb-2 text-xs">{mergeNote}</p> : null}
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          <dt className="text-muted-foreground">{t("Fetched")}</dt>
-          <dd>{formatUnixDateTimeMedium(fetchedAt)}</dd>
-          <dt className="text-muted-foreground">{t("Confirmed")}</dt>
-          <dd>{confirmedAt ? formatUnixDateTimeMedium(confirmedAt) : t("Not confirmed")}</dd>
+          {fetchedAt ? (
+            <>
+              <dt className="opacity-70">{t("Fetched")}</dt>
+              <dd>{formatUnixDateTimeMedium(fetchedAt)}</dd>
+            </>
+          ) : null}
+          {confirmedAt !== undefined ? (
+            <>
+              <dt className="opacity-70">{t("Confirmed")}</dt>
+              <dd>{confirmedAt ? formatUnixDateTimeMedium(confirmedAt) : t("Not confirmed")}</dd>
+            </>
+          ) : null}
           {sourceAsOf ? (
             <>
-              <dt className="text-muted-foreground">{t("Source as of")}</dt>
+              <dt className="opacity-70">{t("Source as of")}</dt>
               <dd>{formatUnixDateTimeMedium(sourceAsOf)}</dd>
             </>
           ) : null}
-          <dt className="text-muted-foreground">{t("Effective as of")}</dt>
+          <dt className="opacity-70">{t("Effective as of")}</dt>
           <dd>{formatUnixDateTimeMedium(effectiveAsOf)}</dd>
+          {provider !== undefined ? (
+            <>
+              <dt className="opacity-70">{t("Provider")}</dt>
+              <dd>{carrierIntelProviderLabel(provider)}</dd>
+            </>
+          ) : null}
         </dl>
         {state === "stale" ? (
           <p className="mt-2 text-xs">

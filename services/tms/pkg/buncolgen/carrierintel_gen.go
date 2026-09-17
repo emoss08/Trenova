@@ -1667,6 +1667,8 @@ var CarrierIntelSnapshotColumns = struct {
 	RawPayloadID   Column // "raw_payload_id" → qualified: "cisnap.raw_payload_id"
 	ContentHash    Column // "content_hash" → qualified: "cisnap.content_hash"
 	FetchedAt      Column // "fetched_at" → qualified: "cisnap.fetched_at"
+	FetchedDepth   Column // "fetched_depth" → qualified: "cisnap.fetched_depth"
+	DepthFetchedAt Column // "depth_fetched_at" → qualified: "cisnap.depth_fetched_at"
 	SourceAsOf     Column // "source_as_of" → qualified: "cisnap.source_as_of"
 	ConfirmedAt    Column // "confirmed_at" → qualified: "cisnap.confirmed_at"
 	CreatedAt      Column // "created_at" → qualified: "cisnap.created_at"
@@ -1699,6 +1701,8 @@ var CarrierIntelSnapshotColumns = struct {
 	RawPayloadID:   NewColumn("raw_payload_id", "cisnap"),
 	ContentHash:    NewColumn("content_hash", "cisnap"),
 	FetchedAt:      NewColumn("fetched_at", "cisnap"),
+	FetchedDepth:   NewColumn("fetched_depth", "cisnap"),
+	DepthFetchedAt: NewColumn("depth_fetched_at", "cisnap"),
 	SourceAsOf:     NewColumn("source_as_of", "cisnap"),
 	ConfirmedAt:    NewColumn("confirmed_at", "cisnap"),
 	CreatedAt:      NewColumn("created_at", "cisnap"),
@@ -1737,6 +1741,8 @@ var CarrierIntelSnapshotFieldMap = map[string]string{
 	"rawPayloadId":   "raw_payload_id",
 	"contentHash":    "content_hash",
 	"fetchedAt":      "fetched_at",
+	"fetchedDepth":   "fetched_depth",
+	"depthFetchedAt": "depth_fetched_at",
 	"sourceAsOf":     "source_as_of",
 	"confirmedAt":    "confirmed_at",
 	"createdAt":      "created_at",
@@ -1773,6 +1779,8 @@ var CarrierIntelSnapshotInsertableColumns = []string{
 	"raw_payload_id",
 	"content_hash",
 	"fetched_at",
+	"fetched_depth",
+	"depth_fetched_at",
 	"source_as_of",
 	"confirmed_at",
 	"created_at",
@@ -1856,6 +1864,8 @@ var CarrierIntelSnapshotFilter = struct {
 	RawPayloadID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rawPayloadId" → DB: "raw_payload_id"
 	ContentHash    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentHash" → DB: "content_hash"
 	FetchedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fetchedAt" → DB: "fetched_at"
+	FetchedDepth   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fetchedDepth" → DB: "fetched_depth"
+	DepthFetchedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "depthFetchedAt" → DB: "depth_fetched_at"
 	SourceAsOf     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceAsOf" → DB: "source_as_of"
 	ConfirmedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confirmedAt" → DB: "confirmed_at"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -1941,6 +1951,12 @@ var CarrierIntelSnapshotFilter = struct {
 	},
 	FetchedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fetchedAt", op, value)
+	},
+	FetchedDepth: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fetchedDepth", op, value)
+	},
+	DepthFetchedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("depthFetchedAt", op, value)
 	},
 	SourceAsOf: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceAsOf", op, value)

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
@@ -569,10 +570,6 @@ func decimalOrZero(v *decimal.Decimal) decimal.Decimal {
 	return *v
 }
 
-func formatUSD(v decimal.Decimal) string {
-	return "$" + v.StringFixedBank(0)
-}
-
 func evalInsuranceNoneOnFile(ctx *RuleContext) (bool, string) {
 	if ctx.BrokerAuthority {
 		return false, ""
@@ -603,7 +600,7 @@ func coverageBelow(
 		return false, ""
 	}
 	return true, fmt.Sprintf("%s on file (%s) is below the required %s",
-		label, formatUSD(*onFile), formatUSD(threshold))
+		label, money.FormatWholeDollars(*onFile), money.FormatWholeDollars(threshold))
 }
 
 func evalBIPDBelow(ctx *RuleContext) (bool, string) {
@@ -637,23 +634,21 @@ func evalBondBelow(ctx *RuleContext) (bool, string) {
 
 func evalPendingCancellation(ctx *RuleContext) (bool, string) {
 	ins := ctx.Profile.Insurance
+	window := int64(ctx.paramInt("withinDays")) * timeutils.SecondsPerDay
+	from, until := ctx.Now-timeutils.SecondsPerDay, ctx.Now+window
 	candidates := make([]int64, 0, len(ins.Filings)+1)
-	if ins.PendingCancelAt != nil {
-		candidates = append(candidates, *ins.PendingCancelAt)
+	if at := ins.PendingCancelAt; at != nil && *at >= from && *at <= until {
+		candidates = append(candidates, *at)
 	}
 	for idx := range ins.Filings {
-		if at := ins.Filings[idx].CancelEffectiveAt; at != nil {
+		if at := ins.Filings[idx].CancelEffectiveAt; at != nil && *at >= from && *at <= until {
 			candidates = append(candidates, *at)
 		}
 	}
 	if len(candidates) == 0 {
 		return false, ""
 	}
-	window := int64(ctx.paramInt("withinDays")) * timeutils.SecondsPerDay
 	earliest := slices.Min(candidates)
-	if earliest < ctx.Now-timeutils.SecondsPerDay || earliest > ctx.Now+window {
-		return false, ""
-	}
 	days := timeutils.WholeDaysBetween(ctx.Now, earliest)
 	if days <= 0 {
 		return true, "An insurance cancellation takes effect today"

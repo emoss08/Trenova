@@ -10,7 +10,6 @@ import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { groupCarrierEligibility, hasEligibilityContent } from "@/lib/carrier-eligibility";
 import { carrierRateMethodChoices } from "@/lib/choices";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -20,10 +19,14 @@ import type {
   CarrierAssignmentPayloadInput,
   CarrierEligibility,
 } from "@trenova/shared/types/shipment";
-import { OctagonXIcon, PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray, type Control, type UseFormReturn } from "react-hook-form";
-import { IntelAdvisoriesCallout, IntelBlockersAlert } from "./intel-eligibility-alerts";
+import {
+  EligibilityGroup,
+  IntelAdvisoriesCallout,
+  IntelBlockersAlert,
+} from "./intel-eligibility-alerts";
 
 /**
  * The payload schema coerces GraphQL decimal strings to numbers, so the form's
@@ -85,19 +88,14 @@ export function CarrierEligibilityAlerts({
   const hasBlockers = grouped.recordBlockers.length > 0 || grouped.intelBlockers.length > 0;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3 rounded-lg border px-3 py-3">
       {grouped.recordBlockers.length > 0 && (
-        <Alert variant="destructive" data-eligibility-group="record-blockers">
-          <OctagonXIcon />
-          <AlertTitle>{t("Carrier cannot be assigned")}</AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc pl-4">
-              {grouped.recordBlockers.map((blocker) => (
-                <li key={blocker.key}>{blocker.message}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
+        <EligibilityGroup
+          group="record-blockers"
+          tone="blocker"
+          title={t("Carrier cannot be assigned")}
+          rows={grouped.recordBlockers}
+        />
       )}
       <IntelBlockersAlert
         items={grouped.intelBlockers}
@@ -105,27 +103,23 @@ export function CarrierEligibilityAlerts({
         onEligibilityChanged={onEligibilityChanged}
       />
       {grouped.warnings.length > 0 && (
-        <Alert variant="warning" data-eligibility-group="warnings">
-          <TriangleAlertIcon />
-          <AlertTitle>{t("Insurance warnings")}</AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc pl-4">
-              {grouped.warnings.map((warning) => (
-                <li key={warning.key}>{warning.message}</li>
-              ))}
-            </ul>
-            {!hasBlockers && (
-              <div className="mt-2">
-                <CheckboxField
-                  control={control}
-                  name="overrideInsuranceWarning"
-                  label={t("Assign anyway")}
-                  description={t("Proceed despite the insurance warnings above.")}
-                />
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
+        <EligibilityGroup
+          group="warnings"
+          tone="warning"
+          title={t("Insurance warnings")}
+          rows={grouped.warnings}
+        >
+          {!hasBlockers && (
+            <div className="pt-1">
+              <CheckboxField
+                control={control}
+                name="overrideInsuranceWarning"
+                label={t("Assign anyway")}
+                description={t("Proceed despite the insurance warnings above.")}
+              />
+            </div>
+          )}
+        </EligibilityGroup>
       )}
       <IntelAdvisoriesCallout items={grouped.advisories} carrierId={carrierId} />
     </div>

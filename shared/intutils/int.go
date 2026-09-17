@@ -3,6 +3,8 @@ package intutils
 import (
 	"fmt"
 	"math"
+	"strconv"
+	"strings"
 )
 
 type Numeric interface {
@@ -79,17 +81,21 @@ func ClonePointer[T Numeric](value *T) *T {
 }
 
 func FormatWithCommas(n int64) string {
-	s := fmt.Sprintf("%d", n)
-	if len(s) <= 3 {
+	s := strconv.FormatInt(n, 10)
+	digits := strings.TrimPrefix(s, "-")
+	if len(digits) <= 3 {
 		return s
 	}
 
-	result := make([]byte, 0, len(s)+(len(s)-1)/3)
-	for i, c := range s {
-		if i > 0 && (len(s)-i)%3 == 0 {
+	result := make([]byte, 0, len(s)+(len(digits)-1)/3)
+	if len(digits) != len(s) {
+		result = append(result, '-')
+	}
+	for i := range len(digits) {
+		if i > 0 && (len(digits)-i)%3 == 0 {
 			result = append(result, ',')
 		}
-		result = append(result, byte(c))
+		result = append(result, digits[i])
 	}
 
 	return string(result)

@@ -183,6 +183,12 @@ enum CarrierIntelInsuranceChangeKind {
   NewFiling
 }
 
+enum CarrierSourcingSort {
+  BestMatch
+  FleetSizeDesc
+  AuthorityAgeDesc
+}
+
 enum CarrierIntelRuleParamType {
   Integer
   Decimal
@@ -243,6 +249,7 @@ type CarrierIntelAuthority {
 
 type CarrierIntelInsuranceFiling {
   type: CarrierIntelInsuranceFilingType!
+  status: String
   insurerName: String
   policyNumber: String
   coverage: Decimal
@@ -286,6 +293,9 @@ type CarrierIntelBasicMeasure {
   alert: Boolean!
   roadsideAlert: Boolean!
   acIndicator: Boolean!
+  violations: Int
+  oosViolations: Int
+  measuredAt: Timestamp
 }
 
 type CarrierIntelInspections {
@@ -405,6 +415,7 @@ type CarrierIntelLanes {
   firstLoadAt: Timestamp
   lastLoadAt: Timestamp
   preferred: [CarrierIntelLane!]
+  preferredStates: [String!]
 }
 
 type CarrierIntelBenchmarks {
@@ -470,6 +481,8 @@ type CarrierIntelSnapshot {
   reviewNote: String
   policyVersion: Int!
   fetchedAt: Timestamp!
+  fetchedDepth: CarrierIntelDepth!
+  depthFetchedAt: Timestamp!
   sourceAsOf: Timestamp
   confirmedAt: Timestamp
   effectiveAsOf: Timestamp!
@@ -488,7 +501,9 @@ type CarrierIntelEvent {
   source: CarrierIntelEventSource!
   category: CarrierIntelSection!
   fieldPath: String
+  fieldLabel: String
   ruleCode: String
+  ruleLabel: String
   severity: CarrierIntelSeverity!
   action: CarrierIntelRuleAction
   priorValue: String
@@ -498,8 +513,10 @@ type CarrierIntelEvent {
   detectedAt: Timestamp!
   status: CarrierIntelEventStatus!
   acknowledgedById: ID
+  acknowledgedBy: User
   acknowledgedAt: Timestamp
   resolvedById: ID
+  resolvedBy: User
   resolvedAt: Timestamp
   resolution: CarrierIntelEventResolution
   resolutionNote: String
@@ -737,6 +754,7 @@ type CarrierSourcingResult {
 type CarrierSourcingPage {
   items: [CarrierSourcingResult!]!
   total: Int!
+  filteredOut: Int!
   provider: String!
 }
 
@@ -937,9 +955,11 @@ input CarrierSourcingSearchInput {
   minPowerUnits: Int
   maxPowerUnits: Int
   minAuthorityAgeDays: Int
+  maxAuthorityAgeDays: Int
   hazmatOnly: Boolean
   excludeBlocking: Boolean
   excludeExistingCarriers: Boolean
+  sort: CarrierSourcingSort
   limit: Int
   offset: Int
 }
@@ -967,6 +987,7 @@ extend type Query {
     input: DataTableConnectionInput!
     filter: CarrierIntelEventFilterInput
   ): CarrierIntelEventConnection!
+  carrierIntelEvent(id: ID!): CarrierIntelEvent
   carrierIntelMonitoringStatus: CarrierIntelMonitoringStatus!
   carrierMonitoringEnrollments(
     input: DataTableConnectionInput!

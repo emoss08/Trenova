@@ -260,30 +260,30 @@ func TestClient_LookupFullRecordsOnce(t *testing.T) {
 	limiter := &keyRecordingLimiter{}
 	bound := bindTestClient(t, liveKey, limiter, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/v2/profile", r.URL.Path)
-		assert.Equal(t, "dot_number=818175", r.URL.RawQuery)
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		assert.Equal(t, "dot_number=265752", r.URL.RawQuery)
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	})
 
 	assert.Equal(t, integration.TypeCarrierOK, bound.client.Provider())
 	assert.False(t, bound.client.IsSandbox())
 
 	result, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{DOTNumber: " 818175 "},
+		Identifier: services.CarrierIntelIdentifier{DOTNumber: " 265752 "},
 		Depth:      carrierintel.LookupDepthFull,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, carrierintel.EndpointProfileFull, result.Endpoint)
 	assert.Equal(t, carrierintel.LookupDepthFull, result.Depth)
-	assert.Equal(t, "818175-MC277621", result.ProviderRef)
-	assert.Equal(t, "818175", result.Profile.DOTNumber())
+	assert.Equal(t, "265752-MC179059", result.ProviderRef)
+	assert.Equal(t, "265752", result.Profile.DOTNumber())
 	assert.NotEmpty(t, result.Raw)
 	require.NotNil(t, result.SourceAsOf)
-	assert.Equal(t, unixDate(t, "2026-09-10"), *result.SourceAsOf)
+	assert.Equal(t, unixDate(t, "2026-09-16"), *result.SourceAsOf)
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
 	assert.Equal(t, carrierintel.EndpointProfileFull, calls[0].Endpoint)
-	assert.Equal(t, "818175", calls[0].DOTNumber)
+	assert.Equal(t, "265752", calls[0].DOTNumber)
 	assert.Equal(t, http.StatusOK, calls[0].StatusCode)
 	assert.True(t, calls[0].Found)
 	assert.Equal(t, 1, calls[0].Units)
@@ -328,9 +328,9 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 		{
 			name:     "full prefers dot over docket",
 			depth:    carrierintel.LookupDepthFull,
-			id:       services.CarrierIntelIdentifier{DOTNumber: "818175", DocketNumber: "MC1"},
+			id:       services.CarrierIntelIdentifier{DOTNumber: "265752", DocketNumber: "MC1"},
 			path:     "/v2/profile",
-			query:    "dot_number=818175",
+			query:    "dot_number=265752",
 			endpoint: carrierintel.EndpointProfileFull,
 		},
 	}
@@ -342,7 +342,7 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 			bound := bindTestClient(t, liveKey, nil, func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, tc.path, r.URL.Path)
 				assert.Equal(t, tc.query, r.URL.RawQuery)
-				writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+				writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 			})
 
 			result, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
@@ -356,7 +356,7 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 			calls := bound.log.all()
 			require.Len(t, calls, 1)
 			assert.Equal(t, tc.endpoint, calls[0].Endpoint)
-			assert.Equal(t, "818175", calls[0].DOTNumber)
+			assert.Equal(t, "265752", calls[0].DOTNumber)
 		})
 	}
 }
@@ -482,7 +482,7 @@ func TestClient_LimiterDenialPassesThrough(t *testing.T) {
 	limiter := &denyingLimiter{}
 	bound := bindTestClient(t, liveKey, limiter, func(w http.ResponseWriter, _ *http.Request) {
 		hits.Add(1)
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	})
 
 	_, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
@@ -509,7 +509,7 @@ func TestClient_SandboxSkipsLimiter(t *testing.T) {
 
 	limiter := &denyingLimiter{}
 	bound := bindTestClient(t, sandboxKey, limiter, func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+		writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 	})
 	assert.True(t, bound.client.IsSandbox())
 
@@ -705,7 +705,7 @@ func TestClient_FindByEquipment(t *testing.T) {
 		switch r.URL.Query().Get("unit_number") {
 		case "101":
 			assert.Equal(t, "TRUCK", r.URL.Query().Get("unit_type"))
-			writeJSON(w, http.StatusOK, fixture(t, "profile_818175.json"))
+			writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 		default:
 			writeJSON(w, http.StatusOK, fixture(t, "not_found.json"))
 		}
@@ -718,10 +718,9 @@ func TestClient_FindByEquipment(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result.Matches, 1)
 	match := result.Matches[0]
-	assert.Equal(t, "818175", match.DOTNumber)
-	assert.Equal(t, "SANDBOX FREIGHT LINES INC", match.LegalName)
-	require.NotNil(t, match.Unit)
-	assert.Equal(t, "1XKYD49X0JJ123456", match.Unit.VIN)
+	assert.Equal(t, "265752", match.DOTNumber)
+	assert.Equal(t, "FEDEX GROUND PACKAGE SYSTEM INC", match.LegalName)
+	assert.Nil(t, match.Unit)
 	assert.True(t, strings.HasPrefix(string(result.Raw), "[{"))
 
 	var raws []map[string]any
@@ -736,7 +735,7 @@ func TestClient_FindByEquipment(t *testing.T) {
 	calls := bound.log.all()
 	require.Len(t, calls, 2)
 	assert.Equal(t, carrierintel.EndpointEquipment, calls[0].Endpoint)
-	assert.Equal(t, "818175", calls[0].DOTNumber)
+	assert.Equal(t, "265752", calls[0].DOTNumber)
 	assert.True(t, calls[0].Found)
 	assert.False(t, calls[1].Found)
 
@@ -747,7 +746,18 @@ func TestClient_FindByEquipment(t *testing.T) {
 func TestMatchingUnit_ByVINAndPlate(t *testing.T) {
 	t.Parallel()
 
-	equipment := normalizeProfile(fixtureProfile(t)).Equipment
+	year := 2018
+	equipment := []carrierintel.Equipment{
+		{
+			VIN:         "1XKYD49X0JJ123456",
+			UnitType:    carrierintel.UnitTypeTractor,
+			Year:        &year,
+			PlateNumber: "P123456",
+			PlateState:  "IL",
+			UnitNumber:  "101",
+		},
+		{VIN: "1GRAA0621KB700001", UnitType: carrierintel.UnitTypeTrailer},
+	}
 
 	byVIN := matchingUnit(
 		equipment,

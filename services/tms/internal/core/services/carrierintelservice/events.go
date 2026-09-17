@@ -25,6 +25,21 @@ func (s *Service) ListEvents(
 	return s.eventRepo.ListConnection(ctx, req)
 }
 
+func (s *Service) GetEvent(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	eventID pulid.ID,
+) (*carrierintel.CarrierIntelEvent, error) {
+	events, err := s.eventRepo.GetByIDs(ctx, tenantInfo, []pulid.ID{eventID})
+	if err != nil {
+		return nil, err
+	}
+	if len(events) == 0 {
+		return nil, errortypes.NewNotFoundError("Carrier intelligence event not found")
+	}
+	return events[0], nil
+}
+
 func (s *Service) EventCounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -101,14 +116,10 @@ func (s *Service) ResolveEvent(
 			"Explain why this change is a false positive")
 	}
 
-	events, err := s.eventRepo.GetByIDs(ctx, req.TenantInfo, []pulid.ID{req.EventID})
+	event, err := s.GetEvent(ctx, req.TenantInfo, req.EventID)
 	if err != nil {
 		return nil, err
 	}
-	if len(events) == 0 {
-		return nil, errortypes.NewNotFoundError("Carrier intelligence event not found")
-	}
-	event := events[0]
 	original := *event
 
 	if err = event.Resolve(req.TenantInfo.UserID, req.Resolution, note, s.now()); err != nil {
@@ -376,7 +387,7 @@ func (s *Service) RawPayload(
 		}, auditservice.WithComment("Carrier intelligence raw payload exported")); err != nil {
 			s.l.Error("failed to log audit action", zap.Error(err))
 		}
-		return raw.Payload, nil
+		return raw.Payload.String(), nil
 	}
 	return "", errortypes.NewNotFoundError("Carrier intelligence snapshot not found")
 }

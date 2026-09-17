@@ -11,16 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func loadFixtureProfile(t *testing.T) (*carrierok.Profile, []byte) {
+const (
+	fullProfileFixture = "profile_265752.json"
+	liteProfileFixture = "profile_lite_265752.json"
+)
+
+func loadFixtureProfile(t *testing.T, name string) (*carrierok.Profile, []byte) {
 	t.Helper()
 
-	var envelope struct {
-		Items []sonic.NoCopyRawMessage `json:"items"`
-	}
-	require.NoError(t, sonic.Unmarshal(fixture(t, "profile_818175.json"), &envelope))
-	require.Len(t, envelope.Items, 1)
-
-	item := []byte(envelope.Items[0])
+	item := fixture(t, name)
 	profile, err := carrierok.DecodeProfile(item)
 	require.NoError(t, err)
 	return profile, item
@@ -33,199 +32,277 @@ func unixDate(year int, month time.Month, day int) int64 {
 func TestDecodeProfileIdentityAndAuthority(t *testing.T) {
 	t.Parallel()
 
-	profile, item := loadFixtureProfile(t)
+	profile, item := loadFixtureProfile(t, fullProfileFixture)
 
 	assert.JSONEq(t, string(item), string(profile.Raw))
-	assert.Equal(t, "818175", profile.Identity.DOTNumber.Value())
+	assert.Equal(t, "265752", profile.Identity.DOTNumber.Value())
 	assert.Equal(t, "MC", profile.Identity.DocketPrefix.Value())
+	assert.Equal(t, "179059", profile.Identity.DocketNumber.Value())
+	assert.Equal(t, "119133494", profile.Identity.DUNS.Value())
 	assert.True(t, profile.Identity.DBAFlag.Value())
-	assert.InDelta(t, 31.2, profile.Identity.DOTAge.Value(), 1e-9)
-	assert.Equal(t, unixDate(2026, time.September, 10), *profile.Identity.SnapshotDate.Unix())
+	assert.Equal(t, int64(14936), profile.Identity.DOTAgeDays.Value())
+	assert.Equal(t, unixDate(1985, time.October, 25), *profile.Identity.AddedDate.Unix())
+	assert.Equal(t, unixDate(2026, time.September, 16), *profile.Identity.SnapshotDate.Unix())
 
-	assert.Equal(t, "ACTIVE", profile.Authority.Common.Value())
-	assert.Nil(t, profile.Authority.BrokerPending)
-	assert.Nil(t, profile.Authority.AgeBroker)
-	assert.Equal(t, int64(2), profile.Authority.TotalRevocations.Value())
-	require.Len(t, profile.Authority.History, 2)
-	assert.Equal(t, "CONTRACT", profile.Authority.History[1].AuthorityType.Value())
-	assert.Equal(t, "REVOKED", profile.Authority.History[1].Action.Value())
-	assert.Equal(
-		t,
-		unixDate(2015, time.August, 3),
-		*profile.Authority.History[1].ServedDate.Unix(),
-	)
-	assert.NotEmpty(t, profile.Authority.History[0].Raw)
+	authority := profile.Authority
+	assert.Equal(t, "Inactive", authority.Common.Value())
+	require.NotNil(t, authority.BrokerPending)
+	assert.False(t, authority.BrokerPending.Value())
+	require.NotNil(t, authority.CommonRevocation)
+	assert.False(t, authority.CommonRevocation.Value())
+	assert.Equal(t, int64(6882), authority.AgeCommonDays.Value())
+	assert.Equal(t, int64(6735), authority.AgeBrokerDays.Value())
+	assert.Equal(t, unixDate(2006, time.May, 10), *authority.StartBroker.Unix())
+	assert.Equal(t, int64(5), authority.TotalRevocations.Value())
+	assert.Equal(t, int64(699), authority.DaysSinceLastRevocation.Value())
+	assert.Equal(t, unixDate(2024, time.October, 17), *authority.LastRevocationDate.Unix())
+
+	require.Len(t, authority.History, 5)
+	broker := authority.History[0]
+	assert.Equal(t, "Property Broker", broker.AuthorityType.Value())
+	assert.Equal(t, "Granted", broker.OriginalAction.Value())
+	assert.Equal(t, unixDate(2006, time.May, 10), *broker.OriginalServedDate.Unix())
+	assert.Equal(t, "Revoked", broker.DispositionAction.Value())
+	assert.Equal(t, unixDate(2024, time.October, 17), *broker.DispositionServedDate.Unix())
+	assert.NotEmpty(t, broker.Raw)
 }
 
-func TestDecodeProfileFlexibleInsurance(t *testing.T) {
+func TestDecodeProfileInsurance(t *testing.T) {
 	t.Parallel()
 
-	profile, _ := loadFixtureProfile(t)
+	profile, _ := loadFixtureProfile(t, fullProfileFixture)
 
-	assert.InDelta(t, 750000, profile.Insurance.BIPDOnFile.Value(), 1e-9)
-	assert.InDelta(t, 750000, profile.Insurance.BIPDRequired.Value(), 1e-9)
-	assert.InDelta(t, 100000, profile.Insurance.CargoOnFile.Value(), 1e-9)
-	assert.Nil(t, profile.Insurance.CargoRequired)
-	assert.Nil(t, profile.Insurance.BondRequired)
-	require.NotNil(t, profile.Insurance.BondOnFile)
-	assert.Zero(t, profile.Insurance.BondOnFile.Value())
-	assert.Nil(t, profile.Insurance.PendingCancelDate)
-	assert.Equal(t, unixDate(2024, time.March, 15), *profile.Insurance.LastCanceled.Unix())
+	insurance := profile.Insurance
+	assert.Zero(t, insurance.BIPDOnFile.Value())
+	require.NotNil(t, insurance.BIPDOnFile)
+	assert.InDelta(t, 5_000_000, insurance.BIPDRequired.Value(), 1e-9)
+	assert.InDelta(t, 75_000, insurance.BondRequired.Value(), 1e-9)
+	assert.Nil(t, insurance.CargoOnFile)
+	require.NotNil(t, insurance.Indicator)
+	assert.False(t, insurance.Indicator.Value())
+	assert.Equal(t, int64(5), insurance.CancelCount.Value())
+	assert.Equal(t, unixDate(2025, time.June, 23), *insurance.LastCanceled.Unix())
+	assert.Nil(t, insurance.PendingCancelDate)
 
-	require.Len(t, profile.Insurance.History, 2)
-	cargo := profile.Insurance.History[1]
+	require.Len(t, insurance.History, 4)
+	cargo := insurance.History[0]
+	assert.Equal(t, "A", cargo.Status.Value())
+	assert.Equal(t, "34", cargo.FormCode.Value())
 	assert.Equal(t, "CARGO", cargo.Type.Value())
-	assert.Equal(t, "NORTHLAND INSURANCE", cargo.Insurer.Value())
-	assert.InDelta(t, 100000, cargo.Coverage.Value(), 1e-9)
-	assert.Equal(t, int64(1577836800), *cargo.EffectiveDate.Unix())
-	assert.Equal(t, unixDate(2024, time.March, 15), *cargo.CancelEffectiveDate.Unix())
-	assert.Equal(t, "REPLACED", cargo.CancelMethod.Value())
-	assert.InDelta(t, 750000, profile.Insurance.History[0].Coverage.Value(), 1e-9)
+	assert.Equal(t, "OLD REPUBLIC INSURANCE COMPANY", cargo.Insurer.Value())
+	assert.Equal(t, "MWE 315778", cargo.PolicyNumber.Value())
+	assert.InDelta(t, 5000, cargo.Coverage.Value(), 1e-9)
+	assert.Zero(t, cargo.UnderlyingLimit.Value())
+	assert.Equal(t, unixDate(2020, time.October, 1), *cargo.EffectiveDate.Unix())
+	assert.Equal(t, unixDate(2021, time.October, 1), *cargo.NextRenewalDate.Unix())
+	assert.Nil(t, cargo.CancelEffectiveDate)
+	assert.Nil(t, cargo.CancelMethod)
+
+	bipd := insurance.History[2]
+	assert.Equal(t, "H", bipd.Status.Value())
+	assert.Equal(t, "BIPD", bipd.Type.Value())
+	assert.InDelta(t, 5_000_000, bipd.Coverage.Value(), 1e-9)
+	assert.Equal(t, "CANCELLED", bipd.CancelMethod.Value())
+	assert.Equal(t, unixDate(2024, time.November, 30), *bipd.CancelEffectiveDate.Unix())
 }
 
 func TestDecodeProfileSafetyAndBasics(t *testing.T) {
 	t.Parallel()
 
-	profile, _ := loadFixtureProfile(t)
+	profile, _ := loadFixtureProfile(t, fullProfileFixture)
 
-	assert.InDelta(t, 48, profile.Safety.ISSValue.Value(), 1e-9)
-	assert.Equal(t, "Satisfactory", profile.Safety.SafetyRating.Value())
-	require.NotNil(t, profile.Safety.OutOfServiceFlag)
-	assert.False(t, profile.Safety.OutOfServiceFlag.Value())
-	assert.Nil(t, profile.Safety.OutOfServiceDate)
+	safety := profile.Safety
+	assert.Equal(t, int64(69), safety.ISSValue.Value())
+	assert.Equal(t, "High", safety.RiskScore.Value())
+	assert.InDelta(t, 0.44334646087254104, safety.RiskScoreProbability.Value(), 1e-12)
+	assert.Equal(t, "Satisfactory", safety.SafetyRating.Value())
+	assert.Equal(t, unixDate(1996, time.September, 25), *safety.SafetyRatingDate.Unix())
+	require.NotNil(t, safety.OutOfServiceFlag)
+	assert.False(t, safety.OutOfServiceFlag.Value())
+	assert.True(t, safety.IndicatorCarrierSafety.Value())
 
-	require.Len(t, profile.Basics, 3)
+	require.Len(t, profile.Basics, len(carrierok.BasicCategories()))
 
 	unsafe := profile.Basics[carrierok.BasicUnsafeDriving]
-	assert.InDelta(t, 1.23, unsafe.Measure.Value(), 1e-9)
-	assert.InDelta(t, 0.41, unsafe.Percentile.Value(), 1e-9)
+	assert.InDelta(t, 0.13, unsafe.Measure.Value(), 1e-9)
+	require.NotNil(t, unsafe.ACIndicator)
+	assert.False(t, unsafe.ACIndicator.Value())
+	assert.Equal(t, unixDate(2024, time.December, 31), *unsafe.MeasuredAt.Unix())
 	require.NotNil(t, unsafe.Alert)
 	assert.False(t, unsafe.Alert.Value())
-	require.NotNil(t, unsafe.RoadsideAlert)
-	assert.False(t, unsafe.RoadsideAlert.Value())
-	assert.InDelta(t, 0.65, unsafe.InterventionThreshold.Value(), 1e-9)
+	require.NotNil(t, unsafe.Violations)
+	assert.Zero(t, unsafe.Violations.Value())
+	require.NotNil(t, unsafe.OOSViolations)
+
+	maintenance := profile.Basics[carrierok.BasicVehicleMaintenance]
+	assert.InDelta(t, 3.11, maintenance.Measure.Value(), 1e-9)
+	require.NotNil(t, maintenance.Alert)
+
+	crash := profile.Basics[carrierok.BasicCrashIndicator]
+	assert.Nil(t, crash.Measure)
+	assert.Nil(t, crash.MeasuredAt)
+	require.NotNil(t, crash.Alert)
+	assert.Nil(t, crash.Violations)
+}
+
+func TestDecodeProfileBasicAlertsAndHistoryOrdering(t *testing.T) {
+	t.Parallel()
+
+	profile, err := carrierok.DecodeProfile([]byte(`{
+		"basic_alert_hours_of_service": true,
+		"violations_hours_of_service": "12",
+		"violations_oos_hours_of_service": "3",
+		"basic_alert_vehicle_maintence": true,
+		"basic_history": [
+			{"snapshot_date": "2025-01-31", "basic_measure_hours_of_service": 4.2},
+			{"snapshot_date": "2025-03-31", "basic_measure_hours_of_service": 6.8,
+				"basic_ac_indicator_hours_of_service": true},
+			{"snapshot_date": "2025-02-28", "basic_measure_hours_of_service": 5.1}
+		]
+	}`))
+	require.NoError(t, err)
 
 	hos := profile.Basics[carrierok.BasicHoursOfService]
 	assert.True(t, hos.Alert.Value())
-	assert.InDelta(t, 0.72, hos.Percentile.Value(), 1e-9)
-	assert.Nil(t, hos.ACIndicator)
+	assert.Equal(t, int64(12), hos.Violations.Value())
+	assert.Equal(t, int64(3), hos.OOSViolations.Value())
+	assert.InDelta(t, 6.8, hos.Measure.Value(), 1e-9)
+	assert.True(t, hos.ACIndicator.Value())
+	assert.Equal(t, unixDate(2025, time.March, 31), *hos.MeasuredAt.Unix())
 
-	maintenance, ok := profile.Basics[carrierok.BasicVehicleMaintenance]
-	require.True(t, ok)
-	assert.InDelta(t, 5.1, maintenance.Measure.Value(), 1e-9)
-	assert.True(t, maintenance.Alert.Value())
-
-	_, ok = profile.Basics[carrierok.BasicControlledSubstance]
+	assert.True(t, profile.Basics[carrierok.BasicVehicleMaintenance].Alert.Value())
+	_, ok := profile.Basics[carrierok.BasicControlledSubstance]
 	assert.False(t, ok)
+
+	_, err = carrierok.DecodeProfile([]byte(`[1,2]`))
+	require.ErrorIs(t, err, carrierok.ErrUnexpectedPayload)
 }
 
 func TestDecodeProfileInspectionsFleetAndOperations(t *testing.T) {
 	t.Parallel()
 
-	profile, _ := loadFixtureProfile(t)
+	profile, _ := loadFixtureProfile(t, fullProfileFixture)
 
-	assert.Equal(t, int64(120), profile.Inspections.Driver.Value())
-	assert.Equal(t, int64(17), profile.Inspections.VehicleOutOfService.Value())
-	assert.InDelta(t, 2.5, profile.Inspections.DriverOutOfServicePct.Value(), 1e-9)
-	assert.InDelta(t, 22.26, profile.Inspections.NationalAvgOOSVehicle.Value(), 1e-9)
-	assert.False(t, profile.Inspections.OOSAlertHazmat.Value())
+	inspections := profile.Inspections
+	assert.Equal(t, int64(15015), inspections.Total.Value())
+	assert.Equal(t, int64(14947), inspections.Driver.Value())
+	assert.Equal(t, int64(1662), inspections.VehicleOutOfService.Value())
+	assert.InDelta(t, 0.019, inspections.DriverOutOfServiceRate.Value(), 1e-9)
+	assert.InDelta(t, 0.183, inspections.VehicleOutOfServiceRate.Value(), 1e-9)
+	assert.InDelta(t, 0.2226, inspections.NationalAvgOOSVehicle.Value(), 1e-9)
+	assert.False(t, inspections.OOSAlertHazmat.Value())
 
-	assert.Equal(t, int64(4), profile.Crashes.Total.Value())
-	assert.Equal(t, int64(1), profile.Crashes.Injuries.Value())
+	assert.Equal(t, int64(123), profile.Crashes.Total.Value())
+	assert.Equal(t, int64(47), profile.Crashes.Injuries.Value())
+	assert.Equal(t, unixDate(2026, time.August, 24), *profile.Crashes.LastCrashDate.Unix())
 
-	assert.Equal(t, int64(85), profile.Fleet.TotalPowerUnits.Value())
-	assert.JSONEq(t, `{"tractors":85,"trailers":150}`, string(profile.Fleet.EquipmentSummary))
-	require.Len(t, profile.Fleet.Equipment, 2)
-	assert.Equal(t, int64(2018), profile.Fleet.Equipment[0].Year.Value())
-	assert.Equal(t, "TRAILER", profile.Fleet.Equipment[1].UnitType.Value())
-	assert.Equal(t, int64(2019), profile.Fleet.Equipment[1].Year.Value())
-	assert.Nil(t, profile.Fleet.Equipment[1].PlateNumber)
+	fleet := profile.Fleet
+	assert.Equal(t, int64(101844), fleet.TotalPowerUnits.Value())
+	assert.Equal(t, int64(30014), fleet.TotalDriversCDL.Value())
+	assert.Equal(t, int64(18363), fleet.TermLeasedTractors.Value())
+	assert.Equal(t, int64(79704), fleet.OwnedTrailers.Value())
+	assert.Nil(t, fleet.OwnedTractors)
+	assert.Empty(t, fleet.Equipment)
 
-	assert.Nil(t, profile.Contacts.Fax)
-	assert.Nil(t, profile.Contacts.SecondaryContact)
-	assert.Equal(t, "JANE DOE", profile.Contacts.PrimaryContact.Value())
+	assert.Nil(t, profile.Contacts.Cellphone)
+	assert.Equal(t, "4128595045", profile.Contacts.Fax.Value())
+	assert.Equal(t, "CLARENCE DOZIER", profile.Contacts.PrimaryContact.Value())
 
-	assert.Equal(t, "60601", profile.Addresses.Physical.ZipCode.Value())
-	assert.False(t, profile.Addresses.Physical.Undeliverable.Value())
-	assert.Nil(t, profile.Addresses.Mailing.Full)
-	assert.Equal(t, "PO BOX 42", profile.Addresses.Mailing.Street.Value())
+	physical := profile.Addresses.Physical
+	assert.Equal(t, "38125", physical.ZipCode.Value())
+	assert.Equal(t, "US", physical.CountryCode.Value())
+	require.NotNil(t, physical.Undeliverable)
+	assert.False(t, physical.Undeliverable.Value())
+	assert.Equal(t, "1000 FEDEX DRIVE", profile.Addresses.Mailing.Street.Value())
+	assert.Equal(t, "US", profile.Addresses.Mailing.CountryCode.Value())
 
-	assert.Equal(
-		t,
-		[]string{"General Freight", "Refrigerated Food"},
-		profile.Operations.CargoCarried,
-	)
-	assert.Equal(
-		t,
-		[]string{"Authorized For Hire", "Private Property"},
-		profile.Operations.OperationClassification,
-	)
-	assert.True(t, profile.Operations.SmartWay.Value())
-	assert.True(t, profile.Operations.CARBTRU.Value())
-	require.NotNil(t, profile.Operations.PHMSA)
-	assert.False(t, profile.Operations.PHMSA.Value())
-	assert.Equal(t, int64(9500000), profile.Operations.MCS150Mileage.Value())
-	assert.Equal(t, int64(2024), profile.Operations.MCS150Year.Value())
+	operations := profile.Operations
+	assert.Equal(t, []string{"General Freight", "Other"}, operations.CargoCarried)
+	assert.Equal(t, []string{"Authorized For Hire"}, operations.OperationClassification)
+	assert.True(t, operations.SmartWay.Value())
+	assert.True(t, operations.HazardousMaterial.Value())
+	require.NotNil(t, operations.CARBTRU)
+	assert.False(t, operations.CARBTRU.Value())
+	assert.Equal(t, int64(3_279_390_000), operations.MCS150Mileage.Value())
+	assert.Equal(t, int64(2024), operations.MCS150Year.Value())
+	assert.Equal(t, "CT CORPORATION SYSTEM", operations.BOC3CompanyName.Value())
+
+	boc3 := profile.RiskFactor("boc3_on_file")
+	require.NotNil(t, boc3)
+	assert.True(t, *boc3)
+	assert.Nil(t, profile.RiskFactor("not_a_flag"))
 }
 
-func TestDecodeProfileHistoryNetworkLoads(t *testing.T) {
+func TestDecodeProfileHistoryNetworkAndBenchmarks(t *testing.T) {
 	t.Parallel()
 
-	profile, _ := loadFixtureProfile(t)
+	profile, _ := loadFixtureProfile(t, fullProfileFixture)
 
-	assert.Nil(t, profile.ChangeHistory.NameLastChanged)
-	assert.Equal(t, int64(2), profile.ChangeHistory.EmailChangeCount.Value())
-	assert.Equal(t, unixDate(2026, time.January, 1), *profile.ChangeHistory.PhoneLastChanged.Unix())
-	assert.Equal(t, int64(1767225600), *profile.ChangeHistory.ContactLastChanged.Unix())
-	assert.Nil(t, profile.ChangeHistory.AddressLastChanged)
+	history := profile.ChangeHistory
+	assert.Zero(t, history.NameChangeCount.Value())
+	assert.Nil(t, history.NameLastChanged)
+	assert.Equal(t, int64(2), history.EmailChangeCount.Value())
+	assert.Equal(t, unixDate(2019, time.June, 27), *history.PhoneLastChanged.Unix())
+	assert.Equal(t, int64(3), history.AddressChangeCount.Value())
+	assert.Equal(t, unixDate(2022, time.December, 8), *history.ContactLastChanged.Unix())
 
-	assert.Equal(t, "YELLOW", profile.Network.IndicatorContact.Value())
-	assert.Equal(t, int64(2), profile.Network.PhysicalAddressCount.Value())
-	assert.Nil(t, profile.Network.DUNSCount)
+	network := profile.Network
+	assert.True(t, network.IndicatorContact.Value())
+	assert.False(t, network.IndicatorEquipment.Value())
+	assert.Equal(t, int64(4), network.MailingAddressCount.Value())
+	assert.Equal(t, int64(1), network.FaxNumberCount.Value())
+	assert.Zero(t, network.PowerUnitsCount.Value())
 	assert.Equal(t, []carrierok.NetworkLink{
-		{
-			Kind:      carrierok.NetworkLinkPhysicalAddress,
-			DOTNumber: "3456789",
-			LegalName: "SHADOW HAULING LLC",
-			Value:     "100 MAIN ST, CHICAGO, IL 60601",
-			Status:    "INACTIVE",
-		},
-		{Kind: carrierok.NetworkLinkTelephone, Value: "3125550100"},
-		{
-			Kind:      carrierok.NetworkLinkEquipment,
-			DOTNumber: "2233445",
-			LegalName: "OTHER CARRIER",
-			Value:     "1XKYD49X0JJ123456",
-			Status:    "ACTIVE",
-		},
-	}, profile.Network.Links)
+		{Kind: carrierok.NetworkLinkPhysicalAddress, DOTNumber: "86876"},
+		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "1964900"},
+		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "4356378"},
+		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "598081"},
+		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "86876"},
+		{Kind: carrierok.NetworkLinkTelephone, DOTNumber: "86876"},
+		{Kind: carrierok.NetworkLinkTelephone, DOTNumber: "598081"},
+		{Kind: carrierok.NetworkLinkFax, DOTNumber: "598081"},
+		{Kind: carrierok.NetworkLinkEmail, DOTNumber: "598081"},
+		{Kind: carrierok.NetworkLinkEIN, DOTNumber: "3859536"},
+		{Kind: carrierok.NetworkLinkDUNS, DOTNumber: "3859536"},
+	}, network.Links)
 
-	assert.Equal(t, int64(1532), profile.Loads.Total.Value())
-	assert.InDelta(t, 97.91, profile.Loads.FTLPercentage.Value(), 1e-9)
-	require.Len(t, profile.Loads.PreferredLanes, 2)
-	assert.Equal(t, int64(210), profile.Loads.PreferredLanes[0].Loads.Value())
-	assert.Equal(t, int64(98), profile.Loads.PreferredLanes[1].Loads.Value())
-	assert.Equal(t, "DALLAS", profile.Loads.PreferredLanes[0].DestinationCity.Value())
+	assert.Empty(t, profile.Lanes.PreferredStates)
 
-	assert.Equal(t, "YELLOW", profile.Benchmarks.InspectedPowerUnitsRatio.Value())
-	assert.Equal(t, "1.02", profile.Benchmarks.PowerUnitMileageRatio.Value())
+	benchmarks := profile.Benchmarks
+	require.NotNil(t, benchmarks.IndicatorIndustry)
+	assert.False(t, benchmarks.IndicatorIndustry.Value())
+	require.NotNil(t, benchmarks.PowerUnitMileageRatio)
+	assert.False(t, benchmarks.PowerUnitMileageRatio.Value())
 }
 
-func TestDecodeProfileAcceptsCorrectBasicSpellingAndRejectsNonObject(t *testing.T) {
+func TestDecodeProfilePreferredStates(t *testing.T) {
 	t.Parallel()
 
-	profile, err := carrierok.DecodeProfile(
-		[]byte(
-			`{"basic_percentile_vehicle_maintenance":"0.5","basic_alert_vehicle_maintenance":"Y"}`,
-		),
-	)
+	profile, err := carrierok.DecodeProfile([]byte(`{
+		"preferred_lanes": [{"state": "TX"}, {"state": ""}, {"state": "IL"}],
+		"preferred_states": "IL, GA"
+	}`))
 	require.NoError(t, err)
-	score := profile.Basics[carrierok.BasicVehicleMaintenance]
-	assert.InDelta(t, 0.5, score.Percentile.Value(), 1e-9)
-	assert.True(t, score.Alert.Value())
+	assert.Equal(t, []string{"TX", "IL", "GA"}, profile.Lanes.PreferredStates)
+}
 
-	_, err = carrierok.DecodeProfile([]byte(`[1,2]`))
-	require.ErrorIs(t, err, carrierok.ErrUnexpectedPayload)
+func TestDecodeLiteProfile(t *testing.T) {
+	t.Parallel()
+
+	profile, _ := loadFixtureProfile(t, liteProfileFixture)
+
+	assert.Equal(t, "265752-MC179059", profile.ProfileID())
+	assert.Equal(t, int64(6882), profile.Authority.AgeCommonDays.Value())
+	assert.Equal(t, "High", profile.Safety.RiskScore.Value())
+	assert.Nil(t, profile.Safety.RiskScoreProbability)
+	assert.Nil(t, profile.Identity.DOTAgeDays)
+	assert.Nil(t, profile.Insurance.BIPDRequired)
+	assert.Empty(t, profile.Authority.History)
+	assert.Empty(t, profile.Insurance.History)
+	assert.Empty(t, profile.Basics)
+	assert.Empty(t, profile.Network.Links)
+	assert.Nil(t, profile.ChangeHistory.EmailChangeCount)
+	require.NotNil(t, profile.RiskFactor("boc3_on_file"))
 }
 
 func TestProfileSonicRoundTrip(t *testing.T) {
@@ -243,6 +320,24 @@ func TestProfileSonicRoundTrip(t *testing.T) {
 	var value jsonflex.Int
 	require.NoError(t, sonic.Unmarshal([]byte(`"7"`), &value))
 	assert.Equal(t, int64(7), value.Value())
+}
+
+func TestBasicVendorKeys(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		"vehicle_maintence",
+		carrierok.BasicVendorKey(carrierok.BasicVehicleMaintenance),
+	)
+	assert.Equal(t, "unsafe_driving", carrierok.BasicVendorKey(carrierok.BasicUnsafeDriving))
+
+	category, ok := carrierok.BasicCategoryForVendorKey("vehicle_maintence")
+	require.True(t, ok)
+	assert.Equal(t, carrierok.BasicVehicleMaintenance, category)
+
+	_, ok = carrierok.BasicCategoryForVendorKey("total")
+	assert.False(t, ok)
 }
 
 func TestProfileIDHelpers(t *testing.T) {

@@ -1,10 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CarrierIntelProfileView } from "@/components/carrier-intelligence/carrier-intel-profile-view";
-import { FindingList } from "@/components/carrier-intelligence/finding-list";
-import { FreshnessIndicator } from "@/components/carrier-intelligence/freshness-indicator";
+import {
+  CarrierIntelProfileView,
+  type CarrierIntelProfileSectionId,
+} from "@/components/carrier-intelligence/carrier-intel-profile-view";
+import { DecisionSummary } from "@/components/carrier-intelligence/decision-summary";
 import { IntelEmptySketch } from "@/components/carrier-intelligence/intel-empty-sketch";
-import { ReviewStateBadge } from "@/components/carrier-intelligence/review-state-badge";
-import { RiskLevelBadge } from "@/components/carrier-intelligence/risk-level-badge";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
+import { IntelSnapshotHeader } from "@/components/carrier-intelligence/intel-snapshot-header";
+import { useCarrierIntelRuleLabels } from "@/components/carrier-intelligence/use-carrier-intel-rule-labels";
+import { StatusDot } from "@/components/carrier-intelligence/status-dot";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
@@ -18,19 +22,23 @@ import {
 } from "@/lib/graphql/carrier-intelligence";
 import { queries } from "@/lib/queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { Customer } from "@trenova/shared/types/customer";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlugZapIcon, RadarIcon, RefreshCwIcon, ScanSearchIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { PlugZapIcon, ScanSearchIcon } from "lucide-react";
+import { useCallback } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
-const BROKER_PROFILE_CARDS = ["identity", "authority", "insurance", "network"] as const;
+const BROKER_PROFILE_SECTIONS = [
+  "company",
+  "authority",
+  "insurance",
+  "network",
+] as const satisfies readonly CarrierIntelProfileSectionId[];
 
 type SavedBrokerSettings = {
   dotNumber: string | null;
@@ -56,7 +64,8 @@ function UnsavedNotice({ server }: { server: SavedBrokerSettings }) {
   }
 
   return (
-    <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-xs">
+    <p className="text-muted-foreground flex items-center gap-2 text-xs">
+      <StatusDot tone="medium" />
       {t(
         "The DOT number or broker vetting setting has unsaved changes. Save the customer before vetting so the new values are used.",
       )}
@@ -85,13 +94,7 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
     enabled: canRead,
   });
 
-  const ruleLabels = useMemo<Record<string, string>>(
-    () =>
-      Object.fromEntries(
-        (settingsQuery.data?.carrierIntelRuleCatalog ?? []).map((rule) => [rule.code, rule.label]),
-      ),
-    [settingsQuery.data],
-  );
+  const ruleLabels = useCarrierIntelRuleLabels(canRead);
 
   const handleVetted = useCallback(
     (result: CustomerBrokerVetResult) => {
@@ -152,9 +155,15 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
 
   if (intelQuery.isPending || settingsQuery.isPending) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-48 w-full" />
+      <div className="flex flex-col gap-4" aria-busy>
+        <div className="flex flex-col gap-2 border-b pb-4">
+          <Skeleton className="h-3.5 w-80" />
+          <Skeleton className="h-3 w-56" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </div>
     );
   }
@@ -162,21 +171,14 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
   const loadError = intelQuery.error ?? settingsQuery.error;
   if (loadError) {
     return (
-      <div className="text-destructive flex items-center justify-between gap-2 rounded-lg border border-dashed p-3 text-sm">
-        <span>{t("Broker vetting could not be loaded. {0}", loadError.message)}</span>
-        <Button
-          type="button"
-          size="xs"
-          variant="outline"
-          onClick={() => {
-            void intelQuery.refetch();
-            void settingsQuery.refetch();
-          }}
-        >
-          <RefreshCwIcon />
-          {t("Retry")}
-        </Button>
-      </div>
+      <IntelInlineError
+        error={loadError}
+        title={t("Broker vetting could not be loaded")}
+        onRetry={() => {
+          void intelQuery.refetch();
+          void settingsQuery.refetch();
+        }}
+      />
     );
   }
 
@@ -184,7 +186,7 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
 
   if (!customer) {
     return (
-      <p className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+      <p className="text-muted-foreground text-sm">
         {t("This customer could not be found. It may have been removed.")}
       </p>
     );
@@ -288,80 +290,70 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
     <div className="flex flex-col gap-4">
       <UnsavedNotice server={server} />
       {!provider?.configured ? (
-        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-xs">
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
+          <PlugZapIcon className="size-3.5" aria-hidden />
           {t(
-            "No provider is connected right now, so this is the last snapshot on file and cannot be refreshed.",
-          )}{" "}
-          <Link to={CARRIER_INTEL_INTEGRATIONS_PATH} className="underline">
+            "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
+          )}
+          <Link
+            to={CARRIER_INTEL_INTEGRATIONS_PATH}
+            className="text-foreground underline-offset-2 hover:underline"
+          >
             {t("Open integrations")}
           </Link>
         </p>
       ) : null}
-      <section
-        aria-label={t("Broker vetting summary")}
-        className="bg-card flex flex-wrap items-start justify-between gap-3 rounded-lg border p-3"
-      >
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <RadarIcon className="text-muted-foreground size-4" aria-hidden />
-            <h3 className="text-sm font-semibold">{t("Broker vetting")}</h3>
-            <span className="text-muted-foreground text-xs">
-              {t(
-                "USDOT {0} via {1}",
-                snapshot.dotNumber ?? customer.dotNumber,
-                carrierIntelProviderLabel(snapshot.provider),
-              )}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <RiskLevelBadge level={snapshot.riskLevel} />
-            <ReviewStateBadge state={snapshot.reviewState} reviewedAt={snapshot.reviewedAt} />
-            {snapshot.blockingCodes.length > 0 ? (
-              <Badge variant="inactive" className="max-h-5 tabular-nums">
-                {t(
-                  "{0, plural, one {# blocker} other {# blockers}}",
-                  snapshot.blockingCodes.length,
-                )}
-              </Badge>
-            ) : null}
-          </div>
-          <FreshnessIndicator
-            fetchedAt={snapshot.fetchedAt}
-            confirmedAt={snapshot.confirmedAt}
-            effectiveAsOf={snapshot.effectiveAsOf}
-            sourceAsOf={snapshot.sourceAsOf}
-            staleAfterHours={control?.preTenderMaxAgeHours}
-            expiredAfterHours={control?.hardMaxAgeHours}
-          />
-          {snapshot.reviewNote ? (
-            <p className="text-muted-foreground text-xs">
-              {t("Review note: {0}", snapshot.reviewNote)}
-            </p>
-          ) : null}
-        </div>
-        {canVet ? (
-          <Button
-            type="button"
-            size="sm"
-            isLoading={vet.isPending}
-            onClick={() => vet.mutate(true)}
-          >
-            <ScanSearchIcon />
-            {t("Vet now")}
-          </Button>
-        ) : null}
-      </section>
-      <section aria-label={t("Findings")} className="flex flex-col gap-2">
-        <h4 className="text-sm font-medium">{t("Findings")}</h4>
-        <FindingList findings={snapshot.findings} ruleLabels={ruleLabels} />
-      </section>
-      <CarrierIntelProfileView
-        profile={snapshot.profile}
-        provider={snapshot.provider}
-        notFound={snapshot.notFound}
-        cards={BROKER_PROFILE_CARDS}
-        columns={1}
+      <IntelSnapshotHeader
+        label={t("Broker vetting summary")}
+        title={snapshot.profile.identity?.legalName ?? t("Broker vetting")}
+        riskLevel={snapshot.riskLevel}
+        reviewState={snapshot.reviewState}
+        reviewedAt={snapshot.reviewedAt}
+        blockingCount={snapshot.blockingCodes.length}
+        freshness={{
+          effectiveAsOf: snapshot.effectiveAsOf,
+          fetchedAt: snapshot.fetchedAt,
+          confirmedAt: snapshot.confirmedAt,
+          depth: snapshot.depth,
+          depthFetchedAt: snapshot.depthFetchedAt,
+          fetchedDepth: snapshot.fetchedDepth,
+          sourceAsOf: snapshot.sourceAsOf,
+          staleAfterHours: control?.preTenderMaxAgeHours,
+          expiredAfterHours: control?.hardMaxAgeHours,
+        }}
+        meta={t(
+          "USDOT {0} via {1}",
+          snapshot.dotNumber ?? customer.dotNumber,
+          carrierIntelProviderLabel(snapshot.provider),
+        )}
+        note={snapshot.reviewNote ? t("Review note: {0}", snapshot.reviewNote) : null}
+        actions={
+          canVet ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              isLoading={vet.isPending}
+              onClick={() => vet.mutate(true)}
+            >
+              {t("Vet now")}
+            </Button>
+          ) : null
+        }
       />
+      <DecisionSummary
+        findings={snapshot.findings}
+        ruleLabels={ruleLabels}
+        notFound={snapshot.notFound}
+        provider={snapshot.provider}
+      />
+      {!snapshot.notFound ? (
+        <CarrierIntelProfileView
+          profile={snapshot.profile}
+          provider={snapshot.provider}
+          sections={BROKER_PROFILE_SECTIONS}
+        />
+      ) : null}
     </div>
   );
 }

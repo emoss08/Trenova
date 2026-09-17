@@ -92,3 +92,51 @@ export function recentUsageMonths(nowSeconds: number, count: number): number[] {
 export function formatUsageMonth(monthStart: number): string {
   return formatUnixInUserTimezone(monthStart, { month: "long", year: "numeric", timezone: "UTC" });
 }
+
+const SECONDS_PER_UTC_DAY = 86_400;
+
+export function shiftUsageMonth(monthStart: number, delta: number): number {
+  const date = new Date(monthStart * 1000);
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + delta, 1) / 1000);
+}
+
+export type CarrierIntelUsageDayPoint = {
+  day: number;
+  start: number;
+  calls: number;
+  billableUnits: number;
+  cost: number;
+};
+
+function unixToUtcDayKey(unixSeconds: number): number {
+  const date = new Date(unixSeconds * 1000);
+  return date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate();
+}
+
+export function dailyUsageSeries(
+  rows: readonly {
+    day: number;
+    calls: number;
+    billableUnits: number;
+    estimatedCost: string;
+  }[],
+  monthStart: number,
+  nowSeconds: number,
+): CarrierIntelUsageDayPoint[] {
+  const totals = new Map(summarizeUsageByDay(rows).map((row) => [row.day, row]));
+  const monthEnd = shiftUsageMonth(monthStart, 1);
+  const lastDay = Math.min(monthEnd - SECONDS_PER_UTC_DAY, nowSeconds);
+  const points: CarrierIntelUsageDayPoint[] = [];
+  for (let start = monthStart; start <= lastDay; start += SECONDS_PER_UTC_DAY) {
+    const day = unixToUtcDayKey(start);
+    const total = totals.get(day);
+    points.push({
+      day,
+      start,
+      calls: total?.calls ?? 0,
+      billableUnits: total?.billableUnits ?? 0,
+      cost: total ? Number(total.estimatedCost) : 0,
+    });
+  }
+  return points;
+}

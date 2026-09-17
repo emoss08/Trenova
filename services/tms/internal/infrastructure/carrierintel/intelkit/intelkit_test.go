@@ -210,6 +210,13 @@ func TestConversions(t *testing.T) {
 	assert.Nil(t, Percent(nil))
 	assert.Nil(t, NonNegativeFloat(&negative))
 
+	natlAvg := jsonflex.Float(0.2226)
+	fullRate := jsonflex.Float(1)
+	assert.InDelta(t, 22.26, *FractionPercent(&natlAvg), 0.0001)
+	assert.InDelta(t, 100, *FractionPercent(&fullRate), 0.0001)
+	assert.Nil(t, FractionPercent(&negative))
+	assert.Nil(t, FractionPercent(nil))
+
 	rounded := jsonflex.Float(47.6)
 	assert.Equal(t, 48, *IntFromFloat(&rounded))
 

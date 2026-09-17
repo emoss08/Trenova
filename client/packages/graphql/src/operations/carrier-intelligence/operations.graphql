@@ -81,6 +81,7 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
     cancelCount
     filings {
       type
+      status
       insurerName
       policyNumber
       coverage
@@ -110,6 +111,9 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
     alert
     roadsideAlert
     acIndicator
+    violations
+    oosViolations
+    measuredAt
   }
   inspections {
     total
@@ -216,6 +220,7 @@ fragment CarrierIntelProfileFields on CarrierIntelProfile {
       destinationState
       loads
     }
+    preferredStates
   }
   benchmarks {
     anyAnomaly
@@ -234,6 +239,8 @@ fragment CarrierIntelSnapshotSummaryFields on CarrierIntelSnapshot {
   docketNumber
   provider
   depth
+  depthFetchedAt
+  fetchedDepth
   source
   notFound
   riskLevel
@@ -273,7 +280,9 @@ fragment CarrierIntelEventFields on CarrierIntelEvent {
   source
   category
   fieldPath
+  fieldLabel
   ruleCode
+  ruleLabel
   severity
   action
   priorValue
@@ -283,8 +292,16 @@ fragment CarrierIntelEventFields on CarrierIntelEvent {
   detectedAt
   status
   acknowledgedById
+  acknowledgedBy {
+    id
+    name
+  }
   acknowledgedAt
   resolvedById
+  resolvedBy {
+    id
+    name
+  }
   resolvedAt
   resolution
   resolutionNote
@@ -565,6 +582,42 @@ query CarrierIntelEventTable(
   }
 }
 
+query CarrierIntelEventInbox(
+  $input: DataTableConnectionInput!
+  $filter: CarrierIntelEventFilterInput
+) {
+  carrierIntelEvents(input: $input, filter: $filter) {
+    edges {
+      node {
+        ...CarrierIntelEventFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query CarrierIntelEvent($id: ID!) {
+  carrierIntelEvent(id: $id) {
+    ...CarrierIntelEventFields
+  }
+}
+
+query CarrierIntelEventCarrierSummary($carrierId: ID!) {
+  carrier(id: $carrierId) {
+    id
+    name
+    dotNumber
+    mcNumber
+    intelRiskLevel
+    intelReviewRequired
+    intelBlockingCount
+    openIntelEventCount
+  }
+}
+
 query CarrierMonitoringEnrollmentTable(
   $input: DataTableConnectionInput!
   $filter: CarrierMonitoringEnrollmentFilterInput
@@ -586,6 +639,12 @@ query CarrierMonitoringEnrollmentTable(
 query CarrierIntelReviewQueue($limit: Int) {
   carrierIntelReviewQueue(limit: $limit) {
     ...CarrierIntelSnapshotSummaryFields
+    profile {
+      identity {
+        legalName
+        dbaName
+      }
+    }
   }
 }
 
@@ -656,6 +715,7 @@ query CarrierIntelLookup($input: CarrierIntelLookupInput!) {
 query CarrierSourcingSearch($input: CarrierSourcingSearchInput!) {
   carrierSourcingSearch(input: $input) {
     total
+    filteredOut
     provider
     items {
       providerRef

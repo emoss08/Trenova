@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
@@ -137,12 +138,20 @@ func (r *carrierIntelEventResolver) Provider(ctx context.Context, obj *carrierin
 	return obj.Provider.String(), nil
 }
 
+func (r *carrierIntelEventResolver) FieldLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+	return carrierIntelEventFieldLabel(obj), nil
+}
+
 func (r *carrierIntelEventResolver) RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
 	if obj.RuleCode == "" {
 		return nil, nil
 	}
 	value := obj.RuleCode.String()
 	return &value, nil
+}
+
+func (r *carrierIntelEventResolver) RuleLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+	return carrierIntelEventRuleLabel(obj), nil
 }
 
 func (r *carrierIntelEventResolver) Action(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.RuleAction, error) {
@@ -165,8 +174,16 @@ func (r *carrierIntelEventResolver) AcknowledgedByID(ctx context.Context, obj *c
 	return idPtr(obj.AcknowledgedByID), nil
 }
 
+func (r *carrierIntelEventResolver) AcknowledgedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error) {
+	return loadUser(ctx, obj.AcknowledgedByID)
+}
+
 func (r *carrierIntelEventResolver) ResolvedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
 	return idPtr(obj.ResolvedByID), nil
+}
+
+func (r *carrierIntelEventResolver) ResolvedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error) {
+	return loadUser(ctx, obj.ResolvedByID)
 }
 
 func (r *carrierIntelEventResolver) Resolution(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.EventResolution, error) {
@@ -620,6 +637,18 @@ func (r *queryResolver) CarrierIntelEvents(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 	return carrierIntelEventConnectionToModel(result)
+}
+
+func (r *queryResolver) CarrierIntelEvent(ctx context.Context, id string) (*carrierintel.CarrierIntelEvent, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	eventID, err := parseCarrierIntelID(id, "id", "Event")
+	if err != nil {
+		return nil, err
+	}
+	return r.carrierIntelService.GetEvent(ctx, tenantInfo(authCtx), eventID)
 }
 
 func (r *queryResolver) CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error) {

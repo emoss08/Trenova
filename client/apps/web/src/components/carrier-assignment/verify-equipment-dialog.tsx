@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -41,7 +42,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { RefreshCwIcon, ScanLineIcon } from "lucide-react";
+import { ScanLineIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -75,35 +76,33 @@ function VerificationHistory({
 
   if (history.isPending) {
     return (
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+      <div className="flex flex-col gap-3 py-3" aria-busy>
+        <Skeleton className="h-3.5 w-48" />
+        <Skeleton className="h-3 w-72" />
       </div>
     );
   }
 
   if (history.isError) {
     return (
-      <div className="text-destructive flex items-center justify-between gap-2 rounded-lg border border-dashed p-3 text-sm">
-        <span>{t("Prior verifications could not be loaded. {0}", history.error.message)}</span>
-        <Button type="button" size="xs" variant="outline" onClick={() => void history.refetch()}>
-          <RefreshCwIcon />
-          {t("Retry")}
-        </Button>
-      </div>
+      <IntelInlineError
+        error={history.error}
+        title={t("Prior verifications could not be loaded")}
+        onRetry={() => void history.refetch()}
+      />
     );
   }
 
   if (history.data.length === 0) {
     return (
-      <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-sm">
+      <p className="text-muted-foreground py-4 text-center text-xs">
         {t("No equipment has been verified on this assignment yet.")}
       </p>
     );
   }
 
   return (
-    <ul className="flex flex-col gap-2" aria-label={t("Prior verifications")}>
+    <ul className="divide-border flex flex-col divide-y" aria-label={t("Prior verifications")}>
       {history.data.map((verification) => (
         <li key={verification.id}>
           <EquipmentVerificationCard
@@ -329,8 +328,8 @@ export function VerifyEquipmentDialog({
             </FormProvider>
 
             {latest ? (
-              <section aria-label={t("Latest result")} className="flex flex-col gap-2">
-                <h4 className="text-sm font-medium">{t("Result")}</h4>
+              <section aria-label={t("Latest result")} className="flex flex-col border-t pt-3">
+                <h4 className="text-muted-foreground text-xs font-medium">{t("Result")}</h4>
                 <EquipmentVerificationCard
                   verification={latest}
                   canApprove={canApprove}
@@ -341,8 +340,10 @@ export function VerifyEquipmentDialog({
             ) : null}
 
             {canRead ? (
-              <section className="flex flex-col gap-2">
-                <h4 className="text-sm font-medium">{t("Verification history")}</h4>
+              <section className="flex flex-col border-t pt-3">
+                <h4 className="text-muted-foreground text-xs font-medium">
+                  {t("Verification history")}
+                </h4>
                 <VerificationHistory
                   carrierAssignmentId={carrierAssignmentId}
                   latestId={latest?.id ?? null}

@@ -1,6 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierIntelProfileView } from "@/components/carrier-intelligence/carrier-intel-profile-view";
+import { CarrierKeyFacts } from "@/components/carrier-intelligence/carrier-key-facts";
+import { SectionNote } from "@/components/carrier-intelligence/intel-facts";
 import { IntelEmptySketch } from "@/components/carrier-intelligence/intel-empty-sketch";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
+import { useCarrierIntelRuleLabels } from "@/components/carrier-intelligence/use-carrier-intel-rule-labels";
 import { usePermission } from "@/hooks/use-permission";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
 import {
@@ -13,15 +17,14 @@ import {
 } from "@/lib/graphql/carrier-intelligence";
 import { queries } from "@/lib/queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { PlugZapIcon, RefreshCwIcon, ScanSearchIcon } from "lucide-react";
+import { PlugZapIcon, ScanSearchIcon } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { IntelligenceEvents } from "./intelligence-events";
 import { IntelligenceFindings } from "./intelligence-findings";
@@ -69,13 +72,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
     enabled: canRead,
   });
 
-  const ruleLabels = useMemo<Record<string, string>>(
-    () =>
-      Object.fromEntries(
-        (settingsQuery.data?.carrierIntelRuleCatalog ?? []).map((rule) => [rule.code, rule.label]),
-      ),
-    [settingsQuery.data],
-  );
+  const ruleLabels = useCarrierIntelRuleLabels(canRead);
 
   const invalidateIntel = useCallback(() => {
     for (const key of [
@@ -113,23 +110,28 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
 
   if (intelQuery.isPending) {
     return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-28 w-full" />
-        <Skeleton className="h-8 w-72" />
-        <Skeleton className="h-48 w-full" />
+      <div className="flex flex-col gap-4" aria-busy>
+        <div className="flex flex-col gap-2 border-b pb-4">
+          <Skeleton className="h-3.5 w-80" />
+          <Skeleton className="h-3 w-56" />
+        </div>
+        <Skeleton className="h-8 w-96" />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </div>
     );
   }
 
   if (intelQuery.isError) {
     return (
-      <div className="text-destructive flex items-center justify-between gap-2 rounded-lg border border-dashed p-3 text-sm">
-        <span>{t("Carrier intelligence could not be loaded. {0}", intelQuery.error.message)}</span>
-        <Button type="button" size="xs" variant="outline" onClick={() => void intelQuery.refetch()}>
-          <RefreshCwIcon />
-          {t("Retry")}
-        </Button>
-      </div>
+      <IntelInlineError
+        error={intelQuery.error}
+        title={t("Carrier intelligence could not be loaded")}
+        onRetry={() => void intelQuery.refetch()}
+      />
     );
   }
 
@@ -137,7 +139,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
 
   if (!carrier) {
     return (
-      <p className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+      <p className="text-muted-foreground text-sm">
         {t("This carrier could not be found. It may have been removed.")}
       </p>
     );
@@ -213,15 +215,23 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
 
   const blockerCount = snapshot.blockingCodes.length;
   const findingCount = snapshot.findings.filter((finding) => finding.action !== "Off").length;
+  const quietCount = (count: number): ReactNode =>
+    count > 0 ? (
+      <span className="text-muted-foreground text-xs font-normal tabular-nums">{count}</span>
+    ) : null;
 
   return (
     <div className="flex flex-col gap-4">
       {!provider.configured ? (
-        <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-xs">
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs">
+          <PlugZapIcon className="size-3.5" aria-hidden />
           {t(
-            "No provider is connected right now, so this is the last snapshot on file and cannot be refreshed.",
-          )}{" "}
-          <Link to="/admin/integrations?category=CarrierCompliance" className="underline">
+            "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
+          )}
+          <Link
+            to="/admin/integrations?category=CarrierCompliance"
+            className="text-foreground underline-offset-2 hover:underline"
+          >
             {t("Open integrations")}
           </Link>
         </p>
@@ -239,46 +249,55 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
         onChanged={invalidateIntel}
       />
       <Tabs value={view} onValueChange={(value) => void setView(value as IntelView)}>
-        <TabsList variant="underline">
-          <TabsTab value="findings">
+        <TabsList variant="underline" className="w-full justify-start overflow-x-auto border-b">
+          <TabsTab value="findings" className="grow-0 px-2 text-sm">
             {t("Findings")}
-            {findingCount > 0 ? (
-              <Badge
-                variant={blockerCount > 0 ? "inactive" : "secondary"}
-                className="max-h-5 tabular-nums"
-              >
-                {findingCount}
-              </Badge>
-            ) : null}
+            {quietCount(findingCount)}
           </TabsTab>
-          <TabsTab value="profile">{t("Profile")}</TabsTab>
-          <TabsTab value="sync">{t("Sync")}</TabsTab>
-          <TabsTab value="timeline">
+          <TabsTab value="profile" className="grow-0 px-2 text-sm">
+            {t("Profile")}
+          </TabsTab>
+          <TabsTab value="sync" className="grow-0 px-2 text-sm">
+            {t("Sync")}
+          </TabsTab>
+          <TabsTab value="timeline" className="grow-0 px-2 text-sm">
             {t("Timeline")}
-            {carrier.openIntelEventCount > 0 ? (
-              <Badge variant="warning" className="max-h-5 tabular-nums">
-                {carrier.openIntelEventCount}
-              </Badge>
-            ) : null}
+            {quietCount(carrier.openIntelEventCount)}
           </TabsTab>
-          <TabsTab value="history">{t("History")}</TabsTab>
+          <TabsTab value="history" className="grow-0 px-2 text-sm">
+            {t("History")}
+          </TabsTab>
         </TabsList>
         <TabsContent value="findings" className="pt-3">
           <IntelligenceFindings
             carrierId={carrierId}
             findings={snapshot.findings}
+            notFound={snapshot.notFound}
+            provider={snapshot.provider}
             ruleLabels={ruleLabels}
             canApprove={canApprove}
             onChanged={invalidateIntel}
           />
         </TabsContent>
         <TabsContent value="profile" className="pt-3">
-          <CarrierIntelProfileView
-            profile={snapshot.profile}
-            provider={snapshot.provider}
-            notFound={snapshot.notFound}
-            columns={1}
-          />
+          {snapshot.notFound ? (
+            <SectionNote>
+              {t(
+                "{0} has no record for USDOT {1}, so there is no profile to show.",
+                carrierIntelProviderLabel(snapshot.provider),
+                snapshot.dotNumber,
+              )}
+            </SectionNote>
+          ) : (
+            <div className="flex flex-col gap-6">
+              <CarrierKeyFacts profile={snapshot.profile} />
+              <CarrierIntelProfileView
+                profile={snapshot.profile}
+                provider={snapshot.provider}
+                showCoverageSummary
+              />
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="sync" className="pt-3">
           <IntelligenceSyncPanel

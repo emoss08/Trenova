@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatOptionalDecimalCurrency } from "@/lib/carrier-intelligence";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
+import { INTEL_EMPTY_VALUE, formatOptionalDecimalCurrency } from "@/lib/carrier-intelligence";
 import {
   CARRIER_INTEL_SYNC_PLAN_KEY,
   applyCarrierIntelSuggestions,
@@ -11,13 +12,12 @@ import {
 } from "@/lib/graphql/carrier-intelligence";
 import type { CarrierIntelSyncField } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { ArrowRightIcon, CheckCircle2Icon, RefreshCwIcon, WandSparklesIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -30,18 +30,15 @@ export type IntelligenceSyncPanelProps = {
 function ValueChange({ current, proposed }: { current: ReactNode; proposed: ReactNode }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5 text-xs">
-      <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 line-through decoration-1">
-        {current}
-      </span>
+      <span className="text-muted-foreground">{current}</span>
       <ArrowRightIcon className="text-muted-foreground size-3" aria-hidden />
-      <span className="bg-muted rounded px-1.5 py-0.5 font-medium">{proposed}</span>
+      <span className="text-foreground">{proposed}</span>
     </span>
   );
 }
 
 function InsuranceChangeDetail({ change }: { change: CarrierIntelInsuranceChange }) {
-  const t = useT();
-  const empty = t("empty");
+  const empty = INTEL_EMPTY_VALUE;
 
   if (change.kind === "ShortenExpiration") {
     return (
@@ -149,18 +146,25 @@ export function IntelligenceSyncPanel({
   };
 
   if (planQuery.isPending) {
-    return <Skeleton className="h-32 w-full" />;
+    return (
+      <div className="divide-border flex flex-col divide-y" aria-busy>
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="flex flex-col gap-1.5 py-2.5">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (planQuery.isError) {
     return (
-      <div className="text-destructive flex items-center justify-between gap-2 rounded-lg border border-dashed p-3 text-sm">
-        <span>{t("Sync suggestions could not be loaded. {0}", planQuery.error.message)}</span>
-        <Button type="button" size="xs" variant="outline" onClick={() => void planQuery.refetch()}>
-          <RefreshCwIcon />
-          {t("Retry")}
-        </Button>
-      </div>
+      <IntelInlineError
+        error={planQuery.error}
+        title={t("Sync suggestions could not be loaded")}
+        onRetry={() => void planQuery.refetch()}
+      />
     );
   }
 
@@ -170,7 +174,9 @@ export function IntelligenceSyncPanel({
     ...loadedPlan.autoApply.map((update: CarrierIntelFieldUpdate) => ({
       key: `field-${update.field}`,
       label: labels.syncField[update.field],
-      detail: <ValueChange current={update.current || t("empty")} proposed={update.proposed} />,
+      detail: (
+        <ValueChange current={update.current || INTEL_EMPTY_VALUE} proposed={update.proposed} />
+      ),
       reason: update.reason,
     })),
     ...loadedPlan.insuranceAutoApply.map((change, index) => ({
@@ -186,18 +192,17 @@ export function IntelligenceSyncPanel({
 
   if (nothingToDo) {
     return (
-      <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-4 text-sm">
-        <CheckCircle2Icon className="size-4 text-green-600" aria-hidden />
+      <p className="text-muted-foreground py-6 text-center text-xs">
         {t("The carrier record matches the latest vetting. Nothing to sync.")}
-      </div>
+      </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {selectableCount > 0 ? (
-        <section aria-label={t("Suggested updates")} className="flex flex-col gap-2">
-          <header className="flex flex-wrap items-center justify-between gap-2">
+        <section aria-label={t("Suggested updates")} className="flex flex-col">
+          <header className="flex min-h-8 flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               {canApply ? (
                 <Checkbox
@@ -207,20 +212,20 @@ export function IntelligenceSyncPanel({
                   onCheckedChange={(checked) => selectAll(checked)}
                 />
               ) : null}
-              <h4 className="text-sm font-medium">{t("Suggested updates")}</h4>
-              <Badge variant="outline" className="tabular-nums">
-                {selectableCount}
-              </Badge>
+              <h3 className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                {t("Suggested updates")}
+                <span className="tabular-nums">{selectableCount}</span>
+              </h3>
             </div>
             {canApply ? (
               <Button
                 type="button"
                 size="sm"
+                variant="outline"
                 disabled={selectedCount === 0}
                 isLoading={apply.isPending}
                 onClick={() => apply.mutate()}
               >
-                <WandSparklesIcon />
                 {t("Apply {0, plural, one {# change} other {# changes}}", selectedCount)}
               </Button>
             ) : (
@@ -229,13 +234,16 @@ export function IntelligenceSyncPanel({
               </span>
             )}
           </header>
-          <ul className="bg-card divide-y rounded-lg border">
+          <ul className="divide-border divide-y">
             {loadedPlan.suggestions.map((update) => {
               const checked = selectedFields.has(update.field);
               return (
                 <li
                   key={update.field}
-                  className={cn("flex items-start gap-3 px-3 py-2", checked && "bg-muted/40")}
+                  className={cn(
+                    "-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5",
+                    checked && "bg-muted/40",
+                  )}
                 >
                   {canApply ? (
                     <Checkbox
@@ -246,9 +254,9 @@ export function IntelligenceSyncPanel({
                     />
                   ) : null}
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="text-sm font-medium">{labels.syncField[update.field]}</span>
+                    <span className="text-sm">{labels.syncField[update.field]}</span>
                     <ValueChange
-                      current={update.current || t("empty")}
+                      current={update.current || INTEL_EMPTY_VALUE}
                       proposed={update.proposed}
                     />
                     <span className="text-muted-foreground text-xs">{update.reason}</span>
@@ -262,7 +270,10 @@ export function IntelligenceSyncPanel({
               return (
                 <li
                   key={policyId}
-                  className={cn("flex items-start gap-3 px-3 py-2", checked && "bg-muted/40")}
+                  className={cn(
+                    "-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5",
+                    checked && "bg-muted/40",
+                  )}
                 >
                   {canApply ? (
                     <Checkbox
@@ -273,9 +284,9 @@ export function IntelligenceSyncPanel({
                     />
                   ) : null}
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="text-sm font-medium">
+                    <span className="text-sm">
                       {labels.policyType[change.policyType]} · {change.policyNumber}
-                      <span className="text-muted-foreground font-normal">
+                      <span className="text-muted-foreground">
                         {" "}
                         · {labels.insuranceChangeKind[change.kind]}
                       </span>
@@ -290,20 +301,20 @@ export function IntelligenceSyncPanel({
         </section>
       ) : null}
       {manualInsurance.length > 0 ? (
-        <section aria-label={t("New filings")} className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">{t("New filings")}</h4>
+        <section aria-label={t("New filings")} className="flex flex-col gap-1">
+          <h3 className="text-muted-foreground text-xs font-medium">{t("New filings")}</h3>
           <p className="text-muted-foreground text-xs">
             {t(
               "The provider reports policies this carrier has no record of. Add them on the Compliance & Insurance tab after confirming the certificate.",
             )}
           </p>
-          <ul className="bg-card divide-y rounded-lg border">
+          <ul className="divide-border divide-y">
             {manualInsurance.map((change, index) => (
-              <li key={`${change.policyNumber}-${index}`} className="flex flex-col gap-1 px-3 py-2">
-                <span className="text-sm font-medium">
+              <li key={`${change.policyNumber}-${index}`} className="flex flex-col gap-0.5 py-2.5">
+                <span className="text-sm">
                   {labels.policyType[change.policyType]} · {change.policyNumber}
                 </span>
-                <span className="text-xs">
+                <span className="text-muted-foreground text-xs">
                   {change.providerName}
                   {change.proposedCoverage
                     ? ` · ${formatOptionalDecimalCurrency(change.proposedCoverage) ?? ""}`
@@ -319,15 +330,17 @@ export function IntelligenceSyncPanel({
         </section>
       ) : null}
       {autoApplied.length > 0 ? (
-        <section aria-label={t("Applied automatically")} className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">{t("Applied automatically")}</h4>
+        <section aria-label={t("Applied automatically")} className="flex flex-col gap-1">
+          <h3 className="text-muted-foreground text-xs font-medium">
+            {t("Applied automatically")}
+          </h3>
           <p className="text-muted-foreground text-xs">
             {t("Your sync settings apply these changes on every vetting without asking.")}
           </p>
-          <ul className="bg-card divide-y rounded-lg border">
+          <ul className="divide-border divide-y">
             {autoApplied.map((item) => (
-              <li key={item.key} className="flex flex-col gap-1 px-3 py-2">
-                <span className="text-sm font-medium">{item.label}</span>
+              <li key={item.key} className="flex flex-col gap-1 py-2.5">
+                <span className="text-sm">{item.label}</span>
                 {item.detail}
                 <span className="text-muted-foreground text-xs">{item.reason}</span>
               </li>

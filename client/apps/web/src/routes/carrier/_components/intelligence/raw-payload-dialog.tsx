@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
 import {
@@ -7,7 +8,6 @@ import {
   type CarrierIntelSnapshotSummary,
 } from "@/lib/graphql/carrier-intelligence";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -72,23 +72,22 @@ export function RawPayloadDialog({
               : null}
           </DialogDescription>
         </DialogHeader>
-        <Alert variant="warning">
-          <LockKeyholeIcon />
-          <AlertTitle>{t("Confidential")}</AlertTitle>
-          <AlertDescription>
-            {t(
-              "Licensed provider data. It may contain personal contact details and must not be shared outside your organization. Viewing it is recorded.",
-            )}
-          </AlertDescription>
-        </Alert>
+        <p className="text-muted-foreground flex items-start gap-2 text-xs">
+          <LockKeyholeIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {t(
+            "Confidential. Licensed provider data that may contain personal contact details and must not be shared outside your organization. Viewing it is recorded.",
+          )}
+        </p>
         {payloadQuery.isPending ? (
           <Skeleton className="h-80 w-full" />
         ) : payloadQuery.isError ? (
-          <p className="text-destructive rounded-lg border border-dashed p-3 text-sm">
-            {t("The payload could not be loaded. {0}", payloadQuery.error.message)}
-          </p>
+          <IntelInlineError
+            error={payloadQuery.error}
+            title={t("The payload could not be loaded")}
+            onRetry={() => void payloadQuery.refetch()}
+          />
         ) : pretty === null ? (
-          <p className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+          <p className="text-muted-foreground py-6 text-center text-xs">
             {t(
               "No raw payload is retained for this snapshot. Payloads are removed once the retention period passes.",
             )}

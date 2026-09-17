@@ -1641,9 +1641,12 @@ type CarrierIntelBasicMeasure {
   alert: Boolean!
   basic: CSABasic!
   measure: Float
+  measuredAt: Timestamp
+  oosViolations: Int
   percentile: Float
   roadsideAlert: Boolean!
   threshold: Float
+  violations: Int
 }
 
 type CarrierIntelBenchmarks {
@@ -1805,6 +1808,7 @@ type CarrierIntelEquipment {
 
 type CarrierIntelEvent {
   acknowledgedAt: Timestamp
+  acknowledgedBy: User
   acknowledgedById: ID
   action: CarrierIntelRuleAction
   carrierId: ID
@@ -1813,6 +1817,7 @@ type CarrierIntelEvent {
   currentValue: String
   detectedAt: Timestamp!
   dotNumber: String!
+  fieldLabel: String
   fieldPath: String
   id: ID!
   priorValue: String
@@ -1820,8 +1825,10 @@ type CarrierIntelEvent {
   resolution: CarrierIntelEventResolution
   resolutionNote: String
   resolvedAt: Timestamp
+  resolvedBy: User
   resolvedById: ID
   ruleCode: String
+  ruleLabel: String
   severity: CarrierIntelSeverity!
   snapshotId: ID
   source: CarrierIntelEventSource!
@@ -2017,6 +2024,7 @@ type CarrierIntelInsuranceFiling {
   effectiveAt: Timestamp
   insurerName: String
   policyNumber: String
+  status: String
   type: CarrierIntelInsuranceFilingType!
 }
 
@@ -2042,6 +2050,7 @@ type CarrierIntelLanes {
   lastLoadAt: Timestamp
   ltlPercent: Float
   preferred: [CarrierIntelLane!]
+  preferredStates: [String!]
   totalLoads: Int
 }
 
@@ -2278,10 +2287,12 @@ type CarrierIntelSnapshot {
   confirmedAt: Timestamp
   createdAt: Timestamp!
   depth: CarrierIntelDepth!
+  depthFetchedAt: Timestamp!
   docketNumber: String
   dotNumber: String!
   effectiveAsOf: Timestamp!
   fetchedAt: Timestamp!
+  fetchedDepth: CarrierIntelDepth!
   findings: [CarrierIntelFinding!]!
   hasRawPayload: Boolean!
   id: ID!
@@ -2733,6 +2744,7 @@ type CarrierSettlementWorkspaceSummary {
 }
 
 type CarrierSourcingPage {
+  filteredOut: Int!
   items: [CarrierSourcingResult!]!
   provider: String!
   total: Int!
@@ -2756,13 +2768,21 @@ input CarrierSourcingSearchInput {
   excludeExistingCarriers: Boolean
   hazmatOnly: Boolean
   limit: Int
+  maxAuthorityAgeDays: Int
   maxPowerUnits: Int
   minAuthorityAgeDays: Int
   minPowerUnits: Int
   offset: Int
   originState: String
+  sort: CarrierSourcingSort
   state: String
   text: String
+}
+
+enum CarrierSourcingSort {
+  AuthorityAgeDesc
+  BestMatch
+  FleetSizeDesc
 }
 
 enum CarrierStatus {
@@ -11970,6 +11990,7 @@ type Query {
   carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
   carrierIntelControl: CarrierIntelControl!
   carrierIntelCostEstimate(includeOpenTenders: Boolean, policy: CarrierIntelEnrollmentPolicy!, recentUsageDays: Int): CarrierIntelCostEstimate!
+  carrierIntelEvent(id: ID!): CarrierIntelEvent
   carrierIntelEvents(filter: CarrierIntelEventFilterInput, input: DataTableConnectionInput!): CarrierIntelEventConnection!
   carrierIntelLookup(input: CarrierIntelLookupInput!): CarrierIntelProspectLookup!
   carrierIntelMonitoringStatus: CarrierIntelMonitoringStatus!

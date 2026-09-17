@@ -1,223 +1,231 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import type { CarrierIntelFinding } from "@/lib/graphql/carrier-intelligence";
 import { groupFindings } from "@/lib/carrier-intelligence";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import type { CarrierIntelFinding } from "@/lib/graphql/carrier-intelligence";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  BanIcon,
-  BellIcon,
-  CircleCheckIcon,
-  HelpCircleIcon,
-  HourglassIcon,
-  ShieldOffIcon,
-  TriangleAlertIcon,
-  type LucideIcon,
-} from "lucide-react";
-import { useId, useMemo, type ReactNode } from "react";
-import { SeverityBadge } from "./severity-badge";
-import { useCarrierIntelLabels } from "./use-carrier-intel-labels";
+import { InfoIcon, OctagonXIcon, TriangleAlertIcon, type LucideIcon } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+
+export type FindingKind = "blocker" | "advisory" | "notice";
+
+export const ALL_FINDING_KINDS: readonly FindingKind[] = ["blocker", "advisory", "notice"];
+
+const KIND_ICON: Record<FindingKind, { icon: LucideIcon; className: string }> = {
+  blocker: { icon: OctagonXIcon, className: "text-red-600 dark:text-red-400" },
+  advisory: { icon: TriangleAlertIcon, className: "text-amber-600 dark:text-amber-400" },
+  notice: { icon: InfoIcon, className: "text-muted-foreground" },
+};
 
 export type FindingListProps = {
   findings: readonly CarrierIntelFinding[];
   ruleLabels?: Readonly<Record<string, string>>;
+  kinds?: readonly FindingKind[];
+  grouped?: boolean;
+  compact?: boolean;
+  limit?: number;
   renderActions?: (finding: CarrierIntelFinding) => ReactNode;
-  emptyMessage?: string;
+  emptyMessage?: ReactNode;
   className?: string;
 };
 
-type FindingGroupProps = {
-  id: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  tone: "blocker" | "advisory" | "notice";
-  findings: CarrierIntelFinding[];
-  ruleLabels?: Readonly<Record<string, string>>;
-  renderActions?: (finding: CarrierIntelFinding) => ReactNode;
-};
+type FindingRowItem = { finding: CarrierIntelFinding; kind: FindingKind };
 
-const TONE_CLASSES: Record<FindingGroupProps["tone"], string> = {
-  blocker: "text-red-700 dark:text-red-400",
-  advisory: "text-yellow-700 dark:text-yellow-400",
-  notice: "text-muted-foreground",
-};
+export function findingTitle(
+  finding: Pick<CarrierIntelFinding, "code" | "message">,
+  ruleLabels: Readonly<Record<string, string>> | undefined,
+): string {
+  return ruleLabels?.[finding.code] ?? finding.message;
+}
 
-function FindingFlags({ finding }: { finding: CarrierIntelFinding }) {
+function useKindLabels(): Record<FindingKind, { row: string; group: string }> {
   const t = useT();
-
-  return (
-    <>
-      {finding.unverifiable ? (
-        <Badge
-          variant="secondary"
-          className="max-h-5"
-          title={t(
-            "The provider did not supply the data this rule needs, so it could not be checked.",
-          )}
-        >
-          <HelpCircleIcon aria-hidden />
-          {t("Unverifiable")}
-        </Badge>
-      ) : null}
-      {finding.unconfirmed ? (
-        <Badge
-          variant="purple"
-          className="max-h-5"
-          title={t("A blocking change is waiting for a confirming refresh before it takes effect.")}
-        >
-          <HourglassIcon aria-hidden />
-          {t("Unconfirmed")}
-        </Badge>
-      ) : null}
-      {finding.overridden ? (
-        <Badge
-          variant="teal"
-          className="max-h-5"
-          title={t("An approved override lets this carrier through while it lasts.")}
-        >
-          <ShieldOffIcon aria-hidden />
-          {finding.overrideExpiresAt
-            ? t("Overridden until {0}", formatUnixDateTimeMedium(finding.overrideExpiresAt))
-            : t("Overridden")}
-        </Badge>
-      ) : null}
-    </>
+  return useMemo(
+    () => ({
+      blocker: { row: t("Blocks tendering"), group: t("Blocking") },
+      advisory: { row: t("Advisory"), group: t("Advisory") },
+      notice: { row: t("Notice"), group: t("Notices") },
+    }),
+    [t],
   );
 }
 
-function FindingGroup({
-  id,
+function FindingRow({
+  item,
   title,
-  description,
-  icon: Icon,
-  tone,
-  findings,
-  ruleLabels,
-  renderActions,
-}: FindingGroupProps) {
-  const labels = useCarrierIntelLabels();
-
-  if (findings.length === 0) {
-    return null;
-  }
-
-  const headingId = `${id}-heading`;
+  kindLabel,
+  actions,
+}: {
+  item: FindingRowItem;
+  title: string;
+  kindLabel: string;
+  actions: ReactNode;
+}) {
+  const t = useT();
+  const { finding, kind } = item;
+  const { icon: Icon, className } = KIND_ICON[kind];
+  const notes = [
+    title !== finding.message ? finding.message : null,
+    finding.unverifiable ? t("Couldn't be verified") : null,
+    finding.unconfirmed ? t("Waiting for a confirming refresh") : null,
+    finding.overridden
+      ? finding.overrideExpiresAt
+        ? t("Overridden until {0}", formatUnixDateMedium(finding.overrideExpiresAt))
+        : t("Overridden")
+      : null,
+  ].filter((note): note is string => note !== null && note !== "");
 
   return (
-    <section aria-labelledby={headingId} data-finding-group={tone} className="flex flex-col">
-      <header className="flex items-center gap-2 px-3 py-2">
-        <Icon className={cn("size-3.5", TONE_CLASSES[tone])} aria-hidden />
-        <h4 id={headingId} className="text-sm font-medium">
+    <li
+      className="flex items-start gap-2.5 py-2"
+      data-finding-kind={kind}
+      data-overridden={finding.overridden ? "true" : undefined}
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={<span className="mt-0.5 flex shrink-0 cursor-default" aria-label={kindLabel} />}
+        >
+          <Icon
+            className={cn("size-3.5", finding.overridden ? "text-muted-foreground" : className)}
+            aria-hidden
+          />
+        </TooltipTrigger>
+        <TooltipContent>
+          <span className="flex flex-col gap-0.5 text-xs">
+            <span>{kindLabel}</span>
+            <span className="font-mono opacity-70">{finding.code}</span>
+          </span>
+        </TooltipContent>
+      </Tooltip>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className={cn("text-sm", finding.overridden && "text-muted-foreground")}>
           {title}
-        </h4>
-        <Badge variant="outline" className="tabular-nums">
-          {findings.length}
-        </Badge>
-        <span className="text-muted-foreground hidden text-xs sm:inline">{description}</span>
-      </header>
-      <ul className="divide-y border-t">
-        {findings.map((finding) => {
-          const ruleLabel = ruleLabels?.[finding.code];
-          const actions = renderActions?.(finding);
-          return (
-            <li
-              key={`${finding.action}-${finding.code}`}
-              className={cn(
-                "flex flex-col gap-1.5 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between",
-                finding.overridden && "bg-muted/40",
-              )}
-            >
-              <div className="flex min-w-0 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <SeverityBadge severity={finding.severity} />
-                  <span className="text-sm font-medium">{ruleLabel ?? finding.code}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {labels.section[finding.category]}
-                  </span>
-                  <FindingFlags finding={finding} />
-                </div>
-                <p
-                  className={cn(
-                    "text-sm",
-                    finding.overridden ? "text-muted-foreground" : "text-foreground",
-                  )}
-                >
-                  {finding.message}
-                </p>
-                {ruleLabel ? (
-                  <span className="text-muted-foreground font-mono text-2xs">{finding.code}</span>
-                ) : null}
-              </div>
-              {actions ? <div className="flex shrink-0 items-center gap-1.5">{actions}</div> : null}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+        </span>
+        {notes.length > 0 ? (
+          <span className="text-muted-foreground text-xs">{notes.join(" · ")}</span>
+        ) : null}
+      </div>
+      {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
+    </li>
+  );
+}
+
+function CompactRow({ item, title }: { item: FindingRowItem; title: string }) {
+  const { icon: Icon, className } = KIND_ICON[item.kind];
+  return (
+    <li className="flex min-w-0 items-center gap-2 text-xs" data-finding-kind={item.kind}>
+      <Icon className={cn("size-3 shrink-0", className)} aria-hidden />
+      <span className="truncate">{title}</span>
+    </li>
   );
 }
 
 export function FindingList({
   findings,
   ruleLabels,
+  kinds = ALL_FINDING_KINDS,
+  grouped = false,
+  compact = false,
+  limit,
   renderActions,
   emptyMessage,
   className,
 }: FindingListProps) {
   const t = useT();
-  const baseId = useId();
-  const grouped = useMemo(() => groupFindings(findings), [findings]);
-  const total = grouped.blockers.length + grouped.advisories.length + grouped.notices.length;
+  const kindLabels = useKindLabels();
 
-  if (total === 0) {
+  const groups = useMemo(() => {
+    const byKind = groupFindings(findings);
+    const lists: Record<FindingKind, CarrierIntelFinding[]> = {
+      blocker: byKind.blockers,
+      advisory: byKind.advisories,
+      notice: byKind.notices,
+    };
+    return kinds.map((kind) => ({
+      kind,
+      items: lists[kind].map((finding) => ({ finding, kind })),
+    }));
+  }, [findings, kinds]);
+
+  const ordered = groups.flatMap((group) => group.items);
+
+  if (ordered.length === 0) {
+    if (emptyMessage === null) {
+      return null;
+    }
     return (
-      <div
-        className={cn(
-          "text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed px-3 py-4 text-sm",
-          className,
-        )}
-      >
-        <CircleCheckIcon className="size-4 text-green-600" aria-hidden />
-        {emptyMessage ?? t("No findings. Every enabled rule passed on the latest vetting.")}
-      </div>
+      <p className={cn("text-muted-foreground text-xs", className)}>
+        {emptyMessage ?? t("Every enabled vetting rule passed.")}
+      </p>
     );
   }
 
+  const shown = limit === undefined ? ordered : ordered.slice(0, limit);
+  const hidden = ordered.length - shown.length;
+  const moreRow =
+    hidden > 0 ? (
+      <li className={cn("text-muted-foreground text-xs", compact ? "pl-5" : "py-2 pl-6")}>
+        {t("{0, plural, one {# more finding} other {# more findings}}", hidden)}
+      </li>
+    ) : null;
+
+  if (compact) {
+    return (
+      <ul className={cn("flex flex-col gap-1", className)}>
+        {shown.map((item) => (
+          <CompactRow
+            key={`${item.finding.action}-${item.finding.code}`}
+            item={item}
+            title={findingTitle(item.finding, ruleLabels)}
+          />
+        ))}
+        {moreRow}
+      </ul>
+    );
+  }
+
+  const renderRow = (item: FindingRowItem) => (
+    <FindingRow
+      key={`${item.finding.action}-${item.finding.code}`}
+      item={item}
+      title={findingTitle(item.finding, ruleLabels)}
+      kindLabel={kindLabels[item.kind].row}
+      actions={renderActions?.(item.finding)}
+    />
+  );
+
+  if (!grouped) {
+    return (
+      <ul className={cn("divide-border divide-y", className)}>
+        {shown.map(renderRow)}
+        {moreRow}
+      </ul>
+    );
+  }
+
+  const visible = new Set(shown);
   return (
-    <div
-      className={cn("bg-card flex flex-col divide-y overflow-hidden rounded-lg border", className)}
-    >
-      <FindingGroup
-        id={`${baseId}-blockers`}
-        title={t("Blockers")}
-        description={t("Stop tendering until resolved or overridden.")}
-        icon={BanIcon}
-        tone="blocker"
-        findings={grouped.blockers}
-        ruleLabels={ruleLabels}
-        renderActions={renderActions}
-      />
-      <FindingGroup
-        id={`${baseId}-advisories`}
-        title={t("Advisories")}
-        description={t("Worth a look before assigning freight.")}
-        icon={TriangleAlertIcon}
-        tone="advisory"
-        findings={grouped.advisories}
-        ruleLabels={ruleLabels}
-        renderActions={renderActions}
-      />
-      <FindingGroup
-        id={`${baseId}-notices`}
-        title={t("Notices")}
-        description={t("Recorded for awareness only.")}
-        icon={BellIcon}
-        tone="notice"
-        findings={grouped.notices}
-        ruleLabels={ruleLabels}
-        renderActions={renderActions}
-      />
+    <div className={cn("flex flex-col gap-4", className)}>
+      {groups
+        .map((group) => ({ ...group, items: group.items.filter((item) => visible.has(item)) }))
+        .filter((group) => group.items.length > 0)
+        .map((group) => (
+          <section
+            key={group.kind}
+            aria-label={kindLabels[group.kind].group}
+            data-finding-group={group.kind}
+            className="flex flex-col"
+          >
+            <h3 className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+              {kindLabels[group.kind].group}
+              <span className="tabular-nums">
+                {groups.find((candidate) => candidate.kind === group.kind)?.items.length}
+              </span>
+            </h3>
+            <ul className="divide-border divide-y">{group.items.map(renderRow)}</ul>
+          </section>
+        ))}
+      {hidden > 0 ? <ul>{moreRow}</ul> : null}
     </div>
   );
 }

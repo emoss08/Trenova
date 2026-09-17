@@ -1,8 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { FindingList } from "@/components/carrier-intelligence/finding-list";
+import { DecisionSummary } from "@/components/carrier-intelligence/decision-summary";
 import { GrantOverrideDialog } from "@/components/carrier-intelligence/grant-override-dialog";
+import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import { RevokeOverrideDialog } from "@/components/carrier-intelligence/revoke-override-dialog";
-import { canOverrideFinding } from "@/lib/carrier-intelligence";
+import { StatusDot, type StatusTone } from "@/components/carrier-intelligence/status-dot";
+import {
+  canOverrideFinding,
+  carrierIntelOverrideState,
+  type CarrierIntelOverrideState,
+} from "@/lib/carrier-intelligence";
 import {
   CARRIER_INTEL_OVERRIDES_KEY,
   fetchCarrierIntelOverrides,
@@ -10,22 +15,29 @@ import {
   type CarrierIntelOverride,
 } from "@/lib/graphql/carrier-intelligence";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
-import { ShieldOffIcon, ShieldPlusIcon } from "lucide-react";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { useCallback, useMemo, useState } from "react";
 
 export type IntelligenceFindingsProps = {
   carrierId: string;
   findings: readonly CarrierIntelFinding[];
+  notFound: boolean;
+  provider: string | null;
   ruleLabels: Readonly<Record<string, string>>;
   canApprove: boolean;
   onChanged: () => void;
 };
 
-function OverrideHistory({
+const OVERRIDE_TONE: Record<CarrierIntelOverrideState, StatusTone> = {
+  active: "success",
+  revoked: "neutral",
+  expired: "neutral",
+};
+
+function OverrideRows({
   overrides,
   ruleLabels,
   canApprove,
@@ -37,60 +49,64 @@ function OverrideHistory({
   onRevoke: (override: CarrierIntelOverride) => void;
 }) {
   const t = useT();
+  const stateLabels: Record<CarrierIntelOverrideState, string> = {
+    active: t("Active"),
+    revoked: t("Revoked"),
+    expired: t("Expired"),
+  };
 
   if (overrides.length === 0) {
     return null;
   }
 
   return (
-    <section aria-label={t("Overrides")} className="flex flex-col gap-2">
-      <h4 className="text-sm font-medium">{t("Overrides")}</h4>
-      <ul className="bg-card divide-y rounded-lg border">
-        {overrides.map((override) => (
-          <li
-            key={override.id}
-            className="flex flex-col gap-1 px-3 py-2 sm:flex-row sm:items-start sm:justify-between"
-          >
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-sm font-medium">
+    <section aria-label={t("Overrides")} className="flex flex-col">
+      <h3 className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+        {t("Overrides")}
+        <span className="tabular-nums">{overrides.length}</span>
+      </h3>
+      <ul className="divide-border divide-y">
+        {overrides.map((override) => {
+          const state = carrierIntelOverrideState(override);
+          return (
+            <li
+              key={override.id}
+              className="flex items-start gap-2.5 py-2"
+              data-override-state={state}
+            >
+              <span className="flex h-5 shrink-0 items-center">
+                <StatusDot tone={OVERRIDE_TONE[state]} />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-sm">
                   {ruleLabels[override.ruleCode] ?? override.ruleCode}
+                  <span className="text-muted-foreground"> · {stateLabels[state]}</span>
                 </span>
-                {override.active ? (
-                  <Badge variant="teal" className="max-h-5">
-                    {t("Active")}
-                  </Badge>
-                ) : override.revokedAt ? (
-                  <Badge variant="secondary" className="max-h-5">
-                    {t("Revoked")}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="max-h-5">
-                    {t("Expired")}
-                  </Badge>
-                )}
+                <span className="text-muted-foreground text-xs">
+                  {[
+                    override.reason,
+                    t(
+                      "granted {0}, expires {1}",
+                      formatUnixDateMedium(override.grantedAt),
+                      formatUnixDateMedium(override.expiresAt),
+                    ),
+                    override.revokedAt
+                      ? t("revoked {0}", formatUnixDateMedium(override.revokedAt))
+                      : null,
+                    override.revokeReason,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
               </div>
-              <p className="text-sm">{override.reason}</p>
-              <p className="text-muted-foreground text-xs">
-                {t(
-                  "Granted {0} · expires {1}",
-                  formatUnixDateTimeMedium(override.grantedAt),
-                  formatUnixDateTimeMedium(override.expiresAt),
-                )}
-                {override.revokedAt
-                  ? ` · ${t("revoked {0}", formatUnixDateTimeMedium(override.revokedAt))}`
-                  : null}
-                {override.revokeReason ? ` · ${override.revokeReason}` : null}
-              </p>
-            </div>
-            {canApprove && override.active ? (
-              <Button type="button" size="xs" variant="outline" onClick={() => onRevoke(override)}>
-                <ShieldOffIcon />
-                {t("Revoke")}
-              </Button>
-            ) : null}
-          </li>
-        ))}
+              {canApprove && override.active ? (
+                <Button type="button" size="xs" variant="ghost" onClick={() => onRevoke(override)}>
+                  {t("Revoke")}
+                </Button>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -99,6 +115,8 @@ function OverrideHistory({
 export function IntelligenceFindings({
   carrierId,
   findings,
+  notFound,
+  provider,
   ruleLabels,
   canApprove,
   onChanged,
@@ -130,8 +148,7 @@ export function IntelligenceFindings({
       }
       if (canOverrideFinding(finding)) {
         return (
-          <Button type="button" size="xs" variant="outline" onClick={() => setGranting(finding)}>
-            <ShieldPlusIcon />
+          <Button type="button" size="xs" variant="ghost" onClick={() => setGranting(finding)}>
             {t("Grant override")}
           </Button>
         );
@@ -139,8 +156,7 @@ export function IntelligenceFindings({
       const override = finding.overrideId ? overridesById.get(finding.overrideId) : undefined;
       if (finding.overridden && override?.active) {
         return (
-          <Button type="button" size="xs" variant="outline" onClick={() => setRevoking(override)}>
-            <ShieldOffIcon />
+          <Button type="button" size="xs" variant="ghost" onClick={() => setRevoking(override)}>
             {t("Revoke override")}
           </Button>
         );
@@ -151,16 +167,28 @@ export function IntelligenceFindings({
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      <FindingList findings={findings} ruleLabels={ruleLabels} renderActions={renderActions} />
+    <div className="flex flex-col gap-6">
+      <DecisionSummary
+        findings={findings}
+        ruleLabels={ruleLabels}
+        notFound={notFound}
+        provider={provider}
+        grouped
+        renderActions={renderActions}
+      />
       {overridesQuery.isPending ? (
-        <Skeleton className="h-16 w-full" />
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-9 w-full" />
+        </div>
       ) : overridesQuery.isError ? (
-        <p className="text-destructive text-sm">
-          {t("Overrides could not be loaded. {0}", overridesQuery.error.message)}
-        </p>
+        <IntelInlineError
+          error={overridesQuery.error}
+          title={t("Overrides could not be loaded")}
+          onRetry={() => void refetchOverrides()}
+        />
       ) : (
-        <OverrideHistory
+        <OverrideRows
           overrides={overridesQuery.data}
           ruleLabels={ruleLabels}
           canApprove={canApprove}

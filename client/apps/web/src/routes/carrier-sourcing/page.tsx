@@ -9,9 +9,7 @@ export function CarrierSourcingPage() {
     <PageLayout
       pageHeaderProps={{
         title: t("Carrier Sourcing"),
-        description: t(
-          "Find carriers by name, home state or the lanes they run, vet them against your rules, and import the ones you want",
-        ),
+        description: t("Find carriers, vet them against your rules and import the ones you want"),
       }}
     >
       <CarrierSourcingWorkspace />

@@ -1163,9 +1163,12 @@ type ComplexityRoot struct {
 		Alert         func(childComplexity int) int
 		Basic         func(childComplexity int) int
 		Measure       func(childComplexity int) int
+		MeasuredAt    func(childComplexity int) int
+		OOSViolations func(childComplexity int) int
 		Percentile    func(childComplexity int) int
 		RoadsideAlert func(childComplexity int) int
 		Threshold     func(childComplexity int) int
+		Violations    func(childComplexity int) int
 	}
 
 	CarrierIntelBenchmarks struct {
@@ -1267,6 +1270,7 @@ type ComplexityRoot struct {
 
 	CarrierIntelEvent struct {
 		AcknowledgedAt   func(childComplexity int) int
+		AcknowledgedBy   func(childComplexity int) int
 		AcknowledgedByID func(childComplexity int) int
 		Action           func(childComplexity int) int
 		CarrierID        func(childComplexity int) int
@@ -1275,6 +1279,7 @@ type ComplexityRoot struct {
 		CurrentValue     func(childComplexity int) int
 		DOTNumber        func(childComplexity int) int
 		DetectedAt       func(childComplexity int) int
+		FieldLabel       func(childComplexity int) int
 		FieldPath        func(childComplexity int) int
 		ID               func(childComplexity int) int
 		PriorValue       func(childComplexity int) int
@@ -1282,8 +1287,10 @@ type ComplexityRoot struct {
 		Resolution       func(childComplexity int) int
 		ResolutionNote   func(childComplexity int) int
 		ResolvedAt       func(childComplexity int) int
+		ResolvedBy       func(childComplexity int) int
 		ResolvedByID     func(childComplexity int) int
 		RuleCode         func(childComplexity int) int
+		RuleLabel        func(childComplexity int) int
 		Severity         func(childComplexity int) int
 		SnapshotID       func(childComplexity int) int
 		Source           func(childComplexity int) int
@@ -1433,6 +1440,7 @@ type ComplexityRoot struct {
 		EffectiveAt       func(childComplexity int) int
 		InsurerName       func(childComplexity int) int
 		PolicyNumber      func(childComplexity int) int
+		Status            func(childComplexity int) int
 		Type              func(childComplexity int) int
 	}
 
@@ -1451,6 +1459,7 @@ type ComplexityRoot struct {
 		LTLPercent      func(childComplexity int) int
 		LastLoadAt      func(childComplexity int) int
 		Preferred       func(childComplexity int) int
+		PreferredStates func(childComplexity int) int
 		TotalLoads      func(childComplexity int) int
 	}
 
@@ -1595,34 +1604,36 @@ type ComplexityRoot struct {
 	}
 
 	CarrierIntelSnapshot struct {
-		AdvisoryCodes func(childComplexity int) int
-		BlockingCodes func(childComplexity int) int
-		CarrierID     func(childComplexity int) int
-		ConfirmedAt   func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
-		DOTNumber     func(childComplexity int) int
-		Depth         func(childComplexity int) int
-		DocketNumber  func(childComplexity int) int
-		EffectiveAsOf func(childComplexity int) int
-		FetchedAt     func(childComplexity int) int
-		Findings      func(childComplexity int) int
-		HasRawPayload func(childComplexity int) int
-		ID            func(childComplexity int) int
-		IsCurrent     func(childComplexity int) int
-		NotFound      func(childComplexity int) int
-		PolicyVersion func(childComplexity int) int
-		Profile       func(childComplexity int) int
-		Provider      func(childComplexity int) int
-		ProviderRef   func(childComplexity int) int
-		ReviewNote    func(childComplexity int) int
-		ReviewState   func(childComplexity int) int
-		ReviewedAt    func(childComplexity int) int
-		ReviewedByID  func(childComplexity int) int
-		RiskLevel     func(childComplexity int) int
-		Source        func(childComplexity int) int
-		SourceAsOf    func(childComplexity int) int
-		SubjectID     func(childComplexity int) int
-		SubjectType   func(childComplexity int) int
+		AdvisoryCodes  func(childComplexity int) int
+		BlockingCodes  func(childComplexity int) int
+		CarrierID      func(childComplexity int) int
+		ConfirmedAt    func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		DOTNumber      func(childComplexity int) int
+		Depth          func(childComplexity int) int
+		DepthFetchedAt func(childComplexity int) int
+		DocketNumber   func(childComplexity int) int
+		EffectiveAsOf  func(childComplexity int) int
+		FetchedAt      func(childComplexity int) int
+		FetchedDepth   func(childComplexity int) int
+		Findings       func(childComplexity int) int
+		HasRawPayload  func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IsCurrent      func(childComplexity int) int
+		NotFound       func(childComplexity int) int
+		PolicyVersion  func(childComplexity int) int
+		Profile        func(childComplexity int) int
+		Provider       func(childComplexity int) int
+		ProviderRef    func(childComplexity int) int
+		ReviewNote     func(childComplexity int) int
+		ReviewState    func(childComplexity int) int
+		ReviewedAt     func(childComplexity int) int
+		ReviewedByID   func(childComplexity int) int
+		RiskLevel      func(childComplexity int) int
+		Source         func(childComplexity int) int
+		SourceAsOf     func(childComplexity int) int
+		SubjectID      func(childComplexity int) int
+		SubjectType    func(childComplexity int) int
 	}
 
 	CarrierIntelSuggestion struct {
@@ -1899,9 +1910,10 @@ type ComplexityRoot struct {
 	}
 
 	CarrierSourcingPage struct {
-		Items    func(childComplexity int) int
-		Provider func(childComplexity int) int
-		Total    func(childComplexity int) int
+		FilteredOut func(childComplexity int) int
+		Items       func(childComplexity int) int
+		Provider    func(childComplexity int) int
+		Total       func(childComplexity int) int
 	}
 
 	CarrierSourcingResult struct {
@@ -7066,6 +7078,7 @@ type ComplexityRoot struct {
 		CarrierEquipmentVerifications       func(childComplexity int, carrierAssignmentID string) int
 		CarrierIntelControl                 func(childComplexity int) int
 		CarrierIntelCostEstimate            func(childComplexity int, policy carrierintel.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) int
+		CarrierIntelEvent                   func(childComplexity int, id string) int
 		CarrierIntelEvents                  func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierIntelEventFilterInput) int
 		CarrierIntelLookup                  func(childComplexity int, input gqlmodel.CarrierIntelLookupInput) int
 		CarrierIntelMonitoringStatus        func(childComplexity int) int
@@ -15617,6 +15630,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelBasicMeasure.Measure(childComplexity), true
+	case "CarrierIntelBasicMeasure.measuredAt":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.MeasuredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.MeasuredAt(childComplexity), true
+	case "CarrierIntelBasicMeasure.oosViolations":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.OOSViolations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.OOSViolations(childComplexity), true
 	case "CarrierIntelBasicMeasure.percentile":
 		if e.ComplexityRoot.CarrierIntelBasicMeasure.Percentile == nil {
 			break
@@ -15635,6 +15660,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelBasicMeasure.Threshold(childComplexity), true
+	case "CarrierIntelBasicMeasure.violations":
+		if e.ComplexityRoot.CarrierIntelBasicMeasure.Violations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelBasicMeasure.Violations(childComplexity), true
 
 	case "CarrierIntelBenchmarks.anyAnomaly":
 		if e.ComplexityRoot.CarrierIntelBenchmarks.AnyAnomaly == nil {
@@ -16088,6 +16119,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelEvent.AcknowledgedAt(childComplexity), true
+	case "CarrierIntelEvent.acknowledgedBy":
+		if e.ComplexityRoot.CarrierIntelEvent.AcknowledgedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.AcknowledgedBy(childComplexity), true
 	case "CarrierIntelEvent.acknowledgedById":
 		if e.ComplexityRoot.CarrierIntelEvent.AcknowledgedByID == nil {
 			break
@@ -16136,6 +16173,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelEvent.DetectedAt(childComplexity), true
+	case "CarrierIntelEvent.fieldLabel":
+		if e.ComplexityRoot.CarrierIntelEvent.FieldLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.FieldLabel(childComplexity), true
 	case "CarrierIntelEvent.fieldPath":
 		if e.ComplexityRoot.CarrierIntelEvent.FieldPath == nil {
 			break
@@ -16178,6 +16221,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelEvent.ResolvedAt(childComplexity), true
+	case "CarrierIntelEvent.resolvedBy":
+		if e.ComplexityRoot.CarrierIntelEvent.ResolvedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.ResolvedBy(childComplexity), true
 	case "CarrierIntelEvent.resolvedById":
 		if e.ComplexityRoot.CarrierIntelEvent.ResolvedByID == nil {
 			break
@@ -16190,6 +16239,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelEvent.RuleCode(childComplexity), true
+	case "CarrierIntelEvent.ruleLabel":
+		if e.ComplexityRoot.CarrierIntelEvent.RuleLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelEvent.RuleLabel(childComplexity), true
 	case "CarrierIntelEvent.severity":
 		if e.ComplexityRoot.CarrierIntelEvent.Severity == nil {
 			break
@@ -16863,6 +16918,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelInsuranceFiling.PolicyNumber(childComplexity), true
+	case "CarrierIntelInsuranceFiling.status":
+		if e.ComplexityRoot.CarrierIntelInsuranceFiling.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelInsuranceFiling.Status(childComplexity), true
 	case "CarrierIntelInsuranceFiling.type":
 		if e.ComplexityRoot.CarrierIntelInsuranceFiling.Type == nil {
 			break
@@ -16937,6 +16998,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelLanes.Preferred(childComplexity), true
+	case "CarrierIntelLanes.preferredStates":
+		if e.ComplexityRoot.CarrierIntelLanes.PreferredStates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelLanes.PreferredStates(childComplexity), true
 	case "CarrierIntelLanes.totalLoads":
 		if e.ComplexityRoot.CarrierIntelLanes.TotalLoads == nil {
 			break
@@ -17588,6 +17655,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelSnapshot.Depth(childComplexity), true
+	case "CarrierIntelSnapshot.depthFetchedAt":
+		if e.ComplexityRoot.CarrierIntelSnapshot.DepthFetchedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.DepthFetchedAt(childComplexity), true
 	case "CarrierIntelSnapshot.docketNumber":
 		if e.ComplexityRoot.CarrierIntelSnapshot.DocketNumber == nil {
 			break
@@ -17606,6 +17679,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierIntelSnapshot.FetchedAt(childComplexity), true
+	case "CarrierIntelSnapshot.fetchedDepth":
+		if e.ComplexityRoot.CarrierIntelSnapshot.FetchedDepth == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierIntelSnapshot.FetchedDepth(childComplexity), true
 	case "CarrierIntelSnapshot.findings":
 		if e.ComplexityRoot.CarrierIntelSnapshot.Findings == nil {
 			break
@@ -18996,6 +19075,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CarrierSettlementWorkspaceSummary.TotalNetMinor(childComplexity), true
 
+	case "CarrierSourcingPage.filteredOut":
+		if e.ComplexityRoot.CarrierSourcingPage.FilteredOut == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSourcingPage.FilteredOut(childComplexity), true
 	case "CarrierSourcingPage.items":
 		if e.ComplexityRoot.CarrierSourcingPage.Items == nil {
 			break
@@ -45857,6 +45942,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CarrierIntelCostEstimate(childComplexity, args["policy"].(carrierintel.EnrollmentPolicy), args["recentUsageDays"].(*int), args["includeOpenTenders"].(*bool)), true
+	case "Query.carrierIntelEvent":
+		if e.ComplexityRoot.Query.CarrierIntelEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrierIntelEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CarrierIntelEvent(childComplexity, args["id"].(string)), true
 	case "Query.carrierIntelEvents":
 		if e.ComplexityRoot.Query.CarrierIntelEvents == nil {
 			break
@@ -69302,6 +69398,12 @@ enum CarrierIntelInsuranceChangeKind {
   NewFiling
 }
 
+enum CarrierSourcingSort {
+  BestMatch
+  FleetSizeDesc
+  AuthorityAgeDesc
+}
+
 enum CarrierIntelRuleParamType {
   Integer
   Decimal
@@ -69362,6 +69464,7 @@ type CarrierIntelAuthority {
 
 type CarrierIntelInsuranceFiling {
   type: CarrierIntelInsuranceFilingType!
+  status: String
   insurerName: String
   policyNumber: String
   coverage: Decimal
@@ -69405,6 +69508,9 @@ type CarrierIntelBasicMeasure {
   alert: Boolean!
   roadsideAlert: Boolean!
   acIndicator: Boolean!
+  violations: Int
+  oosViolations: Int
+  measuredAt: Timestamp
 }
 
 type CarrierIntelInspections {
@@ -69524,6 +69630,7 @@ type CarrierIntelLanes {
   firstLoadAt: Timestamp
   lastLoadAt: Timestamp
   preferred: [CarrierIntelLane!]
+  preferredStates: [String!]
 }
 
 type CarrierIntelBenchmarks {
@@ -69589,6 +69696,8 @@ type CarrierIntelSnapshot {
   reviewNote: String
   policyVersion: Int!
   fetchedAt: Timestamp!
+  fetchedDepth: CarrierIntelDepth!
+  depthFetchedAt: Timestamp!
   sourceAsOf: Timestamp
   confirmedAt: Timestamp
   effectiveAsOf: Timestamp!
@@ -69607,7 +69716,9 @@ type CarrierIntelEvent {
   source: CarrierIntelEventSource!
   category: CarrierIntelSection!
   fieldPath: String
+  fieldLabel: String
   ruleCode: String
+  ruleLabel: String
   severity: CarrierIntelSeverity!
   action: CarrierIntelRuleAction
   priorValue: String
@@ -69617,8 +69728,10 @@ type CarrierIntelEvent {
   detectedAt: Timestamp!
   status: CarrierIntelEventStatus!
   acknowledgedById: ID
+  acknowledgedBy: User
   acknowledgedAt: Timestamp
   resolvedById: ID
+  resolvedBy: User
   resolvedAt: Timestamp
   resolution: CarrierIntelEventResolution
   resolutionNote: String
@@ -69856,6 +69969,7 @@ type CarrierSourcingResult {
 type CarrierSourcingPage {
   items: [CarrierSourcingResult!]!
   total: Int!
+  filteredOut: Int!
   provider: String!
 }
 
@@ -70056,9 +70170,11 @@ input CarrierSourcingSearchInput {
   minPowerUnits: Int
   maxPowerUnits: Int
   minAuthorityAgeDays: Int
+  maxAuthorityAgeDays: Int
   hazmatOnly: Boolean
   excludeBlocking: Boolean
   excludeExistingCarriers: Boolean
+  sort: CarrierSourcingSort
   limit: Int
   offset: Int
 }
@@ -70086,6 +70202,7 @@ extend type Query {
     input: DataTableConnectionInput!
     filter: CarrierIntelEventFilterInput
   ): CarrierIntelEventConnection!
+  carrierIntelEvent(id: ID!): CarrierIntelEvent
   carrierIntelMonitoringStatus: CarrierIntelMonitoringStatus!
   carrierMonitoringEnrollments(
     input: DataTableConnectionInput!
@@ -89912,6 +90029,12 @@ func (ec *executionContext) childFields_CarrierIntelBasicMeasure(ctx context.Con
 		return ec.fieldContext_CarrierIntelBasicMeasure_roadsideAlert(ctx, field)
 	case "acIndicator":
 		return ec.fieldContext_CarrierIntelBasicMeasure_acIndicator(ctx, field)
+	case "violations":
+		return ec.fieldContext_CarrierIntelBasicMeasure_violations(ctx, field)
+	case "oosViolations":
+		return ec.fieldContext_CarrierIntelBasicMeasure_oosViolations(ctx, field)
+	case "measuredAt":
+		return ec.fieldContext_CarrierIntelBasicMeasure_measuredAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelBasicMeasure", field.Name)
 }
@@ -90132,8 +90255,12 @@ func (ec *executionContext) childFields_CarrierIntelEvent(ctx context.Context, f
 		return ec.fieldContext_CarrierIntelEvent_category(ctx, field)
 	case "fieldPath":
 		return ec.fieldContext_CarrierIntelEvent_fieldPath(ctx, field)
+	case "fieldLabel":
+		return ec.fieldContext_CarrierIntelEvent_fieldLabel(ctx, field)
 	case "ruleCode":
 		return ec.fieldContext_CarrierIntelEvent_ruleCode(ctx, field)
+	case "ruleLabel":
+		return ec.fieldContext_CarrierIntelEvent_ruleLabel(ctx, field)
 	case "severity":
 		return ec.fieldContext_CarrierIntelEvent_severity(ctx, field)
 	case "action":
@@ -90152,10 +90279,14 @@ func (ec *executionContext) childFields_CarrierIntelEvent(ctx context.Context, f
 		return ec.fieldContext_CarrierIntelEvent_status(ctx, field)
 	case "acknowledgedById":
 		return ec.fieldContext_CarrierIntelEvent_acknowledgedById(ctx, field)
+	case "acknowledgedBy":
+		return ec.fieldContext_CarrierIntelEvent_acknowledgedBy(ctx, field)
 	case "acknowledgedAt":
 		return ec.fieldContext_CarrierIntelEvent_acknowledgedAt(ctx, field)
 	case "resolvedById":
 		return ec.fieldContext_CarrierIntelEvent_resolvedById(ctx, field)
+	case "resolvedBy":
+		return ec.fieldContext_CarrierIntelEvent_resolvedBy(ctx, field)
 	case "resolvedAt":
 		return ec.fieldContext_CarrierIntelEvent_resolvedAt(ctx, field)
 	case "resolution":
@@ -90436,6 +90567,8 @@ func (ec *executionContext) childFields_CarrierIntelInsuranceFiling(ctx context.
 	switch field.Name {
 	case "type":
 		return ec.fieldContext_CarrierIntelInsuranceFiling_type(ctx, field)
+	case "status":
+		return ec.fieldContext_CarrierIntelInsuranceFiling_status(ctx, field)
 	case "insurerName":
 		return ec.fieldContext_CarrierIntelInsuranceFiling_insurerName(ctx, field)
 	case "policyNumber":
@@ -90484,6 +90617,8 @@ func (ec *executionContext) childFields_CarrierIntelLanes(ctx context.Context, f
 		return ec.fieldContext_CarrierIntelLanes_lastLoadAt(ctx, field)
 	case "preferred":
 		return ec.fieldContext_CarrierIntelLanes_preferred(ctx, field)
+	case "preferredStates":
+		return ec.fieldContext_CarrierIntelLanes_preferredStates(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CarrierIntelLanes", field.Name)
 }
@@ -90816,6 +90951,10 @@ func (ec *executionContext) childFields_CarrierIntelSnapshot(ctx context.Context
 		return ec.fieldContext_CarrierIntelSnapshot_policyVersion(ctx, field)
 	case "fetchedAt":
 		return ec.fieldContext_CarrierIntelSnapshot_fetchedAt(ctx, field)
+	case "fetchedDepth":
+		return ec.fieldContext_CarrierIntelSnapshot_fetchedDepth(ctx, field)
+	case "depthFetchedAt":
+		return ec.fieldContext_CarrierIntelSnapshot_depthFetchedAt(ctx, field)
 	case "sourceAsOf":
 		return ec.fieldContext_CarrierIntelSnapshot_sourceAsOf(ctx, field)
 	case "confirmedAt":
@@ -91382,6 +91521,8 @@ func (ec *executionContext) childFields_CarrierSourcingPage(ctx context.Context,
 		return ec.fieldContext_CarrierSourcingPage_items(ctx, field)
 	case "total":
 		return ec.fieldContext_CarrierSourcingPage_total(ctx, field)
+	case "filteredOut":
+		return ec.fieldContext_CarrierSourcingPage_filteredOut(ctx, field)
 	case "provider":
 		return ec.fieldContext_CarrierSourcingPage_provider(ctx, field)
 	}

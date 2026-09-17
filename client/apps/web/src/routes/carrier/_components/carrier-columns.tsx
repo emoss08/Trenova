@@ -5,8 +5,8 @@ import {
   CarrierComplianceStatusBadge,
   CarrierSafetyRatingBadge,
 } from "@trenova/shared/components/status-badge";
-import { ReviewRequiredBadge } from "@/components/carrier-intelligence/review-state-badge";
-import { RiskLevelBadge } from "@/components/carrier-intelligence/risk-level-badge";
+import { ReviewRequiredLabel } from "@/components/carrier-intelligence/review-state-label";
+import { RiskLabel } from "@/components/carrier-intelligence/status-dot";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
   carrierComplianceStatusChoices,
@@ -207,7 +207,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "intelRiskLevel",
       header: t("Risk"),
-      cell: ({ row }) => <RiskLevelBadge level={row.original.intelRiskLevel} />,
+      cell: ({ row }) => <RiskLabel level={row.original.intelRiskLevel} />,
       size: 130,
       minSize: 110,
       maxSize: 160,
@@ -223,7 +223,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "intelReviewRequired",
       header: t("Intel Review"),
-      cell: ({ row }) => <ReviewRequiredBadge required={row.original.intelReviewRequired} />,
+      cell: ({ row }) => <ReviewRequiredLabel required={row.original.intelReviewRequired} />,
       size: 140,
       minSize: 110,
       maxSize: 170,
