@@ -48,6 +48,7 @@ type Params struct {
 	SubjectRepo    repositories.CarrierIntelSubjectRepository
 	CarrierRepo    repositories.CarrierRepository
 	AssignmentRepo repositories.CarrierAssignmentRepository
+	UsStateRepo    repositories.UsStateRepository
 	CarrierService *carrierservice.Service
 	Notifications  *notificationservice.Service
 	AuditService   services.AuditService
@@ -72,6 +73,7 @@ type Service struct {
 	subjectRepo     repositories.CarrierIntelSubjectRepository
 	carrierRepo     repositories.CarrierRepository
 	assignmentRepo  repositories.CarrierAssignmentRepository
+	usStateRepo     repositories.UsStateRepository
 	carrierService  CarrierWriter
 	notifications   NotificationSender
 	auditService    services.AuditService
@@ -112,6 +114,7 @@ func New(p Params) *Service {
 		subjectRepo:     p.SubjectRepo,
 		carrierRepo:     p.CarrierRepo,
 		assignmentRepo:  p.AssignmentRepo,
+		usStateRepo:     p.UsStateRepo,
 		carrierService:  p.CarrierService,
 		notifications:   p.Notifications,
 		auditService:    p.AuditService,

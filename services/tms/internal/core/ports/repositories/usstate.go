@@ -27,9 +27,3 @@ type UsStateRepository interface {
 	) (*usstate.UsState, error)
 	GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error)
 }
-
-type UsStateCacheRepository interface {
-	GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error)
-	Set(ctx context.Context, states []*usstate.UsState) error
-	Invalidate(ctx context.Context) error
-}

@@ -468,6 +468,9 @@ func (s *Service) ImportProspect(
 	entity := buildProspectCarrier(snapshot.Profile, req.Code)
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
+	if err = s.applyProspectAddresses(ctx, entity, snapshot.Profile.Identity); err != nil {
+		return nil, err
+	}
 
 	created, err := s.carrierService.Create(ctx, entity, &services.RequestActor{
 		PrincipalType:  services.PrincipalTypeUser,
@@ -526,11 +529,6 @@ func buildProspectCarrier(profile *carrierintel.Profile, code string) *carrier.C
 		!profile.Authority.Common.IsActive() && !profile.Authority.Contract.IsActive() {
 		entity.CarrierType = carrier.TypeBroker
 	}
-	if identity.PhysicalAddress != nil {
-		entity.AddressLine1 = stringutils.TruncateRunes(identity.PhysicalAddress.Line1, 150)
-		entity.City = stringutils.TruncateRunes(identity.PhysicalAddress.City, 100)
-		entity.PostalCode = stringutils.TruncateRunes(identity.PhysicalAddress.PostalCode, 10)
-	}
 	if profile.Contacts != nil {
 		entity.Phone = stringutils.TruncateRunes(stringutils.DigitsOnly(profile.Contacts.Phone), 20)
 		email := strings.ToLower(strings.TrimSpace(profile.Contacts.Email))
@@ -585,4 +583,68 @@ func prospectCode(requested, name, dot string) string {
 		digits = digits[len(digits)-6:]
 	}
 	return stringutils.TruncateRunes(string(letters)+digits, 10)
+}
+
+func (s *Service) applyProspectAddresses(
+	ctx context.Context,
+	entity *carrier.Carrier,
+	identity *carrierintel.Identity,
+) error {
+	physicalStateID, physical, err := s.resolveProspectAddress(ctx, identity.PhysicalAddress)
+	if err != nil {
+		return err
+	}
+	mailingStateID, mailing, err := s.resolveProspectAddress(ctx, identity.MailingAddress)
+	if err != nil {
+		return err
+	}
+
+	if physicalStateID == nil {
+		physicalStateID, physical = mailingStateID, mailing
+	}
+	if mailingStateID == nil {
+		mailingStateID, mailing = physicalStateID, physical
+	}
+	if physicalStateID == nil {
+		return errortypes.NewBusinessError(
+			"The provider has no U.S. address for DOT {0}, so the carrier can't be imported. Create it manually instead",
+			entity.DOTNumber,
+		)
+	}
+
+	entity.StateID = physicalStateID
+	entity.AddressLine1 = stringutils.TruncateRunes(physical.Line1, 150)
+	entity.City = stringutils.TruncateRunes(physical.City, 100)
+	entity.PostalCode = stringutils.TruncateRunes(physical.PostalCode, 10)
+
+	entity.RemitStateID = mailingStateID
+	entity.RemitToName = entity.Name
+	entity.RemitAddressLine1 = stringutils.TruncateRunes(mailing.Line1, 150)
+	entity.RemitCity = stringutils.TruncateRunes(mailing.City, 100)
+	entity.RemitPostalCode = stringutils.TruncateRunes(mailing.PostalCode, 10)
+	return nil
+}
+
+func (s *Service) resolveProspectAddress(
+	ctx context.Context,
+	address *carrierintel.Address,
+) (*pulid.ID, *carrierintel.Address, error) {
+	if address.IsZero() {
+		return nil, nil, nil
+	}
+	abbreviation := strings.ToUpper(strings.TrimSpace(address.State))
+	if abbreviation == "" {
+		return nil, nil, nil
+	}
+	state, err := s.usStateRepo.GetByAbbreviation(ctx, abbreviation)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil, nil
+		}
+		return nil, nil, err
+	}
+	if state == nil {
+		return nil, nil, nil
+	}
+	return &state.ID, address, nil
 }

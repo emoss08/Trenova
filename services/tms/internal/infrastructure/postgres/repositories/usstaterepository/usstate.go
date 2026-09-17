@@ -3,6 +3,7 @@ package usstaterepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -10,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -23,20 +23,17 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Cache  repositories.UsStateCacheRepository
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	cache repositories.UsStateCacheRepository
+	db *postgres.Connection
+	l  *zap.Logger
 }
 
 func New(p Params) repositories.UsStateRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.us-state-repository"),
-		cache: p.Cache,
+		db: p.DB,
+		l:  p.Logger.Named("postgres.us-state-repository"),
 	}
 }
 
@@ -98,33 +95,24 @@ func (r *repository) GetByAbbreviation(
 	ctx context.Context,
 	abbreviation string,
 ) (*usstate.UsState, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByAbbreviation"),
-		zap.String("abbreviation", abbreviation),
-	)
-
-	state, err := r.cache.GetByAbbreviation(ctx, abbreviation)
-	if err == nil {
-		return state, nil
+	entity := new(usstate.UsState)
+	err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		Where(
+			buncolgen.UsStateColumns.Abbreviation.Eq(),
+			strings.ToUpper(strings.TrimSpace(abbreviation)),
+		).
+		Scan(ctx)
+	if err != nil {
+		r.l.Debug("failed to get us state by abbreviation",
+			zap.String("abbreviation", abbreviation),
+			zap.Error(err),
+		)
+		return nil, dberror.HandleNotFoundError(err, "UsState")
 	}
 
-	allStates := make([]*usstate.UsState, 0)
-	if err = r.db.DB().NewSelect().Model(&allStates).Scan(ctx); err != nil {
-		log.Error("failed to load us states", zap.Error(err))
-		return nil, err
-	}
-
-	if cacheErr := r.cache.Set(ctx, allStates); cacheErr != nil {
-		log.Warn("failed to populate us states cache", zap.Error(cacheErr))
-	}
-
-	for _, s := range allStates {
-		if s.Abbreviation == abbreviation {
-			return s, nil
-		}
-	}
-
-	return nil, errortypes.NewNotFoundError("us state not found")
+	return entity, nil
 }
 
 func (r *repository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error) {
