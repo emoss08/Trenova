@@ -10,7 +10,8 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
-import type { AgentDefinition, AssistantThread } from "@/types/assistant";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Composer } from "./composer";
@@ -35,7 +36,7 @@ export function MessageThread({
   expanded,
 }: {
   thread: AssistantThread;
-  agent: AgentDefinition | null;
+  agent: AgentDefinitionRow | null;
   expanded: boolean;
 }) {
   const t = useT();
@@ -160,7 +161,7 @@ export function MessageThread({
  * The first thing a reader sees in a new conversation: what this agent is for.
  * The opening questions sit on the composer, where they can be sent or closed.
  */
-function EmptyThread({ agent }: { agent: AgentDefinition | null }) {
+function EmptyThread({ agent }: { agent: AgentDefinitionRow | null }) {
   const t = useT();
 
   return (

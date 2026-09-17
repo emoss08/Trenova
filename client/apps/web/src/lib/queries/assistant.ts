@@ -1,3 +1,4 @@
+import { fetchAgentDefinitions } from "@/lib/graphql/agent-definition";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -20,7 +21,8 @@ export const assistant = createQueryKeys("assistant", {
   }),
   agents: (enabledOnly: boolean, chatOnly = false) => ({
     queryKey: ["agent-definitions", enabledOnly, chatOnly],
-    queryFn: () => apiService.agentDefinitionService.list(enabledOnly, chatOnly),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchAgentDefinitions({ enabledOnly, chatOnly }, { signal }),
   }),
   systemAgent: (systemKey: string) => ({
     queryKey: ["agent-definition-system", systemKey],

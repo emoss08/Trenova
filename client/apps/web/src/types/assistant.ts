@@ -1,4 +1,3 @@
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import { z } from "zod";
 
 export const agentTemplateKindSchema = z.enum([
@@ -69,8 +68,6 @@ export const agentDefinitionSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
 });
-
-export const agentDefinitionListSchema = createLimitOffsetResponse(agentDefinitionSchema);
 
 export const agentTemplateSchema = z.object({
   template: agentTemplateKindSchema,

@@ -6,7 +6,8 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { useAssistantStore } from "@/stores/assistant-store";
-import type { AgentDefinition, AssistantThread } from "@/types/assistant";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import { ArrowRightIcon, BotIcon, ChevronRightIcon, PlugZapIcon, SparklesIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
@@ -14,7 +15,7 @@ import { Link } from "react-router";
 import { AgentAvatar } from "./message-items";
 
 type AssistantHomeProps = {
-  agents: AgentDefinition[];
+  agents: AgentDefinitionRow[];
   threads: AssistantThread[];
   isLoading: boolean;
   isStarting: boolean;

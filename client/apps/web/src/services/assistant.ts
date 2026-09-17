@@ -3,7 +3,6 @@ import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
 import {
-  agentDefinitionListSchema,
   agentDefinitionSchema,
   agentEventListSchema,
   agentTemplateListSchema,
@@ -171,19 +170,6 @@ async function streamFailureMessage(response: Response): Promise<string> {
 }
 
 export class AgentDefinitionService {
-  public async list(enabledOnly = false, chatOnly = false) {
-    const params = new URLSearchParams();
-    if (enabledOnly) {
-      params.set("enabledOnly", "true");
-    }
-    if (chatOnly) {
-      params.set("chatOnly", "true");
-    }
-    const query = params.toString();
-    const response = await api.get(`/agent-definitions/${query ? `?${query}` : ""}`);
-    return safeParse(agentDefinitionListSchema, response, "Agent");
-  }
-
   public async getBySystemKey(systemKey: string) {
     const response = await api.get(`/agent-definitions/system/${systemKey}/`);
     return safeParse(agentDefinitionSchema, response, "Agent");

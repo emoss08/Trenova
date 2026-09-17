@@ -5,7 +5,8 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AgentDefinition, AssistantThread } from "@/types/assistant";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { groupThreadsByRecency } from "./thread-grouping";
@@ -14,7 +15,7 @@ const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
 export type ThreadSidebarProps = {
   threads: AssistantThread[];
-  agentsById: Map<string, AgentDefinition>;
+  agentsById: Map<string, AgentDefinitionRow>;
   activeThreadId: string | null;
   isLoading: boolean;
   canStart: boolean;

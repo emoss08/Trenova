@@ -7,7 +7,8 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { AgentDefinition, AssistantThread } from "@/types/assistant";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AssistantThread } from "@/types/assistant";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -22,8 +23,8 @@ import { useState } from "react";
 import { AgentAvatar } from "./message-items";
 
 type AssistantHeaderProps = {
-  agents: AgentDefinition[];
-  activeAgent: AgentDefinition | null;
+  agents: AgentDefinitionRow[];
+  activeAgent: AgentDefinitionRow | null;
   activeThread: AssistantThread | null;
   threads: AssistantThread[];
   expanded: boolean;

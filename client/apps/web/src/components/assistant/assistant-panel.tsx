@@ -49,7 +49,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);
-  const agents = useMemo(() => agentsQuery.data?.results ?? [], [agentsQuery.data?.results]);
+  const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 
   const activeThread = threads.find((thread) => thread.id === activeThreadId) ?? null;
