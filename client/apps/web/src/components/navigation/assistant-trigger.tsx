@@ -1,18 +1,16 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { SparklesIcon } from "lucide-react";
-import { Link, useLocation } from "react-router";
 
 /**
- * The one global way into the assistant.
- *
- * It sits with the other actions that apply everywhere because a question
- * about a shipment comes up on every page, not on one. A reader who may not
- * use the assistant gets no button rather than a button that refuses.
+ * The header's way into the assistant. It toggles the floating panel rather
+ * than leaving the page, because the question is usually about the page.
  */
 export function AssistantTrigger({
   className,
@@ -22,14 +20,13 @@ export function AssistantTrigger({
   tooltipSide?: "right" | "bottom";
 }) {
   const t = useT();
-  const { pathname } = useLocation();
   const { allowed } = usePermission(Resource.Assistant, Operation.Read);
+  const open = useAssistantStore((state) => state.open);
+  const toggleWidget = useAssistantStore((state) => state.toggleWidget);
 
   if (!allowed) {
     return null;
   }
-
-  const active = pathname.startsWith("/assistant");
 
   return (
     <Tooltip>
@@ -39,12 +36,11 @@ export function AssistantTrigger({
             variant="ghost"
             size="icon-sm"
             aria-label={t("Assistant")}
-            aria-current={active ? "page" : undefined}
-            nativeButton={false}
-            render={<Link to="/assistant" />}
+            aria-pressed={open}
+            onClick={toggleWidget}
             className={cn(
               "text-muted-foreground hover:text-foreground",
-              active && "bg-muted text-foreground",
+              open && "bg-muted text-foreground",
               className,
             )}
           />
@@ -52,8 +48,12 @@ export function AssistantTrigger({
       >
         <SparklesIcon className="size-4" strokeWidth={1.75} />
       </TooltipTrigger>
-      <TooltipContent side={tooltipSide} sideOffset={10}>
+      <TooltipContent side={tooltipSide} sideOffset={10} className="flex items-center gap-2">
         {t("Assistant")}
+        <KbdGroup>
+          <Kbd>⌘</Kbd>
+          <Kbd>J</Kbd>
+        </KbdGroup>
       </TooltipContent>
     </Tooltip>
   );

@@ -2,7 +2,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { AssistantStreamError } from "@/services/assistant";
-import type { AssistantStreamEvent, SendMessageResult } from "@/types/assistant";
+import type {
+  AssistantPageContext,
+  AssistantStreamEvent,
+  SendMessageResult,
+} from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -16,12 +20,13 @@ import { initialTurnState, isTurnActive, reduceTurn, type TurnState } from "./tu
  * The transient turn is cleared only after the refetch lands, so the reply
  * never blinks out and back in between "streamed" and "saved".
  */
-export function useAssistantTurn(threadId: string) {
+export function useAssistantTurn(threadId: string, getContext?: () => AssistantPageContext | null) {
   const t = useT();
   const queryClient = useQueryClient();
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const lastContextRef = useRef<AssistantPageContext | null>(null);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -49,14 +54,17 @@ export function useAssistantTurn(threadId: string) {
   );
 
   const send = useCallback(
-    async (content: string) => {
+    async (content: string, context?: AssistantPageContext | null) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
+      const pageContext = context === undefined ? (getContext?.() ?? null) : context;
+      lastContextRef.current = pageContext;
+
       let terminal = false;
       let done: SendMessageResult | null = null;
-      setTurn(initialTurnState(content));
+      setTurn(initialTurnState(content, pageContext));
 
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? reduceTurn(state, event) : state));
@@ -69,7 +77,13 @@ export function useAssistantTurn(threadId: string) {
       };
 
       try {
-        await apiService.assistantService.streamMessage(threadId, content, onEvent, controller.signal);
+        await apiService.assistantService.streamMessage(
+          threadId,
+          content,
+          onEvent,
+          controller.signal,
+          pageContext,
+        );
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -112,14 +126,18 @@ export function useAssistantTurn(threadId: string) {
         });
       }
     },
-    [refreshThread, settle, t, threadId],
+    [getContext, refreshThread, settle, t, threadId],
   );
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
     setTurn((state) =>
       state && isTurnActive(state)
-        ? { ...state, status: "error", error: t("Stopped. The assistant may still finish and save its reply.") }
+        ? {
+            ...state,
+            status: "error",
+            error: t("Stopped. The assistant may still finish and save its reply."),
+          }
         : state,
     );
   }, [t]);
@@ -135,6 +153,6 @@ export function useAssistantTurn(threadId: string) {
     send,
     stop,
     dismiss,
-    retry: turn ? () => send(turn.userContent) : undefined,
+    retry: turn ? () => send(turn.userContent, lastContextRef.current) : undefined,
   };
 }

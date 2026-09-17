@@ -1,4 +1,8 @@
-import type { AssistantStreamEvent, SendMessageResult } from "@/types/assistant";
+import type {
+  AssistantPageContext,
+  AssistantStreamEvent,
+  SendMessageResult,
+} from "@/types/assistant";
 
 /**
  * Where a turn is, from the reader's side of the wire.
@@ -31,16 +35,22 @@ export type TurnSegment = TextSegment | ToolSegment;
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
+  /** The page the question was asked from, shown on the provisional user turn. */
+  pageContext: AssistantPageContext | null;
   refusal: { message: string; reason: string; category: string } | null;
   segments: TurnSegment[];
   error: string | null;
   result: SendMessageResult | null;
 };
 
-export function initialTurnState(userContent: string): TurnState {
+export function initialTurnState(
+  userContent: string,
+  pageContext: AssistantPageContext | null = null,
+): TurnState {
   return {
     status: "guarding",
     userContent,
+    pageContext,
     refusal: null,
     segments: [],
     error: null,

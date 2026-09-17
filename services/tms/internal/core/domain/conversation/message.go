@@ -3,6 +3,7 @@ package conversation
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -48,6 +49,10 @@ type Message struct {
 	ScopeCategory string `json:"scopeCategory" bun:"scope_category,type:VARCHAR(50),nullzero"`
 	ScopeReason   string `json:"scopeReason"   bun:"scope_reason,type:VARCHAR(50),nullzero"`
 	Refused       bool   `json:"refused"       bun:"refused,type:BOOLEAN,notnull,default:false"`
+
+	// PageContext is what the person was looking at when they sent a user
+	// turn, kept so an answer can be reviewed against the page it was about.
+	PageContext *agent.PageContext `json:"pageContext" bun:"page_context,type:JSONB,nullzero"`
 
 	Model        string   `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
 	ProviderID   pulid.ID `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`

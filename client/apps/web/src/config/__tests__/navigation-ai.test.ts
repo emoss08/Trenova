@@ -49,6 +49,9 @@ describe("AI surfaces in navigation", () => {
     const assistant = actions.find((action) => action.id === "open-assistant");
     expect(assistant?.resource).toBe(Resource.Assistant);
     expect(assistant?.requiredOperation).toBe(Operation.Read);
+    // The assistant is a floating panel, not a page: the palette opens it in
+    // place rather than leaving whatever the person was looking at.
+    expect(assistant?.action).toBe("open-assistant");
 
     const insights = actions.find((action) => action.id === "open-insights");
     expect(insights?.path).toBe("/insights");

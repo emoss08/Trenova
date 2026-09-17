@@ -96,11 +96,18 @@ export interface NavigationConfig {
   quickActions?: QuickActionCommand[];
 }
 
+export type QuickActionKind = "open-assistant";
+
 export interface QuickActionCommand {
   id: string;
   label: string;
   description: string;
   path: string;
+  /**
+   * A command that acts in place instead of navigating. `path` stays as the
+   * fallback a plain link needs; the palette runs the action when it can.
+   */
+  action?: QuickActionKind;
   resource?: string;
   requiredOperation?: OperationType;
   /**

@@ -158,6 +158,14 @@ export const toolCallRecordSchema = z.object({
   arguments: z.record(z.string(), z.unknown()).nullish(),
 });
 
+/** What the person was looking at when they asked; mirrors the server's PageContext. */
+export const pageContextSchema = z.object({
+  path: z.string(),
+  entityType: z.string().optional().default(""),
+  entityId: z.string().optional().default(""),
+  title: z.string().optional().default(""),
+});
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -173,6 +181,7 @@ export const assistantMessageSchema = z.object({
   scopeCategory: z.string().optional().default(""),
   scopeReason: z.string().optional().default(""),
   refused: z.boolean().default(false),
+  pageContext: pageContextSchema.nullish(),
   model: z.string().optional().default(""),
   inputTokens: z.number().default(0),
   outputTokens: z.number().default(0),
@@ -229,6 +238,8 @@ export const assistantProposalSchema = z.object({
   autonomyTier: autonomyTierSchema,
   status: proposalStatusSchema,
   sourceMessageId: z.string().optional().default(""),
+  /** The model's own estimate, 0 to 1. */
+  confidence: z.number().min(0).max(1).nullish(),
   /** Set once an approved proposal has actually run. */
   executedAt: z.number().nullish(),
   /** Why an approved proposal failed to run, shown instead of a success state. */
@@ -347,6 +358,7 @@ export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 export type SendMessageResult = z.infer<typeof sendMessageResultSchema>;
 export type AssistantProposal = z.infer<typeof assistantProposalSchema>;
 export type ProposalStatus = z.infer<typeof proposalStatusSchema>;

@@ -17,6 +17,7 @@ import {
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
   type AgentDefinition,
+  type AssistantPageContext,
   type AssistantProposal,
   type AssistantStreamEvent,
   type AssistantThread,
@@ -64,8 +65,15 @@ export class AssistantService {
    * A refused turn comes back as a normal result with `refused` set, not as an
    * error: the turn was processed, recorded, and explained.
    */
-  public async sendMessage(threadId: AssistantThread["id"], content: string) {
-    const response = await api.post(`/assistant/threads/${threadId}/messages/`, { content });
+  public async sendMessage(
+    threadId: AssistantThread["id"],
+    content: string,
+    context: AssistantPageContext | null = null,
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/messages/`, {
+      content,
+      context,
+    });
     return safeParse(sendMessageResultSchema, response, "Assistant Reply");
   }
 
@@ -79,6 +87,7 @@ export class AssistantService {
     content: string,
     onEvent: (event: AssistantStreamEvent) => void,
     signal?: AbortSignal,
+    context: AssistantPageContext | null = null,
   ): Promise<void> {
     const path = `/assistant/threads/${threadId}/messages/stream/`;
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -88,7 +97,7 @@ export class AssistantService {
         { "Content-Type": "application/json", Accept: "text/event-stream" },
         path,
       ),
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, context }),
       credentials: "include",
       signal,
     });

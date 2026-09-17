@@ -1348,6 +1348,7 @@ export const navigationConfig: NavigationConfig = {
       label: "Open Assistant",
       description: "Ask about shipments, drivers and billing, or propose a change",
       path: "/assistant",
+      action: "open-assistant",
       resource: Resource.Assistant,
       requiredOperation: Operation.Read,
       keywords: ["assistant", "chat", "ai", "agent", "ask"],

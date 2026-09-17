@@ -8,7 +8,11 @@ function run(events: AssistantStreamEvent[], from: TurnState = initialTurnState(
 
 const accepted: AssistantStreamEvent = {
   event: "accepted",
-  data: { content: "Where is S1?", scopeStage: "Deterministic", scopeCategory: "TransportationOperations" },
+  data: {
+    content: "Where is S1?",
+    scopeStage: "Deterministic",
+    scopeCategory: "TransportationOperations",
+  },
 };
 
 /**
@@ -45,10 +49,20 @@ describe("reduceTurn", () => {
       { event: "delta", data: { text: "Let me check." } },
       {
         event: "message",
-        data: { content: "Let me check.", toolCalls: [{ id: "c1", name: "get_shipment" }], model: "m" },
+        data: {
+          content: "Let me check.",
+          toolCalls: [{ id: "c1", name: "get_shipment" }],
+          model: "m",
+        },
       },
-      { event: "tool_started", data: { callId: "c1", name: "get_shipment", arguments: { proNumber: "S1" } } },
-      { event: "tool_finished", data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" } },
+      {
+        event: "tool_started",
+        data: { callId: "c1", name: "get_shipment", arguments: { proNumber: "S1" } },
+      },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_shipment", failed: false, proposed: false, content: "{}" },
+      },
       { event: "delta", data: { text: "S1 is in transit." } },
     ]);
 
@@ -70,9 +84,24 @@ describe("reduceTurn", () => {
     const state = run([
       accepted,
       { event: "tool_started", data: { callId: "c1", name: "get_worker", arguments: {} } },
-      { event: "tool_finished", data: { callId: "c1", name: "get_worker", failed: true, proposed: false, content: "boom" } },
-      { event: "tool_started", data: { callId: "c2", name: "flag_for_manual_review", arguments: {} } },
-      { event: "tool_finished", data: { callId: "c2", name: "flag_for_manual_review", failed: false, proposed: true, content: "" } },
+      {
+        event: "tool_finished",
+        data: { callId: "c1", name: "get_worker", failed: true, proposed: false, content: "boom" },
+      },
+      {
+        event: "tool_started",
+        data: { callId: "c2", name: "flag_for_manual_review", arguments: {} },
+      },
+      {
+        event: "tool_finished",
+        data: {
+          callId: "c2",
+          name: "flag_for_manual_review",
+          failed: false,
+          proposed: true,
+          content: "",
+        },
+      },
     ]);
 
     const tools = state.segments.filter((segment) => segment.kind === "tool");
@@ -86,7 +115,15 @@ describe("reduceTurn", () => {
     const state = run([
       accepted,
       { event: "delta", data: { text: "def export():" } },
-      { event: "refused", data: { message: "I can't write code.", stage: "Output", category: "CodeGeneration", reason: "CodeGeneration" } },
+      {
+        event: "refused",
+        data: {
+          message: "I can't write code.",
+          stage: "Output",
+          category: "CodeGeneration",
+          reason: "CodeGeneration",
+        },
+      },
     ]);
 
     expect(state.refusal?.message).toBe("I can't write code.");
@@ -95,33 +132,40 @@ describe("reduceTurn", () => {
   });
 
   it("finishes with the saved result and reports an error when the server sends one", () => {
-    const done = run([accepted, { event: "delta", data: { text: "ok" } }, {
-      event: "done",
-      data: {
-        thread: {
-          id: "t1",
-          businessUnitId: "bu",
-          organizationId: "org",
-          userId: "u",
-          agentDefinitionId: "agdef",
-          title: "t",
-          status: "Active",
-          lastMessageAt: 0,
-          version: 0,
-          createdAt: 0,
-          updatedAt: 0,
+    const done = run([
+      accepted,
+      { event: "delta", data: { text: "ok" } },
+      {
+        event: "done",
+        data: {
+          thread: {
+            id: "t1",
+            businessUnitId: "bu",
+            organizationId: "org",
+            userId: "u",
+            agentDefinitionId: "agdef",
+            title: "t",
+            status: "Active",
+            lastMessageAt: 0,
+            version: 0,
+            createdAt: 0,
+            updatedAt: 0,
+          },
+          messages: [],
+          reply: "ok",
+          refused: false,
+          proposals: [],
+          proposalsUnrecorded: false,
         },
-        messages: [],
-        reply: "ok",
-        refused: false,
-        proposals: [],
-        proposalsUnrecorded: false,
       },
-    }]);
+    ]);
     expect(done.status).toBe("done");
     expect(done.result?.reply).toBe("ok");
 
-    const failed = run([accepted, { event: "error", data: { message: "No AI provider is configured" } }]);
+    const failed = run([
+      accepted,
+      { event: "error", data: { message: "No AI provider is configured" } },
+    ]);
     expect(failed.status).toBe("error");
     expect(failed.error).toBe("No AI provider is configured");
   });

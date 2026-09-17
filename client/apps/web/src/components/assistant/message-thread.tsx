@@ -1,6 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -10,12 +8,11 @@ import {
   MessageScrollerViewport,
 } from "@trenova/shared/components/ui/message-scroller";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { queries } from "@/lib/queries";
+import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinition, AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
-import { Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Composer } from "./composer";
 import {
   AgentAvatar,
@@ -30,18 +27,20 @@ import { StreamingTurn } from "./streaming-turn";
 import { suggestionsFor } from "./suggestions";
 import { groupThread } from "./thread-view";
 import { useAssistantTurn } from "./use-assistant-turn";
+import { usePageContext } from "./use-page-context";
 
 export function MessageThread({
   thread,
   agent,
-  onDelete,
+  expanded,
 }: {
   thread: AssistantThread;
   agent: AgentDefinition | null;
-  onDelete: () => void;
+  expanded: boolean;
 }) {
   const t = useT();
-  const [seed, setSeed] = useState<string>();
+  const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
+  const dismissSuggestion = useAssistantStore((state) => state.dismissSuggestion);
 
   const messagesQuery = useQuery(queries.assistant.messages(thread.id));
   const messageResults = messagesQuery.data?.results;
@@ -57,19 +56,30 @@ export function MessageThread({
   );
 
   const entries = useMemo(() => groupThread(messages), [messages]);
-  const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(thread.id);
+  const getPageContext = usePageContext();
+  const { turn, isActive, send, stop, dismiss, retry } = useAssistantTurn(
+    thread.id,
+    getPageContext,
+  );
 
   const agentUnavailable = agent === null;
   const isEmpty = !messagesQuery.isLoading && entries.length === 0 && turn === null;
+  const suggestions = useMemo(
+    () =>
+      isEmpty && agent
+        ? suggestionsFor(agent.template).filter((item) => !dismissed.includes(item.prompt))
+        : [],
+    [agent, dismissed, isEmpty],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <ThreadHeader thread={thread} agent={agent} onDelete={onDelete} />
-
       <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <MessageScroller className="flex-1">
-          <MessageScrollerViewport className="px-4">
-            <MessageScrollerContent className="mx-auto w-full max-w-3xl gap-5 py-5">
+          <MessageScrollerViewport className={expanded ? "px-4" : "px-3"}>
+            <MessageScrollerContent
+              className={expanded ? "mx-auto w-full max-w-3xl gap-5 py-5" : "gap-4 py-4"}
+            >
               {messagesQuery.isLoading ? (
                 <div className="flex flex-col gap-4">
                   <Skeleton className="ml-auto h-10 w-2/5" />
@@ -77,7 +87,7 @@ export function MessageThread({
                   <Skeleton className="ml-auto h-10 w-1/3" />
                 </div>
               ) : isEmpty ? (
-                <EmptyThread agent={agent} onSuggest={setSeed} />
+                <EmptyThread agent={agent} />
               ) : (
                 entries.map((entry) => (
                   <MessageScrollerItem key={entry.message.id} messageId={entry.message.id}>
@@ -85,6 +95,7 @@ export function MessageThread({
                       <UserBubble
                         content={entry.message.content}
                         sentAt={entry.message.createdAt}
+                        pageContext={entry.message.pageContext}
                       />
                     ) : entry.kind === "declined" ? (
                       <DeclinedBubble
@@ -115,7 +126,7 @@ export function MessageThread({
 
               {turn && (
                 <MessageScrollerItem messageId="turn-in-progress" scrollAnchor>
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-4">
                     <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} />
                   </div>
                 </MessageScrollerItem>
@@ -127,11 +138,7 @@ export function MessageThread({
       </MessageScrollerProvider>
 
       <Composer
-        seed={seed}
-        onSend={(content) => {
-          setSeed(undefined);
-          void send(content);
-        }}
+        onSend={(content) => void send(content)}
         onStop={stop}
         active={isActive}
         disabled={agentUnavailable}
@@ -141,119 +148,35 @@ export function MessageThread({
             ? t("Message {0}…", agent.name)
             : t("Ask about a shipment, a driver, or how to do something…")
         }
+        suggestions={suggestions}
+        onDismissSuggestion={dismissSuggestion}
+        compact={!expanded}
       />
     </div>
   );
 }
 
 /**
- * Who the reader is talking to, and what that agent may do. A conversation is
- * with one agent, and its reach is the thing worth knowing before asking.
+ * The first thing a reader sees in a new conversation: what this agent is for.
+ * The opening questions sit on the composer, where they can be sent or closed.
  */
-function ThreadHeader({
-  thread,
-  agent,
-  onDelete,
-}: {
-  thread: AssistantThread;
-  agent: AgentDefinition | null;
-  onDelete: () => void;
-}) {
+function EmptyThread({ agent }: { agent: AgentDefinition | null }) {
   const t = useT();
-  const templatesQuery = useQuery(queries.assistant.agentTemplates());
-  const templateLabel = templatesQuery.data?.templates.find(
-    (item) => item.template === agent?.template,
-  )?.label;
 
   return (
-    <div className="border-border flex items-center gap-3 border-b px-4 py-2.5">
-      <AgentAvatar className="size-8" />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="truncate text-sm font-medium">
-            {agent?.name ?? t("Agent unavailable")}
-          </span>
-          {templateLabel && <Badge variant="outline">{templateLabel}</Badge>}
-          {agent && (
-            <Badge variant="secondary">
-              {agent.toolNames.length === 0
-                ? t("Answers only")
-                : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}
-            </Badge>
-          )}
-        </div>
-        <p className="text-muted-foreground truncate text-xs">
-          {agent
-            ? agent.description ||
-              t("Looks records up for you and proposes changes for your approval.")
-            : t(
-                "This agent was disabled or removed. You can read the conversation but not continue it.",
-              )}
-        </p>
-      </div>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-destructive"
-              onClick={onDelete}
-              aria-label={t("Delete conversation")}
-            />
-          }
-        >
-          <Trash2Icon className="size-4" />
-        </TooltipTrigger>
-        <TooltipContent>{t("Delete conversation")}</TooltipContent>
-      </Tooltip>
-      <span className="sr-only">{thread.title}</span>
-    </div>
-  );
-}
-
-/**
- * The first thing a reader sees in a new conversation: what this agent is for
- * and three questions it can actually answer. A blank box teaches nothing.
- */
-function EmptyThread({
-  agent,
-  onSuggest,
-}: {
-  agent: AgentDefinition | null;
-  onSuggest: (prompt: string) => void;
-}) {
-  const t = useT();
-  const suggestions = agent ? suggestionsFor(agent.template) : [];
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
-      <AgentAvatar className="size-12 rounded-xl [&_svg]:size-6" />
-      <div className="flex flex-col gap-1">
-        <p className="text-base font-semibold">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
+      <AgentAvatar className="size-11 rounded-xl [&_svg]:size-5" />
+      <div className="flex flex-col gap-1 px-4">
+        <p className="text-sm font-semibold">
           {agent ? t("Talking to {0}", agent.name) : t("Start a conversation")}
         </p>
-        <p className="text-muted-foreground max-w-md text-sm">
+        <p className="text-muted-foreground max-w-sm text-xs">
           {agent?.description ||
             t(
               "Ask about a shipment, a driver, or how to do something in Trenova. The assistant can look records up and propose changes for you to approve.",
             )}
         </p>
       </div>
-      {suggestions.length > 0 && (
-        <div className="flex max-w-xl flex-wrap justify-center gap-2">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion.prompt}
-              type="button"
-              onClick={() => onSuggest(suggestion.prompt)}
-              className="bg-card text-muted-foreground hover:bg-muted hover:text-foreground rounded-full border px-3 py-1.5 text-xs transition-colors"
-            >
-              {t(suggestion.label)}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

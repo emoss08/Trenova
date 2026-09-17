@@ -11,6 +11,7 @@ import { useLocation } from "react-router";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
+import { AssistantWidget } from "../assistant/assistant-widget";
 import { PageHeader, type PageHeaderProps } from "../page-header";
 import { findModuleForPath } from "./sidebar-model";
 import { ClassicSidebar } from "./variants/classic-sidebar";
@@ -108,6 +109,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     <>
       <CommandPaletteMount />
       <KeyboardShortcutsDialog />
+      <AssistantWidget />
       <Shell>{children}</Shell>
     </>
   );

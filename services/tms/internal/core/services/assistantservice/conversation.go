@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -119,10 +120,15 @@ func (s *Service) SendMessageStream(
 	emit services.AssistantStreamEmitter,
 ) (*services.SendMessageResult, error) {
 	content := strings.TrimSpace(req.Content)
+	multiErr := errortypes.NewMultiError()
 	if content == "" {
-		multiErr := errortypes.NewMultiError()
 		multiErr.Add("content", errortypes.ErrRequired, "Message cannot be empty")
-
+	}
+	page := req.Page.Normalized()
+	if page != nil {
+		page.Validate("context", multiErr)
+	}
+	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
 
@@ -163,10 +169,13 @@ func (s *Service) SendMessageStream(
 		Actor:      actor,
 		History:    history,
 		Input:      content,
+		Page:       page,
 	}, emit)
 	if err != nil {
 		return nil, err
 	}
+
+	attachPageContext(turn.Messages, page)
 
 	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
 		ThreadID:   thread.ID,
@@ -230,4 +239,19 @@ func truncateRunes(s string, limit int) string {
 	runes := []rune(s)
 
 	return strings.TrimSpace(string(runes[:limit])) + "…"
+}
+
+// attachPageContext records the page on the person's turn only: the assistant
+// and tool messages that follow are about the same page, but the fact worth
+// keeping is what the person was looking at when they asked.
+func attachPageContext(messages []conversation.Message, page *agent.PageContext) {
+	if page == nil {
+		return
+	}
+	for i := range messages {
+		if messages[i].Role == conversation.RoleUser {
+			messages[i].PageContext = page
+			return
+		}
+	}
 }

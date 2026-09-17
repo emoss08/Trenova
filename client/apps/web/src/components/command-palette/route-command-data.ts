@@ -1,6 +1,12 @@
-import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
+import {
+  isNavGroup,
+  type NavGroup,
+  type NavItem,
+  type NavModule,
+  type QuickActionCommand,
+  type QuickActionKind,
+} from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
-import type { QuickActionCommand } from "@/config/navigation.types";
 import { canAccessQuickAction, type NavAccessContext } from "@/hooks/use-filtered-navigation";
 import { SettingsIcon } from "lucide-react";
 
@@ -31,6 +37,7 @@ export interface SuggestedCommandItem {
   label: string;
   description: string;
   href: string;
+  action?: QuickActionKind;
   icon: PaletteIconComponent;
   keywords: string[];
 }
@@ -203,6 +210,7 @@ export function buildSuggestedCreateCommands(
       label: definition.label,
       description: definition.description,
       href: buildCommandHref(definition.path, definition.query),
+      action: definition.action,
       icon: routeIconByPath.get(buildCommandHref(definition.path)) ?? SettingsIcon,
       keywords: definition.keywords ?? [],
     }));

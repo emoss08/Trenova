@@ -36,12 +36,7 @@ type RuntimeUser struct {
 	Roles []string
 }
 
-type PageContext struct {
-	Path       string `json:"path"`
-	EntityType string `json:"entityType"`
-	EntityID   string `json:"entityId"`
-	Title      string `json:"title"`
-}
+type PageContext = agent.PageContext
 
 type RuntimeSubject struct {
 	Type  agent.SubjectType

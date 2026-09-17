@@ -13,12 +13,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
-import { CheckIcon, CopyIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react";
+import type { AssistantMessage, AssistantPageContext, AssistantProposal } from "@/types/assistant";
+import { CheckIcon, CopyIcon, MapPinIcon, ShieldAlertIcon, SparklesIcon } from "lucide-react";
 import { useCallback, useState, type ReactNode } from "react";
 import { ProposalCard } from "./proposal-card";
 import type { ThreadEntry } from "./thread-view";
-import { ToolActivity } from "./tool-activity";
+import { ToolTimeline, type ToolStep } from "./tool-activity";
 
 const TIME_FORMAT = { hour: "numeric", minute: "2-digit" } as const;
 
@@ -27,7 +27,7 @@ export function AgentAvatar({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md",
+        "from-primary flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br to-violet-500 text-white shadow-sm",
         className,
       )}
       aria-hidden
@@ -51,20 +51,61 @@ function UserAvatar() {
   );
 }
 
+/** Where the question was asked from, so an answer can be read against its page. */
+export function PageContextChip({ context }: { context: AssistantPageContext | null | undefined }) {
+  const t = useT();
+
+  if (!context || (context.title === "" && context.entityType === "")) {
+    return null;
+  }
+
+  const record = context.entityType
+    ? `${context.entityType.replace(/_/g, " ")}${context.entityId ? ` ${context.entityId}` : ""}`
+    : "";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="text-muted-foreground inline-flex max-w-full items-center gap-1 text-[11px]">
+            <MapPinIcon className="size-3 shrink-0" />
+            <span className="truncate">
+              {t("Asked from {0}", context.title || record || context.path)}
+            </span>
+          </span>
+        }
+      />
+      <TooltipContent className="max-w-xs font-mono text-[11px]">
+        {context.path}
+        {record ? ` · ${record}` : ""}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 /** A person's message, or the one they are about to send. */
-export function UserBubble({ content, sentAt }: { content: string; sentAt?: number }) {
+export function UserBubble({
+  content,
+  sentAt,
+  pageContext,
+}: {
+  content: string;
+  sentAt?: number;
+  pageContext?: AssistantPageContext | null;
+}) {
   return (
     <Message align="end">
       <MessageAvatar className="self-start bg-transparent">
         <UserAvatar />
       </MessageAvatar>
       <MessageContent className="items-end">
-        <div className="bg-primary text-primary-foreground max-w-[85%] rounded-lg rounded-tr-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap">
+        <div className="from-primary text-primary-foreground max-w-[85%] rounded-2xl rounded-tr-md bg-gradient-to-br to-violet-600 px-3.5 py-2.5 text-sm whitespace-pre-wrap shadow-sm">
           {content}
         </div>
-        {sentAt !== undefined && (
-          <MessageFooter className="px-1">
-            <time>{formatUnixInUserTimezone(sentAt, TIME_FORMAT)}</time>
+        {(sentAt !== undefined || pageContext) && (
+          <MessageFooter className="flex-wrap gap-x-2 px-1">
+            {sentAt !== undefined && <time>{formatUnixInUserTimezone(sentAt, TIME_FORMAT)}</time>}
+            <PageContextChip context={pageContext} />
           </MessageFooter>
         )}
       </MessageContent>
@@ -73,13 +114,7 @@ export function UserBubble({ content, sentAt }: { content: string; sentAt?: numb
 }
 
 /** The frame around anything the assistant says, live or saved. */
-export function AssistantFrame({
-  children,
-  footer,
-}: {
-  children: ReactNode;
-  footer?: ReactNode;
-}) {
+export function AssistantFrame({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   return (
     <Message>
       <MessageAvatar className="self-start bg-transparent">
@@ -102,12 +137,12 @@ export function AssistantProse({
   streaming?: boolean;
 }) {
   return (
-    <div className="bg-muted/60 max-w-[92%] rounded-lg rounded-tl-sm px-3.5 py-2.5">
+    <div className="bg-card border-border/70 max-w-[92%] rounded-2xl rounded-tl-md border px-3.5 py-2.5 shadow-xs">
       <AiMarkdown content={content} />
       {streaming && (
         <span
           aria-hidden
-          className="bg-foreground/70 ml-0.5 inline-block h-[1em] w-[2px] animate-pulse align-text-bottom"
+          className="assistant-caret bg-primary ml-0.5 inline-block h-[1em] w-[2px] rounded-full align-text-bottom"
         />
       )}
     </div>
@@ -157,6 +192,14 @@ export function AssistantEntry({
   const t = useT();
   const { message, tools } = entry;
 
+  const steps: ToolStep[] = tools.map((exchange) => ({
+    id: exchange.call.id,
+    name: exchange.call.name,
+    arguments: exchange.call.arguments,
+    status: toolStatus(exchange.result),
+    content: exchange.result?.content ?? "",
+  }));
+
   return (
     <AssistantFrame
       footer={
@@ -176,20 +219,8 @@ export function AssistantEntry({
         </span>
       }
     >
+      {steps.length > 0 && <ToolTimeline steps={steps} />}
       {message.content !== "" && <AssistantProse content={message.content} />}
-      {tools.length > 0 && (
-        <div className="flex max-w-[92%] flex-col gap-1.5">
-          {tools.map((exchange) => (
-            <ToolActivity
-              key={exchange.call.id}
-              name={exchange.call.name}
-              arguments={exchange.call.arguments}
-              status={toolStatus(exchange.result)}
-              content={exchange.result?.content ?? ""}
-            />
-          ))}
-        </div>
-      )}
       {proposals.map((proposal) => (
         <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
       ))}
@@ -197,7 +228,7 @@ export function AssistantEntry({
   );
 }
 
-function toolStatus(result: AssistantMessage | null): "done" | "failed" | "proposed" {
+function toolStatus(result: AssistantMessage | null): ToolStep["status"] {
   if (result === null) return "done";
   if (result.toolFailed) return "failed";
   return result.content.startsWith("Recorded a proposal") ? "proposed" : "done";
@@ -231,7 +262,7 @@ export function DeclinedBubble({ content, sentAt }: { content: string; sentAt: n
         <UserAvatar />
       </MessageAvatar>
       <MessageContent className="items-end">
-        <div className="border-border text-muted-foreground max-w-[85%] rounded-lg rounded-tr-sm border border-dashed px-3.5 py-2.5 text-sm whitespace-pre-wrap">
+        <div className="border-border text-muted-foreground max-w-[85%] rounded-2xl rounded-tr-md border border-dashed px-3.5 py-2.5 text-sm whitespace-pre-wrap">
           {content}
         </div>
         <MessageFooter className="px-1">

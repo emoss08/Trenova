@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { CircleAlertIcon } from "lucide-react";
 import { AssistantFrame, AssistantProse, RefusalNotice, UserBubble } from "./message-items";
-import { ToolActivity } from "./tool-activity";
+import { ToolTimeline, type ToolStep } from "./tool-activity";
 import { describeToolCall } from "./tool-presentation";
 import type { TurnState } from "./turn-stream";
 
@@ -32,29 +32,23 @@ export function StreamingTurn({
 
   return (
     <>
-      <UserBubble content={turn.userContent} />
+      <UserBubble content={turn.userContent} pageContext={turn.pageContext} />
 
-      {turn.status === "refused" && turn.refusal && <RefusalNotice message={turn.refusal.message} />}
+      {turn.status === "refused" && turn.refusal && (
+        <RefusalNotice message={turn.refusal.message} />
+      )}
 
       {showFrame && turn.status !== "refused" && (
         <AssistantFrame>
-          {turn.segments.map((segment, index) =>
-            segment.kind === "text" ? (
+          {groupSegments(turn).map((group, index) =>
+            group.kind === "text" ? (
               <AssistantProse
                 key={`text-${index}`}
-                content={segment.text}
-                streaming={!segment.closed && turn.status === "streaming"}
+                content={group.text}
+                streaming={!group.closed && turn.status === "streaming"}
               />
             ) : (
-              <div key={segment.callId} className="flex max-w-[92%] flex-col gap-1.5">
-                <ToolActivity
-                  name={segment.name}
-                  arguments={segment.arguments}
-                  status={segment.status}
-                  content={segment.content}
-                  live
-                />
-              </div>
+              <ToolTimeline key={`tools-${index}`} steps={group.steps} live />
             ),
           )}
           <StatusLine turn={turn} />
@@ -95,7 +89,11 @@ function StatusLine({ turn }: { turn: TurnState }) {
   const t = useT();
 
   if (turn.status === "guarding") {
-    return <TextShimmer as="span" className="text-xs">{t("Checking the question…")}</TextShimmer>;
+    return (
+      <TextShimmer as="span" className="text-xs">
+        {t("Checking the question…")}
+      </TextShimmer>
+    );
   }
 
   if (turn.status !== "working") {
@@ -111,8 +109,46 @@ function StatusLine({ turn }: { turn: TurnState }) {
       description.subject !== ""
         ? `${description.title} · ${description.subject}…`
         : `${description.title}…`;
-    return <TextShimmer as="span" className="text-xs">{label}</TextShimmer>;
+    return (
+      <TextShimmer as="span" className="text-xs">
+        {label}
+      </TextShimmer>
+    );
   }
 
-  return <TextShimmer as="span" className="text-xs">{t("Thinking…")}</TextShimmer>;
+  return (
+    <TextShimmer as="span" className="text-xs">
+      {t("Thinking…")}
+    </TextShimmer>
+  );
+}
+
+type SegmentGroup =
+  | { kind: "text"; text: string; closed: boolean }
+  | { kind: "tools"; steps: ToolStep[] };
+
+/** Consecutive tool calls share one timeline rather than a row each. */
+function groupSegments(turn: TurnState): SegmentGroup[] {
+  const groups: SegmentGroup[] = [];
+  for (const segment of turn.segments) {
+    if (segment.kind === "text") {
+      groups.push({ kind: "text", text: segment.text, closed: segment.closed });
+      continue;
+    }
+    const step: ToolStep = {
+      id: segment.callId,
+      name: segment.name,
+      arguments: segment.arguments,
+      status: segment.status,
+      content: segment.content,
+    };
+    const last = groups.at(-1);
+    if (last && last.kind === "tools") {
+      last.steps.push(step);
+    } else {
+      groups.push({ kind: "tools", steps: [step] });
+    }
+  }
+
+  return groups;
 }

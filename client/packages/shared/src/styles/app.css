@@ -939,3 +939,43 @@
     stroke-dashoffset: 0;
   }
 }
+
+@keyframes assistant-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px color-mix(in oklch, var(--primary) 0%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 0%, transparent);
+  }
+}
+
+.assistant-pulse {
+  animation: assistant-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes assistant-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+.assistant-caret {
+  animation: assistant-caret 900ms steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-pulse,
+  .assistant-caret {
+    animation: none;
+  }
+}

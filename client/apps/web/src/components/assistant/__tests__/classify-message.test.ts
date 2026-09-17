@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyMessage } from "@/routes/assistant/_components/classify-message";
+import { classifyMessage } from "@/components/assistant/classify-message";
 import type { AssistantMessage } from "@/types/assistant";
 
 /**

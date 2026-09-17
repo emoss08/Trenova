@@ -213,6 +213,7 @@ func toAssistantProposal(proposal *agent.AgentProposal) services.AssistantPropos
 		AutonomyTier:    proposal.AutonomyTier,
 		Status:          proposal.Status,
 		SourceMessageID: proposal.SourceMessageID,
+		Confidence:      proposal.Confidence.InexactFloat64(),
 		ExecutedAt:      proposal.ExecutedAt,
 		ExecutionError:  proposal.ExecutionError,
 	}

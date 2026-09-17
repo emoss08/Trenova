@@ -19,8 +19,11 @@ type StartThreadRequest struct {
 
 // SendMessageRequest is one turn from a person.
 type SendMessageRequest struct {
-	ThreadID   pulid.ID
-	Content    string
+	ThreadID pulid.ID
+	Content  string
+	// Page is what the person was looking at when they asked, if the client
+	// sent it. It is validated and stored with the user turn.
+	Page       *agent.PageContext
 	TenantInfo pagination.TenantInfo
 }
 
@@ -55,6 +58,9 @@ type AssistantProposal struct {
 	AutonomyTier    agent.AutonomyTier   `json:"autonomyTier"`
 	Status          agent.ProposalStatus `json:"status"`
 	SourceMessageID pulid.ID             `json:"sourceMessageId"`
+	// Confidence is the model's own estimate, 0 to 1, shown so an approver can
+	// weigh the rationale.
+	Confidence float64 `json:"confidence"`
 	// ExecutedAt and ExecutionError report what happened after approval. An
 	// accepted proposal with neither set was approved but has not run yet.
 	ExecutedAt     *int64 `json:"executedAt"`

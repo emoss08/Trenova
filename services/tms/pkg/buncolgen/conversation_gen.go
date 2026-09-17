@@ -64,6 +64,7 @@ var MessageColumns = struct {
 	ScopeCategory  Column // "scope_category" → qualified: "amsg.scope_category"
 	ScopeReason    Column // "scope_reason" → qualified: "amsg.scope_reason"
 	Refused        Column // "refused" → qualified: "amsg.refused"
+	PageContext    Column // "page_context" → qualified: "amsg.page_context"
 	Model          Column // "model" → qualified: "amsg.model"
 	ProviderID     Column // "provider_id" → qualified: "amsg.provider_id"
 	InputTokens    Column // "input_tokens" → qualified: "amsg.input_tokens"
@@ -85,6 +86,7 @@ var MessageColumns = struct {
 	ScopeCategory:  NewColumn("scope_category", "amsg"),
 	ScopeReason:    NewColumn("scope_reason", "amsg"),
 	Refused:        NewColumn("refused", "amsg"),
+	PageContext:    NewColumn("page_context", "amsg"),
 	Model:          NewColumn("model", "amsg"),
 	ProviderID:     NewColumn("provider_id", "amsg"),
 	InputTokens:    NewColumn("input_tokens", "amsg"),
@@ -112,6 +114,7 @@ var MessageFieldMap = map[string]string{
 	"scopeCategory":  "scope_category",
 	"scopeReason":    "scope_reason",
 	"refused":        "refused",
+	"pageContext":    "page_context",
 	"model":          "model",
 	"providerId":     "provider_id",
 	"inputTokens":    "input_tokens",
@@ -137,6 +140,7 @@ var MessageInsertableColumns = []string{
 	"scope_category",
 	"scope_reason",
 	"refused",
+	"page_context",
 	"model",
 	"provider_id",
 	"input_tokens",
@@ -220,6 +224,7 @@ var MessageFilter = struct {
 	ScopeCategory  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeCategory" → DB: "scope_category"
 	ScopeReason    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeReason" → DB: "scope_reason"
 	Refused        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "refused" → DB: "refused"
+	PageContext    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageContext" → DB: "page_context"
 	Model          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
 	ProviderID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
 	InputTokens    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
@@ -270,6 +275,9 @@ var MessageFilter = struct {
 	},
 	Refused: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("refused", op, value)
+	},
+	PageContext: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pageContext", op, value)
 	},
 	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("model", op, value)

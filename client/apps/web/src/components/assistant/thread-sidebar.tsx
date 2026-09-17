@@ -21,6 +21,7 @@ export type ThreadSidebarProps = {
   onSelect: (id: string) => void;
   onStart: () => void;
   onDelete: (thread: AssistantThread) => void;
+  className?: string;
 };
 
 export function ThreadSidebar({
@@ -32,6 +33,7 @@ export function ThreadSidebar({
   onSelect,
   onStart,
   onDelete,
+  className,
 }: ThreadSidebarProps) {
   const t = useT();
   const [query, setQuery] = useState("");
@@ -52,7 +54,9 @@ export function ThreadSidebar({
   }, [agentsById, now, query, threads]);
 
   return (
-    <aside className="border-border bg-sidebar flex w-72 shrink-0 flex-col border-r">
+    <aside
+      className={cn("border-border bg-sidebar flex w-72 shrink-0 flex-col border-r", className)}
+    >
       <div className="border-border flex flex-col gap-2 border-b p-3">
         <Button size="sm" className="w-full" onClick={onStart} disabled={!canStart}>
           <PlusIcon className="size-4" />

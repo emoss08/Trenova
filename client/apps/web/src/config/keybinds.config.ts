@@ -40,6 +40,12 @@ export const keybindGroups: KeybindGroup[] = [
         keys: ["Ctrl", "/"],
         description: "Show this keyboard shortcuts dialog",
       },
+      {
+        id: "assistant",
+        label: "Assistant",
+        keys: ["Ctrl", "J"],
+        description: "Open or close the assistant from any page",
+      },
     ],
   },
   {

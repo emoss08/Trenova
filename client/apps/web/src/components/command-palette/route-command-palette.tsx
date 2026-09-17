@@ -9,6 +9,8 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { navigationConfig } from "@/config/navigation.config";
+import type { QuickActionKind } from "@/config/navigation.types";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
@@ -94,6 +96,15 @@ export function RouteCommandPalette() {
   );
   const showPreview = shipmentHits.length > 0 && remoteQueryReady && !remoteSearchQuery.isFetching;
   const effectivePreviewId = showPreview ? (previewId ?? shipmentHits[0]?.id) : undefined;
+
+  const handleAction = (action: QuickActionKind) => {
+    setSearchValue("");
+    setRecordEntityFilter(null);
+    setOpen(false);
+    if (action === "open-assistant") {
+      useAssistantStore.getState().openWidget();
+    }
+  };
 
   const handleNavigate = (href: string) => {
     setSearchValue("");
@@ -374,7 +385,9 @@ export function RouteCommandPalette() {
                           key={item.id}
                           className="group"
                           value={`${item.label} ${item.description} ${item.keywords.join(" ")}`}
-                          onSelect={() => handleNavigate(item.href)}
+                          onSelect={() =>
+                            item.action ? handleAction(item.action) : handleNavigate(item.href)
+                          }
                         >
                           <Plus className="size-4" />
                           <div className="flex flex-1 flex-col">

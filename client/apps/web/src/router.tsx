@@ -84,15 +84,10 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            // The assistant is a floating panel on every page now; an old
+            // link opens it on the home screen.
             path: "/assistant",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Assistant, Operation.Read),
-            ),
-            async lazy() {
-              const { AssistantPage } = await import("@/routes/assistant/page");
-              return { Component: AssistantPage };
-            },
+            loader: () => redirect("/?assistant=open"),
           },
           {
             path: "/insights",

@@ -1,6 +1,7 @@
 package assistanthandler
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"net/http"
 
 	"github.com/bytedance/sonic"
@@ -243,8 +244,29 @@ func (h *Handler) listMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"results": messages})
 }
 
+type pageContextRequest struct {
+	Path       string `json:"path"`
+	EntityType string `json:"entityType"`
+	EntityID   string `json:"entityId"`
+	Title      string `json:"title"`
+}
+
 type sendMessageRequest struct {
-	Content string `json:"content"`
+	Content string              `json:"content"`
+	Context *pageContextRequest `json:"context"`
+}
+
+func (r *sendMessageRequest) page() *agent.PageContext {
+	if r.Context == nil {
+		return nil
+	}
+
+	return &agent.PageContext{
+		Path:       r.Context.Path,
+		EntityType: r.Context.EntityType,
+		EntityID:   r.Context.EntityID,
+		Title:      r.Context.Title,
+	}
 }
 
 func (h *Handler) sendMessage(c *gin.Context) {
@@ -266,6 +288,7 @@ func (h *Handler) sendMessage(c *gin.Context) {
 	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   threadID,
 		Content:    body.Content,
+		Page:       body.page(),
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor)
 	if err != nil {
@@ -325,6 +348,7 @@ func (h *Handler) sendMessageStream(c *gin.Context) {
 	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   threadID,
 		Content:    body.Content,
+		Page:       body.page(),
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor, emit)
 	if err != nil {

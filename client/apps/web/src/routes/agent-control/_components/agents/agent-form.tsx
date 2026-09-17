@@ -18,7 +18,7 @@ import {
   type AgentTemplateKind,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
-import { describeToolCall } from "@/routes/assistant/_components/tool-presentation";
+import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldAlertIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
