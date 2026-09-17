@@ -3721,6 +3721,61 @@ func (ec *executionContext) fieldContext_DispatchCarrierEligibility_warnings(_ c
 	return graphql.NewScalarFieldContext("DispatchCarrierEligibility", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _DispatchCarrierEligibility_advisories(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCarrierEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCarrierEligibility_advisories(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Advisories, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCarrierEligibility_advisories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchCarrierEligibility", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchCarrierEligibility_findings(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCarrierEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchCarrierEligibility_findings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Findings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchCarrierEligibilityFinding) graphql.Marshaler {
+			return ec.marshalNDispatchCarrierEligibilityFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCarrierEligibilityFindingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchCarrierEligibility_findings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchCarrierEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchCarrierEligibilityFinding(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DispatchCommitment_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchCommitment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6904,6 +6959,16 @@ func (ec *executionContext) _DispatchCarrierEligibility(ctx context.Context, sel
 			}
 		case "warnings":
 			out.Values[i] = ec._DispatchCarrierEligibility_warnings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "advisories":
+			out.Values[i] = ec._DispatchCarrierEligibility_advisories(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "findings":
+			out.Values[i] = ec._DispatchCarrierEligibility_findings(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

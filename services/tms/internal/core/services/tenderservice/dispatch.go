@@ -59,6 +59,10 @@ func (s *Service) DispatchOffer(
 		}, nil
 	}
 
+	if skipped, skipErr := s.skipIneligibleOffer(ctx, tenantInfo, offer); skipErr != nil || skipped != nil {
+		return skipped, skipErr
+	}
+
 	now := timeutils.NowUnix()
 	expiresAt := now + int64(offer.OfferTTLSeconds)
 	moved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{

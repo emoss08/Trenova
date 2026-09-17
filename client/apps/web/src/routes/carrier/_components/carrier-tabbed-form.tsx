@@ -1,15 +1,27 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { LandmarkIcon, ReceiptIcon, ShieldCheckIcon, TruckIcon, UsersIcon } from "lucide-react";
+import {
+  LandmarkIcon,
+  RadarIcon,
+  ReceiptIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+  UsersIcon,
+} from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { CarrierComplianceForm } from "./carrier-compliance-form";
 import { CarrierContactsForm } from "./carrier-contacts-form";
 import { CarrierForm } from "./carrier-form";
 import { CarrierRemittanceForm } from "./carrier-remittance-form";
 import { CarrierTaxForm } from "./carrier-tax-form";
+import { CarrierIntelligenceTab } from "./intelligence/carrier-intelligence-tab";
 
-export function CarrierTabbedForm() {
+export type CarrierTabbedFormProps = {
+  carrierId?: string;
+};
+
+export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
   const t = useT();
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
@@ -42,6 +54,12 @@ export function CarrierTabbedForm() {
             <UsersIcon className="size-4" />
             {t("Contacts")}
           </TabsTab>
+          {carrierId ? (
+            <TabsTab value="intelligence">
+              <RadarIcon className="size-4" />
+              {t("Intelligence")}
+            </TabsTab>
+          ) : null}
         </TabsList>
       </div>
       <ScrollArea className="flex-1">
@@ -60,6 +78,11 @@ export function CarrierTabbedForm() {
         <TabsContent value="contacts" className="p-4">
           <CarrierContactsForm />
         </TabsContent>
+        {carrierId ? (
+          <TabsContent value="intelligence" className="p-4">
+            <CarrierIntelligenceTab carrierId={carrierId} />
+          </TabsContent>
+        ) : null}
       </ScrollArea>
     </Tabs>
   );

@@ -50,6 +50,7 @@ const (
 	PurposeIAMOIDCClientSecret         Purpose = "iam_oidc_client_secret" // #nosec G101 -- AAD label, not a credential.
 	PurposeEDICommunicationProfile     Purpose = "edi_communication_profile"
 	PurposeEDICommunicationProfileItem Purpose = "edi_communication_profile_item"
+	PurposeIntegrationSecret           Purpose = "integration_secret" // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 

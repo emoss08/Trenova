@@ -381,6 +381,14 @@ query DispatchCarrierAssignmentPreview($input: DispatchCarrierAssignmentPreviewI
   dispatchCarrierAssignmentPreview(input: $input) {
     blockers
     warnings
+    advisories
+    findings {
+      code
+      source
+      severity
+      message
+      requiresOverride
+    }
   }
 }
 

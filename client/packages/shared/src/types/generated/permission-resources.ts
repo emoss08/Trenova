@@ -144,6 +144,9 @@ export const Resource = {
   CarrierInvoiceMatch: "carrier_invoice_match",
   RoutingGuide: "routing_guide",
   Tender: "tender",
+  CarrierIntelligence: "carrier_intelligence",
+  CarrierSourcing: "carrier_sourcing",
+  EquipmentVerification: "equipment_verification",
 
   // Locations
   Location: "location",

@@ -70,6 +70,8 @@ type Service struct {
 	rateEngine        portservices.RateEngine
 	agreementRepo     repositories.RateAgreementRepository
 	billingCtrlRepo   repositories.BillingControlRepository
+	intelGate         portservices.CarrierIntelGate
+	lifecycle         portservices.CarrierLifecycleObserver
 }
 
 func New(p Params) *Service {
@@ -125,8 +127,51 @@ func (s *Service) PreviewEligibility(
 		return nil, err
 	}
 
-	result := carrier.EvaluateCarrierEligibility(carrierEntity, timeutils.NowUnix())
+	result := carrier.EvaluateEligibility(carrier.EligibilityInput{
+		Carrier: carrierEntity,
+		Now:     timeutils.NowUnix(),
+		Intel:   s.intelGateFor(ctx, tenantInfo, carrierID),
+	})
 	return &result, nil
+}
+
+func (s *Service) SetIntelGate(gate portservices.CarrierIntelGate) {
+	s.intelGate = gate
+}
+
+func (s *Service) SetLifecycleObserver(observer portservices.CarrierLifecycleObserver) {
+	s.lifecycle = observer
+}
+
+func (s *Service) intelGateFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierID pulid.ID,
+) *carrier.IntelGate {
+	if s.intelGate == nil {
+		return nil
+	}
+	gates, err := s.intelGate.GateFor(ctx, tenantInfo, []pulid.ID{carrierID})
+	if err != nil {
+		s.l.Warn("failed to evaluate carrier intelligence gate", zap.Error(err))
+		return nil
+	}
+	return gates[carrierID]
+}
+
+func (s *Service) refreshIntel(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierID pulid.ID,
+) *carrier.IntelGate {
+	if s.intelGate == nil {
+		return nil
+	}
+	s.intelGate.EnsureFresh(ctx, &portservices.CarrierIntelEnsureFreshRequest{
+		TenantInfo: tenantInfo,
+		CarrierIDs: []pulid.ID{carrierID},
+	})
+	return s.intelGateFor(ctx, tenantInfo, carrierID)
 }
 
 func (s *Service) AssignToMove(
@@ -140,6 +185,8 @@ func (s *Service) AssignToMove(
 	var result *shipment.CarrierAssignment
 	var carrierEntity *carrier.Carrier
 	var replaced bool
+
+	intelGate := s.refreshIntel(ctx, req.TenantInfo, req.CarrierID)
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		move, txErr := s.assignmentRepo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
@@ -182,7 +229,11 @@ func (s *Service) AssignToMove(
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = enforceEligibility(carrierEntity, req.OverrideInsuranceWarning); txErr != nil {
+		if txErr = enforceEligibility(
+			carrierEntity,
+			intelGate,
+			req.OverrideInsuranceWarning,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -266,6 +317,9 @@ func (s *Service) AssignToMove(
 		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 	}
 	s.withdrawLiveTender(ctx, req.TenantInfo, req.ShipmentMoveID)
+	if s.lifecycle != nil {
+		s.lifecycle.CarriersUsed(ctx, req.TenantInfo, []pulid.ID{req.CarrierID})
+	}
 
 	return result, nil
 }
@@ -655,8 +709,16 @@ func (s *Service) publishInvalidation(
 	}
 }
 
-func enforceEligibility(entity *carrier.Carrier, overrideWarnings bool) error {
-	result := carrier.EvaluateCarrierEligibility(entity, timeutils.NowUnix())
+func enforceEligibility(
+	entity *carrier.Carrier,
+	intelGate *carrier.IntelGate,
+	overrideWarnings bool,
+) error {
+	result := carrier.EvaluateEligibility(carrier.EligibilityInput{
+		Carrier: entity,
+		Now:     timeutils.NowUnix(),
+		Intel:   intelGate,
+	})
 
 	if result.IsBlocked() {
 		return errortypes.NewBusinessError(

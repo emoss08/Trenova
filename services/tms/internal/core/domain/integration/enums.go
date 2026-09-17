@@ -20,6 +20,8 @@ const (
 	TypeWEXFuel            = Type("WEXFuel")
 	TypeComdataFuel        = Type("ComdataFuel")
 	TypeRampFuel           = Type("RampFuel")
+	TypeCarrierOK          = Type("CarrierOK")
+	TypeFMCSAQCMobile      = Type("FMCSAQCMobile")
 	// TypeMotive     Type = "Motive"
 )
 
@@ -34,7 +36,12 @@ const (
 	CategoryFinancialData          = Category("FinancialData")
 	CategoryEmail                  = Category("Email")
 	CategoryFuelCards              = Category("FuelCards")
+	CategoryCarrierCompliance      = Category("CarrierCompliance")
 )
+
+func (v Type) String() string { return string(v) }
+
+func (v Category) String() string { return string(v) }
 
 func (v Type) IsValid() bool {
 	switch v {
@@ -54,7 +61,9 @@ func (v Type) IsValid() bool {
 		TypePostmark,
 		TypeWEXFuel,
 		TypeComdataFuel,
-		TypeRampFuel:
+		TypeRampFuel,
+		TypeCarrierOK,
+		TypeFMCSAQCMobile:
 		return true
 	default:
 		return false
@@ -70,7 +79,17 @@ func (v Category) IsValid() bool {
 		CategoryWeather,
 		CategoryFinancialData,
 		CategoryEmail,
-		CategoryFuelCards:
+		CategoryFuelCards,
+		CategoryCarrierCompliance:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Type) SupportsCarrierIntelligence() bool {
+	switch v {
+	case TypeCarrierOK, TypeFMCSAQCMobile:
 		return true
 	default:
 		return false

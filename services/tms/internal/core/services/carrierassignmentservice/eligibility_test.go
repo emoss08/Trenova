@@ -38,14 +38,36 @@ func TestEnforceEligibility(t *testing.T) {
 	t.Run("blocked carrier returns error regardless of override", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.Status = carrier.StatusInactive
-		require.Error(t, enforceEligibility(entity, true))
+		require.Error(t, enforceEligibility(entity, nil, true))
 	})
 
 	t.Run("warnings require override", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.InsurancePolicies[0].ExpirationDate = now + 10*day
-		require.Error(t, enforceEligibility(entity, false))
-		require.NoError(t, enforceEligibility(entity, true))
+		require.Error(t, enforceEligibility(entity, nil, false))
+		require.NoError(t, enforceEligibility(entity, nil, true))
+	})
+
+	t.Run("blocking intelligence finding blocks even with override", func(t *testing.T) {
+		gate := &carrier.IntelGate{
+			Evaluated: true,
+			FetchedAt: now,
+			Findings: []carrier.IntelFinding{
+				{Code: "authority.revoked", Action: carrier.IntelActionBlock, Message: "revoked"},
+			},
+		}
+		require.Error(t, enforceEligibility(qualifiedCarrier(now), gate, true))
+	})
+
+	t.Run("intelligence warnings never require an override", func(t *testing.T) {
+		gate := &carrier.IntelGate{
+			Evaluated: true,
+			FetchedAt: now,
+			Findings: []carrier.IntelFinding{
+				{Code: "safety.iss_high", Action: carrier.IntelActionWarn, Message: "iss"},
+			},
+		}
+		require.NoError(t, enforceEligibility(qualifiedCarrier(now), gate, false))
 	})
 }
 

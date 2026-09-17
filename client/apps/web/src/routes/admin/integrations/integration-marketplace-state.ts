@@ -16,6 +16,8 @@ export const integrationModalTypes = [
   "WEXFuel",
   "ComdataFuel",
   "RampFuel",
+  "CarrierOK",
+  "FMCSAQCMobile",
 ] as const;
 
 export type IntegrationModalType = (typeof integrationModalTypes)[number];

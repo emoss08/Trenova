@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierrepository"
@@ -364,6 +365,16 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	carriersettlementcontrolrepository.New,
 	carrierledgerrepository.New,
 	carrierinvoicematchrepository.New,
+	carrierintelrepository.NewControlRepository,
+	carrierintelrepository.NewSnapshotRepository,
+	carrierintelrepository.NewRawPayloadRepository,
+	carrierintelrepository.NewEventRepository,
+	carrierintelrepository.NewEnrollmentRepository,
+	carrierintelrepository.NewFeedStateRepository,
+	carrierintelrepository.NewUsageRepository,
+	carrierintelrepository.NewOverrideRepository,
+	carrierintelrepository.NewVerificationRepository,
+	carrierintelrepository.NewSubjectRepository,
 	rateconfirmationrepository.New,
 	routingguiderepository.New,
 	tenderrepository.New,

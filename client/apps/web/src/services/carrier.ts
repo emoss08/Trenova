@@ -18,6 +18,14 @@ export class CarrierService {
     return safeParse(bulkUpdateCarrierStatusResponseSchema, response, "Bulk Update Carrier Status");
   }
 
+  public async getById(carrierId: string) {
+    const response = await api.get<Carrier>(
+      `/carriers/${carrierId}/?includeContacts=true&includeInsurancePolicies=true`,
+    );
+
+    return safeParse(carrierSchema, response, "Carrier");
+  }
+
   public async patch(carrierId: Carrier["id"], data: Partial<Carrier>) {
     const response = await api.patch<Carrier>(`/carriers/${carrierId}/`, data);
 

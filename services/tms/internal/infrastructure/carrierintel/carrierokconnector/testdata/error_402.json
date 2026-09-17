@@ -1,0 +1,5 @@
+{
+  "error": "Payment failed for this account",
+  "code": "payment_failed",
+  "hint": "Update the billing method in the CarrierOk dashboard"
+}

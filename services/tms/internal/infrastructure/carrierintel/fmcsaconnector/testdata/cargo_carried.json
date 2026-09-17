@@ -1,0 +1,7 @@
+{
+  "content": [
+    {"cargoClassDesc": "General Freight", "id": {"cargoClassId": 1, "dotNumber": 818175}},
+    {"cargoClassDesc": "Refrigerated Food", "id": {"cargoClassId": 2, "dotNumber": 818175}},
+    {"cargoClassDesc": "", "id": {"cargoClassId": 3, "dotNumber": 818175}}
+  ]
+}

@@ -1,0 +1,1009 @@
+enum CarrierIntelSection {
+  Identity
+  Authority
+  Insurance
+  Safety
+  Basics
+  Inspections
+  Crashes
+  Fleet
+  Equipment
+  Contacts
+  Operations
+  ChangeHistory
+  Network
+  Lanes
+  Benchmarks
+}
+
+enum CarrierIntelRuleAction {
+  Block
+  Warn
+  Notify
+  Off
+}
+
+enum CarrierIntelSeverity {
+  Critical
+  High
+  Medium
+  Low
+  Info
+}
+
+enum CarrierIntelRiskLevel {
+  Low
+  Moderate
+  Elevated
+  High
+  VeryHigh
+  Unknown
+}
+
+enum CarrierIntelReviewState {
+  None
+  NeedsReview
+  Reviewed
+}
+
+enum CarrierIntelDepth {
+  FMCSA
+  Lite
+  Full
+}
+
+enum CarrierIntelSubjectType {
+  Carrier
+  Organization
+  Customer
+  Prospect
+}
+
+enum CarrierIntelEventStatus {
+  Open
+  Acknowledged
+  Resolved
+  Dismissed
+}
+
+enum CarrierIntelEventResolution {
+  CarrierUpdated
+  CarrierBlocked
+  OverrideGranted
+  NoActionRequired
+  FalsePositive
+}
+
+enum CarrierIntelEventSource {
+  NativeChangeFeed
+  SnapshotDiff
+  RuleEvaluation
+  EquipmentVerification
+  Enrollment
+  ProviderError
+  Override
+}
+
+enum CarrierIntelEnrollmentPolicy {
+  AllActive
+  RecentlyUsed
+  Manual
+}
+
+enum CarrierIntelOutagePolicy {
+  FailOpen
+  FailClosed
+}
+
+enum CarrierIntelEnrollmentMode {
+  Native
+  SnapshotDiff
+}
+
+enum CarrierIntelDesiredState {
+  Enrolled
+  NotEnrolled
+}
+
+enum CarrierIntelVendorState {
+  Unknown
+  PendingAdd
+  Active
+  PendingRemove
+  Removed
+  Failed
+}
+
+enum CarrierIntelEnrollmentReason {
+  PolicyAllActive
+  PolicyRecentUse
+  AssignedOrTendered
+  Manual
+  SelfMonitor
+  CustomerBroker
+}
+
+enum CarrierIntelAuthorityStatus {
+  Active
+  Inactive
+  Revoked
+  None
+  Unknown
+}
+
+enum CarrierIntelInsuranceFilingType {
+  BIPD
+  Cargo
+  Bond
+  Other
+}
+
+enum CarrierIntelNetworkKind {
+  Address
+  Phone
+  Email
+  EIN
+  Equipment
+}
+
+enum CarrierIntelUnitType {
+  Tractor
+  Trailer
+  Straight
+}
+
+enum CarrierEquipmentVerificationResult {
+  Match
+  Mismatch
+  NotFound
+  Unverifiable
+  ProviderError
+}
+
+enum CarrierIntelFeedType {
+  ChangeFeed
+  SnapshotRefresh
+}
+
+enum CarrierIntelSyncField {
+  safetyRating
+  mcNumber
+  name
+  dbaName
+  addressLine1
+  city
+  postalCode
+  phone
+  email
+}
+
+enum CarrierIntelInsuranceChangeKind {
+  ShortenExpiration
+  CoverageChanged
+  NewFiling
+}
+
+enum CarrierIntelRuleParamType {
+  Integer
+  Decimal
+  Number
+  Select
+  MultiSelect
+}
+
+type CarrierIntelAddress {
+  line1: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+  undelivered: Boolean
+}
+
+type CarrierIntelIdentity {
+  dotNumber: String!
+  docketPrefix: String
+  docketNumber: String
+  legalName: String
+  dbaName: String
+  ein: String
+  usdotStatus: String
+  entityType: String
+  carrierOperation: String
+  dotAddedAt: Timestamp
+  dotAgeDays: Int
+  physicalAddress: CarrierIntelAddress
+  mailingAddress: CarrierIntelAddress
+}
+
+type CarrierIntelAuthorityGrant {
+  status: CarrierIntelAuthorityStatus!
+  pending: Boolean!
+  underReview: Boolean!
+  revocationPending: Boolean!
+  grantedAt: Timestamp
+  ageDays: Int
+}
+
+type CarrierIntelAuthorityHistoryEntry {
+  authorityType: String!
+  action: String!
+  servedAt: Timestamp
+  effectiveAt: Timestamp
+}
+
+type CarrierIntelAuthority {
+  common: CarrierIntelAuthorityGrant
+  contract: CarrierIntelAuthorityGrant
+  broker: CarrierIntelAuthorityGrant
+  totalRevocations: Int
+  lastRevocationAt: Timestamp
+  history: [CarrierIntelAuthorityHistoryEntry!]
+}
+
+type CarrierIntelInsuranceFiling {
+  type: CarrierIntelInsuranceFilingType!
+  insurerName: String
+  policyNumber: String
+  coverage: Decimal
+  effectiveAt: Timestamp
+  cancelEffectiveAt: Timestamp
+  cancelMethod: String
+}
+
+type CarrierIntelInsurance {
+  bipdOnFile: Decimal
+  bipdRequired: Decimal
+  cargoOnFile: Decimal
+  cargoRequired: Decimal
+  bondOnFile: Decimal
+  bondRequired: Decimal
+  pendingCancelAt: Timestamp
+  lastCanceledAt: Timestamp
+  cancelCount: Int
+  filings: [CarrierIntelInsuranceFiling!]
+}
+
+type CarrierIntelSafety {
+  rating: String
+  ratingDate: Timestamp
+  issValue: Int
+  issRecommendation: String
+  riskScore: String
+  riskProbability: Float
+  safetyScore: Float
+  outOfServiceOrder: Boolean
+  outOfServiceAt: Timestamp
+  latestReviewType: String
+  latestReviewAt: Timestamp
+}
+
+type CarrierIntelBasicMeasure {
+  basic: CSABasic!
+  measure: Float
+  percentile: Float
+  threshold: Float
+  alert: Boolean!
+  roadsideAlert: Boolean!
+  acIndicator: Boolean!
+}
+
+type CarrierIntelInspections {
+  total: Int
+  driver: Int
+  vehicle: Int
+  hazmat: Int
+  driverOos: Int
+  vehicleOos: Int
+  hazmatOos: Int
+  driverOosRate: Float
+  vehicleOosRate: Float
+  hazmatOosRate: Float
+  nationalDriverOosRate: Float
+  nationalVehicleOosRate: Float
+  nationalHazmatOosRate: Float
+  lastInspectionAt: Timestamp
+}
+
+type CarrierIntelCrashes {
+  total: Int
+  fatal: Int
+  injury: Int
+  tow: Int
+  lastCrashAt: Timestamp
+}
+
+type CarrierIntelFleet {
+  powerUnits: Int
+  drivers: Int
+  cdlDrivers: Int
+  ownedTractors: Int
+  termLeasedTractors: Int
+  ownedTrailers: Int
+  termLeasedTrailers: Int
+  trailers: Int
+  trucks: Int
+}
+
+type CarrierIntelEquipment {
+  vin: String
+  unitType: String
+  category: String
+  make: String
+  model: String
+  year: Int
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+}
+
+type CarrierIntelContacts {
+  phone: String
+  cellphone: String
+  fax: String
+  email: String
+  primaryContact: String
+  secondaryContact: String
+}
+
+type CarrierIntelOperations {
+  classification: [String!]
+  cargoCarried: [String!]
+  hazmatCarrier: Boolean
+  mcs150At: Timestamp
+  mcs150Mileage: Int
+  boc3OnFile: Boolean
+  boc3Agent: String
+  smartWay: Boolean
+  carbCompliant: Boolean
+  phmsa: Boolean
+}
+
+type CarrierIntelChangeHistory {
+  nameChanges: Int
+  nameLastChangedAt: Timestamp
+  emailChanges: Int
+  emailLastChangedAt: Timestamp
+  phoneChanges: Int
+  phoneLastChangedAt: Timestamp
+  addressChanges: Int
+  addressLastChangedAt: Timestamp
+  contactChanges: Int
+  contactLastChangedAt: Timestamp
+}
+
+type CarrierIntelNetworkLink {
+  kind: CarrierIntelNetworkKind!
+  dotNumber: String
+  legalName: String
+  value: String
+  status: String
+}
+
+type CarrierIntelNetwork {
+  sharedAddresses: Int
+  sharedPhones: Int
+  sharedEmails: Int
+  sharedEins: Int
+  sharedEquipment: Int
+  links: [CarrierIntelNetworkLink!]
+}
+
+type CarrierIntelLane {
+  originCity: String
+  originState: String
+  destinationCity: String
+  destinationState: String
+  loads: Int
+}
+
+type CarrierIntelLanes {
+  totalLoads: Int
+  ftlPercent: Float
+  ltlPercent: Float
+  deadheadPercent: Float
+  firstLoadAt: Timestamp
+  lastLoadAt: Timestamp
+  preferred: [CarrierIntelLane!]
+}
+
+type CarrierIntelBenchmarks {
+  anyAnomaly: Boolean
+  inspectionMileageAnomaly: Boolean
+  inspectedUnitsAnomaly: Boolean
+  powerUnitMileageAnomaly: Boolean
+}
+
+type CarrierIntelProfile {
+  identity: CarrierIntelIdentity
+  authority: CarrierIntelAuthority
+  insurance: CarrierIntelInsurance
+  safety: CarrierIntelSafety
+  basics: [CarrierIntelBasicMeasure!]
+  inspections: CarrierIntelInspections
+  crashes: CarrierIntelCrashes
+  fleet: CarrierIntelFleet
+  equipment: [CarrierIntelEquipment!]
+  contacts: CarrierIntelContacts
+  operations: CarrierIntelOperations
+  changeHistory: CarrierIntelChangeHistory
+  network: CarrierIntelNetwork
+  lanes: CarrierIntelLanes
+  benchmarks: CarrierIntelBenchmarks
+  coverage: [CarrierIntelSection!]!
+}
+
+type CarrierIntelFinding {
+  code: String!
+  category: CarrierIntelSection!
+  action: CarrierIntelRuleAction!
+  severity: CarrierIntelSeverity!
+  message: String!
+  unverifiable: Boolean!
+  unconfirmed: Boolean!
+  overridden: Boolean!
+  overrideId: ID
+  overrideExpiresAt: Timestamp
+}
+
+type CarrierIntelSnapshot {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  dotNumber: String!
+  docketNumber: String
+  provider: String!
+  providerRef: String
+  depth: CarrierIntelDepth!
+  source: String!
+  isCurrent: Boolean!
+  notFound: Boolean!
+  profile: CarrierIntelProfile!
+  findings: [CarrierIntelFinding!]!
+  blockingCodes: [String!]!
+  advisoryCodes: [String!]!
+  riskLevel: CarrierIntelRiskLevel!
+  reviewState: CarrierIntelReviewState!
+  reviewedById: ID
+  reviewedAt: Timestamp
+  reviewNote: String
+  policyVersion: Int!
+  fetchedAt: Timestamp!
+  sourceAsOf: Timestamp
+  confirmedAt: Timestamp
+  effectiveAsOf: Timestamp!
+  hasRawPayload: Boolean!
+  createdAt: Timestamp!
+}
+
+type CarrierIntelEvent {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  dotNumber: String!
+  subjectName: String
+  provider: String!
+  source: CarrierIntelEventSource!
+  category: CarrierIntelSection!
+  fieldPath: String
+  ruleCode: String
+  severity: CarrierIntelSeverity!
+  action: CarrierIntelRuleAction
+  priorValue: String
+  currentValue: String
+  summary: String!
+  vendorChangedAt: Timestamp
+  detectedAt: Timestamp!
+  status: CarrierIntelEventStatus!
+  acknowledgedById: ID
+  acknowledgedAt: Timestamp
+  resolvedById: ID
+  resolvedAt: Timestamp
+  resolution: CarrierIntelEventResolution
+  resolutionNote: String
+  snapshotId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CarrierIntelEventEdge {
+  node: CarrierIntelEvent!
+  cursor: String!
+}
+
+type CarrierIntelEventConnection {
+  edges: [CarrierIntelEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierMonitoringEnrollment {
+  id: ID!
+  subjectType: CarrierIntelSubjectType!
+  subjectId: String!
+  carrierId: ID
+  subjectName: String
+  dotNumber: String!
+  docketNumber: String
+  provider: String!
+  providerRef: String
+  mode: CarrierIntelEnrollmentMode!
+  desiredState: CarrierIntelDesiredState!
+  vendorState: CarrierIntelVendorState!
+  reason: CarrierIntelEnrollmentReason!
+  ownedByTrenova: Boolean!
+  enrolledAt: Timestamp
+  unenrolledAt: Timestamp
+  lastSyncedAt: Timestamp
+  lastConfirmedAt: Timestamp
+  lastUsedAt: Timestamp
+  failureCount: Int!
+  lastError: String
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CarrierMonitoringEnrollmentEdge {
+  node: CarrierMonitoringEnrollment!
+  cursor: String!
+}
+
+type CarrierMonitoringEnrollmentConnection {
+  edges: [CarrierMonitoringEnrollmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierIntelOverride {
+  id: ID!
+  carrierId: ID!
+  ruleCode: String!
+  reason: String!
+  grantedById: ID!
+  grantedAt: Timestamp!
+  expiresAt: Timestamp!
+  revokedById: ID
+  revokedAt: Timestamp
+  revokeReason: String
+  active: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+}
+
+type CarrierEquipmentVerification {
+  id: ID!
+  carrierAssignmentId: ID!
+  shipmentMoveId: ID
+  carrierId: ID!
+  expectedDotNumber: String
+  unitType: CarrierIntelUnitType!
+  vin: String
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+  result: CarrierEquipmentVerificationResult!
+  matchedDotNumbers: [String!]!
+  matchedLegalName: String
+  detail: CarrierIntelEquipment
+  mismatchReason: String
+  provider: String
+  verifiedById: ID!
+  verifiedAt: Timestamp!
+  overrideById: ID
+  overrideReason: String
+  overriddenAt: Timestamp
+  cleared: Boolean!
+  createdAt: Timestamp!
+}
+
+type CarrierIntelRuleSettingParam {
+  key: String!
+  value: String!
+}
+
+type CarrierIntelRuleSetting {
+  code: String!
+  action: CarrierIntelRuleAction!
+  params: [CarrierIntelRuleSettingParam!]!
+}
+
+type CarrierIntelControl {
+  id: ID!
+  primaryProvider: String
+  fallbackProvider: String
+  enrollmentPolicy: CarrierIntelEnrollmentPolicy!
+  recentUsageDays: Int!
+  includeOpenTenders: Boolean!
+  autoEnrollOnCreate: Boolean!
+  autoUnenrollOnInactive: Boolean!
+  exclusiveWatchlist: Boolean!
+  pollIntervalMinutes: Int!
+  snapshotTtlHours: Int!
+  fullProfileTtlDays: Int!
+  preTenderRefreshEnabled: Boolean!
+  preTenderMaxAgeHours: Int!
+  hardMaxAgeHours: Int!
+  confirmBlockingChanges: Boolean!
+  outagePolicy: CarrierIntelOutagePolicy!
+  autoDisqualifyOnBlock: Boolean!
+  autoApplySafetyRating: Boolean!
+  rules: [CarrierIntelRuleSetting!]!
+  autoSyncFields: [CarrierIntelSyncField!]!
+  monthlySpendCap: Decimal
+  softCapPercent: Int!
+  dailyFullProfileCap: Int
+  rawRetentionDays: Int!
+  snapshotHistoryLimit: Int!
+  selfMonitoringEnabled: Boolean!
+  policyVersion: Int!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type CarrierIntelRuleParam {
+  key: String!
+  label: String!
+  type: CarrierIntelRuleParamType!
+  default: String!
+  min: Float
+  max: Float
+  options: [String!]
+  helpText: String
+}
+
+type CarrierIntelRuleDefinition {
+  code: String!
+  label: String!
+  description: String!
+  category: CarrierIntelSection!
+  defaultAction: CarrierIntelRuleAction!
+  recommendedAction: CarrierIntelRuleAction!
+  requiredSections: [CarrierIntelSection!]!
+  params: [CarrierIntelRuleParam!]!
+  subjects: [CarrierIntelSubjectType!]!
+  gateRelevant: Boolean!
+}
+
+type CarrierIntelProviderInfo {
+  configured: Boolean!
+  provider: String
+  fallbackProvider: String
+  capabilities: [String!]!
+  sections: [CarrierIntelSection!]!
+}
+
+type CarrierIntelUsageRow {
+  provider: String!
+  endpoint: String!
+  calls: Int!
+  billableUnits: Int!
+  estimatedCost: Decimal!
+}
+
+type CarrierIntelUsageDay {
+  day: Int!
+  endpoint: String!
+  calls: Int!
+  billableUnits: Int!
+  estimatedCost: Decimal!
+}
+
+type CarrierIntelUsageSummary {
+  monthStart: Timestamp!
+  monthToDate: Decimal!
+  cap: Decimal
+  softCapPercent: Int!
+  byEndpoint: [CarrierIntelUsageRow!]!
+  daily: [CarrierIntelUsageDay!]!
+}
+
+type CarrierIntelCostEstimate {
+  provider: String!
+  policy: CarrierIntelEnrollmentPolicy!
+  subjectCount: Int!
+  monthlyMonitoring: Decimal!
+  perSubject: Decimal!
+}
+
+type CarrierIntelFetchResult {
+  snapshot: CarrierIntelSnapshot!
+  fromCache: Boolean!
+  usedFallback: Boolean!
+  raisedCount: Int!
+  changeCount: Int!
+}
+
+type CarrierIntelProspectLookup {
+  snapshot: CarrierIntelSnapshot!
+  existingCarrierId: ID
+}
+
+type CarrierSourcingResult {
+  profile: CarrierIntelProfile!
+  providerRef: String
+  dotNumber: String!
+  legalName: String
+  existingCarrierId: ID
+  laneMatches: Int!
+  findings: [CarrierIntelFinding!]!
+  riskLevel: CarrierIntelRiskLevel!
+  score: Float!
+}
+
+type CarrierSourcingPage {
+  items: [CarrierSourcingResult!]!
+  total: Int!
+  provider: String!
+}
+
+type CarrierIntelSuggestion {
+  dotNumber: String!
+  legalName: String
+  dbaName: String
+  city: String
+  state: String
+}
+
+type CarrierIntelFieldUpdate {
+  field: CarrierIntelSyncField!
+  current: String!
+  proposed: String!
+  reason: String!
+}
+
+type CarrierIntelInsuranceChange {
+  kind: CarrierIntelInsuranceChangeKind!
+  policyId: ID
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  currentCoverage: Decimal
+  proposedCoverage: Decimal
+  currentExpirationDate: Timestamp
+  proposedExpirationDate: Timestamp
+  effectiveDate: Timestamp
+  reason: String!
+}
+
+type CarrierIntelSyncPlan {
+  autoApply: [CarrierIntelFieldUpdate!]!
+  suggestions: [CarrierIntelFieldUpdate!]!
+  insuranceAutoApply: [CarrierIntelInsuranceChange!]!
+  insuranceSuggestions: [CarrierIntelInsuranceChange!]!
+}
+
+type CarrierIntelSeverityCount {
+  severity: CarrierIntelSeverity!
+  count: Int!
+}
+
+type CarrierIntelEventCounts {
+  open: Int!
+  acknowledged: Int!
+  bySeverity: [CarrierIntelSeverityCount!]!
+}
+
+type CarrierIntelEnrollmentCounts {
+  desired: Int!
+  active: Int!
+  pending: Int!
+  failed: Int!
+}
+
+type CarrierIntelFeedState {
+  provider: String!
+  feedType: CarrierIntelFeedType!
+  lastPolledAt: Timestamp
+  lastSuccessAt: Timestamp
+  nextPollAfter: Timestamp
+  pausedReason: String
+  pausedAt: Timestamp
+  failureCount: Int!
+  lastError: String
+}
+
+type CarrierIntelMonitoringStatus {
+  provider: CarrierIntelProviderInfo!
+  enrollmentCounts: CarrierIntelEnrollmentCounts!
+  eventCounts: CarrierIntelEventCounts!
+  feeds: [CarrierIntelFeedState!]!
+  reviewQueueCount: Int!
+}
+
+type MyCarrierIntelligence {
+  configured: Boolean!
+  dotNumber: String
+  snapshot: CarrierIntelSnapshot
+}
+
+type DispatchCarrierEligibilityFinding {
+  code: String!
+  source: String!
+  severity: String!
+  message: String!
+  requiresOverride: Boolean!
+}
+
+extend type DispatchCarrierEligibility {
+  advisories: [String!]!
+  findings: [DispatchCarrierEligibilityFinding!]!
+}
+
+extend type Carrier {
+  intelRiskLevel: String
+  intelReviewRequired: Boolean!
+  intelBlockingCount: Int!
+  intelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+  openIntelEventCount: Int! @goField(forceResolver: true)
+  monitoringEnrollment: CarrierMonitoringEnrollment @goField(forceResolver: true)
+}
+
+extend type Customer {
+  dotNumber: String
+  mcNumber: String
+  brokerVettingEnabled: Boolean!
+  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+}
+
+input CarrierIntelEventFilterInput {
+  statuses: [CarrierIntelEventStatus!]
+  severities: [CarrierIntelSeverity!]
+  categories: [CarrierIntelSection!]
+  carrierId: ID
+  subjectType: CarrierIntelSubjectType
+  subjectId: String
+  openOnly: Boolean
+}
+
+input CarrierMonitoringEnrollmentFilterInput {
+  desiredState: CarrierIntelDesiredState
+  vendorStates: [CarrierIntelVendorState!]
+}
+
+input CarrierIntelRuleParamInput {
+  key: String!
+  value: String!
+}
+
+input CarrierIntelRuleSettingInput {
+  code: String!
+  action: CarrierIntelRuleAction!
+  params: [CarrierIntelRuleParamInput!]
+}
+
+input CarrierIntelControlPatchInput {
+  version: Int
+  enrollmentPolicy: CarrierIntelEnrollmentPolicy @goField(omittable: true)
+  recentUsageDays: Int @goField(omittable: true)
+  includeOpenTenders: Boolean @goField(omittable: true)
+  autoEnrollOnCreate: Boolean @goField(omittable: true)
+  autoUnenrollOnInactive: Boolean @goField(omittable: true)
+  exclusiveWatchlist: Boolean @goField(omittable: true)
+  pollIntervalMinutes: Int @goField(omittable: true)
+  snapshotTtlHours: Int @goField(omittable: true)
+  fullProfileTtlDays: Int @goField(omittable: true)
+  preTenderRefreshEnabled: Boolean @goField(omittable: true)
+  preTenderMaxAgeHours: Int @goField(omittable: true)
+  hardMaxAgeHours: Int @goField(omittable: true)
+  confirmBlockingChanges: Boolean @goField(omittable: true)
+  outagePolicy: CarrierIntelOutagePolicy @goField(omittable: true)
+  autoDisqualifyOnBlock: Boolean @goField(omittable: true)
+  autoApplySafetyRating: Boolean @goField(omittable: true)
+  rules: [CarrierIntelRuleSettingInput!] @goField(omittable: true)
+  autoSyncFields: [CarrierIntelSyncField!] @goField(omittable: true)
+  monthlySpendCap: Decimal @goField(omittable: true)
+  softCapPercent: Int @goField(omittable: true)
+  dailyFullProfileCap: Int @goField(omittable: true)
+  rawRetentionDays: Int @goField(omittable: true)
+  snapshotHistoryLimit: Int @goField(omittable: true)
+  selfMonitoringEnabled: Boolean @goField(omittable: true)
+  confirmEstimatedCost: Boolean
+}
+
+input ResolveCarrierIntelEventInput {
+  id: ID!
+  resolution: CarrierIntelEventResolution!
+  note: String
+}
+
+input GrantCarrierIntelOverrideInput {
+  carrierId: ID!
+  ruleCode: String!
+  reason: String!
+  expiresAt: Timestamp
+}
+
+input ApplyCarrierIntelSuggestionsInput {
+  carrierId: ID!
+  fields: [CarrierIntelSyncField!]
+  policyIds: [ID!]
+}
+
+input CarrierIntelLookupInput {
+  dotNumber: String
+  docketNumber: String
+  depth: CarrierIntelDepth
+}
+
+input CarrierSourcingSearchInput {
+  text: String
+  state: String
+  originState: String
+  destinationState: String
+  minPowerUnits: Int
+  maxPowerUnits: Int
+  minAuthorityAgeDays: Int
+  hazmatOnly: Boolean
+  excludeBlocking: Boolean
+  excludeExistingCarriers: Boolean
+  limit: Int
+  offset: Int
+}
+
+input ImportSourcedCarrierInput {
+  dotNumber: String!
+  code: String
+  enrollMonitoring: Boolean
+}
+
+input VerifyCarrierEquipmentInput {
+  carrierAssignmentId: ID!
+  unitType: CarrierIntelUnitType!
+  vin: String
+  plateNumber: String
+  plateState: String
+  unitNumber: String
+}
+
+extend type Query {
+  carrierIntelControl: CarrierIntelControl!
+  carrierIntelProvider: CarrierIntelProviderInfo!
+  carrierIntelRuleCatalog: [CarrierIntelRuleDefinition!]!
+  carrierIntelEvents(
+    input: DataTableConnectionInput!
+    filter: CarrierIntelEventFilterInput
+  ): CarrierIntelEventConnection!
+  carrierIntelMonitoringStatus: CarrierIntelMonitoringStatus!
+  carrierMonitoringEnrollments(
+    input: DataTableConnectionInput!
+    filter: CarrierMonitoringEnrollmentFilterInput
+  ): CarrierMonitoringEnrollmentConnection!
+  carrierIntelReviewQueue(limit: Int): [CarrierIntelSnapshot!]!
+  carrierIntelSnapshotHistory(carrierId: ID!, limit: Int): [CarrierIntelSnapshot!]!
+  carrierIntelUsage(month: Timestamp): CarrierIntelUsageSummary!
+  carrierIntelCostEstimate(
+    policy: CarrierIntelEnrollmentPolicy!
+    recentUsageDays: Int
+    includeOpenTenders: Boolean
+  ): CarrierIntelCostEstimate!
+  carrierIntelSyncPlan(carrierId: ID!): CarrierIntelSyncPlan!
+  carrierIntelOverrides(carrierId: ID!): [CarrierIntelOverride!]!
+  carrierIntelRawPayload(carrierId: ID!, snapshotId: ID!): JSON
+  carrierIntelLookup(input: CarrierIntelLookupInput!): CarrierIntelProspectLookup!
+  carrierSourcingSearch(input: CarrierSourcingSearchInput!): CarrierSourcingPage!
+  carrierSourcingAutocomplete(query: String!, limit: Int): [CarrierIntelSuggestion!]!
+  carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
+  myCarrierIntelligence(refresh: Boolean): MyCarrierIntelligence!
+}
+
+extend type Mutation {
+  updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
+  switchCarrierIntelProvider(provider: String!): CarrierIntelControl!
+  resumeCarrierIntelMonitoring: Boolean!
+  vetCarrier(carrierId: ID!, depth: CarrierIntelDepth, force: Boolean): CarrierIntelFetchResult!
+  vetCustomerBroker(customerId: ID!, force: Boolean): CarrierIntelFetchResult!
+  setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
+  acknowledgeCarrierIntelEvents(ids: [ID!]!): Int!
+  resolveCarrierIntelEvent(input: ResolveCarrierIntelEventInput!): CarrierIntelEvent!
+  markCarrierIntelReviewed(carrierId: ID!, note: String!): Boolean!
+  grantCarrierIntelOverride(input: GrantCarrierIntelOverrideInput!): CarrierIntelOverride!
+  revokeCarrierIntelOverride(id: ID!, reason: String!): CarrierIntelOverride!
+  applyCarrierIntelSuggestions(input: ApplyCarrierIntelSuggestionsInput!): Int!
+  importSourcedCarrier(input: ImportSourcedCarrierInput!): Carrier!
+  verifyCarrierEquipment(input: VerifyCarrierEquipmentInput!): CarrierEquipmentVerification!
+  overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
+}

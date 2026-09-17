@@ -1,0 +1,18 @@
+{
+  "content": [
+    {
+      "carrierAuthority": {
+        "authorizedForBroker": "N",
+        "authorizedForHouseholdGoods": "N",
+        "authorizedForPassenger": "N",
+        "authorizedForProperty": "Y",
+        "brokerAuthorityStatus": "N",
+        "commonAuthorityStatus": "A",
+        "contractAuthorityStatus": "I",
+        "docketNumber": 277621,
+        "dotNumber": 818175,
+        "prefix": "MC"
+      }
+    }
+  ]
+}

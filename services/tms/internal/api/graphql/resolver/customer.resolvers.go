@@ -153,8 +153,13 @@ func (r *queryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 	})
 }
 
+func (r *Resolver) Customer() generated.CustomerResolver { return &customerResolver{r} }
+
 func (r *Resolver) CustomerBillingProfile() generated.CustomerBillingProfileResolver {
 	return &customerBillingProfileResolver{r}
 }
 
-type customerBillingProfileResolver struct{ *Resolver }
+type (
+	customerResolver               struct{ *Resolver }
+	customerBillingProfileResolver struct{ *Resolver }
+)

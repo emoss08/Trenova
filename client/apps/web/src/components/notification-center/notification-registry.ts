@@ -2,6 +2,12 @@ import { invoicePanelPath } from "@/lib/invoice-links";
 import type { Notification } from "@trenova/shared/types/notification";
 import {
   ArrowLeftRightIcon,
+  CirclePauseIcon,
+  CoinsIcon,
+  ListChecksIcon,
+  ShieldBanIcon,
+  ShieldQuestionIcon,
+  TruckIcon,
   AtSignIcon,
   BanIcon,
   BellIcon,
@@ -97,6 +103,20 @@ const invoiceLink = (notification: Notification) => {
 
 const dispatchConsoleLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? "/dispatch/console";
+
+const CARRIER_MONITORING_PATH = "/dispatch/carrier-monitoring";
+
+const carrierIntelLink = (notification: Notification) => {
+  const link = notificationDataString(notification, "link");
+  if (link) return link;
+  const carrierId = notificationRelatedId(notification, "carrierId");
+  return carrierId
+    ? entityPanelLink("/dispatch/carriers", carrierId, { tab: "intelligence" })
+    : CARRIER_MONITORING_PATH;
+};
+
+const carrierIntelUsageLink = (notification: Notification) =>
+  notificationDataString(notification, "link") ?? `${CARRIER_MONITORING_PATH}?tab=usage`;
 
 const REPORT_READY: NotificationDescriptor = {
   category: "Reports",
@@ -247,6 +267,56 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-destructive",
     tileClass: "bg-destructive/10",
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/inbound-files",
+  },
+  carrier_intel_block: {
+    category: "Carrier Intelligence",
+    icon: ShieldBanIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: carrierIntelLink,
+  },
+  carrier_intel_change: {
+    category: "Carrier Intelligence",
+    icon: ShieldQuestionIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: carrierIntelLink,
+  },
+  carrier_intel_digest: {
+    category: "Carrier Intelligence",
+    icon: ListChecksIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand/10",
+    getLink: (n) => notificationDataString(n, "link") ?? CARRIER_MONITORING_PATH,
+  },
+  carrier_intel_provider_paused: {
+    category: "Carrier Intelligence",
+    icon: CirclePauseIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: (n) =>
+      notificationDataString(n, "link") ?? "/admin/integrations?category=CarrierCompliance",
+  },
+  carrier_equipment_mismatch: {
+    category: "Carrier Intelligence",
+    icon: TruckIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: carrierIntelLink,
+  },
+  carrier_intel_spend_soft_cap: {
+    category: "Carrier Intelligence",
+    icon: CoinsIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: carrierIntelUsageLink,
+  },
+  carrier_intel_spend_cap: {
+    category: "Carrier Intelligence",
+    icon: CoinsIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: carrierIntelUsageLink,
   },
   tender_accepted: {
     category: "Dispatch",

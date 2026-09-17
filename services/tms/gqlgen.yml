@@ -36,6 +36,12 @@ go_initialisms:
     - SCAC
     - TTL
     - TWIC
+    - BIPD
+    - EIN
+    - FTL
+    - LTL
+    - OOS
+    - USDOT
 
 omit_gqlgen_version_in_file_notice: true
 skip_mod_tidy: true
@@ -828,6 +834,344 @@ models:
   CSABasic:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.CSABasic
+  CarrierIntelSection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Section
+  CarrierIntelRuleAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.RuleAction
+  CarrierIntelSeverity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Severity
+  CarrierIntelRiskLevel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.RiskLevel
+  CarrierIntelReviewState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.ReviewState
+  CarrierIntelDepth:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.LookupDepth
+  CarrierIntelSubjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.SubjectType
+  CarrierIntelEventStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EventStatus
+  CarrierIntelEventResolution:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EventResolution
+  CarrierIntelEventSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EventSource
+  CarrierIntelEnrollmentPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EnrollmentPolicy
+  CarrierIntelOutagePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.OutagePolicy
+  CarrierIntelEnrollmentMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EnrollmentMode
+  CarrierIntelDesiredState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.DesiredState
+  CarrierIntelVendorState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.VendorState
+  CarrierIntelEnrollmentReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.EnrollmentReason
+  CarrierIntelAuthorityStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.AuthorityStatus
+  CarrierIntelInsuranceFilingType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.InsuranceFilingType
+  CarrierIntelNetworkKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.NetworkKind
+  CarrierIntelUnitType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.UnitType
+  CarrierEquipmentVerificationResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.VerificationResult
+  CarrierIntelFeedType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.FeedType
+  CarrierIntelSyncField:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.SyncField
+  CarrierIntelInsuranceChangeKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.InsuranceChangeKind
+  CarrierIntelRuleParamType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.RuleParamType
+  CarrierIntelAddress:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Address
+  CarrierIntelIdentity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Identity
+  CarrierIntelAuthorityGrant:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.AuthorityGrant
+  CarrierIntelAuthorityHistoryEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.AuthorityHistoryEntry
+  CarrierIntelAuthority:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Authority
+  CarrierIntelInsuranceFiling:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.InsuranceFiling
+    fields:
+      coverage:
+        resolver: true
+  CarrierIntelInsurance:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Insurance
+    fields:
+      bipdOnFile:
+        resolver: true
+      bipdRequired:
+        resolver: true
+      cargoOnFile:
+        resolver: true
+      cargoRequired:
+        resolver: true
+      bondOnFile:
+        resolver: true
+      bondRequired:
+        resolver: true
+  CarrierIntelSafety:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Safety
+    fields:
+      rating:
+        resolver: true
+      riskScore:
+        resolver: true
+      issValue:
+        fieldName: ISSValue
+      issRecommendation:
+        fieldName: ISSRecommendation
+  CarrierIntelBasicMeasure:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.BasicMeasure
+    fields:
+      acIndicator:
+        fieldName: ACIndicator
+  CarrierIntelInspections:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Inspections
+    fields:
+      nationalVehicleOosRate:
+        fieldName: NationalVehicleOOS
+  CarrierIntelCrashes:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Crashes
+  CarrierIntelFleet:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Fleet
+    fields:
+      cdlDrivers:
+        fieldName: CDLDrivers
+  CarrierIntelEquipment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Equipment
+    fields:
+      vin:
+        fieldName: VIN
+      unitType:
+        resolver: true
+  CarrierIntelContacts:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Contacts
+  CarrierIntelOperations:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Operations
+    fields:
+      mcs150At:
+        fieldName: MCS150At
+      mcs150Mileage:
+        fieldName: MCS150Mileage
+      boc3OnFile:
+        fieldName: BOC3OnFile
+      boc3Agent:
+        fieldName: BOC3Agent
+      carbCompliant:
+        fieldName: CARBCompliant
+      phmsa:
+        fieldName: PHMSA
+  CarrierIntelChangeHistory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.ChangeHistory
+    fields:
+      addressLastChangedAt:
+        fieldName: AddressLastChangeAt
+      contactLastChangedAt:
+        fieldName: ContactLastChangeAt
+  CarrierIntelNetworkLink:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.NetworkLink
+  CarrierIntelNetwork:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Network
+    fields:
+      sharedEins:
+        fieldName: SharedEINs
+  CarrierIntelLane:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Lane
+  CarrierIntelLanes:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Lanes
+  CarrierIntelBenchmarks:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Benchmarks
+  CarrierIntelProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Profile
+  CarrierIntelFinding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.Finding
+    fields:
+      code:
+        resolver: true
+      overrideId:
+        resolver: true
+  CarrierIntelSnapshot:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelSnapshot
+    fields:
+      carrierId:
+        resolver: true
+      provider:
+        resolver: true
+      source:
+        resolver: true
+      reviewedById:
+        resolver: true
+      effectiveAsOf:
+        resolver: true
+      hasRawPayload:
+        resolver: true
+  CarrierIntelEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelEvent
+    fields:
+      carrierId:
+        resolver: true
+      provider:
+        resolver: true
+      ruleCode:
+        resolver: true
+      action:
+        resolver: true
+      priorValue:
+        resolver: true
+      currentValue:
+        resolver: true
+      acknowledgedById:
+        resolver: true
+      resolvedById:
+        resolver: true
+      resolution:
+        resolver: true
+      snapshotId:
+        resolver: true
+  CarrierMonitoringEnrollment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierMonitoringEnrollment
+    fields:
+      carrierId:
+        resolver: true
+      provider:
+        resolver: true
+  CarrierIntelOverride:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelOverride
+    fields:
+      ruleCode:
+        resolver: true
+      revokedById:
+        resolver: true
+      active:
+        resolver: true
+  CarrierEquipmentVerification:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierEquipmentVerification
+    fields:
+      vin:
+        fieldName: VIN
+      shipmentMoveId:
+        resolver: true
+      provider:
+        resolver: true
+      overrideById:
+        resolver: true
+      cleared:
+        resolver: true
+  CarrierIntelControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelControl
+    fields:
+      primaryProvider:
+        resolver: true
+      fallbackProvider:
+        resolver: true
+      rules:
+        resolver: true
+      monthlySpendCap:
+        resolver: true
+  CarrierIntelRuleParam:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.RuleParamSpec
+  CarrierIntelRuleDefinition:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.RuleDefinition
+    fields:
+      code:
+        resolver: true
+  CarrierIntelFieldUpdate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.FieldUpdate
+  CarrierIntelInsuranceChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.InsuranceChange
+    fields:
+      policyId:
+        resolver: true
+      currentCoverage:
+        resolver: true
+      proposedCoverage:
+        resolver: true
+  CarrierIntelSyncPlan:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.SyncPlan
+  CarrierIntelSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.CarrierIntelSuggestion
+  CarrierSourcingResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carrierintelservice.SourcingResult
+    fields:
+      existingCarrierId:
+        resolver: true
+  CarrierSourcingPage:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carrierintelservice.SourcingPage
+  CarrierIntelFeedState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrierintel.CarrierIntelFeedState
+    fields:
+      provider:
+        resolver: true
+      pausedReason:
+        resolver: true
   JobDepartment:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.JobDepartment
@@ -2381,6 +2725,9 @@ models:
   Customer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.Customer
+    fields:
+      mcNumber:
+        fieldName: MCNumber
   CustomerPaymentTerm:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.PaymentTerm

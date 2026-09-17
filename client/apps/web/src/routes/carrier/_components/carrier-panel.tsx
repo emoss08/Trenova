@@ -67,7 +67,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         title={t("Carrier")}
         fieldKey="name"
         size="lg"
-        formComponent={<CarrierTabbedForm />}
+        formComponent={<CarrierTabbedForm carrierId={row?.id} />}
       />
     );
   }

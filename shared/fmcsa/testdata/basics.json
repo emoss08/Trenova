@@ -1,0 +1,42 @@
+{
+  "content": [
+    {
+      "basic": {
+        "basicsId": 111,
+        "basicsPercentile": "72.4",
+        "basicsRunDate": "2026-08-29T04:00:00.000+0000",
+        "basicsType": {
+          "basicsCode": "HOS",
+          "basicsCodeMcmis": "HOS",
+          "basicsShortDesc": "Hours-of-Service Compliance"
+        },
+        "basicsViolationThreshold": "65",
+        "exceededFMCSAInterventionThreshold": "Y",
+        "measureValue": "0.8",
+        "onRoadPerformanceThresholdViolationIndicator": "Y",
+        "seriousViolationFromInvestigationPast12MonthIndicator": "N",
+        "totalInspectionWithViolation": 14,
+        "totalViolation": "21"
+      }
+    },
+    {
+      "basic": {
+        "basicsId": "112",
+        "basicsPercentile": "Not Public",
+        "basicsRunDate": 1788048000000,
+        "basicsType": {
+          "basicsCode": "UNSAFE",
+          "basicsCodeMcmis": "UNSAFE_DRIVING",
+          "basicsShortDesc": "Unsafe Driving"
+        },
+        "basicsViolationThreshold": 65,
+        "exceededFMCSAInterventionThreshold": "-1",
+        "measureValue": 1.23,
+        "onRoadPerformanceThresholdViolationIndicator": "N",
+        "seriousViolationFromInvestigationPast12MonthIndicator": "N",
+        "totalInspectionWithViolation": 5,
+        "totalViolation": 6
+      }
+    }
+  ]
+}

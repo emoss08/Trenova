@@ -147,3 +147,72 @@ describe("notification registry — invoice notifications", () => {
     );
   });
 });
+
+describe("notification registry — carrier intelligence notifications", () => {
+  const CARRIER_INTEL_EVENT_TYPES = [
+    "carrier_intel_block",
+    "carrier_intel_change",
+    "carrier_intel_digest",
+    "carrier_intel_provider_paused",
+    "carrier_equipment_mismatch",
+    "carrier_intel_spend_soft_cap",
+    "carrier_intel_spend_cap",
+  ] as const;
+  const fallback = getNotificationDescriptor("some.unregistered.event");
+
+  it.each(CARRIER_INTEL_EVENT_TYPES)(
+    "registers %s under the Carrier Intelligence category",
+    (eventType) => {
+      const descriptor = getNotificationDescriptor(eventType);
+
+      expect(descriptor).not.toBe(fallback);
+      expect(descriptor.category).toBe("Carrier Intelligence");
+      expect(descriptor.icon).not.toBe(fallback.icon);
+    },
+  );
+
+  it.each(CARRIER_INTEL_EVENT_TYPES)("prefers the producer's data.link for %s", (eventType) => {
+    const link = getNotificationLink(
+      notification({ eventType, data: { link: "/dispatch/carriers?panelEntityId=car_7" } }),
+    );
+
+    expect(link).toBe("/dispatch/carriers?panelEntityId=car_7");
+  });
+
+  it("opens the carrier's intelligence tab for a block when the link is missing", () => {
+    const link = getNotificationLink(
+      notification({
+        eventType: "carrier_intel_block",
+        relatedEntities: { carrierId: "car_1", dotNumber: "1234567" },
+      }),
+    );
+
+    expect(link).toBe("/dispatch/carriers?panelType=edit&panelEntityId=car_1&tab=intelligence");
+  });
+
+  it("falls back to the monitoring page for a change on a subject that is not a carrier", () => {
+    expect(
+      getNotificationLink(
+        notification({ eventType: "carrier_intel_change", relatedEntities: { dotNumber: "99" } }),
+      ),
+    ).toBe("/dispatch/carrier-monitoring");
+    expect(getNotificationLink(notification({ eventType: "carrier_intel_digest" }))).toBe(
+      "/dispatch/carrier-monitoring",
+    );
+  });
+
+  it("sends spend cap notifications to the usage tab without a link", () => {
+    expect(getNotificationLink(notification({ eventType: "carrier_intel_spend_soft_cap" }))).toBe(
+      "/dispatch/carrier-monitoring?tab=usage",
+    );
+    expect(getNotificationLink(notification({ eventType: "carrier_intel_spend_cap" }))).toBe(
+      "/dispatch/carrier-monitoring?tab=usage",
+    );
+  });
+
+  it("sends a paused provider to the integrations catalog without a link", () => {
+    expect(getNotificationLink(notification({ eventType: "carrier_intel_provider_paused" }))).toBe(
+      "/admin/integrations?category=CarrierCompliance",
+    );
+  });
+});

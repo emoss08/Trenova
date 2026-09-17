@@ -9,8 +9,8 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { statusChoices } from "@/lib/choices";
 import type { Customer } from "@trenova/shared/types/customer";
-import { BuildingIcon, LinkIcon, PackageIcon, UserIcon } from "lucide-react";
-import { useFormContext } from "react-hook-form";
+import { BuildingIcon, LinkIcon, PackageIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+import { useFormContext, useWatch } from "react-hook-form";
 
 function SectionHeader({
   icon: Icon,
@@ -38,6 +38,7 @@ export function CustomerForm() {
   const t = useT();
 
   const { control } = useFormContext<Customer>();
+  const brokerVettingEnabled = useWatch({ control, name: "brokerVettingEnabled" });
 
   return (
     <div className="space-y-6">
@@ -179,6 +180,53 @@ export function CustomerForm() {
             placeholder={t("e.g., CRM-10042")}
             description={t(
               "Identifier from an external system (ERP, CRM, EDI partner ID). Useful for data imports, API integrations, and cross-system reconciliation.",
+            )}
+          />
+        </FormControl>
+      </FormGroup>
+
+      <Separator />
+
+      <SectionHeader
+        icon={ShieldCheckIcon}
+        title={t("Broker vetting")}
+        description={t(
+          "When this customer is a freight broker, vet its authority, bond and insurance before booking its loads",
+        )}
+      />
+      <FormGroup cols={2}>
+        <FormControl>
+          <InputField
+            control={control}
+            name="dotNumber"
+            label={t("DOT Number")}
+            placeholder={t("e.g., 1234567")}
+            inputMode="numeric"
+            maxLength={12}
+            rules={{ required: brokerVettingEnabled }}
+            description={t(
+              "USDOT number issued by the FMCSA. Required to vet the customer as a broker.",
+            )}
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            name="mcNumber"
+            label={t("MC Number")}
+            placeholder={t("e.g., 654321")}
+            inputMode="numeric"
+            maxLength={12}
+            description={t("Broker operating authority docket number, digits only.")}
+          />
+        </FormControl>
+        <FormControl cols="full">
+          <SwitchField
+            control={control}
+            name="brokerVettingEnabled"
+            label={t("Vet as a broker")}
+            description={t(
+              "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.",
             )}
           />
         </FormControl>

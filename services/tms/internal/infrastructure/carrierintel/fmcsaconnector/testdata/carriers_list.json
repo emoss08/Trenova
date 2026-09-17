@@ -1,0 +1,21 @@
+{
+  "content": [
+    {
+      "carrier": {
+        "dotNumber": 818175,
+        "legalName": "SANDBOX FREIGHT LINES INC",
+        "allowedToOperate": "Y",
+        "statusCode": "A"
+      }
+    },
+    {
+      "carrier": {
+        "dotNumber": "2233445",
+        "legalName": "SANDBOX & SONS/TRUCKING",
+        "allowedToOperate": "N",
+        "statusCode": "I"
+      }
+    }
+  ],
+  "retrievalDate": "2026-09-16T10:00:00.000+0000"
+}

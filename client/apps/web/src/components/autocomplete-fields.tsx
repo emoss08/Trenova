@@ -1304,6 +1304,35 @@ export function ControlledShipmentAutocompleteField({
   );
 }
 
+export function ControlledCarrierAutocompleteField({
+  label = "Carrier",
+  placeholder = "Search by code or name",
+  ...props
+}: ControlledGraphQLAutocompleteFieldProps) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      link="/carriers/select-options/"
+      graphql={carrierSelectOptionsGraphQL}
+      placeholder={placeholder}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+          </div>
+        );
+      }}
+      {...props}
+    />
+  );
+}
+
 export function ControlledEDITransferAutocompleteField({
   label = "Transfer",
   placeholder = "Search transfers by BOL...",

@@ -8,6 +8,7 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { groupCarrierEligibility, hasEligibilityContent } from "@/lib/carrier-eligibility";
 import { carrierRateMethodChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -20,7 +21,9 @@ import type {
   CarrierEligibility,
 } from "@trenova/shared/types/shipment";
 import { OctagonXIcon, PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
+import { useMemo } from "react";
 import { useFieldArray, type Control, type UseFormReturn } from "react-hook-form";
+import { IntelAdvisoriesCallout, IntelBlockersAlert } from "./intel-eligibility-alerts";
 
 /**
  * The payload schema coerces GraphQL decimal strings to numbers, so the form's
@@ -55,47 +58,63 @@ export function CarrierEligibilityAlerts({
   control,
   eligibility,
   isLoading,
+  carrierId,
+  onEligibilityChanged,
 }: {
   control: CarrierAssignmentFormControl;
   eligibility: CarrierEligibility | undefined;
   isLoading: boolean;
+  carrierId?: string;
+  onEligibilityChanged?: () => void;
 }) {
   const t = useT();
+
+  const grouped = useMemo(
+    () => (eligibility ? groupCarrierEligibility(eligibility) : null),
+    [eligibility],
+  );
 
   if (isLoading) {
     return <Skeleton className="h-14 rounded-lg" />;
   }
 
-  if (!eligibility || (eligibility.blockers.length === 0 && eligibility.warnings.length === 0)) {
+  if (!grouped || !hasEligibilityContent(grouped)) {
     return null;
   }
 
+  const hasBlockers = grouped.recordBlockers.length > 0 || grouped.intelBlockers.length > 0;
+
   return (
     <div className="flex flex-col gap-2">
-      {eligibility.blockers.length > 0 && (
-        <Alert variant="destructive">
+      {grouped.recordBlockers.length > 0 && (
+        <Alert variant="destructive" data-eligibility-group="record-blockers">
           <OctagonXIcon />
           <AlertTitle>{t("Carrier cannot be assigned")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-4">
-              {eligibility.blockers.map((blocker) => (
-                <li key={blocker}>{blocker}</li>
+              {grouped.recordBlockers.map((blocker) => (
+                <li key={blocker.key}>{blocker.message}</li>
               ))}
             </ul>
           </AlertDescription>
         </Alert>
       )}
-      {eligibility.warnings.length > 0 && (
-        <Alert variant="warning">
+      <IntelBlockersAlert
+        items={grouped.intelBlockers}
+        carrierId={carrierId}
+        onEligibilityChanged={onEligibilityChanged}
+      />
+      {grouped.warnings.length > 0 && (
+        <Alert variant="warning" data-eligibility-group="warnings">
           <TriangleAlertIcon />
           <AlertTitle>{t("Insurance warnings")}</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-4">
-              {eligibility.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
+              {grouped.warnings.map((warning) => (
+                <li key={warning.key}>{warning.message}</li>
               ))}
             </ul>
-            {eligibility.blockers.length === 0 && (
+            {!hasBlockers && (
               <div className="mt-2">
                 <CheckboxField
                   control={control}
@@ -108,6 +127,7 @@ export function CarrierEligibilityAlerts({
           </AlertDescription>
         </Alert>
       )}
+      <IntelAdvisoriesCallout items={grouped.advisories} carrierId={carrierId} />
     </div>
   );
 }

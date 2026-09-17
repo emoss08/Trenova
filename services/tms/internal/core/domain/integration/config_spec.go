@@ -29,6 +29,7 @@ type ConfigFieldSpec struct {
 type IntegrationSpec struct {
 	Fields              []ConfigFieldSpec `json:"fields"`
 	SupportsTestConnect bool              `json:"supportsTestConnect"`
+	BindSecretsToTenant bool              `json:"-"`
 }
 
 var ConfigSpecs = map[Type]IntegrationSpec{
@@ -253,9 +254,11 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 		},
 		SupportsTestConnect: true,
 	},
-	TypeWEXFuel:     wexFuelSpec(),
-	TypeComdataFuel: comdataFuelSpec(),
-	TypeRampFuel:    rampFuelSpec(),
+	TypeWEXFuel:       wexFuelSpec(),
+	TypeComdataFuel:   comdataFuelSpec(),
+	TypeRampFuel:      rampFuelSpec(),
+	TypeCarrierOK:     carrierOKSpec(),
+	TypeFMCSAQCMobile: fmcsaQCMobileSpec(),
 }
 
 func HasRequiredConfiguration(configuration map[string]any, spec IntegrationSpec) bool {

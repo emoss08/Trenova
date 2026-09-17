@@ -3,6 +3,7 @@ package tenderservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -73,6 +74,8 @@ type Service struct {
 	ediChannel            portservices.EDITenderChannel
 	rateConIssuer         portservices.RateConfirmationIssuer
 	rateEngine            portservices.RateEngine
+	intelGate             portservices.CarrierIntelGate
+	lifecycle             portservices.CarrierLifecycleObserver
 }
 
 func New(p Params) *Service {
@@ -111,6 +114,37 @@ type AssignerSetter interface {
 
 func (s *Service) SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssigner) {
 	s.assigner = assigner
+}
+
+func (s *Service) SetIntelGate(gate portservices.CarrierIntelGate) {
+	s.intelGate = gate
+}
+
+func (s *Service) SetLifecycleObserver(observer portservices.CarrierLifecycleObserver) {
+	s.lifecycle = observer
+}
+
+func (s *Service) intelGates(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierIDs []pulid.ID,
+	refresh bool,
+) map[pulid.ID]*carrier.IntelGate {
+	if s.intelGate == nil || len(carrierIDs) == 0 {
+		return nil
+	}
+	if refresh {
+		s.intelGate.EnsureFresh(ctx, &portservices.CarrierIntelEnsureFreshRequest{
+			TenantInfo: tenantInfo,
+			CarrierIDs: carrierIDs,
+		})
+	}
+	gates, err := s.intelGate.GateFor(ctx, tenantInfo, carrierIDs)
+	if err != nil {
+		s.l.Warn("failed to evaluate carrier intelligence gates", zap.Error(err))
+		return nil
+	}
+	return gates
 }
 
 // SetEDITenderChannel injects the EDI delivery seam after construction:

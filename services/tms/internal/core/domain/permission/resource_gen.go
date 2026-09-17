@@ -141,6 +141,9 @@ const (
 	ResourceCarrierInvoiceMatch      Resource = "carrier_invoice_match"
 	ResourceRoutingGuide             Resource = "routing_guide"
 	ResourceTender                   Resource = "tender"
+	ResourceCarrierIntelligence      Resource = "carrier_intelligence"
+	ResourceCarrierSourcing          Resource = "carrier_sourcing"
+	ResourceEquipmentVerification    Resource = "equipment_verification"
 
 	// Locations
 	ResourceLocation         Resource = "location"

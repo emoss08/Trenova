@@ -32,6 +32,7 @@ type Service struct {
 	validator    *Validator
 	auditService services.AuditService
 	realtime     services.RealtimeService
+	observer     services.CarrierLifecycleObserver
 }
 
 func New(p Params) *Service {
@@ -131,6 +132,18 @@ func (s *Service) BulkUpdateStatus(
 		log.Warn("failed to publish carrier invalidation", zap.Error(err))
 	}
 
+	previous := make(map[string]carrier.Status, len(originalEntities))
+	for _, original := range originalEntities {
+		previous[original.ID.String()] = original.Status
+	}
+	for _, entity := range entities {
+		s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+			TenantInfo:     req.TenantInfo,
+			Carrier:        entity,
+			PreviousStatus: previous[entity.ID.String()],
+		})
+	}
+
 	return entities, nil
 }
 
@@ -187,6 +200,16 @@ func (s *Service) Create(
 	}); err != nil {
 		log.Warn("failed to publish carrier invalidation", zap.Error(err))
 	}
+
+	s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  createdEntity.OrganizationID,
+			BuID:   createdEntity.BusinessUnitID,
+			UserID: auditActor.UserID,
+		},
+		Carrier: createdEntity,
+		Created: true,
+	})
 
 	return createdEntity, nil
 }
@@ -263,5 +286,24 @@ func (s *Service) Update(
 		log.Warn("failed to publish carrier invalidation", zap.Error(err))
 	}
 
+	if auditActor.PrincipalType != services.PrincipalTypeSystem {
+		s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+			TenantInfo:     pagination.TenantInfo{OrgID: updatedEntity.OrganizationID, BuID: updatedEntity.BusinessUnitID, UserID: auditActor.UserID},
+			Carrier:        updatedEntity,
+			PreviousStatus: original.Status,
+		})
+	}
+
 	return updatedEntity, nil
+}
+
+func (s *Service) SetLifecycleObserver(observer services.CarrierLifecycleObserver) {
+	s.observer = observer
+}
+
+func (s *Service) notifyObserver(ctx context.Context, event *services.CarrierLifecycleEvent) {
+	if s.observer == nil {
+		return
+	}
+	s.observer.CarrierSaved(ctx, event)
 }

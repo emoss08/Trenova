@@ -22,6 +22,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	},
 	FeatureDispatch: {
 		"dispatch_console.graphqls",
+		"carrier_intelligence.graphqls",
 		"detention.graphqls",
 		"distance_override.graphqls",
 		"distance_profile.graphqls",

@@ -681,6 +681,20 @@ func IsConflictError(err error) bool {
 	return ok
 }
 
+func IsVersionMismatchError(err error) bool {
+	if single, ok := errors.AsType[*Error](err); ok && single.Code == ErrVersionMismatch {
+		return true
+	}
+	if multi, ok := errors.AsType[*MultiError](err); ok {
+		for _, item := range multi.Errors {
+			if item.Code == ErrVersionMismatch {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func MergeMultiErrors(multiErrs ...*MultiError) *MultiError {
 	var merged *MultiError
 	for _, multiErr := range multiErrs {

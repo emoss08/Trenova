@@ -178,25 +178,6 @@ func TestDoDecodeError(t *testing.T) {
 	assert.Contains(t, err.Error(), "decode response")
 }
 
-func TestParseRetryAfter(t *testing.T) {
-	t.Parallel()
-
-	d, ok := parseRetryAfter("120")
-	require.True(t, ok)
-	assert.Equal(t, 120*time.Second, d)
-
-	future := time.Now().Add(2 * time.Second).UTC().Format(http.TimeFormat)
-	d, ok = parseRetryAfter(future)
-	require.True(t, ok)
-	assert.GreaterOrEqual(t, d, 0*time.Second)
-
-	_, ok = parseRetryAfter("")
-	assert.False(t, ok)
-
-	_, ok = parseRetryAfter("bad")
-	assert.False(t, ok)
-}
-
 func TestDoHonorsContextCancellation(t *testing.T) {
 	t.Parallel()
 

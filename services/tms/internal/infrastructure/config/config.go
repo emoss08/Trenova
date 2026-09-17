@@ -1544,6 +1544,44 @@ type Config struct {
 	Portal               PortalConfig               `mapstructure:"portal"`
 	Push                 PushConfig                 `mapstructure:"push"`
 	Tendering            TenderingConfig            `mapstructure:"tendering"`
+	CarrierIntelligence  CarrierIntelligenceConfig  `mapstructure:"carrierIntelligence"`
+}
+
+type CarrierIntelligenceConfig struct {
+	AllowedHosts    []string      `mapstructure:"allowedHosts"`
+	SandboxAllowed  *bool         `mapstructure:"sandboxAllowed"`
+	InteractiveWait time.Duration `mapstructure:"interactiveWait"`
+	ReplicaHint     int           `mapstructure:"replicaHint"     validate:"omitempty,min=1,max=1000"`
+}
+
+var defaultCarrierIntelligenceHosts = []string{"api.carrierok.com", "mobile.fmcsa.dot.gov"}
+
+func (c *CarrierIntelligenceConfig) GetAllowedHosts() []string {
+	if len(c.AllowedHosts) == 0 {
+		return defaultCarrierIntelligenceHosts
+	}
+	return c.AllowedHosts
+}
+
+func (c *CarrierIntelligenceConfig) IsSandboxAllowed(app *AppConfig) bool {
+	if c.SandboxAllowed != nil {
+		return *c.SandboxAllowed
+	}
+	return !app.IsProduction()
+}
+
+func (c *CarrierIntelligenceConfig) GetInteractiveWait() time.Duration {
+	if c.InteractiveWait <= 0 {
+		return 8 * time.Second
+	}
+	return c.InteractiveWait
+}
+
+func (c *CarrierIntelligenceConfig) GetReplicaHint() int {
+	if c.ReplicaHint <= 0 {
+		return 1
+	}
+	return c.ReplicaHint
 }
 
 type PortalConfig struct {

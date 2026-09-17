@@ -44,13 +44,31 @@ var CarrierContactSpec TypeSpec
 
 var CarrierCostEventSpec TypeSpec
 
+var CarrierEquipmentVerificationSpec TypeSpec
+
 var CarrierInsurancePolicySpec TypeSpec
+
+var CarrierIntelControlSpec TypeSpec
+
+var CarrierIntelEventSpec TypeSpec
+
+var CarrierIntelFeedStateSpec TypeSpec
+
+var CarrierIntelOverrideSpec TypeSpec
+
+var CarrierIntelSnapshotSpec TypeSpec
+
+var CarrierIntelUsageDaySpec TypeSpec
+
+var CarrierIntelUsageRowSpec TypeSpec
 
 var CarrierInvoiceMatchSpec TypeSpec
 
 var CarrierInvoiceMatchListSpec TypeSpec
 
 var CarrierLedgerEntrySpec TypeSpec
+
+var CarrierMonitoringEnrollmentSpec TypeSpec
 
 var CarrierSettlementSpec TypeSpec
 
@@ -97,6 +115,8 @@ var DetentionNoticeSpec TypeSpec
 var DetentionOccurrenceSpec TypeSpec
 
 var DetentionPolicyTierSpec TypeSpec
+
+var DispatchCarrierEligibilityFindingSpec TypeSpec
 
 var DispatchTimeOffSpec TypeSpec
 
@@ -1975,6 +1995,30 @@ func init() {
 					Target: &CarrierInsurancePolicySpec,
 				},
 			},
+			{
+				Name:        "intelRiskLevel",
+				FieldMapKey: "intelRiskLevel",
+			},
+			{
+				Name:        "intelReviewRequired",
+				FieldMapKey: "intelReviewRequired",
+			},
+			{
+				Name:        "intelBlockingCount",
+				FieldMapKey: "intelBlockingCount",
+			},
+			{
+				Name:    "intelligence",
+				Special: "intelligence",
+			},
+			{
+				Name:    "openIntelEventCount",
+				Special: "openIntelEventCount",
+			},
+			{
+				Name:    "monitoringEnrollment",
+				Special: "monitoringEnrollment",
+			},
 		},
 	}
 
@@ -2318,6 +2362,109 @@ func init() {
 		},
 	}
 
+	CarrierEquipmentVerificationSpec = TypeSpec{
+		TypeName: "CarrierEquipmentVerification",
+		FieldMap: buncolgen.CarrierEquipmentVerificationFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "carrierAssignmentId",
+				FieldMapKey: "carrierAssignmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "expectedDotNumber",
+				FieldMapKey: "expectedDotNumber",
+			},
+			{
+				Name:        "unitType",
+				FieldMapKey: "unitType",
+			},
+			{
+				Name:        "vin",
+				FieldMapKey: "vin",
+			},
+			{
+				Name:        "plateNumber",
+				FieldMapKey: "plateNumber",
+			},
+			{
+				Name:        "plateState",
+				FieldMapKey: "plateState",
+			},
+			{
+				Name:        "unitNumber",
+				FieldMapKey: "unitNumber",
+			},
+			{
+				Name:        "result",
+				FieldMapKey: "result",
+			},
+			{
+				Name:        "matchedDotNumbers",
+				FieldMapKey: "matchedDotNumbers",
+			},
+			{
+				Name:        "matchedLegalName",
+				FieldMapKey: "matchedLegalName",
+			},
+			{
+				Name:        "detail",
+				FieldMapKey: "detail",
+			},
+			{
+				Name:        "mismatchReason",
+				FieldMapKey: "mismatchReason",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "verifiedById",
+				FieldMapKey: "verifiedById",
+			},
+			{
+				Name:        "verifiedAt",
+				FieldMapKey: "verifiedAt",
+			},
+			{
+				Name:        "overrideById",
+				FieldMapKey: "overrideById",
+			},
+			{
+				Name:        "overrideReason",
+				FieldMapKey: "overrideReason",
+			},
+			{
+				Name:        "overriddenAt",
+				FieldMapKey: "overriddenAt",
+			},
+			{
+				Name:    "cleared",
+				Special: "cleared",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	CarrierInsurancePolicySpec = TypeSpec{
 		TypeName: "CarrierInsurancePolicy",
 		FieldMap: buncolgen.CarrierInsurancePolicyFieldMap,
@@ -2381,6 +2528,550 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierIntelControlSpec = TypeSpec{
+		TypeName: "CarrierIntelControl",
+		FieldMap: buncolgen.CarrierIntelControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "primaryProvider",
+				FieldMapKey: "primaryProvider",
+			},
+			{
+				Name:        "fallbackProvider",
+				FieldMapKey: "fallbackProvider",
+			},
+			{
+				Name:        "enrollmentPolicy",
+				FieldMapKey: "enrollmentPolicy",
+			},
+			{
+				Name:        "recentUsageDays",
+				FieldMapKey: "recentUsageDays",
+			},
+			{
+				Name:        "includeOpenTenders",
+				FieldMapKey: "includeOpenTenders",
+			},
+			{
+				Name:        "autoEnrollOnCreate",
+				FieldMapKey: "autoEnrollOnCreate",
+			},
+			{
+				Name:        "autoUnenrollOnInactive",
+				FieldMapKey: "autoUnenrollOnInactive",
+			},
+			{
+				Name:        "exclusiveWatchlist",
+				FieldMapKey: "exclusiveWatchlist",
+			},
+			{
+				Name:        "pollIntervalMinutes",
+				FieldMapKey: "pollIntervalMinutes",
+			},
+			{
+				Name:        "snapshotTtlHours",
+				FieldMapKey: "snapshotTtlHours",
+			},
+			{
+				Name:        "fullProfileTtlDays",
+				FieldMapKey: "fullProfileTtlDays",
+			},
+			{
+				Name:        "preTenderRefreshEnabled",
+				FieldMapKey: "preTenderRefreshEnabled",
+			},
+			{
+				Name:        "preTenderMaxAgeHours",
+				FieldMapKey: "preTenderMaxAgeHours",
+			},
+			{
+				Name:        "hardMaxAgeHours",
+				FieldMapKey: "hardMaxAgeHours",
+			},
+			{
+				Name:        "confirmBlockingChanges",
+				FieldMapKey: "confirmBlockingChanges",
+			},
+			{
+				Name:        "outagePolicy",
+				FieldMapKey: "outagePolicy",
+			},
+			{
+				Name:        "autoDisqualifyOnBlock",
+				FieldMapKey: "autoDisqualifyOnBlock",
+			},
+			{
+				Name:        "autoApplySafetyRating",
+				FieldMapKey: "autoApplySafetyRating",
+			},
+			{
+				Name:        "rules",
+				FieldMapKey: "rules",
+			},
+			{
+				Name:        "autoSyncFields",
+				FieldMapKey: "autoSyncFields",
+			},
+			{
+				Name:        "monthlySpendCap",
+				FieldMapKey: "monthlySpendCap",
+			},
+			{
+				Name:        "softCapPercent",
+				FieldMapKey: "softCapPercent",
+			},
+			{
+				Name:        "dailyFullProfileCap",
+				FieldMapKey: "dailyFullProfileCap",
+			},
+			{
+				Name:        "rawRetentionDays",
+				FieldMapKey: "rawRetentionDays",
+			},
+			{
+				Name:        "snapshotHistoryLimit",
+				FieldMapKey: "snapshotHistoryLimit",
+			},
+			{
+				Name:        "selfMonitoringEnabled",
+				FieldMapKey: "selfMonitoringEnabled",
+			},
+			{
+				Name:        "policyVersion",
+				FieldMapKey: "policyVersion",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierIntelEventSpec = TypeSpec{
+		TypeName: "CarrierIntelEvent",
+		FieldMap: buncolgen.CarrierIntelEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "dotNumber",
+				FieldMapKey: "dotNumber",
+			},
+			{
+				Name:        "subjectName",
+				FieldMapKey: "subjectName",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "category",
+				FieldMapKey: "category",
+			},
+			{
+				Name:        "fieldPath",
+				FieldMapKey: "fieldPath",
+			},
+			{
+				Name:        "ruleCode",
+				FieldMapKey: "ruleCode",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "action",
+				FieldMapKey: "action",
+			},
+			{
+				Name:        "priorValue",
+				FieldMapKey: "priorValue",
+			},
+			{
+				Name:        "currentValue",
+				FieldMapKey: "currentValue",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "vendorChangedAt",
+				FieldMapKey: "vendorChangedAt",
+			},
+			{
+				Name:        "detectedAt",
+				FieldMapKey: "detectedAt",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "acknowledgedById",
+				FieldMapKey: "acknowledgedById",
+			},
+			{
+				Name:        "acknowledgedAt",
+				FieldMapKey: "acknowledgedAt",
+			},
+			{
+				Name:        "resolvedById",
+				FieldMapKey: "resolvedById",
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "resolutionNote",
+				FieldMapKey: "resolutionNote",
+			},
+			{
+				Name:        "snapshotId",
+				FieldMapKey: "snapshotId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierIntelFeedStateSpec = TypeSpec{
+		TypeName:      "CarrierIntelFeedState",
+		FieldMap:      buncolgen.CarrierIntelFeedStateFieldMap,
+		AlwaysColumns: []string{},
+		Fields: []FieldSpec{
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "feedType",
+				FieldMapKey: "feedType",
+			},
+			{
+				Name:        "lastPolledAt",
+				FieldMapKey: "lastPolledAt",
+			},
+			{
+				Name:        "lastSuccessAt",
+				FieldMapKey: "lastSuccessAt",
+			},
+			{
+				Name:        "nextPollAfter",
+				FieldMapKey: "nextPollAfter",
+			},
+			{
+				Name:        "pausedReason",
+				FieldMapKey: "pausedReason",
+			},
+			{
+				Name:        "pausedAt",
+				FieldMapKey: "pausedAt",
+			},
+			{
+				Name:        "failureCount",
+				FieldMapKey: "failureCount",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+		},
+	}
+
+	CarrierIntelOverrideSpec = TypeSpec{
+		TypeName: "CarrierIntelOverride",
+		FieldMap: buncolgen.CarrierIntelOverrideFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "ruleCode",
+				FieldMapKey: "ruleCode",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "grantedById",
+				FieldMapKey: "grantedById",
+			},
+			{
+				Name:        "grantedAt",
+				FieldMapKey: "grantedAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokeReason",
+				FieldMapKey: "revokeReason",
+			},
+			{
+				Name:    "active",
+				Special: "active",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CarrierIntelSnapshotSpec = TypeSpec{
+		TypeName: "CarrierIntelSnapshot",
+		FieldMap: buncolgen.CarrierIntelSnapshotFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "dotNumber",
+				FieldMapKey: "dotNumber",
+			},
+			{
+				Name:        "docketNumber",
+				FieldMapKey: "docketNumber",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "providerRef",
+				FieldMapKey: "providerRef",
+			},
+			{
+				Name:        "depth",
+				FieldMapKey: "depth",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "isCurrent",
+				FieldMapKey: "isCurrent",
+			},
+			{
+				Name:        "notFound",
+				FieldMapKey: "notFound",
+			},
+			{
+				Name:        "profile",
+				FieldMapKey: "profile",
+			},
+			{
+				Name:        "findings",
+				FieldMapKey: "findings",
+			},
+			{
+				Name:        "blockingCodes",
+				FieldMapKey: "blockingCodes",
+			},
+			{
+				Name:        "advisoryCodes",
+				FieldMapKey: "advisoryCodes",
+			},
+			{
+				Name:        "riskLevel",
+				FieldMapKey: "riskLevel",
+			},
+			{
+				Name:        "reviewState",
+				FieldMapKey: "reviewState",
+			},
+			{
+				Name:        "reviewedById",
+				FieldMapKey: "reviewedById",
+			},
+			{
+				Name:        "reviewedAt",
+				FieldMapKey: "reviewedAt",
+			},
+			{
+				Name:        "reviewNote",
+				FieldMapKey: "reviewNote",
+			},
+			{
+				Name:        "policyVersion",
+				FieldMapKey: "policyVersion",
+			},
+			{
+				Name:        "fetchedAt",
+				FieldMapKey: "fetchedAt",
+			},
+			{
+				Name:        "sourceAsOf",
+				FieldMapKey: "sourceAsOf",
+			},
+			{
+				Name:        "confirmedAt",
+				FieldMapKey: "confirmedAt",
+			},
+			{
+				Name:    "effectiveAsOf",
+				Special: "effectiveAsOf",
+			},
+			{
+				Name:    "hasRawPayload",
+				Special: "hasRawPayload",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CarrierIntelUsageDaySpec = TypeSpec{
+		TypeName:      "CarrierIntelUsageDay",
+		FieldMap:      buncolgen.CarrierIntelUsageDailyFieldMap,
+		AlwaysColumns: []string{},
+		Fields: []FieldSpec{
+			{
+				Name:        "day",
+				FieldMapKey: "day",
+			},
+			{
+				Name:        "endpoint",
+				FieldMapKey: "endpoint",
+			},
+			{
+				Name:        "calls",
+				FieldMapKey: "calls",
+			},
+			{
+				Name:        "billableUnits",
+				FieldMapKey: "billableUnits",
+			},
+			{
+				Name:        "estimatedCost",
+				FieldMapKey: "estimatedCost",
+			},
+		},
+	}
+
+	CarrierIntelUsageRowSpec = TypeSpec{
+		TypeName:      "CarrierIntelUsageRow",
+		FieldMap:      buncolgen.CarrierIntelUsageDailyFieldMap,
+		AlwaysColumns: []string{},
+		Fields: []FieldSpec{
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "endpoint",
+				FieldMapKey: "endpoint",
+			},
+			{
+				Name:        "calls",
+				FieldMapKey: "calls",
+			},
+			{
+				Name:        "billableUnits",
+				FieldMapKey: "billableUnits",
+			},
+			{
+				Name:        "estimatedCost",
+				FieldMapKey: "estimatedCost",
 			},
 		},
 	}
@@ -2590,6 +3281,113 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CarrierMonitoringEnrollmentSpec = TypeSpec{
+		TypeName: "CarrierMonitoringEnrollment",
+		FieldMap: buncolgen.CarrierMonitoringEnrollmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "subjectName",
+				FieldMapKey: "subjectName",
+			},
+			{
+				Name:        "dotNumber",
+				FieldMapKey: "dotNumber",
+			},
+			{
+				Name:        "docketNumber",
+				FieldMapKey: "docketNumber",
+			},
+			{
+				Name:        "provider",
+				FieldMapKey: "provider",
+			},
+			{
+				Name:        "providerRef",
+				FieldMapKey: "providerRef",
+			},
+			{
+				Name:        "mode",
+				FieldMapKey: "mode",
+			},
+			{
+				Name:        "desiredState",
+				FieldMapKey: "desiredState",
+			},
+			{
+				Name:        "vendorState",
+				FieldMapKey: "vendorState",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "ownedByTrenova",
+				FieldMapKey: "ownedByTrenova",
+			},
+			{
+				Name:        "enrolledAt",
+				FieldMapKey: "enrolledAt",
+			},
+			{
+				Name:        "unenrolledAt",
+				FieldMapKey: "unenrolledAt",
+			},
+			{
+				Name:        "lastSyncedAt",
+				FieldMapKey: "lastSyncedAt",
+			},
+			{
+				Name:        "lastConfirmedAt",
+				FieldMapKey: "lastConfirmedAt",
+			},
+			{
+				Name:        "lastUsedAt",
+				FieldMapKey: "lastUsedAt",
+			},
+			{
+				Name:        "failureCount",
+				FieldMapKey: "failureCount",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -3609,6 +4407,22 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CustomerEmailProfileSpec,
 				},
+			},
+			{
+				Name:        "dotNumber",
+				FieldMapKey: "dotNumber",
+			},
+			{
+				Name:        "mcNumber",
+				FieldMapKey: "mcNumber",
+			},
+			{
+				Name:        "brokerVettingEnabled",
+				FieldMapKey: "brokerVettingEnabled",
+			},
+			{
+				Name:    "brokerIntelligence",
+				Special: "brokerIntelligence",
 			},
 		},
 	}
@@ -4954,6 +5768,37 @@ func init() {
 			{
 				Name:        "sortOrder",
 				FieldMapKey: "sortOrder",
+			},
+		},
+	}
+
+	DispatchCarrierEligibilityFindingSpec = TypeSpec{
+		TypeName: "DispatchCarrierEligibilityFinding",
+		FieldMap: buncolgen.EDIMessageValidationErrorFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:    "source",
+				Special: "source",
+			},
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "message",
+				FieldMapKey: "message",
+			},
+			{
+				Name:    "requiresOverride",
+				Special: "requiresOverride",
 			},
 		},
 	}

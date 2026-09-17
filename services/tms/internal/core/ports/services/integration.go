@@ -6,15 +6,16 @@ import (
 )
 
 const (
-	catalogEmailCategoryLabel   = "Email"
-	catalogDocsLabel            = "Docs"
-	catalogWebsiteLabel         = "Website"
-	catalogViewIntegrationLabel = "View Integration"
-	catalogFuelCardsLabel       = "Fuel Cards"
-	catalogPostmarkLogoURL      = "/integrations/logos/postmark_all.png"
-	catalogSlateColor           = "#0f172a"
-	catalogGoogleMapsLogoURL    = "/integrations/logos/googleMaps.svg"
-	catalogOandaAPIURL          = "https://exchange-rates-api.oanda.com/"
+	catalogEmailCategoryLabel     = "Email"
+	catalogDocsLabel              = "Docs"
+	catalogWebsiteLabel           = "Website"
+	catalogViewIntegrationLabel   = "View Integration"
+	catalogFuelCardsLabel         = "Fuel Cards"
+	catalogCarrierComplianceLabel = "Carrier Compliance"
+	catalogPostmarkLogoURL        = "/integrations/logos/postmark_all.png"
+	catalogSlateColor             = "#0f172a"
+	catalogGoogleMapsLogoURL      = "/integrations/logos/googleMaps.svg"
+	catalogOandaAPIURL            = "https://exchange-rates-api.oanda.com/"
 )
 
 var CatalogDefinitions = []CatalogItem{
@@ -409,6 +410,66 @@ var CatalogDefinitions = []CatalogItem{
 		},
 		Featured:           false,
 		SortOrder:          52,
+		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeCarrierOK,
+		Name:          "CarrierOk",
+		Description:   "Vet and continuously monitor carriers and brokers: operating authority, insurance filings, BASIC percentiles, out-of-service orders, fraud network signals, lanes and VIN-level equipment. Blocking findings stop tenders and assignments automatically.",
+		Category:      integration.CategoryCarrierCompliance,
+		CategoryLabel: catalogCarrierComplianceLabel,
+		LogoURL:       "/integrations/logos/carrierok-light.svg",
+		LogoLightURL:  "/integrations/logos/carrierok-light.svg",
+		LogoDarkURL:   "/integrations/logos/carrierok-dark.svg",
+		DocsURL:       "https://developers.carrierok.com/docs",
+		WebsiteURL:    "https://www.carrier-ok.com/",
+		Color:         "#16a34a",
+		GlowFrom:      "#16a34a",
+		GlowTo:        "#4ade80",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://developers.carrierok.com/docs",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://www.carrier-ok.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          60,
+		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeFMCSAQCMobile,
+		Name:          "FMCSA QCMobile",
+		Description:   "Free FMCSA carrier lookups: authority, insurance on file, safety rating, BASIC alerts and out-of-service status. Use it as your carrier intelligence provider or as a fallback when your primary provider is unavailable.",
+		Category:      integration.CategoryCarrierCompliance,
+		CategoryLabel: catalogCarrierComplianceLabel,
+		LogoURL:       "/integrations/logos/fmcsa-light.svg",
+		LogoLightURL:  "/integrations/logos/fmcsa-light.svg",
+		LogoDarkURL:   "/integrations/logos/fmcsa-dark.svg",
+		DocsURL:       "https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi",
+		WebsiteURL:    "https://mobile.fmcsa.dot.gov/QCDevsite/",
+		Color:         "#1d4ed8",
+		GlowFrom:      "#1d4ed8",
+		GlowTo:        "#60a5fa",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://mobile.fmcsa.dot.gov/QCDevsite/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          61,
 		PrimaryActionLabel: catalogViewIntegrationLabel,
 	},
 }

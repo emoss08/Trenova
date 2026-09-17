@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
@@ -386,6 +387,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	routingguideservice.NewValidator,
 	routingguideservice.New,
 	tenderservice.New,
+	carrierintelservice.New,
+	func(s *carrierintelservice.Service) services.CarrierIntelGate { return s },
+	func(s *carrierintelservice.Service) services.CarrierLifecycleObserver { return s },
 	func(s *tenderservice.Service) services.TenderGuard { return s },
 	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
 	func(s *tenderservice.Service) services.TenderLifecycle { return s },
@@ -557,6 +561,20 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	},
 	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
 		s.SetCarrierMoveAssigner(assigner)
+	},
+	// Carrier intelligence writes carrier records back through the carrier
+	// service, so the gate and lifecycle observer are attached after every
+	// consumer is built instead of through their constructors.
+	func(
+		tenders *tenderservice.Service,
+		assignments *carrierassignmentservice.Service,
+		gate services.CarrierIntelGate,
+		observer services.CarrierLifecycleObserver,
+	) {
+		tenders.SetIntelGate(gate)
+		tenders.SetLifecycleObserver(observer)
+		assignments.SetIntelGate(gate)
+		assignments.SetLifecycleObserver(observer)
 	},
 	// Injecting the recorder through FX would close the constructor cycle
 	// workerservice -> EmploymentEventRecorder -> workeremploymentservice ->
