@@ -5944,7 +5944,7 @@
     ]
   },
   "API Key": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go"
     ],
@@ -24763,7 +24763,7 @@
     ]
   },
   "Cancel": {
-    "sites": 243,
+    "sites": 244,
     "scope": [
       "ts"
     ],
@@ -34459,6 +34459,15 @@
       "routes/admin"
     ]
   },
+  "Connect with OpenAI": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connect with OpenWeatherMap": {
     "sites": 1,
     "scope": [
@@ -35509,7 +35518,7 @@
       "routes/customer"
     ]
   },
-  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
+  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -38368,6 +38377,15 @@
     ]
   },
   "Create an API key and webhook in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Create an API key in the": {
     "sites": 1,
     "scope": [
       "ts"
@@ -54898,6 +54916,15 @@
     ]
   },
   "Enable Okta sign-in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Enable OpenAI": {
     "sites": 1,
     "scope": [
       "ts"
@@ -77801,6 +77828,15 @@
       "routes/admin"
     ]
   },
+  "It powers document classification, extraction and shipment import, which are switched on in Document Intelligence. The assistant, agents and operational insights route through AI Providers instead, where any model endpoint can be connected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "It seems you got a little bit lost": {
     "sites": 1,
     "scope": [
@@ -85028,7 +85064,7 @@
       "routes/worker"
     ]
   },
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.": {
+  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -92319,7 +92355,7 @@
     ]
   },
   "New conversation": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -104064,6 +104100,15 @@
       "service/shipmentimportassistantservice"
     ]
   },
+  "OpenAI Logo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "OpenAI Responses": {
     "sites": 1,
     "scope": [
@@ -104073,6 +104118,24 @@
       "api/handlers"
     ]
   },
+  "OpenAI credential for document intelligence and shipment import. The assistant, agents and insights route through AI Providers instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "OpenAI dashboard.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "OpenAI integration is not configured": {
     "sites": 2,
     "scope": [
@@ -104080,6 +104143,15 @@
     ],
     "areas": [
       "service/shipmentimportassistantservice"
+    ]
+  },
+  "OpenAI integration updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "OpenAI's Responses API, and endpoints serving the same shape.": {
@@ -133518,7 +133590,7 @@
     ]
   },
   "Save Changes": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -134088,7 +134160,7 @@
     ]
   },
   "Saving...": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "ts"
     ],
@@ -135004,7 +135076,7 @@
     ]
   },
   "Search": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -135168,7 +135240,7 @@
     ]
   },
   "Search conversations": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -161207,6 +161279,15 @@
       "routes/admin"
     ]
   },
+  "This key is for document intelligence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.": {
     "sites": 1,
     "scope": [
@@ -163684,6 +163765,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Toggle AI provider availability for this business unit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Toggle Sidebar": {
@@ -169830,24 +169920,6 @@
       "packages/shared/types"
     ]
   },
-  "Use an AI provider for structured extraction on supported document kinds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Use base free time": {
     "sites": 2,
     "scope": [
@@ -169918,6 +169990,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Use the OpenAI integration for structured extraction on supported document kinds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Use the expression currently in the editor": {
@@ -170112,6 +170202,15 @@
     ]
   },
   "Used by the server for Resend REST API calls.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Used for AI-assisted document classification and structured extraction.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -176030,7 +176129,7 @@
       "routes/agent-control"
     ]
   },
-  "Where a shipment is, who is free, what is holding an invoice, how to do something. The assistant reads what you can already see and asks before changing anything.": {
+  "Where a shipment is, who is free, what is holding an invoice, how to do something.": {
     "sites": 1,
     "scope": [
       "ts"

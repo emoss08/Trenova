@@ -3,12 +3,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { groupThreadsByRecency } from "./thread-grouping";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -58,19 +60,36 @@ export function ThreadSidebar({
     <aside
       className={cn("border-border bg-sidebar flex w-72 shrink-0 flex-col border-r", className)}
     >
-      <div className="border-border flex flex-col gap-2 border-b p-3">
-        <Button size="sm" className="w-full" onClick={onStart} disabled={!canStart}>
-          <PlusIcon className="size-4" />
-          {t("New conversation")}
-        </Button>
+      {/* One row, not a filled button stacked over a field. Starting a
+          conversation is the cheapest thing in the panel; a solid brand block
+          at the top of the sidebar outranked Approve, which is the one place in
+          this surface where a filled button means something. */}
+      <div className="border-border flex items-center gap-1 border-b p-2">
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("Search conversations")}
-          className="h-8 text-xs"
+          placeholder={t("Search")}
+          className="h-7 text-xs"
           leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           aria-label={t("Search conversations")}
         />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="shrink-0"
+                onClick={onStart}
+                disabled={!canStart}
+                aria-label={t("New conversation")}
+              />
+            }
+          >
+            <PlusIcon className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>{t("New conversation")}</TooltipContent>
+        </Tooltip>
       </div>
 
       <ScrollArea className="flex-1">
@@ -98,7 +117,7 @@ export function ThreadSidebar({
                   <ThreadRow
                     key={thread.id}
                     thread={thread}
-                    agentName={agentsById.get(thread.agentDefinitionId)?.name}
+                    agent={agentsById.get(thread.agentDefinitionId) ?? null}
                     active={thread.id === activeThreadId}
                     now={now}
                     onSelect={() => onSelect(thread.id)}
@@ -116,14 +135,14 @@ export function ThreadSidebar({
 
 function ThreadRow({
   thread,
-  agentName,
+  agent,
   active,
   now,
   onSelect,
   onDelete,
 }: {
   thread: AssistantThread;
-  agentName: string | undefined;
+  agent: AgentDefinitionRow | null;
   active: boolean;
   now: number;
   onSelect: () => void;
@@ -141,13 +160,18 @@ function ThreadRow({
     >
       <button
         type="button"
-        className="min-w-0 flex-1 text-left"
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
         onClick={onSelect}
         aria-current={active ? "true" : undefined}
       >
-        <span className="block truncate text-sm">{thread.title || t("Untitled conversation")}</span>
-        <span className="text-muted-foreground block truncate text-[11px]">
-          {agentName ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
+        <AgentTile agent={agent} size="sm" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm">
+            {thread.title || t("Untitled conversation")}
+          </span>
+          <span className="text-muted-foreground block truncate text-[11px]">
+            {agent?.name ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
+          </span>
         </span>
       </button>
       <Button

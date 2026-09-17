@@ -1,18 +1,18 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { DecorIcon } from "@trenova/shared/components/ui/decor-icon";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
-import { ArrowRightIcon, BotIcon, ChevronRightIcon, PlugZapIcon, SparklesIcon } from "lucide-react";
-import { m } from "motion/react";
+import { ArrowRightIcon, BotIcon, ChevronRightIcon, PlugZapIcon } from "lucide-react";
+import { m, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { AgentAvatar } from "./message-items";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { TrenovaSpark } from "./trenova-spark";
 
 type AssistantHomeProps = {
   agents: AgentDefinitionRow[];
@@ -42,6 +42,7 @@ export function AssistantHome({
 }: AssistantHomeProps) {
   const t = useT();
   const closeWidget = useAssistantStore((state) => state.closeWidget);
+  const reduceMotion = useReducedMotion();
   const [now] = useState(nowInSeconds);
 
   if (!isLoading && agents.length === 0) {
@@ -78,26 +79,24 @@ export function AssistantHome({
   return (
     <ScrollArea className="flex-1" maskVariant="card">
       <div className="flex flex-col gap-5 px-4 py-4">
+        {/* No corner flourishes and no blurred wash behind the text. This is
+            the first thing a person sees every time they open the panel, and
+            decoration that cannot be read is decoration they cannot skip. */}
         <m.div
-          initial={{ opacity: 0, y: 6 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="border-border/70 bg-card relative overflow-hidden rounded-xl border px-4 py-5"
+          className="flex flex-col gap-2 px-1 pt-1"
         >
-          <DecorIcon position="top-left" />
-          <DecorIcon position="bottom-right" />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-10 -right-10 size-32 rounded-full bg-muted/40 blur-2xl"
-          />
-          <span className="bg-muted text-muted-foreground flex size-9 items-center justify-center rounded-xl">
-            <SparklesIcon className="size-4.5" />
-          </span>
-          <p className="mt-3 text-sm font-semibold">{t("Ask about anything you can see")}</p>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <TrenovaSpark className="text-foreground size-6" />
+          <p className="text-sm font-semibold">{t("Ask about anything you can see")}</p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
             {t(
-              "Where a shipment is, who is free, what is holding an invoice, how to do something. The assistant reads what you can already see and asks before changing anything.",
+              "Where a shipment is, who is free, what is holding an invoice, how to do something.",
             )}
+          </p>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {t("Reads only what you can already see. Changes wait for your approval.")}
           </p>
         </m.div>
 
@@ -121,7 +120,7 @@ export function AssistantHome({
                   transition={{ duration: 0.2, delay: 0.04 * index }}
                   className="border-border/70 bg-card hover:border-border hover:bg-muted/40 hover:bg-muted/40 focus-visible:ring-ring/50 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-[3px] disabled:opacity-60"
                 >
-                  <AgentAvatar className="size-8 rounded-lg" />
+                  <AgentTile agent={agent} size="lg" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="truncate">{agent.name}</span>

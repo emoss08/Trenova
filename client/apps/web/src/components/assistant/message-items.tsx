@@ -207,14 +207,26 @@ export function AssistantEntry({
     <AssistantFrame
       footer={
         <span className="flex items-center gap-2">
-          <time>{formatUnixInUserTimezone(message.createdAt, TIME_FORMAT)}</time>
-          {message.model !== "" && (
+          {/* Which model answered and what it cost belong to whoever is tuning
+              the agent, not to the dispatcher reading the answer. The whole
+              model identifier printed beside every reply was the longest thing
+              in the footer and told a dispatcher nothing. */}
+          {message.model === "" ? (
+            <time>{formatUnixInUserTimezone(message.createdAt, TIME_FORMAT)}</time>
+          ) : (
             <Tooltip>
-              <TooltipTrigger render={<span className="cursor-default truncate" />}>
-                · {message.model}
+              <TooltipTrigger
+                render={
+                  <time className="cursor-default border-b border-dotted border-current/40" />
+                }
+              >
+                {formatUnixInUserTimezone(message.createdAt, TIME_FORMAT)}
               </TooltipTrigger>
-              <TooltipContent>
-                {t("{0} in, {1} out", message.inputTokens, message.outputTokens)} · {t("tokens")}
+              <TooltipContent className="flex flex-col gap-0.5">
+                <span className="font-mono">{message.model}</span>
+                <span>
+                  {t("{0} in, {1} out", message.inputTokens, message.outputTokens)} · {t("tokens")}
+                </span>
               </TooltipContent>
             </Tooltip>
           )}

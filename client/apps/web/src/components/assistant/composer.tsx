@@ -61,6 +61,7 @@ export function Composer({
   const reduceMotion = useReducedMotion();
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState(0);
+  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const canSend = draft.trim() !== "" && !active && !disabled;
@@ -106,6 +107,8 @@ export function Composer({
               ref={textareaRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && (event.metaKey || event.ctrlKey || !event.shiftKey)) {
                   event.preventDefault();
@@ -243,17 +246,27 @@ export function Composer({
           </div>
         </div>
 
-        <div className="text-muted-foreground flex items-center justify-between gap-2 px-1 text-xs">
-          <span className="hidden items-center gap-1 sm:flex">
-            <Kbd>Enter</Kbd> {t("to send")} · <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd>{" "}
-            {t("for a new line")}
-          </span>
-          {!compact && (
-            <span className="ml-auto truncate">
-              {t("Reads only what you can already see. Changes wait for your approval.")}
-            </span>
+        {/* Two permanent lines of chrome under the box said the same thing on
+            every page for the life of the session. The keyboard hint appears
+            while someone is actually typing and goes away again; what the
+            assistant may do is stated once, on the launch pad. */}
+        <AnimatePresence initial={false}>
+          {focused && (
+            <m.div
+              key="hint"
+              initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
+              className="text-muted-foreground overflow-hidden px-1 text-xs"
+            >
+              <span className="hidden items-center gap-1 pt-1 sm:flex">
+                <Kbd>Enter</Kbd> {t("to send")} · <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd>{" "}
+                {t("for a new line")}
+              </span>
+            </m.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   );
