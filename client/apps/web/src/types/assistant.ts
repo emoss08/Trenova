@@ -1,3 +1,4 @@
+import { optionalIdSchema } from "@trenova/shared/types/helpers";
 import { z } from "zod";
 
 export const agentTemplateKindSchema = z.enum([
@@ -28,14 +29,12 @@ const nullableList = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => value ?? [], z.array(item));
 
 /**
- * A PULID the server leaves unset. Those columns marshal as `null` rather than
- * `""`, so the reader has to accept null where the UI wants an empty string.
- */
-const optionalId = z.preprocess((value) => value ?? "", z.string());
-
-/**
  * An enum-typed Go string the server leaves unset. A plain string field
  * marshals as `""`, which is not one of the enum's values.
+ *
+ * This is a stricter cousin of `nullableEnumSchema` in shared/types/helpers: it
+ * yields `T | null` rather than `T | null | undefined`, which these schemas rely
+ * on, so the two are deliberately not the same function.
  */
 const nullableEnum = <T extends z.ZodType>(item: T) =>
   z.preprocess((value) => (value === "" || value == null ? null : value), item.nullable());
@@ -54,9 +53,9 @@ export const agentDefinitionSchema = z.object({
   /** The starter this agent began from. It carries no restriction. */
   template: nullableEnum(agentTemplateKindSchema),
   /** Chosen icon name; empty means the client derives one. */
-  icon: optionalId,
+  icon: optionalIdSchema,
   /** Chosen accent name; empty means the client derives one. */
-  accent: optionalId,
+  accent: optionalIdSchema,
   /** Organization-authored instructions, placed after Trenova's safety preamble. */
   instructions: z.string().optional().default(""),
   guardrails: nullableList(z.string()),
@@ -77,7 +76,7 @@ export const agentDefinitionSchema = z.object({
   maxToolCalls: z.number().default(12),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
-  preferredProviderId: optionalId,
+  preferredProviderId: optionalIdSchema,
   systemKey: z.string().optional().default(""),
   lastRunAt: z.number().nullish(),
   nextRunAt: z.number().nullish(),
@@ -164,7 +163,7 @@ export const saveAgentDefinitionRequestSchema = z.object({
   maxToolCalls: z.number().min(1).max(64).default(12),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
-  preferredProviderId: optionalId,
+  preferredProviderId: optionalIdSchema,
   version: z.number().default(0),
 });
 
@@ -253,7 +252,7 @@ export const assistantProposalSchema = z.object({
   rationale: z.string().optional().default(""),
   autonomyTier: autonomyTierSchema,
   status: proposalStatusSchema,
-  sourceMessageId: optionalId,
+  sourceMessageId: optionalIdSchema,
   /** The model's own estimate, 0 to 1. */
   confidence: z.number().min(0).max(1).nullish(),
   /** Set once an approved proposal has actually run. */

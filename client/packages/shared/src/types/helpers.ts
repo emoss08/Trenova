@@ -55,6 +55,21 @@ export const nullableStringSchema = z
 export const nullableEnumSchema = <T extends z.ZodType>(schema: T) =>
   z.preprocess((value) => (value === "" ? null : value), schema.nullish());
 
+/**
+ * A PULID the server leaves unset.
+ *
+ * `pulid.ID.MarshalJSON` (shared/pulid/pulid.go) returns the literal `null` for
+ * a nil id, so an optional id is `null` on the wire — never `""`, never absent.
+ * That is the opposite of an unset Go `string`, which always marshals as `""`:
+ * `nullzero` governs the database write, not the JSON.
+ *
+ * `optionalStringSchema` cannot read one. `z.optional()` admits `undefined` and
+ * nothing else, and `.default()` only fires for `undefined` too, so a `null` id
+ * fails the parse and — through `safeParse` — discards the entire response.
+ * Use this for any field whose Go counterpart is a `pulid.ID` that may be nil.
+ */
+export const optionalIdSchema = z.preprocess((value) => value ?? "", z.string());
+
 export const stringArraySchema = z
   .array(z.string())
   .nullish()

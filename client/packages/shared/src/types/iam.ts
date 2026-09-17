@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod/v4";
+import { optionalIdSchema } from "./helpers";
 import { roleSchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
 
@@ -139,7 +140,8 @@ export const provisioningAuditRecordSchema = z.object({
   action: z.enum(["create", "update", "deactivate", "delete"]),
   resourceType: z.string(),
   externalId: z.string().optional().default(""),
-  resourceId: z.string().optional().default(""),
+  /** Nil when the action failed before it created anything to point at. */
+  resourceId: optionalIdSchema,
   status: z.string(),
   errorMessage: z.string().optional().default(""),
   createdAt: z.number(),
@@ -211,10 +213,15 @@ export type AccessPolicyFormValues = z.infer<typeof accessPolicyFormSchema>;
 
 export const authEventSchema = z.object({
   id: z.string(),
-  userId: z.string().optional().default(""),
-  organizationId: z.string().optional().default(""),
-  businessUnitId: z.string().optional().default(""),
-  identityProviderId: z.string().optional().default(""),
+  /**
+   * All four are nil on a login rejected before the account was identified,
+   * which is exactly the event this record exists to capture. They are
+   * `pulid.ID` without `notnull` on the server, so they arrive as null.
+   */
+  userId: optionalIdSchema,
+  organizationId: optionalIdSchema,
+  businessUnitId: optionalIdSchema,
+  identityProviderId: optionalIdSchema,
   provider: z.string(),
   outcome: z.enum(["success", "challenge", "denied", "failed"]),
   ipAddress: z.string().optional().default(""),
@@ -235,9 +242,10 @@ export const authEventsSchema = z.array(authEventSchema);
 
 export const riskDecisionSchema = z.object({
   id: z.string(),
-  userId: z.string().optional().default(""),
-  organizationId: z.string().optional().default(""),
-  businessUnitId: z.string().optional().default(""),
+  /** Nil when the decision was reached before the user was known. */
+  userId: optionalIdSchema,
+  organizationId: optionalIdSchema,
+  businessUnitId: optionalIdSchema,
   outcome: z.enum(["allow", "challenge", "deny"]),
   signals: stringArraySchema,
   reason: z.string().optional().default(""),

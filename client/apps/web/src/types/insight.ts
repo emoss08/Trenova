@@ -1,3 +1,4 @@
+import { optionalIdSchema } from "@trenova/shared/types/helpers";
 import { z } from "zod";
 
 export const insightCategorySchema = z.enum([
@@ -79,10 +80,15 @@ export const insightSchema = z.object({
   /** When these numbers stop being worth trusting. */
   staleAt: z.number().default(0),
   dismissedAt: z.number().nullish(),
-  dismissedById: z.string().optional().default(""),
+  /**
+   * Both of these are `pulid.ID` on the server, so an insight nobody dismissed
+   * and one the narrator never touched arrive with `null` here, not `""`. The
+   * neighbouring text fields are Go `string` and really are `""` when unset.
+   */
+  dismissedById: optionalIdSchema,
   dismissReason: z.string().optional().default(""),
   modelIdentifier: z.string().optional().default(""),
-  providerId: z.string().optional().default(""),
+  providerId: optionalIdSchema,
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
