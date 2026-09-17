@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
@@ -55,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
+	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
@@ -86,6 +88,7 @@ func Options() fx.Option {
 			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
 		)),
 		fuelcard.Module,
+		carrierintelinfra.Module,
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
@@ -105,6 +108,7 @@ func Options() fx.Option {
 		emailjobs.Module,
 		exchangeratejobs.Module,
 		fuelcardjobs.Module,
+		carrierintelligencejobs.Module,
 		fuelpricejobs.Module,
 		formulatemplatejobs.Module,
 		ratesimjobs.Module,

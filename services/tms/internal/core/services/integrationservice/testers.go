@@ -41,9 +41,20 @@ func (t *fuelCardConnectionTester) Test(ctx context.Context, cfg map[string]stri
 	return t.connector.TestConnection(ctx, cfg)
 }
 
+type carrierIntelConnectionTester struct {
+	connector services.CarrierIntelConnector
+}
+
+func (t *carrierIntelConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	return t.connector.TestConnection(ctx, cfg)
+}
+
 func (s *Service) testerFor(typ integration.Type) (connectionTester, bool) {
 	if connector, ok := s.fuelCardConnectors[typ]; ok {
 		return &fuelCardConnectionTester{connector: connector}, true
+	}
+	if connector, ok := s.carrierIntelConnectors[typ]; ok {
+		return &carrierIntelConnectionTester{connector: connector}, true
 	}
 
 	tester, ok := connectionTesters[typ]

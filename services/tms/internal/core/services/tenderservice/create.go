@@ -441,6 +441,7 @@ func (s *Service) buildGuideOffers(
 	}
 
 	now := timeutils.NowUnix()
+	gates := s.intelGates(ctx, tenantInfo, carrierIDs, true)
 	plan := &guideOfferPlan{
 		offers: make([]*tender.TenderOffer, 0, len(guide.Entries)),
 	}
@@ -467,7 +468,11 @@ func (s *Service) buildGuideOffers(
 			continue
 		}
 
-		eligibility := carrier.EvaluateCarrierEligibility(carrierEntity, now)
+		eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
+			Carrier: carrierEntity,
+			Now:     now,
+			Intel:   gates[carrierEntity.ID],
+		})
 		if eligibility.IsBlocked() {
 			plan.skipped = append(plan.skipped, guideEntryScreening{
 				carrierName: carrierEntity.Name,
@@ -643,6 +648,7 @@ func (s *Service) buildSpotOffers(
 	}
 
 	now := timeutils.NowUnix()
+	gates := s.intelGates(ctx, req.TenantInfo, carrierIDs, true)
 	offers := make([]*tender.TenderOffer, 0, len(req.Lines))
 	warnings := make([]string, 0, len(req.Lines))
 	multiErr := errortypes.NewMultiError()
@@ -660,7 +666,11 @@ func (s *Service) buildSpotOffers(
 			continue
 		}
 
-		eligibility := carrier.EvaluateCarrierEligibility(carrierEntity, now)
+		eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
+			Carrier: carrierEntity,
+			Now:     now,
+			Intel:   gates[carrierEntity.ID],
+		})
 		if eligibility.IsBlocked() {
 			lineErr.Add(
 				"carrierId",
@@ -826,6 +836,7 @@ func (s *Service) persistAndStart(
 	entity.WorkflowID = workflowID
 
 	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_created")
+	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
 
 	return entity, nil
 }

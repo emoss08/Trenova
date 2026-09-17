@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 15
+const expectedCatalogItems = 17
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration

@@ -31,16 +31,20 @@ type Params struct {
 	AuditService services.AuditService
 	Registry     *permission.Registry
 
-	FuelCardConnectors []services.FuelCardProvider `group:"fuelCardConnectors"`
+	FuelCardConnectors     []services.FuelCardProvider                `group:"fuelCardConnectors"`
+	CarrierIntelConnectors []services.CarrierIntelConnector           `group:"carrierIntelConnectors"`
+	CarrierIntelControls   repositories.CarrierIntelControlRepository `optional:"true"`
 }
 
 type Service struct {
-	l                  *zap.Logger
-	repo               repositories.IntegrationRepository
-	encryption         *encryptionservice.Service
-	auditService       services.AuditService
-	registry           *permission.Registry
-	fuelCardConnectors map[integration.Type]services.FuelCardProvider
+	l                      *zap.Logger
+	repo                   repositories.IntegrationRepository
+	encryption             *encryptionservice.Service
+	auditService           services.AuditService
+	registry               *permission.Registry
+	fuelCardConnectors     map[integration.Type]services.FuelCardProvider
+	carrierIntelConnectors map[integration.Type]services.CarrierIntelConnector
+	carrierIntelControls   repositories.CarrierIntelControlRepository
 }
 
 func New(p Params) *Service {
@@ -51,13 +55,25 @@ func New(p Params) *Service {
 		}
 	}
 
+	intelConnectors := make(
+		map[integration.Type]services.CarrierIntelConnector,
+		len(p.CarrierIntelConnectors),
+	)
+	for _, connector := range p.CarrierIntelConnectors {
+		if connector != nil {
+			intelConnectors[connector.IntegrationType()] = connector
+		}
+	}
+
 	return &Service{
-		l:                  p.Logger.Named("service.integration"),
-		repo:               p.Repo,
-		encryption:         p.Encryption,
-		auditService:       p.AuditService,
-		registry:           p.Registry,
-		fuelCardConnectors: connectors,
+		l:                      p.Logger.Named("service.integration"),
+		repo:                   p.Repo,
+		encryption:             p.Encryption,
+		auditService:           p.AuditService,
+		registry:               p.Registry,
+		fuelCardConnectors:     connectors,
+		carrierIntelConnectors: intelConnectors,
+		carrierIntelControls:   p.CarrierIntelControls,
 	}
 }
 
@@ -236,7 +252,8 @@ func (s *Service) UpdateConfig(
 		return nil, err
 	}
 
-	finalConfig, err := s.buildFinalConfig(spec, req.Configuration, existing)
+	scope := newSecretScope(tenantInfo, typ, spec)
+	finalConfig, err := s.buildFinalConfig(spec, req.Configuration, existing, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +267,16 @@ func (s *Service) UpdateConfig(
 	}
 
 	if err = validateRequiredFields(spec, finalConfig, req.Enabled); err != nil {
+		return nil, err
+	}
+
+	roleChange := &carrierIntelRoleChange{
+		tenant:  tenantInfo,
+		typ:     typ,
+		enabled: req.Enabled,
+		role:    integration.ReadConfigString(finalConfig, integration.ConfigKeyCarrierIntelRole),
+	}
+	if err = s.checkCarrierIntelRole(ctx, roleChange); err != nil {
 		return nil, err
 	}
 
@@ -273,6 +300,13 @@ func (s *Service) UpdateConfig(
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
 			"failed to save integration configuration",
+		).WithInternal(err)
+	}
+
+	if err = s.syncCarrierIntelRole(ctx, roleChange); err != nil {
+		log.Error("failed to sync carrier intelligence provider role", zap.Error(err))
+		return nil, errortypes.NewBusinessError(
+			"The integration was saved but carrier intelligence settings could not be updated",
 		).WithInternal(err)
 	}
 
@@ -333,7 +367,7 @@ func (s *Service) TestConnection(
 
 	if err = tester.Test(ctx, cfg.Config); err != nil {
 		log.Error("connection test failed", zap.Error(err))
-		if typ == integration.TypePCMiler {
+		if typ == integration.TypePCMiler || typ.SupportsCarrierIntelligence() {
 			return nil, errortypes.NewBusinessError(err.Error()).WithInternal(err)
 		}
 		return nil, errortypes.NewBusinessError(
@@ -342,6 +376,12 @@ func (s *Service) TestConnection(
 	}
 
 	if !cfg.Enabled {
+		preserved := make(map[string]string, len(spec.Fields))
+		for _, field := range spec.Fields {
+			if !field.Sensitive {
+				preserved[field.Key] = cfg.Config[field.Key]
+			}
+		}
 		if _, err = s.UpdateConfig(
 			ctx,
 			tenantInfo,
@@ -349,7 +389,7 @@ func (s *Service) TestConnection(
 			&services.UpdateConfigRequest{
 				TenantInfo:    tenantInfo,
 				Enabled:       true,
-				Configuration: map[string]string{},
+				Configuration: preserved,
 			},
 			userID,
 		); err != nil {
@@ -435,7 +475,11 @@ func (s *Service) GetClientRuntimeConfig(
 	if ready {
 		fieldsByKey := configFieldsByKey(spec)
 		for key := range allowedFields {
-			value, err := s.readRuntimeConfigField(record.Configuration, fieldsByKey[key])
+			value, err := s.readRuntimeConfigField(
+				record.Configuration,
+				fieldsByKey[key],
+				newSecretScope(tenantInfo, typ, spec),
+			)
 			if err != nil {
 				return nil, errortypes.NewBusinessError(
 					"failed to decrypt {0} configuration", string(typ),
@@ -486,8 +530,9 @@ func (s *Service) getRuntimeConfig(
 	}
 
 	cfg := make(map[string]string, len(spec.Fields))
+	scope := newSecretScope(tenantInfo, typ, spec)
 	for _, field := range spec.Fields {
-		val, readErr := s.readRuntimeConfigField(record.Configuration, &field)
+		val, readErr := s.readRuntimeConfigField(record.Configuration, &field, scope)
 		if readErr != nil {
 			return nil, errortypes.NewBusinessError(
 				"failed to decrypt {0} configuration", string(typ),
@@ -517,6 +562,7 @@ func (s *Service) getRuntimeConfig(
 func (s *Service) readRuntimeConfigField(
 	configuration map[string]any,
 	field *integration.ConfigFieldSpec,
+	scope secretScope,
 ) (string, error) {
 	if field == nil {
 		return "", nil
@@ -528,11 +574,7 @@ func (s *Service) readRuntimeConfigField(
 	}
 
 	if field.Sensitive {
-		decrypted, err := s.encryption.DecryptString(val)
-		if err != nil {
-			return "", err
-		}
-		return decrypted, nil
+		return s.decryptSecret(val, field.Key, scope)
 	}
 
 	return val, nil
@@ -586,6 +628,7 @@ func (s *Service) buildFinalConfig(
 	spec integration.IntegrationSpec,
 	incoming map[string]string,
 	existing *integration.Integration,
+	scope secretScope,
 ) (map[string]any, error) {
 	finalConfig := make(map[string]any, len(spec.Fields))
 
@@ -594,7 +637,7 @@ func (s *Service) buildFinalConfig(
 		val := strings.TrimSpace(incoming[field.Key])
 
 		if field.Sensitive {
-			stored, storeErr := s.resolveSensitiveField(field, val, existing)
+			stored, storeErr := s.resolveSensitiveField(field, val, existing, scope)
 			if storeErr != nil {
 				return nil, storeErr
 			}
@@ -611,15 +654,17 @@ func (s *Service) resolveSensitiveField(
 	field *integration.ConfigFieldSpec,
 	incoming string,
 	existing *integration.Integration,
+	scope secretScope,
 ) (string, error) {
 	if incoming == "" {
 		if existing != nil {
-			return integration.ReadConfigString(existing.Configuration, field.Key), nil
+			stored := integration.ReadConfigString(existing.Configuration, field.Key)
+			return s.rebindLegacySecret(stored, field.Key, scope), nil
 		}
 		return "", nil
 	}
 
-	encrypted, err := s.encryption.EncryptString(incoming)
+	encrypted, err := s.encryptSecret(incoming, field.Key, scope)
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to encrypt configuration value",
