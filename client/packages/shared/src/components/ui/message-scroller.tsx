@@ -40,8 +40,12 @@ function MessageScrollerViewport({
   return (
     <MessageScrollerPrimitive.Viewport
       data-slot="message-scroller-viewport"
+      // scrollbar-overlay (app.css) matches ScrollArea's scrollbar, which this
+      // surface cannot use directly — see the note there. scroll-fade-b stays:
+      // it is an alpha mask, so unlike ScrollArea's colour-matched fade it is
+      // already correct on any surface.
       className={cn(
-        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-thin scrollbar-gutter-stable overflow-y-auto overscroll-contain contain-content data-autoscrolling:scrollbar-thumb-transparent data-autoscrolling:scrollbar-track-transparent",
+        "size-full min-h-0 min-w-0 scroll-fade-b scrollbar-overlay overflow-y-auto overscroll-contain contain-content",
         className,
       )}
       {...props}

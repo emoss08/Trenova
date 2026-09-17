@@ -1014,6 +1014,58 @@
   animation: assistant-stop 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
 }
 
+/* The scrollbar every chat surface uses, matched to ScrollArea's own
+   (components/ui/scroll-area.tsx, ScrollBar): a 10px track that stays out of
+   the way until the pointer is over the list, and a rounded thumb in --border.
+
+   Base UI's scrollbar only renders inside ScrollArea.Root, and ScrollArea keeps
+   its viewport ref private, so a surface that needs stick-to-bottom — every
+   chat in the app — cannot use the component and has to reproduce its values on
+   the native bar. Doing that here rather than inline keeps the two in step. */
+@utility scrollbar-overlay {
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 150ms ease-out;
+
+  &:hover {
+    scrollbar-color: var(--border) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* The transparent border plus background-clip is what insets the thumb from
+     the track edge, the way ScrollBar's `p-px` and `my-1` do. */
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    background-clip: content-box;
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    transition: background-color 150ms ease-out;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+  }
+
+  /* While the view is being driven to the bottom the bar would streak, so it
+     stays hidden until the reader takes it back. */
+  &[data-autoscrolling] {
+    scrollbar-color: transparent transparent;
+  }
+
+  &[data-autoscrolling]::-webkit-scrollbar-thumb {
+    background-color: transparent;
+  }
+}
+
 /* The composer's focus ring draws on rather than appearing, which is the one
    moment the accent is allowed to move. */
 @keyframes assistant-focus-ring {

@@ -54,7 +54,7 @@ describe("presentProposal", () => {
     expect(view.reversible).toBe(false);
   });
 
-  it("keeps every argument in details, including the ones the sentence used", () => {
+  it("does not repeat an argument the presenter already spoke for", () => {
     const view = presentProposal(
       proposal({
         toolName: "request_missing_docs",
@@ -66,11 +66,9 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.details).toContainEqual({
-      label: "body",
-      value: "Hello, please send the documents.",
-    });
-    expect(view.details.map((entry) => entry.label)).toContain("to");
+    const labels = view.highlights.map((entry) => entry.label);
+    expect(labels).toEqual(["To", "Asking for"]);
+    expect(labels).not.toContain("body");
   });
 
   it("shows a charge correction as the charges that would replace the current ones", () => {
@@ -126,7 +124,7 @@ describe("presentProposal", () => {
    * something an approver has to match by eye, and the earlier card put one
    * there verbatim.
    */
-  it("shortens an opaque id in the sentence and keeps it whole in details", () => {
+  it("shortens an opaque id in the sentence", () => {
     const view = presentProposal(
       proposal({
         toolName: "assign_move",
@@ -139,10 +137,6 @@ describe("presentProposal", () => {
 
     expect(view.summary).toBe("Put driver …B817QE on this move.");
     expect(view.summary).not.toContain("wrk_01M2PRNXAMQNKK9HK9V5B817QE");
-    expect(view.details).toContainEqual({
-      label: "primary Worker Id",
-      value: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
-    });
   });
 
   /**
@@ -169,9 +163,34 @@ describe("presentProposal", () => {
     expect(view.highlights).toEqual([
       { label: "What the agent found", value: "Signed bill of lading is missing." },
     ]);
-    expect(view.highlights.map((entry) => entry.value)).not.toContain(
-      "shp_01M2PRNXAMQNKK9HK9V5B817QE",
+  });
+
+  /**
+   * With no disclosure left on the card, anything a presenter names is the only
+   * thing shown. The run id, the subject's PULID and the raw evidence blob are
+   * bookkeeping for the audit trail, not inputs to a yes or no, and printing
+   * them was the whole reason the old Details panel read as a dump.
+   */
+  it("keeps a flag's bookkeeping off the card", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "flag_for_manual_review",
+        arguments: {
+          runId: "ar_01M2PRQ1C0QN91R9TNRXSSSFZ5",
+          subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
+          category: "MissingBOL",
+          severity: "Medium",
+          blastRadius: 1,
+          attemptSummary: "Signed bill of lading is missing.",
+          evidence: [{ id: "shp_01M2PRNXAMQNKK9HK9V5B817QE", type: "Shipment" }],
+        },
+      }),
     );
+
+    const labels = view.highlights.map((entry) => entry.label);
+    for (const noise of ["run Id", "subject Id", "evidence", "category", "severity"]) {
+      expect(labels, `${noise} should not be on the card`).not.toContain(noise);
+    }
   });
 
   it("omits a blast radius of one rather than stating the obvious", () => {
@@ -201,10 +220,14 @@ describe("presentProposal", () => {
       { label: "notes", value: "—" },
       { label: "tractor Id", value: "trc_9" },
     ]);
-    expect(view.details).toEqual([]);
     expect(view.reversible).toBe(false);
   });
 
+  /**
+   * The safety net the disclosure used to provide. A tool that grows an
+   * argument server-side must still put it in front of the approver, or the
+   * card would quietly understate what approving it does.
+   */
   it("never loses an argument the presenter did not expect", () => {
     const view = presentProposal(
       proposal({
@@ -213,7 +236,7 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.details).toContainEqual({ label: "surprise", value: "yes" });
+    expect(view.highlights).toContainEqual({ label: "surprise", value: "yes" });
   });
 });
 

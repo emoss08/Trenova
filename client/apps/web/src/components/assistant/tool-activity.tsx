@@ -135,7 +135,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
             {rows.map((row) => (
               <span
                 key={row.key}
-                className="bg-background border-border/70 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5"
+                className="bg-muted/40 border-border/70 inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5"
               >
                 <span className="text-muted-foreground font-mono">{row.key}</span>
                 <span className="truncate">{row.value}</span>
@@ -197,7 +197,7 @@ function ToolResultBody({
       );
     case "json":
       return raw ? (
-        <div className="bg-background max-h-72 overflow-auto rounded-md p-2">
+        <div className="bg-muted/40 scrollbar-overlay max-h-72 overflow-auto rounded-md p-2">
           <JsonViewer data={result.value as never} collapsed={2} />
         </div>
       ) : (
@@ -206,7 +206,7 @@ function ToolResultBody({
     default:
       return (
         <div className="flex flex-col gap-1">
-          <pre className="bg-background max-h-72 overflow-auto rounded-md p-2 font-mono text-[11px] whitespace-pre-wrap">
+          <pre className="bg-muted/40 scrollbar-overlay max-h-72 overflow-auto rounded-md p-2 font-mono text-[11px] whitespace-pre-wrap">
             {result.text}
           </pre>
           {result.truncated && (

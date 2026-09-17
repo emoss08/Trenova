@@ -7,20 +7,23 @@ export type ProposalFact = { label: string; value: string };
 /**
  * A proposal in an approver's words.
  *
- * `summary` is the whole decision in one sentence; everything else is support.
- * `details` carries every argument that would be sent, including the ones the
- * sentence already named, so the card can hide them behind a disclosure without
- * hiding anything: an approver who wants the literal payload can always get it,
- * and one who does not is never made to read an identifier to answer yes or no.
+ * `summary` is the whole decision in one sentence and `highlights` are the few
+ * values that bear on it. There is deliberately no second tier: a disclosure
+ * holding the literal payload turned out to be a wall of bookkeeping — run ids,
+ * PULIDs, a raw evidence blob — that restated the sentence above it and pushed
+ * the decision off the bottom of the card.
+ *
+ * Nothing is lost by dropping it. Each presenter declares which arguments its
+ * words already account for, and every argument it did not name is appended to
+ * `highlights`, so a tool that grows a field server-side still puts it in front
+ * of the approver rather than going quiet.
  */
 export type ProposalView = {
   title: string;
   summary: string;
   /** Shown as a badge beside the title when the tool reports one. */
   severity: { label: string; tone: Tone } | null;
-  /** The one or two values worth reading without expanding. */
   highlights: ProposalFact[];
-  details: ProposalFact[];
   reversible: boolean;
 };
 
@@ -31,6 +34,8 @@ type Presenter = (args: Args) => {
   summary: string;
   severity?: { label: string; tone: Tone } | null;
   highlights?: ProposalFact[];
+  /** Argument keys this presenter's words already account for. */
+  covered: string[];
   reversible: boolean;
 };
 
@@ -125,6 +130,15 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("Asking for", documents.join(", ")),
         fact("Subject", text(args.subject)),
       ),
+      covered: [
+        "to",
+        "requestedDocuments",
+        "customerName",
+        "shipmentProNumber",
+        "subject",
+        "body",
+        "profileId",
+      ],
       reversible: false,
     };
   },
@@ -149,6 +163,7 @@ const PRESENTERS: Record<string, Presenter> = {
 
         return { label: name, value: amount === "" ? "—" : amount };
       }),
+      covered: ["billingQueueItemId", "additionalCharges"],
       reversible: true,
     };
   },
@@ -169,6 +184,7 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("Tractor", tractor),
         fact("Trailer", trailer),
       ),
+      covered: ["shipmentMoveId", "primaryWorkerId", "secondaryWorkerId", "tractorId", "trailerId"],
       reversible: true,
     };
   },
@@ -177,6 +193,7 @@ const PRESENTERS: Record<string, Presenter> = {
     title: "Send to review",
     summary: "Move this billing item into review so a biller picks it up.",
     highlights: facts(fact("Reason", text(args.reason))),
+    covered: ["billingQueueItemId", "reason"],
     reversible: true,
   }),
 
@@ -194,6 +211,17 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("What the agent found", text(args.attemptSummary)),
         affected > 1 ? fact("Records affected", String(affected)) : null,
       ),
+      // The run id, the subject's key and the evidence blob belong to the audit
+      // trail. Severity and category are already the badge and the sentence.
+      covered: [
+        "runId",
+        "subjectId",
+        "category",
+        "severity",
+        "attemptSummary",
+        "blastRadius",
+        "evidence",
+      ],
       reversible: false,
     };
   },
@@ -209,6 +237,14 @@ const PRESENTERS: Record<string, Presenter> = {
         fact("Type", text(args.contentType)),
         fact("Note", text(args.description)),
       ),
+      covered: [
+        "shipmentId",
+        "documentTypeId",
+        "fileName",
+        "contentType",
+        "fileSize",
+        "description",
+      ],
       reversible: false,
     };
   },
@@ -216,9 +252,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
 export function presentProposal(proposal: AssistantProposal): ProposalView {
   const args = (proposal.arguments ?? {}) as Args;
-  const details = argumentRows(args).map((row) => ({
+  const rows = argumentRows(args).map((row) => ({
     label: humanizeEnum(row.key),
     value: row.value,
+    key: row.key,
   }));
 
   const presenter = PRESENTERS[proposal.toolName];
@@ -227,22 +264,24 @@ export function presentProposal(proposal: AssistantProposal): ProposalView {
       title: humanizeToolName(proposal.toolName),
       summary: `Run ${humanizeToolName(proposal.toolName).toLowerCase()} with the values below.`,
       severity: null,
-      // Nothing is known about an unrecognised tool, so nothing is hidden:
-      // every argument is on the face of the card rather than behind a click.
-      highlights: details,
-      details: [],
+      // Nothing is known about an unrecognised tool, so nothing is assumed to
+      // be noise: every argument it would send is on the face of the card.
+      highlights: rows.map(({ label, value }) => ({ label, value })),
       reversible: false,
     };
   }
 
   const view = presenter(args);
+  const covered = new Set(view.covered);
+  const uncovered = rows
+    .filter((row) => !covered.has(row.key))
+    .map(({ label, value }) => ({ label, value }));
 
   return {
     title: view.title,
     summary: view.summary,
     severity: view.severity ?? null,
-    highlights: (view.highlights ?? []).filter((entry) => entry.value !== ""),
-    details,
+    highlights: [...(view.highlights ?? []).filter((entry) => entry.value !== ""), ...uncovered],
     reversible: view.reversible,
   };
 }

@@ -10,7 +10,6 @@ import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { MessageSquareIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { groupThreadsByRecency } from "./thread-grouping";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -92,7 +91,7 @@ export function ThreadSidebar({
         </Tooltip>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" maskVariant="sidebar" maskHeight={16}>
         {isLoading ? (
           <div className="space-y-2 p-3">
             <Skeleton className="h-11" />
@@ -117,7 +116,7 @@ export function ThreadSidebar({
                   <ThreadRow
                     key={thread.id}
                     thread={thread}
-                    agent={agentsById.get(thread.agentDefinitionId) ?? null}
+                    agentName={agentsById.get(thread.agentDefinitionId)?.name}
                     active={thread.id === activeThreadId}
                     now={now}
                     onSelect={() => onSelect(thread.id)}
@@ -135,14 +134,14 @@ export function ThreadSidebar({
 
 function ThreadRow({
   thread,
-  agent,
+  agentName,
   active,
   now,
   onSelect,
   onDelete,
 }: {
   thread: AssistantThread;
-  agent: AgentDefinitionRow | null;
+  agentName: string | undefined;
   active: boolean;
   now: number;
   onSelect: () => void;
@@ -160,17 +159,16 @@ function ThreadRow({
     >
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        className="min-w-0 flex-1 text-left"
         onClick={onSelect}
         aria-current={active ? "true" : undefined}
       >
-        <AgentTile agent={agent} size="sm" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm">
             {thread.title || t("Untitled conversation")}
           </span>
           <span className="text-muted-foreground block truncate text-[11px]">
-            {agent?.name ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
+            {agentName ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
           </span>
         </span>
       </button>

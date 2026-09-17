@@ -179,8 +179,18 @@ function SelectCommandItem({
       )}
       {...props}
     >
+      {/* The slot decides how big an icon is, not the icon. A caller's mark may
+          carry any sizing class — `size-full` is what the brand-mark registry
+          hands over — and the row's `[&_svg:not([class*='size-'])]:size-4`
+          guard skips exactly those, so an unconstrained mark grows to the
+          height of the row. */}
       {icon ? (
-        icon
+        <span
+          data-slot="command-item-icon"
+          className="flex size-4 shrink-0 items-center justify-center [&_svg]:size-full"
+        >
+          {icon}
+        </span>
       ) : color ? (
         <span className="block size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       ) : null}
