@@ -37,6 +37,10 @@ type StructuredCompletionRequest struct {
 	// SchemaName labels the schema for the protocols that require one.
 	SchemaName string
 	MaxTokens  int
+	// PreferredProviderID asks for one configured provider first. It is honoured
+	// only when that provider is enabled and serves the task; otherwise the usual
+	// priority order applies, so a deleted preference never strands a caller.
+	PreferredProviderID pulid.ID
 }
 
 type StructuredCompletionResult struct {
@@ -81,6 +85,51 @@ type ChatCompletionResult struct {
 // of the result's Text, delivered in order; the result is still authoritative.
 type ChatStreamSink func(delta string)
 
+// BackgroundState is where a deferred call stands. It is deliberately smaller
+// than the set of statuses any one protocol reports: a caller only needs to know
+// whether to wait, read the answer, or give up.
+type BackgroundState string
+
+const (
+	BackgroundPending   BackgroundState = "pending"
+	BackgroundCompleted BackgroundState = "completed"
+	BackgroundFailed    BackgroundState = "failed"
+)
+
+// BackgroundSubmission is the outcome of handing a structured call to a provider
+// for deferred execution.
+type BackgroundSubmission struct {
+	// Handle identifies the deferred call to the provider that accepted it, and
+	// is meaningful only to that provider. It is empty when no candidate could
+	// defer: Result then carries an answer produced inline and there is nothing
+	// to poll, so a caller never needs a second code path for the providers whose
+	// protocol has no background mode.
+	Handle          string
+	ProviderID      pulid.ID
+	ProviderKind    aiprovider.Kind
+	ModelIdentifier string
+	RawStatus       string
+	Result          *StructuredCompletionResult
+}
+
+// BackgroundPollRequest asks after a submission. ProviderID is required because
+// a handle belongs to the endpoint that issued it; asking a different provider
+// about it would at best 404 and at worst read someone else's call.
+type BackgroundPollRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	Handle     string
+}
+
+type BackgroundOutcome struct {
+	State           BackgroundState
+	RawStatus       string
+	ModelIdentifier string
+	Result          *StructuredCompletionResult
+	FailureCode     string
+	FailureMessage  string
+}
+
 type CompletionService interface {
 	CompleteStructured(
 		ctx context.Context,
@@ -101,4 +150,18 @@ type CompletionService interface {
 		req *ChatCompletionRequest,
 		sink ChatStreamSink,
 	) (*ChatCompletionResult, error)
+	// SubmitBackground hands a structured call to the first candidate whose
+	// protocol can run it asynchronously, which is what keeps a long extraction
+	// off an activity's heartbeat. When no candidate can defer, the call is run
+	// inline and the answer comes back on the submission.
+	SubmitBackground(
+		ctx context.Context,
+		req *StructuredCompletionRequest,
+	) (*BackgroundSubmission, error)
+	// PollBackground reports where a submission stands. A provider that has since
+	// been deleted or disabled fails the poll rather than silently waiting.
+	PollBackground(
+		ctx context.Context,
+		req *BackgroundPollRequest,
+	) (*BackgroundOutcome, error)
 }

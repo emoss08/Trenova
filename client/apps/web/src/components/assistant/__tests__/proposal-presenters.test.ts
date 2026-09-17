@@ -1,6 +1,6 @@
 import type { AssistantProposal } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { presentProposal } from "../proposal-presenters";
+import { presentProposal, shortRef } from "../proposal-presenters";
 
 function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
   return {
@@ -24,9 +24,9 @@ function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
 
 /**
  * Tool arguments follow the server's JSON schemas
- * (services/agenttoolservice/*.go). The card explains a change in the
- * approver's words, so each known tool gets a sentence and the fields that
- * matter, and an unknown tool still shows every argument rather than none.
+ * (services/agenttoolservice/*.go). The card exists to answer "should this
+ * run", so a presenter's job is a sentence that answers it; everything the
+ * sentence does not need goes to `details`, which is still complete.
  */
 describe("presentProposal", () => {
   it("explains a document request by recipient and documents", () => {
@@ -44,15 +44,33 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.title).toBe("Request missing documents");
-    expect(view.summary).toBe("Email Acme about shipment S12345 asking for 2 documents.");
-    expect(view.facts).toEqual([
+    expect(view.title).toBe("Email the customer");
+    expect(view.summary).toBe("Ask Acme for 2 documents on shipment S12345.");
+    expect(view.highlights).toEqual([
       { label: "To", value: "ap@acme.example, ops@acme.example" },
+      { label: "Asking for", value: "Proof of delivery, Signed BOL" },
       { label: "Subject", value: "Missing POD for S12345" },
-      { label: "Documents", value: "Proof of delivery, Signed BOL" },
     ]);
-    expect(view.longText).toEqual({ label: "Message", value: "Hello, please send the documents." });
     expect(view.reversible).toBe(false);
+  });
+
+  it("keeps every argument in details, including the ones the sentence used", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "request_missing_docs",
+        arguments: {
+          to: ["ap@acme.example"],
+          body: "Hello, please send the documents.",
+          requestedDocuments: ["Proof of delivery"],
+        },
+      }),
+    );
+
+    expect(view.details).toContainEqual({
+      label: "body",
+      value: "Hello, please send the documents.",
+    });
+    expect(view.details.map((entry) => entry.label)).toContain("to");
   });
 
   it("shows a charge correction as the charges that would replace the current ones", () => {
@@ -71,17 +89,16 @@ describe("presentProposal", () => {
 
     expect(view.title).toBe("Correct charge codes");
     expect(view.summary).toBe(
-      "Replace the additional charges on billing item bqi_1 with 2 charges.",
+      "Replace the additional charges on this billing item with 2 charges.",
     );
-    expect(view.facts).toEqual([
-      { label: "Billing item", value: "bqi_1" },
-      { label: "Charge 1", value: "Detention · 125" },
-      { label: "Charge 2", value: "acc_2 · 40" },
+    expect(view.highlights).toEqual([
+      { label: "Detention", value: "125" },
+      { label: "acc_2", value: "40" },
     ]);
     expect(view.reversible).toBe(true);
   });
 
-  it("describes a move assignment by driver and equipment", () => {
+  it("describes a move assignment without repeating the move's own id", () => {
     const view = presentProposal(
       proposal({
         toolName: "assign_move",
@@ -95,19 +112,81 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.title).toBe("Assign move");
-    expect(view.summary).toBe(
-      "Put driver wrk_1 on move smv_1 with tractor trc_1 and trailer trl_1.",
-    );
-    expect(view.facts).toEqual([
-      { label: "Move", value: "smv_1" },
+    expect(view.title).toBe("Assign a driver");
+    expect(view.summary).toBe("Put driver wrk_1 on this move with tractor trc_1.");
+    expect(view.highlights).toEqual([
       { label: "Driver", value: "wrk_1" },
       { label: "Tractor", value: "trc_1" },
       { label: "Trailer", value: "trl_1" },
     ]);
   });
 
-  it("falls back to every argument for a tool it has no words for", () => {
+  /**
+   * The server sends PULIDs, not names. A 30-character key in a sentence is
+   * something an approver has to match by eye, and the earlier card put one
+   * there verbatim.
+   */
+  it("shortens an opaque id in the sentence and keeps it whole in details", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "assign_move",
+        arguments: {
+          shipmentMoveId: "smv_01M2PRNXAMQNKK9HK9V5B817QE",
+          primaryWorkerId: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
+        },
+      }),
+    );
+
+    expect(view.summary).toBe("Put driver …B817QE on this move.");
+    expect(view.summary).not.toContain("wrk_01M2PRNXAMQNKK9HK9V5B817QE");
+    expect(view.details).toContainEqual({
+      label: "primary Worker Id",
+      value: "wrk_01M2PRNXAMQNKK9HK9V5B817QE",
+    });
+  });
+
+  /**
+   * "Raise a medium missing bol for a person to handle" was the old sentence:
+   * the severity and the category were spliced into the prose in whatever case
+   * the server sent, and the same two values were then repeated as rows below.
+   */
+  it("reads a flag as a sentence and carries severity separately", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "flag_for_manual_review",
+        arguments: {
+          subjectId: "shp_01M2PRNXAMQNKK9HK9V5B817QE",
+          category: "MissingBOL",
+          severity: "Medium",
+          blastRadius: 1,
+          attemptSummary: "Signed bill of lading is missing.",
+        },
+      }),
+    );
+
+    expect(view.summary).toBe("Record a missing BOL case for a person to resolve.");
+    expect(view.severity).toEqual({ label: "Medium", tone: "warning" });
+    expect(view.highlights).toEqual([
+      { label: "What the agent found", value: "Signed bill of lading is missing." },
+    ]);
+    expect(view.highlights.map((entry) => entry.value)).not.toContain(
+      "shp_01M2PRNXAMQNKK9HK9V5B817QE",
+    );
+  });
+
+  it("omits a blast radius of one rather than stating the obvious", () => {
+    const wide = presentProposal(
+      proposal({
+        toolName: "flag_for_manual_review",
+        arguments: { category: "RateMismatch", severity: "High", blastRadius: 7 },
+      }),
+    );
+
+    expect(wide.highlights).toContainEqual({ label: "Records affected", value: "7" });
+    expect(wide.severity).toEqual({ label: "High", tone: "danger" });
+  });
+
+  it("puts every argument on the face of the card for a tool it has no words for", () => {
     const view = presentProposal(
       proposal({
         toolName: "rotate_tires",
@@ -116,16 +195,17 @@ describe("presentProposal", () => {
     );
 
     expect(view.title).toBe("Rotate tires");
-    expect(view.summary).toBe("Run rotate_tires with the parameters below.");
-    expect(view.facts).toEqual([
+    expect(view.summary).toBe("Run rotate tires with the values below.");
+    expect(view.highlights).toEqual([
       { label: "mileage", value: "120000" },
       { label: "notes", value: "—" },
-      { label: "tractorId", value: "trc_9" },
+      { label: "tractor Id", value: "trc_9" },
     ]);
+    expect(view.details).toEqual([]);
     expect(view.reversible).toBe(false);
   });
 
-  it("never hides an argument the presenter did not expect", () => {
+  it("never loses an argument the presenter did not expect", () => {
     const view = presentProposal(
       proposal({
         toolName: "assign_move",
@@ -133,6 +213,14 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.facts).toContainEqual({ label: "surprise", value: "yes" });
+    expect(view.details).toContainEqual({ label: "surprise", value: "yes" });
+  });
+});
+
+describe("shortRef", () => {
+  it("shortens a PULID and leaves a human reference alone", () => {
+    expect(shortRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("…B817QE");
+    expect(shortRef("SEED-SHP-001")).toBe("SEED-SHP-001");
+    expect(shortRef("")).toBe("");
   });
 });

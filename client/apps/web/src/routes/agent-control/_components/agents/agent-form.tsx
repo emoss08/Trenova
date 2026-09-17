@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CronCadenceField } from "@/components/fields/cron-cadence-field";
-import { DatePickerField } from "@/components/fields/date-picker-field";
+import { DateField } from "@/components/fields/date-field/date-field";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
@@ -13,6 +13,9 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
+import { toneVar } from "@/components/kpi/tone";
+import { brandMarkFor } from "@trenova/shared/components/ui/logos/registry";
+import { providerBrandDomain } from "../providers/provider-brand";
 import { queries } from "@/lib/queries";
 import type { AgentTemplate, AutonomyTier, OutputMode, TriggerMode } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
@@ -40,13 +43,18 @@ type AgentFormProps = {
   systemKey?: string;
 };
 
+/**
+ * How long a change may sit undecided. The colour is the exposure, not the
+ * duration: a proposal nobody has looked at for a week is a week of a decision
+ * the agent thought was worth making going unmade.
+ */
 const DECISION_TIMEOUTS = [
-  { label: "1 hour", value: 3600 },
-  { label: "4 hours", value: 14400 },
-  { label: "1 day", value: 86400 },
-  { label: "3 days", value: 259200 },
-  { label: "7 days", value: 604800 },
-];
+  { label: "1 hour", value: 3600, tone: "success" },
+  { label: "4 hours", value: 14400, tone: "success" },
+  { label: "1 day", value: 86400, tone: "info" },
+  { label: "3 days", value: 259200, tone: "warning" },
+  { label: "7 days", value: 604800, tone: "danger" },
+] as const;
 
 export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   const t = useT();
@@ -56,6 +64,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   const catalogQuery = useQuery(queries.assistant.toolCatalog());
   const eventsQuery = useQuery(queries.assistant.eventKinds());
   const providersQuery = useQuery(queries.aiProvider.list());
+  const providerCatalogQuery = useQuery(queries.aiProvider.catalog());
 
   const template = useWatch({ control, name: "template" });
   const name = useWatch({ control, name: "name" });
@@ -69,10 +78,6 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
   const { field: triggerField } = useController({ control, name: "triggerMode" });
   const { field: ceilingField } = useController({ control, name: "autonomyCeiling" });
   const { field: outputField } = useController({ control, name: "outputMode" });
-  const { field: endsAtField, fieldState: endsAtState } = useController({
-    control,
-    name: "endsAt",
-  });
 
   const isSystem = systemKey !== "";
 
@@ -105,11 +110,19 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
     () =>
       (providersQuery.data ?? [])
         .filter((provider) => provider.enabled && provider.tasks.includes("AssistantChat"))
-        .map((provider) => ({
-          label: `${provider.name} · ${provider.model}`,
-          value: provider.id,
-        })),
-    [providersQuery.data],
+        .map((provider) => {
+          const Mark = brandMarkFor({
+            domain: providerBrandDomain(provider, providerCatalogQuery.data?.presets ?? []),
+          });
+
+          return {
+            label: provider.name,
+            value: provider.id,
+            description: provider.model,
+            icon: Mark ? <Mark className="size-4 shrink-0" /> : undefined,
+          };
+        }),
+    [providersQuery.data, providerCatalogQuery.data?.presets],
   );
 
   const triggerItems = [
@@ -146,49 +159,46 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               placeholder={t("Night dispatch helper")}
               rules={{ required: t("Name is required") }}
               maxLength={100}
+              description={t("What people see when they pick this agent.")}
             />
           </FormControl>
           <FormControl>
+            <FieldWrapper
+              label={t("Face")}
+              description={t("Left alone, Trenova picks one and keeps it.")}
+            >
+              <IdentityPicker
+                name={name}
+                template={template}
+                icon={icon}
+                accent={accent}
+                onIconChange={(value) => setValue("icon", value, { shouldDirty: true })}
+                onAccentChange={(value) => setValue("accent", value, { shouldDirty: true })}
+              />
+            </FieldWrapper>
+          </FormControl>
+          <FormControl cols="full">
             <TextareaField
               name="description"
               control={control}
               label={t("Description")}
               placeholder={t("Looks up shipments and drivers for the night dispatch team.")}
-              minRows={1}
-              maxRows={3}
+              minRows={2}
+              maxRows={4}
+              description={t("One line on what this agent is for, shown under its name.")}
             />
           </FormControl>
-        </FormGroup>
-        <FieldWrapper
-          label={t("Face")}
-          description={t(
-            "How this agent is recognized in chat and in AI Control. Leave it and Trenova picks one that stays the same for the life of the agent.",
+          {mode === "create" && (
+            <FormControl cols="full">
+              <TemplatePicker
+                control={control}
+                templates={templatesQuery.data?.templates ?? []}
+                isLoading={templatesQuery.isLoading}
+                onSelect={onTemplate}
+              />
+            </FormControl>
           )}
-        >
-          <IdentityPicker
-            name={name}
-            template={template}
-            icon={icon}
-            accent={accent}
-            onIconChange={(value) => setValue("icon", value, { shouldDirty: true })}
-            onAccentChange={(value) => setValue("accent", value, { shouldDirty: true })}
-          />
-        </FieldWrapper>
-        {mode === "create" && (
-          <FieldWrapper
-            label={t("Start from a template")}
-            description={t(
-              "A template fills in instructions, tools and a trigger you can change freely. It never limits what the agent may do.",
-            )}
-          >
-            <TemplatePicker
-              templates={templatesQuery.data?.templates ?? []}
-              value={template}
-              isLoading={templatesQuery.isLoading}
-              onSelect={onTemplate}
-            />
-          </FieldWrapper>
-        )}
+        </FormGroup>
       </FormSection>
 
       <FormSection
@@ -256,7 +266,10 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
           "The most any tool may do on its own, and what happens while you are still deciding.",
         )}
       >
-        <FieldWrapper label={t("Ceiling")}>
+        <FieldWrapper
+          label={t("Ceiling")}
+          description={t("No tool may go beyond this, whatever it is set to on its own.")}
+        >
           <SegmentedControl<AutonomyTier>
             fullWidth
             value={ceilingField.value}
@@ -293,13 +306,14 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               options={DECISION_TIMEOUTS.map((preset) => ({
                 label: t(preset.label),
                 value: preset.value,
+                color: toneVar(preset.tone),
               }))}
               description={t(
                 "A proposal nobody decides on in this time expires and its run is closed.",
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               name="shadowMode"
               control={control}
@@ -308,6 +322,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
                 "Runs and records its proposals for review, but nothing it asks for is offered for approval.",
               )}
               outlined
+              position="left"
             />
           </FormControl>
         </FormGroup>
@@ -366,22 +381,20 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               />
             </FormControl>
             <FormControl>
-              <FieldWrapper
+              <DateField
+                name="endsAt"
+                control={control}
                 label={t("Stop after")}
+                placeholder={t("Runs until switched off")}
+                clearable
                 description={t("Optional. The agent switches itself off after this date.")}
-                error={endsAtState.error?.message}
-              >
-                <DatePickerField
-                  date={endsAtField.value ? new Date(endsAtField.value * 1000) : undefined}
-                  setDate={(next) => endsAtField.onChange(next ?? null)}
-                />
-              </FieldWrapper>
+              />
             </FormControl>
           </FormGroup>
         )}
 
         {triggerMode === "Event" && (
-          <FormGroup cols={1}>
+          <FormGroup cols={2}>
             <FormControl cols="full">
               <MultiCheckboxField
                 name="eventKinds"
@@ -418,21 +431,24 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
                 max={10}
               />
             </FormControl>
-            <FormControl cols="full">
-              <FieldWrapper
+            <FormControl>
+              <DateField
+                name="endsAt"
+                control={control}
                 label={t("Stop after")}
+                placeholder={t("Runs until switched off")}
+                clearable
                 description={t("Optional. The agent switches itself off after this date.")}
-                error={endsAtState.error?.message}
-              >
-                <DatePickerField
-                  date={endsAtField.value ? new Date(endsAtField.value * 1000) : undefined}
-                  setDate={(next) => endsAtField.onChange(next ?? null)}
-                />
-              </FieldWrapper>
+              />
             </FormControl>
           </FormGroup>
         )}
+      </FormSection>
 
+      <FormSection
+        title={t("Limits")}
+        description={t("What one run may spend before it is stopped, however it was started.")}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <NumberField
@@ -479,7 +495,10 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
             />
           </FormControl>
           <FormControl>
-            <FieldWrapper label={t("Replies as")}>
+            <FieldWrapper
+              label={t("Replies as")}
+              description={t("A conversation answers in prose; a report answers in sections.")}
+            >
               <SegmentedControl<OutputMode>
                 fullWidth
                 value={outputField.value}
@@ -539,6 +558,7 @@ export function AgentForm({ mode, systemKey = "" }: AgentFormProps) {
               label={t("Enabled")}
               description={t("Disabled agents cannot be talked to, scheduled or fired by events.")}
               outlined
+              position="left"
             />
           </FormControl>
         </FormGroup>

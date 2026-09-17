@@ -90,6 +90,51 @@ func postJSON(
 	return nil
 }
 
+func getJSON(
+	ctx context.Context,
+	client *http.Client,
+	url string,
+	headers map[string]string,
+	out any,
+) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("build provider request: %w", err)
+	}
+
+	for key, value := range headers {
+		if value != "" {
+			req.Header.Set(key, value)
+		}
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("execute provider request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	payload, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read provider response: %w", err)
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return &TransportError{
+			StatusCode: resp.StatusCode,
+			Retryable: resp.StatusCode == http.StatusTooManyRequests ||
+				resp.StatusCode >= http.StatusInternalServerError,
+			Message: parseErrorMessage(payload),
+		}
+	}
+
+	if err = sonic.Unmarshal(payload, out); err != nil {
+		return fmt.Errorf("decode provider response: %w", err)
+	}
+
+	return nil
+}
+
 // errorEnvelope covers the shapes providers actually return. OpenAI-compatible
 // servers nest under "error", Ollama returns a bare "error" string, and some
 // self-hosted runtimes return neither, in which case the raw body is the message.

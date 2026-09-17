@@ -96,3 +96,42 @@ func (r *Registry) Get(kind aiprovider.Kind) (Adapter, error) {
 
 	return adapter, nil
 }
+
+// BackgroundState is where a submitted run has got to.
+type BackgroundState string
+
+const (
+	BackgroundPending   = BackgroundState("Pending")
+	BackgroundCompleted = BackgroundState("Completed")
+	BackgroundFailed    = BackgroundState("Failed")
+)
+
+// BackgroundHandle identifies a run the provider is holding for us.
+type BackgroundHandle struct {
+	ID              string
+	ModelIdentifier string
+	Status          string
+}
+
+// BackgroundOutcome is one poll of a submitted run.
+type BackgroundOutcome struct {
+	State BackgroundState
+	// RawStatus is the provider's own word for it, kept for the audit trail
+	// because every vendor spells these differently.
+	RawStatus       string
+	ModelIdentifier string
+	Response        *Response
+	FailureCode     string
+	FailureMessage  string
+}
+
+// BackgroundRunner is implemented by a protocol that can start work and be asked
+// about it later. Extraction of a long document takes minutes, and holding an
+// HTTP request open for that is how a worker ends up blocked on a socket.
+//
+// Only one protocol offers this today. A provider without it is not excluded
+// from the work; the caller runs it inline instead and gets its answer at once.
+type BackgroundRunner interface {
+	Submit(ctx context.Context, call *Call) (*BackgroundHandle, error)
+	Poll(ctx context.Context, call *Call, id string) (*BackgroundOutcome, error)
+}

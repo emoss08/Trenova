@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type ollamaAdapter struct{}
@@ -127,7 +128,7 @@ func (a ollamaAdapter) Stream(
 		// Tool calls arrive on whichever chunk the model finished deciding them,
 		// usually one of the last, and never repeat.
 		calls = append(calls, chunk.Message.ToolCalls...)
-		final.Model = firstNonEmpty(final.Model, chunk.Model)
+		final.Model = stringutils.FirstNonEmpty(final.Model, chunk.Model)
 		if chunk.Done {
 			final.PromptEvalCount = chunk.PromptEvalCount
 			final.EvalCount = chunk.EvalCount
@@ -142,7 +143,7 @@ func (a ollamaAdapter) Stream(
 	return &Response{
 		Text:            text.String(),
 		ToolCalls:       fromOllamaToolCalls(calls),
-		ModelIdentifier: firstNonEmpty(final.Model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(final.Model, call.Provider.Model),
 		InputTokens:     final.PromptEvalCount,
 		OutputTokens:    final.EvalCount,
 		Refused:         false,
@@ -187,7 +188,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 	return &Response{
 		Text:            envelope.Message.Content,
 		ToolCalls:       fromOllamaToolCalls(envelope.Message.ToolCalls),
-		ModelIdentifier: firstNonEmpty(envelope.Model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.PromptEvalCount,
 		OutputTokens:    envelope.EvalCount,
 		// Ollama has no refusal signal; an empty body with a load failure surfaces

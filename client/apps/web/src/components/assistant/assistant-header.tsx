@@ -20,7 +20,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { AgentAvatar } from "./message-items";
+import { AgentTile } from "@/components/agent-identity/agent-tile";
 
 type AssistantHeaderProps = {
   agents: AgentDefinitionRow[];
@@ -74,7 +74,7 @@ export function AssistantHeader({
             />
           }
         >
-          <AgentAvatar className="size-8 rounded-lg" />
+          <AgentTile agent={activeAgent} size="lg" />
           <span className="flex min-w-0 flex-1 flex-col leading-tight">
             <span className="flex items-center gap-1 text-sm font-semibold">
               <span className="truncate">{title}</span>
@@ -102,7 +102,7 @@ export function AssistantHeader({
                   }}
                   className="hover:bg-muted flex items-start gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:opacity-60"
                 >
-                  <AgentAvatar className="mt-0.5 size-7 rounded-md" />
+                  <AgentTile agent={agent} size="md" className="mt-0.5" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="truncate">{agent.name}</span>

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // StreamSink receives model text as it is produced, in order, possibly one
@@ -158,7 +159,7 @@ func streamError(errType, message string) error {
 	return &TransportError{
 		StatusCode: http.StatusBadGateway,
 		Retryable:  retryable,
-		Message:    firstNonEmpty(message, "provider stream failed"),
+		Message:    stringutils.FirstNonEmpty(message, "provider stream failed"),
 	}
 }
 

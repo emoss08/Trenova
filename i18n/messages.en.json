@@ -1269,6 +1269,15 @@
       "domain/iam"
     ]
   },
+  "A background handle is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A bill-to customer belongs on a customer agreement": {
     "sites": 1,
     "scope": [
@@ -2043,6 +2052,15 @@
     ]
   },
   "A continuous agent runs at most once a minute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A conversation answers in prose; a report answers in sections.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -4800,6 +4818,15 @@
       "domain/worker"
     ]
   },
+  "A starter fills in instructions, tools and a trigger you can change freely. It never limits what the agent may do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A statement, never a constraint. Dispatch can override it, and the rota shows where it did rather than hiding the override.": {
     "sites": 1,
     "scope": [
@@ -5055,15 +5082,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "A template fills in instructions, tools and a trigger you can change freely. It never limits what the agent may do.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "A template with this name already exists": {
@@ -5827,7 +5845,7 @@
     ]
   },
   "AI features are disabled": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -5842,6 +5860,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "AI provider {0} cannot report on background calls": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "AI provider {0} has no API key configured": {
@@ -5917,7 +5944,7 @@
     ]
   },
   "API Key": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -16185,14 +16212,13 @@
     ]
   },
   "Approved": {
-    "sites": 28,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/components",
       "apps/web/lib",
       "domain/worker",
       "packages/shared/components",
@@ -16260,7 +16286,16 @@
       "apps/dash/_components"
     ]
   },
-  "Approved, but it did not run": {
+  "Approved, but it did not run. Nothing was changed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved, but it did not run: {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -17391,6 +17426,15 @@
       "routes/customer"
     ]
   },
+  "Assign a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Assign a template to a specific customer": {
     "sites": 1,
     "scope": [
@@ -17515,15 +17559,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Assign move": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Assign pay profiles to workers": {
@@ -18526,21 +18561,13 @@
     ]
   },
   "Attach a document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/policies"
-    ]
-  },
-  "Attach document to billing item": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Attach files": {
@@ -24689,15 +24716,6 @@
       "routes/worker"
     ]
   },
-  "Can be undone": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Can view": {
     "sites": 1,
     "scope": [
@@ -24745,7 +24763,7 @@
     ]
   },
   "Cancel": {
-    "sites": 244,
+    "sites": 243,
     "scope": [
       "ts"
     ],
@@ -25539,15 +25557,6 @@
       "api/handlers",
       "packages/shared/types",
       "routes/reports"
-    ]
-  },
-  "Cannot be undone": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Cannot close fiscal period while {0} accounting sources remain unposted": {
@@ -29001,6 +29010,15 @@
       "routes/edi"
     ]
   },
+  "Choose a face": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose a field to filter on": {
     "sites": 1,
     "scope": [
@@ -29782,6 +29800,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Chosen for this agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Chosen on {0}.": {
@@ -32140,7 +32167,7 @@
     ]
   },
   "Colour": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -33593,7 +33620,7 @@
     ]
   },
   "Confidence": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -34424,15 +34451,6 @@
     ]
   },
   "Connect with OANDA Exchange Rates": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Connect with OpenAI": {
     "sites": 1,
     "scope": [
       "ts"
@@ -35491,7 +35509,7 @@
       "routes/customer"
     ]
   },
-  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if the OpenAI integration is configured.": {
+  "Control whether document intelligence is active for this tenant. When this is disabled, extraction and shipment-draft workflows remain off even if a provider is configured.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -38350,15 +38368,6 @@
     ]
   },
   "Create an API key and webhook in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Create an API key in the": {
     "sites": 1,
     "scope": [
       "ts"
@@ -46387,7 +46396,7 @@
     ]
   },
   "Details": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -49825,6 +49834,15 @@
       "routes/invoice-adjustment-batch",
       "routes/rate-agreement",
       "routes/shipment"
+    ]
+  },
+  "Done {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Donut": {
@@ -54250,6 +54268,15 @@
       "routes/customer"
     ]
   },
+  "Email the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Email the invoice to the configured recipients after the invoice PDF is generated.": {
     "sites": 1,
     "scope": [
@@ -54871,15 +54898,6 @@
     ]
   },
   "Enable Okta sign-in": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Enable OpenAI": {
     "sites": 1,
     "scope": [
       "ts"
@@ -59772,6 +59790,15 @@
       "routes/worker"
     ]
   },
+  "Expired without a decision.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Expires": {
     "sites": 12,
     "scope": [
@@ -61431,7 +61458,7 @@
     ]
   },
   "Failed": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -65033,7 +65060,7 @@
       "domain/carrierintel"
     ]
   },
-  "Flag for manual review": {
+  "Flag for review": {
     "sites": 1,
     "scope": [
       "ts"
@@ -72001,15 +72028,6 @@
       "routes/agent-control"
     ]
   },
-  "How this agent is recognized in chat and in AI Control. Leave it and Trenova picks one that stays the same for the life of the agent.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "How this charge was calculated": {
     "sites": 2,
     "scope": [
@@ -72462,15 +72480,6 @@
     ],
     "areas": [
       "apps/web/types"
-    ]
-  },
-  "Icon": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Idaho (ID)": {
@@ -77792,15 +77801,6 @@
       "routes/admin"
     ]
   },
-  "It powers document classification, extraction and shipment import, which are switched on in Document Intelligence. The assistant, agents and operational insights route through AI Providers instead, where any model endpoint can be connected.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "It seems you got a little bit lost": {
     "sites": 1,
     "scope": [
@@ -81022,6 +81022,15 @@
       "routes/edi"
     ]
   },
+  "Left alone, Trenova picks one and keeps it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Leg removed": {
     "sites": 1,
     "scope": [
@@ -81657,6 +81666,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Limits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Limits on what this carrier may be paid relative to what the load sells for.": {
@@ -83327,6 +83345,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Loading starters…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Loading supporting documents...": {
@@ -85001,7 +85028,7 @@
       "routes/worker"
     ]
   },
-  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on a configured and enabled OpenAI integration.": {
+  "Manage automatic routing, document type assignment, and optional AI-assisted extraction. AI toggles here depend on an enabled AI provider that serves document work.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -90077,15 +90104,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Move billing item to review": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Move cannot be completed until all stops are completed": {
     "sites": 1,
     "scope": [
@@ -90202,6 +90220,15 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "Move this billing item into review so a biller picks it up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Move tile": {
@@ -91610,15 +91637,6 @@
     ],
     "areas": [
       "routes/osha"
-    ]
-  },
-  "Needs your approval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Needs your attention": {
@@ -95103,15 +95121,6 @@
       "routes/admin"
     ]
   },
-  "No longer available": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "No longer found": {
     "sites": 1,
     "scope": [
@@ -96920,6 +96929,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "No tool may go beyond this, whatever it is set to on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No tools match that search.": {
@@ -101118,6 +101136,15 @@
       "routes/order"
     ]
   },
+  "One line on what this agent is for, shown under its name.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.": {
     "sites": 1,
     "scope": [
@@ -104037,15 +104064,6 @@
       "service/shipmentimportassistantservice"
     ]
   },
-  "OpenAI Logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "OpenAI Responses": {
     "sites": 1,
     "scope": [
@@ -104055,24 +104073,6 @@
       "api/handlers"
     ]
   },
-  "OpenAI credential for document intelligence and shipment import. The assistant, agents and insights route through AI Providers instead.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "OpenAI dashboard.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "OpenAI integration is not configured": {
     "sites": 2,
     "scope": [
@@ -104080,15 +104080,6 @@
     ],
     "areas": [
       "service/shipmentimportassistantservice"
-    ]
-  },
-  "OpenAI integration updated": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "OpenAI's Responses API, and endpoints serving the same shape.": {
@@ -106537,15 +106528,6 @@
     ],
     "areas": [
       "routes/rate-matrix"
-    ]
-  },
-  "Outside what this assistant covers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Outstanding": {
@@ -111462,6 +111444,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Permanent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Permanently Closed": {
@@ -118472,15 +118463,6 @@
       "routes/fuel-feed-run"
     ]
   },
-  "Ran on {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Ran {0}": {
     "sites": 2,
     "scope": [
@@ -124427,13 +124409,12 @@
     ]
   },
   "Rejected": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/components",
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
@@ -126602,15 +126583,6 @@
       "service/orderservice"
     ]
   },
-  "Request missing documents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Request recorded": {
     "sites": 1,
     "scope": [
@@ -127751,13 +127723,14 @@
     ]
   },
   "Reset": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
       "routes/edi",
@@ -132490,6 +132463,15 @@
       "routes/time-attendance"
     ]
   },
+  "Runs until switched off": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Runs, but its proposals are recorded rather than offered": {
     "sites": 1,
     "scope": [
@@ -133536,7 +133518,7 @@
     ]
   },
   "Save Changes": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -134106,7 +134088,7 @@
     ]
   },
   "Saving...": {
-    "sites": 58,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -138863,6 +138845,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Send to review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send {0}": {
@@ -146320,6 +146311,15 @@
       "go/other"
     ]
   },
+  "Start from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Start from a preset": {
     "sites": 1,
     "scope": [
@@ -146336,15 +146336,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Start from a template": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Start over": {
@@ -149053,6 +149044,15 @@
       "apps/web/lib"
     ]
   },
+  "Symbol": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Sync": {
     "sites": 1,
     "scope": [
@@ -150441,13 +150441,12 @@
     ]
   },
   "Template": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -151976,6 +151975,15 @@
       "routes/driver-settlement"
     ]
   },
+  "The AI provider that started this call no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The AP account credited when a settlement posts and debited when it is paid.": {
     "sites": 1,
     "scope": [
@@ -153173,15 +153181,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "The change was approved but could not be completed. Nothing was changed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "The change was reviewed and needs nothing further.": {
@@ -159954,6 +159953,15 @@
       "routes/invoice-approval"
     ]
   },
+  "This agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This agent can change records without asking": {
     "sites": 1,
     "scope": [
@@ -160132,15 +160140,6 @@
     ],
     "areas": [
       "apps/web/hooks"
-    ]
-  },
-  "This change has been made.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {
@@ -161200,15 +161199,6 @@
     ]
   },
   "This keeps the record for audit/history but removes it from future mileage lookups.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "This key is for document intelligence": {
     "sites": 1,
     "scope": [
       "ts"
@@ -163696,15 +163686,6 @@
       "api/handlers"
     ]
   },
-  "Toggle AI provider availability for this business unit.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Toggle Sidebar": {
     "sites": 4,
     "scope": [
@@ -166034,6 +166015,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trenova picked this and will keep it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Trenova starts this agent itself. You can change what it is told, which tools it may use and how much it may do, but not when it runs, and it cannot be removed.": {
@@ -169840,6 +169830,24 @@
       "packages/shared/types"
     ]
   },
+  "Use an AI provider for structured extraction on supported document kinds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Use an AI provider to improve document-kind routing when deterministic classification is insufficient.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Use base free time": {
     "sites": 2,
     "scope": [
@@ -169910,24 +169918,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Use the OpenAI integration for structured extraction on supported document kinds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Use the OpenAI integration to improve document-kind routing when deterministic classification is insufficient.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Use the expression currently in the editor": {
@@ -170122,15 +170112,6 @@
     ]
   },
   "Used by the server for Resend REST API calls.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Used for AI-assisted document classification and structured extraction.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174901,6 +174882,15 @@
       "apps/web/components"
     ]
   },
+  "What one run may spend before it is stopped, however it was started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What one week of the entitlement converts to when leave is taken in hours.": {
     "sites": 1,
     "scope": [
@@ -174908,6 +174898,15 @@
     ],
     "areas": [
       "routes/leave-control"
+    ]
+  },
+  "What people see when they pick this agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "What prompted it": {
@@ -178674,15 +178673,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Write every instruction yourself": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Write it here": {

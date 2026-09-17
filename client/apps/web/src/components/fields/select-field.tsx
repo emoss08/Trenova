@@ -160,13 +160,22 @@ export function SelectField<T extends FieldValues>({
                         fieldState.invalid && "text-destructive",
                       )}
                     >
-                      {color ? (
+                      {/* An option that carries a mark shows it here too. Seeing the
+                          vendor's logo on the closed field is the whole reason the
+                          list had one; a dot is the fallback for a plain choice. */}
+                      {selectedOption?.icon ? (
+                        <span className="flex size-4 shrink-0 items-center justify-center [&_svg]:size-full">
+                          {selectedOption.icon}
+                        </span>
+                      ) : color ? (
                         <span
                           className="size-2 shrink-0 rounded-full"
                           style={{ backgroundColor: color }}
                         />
                       ) : null}
-                      <span className="truncate">{selectedOption?.label || placeholder}</span>
+                      <span className="truncate">
+                        {selectedOption ? t(selectedOption.label) : placeholder}
+                      </span>
                     </div>
                     <SelectInputActions
                       clearable={isClearable}

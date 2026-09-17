@@ -3,6 +3,8 @@ import { InputField } from "@/components/fields/input-field";
 import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { toneVar } from "@/components/kpi/tone";
+import { kindMark } from "./kind-marks";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -126,6 +128,8 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               options={(catalog?.kinds ?? []).map((descriptor) => ({
                 label: descriptor.label,
                 value: descriptor.kind,
+                icon: kindMark(descriptor.kind),
+                description: descriptor.description,
               }))}
               description={kindDescriptor?.description}
             />
@@ -254,10 +258,25 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               name="structuredOutputMode"
               control={control}
               label={t("Structured output")}
+              // Colour here is the guarantee, strongest first: a server that
+              // enforces the schema cannot return the wrong shape, one that only
+              // promises JSON can, and one merely asked in the prompt often does.
               options={[
-                { label: t("Enforced by the server (JSON schema)"), value: "JSONSchema" },
-                { label: t("Valid JSON only (no schema)"), value: "JSONMode" },
-                { label: t("Requested in the prompt"), value: "Prompted" },
+                {
+                  label: t("Enforced by the server (JSON schema)"),
+                  value: "JSONSchema",
+                  color: toneVar("success"),
+                },
+                {
+                  label: t("Valid JSON only (no schema)"),
+                  value: "JSONMode",
+                  color: toneVar("warning"),
+                },
+                {
+                  label: t("Requested in the prompt"),
+                  value: "Prompted",
+                  color: toneVar("muted"),
+                },
               ]}
               description={t(
                 "Some OpenAI-compatible servers accept a schema and ignore it — test the connection to find out before relying on it.",

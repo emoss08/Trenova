@@ -53,11 +53,7 @@ export function PresetPicker({ control, presets, isLoading = false, onSelect }: 
           value: CUSTOM_PRESET_VALUE,
           label: "Custom endpoint",
           description: "Any OpenAI-compatible server",
-          icon: (
-            <span className="bg-muted text-muted-foreground ring-border flex size-5 shrink-0 items-center justify-center rounded-md ring-1">
-              <SlidersHorizontalIcon className="size-3" />
-            </span>
-          ),
+          icon: <SlidersHorizontalIcon className="text-muted-foreground size-[18px] shrink-0" />,
         },
       ],
     };
@@ -75,8 +71,7 @@ export function PresetPicker({ control, presets, isLoading = false, onSelect }: 
               presetKey={preset.key}
               domain={preset.domain}
               name={preset.label}
-              size={20}
-              className="rounded-md"
+              size={18}
             />
           ),
         })),

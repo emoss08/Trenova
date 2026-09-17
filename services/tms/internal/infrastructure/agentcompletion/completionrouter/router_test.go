@@ -25,6 +25,7 @@ type fakeRepo struct {
 	repositories.AIProviderRepository
 
 	providers []*aiprovider.Provider
+	byID      *aiprovider.Provider
 	err       error
 }
 
@@ -46,7 +47,7 @@ func (f *fakeRepo) GetByID(
 	_ context.Context,
 	_ repositories.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
-	return nil, nil
+	return f.byID, f.err
 }
 
 func (f *fakeRepo) Create(

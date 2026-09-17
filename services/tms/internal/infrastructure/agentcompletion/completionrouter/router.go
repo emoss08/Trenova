@@ -73,16 +73,14 @@ func (s *Service) CompleteStructured(
 	}
 
 	outcome, err := s.run(ctx, &runRequest{
-		TenantInfo:  req.TenantInfo,
-		Task:        task,
-		System:      req.System,
-		UserContent: modeladapter.BuildContextText(req.Context),
-		Schema:      req.OutputSchema,
-		SchemaName:  req.SchemaName,
-		MaxTokens:   req.MaxTokens,
-		// Callers of CompleteStructured decode the text themselves, so the router
-		// only normalizes it rather than binding it to a type.
-		Into: nil,
+		TenantInfo:          req.TenantInfo,
+		Task:                task,
+		System:              req.System,
+		UserContent:         modeladapter.BuildContextText(req.Context),
+		Schema:              req.OutputSchema,
+		SchemaName:          req.SchemaName,
+		MaxTokens:           req.MaxTokens,
+		PreferredProviderID: req.PreferredProviderID,
 	})
 	if err != nil {
 		return nil, err
@@ -106,10 +104,9 @@ type runRequest struct {
 	Schema      map[string]any
 	SchemaName  string
 	MaxTokens   int
-	// Into, when non-nil, receives the decoded reply. Decoding inside the router
-	// is what lets a provider that cannot honour the schema fail over to the next
-	// candidate rather than returning unusable text to the caller.
-	Into any
+	// PreferredProviderID asks for one configured provider first, subject to the
+	// same task and trust checks as any other candidate.
+	PreferredProviderID pulid.ID
 }
 
 type runOutcome struct {
@@ -121,7 +118,12 @@ type runOutcome struct {
 	ProviderKind aiprovider.Kind
 }
 
-func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
+// candidatesFor resolves the providers allowed to serve a task, in the order
+// they should be tried.
+func (s *Service) candidatesFor(
+	ctx context.Context,
+	req *runRequest,
+) ([]*aiprovider.Provider, error) {
 	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
 		Task:       req.Task,
 		TenantInfo: req.TenantInfo,
@@ -149,6 +151,23 @@ func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error)
 		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
 
+	return preferFirst(usable, req.PreferredProviderID), nil
+}
+
+func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
+	usable, err := s.candidatesFor(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.runAmong(ctx, usable, req)
+}
+
+func (s *Service) runAmong(
+	ctx context.Context,
+	usable []*aiprovider.Provider,
+	req *runRequest,
+) (*runOutcome, error) {
 	var lastErr error
 	for _, provider := range usable {
 		outcome, attemptErr := s.attempt(ctx, provider, req)
@@ -192,12 +211,48 @@ func (s *Service) attempt(
 		return nil, err
 	}
 
+	resp, err := s.executeWithRetry(ctx, adapter, s.callFor(provider, apiKey, req))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Refused {
+		return nil, errRefused
+	}
+
+	text := strings.TrimSpace(resp.Text)
+	if text == "" {
+		return nil, errors.New("provider returned no content")
+	}
+
+	if err = validateStructuredOutput(req.Schema, text); err != nil {
+		return nil, err
+	}
+
+	return &runOutcome{
+		Text:         resp.Text,
+		Model:        resp.ModelIdentifier,
+		InputTokens:  resp.InputTokens,
+		OutputTokens: resp.OutputTokens,
+		ProviderID:   provider.ID,
+		ProviderKind: provider.Kind,
+	}, nil
+}
+
+// callFor builds the provider-shaped call for a structured request. It is shared
+// with the background path so a deferred call carries exactly the same prompt,
+// schema and token budget as the synchronous one.
+func (s *Service) callFor(
+	provider *aiprovider.Provider,
+	apiKey string,
+	req *runRequest,
+) *modeladapter.Call {
 	maxTokens := req.MaxTokens
 	if maxTokens <= 0 {
 		maxTokens = provider.ResolvedMaxTokens()
 	}
 
-	call := &modeladapter.Call{
+	return &modeladapter.Call{
 		Provider: provider,
 		APIKey:   apiKey,
 		Client:   s.clientFor(provider),
@@ -215,35 +270,27 @@ func (s *Service) attempt(
 			MaxTokens:    maxTokens,
 		},
 	}
+}
 
-	resp, err := s.executeWithRetry(ctx, adapter, call)
-	if err != nil {
-		return nil, err
+// validateStructuredOutput rejects a reply that will not decode against the
+// requested schema. Checking here rather than at the call site is what makes a
+// provider that cannot hold the format fall through to the next candidate; a
+// caller that received the prose instead would have no way to ask again.
+//
+// The check is structural, not a full JSON Schema validation: every schema this
+// router sends declares a top-level object, so text that yields one has honoured
+// the shape, and text that does not is a refusal or a ramble either way.
+func validateStructuredOutput(schema map[string]any, text string) error {
+	if len(schema) == 0 {
+		return nil
 	}
 
-	if resp.Refused {
-		return nil, errRefused
+	decoded := make(map[string]any, len(schema))
+	if err := modeladapter.ExtractJSON(text, &decoded); err != nil {
+		return fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
 	}
 
-	text := strings.TrimSpace(resp.Text)
-	if text == "" {
-		return nil, errors.New("provider returned no content")
-	}
-
-	if req.Into != nil {
-		if err = modeladapter.ExtractJSON(resp.Text, req.Into); err != nil {
-			return nil, fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
-		}
-	}
-
-	return &runOutcome{
-		Text:         resp.Text,
-		Model:        resp.ModelIdentifier,
-		InputTokens:  resp.InputTokens,
-		OutputTokens: resp.OutputTokens,
-		ProviderID:   provider.ID,
-		ProviderKind: provider.Kind,
-	}, nil
+	return nil
 }
 
 func (s *Service) executeWithRetry(

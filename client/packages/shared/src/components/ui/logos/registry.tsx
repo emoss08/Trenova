@@ -2,7 +2,9 @@ import type { ComponentType } from "react";
 import { AnthropicLogo } from "./anthropic";
 import { AWSLogo } from "./aws";
 import { DeepSeekLogo } from "./deepseek";
+import { FireworksLogo } from "./fireworks";
 import { GeminiLogo } from "./gemini";
+import { GroqLogo } from "./groq";
 import { HuggingFaceLogo } from "./huggingface";
 import { LMStudioLogo } from "./lmstudio";
 import { MetaLogo } from "./meta";
@@ -10,6 +12,7 @@ import { MistralLogo } from "./mistral";
 import { OllamaLogo } from "./ollama";
 import { OpenAILogo } from "./openai";
 import { OpenRouterLogo } from "./openrouter";
+import { TogetherLogo } from "./together";
 import { VLLMLogo } from "./vllm";
 
 export type BrandMark = ComponentType<{ className?: string }>;
@@ -19,8 +22,8 @@ export type BrandMark = ComponentType<{ className?: string }>;
  * them means a logo renders with no API key, no network request and no layout
  * shift, which the Brandfetch CDN cannot promise.
  *
- * A vendor with no freely licensed mark is deliberately absent rather than drawn
- * approximately; those fall through to the monogram.
+ * Each is redrawn flat in one colour from the vendor's own geometry, used to
+ * name that vendor in a list of endpoints and nothing else.
  */
 const MARKS_BY_PRESET: Record<string, BrandMark> = {
   anthropic: AnthropicLogo,
@@ -30,6 +33,9 @@ const MARKS_BY_PRESET: Record<string, BrandMark> = {
   ollama: OllamaLogo,
   vllm: VLLMLogo,
   lmstudio: LMStudioLogo,
+  groq: GroqLogo,
+  together: TogetherLogo,
+  fireworks: FireworksLogo,
 };
 
 /**
@@ -53,6 +59,10 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "googleapis.com": GeminiLogo,
   "meta.com": MetaLogo,
   "llama.com": MetaLogo,
+  "groq.com": GroqLogo,
+  "together.ai": TogetherLogo,
+  "together.xyz": TogetherLogo,
+  "fireworks.ai": FireworksLogo,
 };
 
 export type BrandMarkLookup = {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type openAIChatAdapter struct{}
@@ -124,7 +125,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	return &Response{
 		Text:            text,
 		ToolCalls:       toolCalls,
-		ModelIdentifier: firstNonEmpty(envelope.Model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.Usage.PromptTokens,
 		OutputTokens:    envelope.Usage.CompletionTokens,
 		Refused:         refused,
@@ -205,7 +206,7 @@ func (a openAIChatAdapter) Stream(
 			return fmt.Errorf("decode stream chunk: %w", err)
 		}
 
-		model = firstNonEmpty(model, chunk.Model)
+		model = stringutils.FirstNonEmpty(model, chunk.Model)
 		if chunk.Usage != nil {
 			usage = *chunk.Usage
 		}
@@ -226,8 +227,8 @@ func (a openAIChatAdapter) Stream(
 					buffers[fragment.Index] = buffer
 					order = append(order, fragment.Index)
 				}
-				buffer.id = firstNonEmpty(buffer.id, fragment.ID)
-				buffer.name = firstNonEmpty(buffer.name, fragment.Function.Name)
+				buffer.id = stringutils.FirstNonEmpty(buffer.id, fragment.ID)
+				buffer.name = stringutils.FirstNonEmpty(buffer.name, fragment.Function.Name)
 				buffer.arguments.WriteString(fragment.Function.Arguments)
 			}
 		}
@@ -242,7 +243,7 @@ func (a openAIChatAdapter) Stream(
 	for _, index := range order {
 		buffer := buffers[index]
 		toolCalls = append(toolCalls, ToolCall{
-			ID:        firstNonEmpty(buffer.id, fmt.Sprintf("call_%d", index)),
+			ID:        stringutils.FirstNonEmpty(buffer.id, fmt.Sprintf("call_%d", index)),
 			Name:      buffer.name,
 			Arguments: decodeArguments(buffer.arguments.String()),
 		})
@@ -254,7 +255,7 @@ func (a openAIChatAdapter) Stream(
 	return &Response{
 		Text:            text.String(),
 		ToolCalls:       toolCalls,
-		ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 		InputTokens:     usage.PromptTokens,
 		OutputTokens:    usage.CompletionTokens,
 		Refused:         refused,
@@ -409,14 +410,4 @@ func bearer(apiKey string) string {
 	}
 
 	return "Bearer " + apiKey
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-
-	return ""
 }

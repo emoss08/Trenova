@@ -17,6 +17,9 @@ describe("brandMarkFor", () => {
       "bedrock",
       "vllm",
       "lmstudio",
+      "groq",
+      "together",
+      "fireworks",
     ]) {
       expect(brandMarkFor({ presetKey: key }), `${key} has no bundled mark`).not.toBeNull();
     }
@@ -28,8 +31,17 @@ describe("brandMarkFor", () => {
     expect(brandMarkFor({ domain: "www.ollama.com" })).not.toBeNull();
   });
 
+  it("resolves the three vendors whose marks are not in simple-icons", () => {
+    expect(brandMarkFor({ domain: "groq.com" })).not.toBeNull();
+    expect(brandMarkFor({ domain: "api.together.xyz" })).not.toBeNull();
+    expect(brandMarkFor({ domain: "api.fireworks.ai" })).not.toBeNull();
+  });
+
   it("returns nothing for a vendor we do not ship", () => {
-    expect(brandMarkFor({ presetKey: "groq" })).toBeNull();
+    // sglang, llamacpp and deepinfra have no mark we can draw from a published
+    // source, so they fall to the monogram rather than to a guess at a logo.
+    expect(brandMarkFor({ presetKey: "sglang" })).toBeNull();
+    expect(brandMarkFor({ presetKey: "llamacpp" })).toBeNull();
     expect(brandMarkFor({ domain: "example.invalid" })).toBeNull();
     expect(brandMarkFor({})).toBeNull();
   });

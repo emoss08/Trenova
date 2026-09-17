@@ -7,7 +7,7 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import { useSearchParams } from "react-router";
 import { AssistantLauncher } from "./assistant-launcher";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
@@ -78,37 +78,54 @@ export function AssistantWidget() {
   return (
     <AnimatePresence initial={false} mode="popLayout">
       {open ? (
-        <m.section
-          key="panel"
-          role="dialog"
-          aria-label={t("Assistant")}
-          aria-modal={expanded}
-          layout
-          layoutId={ASSISTANT_SURFACE_ID}
-          style={{ borderRadius: 16 }}
-          transition={
-            reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }
-          }
-          className={cn(
-            "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden shadow-xl shadow-black/15 ring-1 backdrop-blur-sm",
-            expanded
-              ? "inset-4 md:inset-x-[max(1rem,calc((100vw-1100px)/2))] md:inset-y-4"
-              : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",
-          )}
-        >
-          <m.div
-            className="flex min-h-0 flex-1 flex-col"
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={reduceMotion ? { duration: 0 } : { duration: 0.12, delay: 0.08 }}
-          >
-            <AssistantPanel
-              expanded={expanded}
-              onToggleExpanded={toggleExpanded}
-              onClose={closeWidget}
+        <Fragment key="panel">
+          {/* Expanded, the panel is the only thing being used, so it says so.
+              Floating it a few pixels below the app header instead left the two
+              overlapping at the top of the screen, which read as a mistake
+              rather than as a mode. */}
+          {expanded && (
+            <m.div
+              key="scrim"
+              aria-hidden
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setExpanded(false)}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
             />
-          </m.div>
-        </m.section>
+          )}
+          <m.section
+            role="dialog"
+            aria-label={t("Assistant")}
+            aria-modal={expanded}
+            layout
+            layoutId={ASSISTANT_SURFACE_ID}
+            style={{ borderRadius: 16 }}
+            transition={
+              reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }
+            }
+            className={cn(
+              "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden shadow-xl shadow-black/15 ring-1",
+              expanded
+                ? "inset-x-3 inset-y-3 md:inset-x-[max(2rem,calc((100vw-1180px)/2))] md:inset-y-[max(2rem,calc((100dvh-820px)/2))]"
+                : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",
+            )}
+          >
+            <m.div
+              className="flex min-h-0 flex-1 flex-col"
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.12, delay: 0.08 }}
+            >
+              <AssistantPanel
+                expanded={expanded}
+                onToggleExpanded={toggleExpanded}
+                onClose={closeWidget}
+              />
+            </m.div>
+          </m.section>
+        </Fragment>
       ) : (
         <AssistantLauncher
           key="launcher"

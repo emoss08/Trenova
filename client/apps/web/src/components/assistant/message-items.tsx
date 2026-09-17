@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
+import { toneVar } from "@/components/kpi/tone";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Message,
@@ -242,15 +242,18 @@ function toolStatus(result: AssistantMessage | null): ToolStep["status"] {
  * not fail; it declined, and the message explains what it does cover.
  */
 export function RefusalNotice({ message }: { message: string }) {
-  const t = useT();
-
   return (
     <AssistantFrame>
-      <Alert variant="warning" className="max-w-[92%]">
-        <ShieldAlertIcon className="size-4" />
-        <AlertTitle>{t("Outside what this assistant covers")}</AlertTitle>
-        <AlertDescription>{message}</AlertDescription>
-      </Alert>
+      {/* A refusal is a sentence, not an incident. Framing it as a filled alert
+          box made declining to write Python look like something had gone wrong,
+          when the assistant simply answered. */}
+      <div className="text-muted-foreground flex gap-2 text-sm">
+        <ShieldAlertIcon
+          className="mt-0.5 size-3.5 shrink-0"
+          style={{ color: toneVar("warning") }}
+        />
+        <p className="min-w-0 flex-1">{message}</p>
+      </div>
     </AssistantFrame>
   );
 }

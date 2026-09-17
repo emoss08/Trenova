@@ -28,16 +28,16 @@ export function BrandLogo({ domain, presetKey, name, size = 32, className }: Bra
 
   const Mark = brandMarkFor({ presetKey, domain });
   if (Mark) {
+    // The mark stands on its own. A ringed tile behind it turns a list of
+    // vendors into a row of identical boxes, which is the opposite of what a
+    // logo is for.
     return (
       <span
         aria-hidden
-        className={cn(
-          "bg-background ring-border text-foreground flex shrink-0 items-center justify-center rounded-lg ring-1",
-          className,
-        )}
+        className={cn("text-foreground flex shrink-0 items-center justify-center", className)}
         style={{ width: size, height: size }}
       >
-        <Mark className="size-[62%]" />
+        <Mark className="size-full" />
       </span>
     );
   }
@@ -59,10 +59,7 @@ export function BrandLogo({ domain, presetKey, name, size = 32, className }: Bra
       loading="lazy"
       decoding="async"
       onError={() => setFailedDomain(domain ?? null)}
-      className={cn(
-        "bg-background ring-border shrink-0 rounded-lg object-contain p-1 ring-1",
-        className,
-      )}
+      className={cn("shrink-0 object-contain", className)}
       style={{ width: size, height: size }}
     />
   );
@@ -77,10 +74,10 @@ export function BrandMonogram({
     <span
       aria-hidden
       className={cn(
-        "bg-muted text-muted-foreground ring-border flex shrink-0 items-center justify-center rounded-lg font-semibold tracking-tight ring-1 select-none",
+        "text-muted-foreground flex shrink-0 items-center justify-center font-semibold tracking-tight select-none",
         className,
       )}
-      style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.36)) }}
+      style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.44)) }}
     >
       {getNameInitials(name, "AI", { maxLength: 2 })}
     </span>

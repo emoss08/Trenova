@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const anthropicVersion = "2023-06-01"
@@ -230,7 +231,7 @@ func (a anthropicAdapter) Stream(
 			}
 		case "message_delta":
 			if event.Delta != nil {
-				stopReason = firstNonEmpty(event.Delta.StopReason, stopReason)
+				stopReason = stringutils.FirstNonEmpty(event.Delta.StopReason, stopReason)
 			}
 			if event.Usage != nil {
 				usage.OutputTokens = event.Usage.OutputTokens
@@ -271,7 +272,7 @@ func (a anthropicAdapter) Stream(
 	return &Response{
 		Text:            text,
 		ToolCalls:       toolCalls,
-		ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 		InputTokens:     usage.InputTokens,
 		OutputTokens:    usage.OutputTokens,
 		Refused:         stopReason == "refusal",

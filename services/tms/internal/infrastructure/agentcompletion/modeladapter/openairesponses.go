@@ -2,15 +2,19 @@ package modeladapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type openAIResponsesAdapter struct{}
+
+var _ BackgroundRunner = openAIResponsesAdapter{}
 
 // NewOpenAIResponsesAdapter speaks the OpenAI Responses API, which the document
 // intelligence path already uses and which Bedrock's mantle endpoint also serves.
@@ -25,6 +29,8 @@ type responsesRequest struct {
 	Tools           []responsesTool      `json:"tools,omitempty"`
 	MaxOutputTokens int                  `json:"max_output_tokens,omitempty"`
 	Stream          bool                 `json:"stream,omitempty"`
+	Background      bool                 `json:"background,omitempty"`
+	Store           bool                 `json:"store,omitempty"`
 }
 
 // responsesItem is both a message and a function call or its output: this
@@ -68,10 +74,19 @@ type responsesFormat struct {
 }
 
 type responsesEnvelope struct {
+	ID     string          `json:"id"`
 	Model  string          `json:"model"`
 	Status string          `json:"status"`
 	Output []responsesItem `json:"output"`
 	Usage  responsesUsage  `json:"usage"`
+
+	IncompleteDetails *struct {
+		Reason string `json:"reason"`
+	} `json:"incomplete_details"`
+	Error *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 type responsesUsage struct {
@@ -79,7 +94,7 @@ type responsesUsage struct {
 	OutputTokens int `json:"output_tokens"`
 }
 
-func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
+func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
 	body := responsesRequest{
 		Model:           call.Provider.Model,
 		MaxOutputTokens: call.Request.MaxTokens,
@@ -100,29 +115,135 @@ func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Resp
 		}
 	}
 
+	return body
+}
+
+func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
 	var envelope responsesEnvelope
 	err := postJSON(
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/v1/responses",
 		map[string]string{"Authorization": bearer(call.APIKey)},
-		body,
+		a.requestFor(call),
 		&envelope,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	text, toolCalls, refused := splitResponsesOutput(&envelope)
+	return a.responseFrom(call, &envelope), nil
+}
+
+func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnvelope) *Response {
+	text, toolCalls, refused := splitResponsesOutput(envelope)
 
 	return &Response{
 		Text:            text,
 		ToolCalls:       toolCalls,
-		ModelIdentifier: firstNonEmpty(envelope.Model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.Usage.InputTokens,
 		OutputTokens:    envelope.Usage.OutputTokens,
 		Refused:         refused,
+	}
+}
+
+// Submit starts a run the provider holds for us. Extraction of a long document
+// runs for minutes, so the worker hands it over and comes back rather than
+// holding a socket open across the whole thing.
+func (a openAIResponsesAdapter) Submit(ctx context.Context, call *Call) (*BackgroundHandle, error) {
+	body := a.requestFor(call)
+	body.Background = true
+	body.Store = true
+
+	var envelope responsesEnvelope
+	if err := postJSON(
+		ctx,
+		call.Client,
+		call.Provider.ResolvedBaseURL()+"/v1/responses",
+		map[string]string{"Authorization": bearer(call.APIKey)},
+		body,
+		&envelope,
+	); err != nil {
+		return nil, err
+	}
+
+	if strings.TrimSpace(envelope.ID) == "" {
+		return nil, errors.New("provider accepted the run but returned no id to poll")
+	}
+
+	return &BackgroundHandle{
+		ID:              envelope.ID,
+		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
+		Status:          strings.TrimSpace(envelope.Status),
 	}, nil
+}
+
+func (a openAIResponsesAdapter) Poll(
+	ctx context.Context,
+	call *Call,
+	id string,
+) (*BackgroundOutcome, error) {
+	var envelope responsesEnvelope
+	if err := getJSON(
+		ctx,
+		call.Client,
+		fmt.Sprintf("%s/v1/responses/%s", call.Provider.ResolvedBaseURL(), strings.TrimSpace(id)),
+		map[string]string{"Authorization": bearer(call.APIKey)},
+		&envelope,
+	); err != nil {
+		return nil, err
+	}
+
+	raw := strings.TrimSpace(envelope.Status)
+	model := stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model)
+
+	switch raw {
+	case "", "queued", "in_progress":
+		return &BackgroundOutcome{
+			State:           BackgroundPending,
+			RawStatus:       raw,
+			ModelIdentifier: model,
+		}, nil
+	case "completed":
+		response := a.responseFrom(call, &envelope)
+		if strings.TrimSpace(response.Text) == "" {
+			return &BackgroundOutcome{
+				State:           BackgroundFailed,
+				RawStatus:       raw,
+				ModelIdentifier: model,
+				FailureCode:     "empty_output",
+				FailureMessage:  "the run finished without producing any output",
+			}, nil
+		}
+
+		return &BackgroundOutcome{
+			State:           BackgroundCompleted,
+			RawStatus:       raw,
+			ModelIdentifier: model,
+			Response:        response,
+		}, nil
+	default:
+		code := raw
+		message := fmt.Sprintf("the run ended with status %s", raw)
+		if envelope.IncompleteDetails != nil &&
+			strings.TrimSpace(envelope.IncompleteDetails.Reason) != "" {
+			code = envelope.IncompleteDetails.Reason
+			message = fmt.Sprintf("the run stopped early: %s", code)
+		}
+		if envelope.Error != nil && strings.TrimSpace(envelope.Error.Message) != "" {
+			code = stringutils.FirstNonEmpty(strings.TrimSpace(envelope.Error.Code), code)
+			message = envelope.Error.Message
+		}
+
+		return &BackgroundOutcome{
+			State:           BackgroundFailed,
+			RawStatus:       raw,
+			ModelIdentifier: model,
+			FailureCode:     code,
+			FailureMessage:  message,
+		}, nil
+	}
 }
 
 // responsesStreamEvent is the union of the Responses API stream events this
@@ -225,7 +346,7 @@ func (a openAIResponsesAdapter) Stream(
 		// calls cannot be trusted without the completed output, so none are.
 		return &Response{
 			Text:            text.String(),
-			ModelIdentifier: firstNonEmpty(model, call.Provider.Model),
+			ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 			Refused:         refused,
 		}, nil
 	}
@@ -233,9 +354,9 @@ func (a openAIResponsesAdapter) Stream(
 	finalText, toolCalls, finalRefused := splitResponsesOutput(completed)
 
 	return &Response{
-		Text:            firstNonEmpty(finalText, text.String()),
+		Text:            stringutils.FirstNonEmpty(finalText, text.String()),
 		ToolCalls:       toolCalls,
-		ModelIdentifier: firstNonEmpty(completed.Model, model, call.Provider.Model),
+		ModelIdentifier: stringutils.FirstNonEmpty(completed.Model, model, call.Provider.Model),
 		InputTokens:     completed.Usage.InputTokens,
 		OutputTokens:    completed.Usage.OutputTokens,
 		Refused:         refused || finalRefused,
