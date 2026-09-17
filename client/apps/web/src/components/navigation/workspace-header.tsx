@@ -60,7 +60,7 @@ export function WorkspaceHeader() {
   return (
     <header
       className={cn(
-        "bg-sidebar border-border relative z-50 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b pr-2.5 pl-2",
+        "bg-sidebar border-border relative z-30 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b pr-2.5 pl-2",
         WORKSPACE_HEADER_HEIGHT_CLASS,
       )}
     >
