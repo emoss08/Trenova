@@ -1,9 +1,9 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { usePermission } from "@/hooks/use-permission";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ActivityIcon, BotIcon, LayoutDashboardIcon, PlugZapIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
@@ -37,7 +37,7 @@ export function AgentControlPage() {
           "Providers say where AI work goes, agents say what it may do, and activity shows what it did.",
         )}
       />
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-4 px-4">
         <Tabs
           value={tab}
           className="gap-4"
