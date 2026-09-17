@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/restx"
 	samsaratypes "github.com/emoss08/trenova/shared/samsara/types"
 	"github.com/go-resty/resty/v2"
 )
@@ -158,7 +158,7 @@ func configureRetries(client *resty.Client, cfg RetryConfig) {
 			return 0, nil
 		}
 
-		d, ok := parseRetryAfter(resp.Header().Get("Retry-After"))
+		d, ok := restx.ParseRetryAfter(resp.Header().Get("Retry-After"))
 		if !ok {
 			return 0, nil
 		}
@@ -173,28 +173,6 @@ func containsStatus(expected []int, status int) bool {
 		}
 	}
 	return false
-}
-
-func parseRetryAfter(value string) (time.Duration, bool) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0, false
-	}
-
-	seconds, err := strconv.Atoi(value)
-	if err == nil && seconds >= 0 {
-		return time.Duration(seconds) * time.Second, true
-	}
-
-	t, err := http.ParseTime(value)
-	if err != nil {
-		return 0, false
-	}
-	until := time.Until(t)
-	if until < 0 {
-		return 0, true
-	}
-	return until, true
 }
 
 func parseAPIError(statusCode int, body []byte) *samsaratypes.APIError {

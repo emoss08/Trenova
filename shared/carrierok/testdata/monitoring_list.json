@@ -1,0 +1,31 @@
+{
+  "total_count": 2,
+  "items": {
+    "818175-MC277621": [
+      {
+        "safety_rating_desc_current": "Satisfactory",
+        "safety_rating_desc_prior": "Conditional",
+        "safety_rating_desc_changed": true,
+        "insurance_bipd_on_file_current": 1000000,
+        "insurance_bipd_on_file_prior": "750000",
+        "insurance_bipd_on_file_changed": "Y",
+        "last_changed_date": "20260912",
+        "started_monitoring_at": 1754006400
+      },
+      {
+        "email_address_current": "ops@sandboxfreight.example",
+        "email_address_prior": null,
+        "email_address_changed": false,
+        "last_acknowledged_at": "2026-09-01T12:00:00Z"
+      }
+    ],
+    "568253-MC277622": [
+      {
+        "authority_common_current": "INACTIVE",
+        "authority_common_prior": "ACTIVE",
+        "authority_common_changed": 1,
+        "last_changed_date": "20260910"
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "status": "partial",
+  "added": 1,
+  "failed": [
+    {"profile_id": "999999-MC000000", "error": "Profile not found"}
+  ]
+}
