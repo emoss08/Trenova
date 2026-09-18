@@ -61,7 +61,7 @@ export function ActivityFeed({
         <div className="flex items-center gap-2">
           <h3 className="cc-label text-foreground">{t("Activity stream")}</h3>
           <span aria-hidden className="bg-success size-1.5 rounded-full" />
-          <span className="text-muted-foreground font-mono text-[10px]">live</span>
+          <span className="text-muted-foreground font-mono text-2xs">live</span>
         </div>
       </header>
       <ScrollArea className="min-h-0 flex-1" viewportClassName="max-h-[260px]">
@@ -73,7 +73,7 @@ export function ActivityFeed({
         />
         {hasNextPage && <div ref={sentinelRef} className="h-4" aria-hidden />}
         {isFetchingNextPage && (
-          <p className="text-muted-foreground px-3 py-1 text-center font-mono text-[10px]">
+          <p className="text-muted-foreground px-3 py-1 text-center font-mono text-2xs">
             {t("Loading more…")}
           </p>
         )}
@@ -104,14 +104,14 @@ function FeedBody({ isLoading, isError, events, emptyLabel }: FeedBodyProps) {
 
   if (isError) {
     return (
-      <p className="text-destructive px-3 py-2 text-[11px]">
+      <p className="text-destructive px-3 py-2 text-xs">
         {t("Failed to load activity. Try refreshing.")}
       </p>
     );
   }
 
   if (events.length === 0) {
-    return <p className="text-muted-foreground px-3 py-2 text-[11px]">{emptyLabel}</p>;
+    return <p className="text-muted-foreground px-3 py-2 text-xs">{emptyLabel}</p>;
   }
 
   return (
@@ -130,20 +130,20 @@ function ActivityFeedItem({ event }: { event: ShipmentEvent }) {
       <span className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", SEVERITY_DOT[event.severity])} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-foreground min-w-0 flex-1 text-[11.5px] leading-snug">
+          <p className="text-foreground min-w-0 flex-1 text-xs leading-snug">
             {rendered.headline}
           </p>
           <time
-            className="text-muted-foreground shrink-0 font-mono text-[10.5px] tabular-nums"
+            className="text-muted-foreground shrink-0 font-mono text-2xs tabular-nums"
             dateTime={new Date(event.occurredAt * 1000).toISOString()}
           >
             {formatRelative(event.occurredAt)}
           </time>
         </div>
         {rendered.detail && (
-          <p className="text-muted-foreground line-clamp-2 text-[11px]">{rendered.detail}</p>
+          <p className="text-muted-foreground line-clamp-2 text-xs">{rendered.detail}</p>
         )}
-        <p className="text-muted-foreground font-mono text-[10px]">{rendered.actorHandle}</p>
+        <p className="text-muted-foreground font-mono text-2xs">{rendered.actorHandle}</p>
       </div>
     </li>
   );

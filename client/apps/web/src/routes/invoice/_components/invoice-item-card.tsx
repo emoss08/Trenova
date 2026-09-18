@@ -59,7 +59,7 @@ export function InvoiceItemCard({
             <span className="flex items-center gap-1.5">
               <PlainInvoiceScopeBadge scope={invoice.scope} />
               <PlainInvoiceSplitBadge isSplitBill={invoice.isSplitBill} />
-              <span className="text-muted-foreground font-mono text-[10px]">
+              <span className="text-muted-foreground font-mono text-2xs">
                 {invoice.billType}
               </span>
             </span>
@@ -69,7 +69,7 @@ export function InvoiceItemCard({
           meta={
             <div className="flex flex-col gap-1">
               {scopeDetail ? (
-                <span className="text-muted-foreground truncate text-[11px] tabular-nums">
+                <span className="text-muted-foreground truncate text-xs tabular-nums">
                   {scopeDetail}
                 </span>
               ) : null}
@@ -83,7 +83,7 @@ export function InvoiceItemCard({
                 </div>
                 <Tooltip>
                   <TooltipTrigger
-                    render={<span className="text-muted-foreground/70 text-[11px]">{age}</span>}
+                    render={<span className="text-muted-foreground/70 text-xs">{age}</span>}
                   />
                   <TooltipContent side="left" sideOffset={10}>
                     {generateDateTimeStringFromUnixTimestamp(invoice.createdAt)}

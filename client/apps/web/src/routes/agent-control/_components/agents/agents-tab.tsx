@@ -101,7 +101,7 @@ export default function AgentsTab() {
           <h2 className="flex items-center gap-2 text-base font-semibold">
             {t("Agents")}
             {agents.length > 0 && (
-              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums">
+              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
                 {t("{0} of {1} enabled", enabledCount, agents.length)}
               </span>
             )}

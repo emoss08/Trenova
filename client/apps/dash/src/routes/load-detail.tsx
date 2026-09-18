@@ -41,7 +41,7 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
     >
       {copied ? (
-        <CheckIcon className="size-3 text-green-600" />
+        <CheckIcon className="size-3 text-success-foreground" />
       ) : (
         <CopyIcon className="size-3 text-muted-foreground" />
       )}

@@ -29,11 +29,11 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+        <h4 className="text-muted-foreground text-xs font-semibold uppercase">
           {t("Next steps")}
         </h4>
         {steps.length > 0 ? (
-          <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
+          <span className="text-muted-foreground font-mono text-xs tabular-nums">
             {steps.length}
           </span>
         ) : null}
@@ -52,7 +52,7 @@ export function DQFNextSteps({ steps, busyId, onStep }: DQFNextStepsProps) {
               <>
                 <span
                   className={cn(
-                    "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-medium tabular-nums",
+                    "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-2xs font-medium tabular-nums",
                     step.blocking ? "bg-primary text-primary-foreground" : "bg-accent",
                   )}
                   aria-hidden

@@ -224,7 +224,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                             onClick={() => setDays(preset.mask)}
                             aria-pressed={daysOfWeek === preset.mask}
                             className={cn(
-                              "text-muted-foreground hover:text-foreground hover:bg-muted rounded-full border border-transparent px-2 py-0.5 text-[11px] transition-colors",
+                              "text-muted-foreground hover:text-foreground hover:bg-muted rounded-full border border-transparent px-2 py-0.5 text-xs transition-colors",
                               daysOfWeek === preset.mask &&
                                 "border-border bg-muted text-foreground",
                             )}
@@ -401,7 +401,7 @@ function ShiftPreview({
       )}
       aria-label={t("Shift preview")}
     >
-      <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("On the board")}</p>
+      <p className="text-muted-foreground text-xs font-medium uppercase">{t("On the board")}</p>
       <div className="flex items-center gap-2">
         <span className="bg-accent grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
           {code.trim().slice(0, 3).toUpperCase() || "—"}
@@ -430,7 +430,7 @@ function ShiftPreview({
             <span
               key={label}
               className={cn(
-                "grid h-6 place-items-center rounded text-[10px]",
+                "grid h-6 place-items-center rounded text-2xs",
                 on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground/70",
               )}
               aria-hidden

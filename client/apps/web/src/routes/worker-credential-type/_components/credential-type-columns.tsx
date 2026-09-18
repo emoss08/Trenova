@@ -122,12 +122,12 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerCredentialTypeRow>[]
       cell: ({ row }) => (
         <span className="flex gap-1">
           {row.original.requiresNumber ? (
-            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t("Number")}
             </Badge>
           ) : null}
           {row.original.requiresDocument ? (
-            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t("Document")}
             </Badge>
           ) : null}

@@ -181,15 +181,15 @@ export function StopTimeline({
               <span
                 className={cn(
                   "absolute top-4 left-[5px] h-full border-l border-border",
-                  isDone && "border-green-600/60",
+                  isDone && "border-success/60",
                 )}
               />
             ) : null}
             <span
               className={cn(
                 "z-10 mt-1.5 size-3 shrink-0 rounded-full border-2 border-muted-foreground/50 bg-background",
-                isDone && "border-green-600 bg-green-600",
-                isCurrent && "border-blue-600 bg-blue-600",
+                isDone && "border-success bg-success",
+                isCurrent && "border-info bg-info",
               )}
             />
             <div className="min-w-0 flex-1">
@@ -214,7 +214,7 @@ export function StopTimeline({
                     "mt-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-60",
                     action === "Arrive"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-green-600 text-white",
+                      : "bg-success text-white",
                   )}
                 >
                   {checkIn.isPending

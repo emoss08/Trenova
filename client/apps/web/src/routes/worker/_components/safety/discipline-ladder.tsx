@@ -62,7 +62,7 @@ export function DisciplineLadder({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">
-            <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+            <h4 className="text-muted-foreground text-xs font-semibold uppercase">
               {t("Discipline")}
             </h4>
             <InfoPopover title={t("Discipline ladder")}>
@@ -108,7 +108,7 @@ export function DisciplineLadder({
               >
                 <span
                   className={cn(
-                    "inline-flex size-5 items-center justify-center rounded-full border text-[10px] font-medium tabular-nums",
+                    "inline-flex size-5 items-center justify-center rounded-full border text-2xs font-medium tabular-nums",
                     taken && "border-primary bg-primary text-primary-foreground",
                     isNext && "border-primary border-dashed",
                     !taken && !isNext && "text-muted-foreground",
@@ -153,7 +153,7 @@ export function DisciplineLadder({
                 className="flex items-start gap-3 px-3 py-2.5"
               >
                 <span
-                  className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md text-[10px] font-medium tabular-nums"
+                  className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md text-2xs font-medium tabular-nums"
                   aria-hidden
                 >
                   {meta.rank}

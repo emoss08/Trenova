@@ -78,10 +78,10 @@ export function WhosOutStrip({
   return (
     <section className="flex shrink-0 flex-col gap-1.5" data-testid="whos-out-strip">
       <div className="flex items-baseline justify-between">
-        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {t("Who's out")}
         </p>
-        <p className="text-muted-foreground text-[11px] tabular-nums">
+        <p className="text-muted-foreground text-xs tabular-nums">
           {t("{0} today · {1} this week", totalToday, distinctThisWeek)}
         </p>
       </div>
@@ -135,10 +135,10 @@ function DayTile({
       )}
     >
       <span className="flex items-baseline justify-between gap-1 leading-none">
-        <span className={cn("truncate text-[11px] font-medium", isToday && "text-primary")}>
+        <span className={cn("truncate text-xs font-medium", isToday && "text-primary")}>
           {t(day.label)}
         </span>
-        <span className="text-muted-foreground text-[10px] tabular-nums">{dateNumber}</span>
+        <span className="text-muted-foreground text-2xs tabular-nums">{dateNumber}</span>
       </span>
       {count > 0 ? (
         <AvatarGroup className="-space-x-1.5">
@@ -149,19 +149,19 @@ function DayTile({
                 alt=""
                 className="rounded-full"
               />
-              <AvatarFallback className="rounded-full text-[9px] font-medium">
+              <AvatarFallback className="rounded-full text-3xs font-medium">
                 {ptoWorkerInitials(pto)}
               </AvatarFallback>
             </Avatar>
           ))}
           {count > MAX_FACES ? (
-            <AvatarGroupCount className="size-5 text-[9px] font-medium">
+            <AvatarGroupCount className="size-5 text-3xs font-medium">
               +{count - MAX_FACES}
             </AvatarGroupCount>
           ) : null}
         </AvatarGroup>
       ) : (
-        <span className="text-muted-foreground/50 h-5 text-[11px] leading-5">{t("Nobody")}</span>
+        <span className="text-muted-foreground/50 h-5 text-xs leading-5">{t("Nobody")}</span>
       )}
     </button>
   );

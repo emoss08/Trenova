@@ -73,9 +73,9 @@ type RunDialogState = {
 
 const STATUS_DOT: Record<string, string> = {
   draft: "bg-muted-foreground/50",
-  active: "bg-emerald-500",
+  active: "bg-success",
   archived: "bg-muted-foreground/30",
-  needs_attention: "bg-amber-500",
+  needs_attention: "bg-warning",
 };
 
 function StatusDot({ status }: { status: string }) {

@@ -148,7 +148,7 @@ export function FavoriteToggle({ className }: { className?: string }) {
         }
       >
         <Star
-          className={cn("size-3 transition-colors", isFavorited && "fill-amber-400 text-amber-400")}
+          className={cn("size-3 transition-colors", isFavorited && "fill-warning text-warning-foreground")}
         />
       </TooltipTrigger>
       <TooltipContent>

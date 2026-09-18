@@ -52,7 +52,7 @@ function OrgLogo({
   }
 
   return (
-    <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">
+    <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-2xs font-bold">
       {initials}
     </div>
   );

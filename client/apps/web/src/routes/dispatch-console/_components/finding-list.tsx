@@ -11,12 +11,12 @@ const SEVERITY_ROW: Record<
 > = {
   Block: {
     Icon: OctagonXIcon,
-    iconClass: "text-red-600 dark:text-red-400",
+    iconClass: "text-danger-foreground",
     textClass: "text-foreground",
   },
   Warn: {
     Icon: TriangleAlertIcon,
-    iconClass: "text-amber-600 dark:text-amber-400",
+    iconClass: "text-warning-foreground",
     textClass: "text-foreground/80",
   },
   Info: {
@@ -57,11 +57,11 @@ export function FindingList({
         return (
           <li key={`${finding.code}-${finding.field}`} className="flex items-start gap-2">
             <row.Icon className={cn("mt-px size-3.5 shrink-0", row.iconClass)} aria-hidden />
-            <span className={cn("min-w-0 flex-1 text-[11px] leading-snug", row.textClass)}>
+            <span className={cn("min-w-0 flex-1 text-xs leading-snug", row.textClass)}>
               {finding.message}
             </span>
             {finding.regulation ? (
-              <span className="border-border bg-muted/50 text-muted-foreground shrink-0 rounded border px-1 py-px font-mono text-[9px] leading-4">
+              <span className="border-border bg-muted/50 text-muted-foreground shrink-0 rounded border px-1 py-px font-mono text-3xs leading-4">
                 {finding.regulation}
               </span>
             ) : null}
@@ -69,7 +69,7 @@ export function FindingList({
         );
       })}
       {hidden > 0 ? (
-        <li className="text-muted-foreground pl-[22px] text-[11px]">{t("+{0} more", hidden)}</li>
+        <li className="text-muted-foreground pl-[22px] text-xs">{t("+{0} more", hidden)}</li>
       ) : null}
     </ul>
   );

@@ -131,7 +131,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
               className="size-7"
-              fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
+              fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
           </DropdownMenuTrigger>
         ) : (
@@ -149,7 +149,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
               className="size-7"
-              fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
+              fallbackClassName="bg-muted text-2xs font-medium text-muted-foreground"
             />
             <span className="grid min-w-0 flex-1 text-left leading-tight">
               <span className="truncate text-sm font-medium">{displayName}</span>

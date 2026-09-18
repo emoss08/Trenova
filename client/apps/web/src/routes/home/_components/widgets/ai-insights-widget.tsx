@@ -223,7 +223,7 @@ function StaleMark() {
   const t = useT();
 
   return (
-    <Badge variant="neutral" appearance="outline" className="gap-1 text-[9px]">
+    <Badge variant="neutral" appearance="outline" className="gap-1 text-3xs">
       <ClockAlertIcon className="size-2.5" />
       {t("Numbers may be out of date")}
     </Badge>

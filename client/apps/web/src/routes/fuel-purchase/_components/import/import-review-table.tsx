@@ -180,7 +180,7 @@ export function ImportReviewTable({
                     <TableCell>
                       <Badge
                         variant={STATUS_VARIANT[row.status]}
-                        className="px-1.5 py-0 text-[10px] whitespace-nowrap"
+                        className="px-1.5 py-0 text-2xs whitespace-nowrap"
                       >
                         {IMPORT_ROW_STATUS_LABELS[row.status]}
                       </Badge>

@@ -24,11 +24,11 @@ const moveStatusConfig: Record<
 };
 
 const stopDotColor: Record<MoveStatus, string> = {
-  New: "bg-purple-500",
-  Assigned: "bg-blue-500",
-  InTransit: "bg-blue-500",
-  Completed: "bg-green-500",
-  Canceled: "bg-red-500",
+  New: "bg-accent-violet",
+  Assigned: "bg-info",
+  InTransit: "bg-info",
+  Completed: "bg-success",
+  Canceled: "bg-danger",
 };
 
 export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {

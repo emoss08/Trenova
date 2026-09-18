@@ -199,7 +199,7 @@ type PersonLike = { firstName: string; lastName: string } | null | undefined;
 function Person({ person, placeholder = "" }: { person: PersonLike; placeholder?: string }) {
   return (
     <Avatar className="size-7">
-      <AvatarFallback className="text-[10px] font-medium">
+      <AvatarFallback className="text-2xs font-medium">
         {person ? initials(person.firstName, person.lastName) : placeholder}
       </AvatarFallback>
     </Avatar>

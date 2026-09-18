@@ -462,22 +462,22 @@ export function isTableConfigEqual(a: TableConfig, b: TableConfig): boolean {
 }
 
 export const FORMAT_RULE_COLOR_CLASSES: Record<FormatRuleColor, string> = {
-  red: "bg-red-500/10 hover:bg-red-500/15 dark:bg-red-500/15 dark:hover:bg-red-500/20",
-  amber: "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/15 dark:hover:bg-amber-500/20",
+  red: "bg-danger/10 hover:bg-danger/15 dark:hover:bg-danger/20",
+  amber: "bg-warning/10 hover:bg-warning/15 dark:hover:bg-warning/20",
   green:
-    "bg-emerald-500/10 hover:bg-emerald-500/15 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/20",
-  blue: "bg-sky-500/10 hover:bg-sky-500/15 dark:bg-sky-500/15 dark:hover:bg-sky-500/20",
+    "bg-success/10 hover:bg-success/15 dark:hover:bg-success/20",
+  blue: "bg-accent-sky/10 hover:bg-accent-sky/15 dark:hover:bg-accent-sky/20",
   purple:
-    "bg-violet-500/10 hover:bg-violet-500/15 dark:bg-violet-500/15 dark:hover:bg-violet-500/20",
+    "bg-accent-violet/10 hover:bg-accent-violet/15 dark:hover:bg-accent-violet/20",
   gray: "bg-muted-foreground/10 hover:bg-muted-foreground/15",
 };
 
 export const FORMAT_RULE_COLOR_SWATCHES: Record<FormatRuleColor, string> = {
-  red: "bg-red-500",
-  amber: "bg-amber-500",
-  green: "bg-emerald-500",
-  blue: "bg-sky-500",
-  purple: "bg-violet-500",
+  red: "bg-danger",
+  amber: "bg-warning",
+  green: "bg-success",
+  blue: "bg-accent-sky",
+  purple: "bg-accent-violet",
   gray: "bg-muted-foreground",
 };
 

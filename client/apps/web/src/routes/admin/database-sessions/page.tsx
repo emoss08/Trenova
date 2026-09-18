@@ -55,7 +55,7 @@ function durationLabel(seconds: number) {
 }
 
 function ageSeverityClass(seconds: number) {
-  if (seconds > 120) return "text-orange-600 dark:text-orange-400";
+  if (seconds > 120) return "text-warning-foreground";
   if (seconds >= 30) return "text-foreground";
   return "text-muted-foreground";
 }
@@ -112,7 +112,7 @@ function QueryBlock({ label, query }: { label: string; query: string }) {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="text-muted-foreground text-[10px] tracking-wider uppercase">{label}</span>
+      <span className="text-muted-foreground text-2xs tracking-wider uppercase">{label}</span>
       {query ? (
         <div className="max-h-32 overflow-auto">
           <ShikiCodeBlock code={query} lang="plsql" darkTheme="vitesse-dark" />
@@ -296,8 +296,8 @@ function StatusBar({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-success" />
           </span>
           <span className="text-muted-foreground text-xs">{t("Live")}</span>
         </div>

@@ -14,7 +14,7 @@ export function KPICard({ label, value, icon: Icon, detail, children }: KPICardP
   return (
     <KpiCard span={2}>
       <KpiHeader icon={<Icon className="size-[11px]" />} label={label} />
-      <span className="font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums">
+      <span className="font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums">
         {value}
       </span>
       {children ?? <KpiSub>{detail}</KpiSub>}

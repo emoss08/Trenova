@@ -54,9 +54,9 @@ function sortFacilities(
 }
 
 function breachToneClass(rate: number): string {
-  if (rate >= 0.5) return "bg-red-500 dark:bg-red-400";
-  if (rate >= 0.25) return "bg-amber-500 dark:bg-amber-400";
-  return "bg-emerald-500 dark:bg-emerald-400";
+  if (rate >= 0.5) return "bg-danger";
+  if (rate >= 0.25) return "bg-warning";
+  return "bg-success";
 }
 
 function FacilityRow({
@@ -189,7 +189,7 @@ function FacilityRow({
                 label={t("Leakage")}
                 value={formatCurrency(row.waivedAmount)}
                 valueClassName={
-                  row.waivedAmount > 0 ? "text-amber-600 dark:text-amber-400" : undefined
+                  row.waivedAmount > 0 ? "text-warning-foreground" : undefined
                 }
                 detail={
                   row.suppressedCount > 0

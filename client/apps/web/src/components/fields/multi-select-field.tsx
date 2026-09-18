@@ -572,7 +572,7 @@ export function MultiSelectAutocomplete<T>({
                 "cursor-default whitespace-nowrap",
                 isLocked && "cursor-not-allowed opacity-50",
                 isInvalid &&
-                  "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 hover:border-red-500 hover:bg-red-500/20 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
+                  "border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden focus-visible:border-danger focus-visible:ring-4 focus-visible:ring-danger/20 data-[state=open]:border-danger data-[state=open]:bg-danger/20 data-[state=open]:ring-danger/20",
                 triggerClassName,
               )}
               disabled={isLocked}
@@ -652,7 +652,7 @@ export function MultiSelectAutocomplete<T>({
                 </div>
               ) : (
                 <>
-                  <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>
+                  <p className={cn("text-muted-foreground", isInvalid && "text-danger-foreground")}>
                     {placeholder}
                   </p>
                   <span

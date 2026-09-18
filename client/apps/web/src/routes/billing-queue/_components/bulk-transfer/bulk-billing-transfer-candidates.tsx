@@ -110,7 +110,7 @@ export function BulkBillingTransferCandidates({
       </div>
 
       <div className="overflow-hidden rounded-lg border">
-        <div className="bg-muted/40 text-muted-foreground grid grid-cols-[1.5rem_minmax(0,1.2fr)_minmax(0,1.4fr)_7.5rem_6rem_6rem] items-center gap-3 border-b px-3 py-2 text-[11px] font-medium">
+        <div className="bg-muted/40 text-muted-foreground grid grid-cols-[1.5rem_minmax(0,1.2fr)_minmax(0,1.4fr)_7.5rem_6rem_6rem] items-center gap-3 border-b px-3 py-2 text-xs font-medium">
           <Checkbox
             aria-label={t("Select all shown shipments")}
             checked={allShownSelected}
@@ -213,7 +213,7 @@ function CandidateRow({
       <div className="flex min-w-0 flex-col">
         <span className="truncate font-mono font-medium">{candidate.proNumber}</span>
         {candidate.bol ? (
-          <span className="text-muted-foreground truncate text-[11px]">
+          <span className="text-muted-foreground truncate text-xs">
             {t("BOL {0}", candidate.bol)}
           </span>
         ) : null}
@@ -224,7 +224,7 @@ function CandidateRow({
       <div className="flex min-w-0 flex-col items-start gap-1">
         <ShipmentStatusBadge status={candidate.status} />
         {candidate.billingTransferStatus === "SentBackToOps" ? (
-          <Badge variant="warning" className="max-h-5 text-[10px]">
+          <Badge variant="warning" className="max-h-5 text-2xs">
             {t("Sent back")}
           </Badge>
         ) : null}

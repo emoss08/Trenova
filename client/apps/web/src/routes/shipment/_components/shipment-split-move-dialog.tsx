@@ -107,10 +107,10 @@ function MiniStopRow({
   return (
     <div className="relative flex items-start gap-3">
       <div className="flex flex-col items-center">
-        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-500">
+        <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-violet">
           <div className="size-2 rounded-full bg-white" />
         </div>
-        {showConnector && <div className="mt-0.5 h-12 w-0.5 bg-purple-500" />}
+        {showConnector && <div className="mt-0.5 h-12 w-0.5 bg-accent-violet" />}
       </div>
 
       <div className="flex min-w-0 flex-1 items-start justify-between gap-2 pb-1">
@@ -352,9 +352,9 @@ export function SplitMoveDialog({
           <ScrollArea className="flex max-h-[calc(100vh-14rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
             <div className="space-y-5 px-1 pb-4">
               {hasAssignment && (
-                <div className="flex shrink-0 items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/50">
-                  <InfoIcon className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                <div className="flex shrink-0 items-start gap-2 rounded-lg border border-info-border bg-info-subtle p-3 dark:border-info-border dark:bg-info-subtle/50">
+                  <InfoIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
+                  <p className="text-xs text-info-foreground">
                     {t(
                       "The current assignment will remain on the original move. The new move will be unassigned.",
                     )}

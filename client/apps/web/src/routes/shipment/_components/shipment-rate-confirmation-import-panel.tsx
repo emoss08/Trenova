@@ -432,7 +432,7 @@ export function ShipmentRateConfirmationImportPanel({
                     isActive
                       ? "ring-primary/30"
                       : isComplete
-                        ? "bg-emerald-50/40 ring-emerald-500/20"
+                        ? "bg-success-subtle/40 ring-success/20"
                         : "bg-muted/20"
                   }
                 >
@@ -441,7 +441,7 @@ export function ShipmentRateConfirmationImportPanel({
                       <div
                         className={
                           isComplete
-                            ? "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-white"
+                            ? "flex size-6 items-center justify-center rounded-full bg-success text-white"
                             : isActive
                               ? "bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full"
                               : "bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full"
@@ -641,10 +641,10 @@ export function ShipmentRateConfirmationImportPanel({
 
         {currentStep === "success" ? (
           <div className="grid gap-6 p-6">
-            <Card className="border-emerald-200 bg-emerald-50/60">
+            <Card className="border-success-border bg-success-subtle/60">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2Icon className="size-5 text-emerald-600" />
+                  <CheckCircle2Icon className="size-5 text-success-foreground" />
                   <CardTitle>{t("Shipment created")}</CardTitle>
                 </div>
                 <CardDescription>
@@ -652,21 +652,21 @@ export function ShipmentRateConfirmationImportPanel({
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="bg-background/80 rounded-lg border border-emerald-200 p-4">
+                <div className="bg-background/80 rounded-lg border border-success-border p-4">
                   <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                     {t("Shipment ID")}
                   </div>
                   <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>
                 </div>
                 {attachErrorMessage ? (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                  <div className="rounded-lg border border-warning-border bg-warning-subtle p-4 text-sm text-warning-foreground">
                     {t(
                       "Shipment creation succeeded, but the source document could not be attached.",
                     )}
-                    <div className="mt-1 text-amber-900/80">{attachErrorMessage}</div>
+                    <div className="mt-1 text-warning-foreground/80">{attachErrorMessage}</div>
                   </div>
                 ) : (
-                  <div className="bg-background/80 rounded-lg border border-emerald-200 p-4 text-sm text-emerald-950">
+                  <div className="bg-background/80 rounded-lg border border-success-border p-4 text-sm text-success-foreground">
                     {t("The source document was attached to the new shipment successfully.")}
                   </div>
                 )}

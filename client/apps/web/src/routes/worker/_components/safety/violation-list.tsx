@@ -60,7 +60,7 @@ export function ViolationList({
   return (
     <div className="border-border/60 mt-1 border-t pt-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-[11px] font-medium">
+        <span className="text-muted-foreground text-xs font-medium">
           {t("Violations cited {0}", violations.length > 0 ? ` (${violations.length})` : "")}
         </span>
         {canRecord ? (
@@ -77,7 +77,7 @@ export function ViolationList({
       </div>
 
       {violations.length === 0 ? (
-        <p className="text-muted-foreground mt-1 text-[11px]">
+        <p className="text-muted-foreground mt-1 text-xs">
           {t(
             "None keyed in. The fleet scorecard falls back to the kind of event, which is an estimate rather than what the inspection actually said.",
           )}
@@ -85,7 +85,7 @@ export function ViolationList({
       ) : (
         <ul className="mt-1 flex flex-col gap-1">
           {violations.map((violation) => (
-            <li key={violation.id} className="flex items-center justify-between gap-2 text-[11px]">
+            <li key={violation.id} className="flex items-center justify-between gap-2 text-xs">
               <span className="flex min-w-0 items-center gap-1.5">
                 <Badge variant="neutral">{csaBasicLabel(violation.basic)}</Badge>
                 {violation.code ? (

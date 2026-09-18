@@ -34,7 +34,7 @@ export function ScoreBreakdown({
     <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
-          <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+          <span className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
             {t("Match score")}
           </span>
           <span className="flex items-baseline gap-1">
@@ -43,7 +43,7 @@ export function ScoreBreakdown({
             >
               {score}
             </span>
-            <span className="text-muted-foreground text-[10px]">/ 100</span>
+            <span className="text-muted-foreground text-2xs">/ 100</span>
           </span>
         </div>
         <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
@@ -57,7 +57,7 @@ export function ScoreBreakdown({
       </div>
 
       {factors.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("Not enough data to score this pairing.")}
         </p>
       ) : (
@@ -78,7 +78,7 @@ export function ScoreBreakdown({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-[10.5px] transition-colors"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-2xs transition-colors"
                 onClick={() => setShowFlat((previous) => !previous)}
                 aria-expanded={showFlat}
               >
@@ -96,12 +96,12 @@ export function ScoreBreakdown({
                   {flat.map((factor) => (
                     <li key={factor.key} className="flex flex-col gap-px">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-muted-foreground text-[11px]">{t(factor.label)}</span>
-                        <span className="text-muted-foreground/60 text-[10px] tabular-nums">
+                        <span className="text-muted-foreground text-xs">{t(factor.label)}</span>
+                        <span className="text-muted-foreground/60 text-2xs tabular-nums">
                           +0.0
                         </span>
                       </div>
-                      <span className="text-muted-foreground/70 text-[10px] leading-snug">
+                      <span className="text-muted-foreground/70 text-2xs leading-snug">
                         {factor.detail}
                       </span>
                     </li>
@@ -134,8 +134,8 @@ function FactorRow({
   return (
     <li className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] font-medium">{t(factor.label)}</span>
-        <span className="text-muted-foreground text-[11px] font-medium tabular-nums">
+        <span className="text-xs font-medium">{t(factor.label)}</span>
+        <span className="text-muted-foreground text-xs font-medium tabular-nums">
           +{factor.contribution.toFixed(1)}
         </span>
       </div>
@@ -147,7 +147,7 @@ function FactorRow({
           transition={{ duration: 0.4, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] }}
         />
       </div>
-      <span className="text-muted-foreground text-[10px] leading-snug">{factor.detail}</span>
+      <span className="text-muted-foreground text-2xs leading-snug">{factor.detail}</span>
     </li>
   );
 }

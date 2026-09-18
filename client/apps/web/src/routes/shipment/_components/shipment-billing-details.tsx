@@ -510,7 +510,7 @@ function RatingBreakdownCard() {
             breakdown.length > 0 && "mt-3",
           )}
         >
-          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-info-foreground" />
           <p className="text-2xs text-muted-foreground">
             {t(
               "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .",

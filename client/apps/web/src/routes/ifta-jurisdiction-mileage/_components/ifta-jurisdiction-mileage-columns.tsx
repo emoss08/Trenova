@@ -133,7 +133,7 @@ export function getColumns(
       accessorKey: "source",
       header: t("Source"),
       cell: ({ row }) => (
-        <Badge variant={SOURCE_VARIANTS[row.original.source]} className="px-1.5 py-0 text-[10px]">
+        <Badge variant={SOURCE_VARIANTS[row.original.source]} className="px-1.5 py-0 text-2xs">
           {IFTA_MILEAGE_SOURCE_LABELS[row.original.source]}
         </Badge>
       ),

@@ -87,7 +87,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
               to={favorite.pageUrl}
               className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors"
             >
-              <StarIcon className="size-3 shrink-0 fill-amber-400 text-amber-400" />
+              <StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />
               <span className="truncate">{favorite.pageTitle}</span>
             </Link>
           ))}
@@ -135,7 +135,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
               <span className="text-muted-foreground">{entry.operation}</span>{" "}
               <span className="text-muted-foreground">{entry.resource}</span>
             </span>
-            <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+            <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
               {formatToUserTimezone(entry.timestamp, {
                 showTimeZone: false,
                 showSeconds: false,
@@ -227,7 +227,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
           {notifications.map((notification) => (
             <div key={notification.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
               <span className="truncate text-xs font-medium">{t(notification.title)}</span>
-              <span className="text-muted-foreground truncate text-[10px]">
+              <span className="text-muted-foreground truncate text-2xs">
                 {notification.message}
               </span>
             </div>

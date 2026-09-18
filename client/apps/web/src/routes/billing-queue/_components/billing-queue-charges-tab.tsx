@@ -150,7 +150,7 @@ function ChargeRow({
             {formatCurrency(Number(amount ?? 0))}
           </span>
           {secondary ? (
-            <span className="text-muted-foreground text-[11px] tabular-nums">{secondary}</span>
+            <span className="text-muted-foreground text-xs tabular-nums">{secondary}</span>
           ) : null}
         </span>
         {actions.length > 0 ? (
@@ -433,7 +433,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
             <span className="text-sm">{t("Base Rate")}</span>
-            <span className="text-muted-foreground text-[11px]">
+            <span className="text-muted-foreground text-xs">
               {share ? t("Shipment rate before formula") : t("Per-unit rate before formula")}
             </span>
           </div>
@@ -465,7 +465,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 disabled={isPending}
                 onClick={saveBaseRate}
               >
-                <CheckIcon className="size-3 text-green-600" />
+                <CheckIcon className="size-3 text-success-foreground" />
               </Button>
               <Button
                 size="icon-xs"
@@ -702,7 +702,7 @@ function ShipmentChargeLines({
           key={charge.id ?? index}
           name={chargeName(charge, t("Charge"))}
           details={
-            <span className="text-muted-foreground text-[11px]">
+            <span className="text-muted-foreground text-xs">
               {formatChargeBreakdown(charge)}
             </span>
           }
@@ -762,7 +762,7 @@ function PayerBillLines({
         muted={muted}
         details={
           <>
-            <span className="text-muted-foreground text-[11px]">
+            <span className="text-muted-foreground text-xs">
               {muted
                 ? describeLinePayers(line)
                 : charge
@@ -835,7 +835,7 @@ function PayerBillLines({
                   name={t("Line Haul")}
                   muted
                   details={
-                    <span className="text-muted-foreground text-[11px]">
+                    <span className="text-muted-foreground text-xs">
                       {describeLinePayers(line)}
                     </span>
                   }

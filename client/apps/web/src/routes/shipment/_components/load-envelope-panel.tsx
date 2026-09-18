@@ -272,7 +272,7 @@ function EnvelopeBody({
               )}
             </p>
             {pickupTooSoon && (
-              <p className="mt-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
+              <p className="mt-1 text-xs font-medium text-warning-foreground">
                 {t("The booked pickup falls inside that window and cannot be permitted in time.")}
               </p>
             )}
@@ -297,10 +297,10 @@ function EnvelopeBody({
       </div>
 
       {unverified.length > 0 && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-3 py-2.5">
-          <ShieldQuestionIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
+        <div className="flex items-start gap-2.5 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5">
+          <ShieldQuestionIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
           <div className="space-y-0.5">
-            <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+            <p className="text-xs font-medium text-warning-foreground">
               {t("Unconfirmed limits for {0}", unverified.map((j) => j.stateCode).join(", "))}
             </p>
             <p className="text-muted-foreground text-xs">
@@ -470,7 +470,7 @@ function RequirementRow({
           {exceedances.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {requirement.isSuperload && (
-                <span className="text-2xs rounded-sm bg-orange-600/15 px-1.5 py-px font-medium text-orange-700 dark:text-orange-400">
+                <span className="text-2xs rounded-sm bg-warning/15 px-1.5 py-px font-medium text-warning-foreground">
                   superload
                 </span>
               )}
@@ -595,14 +595,14 @@ function SummaryCard({
     <div
       className={cn(
         "bg-muted/40 rounded-lg border px-3 py-2.5",
-        tone === "warning" && "border-yellow-600/30 bg-yellow-600/10",
+        tone === "warning" && "border-warning/30 bg-warning/10",
       )}
     >
       <div className="flex items-center gap-1.5">
         <span
           className={cn(
             "text-muted-foreground",
-            tone === "warning" && "text-yellow-700 dark:text-yellow-400",
+            tone === "warning" && "text-warning-foreground",
           )}
         >
           {icon}

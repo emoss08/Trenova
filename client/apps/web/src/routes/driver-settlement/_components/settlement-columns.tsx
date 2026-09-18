@@ -28,7 +28,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DriverSettlementRow>[] {
         <div className="flex items-center gap-1.5">
           <DriverSettlementStatusBadge status={row.original.status as DriverSettlementStatus} />
           {row.original.hasExceptions && (
-            <TriangleAlert className="size-3.5 text-amber-500" aria-label={t("Has exceptions")} />
+            <TriangleAlert className="size-3.5 text-warning-foreground" aria-label={t("Has exceptions")} />
           )}
         </div>
       ),

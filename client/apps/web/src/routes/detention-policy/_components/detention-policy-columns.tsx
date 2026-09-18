@@ -43,7 +43,7 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{row.original.name}</span>
           {row.original.isOrgDefault && (
-            <Badge variant="neutral" appearance="outline" className="text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="text-2xs">
               {t("Org default")}
             </Badge>
           )}

@@ -75,7 +75,7 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
-      <TriangleAlertIcon className="size-5 text-amber-500" />
+      <TriangleAlertIcon className="size-5 text-warning-foreground" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
         {t(
           "These figures could not be loaded. The window may be too wide, or the aggregation timed out.",

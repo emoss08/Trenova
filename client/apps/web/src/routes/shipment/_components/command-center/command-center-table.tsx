@@ -486,7 +486,7 @@ export function CommandCenterTable({
           </TableBody>
         </Table>
         {dataQuery.isFetching && !isInitialLoading && (
-          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
+          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded px-2 py-1 text-2xs backdrop-blur-sm">
             <Spinner className="size-3" />
             {t("Refreshing")}
           </div>
@@ -532,7 +532,7 @@ export function CommandCenterTable({
             {isInitialLoading ? (
               <Skeleton className="ml-auto h-3.5 w-24 shrink-0" />
             ) : (
-              <p className="font-table text-muted-foreground ml-auto shrink-0 text-[10.5px] tabular-nums">
+              <p className="font-table text-muted-foreground ml-auto shrink-0 text-2xs tabular-nums">
                 {t("{0} of {1} results", rows.length, totalCount)}
               </p>
             )}
@@ -588,7 +588,7 @@ function ViewModeToggle({
         onClick={() => setViewMode("table")}
         aria-pressed={viewMode === "table"}
         className={cn(
-          "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
+          "flex items-center gap-1 px-2 py-1 text-xs transition-colors",
           viewMode === "table"
             ? "bg-muted text-foreground"
             : "bg-background text-muted-foreground hover:text-foreground",
@@ -602,7 +602,7 @@ function ViewModeToggle({
         onClick={() => setViewMode("timeline")}
         aria-pressed={viewMode === "timeline"}
         className={cn(
-          "border-border flex items-center gap-1 border-l px-2 py-1 text-[11px] transition-colors",
+          "border-border flex items-center gap-1 border-l px-2 py-1 text-xs transition-colors",
           viewMode === "timeline"
             ? "bg-muted text-foreground"
             : "bg-background text-muted-foreground hover:text-foreground",
@@ -651,7 +651,7 @@ function RowFragment({
           <td
             key={cell.id}
             className={cn(
-              "border-border/70 overflow-hidden border-b px-2.5 py-1.5 align-middle text-[11.5px] [tr:last-child>&]:border-b-0",
+              "border-border/70 overflow-hidden border-b px-2.5 py-1.5 align-middle text-xs [tr:last-child>&]:border-b-0",
               pinnedRowCellClass(cell.column, tone),
             )}
             style={pinnedRowCellStyle(cell.column, tone)}
@@ -707,7 +707,7 @@ function CommandCenterFooter({
   const t = useT();
 
   return (
-    <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-[11px]">
+    <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-xs">
       {isLoading ? (
         <Skeleton className="h-3.5 w-44" />
       ) : (
@@ -728,13 +728,13 @@ function CommandCenterFooter({
             value={String(pageSize)}
             onValueChange={(value) => onPageSizeChange(Number(value) as CommandCenterPageSize)}
           >
-            <SelectTrigger className="h-6 w-14.5 py-0 text-[11px]">
+            <SelectTrigger className="h-6 w-14.5 py-0 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={String(size)} className="text-[11px]">
+                  <SelectItem key={size} value={String(size)} className="text-xs">
                     {size}
                   </SelectItem>
                 ))}

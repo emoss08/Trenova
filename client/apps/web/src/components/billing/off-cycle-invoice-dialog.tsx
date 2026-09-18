@@ -81,9 +81,9 @@ export function OffCycleInvoiceDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-            <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-xs text-amber-800 dark:text-amber-200">
+          <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
+            <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
+            <p className="text-xs text-warning-foreground">
               {t(
                 "This freight will not appear on the customer's next statement. Their cycle does not change — everything else still bills on schedule.",
               )}

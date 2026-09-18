@@ -31,8 +31,8 @@ function BillingControlAlert() {
   const t = useT();
 
   return (
-    <div className="mb-4 flex w-full items-center justify-between rounded-md border border-amber-600/50 bg-amber-500/10 p-4">
-      <div className="flex w-full items-center gap-3 text-amber-600">
+    <div className="mb-4 flex w-full items-center justify-between rounded-md border border-warning/50 bg-warning/10 p-4">
+      <div className="flex w-full items-center gap-3 text-warning-foreground">
         <TriangleAlertIcon className="size-5" />
         <div className="flex flex-col">
           <p className="text-sm font-semibold">{t("Critical Financial Configuration")}</p>

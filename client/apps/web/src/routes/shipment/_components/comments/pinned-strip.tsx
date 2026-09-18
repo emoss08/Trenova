@@ -37,14 +37,14 @@ export function PinnedStrip({
   const first = pinnedComments[0];
 
   return (
-    <div className="border-border border-b bg-amber-500/[0.04]">
+    <div className="border-border border-b bg-warning/[0.04]">
       <button
         type="button"
-        className="flex w-full items-center gap-2 px-4 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
+        className="flex w-full items-center gap-2 px-4 py-2 text-left transition-colors hover:bg-warning/[0.08]"
         onClick={() => setIsExpanded((expanded) => !expanded)}
         aria-expanded={isExpanded}
       >
-        <PinIcon className="size-3.5 shrink-0 text-amber-500" />
+        <PinIcon className="size-3.5 shrink-0 text-warning-foreground" />
         <span className="shrink-0 text-xs font-medium">
           {pinnedComments.length === 1 ? t("1 pinned") : t("{0} pinned", pinnedComments.length)}
         </span>

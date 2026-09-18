@@ -238,7 +238,7 @@ function ItemRow({
   return (
     <div className="border-border bg-muted/20 flex flex-col gap-3 rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium uppercase">
+        <span className="text-muted-foreground flex items-center gap-1 text-xs font-medium uppercase">
           <GripVerticalIcon className="size-3.5" />
           {t("Item {0}", index + 1)}
         </span>

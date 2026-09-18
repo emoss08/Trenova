@@ -362,12 +362,12 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             <StatTile
               label={t("Increased")}
               value={String(summary.increasedCount)}
-              tone="text-emerald-600 dark:text-emerald-400"
+              tone="text-success-foreground"
             />
             <StatTile
               label={t("Decreased")}
               value={String(summary.decreasedCount)}
-              tone="text-red-600 dark:text-red-400"
+              tone="text-danger-foreground"
             />
             <StatTile
               label={t("Errors")}

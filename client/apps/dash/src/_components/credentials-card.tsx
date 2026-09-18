@@ -125,7 +125,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
           <p className="truncate text-sm font-medium">
             {item.name}
             {item.required ? (
-              <span className="ml-1 text-[10px] font-normal uppercase text-muted-foreground">
+              <span className="ml-1 text-2xs font-normal uppercase text-muted-foreground">
                 {t("Required")}
               </span>
             ) : null}
@@ -148,7 +148,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
         <div className="flex items-center gap-2 text-muted-foreground">
           {item.numberMasked ? <span className="tabular-nums">{item.numberMasked}</span> : null}
           {item.verified ? (
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+            <span className="flex items-center gap-1 text-success-foreground">
               <ShieldCheckIcon className="size-3.5" />
               {t("Verified")}
             </span>

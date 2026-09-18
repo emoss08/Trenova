@@ -176,8 +176,8 @@ function IndexPriceCard({
           <span
             className={cn(
               "flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              isUp && "text-red-600 dark:text-red-400",
-              isDown && "text-emerald-600 dark:text-emerald-400",
+              isUp && "text-danger-foreground",
+              isDown && "text-success-foreground",
             )}
           >
             {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}

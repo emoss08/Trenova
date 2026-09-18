@@ -158,7 +158,7 @@ export function RecordEntryDialog({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium uppercase">
               {t("Would be paid")}
             </p>
             <p className="font-mono text-xl leading-none font-semibold tabular-nums">
@@ -220,7 +220,7 @@ export function RecordEntryDialog({
                           })
                         }
                         className={cn(
-                          "text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-7 items-center gap-1 rounded-full border border-transparent px-2 text-[11px] tabular-nums transition-colors",
+                          "text-muted-foreground hover:text-foreground hover:bg-muted inline-flex h-7 items-center gap-1 rounded-full border border-transparent px-2 text-xs tabular-nums transition-colors",
                           breakMinutes === minutes && "border-border bg-muted text-foreground",
                         )}
                       >

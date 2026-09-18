@@ -253,7 +253,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             type="button"
             size="sm"
             variant="outline"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-2xs"
             onClick={() => append({ accessorialChargeId: null, description: "", amount: 0 })}
           >
             <PlusIcon className="size-3" />
@@ -275,7 +275,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-[10px]"
+                className="h-6 px-2 text-2xs"
                 onClick={() => remove(index)}
               >
                 <TrashIcon className="size-3" />

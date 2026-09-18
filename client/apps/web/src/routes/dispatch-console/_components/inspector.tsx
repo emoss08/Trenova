@@ -65,21 +65,21 @@ function CandidateRow({
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           {rank <= MAX_HOTKEY_RANK && !candidate.blocked && !missingTractor && (
-            <Kbd className="size-4 min-w-4 shrink-0 text-[9px]">{rank}</Kbd>
+            <Kbd className="size-4 min-w-4 shrink-0 text-3xs">{rank}</Kbd>
           )}
           <span className="truncate text-xs font-medium">{candidate.workerName}</span>
         </div>
-        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
           {t(verdict.label)}
         </Badge>
       </div>
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs">
         <span className="tabular-nums">{t("Score {0}", candidate.score)}</span>
         <span>{t("· {0} empty", formatMiles(candidate.deadheadMiles))}</span>
         <span>{t("· {0} drive left", formatClockDurationMs(candidate.driveRemainingMs))}</span>
         {candidate.minutesOfSlack < 0 ? (
-          <span className="text-red-600 dark:text-red-400">
+          <span className="text-danger-foreground">
             {t("· {0}m late", Math.abs(candidate.minutesOfSlack))}
           </span>
         ) : (
@@ -97,14 +97,14 @@ function CandidateRow({
         <Button
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px]"
+          className="h-6 px-2 text-2xs"
           onClick={() => setExpanded((value) => !value)}
         >
           {expanded ? t("Hide detail") : t("Why this score")}
         </Button>
         <Button
           size="sm"
-          className="h-6 px-2 text-[10px]"
+          className="h-6 px-2 text-2xs"
           disabled={candidate.blocked || missingTractor || isAssigning}
           title={
             missingTractor && !candidate.blocked
@@ -132,12 +132,12 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
       <div className="flex items-center gap-1.5">
         <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
-        <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-3xs">
           {t("Carrier")}
         </Badge>
       </div>
       {move.carrierTotalCost != null && (
-        <span className="text-muted-foreground text-[10px] tabular-nums">
+        <span className="text-muted-foreground text-2xs tabular-nums">
           {t("Total cost {0}", formatCurrency(move.carrierTotalCost))}
         </span>
       )}
@@ -154,7 +154,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
           <Button
             size="sm"
             variant="outline"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-2xs"
             title={t(
               "Broker this move to a different carrier — the current assignment is replaced",
             )}
@@ -168,7 +168,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
             <Button
               size="sm"
               variant="outline"
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-2xs"
               onClick={() => setVerifyOpen(true)}
             >
               <ScanLineIcon className="size-3" aria-hidden />
@@ -179,7 +179,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
         <Button
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px]"
+          className="h-6 px-2 text-2xs"
           onClick={() => openCarrierCancel(move)}
         >
           {t("Cancel carrier assignment")}
@@ -297,10 +297,10 @@ function MoveInspector({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
         <span className="font-mono text-xs font-semibold">{move.proNumber}</span>
-        <span className="text-muted-foreground text-[11px]">
+        <span className="text-muted-foreground text-xs">
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
-        <span className="text-muted-foreground text-[10px]">
+        <span className="text-muted-foreground text-2xs">
           {t(
             "Pickup {0}",
             move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled",
@@ -318,7 +318,7 @@ function MoveInspector({
 
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         {canRankDrivers && (
-          <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+          <span className="text-muted-foreground text-2xs tracking-wide uppercase">
             {t("{0} candidates", candidates.length)}
           </span>
         )}
@@ -329,7 +329,7 @@ function MoveInspector({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 text-[10px]"
+                  className="h-6 px-2 text-2xs"
                   disabled={isAssigning}
                   onClick={() => openCarrierAssign(move)}
                 >
@@ -343,7 +343,7 @@ function MoveInspector({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 text-[10px]"
+                  className="h-6 px-2 text-2xs"
                   disabled={isAssigning}
                   onClick={() => openTender(move)}
                 >
@@ -357,7 +357,7 @@ function MoveInspector({
             <Button
               size="sm"
               variant="outline"
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-2xs"
               onClick={() => setIncludeBlocked((value) => !value)}
             >
               {includeBlocked ? t("Hide ineligible") : t("Show ineligible")}
@@ -429,16 +429,16 @@ function DriverMatchRow({
         <span className="truncate font-mono text-xs font-semibold">{match.move.proNumber}</span>
         <Badge
           variant={verdict.variant}
-          className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums"
+          className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
         >
           {match.score.score}
         </Badge>
       </div>
-      <span className="truncate text-[11px]">
+      <span className="truncate text-xs">
         {match.move.originCity}, {match.move.originState} → {match.move.destinationCity},{" "}
         {match.move.destinationState}
       </span>
-      <span className="text-muted-foreground text-[10px]">
+      <span className="text-muted-foreground text-2xs">
         {t(
           "{0} · {1} empty",
           formatUnixDateTime(match.move.originWindowStart),
@@ -471,11 +471,11 @@ function DriverInspector({
         <span className="text-xs font-semibold">
           {driver.firstName} {driver.lastName}
         </span>
-        <span className="text-muted-foreground text-[11px]">
+        <span className="text-muted-foreground text-xs">
           {driver.tractorCode ? `${driver.tractorCode} · ` : ""}
           {driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`}
         </span>
-        <span className="text-muted-foreground text-[10px]">
+        <span className="text-muted-foreground text-2xs">
           {t("Available {0}", formatUnixDateTime(driver.projectedTimeAvailable))}
         </span>
       </div>
@@ -485,7 +485,7 @@ function DriverInspector({
 
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+            <span className="text-muted-foreground text-2xs tracking-wide uppercase">
               {t("Committed")}
             </span>
             {driver.commitments.map((commitment) => (
@@ -493,8 +493,8 @@ function DriverInspector({
                 key={commitment.moveId}
                 className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
               >
-                <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
-                <span className="text-muted-foreground shrink-0 text-[10px]">
+                <span className="truncate font-mono text-2xs">{commitment.proNumber}</span>
+                <span className="text-muted-foreground shrink-0 text-2xs">
                   {t("to {0}, {1}", commitment.destinationCity, commitment.destinationState)}
                 </span>
               </div>
@@ -503,7 +503,7 @@ function DriverInspector({
         )}
       </div>
 
-      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-[10px] tracking-wide uppercase">
+      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-2xs tracking-wide uppercase">
         {t("Best fit ({0})", matches.length)}
       </span>
 
@@ -564,7 +564,7 @@ export function Inspector({
   return (
     <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <h2 className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
+        <h2 className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
           {selectedMove
             ? canRankDrivers
               ? t("Rank drivers")
@@ -588,7 +588,7 @@ export function Inspector({
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
           <p className="text-xs font-medium">{t("Nothing selected")}</p>
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-muted-foreground text-xs">
             {canRankDrivers
               ? t("Select a move to rank drivers for it, or a driver to find them work.")
               : t("Select a move to see how it can be covered.")}

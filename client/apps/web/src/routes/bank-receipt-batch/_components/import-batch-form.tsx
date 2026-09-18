@@ -113,7 +113,7 @@ export function ImportBatchForm() {
                         <Input
                           {...f}
                           type="date"
-                          className={`h-8 text-xs ${fieldState.error ? "border-red-500" : ""}`}
+                          className={`h-8 text-xs ${fieldState.error ? "border-danger" : ""}`}
                         />
                       )}
                     />
@@ -137,7 +137,7 @@ export function ImportBatchForm() {
                           step="0.01"
                           min="0.01"
                           placeholder="0.00"
-                          className={`h-8 text-right text-xs tabular-nums ${fieldState.error ? "border-red-500" : ""}`}
+                          className={`h-8 text-right text-xs tabular-nums ${fieldState.error ? "border-danger" : ""}`}
                         />
                       )}
                     />
@@ -151,7 +151,7 @@ export function ImportBatchForm() {
                         <Input
                           {...f}
                           placeholder={t("Check #, txn ID...")}
-                          className={`h-8 text-xs ${fieldState.error ? "border-red-500" : ""}`}
+                          className={`h-8 text-xs ${fieldState.error ? "border-danger" : ""}`}
                         />
                       )}
                     />

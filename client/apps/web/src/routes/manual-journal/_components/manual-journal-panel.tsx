@@ -278,7 +278,7 @@ function EditPanel({
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-success text-white hover:bg-success"
                     onClick={() => approveMutation.mutate(undefined)}
                     disabled={approveMutation.isPending}
                   >

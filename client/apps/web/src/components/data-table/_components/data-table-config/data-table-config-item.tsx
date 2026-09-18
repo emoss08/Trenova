@@ -167,19 +167,19 @@ export function DataTableConfigItem({
         <span className="flex min-w-0 flex-col">
           <span className="truncate">{config.name}</span>
           {!isOwn && config.user?.name && (
-            <span className="text-muted-foreground truncate text-[10px]">
+            <span className="text-muted-foreground truncate text-2xs">
               {t("by {0}", config.user.name)}
             </span>
           )}
         </span>
         {config.isDefault && isOwn && (
-          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
+          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-2xs font-medium">
             <StarIcon className="size-2.5" />
             {t("Default")}
           </span>
         )}
         {config.isOrgDefault && (
-          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
+          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-2xs font-medium">
             <Building2Icon className="size-2.5" />
             {t("Org default")}
           </span>
@@ -192,7 +192,7 @@ export function DataTableConfigItem({
             className="flex items-center"
           >
             {isViewDirty ? (
-              <span className="size-1.5 rounded-full bg-amber-500" />
+              <span className="size-1.5 rounded-full bg-warning" />
             ) : (
               <CheckIcon className="text-primary size-3.5" />
             )}

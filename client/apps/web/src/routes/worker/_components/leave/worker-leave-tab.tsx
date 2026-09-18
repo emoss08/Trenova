@@ -149,7 +149,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
       <section
         className={cn(
           "rounded-lg border p-4",
-          entitlement.exhausted && "border-amber-500/60 bg-amber-500/5",
+          entitlement.exhausted && "border-warning/60 bg-warning/5",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -213,7 +213,7 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
           <Figure label={t("Months employed")} value={String(entitlement.monthsEmployed)} />
         </dl>
 
-        <p className="text-muted-foreground mt-3 text-[11px]">
+        <p className="text-muted-foreground mt-3 text-xs">
           {t(
             "The 1,250-hour half of the eligibility test is recorded on each case: there is no timeclock here to answer it from.",
           )}
@@ -412,9 +412,9 @@ export default function WorkerLeaveTab({ workerId }: { workerId: string }) {
 function Figure({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div>
-      <dt className="text-muted-foreground text-[11px]">{label}</dt>
+      <dt className="text-muted-foreground text-xs">{label}</dt>
       <dd className="text-sm font-semibold tabular-nums">{value}</dd>
-      {detail ? <dd className="text-muted-foreground text-[11px]">{detail}</dd> : null}
+      {detail ? <dd className="text-muted-foreground text-xs">{detail}</dd> : null}
     </div>
   );
 }

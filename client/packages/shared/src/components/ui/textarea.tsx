@@ -33,27 +33,27 @@ const ITEMS = [
     text: "Summary",
     icon: <TextIcon />,
     colors: {
-      icon: "text-orange-600",
-      border: "border-orange-500",
-      bg: "bg-orange-500/10",
+      icon: "text-warning-foreground",
+      border: "border-warning",
+      bg: "bg-warning/10",
     },
   },
   {
     text: "Fix Spelling and Grammar",
     icon: <CheckIcon />,
     colors: {
-      icon: "text-emerald-600",
-      border: "border-emerald-500",
-      bg: "bg-emerald-500/10",
+      icon: "text-success-foreground",
+      border: "border-success",
+      bg: "bg-success/10",
     },
   },
   {
     text: "Make shorter",
     icon: <ArrowDownIcon />,
     colors: {
-      icon: "text-purple-600",
-      border: "border-purple-500",
-      bg: "bg-purple-500/10",
+      icon: "text-accent-violet-on-subtle",
+      border: "border-accent-violet",
+      bg: "bg-accent-violet/10",
     },
   },
 ];
@@ -89,7 +89,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
             "focus-within:border-foreground focus-within:ring-4 focus-within:ring-foreground/20 focus-within:outline-hidden",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             isInvalid &&
-              "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+              "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-danger focus-visible:ring-4 focus-visible:ring-danger/20",
             className,
           )}
         >

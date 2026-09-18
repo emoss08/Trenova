@@ -185,7 +185,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
         {schemaUnavailable && (
           <div
             role="status"
-            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
+            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-warning-foreground"
           >
             <span>
               {t(

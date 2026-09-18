@@ -19,10 +19,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
 const OVERDUE_CELL_CLASSES: Record<string, string> = {
-  days1To30Minor: "text-amber-700 dark:text-amber-400",
-  days31To60Minor: "text-orange-700 dark:text-orange-400",
-  days61To90Minor: "text-red-600 dark:text-red-400",
-  daysOver90Minor: "font-medium text-red-700 dark:text-red-400",
+  days1To30Minor: "text-warning-foreground",
+  days31To60Minor: "text-warning-foreground",
+  days61To90Minor: "text-danger-foreground",
+  daysOver90Minor: "font-medium text-danger-foreground",
 };
 
 function bucketColumn(key: keyof ARAgingRow["buckets"], header: string): ColumnDef<ARAgingRow> {
@@ -82,7 +82,7 @@ export function AgingTable({
             className={cn(
               "text-xs",
               row.original.buckets.currentMinor > 0
-                ? "text-emerald-700 dark:text-emerald-400"
+                ? "text-success-foreground"
                 : "text-muted-foreground/60",
             )}
           />

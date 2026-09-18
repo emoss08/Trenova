@@ -19,7 +19,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Good: {
     label: WORKER_STANDING_LABELS.Good,
     badgeVariant: "success",
-    textClass: "text-green-600 dark:text-green-400",
+    textClass: "text-success-foreground",
     ringTone: "success",
     blurb: "Nothing on the record needs attention.",
     rank: 0,
@@ -27,7 +27,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Watch: {
     label: WORKER_STANDING_LABELS.Watch,
     badgeVariant: "warning",
-    textClass: "text-amber-600 dark:text-amber-400",
+    textClass: "text-warning-foreground",
     ringTone: "warning",
     blurb: "Something is coming due soon.",
     rank: 1,
@@ -35,7 +35,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   AtRisk: {
     label: WORKER_STANDING_LABELS.AtRisk,
     badgeVariant: "danger",
-    textClass: "text-red-600 dark:text-red-400",
+    textClass: "text-danger-foreground",
     ringTone: "critical",
     blurb: "Something on the record has already lapsed.",
     rank: 2,
@@ -43,7 +43,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Blocked: {
     label: WORKER_STANDING_LABELS.Blocked,
     badgeVariant: "danger",
-    textClass: "text-red-600 dark:text-red-400",
+    textClass: "text-danger-foreground",
     ringTone: "critical",
     blurb: "The worker cannot be put on a load today.",
     rank: 3,
@@ -75,15 +75,15 @@ export type ConcernSeverityMeta = {
 const SEVERITY_META: Record<ConcernSeverity, ConcernSeverityMeta> = {
   Critical: {
     label: "Needs action",
-    textClass: "text-red-600 dark:text-red-400",
-    borderClass: "border-red-500/40 bg-red-500/5",
+    textClass: "text-danger-foreground",
+    borderClass: "border-danger/40 bg-danger/5",
     dotClass: "bg-destructive",
     rank: 0,
   },
   Warning: {
     label: "Coming due",
-    textClass: "text-amber-600 dark:text-amber-400",
-    borderClass: "border-amber-500/40 bg-amber-500/5",
+    textClass: "text-warning-foreground",
+    borderClass: "border-warning/40 bg-warning/5",
     dotClass: "bg-warning",
     rank: 1,
   },

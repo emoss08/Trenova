@@ -81,12 +81,12 @@ export function InfoTile({
         className={cn(
           "mt-1 font-semibold",
           size === "kpi" ? "text-2xl leading-none tracking-tight tabular-nums" : "text-sm",
-          emphasized && "text-red-600 dark:text-red-400",
+          emphasized && "text-danger-foreground",
         )}
       >
         {value}
       </div>
-      {hint && <div className="text-muted-foreground mt-0.5 text-[10px]">{hint}</div>}
+      {hint && <div className="text-muted-foreground mt-0.5 text-2xs">{hint}</div>}
     </div>
   );
 }

@@ -10,7 +10,7 @@ export type ShareSegment = {
   key: string;
   label: string;
   value: number;
-  /** Fill utility for the segment, e.g. `bg-emerald-500 dark:bg-emerald-400`. */
+  /** Fill utility for the segment, e.g. `bg-success`. */
   className: string;
   /** Secondary legend text — usually the formatted amount. */
   caption?: string;
@@ -148,8 +148,8 @@ export function DivergingBar({
         className={cn(
           "absolute inset-y-0 rounded-full",
           positive
-            ? "left-1/2 bg-emerald-500 dark:bg-emerald-400"
-            : "right-1/2 bg-red-500 dark:bg-red-400",
+            ? "left-1/2 bg-success"
+            : "right-1/2 bg-danger",
         )}
         initial={{ width: 0 }}
         animate={{ width: `${width}%` }}

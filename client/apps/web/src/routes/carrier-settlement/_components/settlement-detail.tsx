@@ -129,7 +129,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
 
   return (
     <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-[11px]">
+      <p className="text-muted-foreground text-xs">
         {isTerminal
           ? t("This settlement is finalized and shown here for record-keeping.")
           : t(
@@ -211,11 +211,11 @@ function SummaryTile({
       className={cn(
         "rounded-lg border p-3",
         highlight
-          ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30"
+          ? "border-success-border bg-success-subtle/50 dark:border-success-border dark:bg-success-subtle/30"
           : "bg-muted/30",
       )}
     >
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -335,7 +335,7 @@ function SettlementActions({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:text-red-700 dark:text-red-400"
+          className="text-danger-foreground hover:text-danger-foreground"
           disabled={busy}
           onClick={() => setReasonAction("void")}
         >
@@ -522,7 +522,7 @@ function MarkPaidDialog({
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
-            <p className="text-muted-foreground mb-1 text-[11px]">
+            <p className="text-muted-foreground mb-1 text-xs">
               {t("How the payable was remitted — defaults to the carrier's preferred method.")}
             </p>
             <div className="flex gap-2">
@@ -549,7 +549,7 @@ function MarkPaidDialog({
               onChange={(e) => setPaymentReference(e.target.value)}
               placeholder={t("Check number / ACH trace (optional)")}
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("The check number or ACH trace so the payment reconciles against the bank.")}
             </p>
           </div>
@@ -621,7 +621,7 @@ function AddAdjustmentDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("Description (e.g. Detention - Chicago 6/12)")}
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Appears as the line item on the carrier's statement — say what and when.")}
             </p>
           </div>
@@ -632,7 +632,7 @@ function AddAdjustmentDialog({
               placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Dollars, not cents; positive increases the payable, negative reduces it.")}
             </p>
           </div>
@@ -781,7 +781,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
       </h4>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <p className="text-muted-foreground text-[11px]">{t("Remit to")}</p>
+          <p className="text-muted-foreground text-xs">{t("Remit to")}</p>
           {remitLines.length > 0 ? (
             remitLines.map((line) => (
               <p key={line} className="text-xs font-medium">
@@ -796,7 +796,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
         </div>
         <div className="flex flex-col gap-1.5">
           <div>
-            <p className="text-muted-foreground text-[11px]">{t("Payment method")}</p>
+            <p className="text-muted-foreground text-xs">{t("Payment method")}</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
                 (carrier.paymentMethod === "ACHManual" ? t("ACH (Manual)") : carrier.paymentMethod)}
@@ -804,7 +804,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-[11px]">{t("Payment terms")}</p>
+            <p className="text-muted-foreground text-xs">{t("Payment terms")}</p>
             <p className="text-xs font-medium">{t("Net {0} days", carrier.paymentTermDays)}</p>
           </div>
         </div>
@@ -847,7 +847,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
       {isLoading ? (
         <Skeleton className="h-10 w-full" />
       ) : active.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("No rate confirmations on the covered moves.")}
         </p>
       ) : (
@@ -924,8 +924,8 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
             {match.varianceMinor !== 0 && (
               <span
                 className={cn(
-                  "ml-auto inline-flex rounded-full px-1.5 py-px text-[10px] font-medium",
-                  "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+                  "ml-auto inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
+                  "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
                 )}
                 title={t("Invoice total minus the expected buy rate")}
               >

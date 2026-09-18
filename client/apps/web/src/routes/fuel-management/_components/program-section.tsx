@@ -186,7 +186,7 @@ function ProgramCard({
         {entry.usedFallback && (
           <Badge
             variant="neutral" appearance="outline"
-            className="text-2xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400"
+            className="text-2xs gap-1 border-warning/50 text-warning-foreground"
           >
             <AlertTriangle className="size-3" />
             {t("Prior week price")}

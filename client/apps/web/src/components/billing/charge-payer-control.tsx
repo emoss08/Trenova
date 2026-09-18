@@ -112,7 +112,7 @@ export function ChargePayerControl({
               disabled={disabled}
               className={cn(
                 "text-2xs h-5 max-w-56 shrink-0 gap-1 truncate",
-                rows.length > 0 && "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+                rows.length > 0 && "bg-accent-indigo/10 text-accent-indigo-on-subtle",
                 className,
               )}
               data-testid="charge-payer-control"

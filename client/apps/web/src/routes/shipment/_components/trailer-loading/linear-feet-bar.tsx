@@ -59,12 +59,12 @@ export function LinearFeetBar({
           <div
             className={cn(
               "h-full rounded-full transition-all duration-500",
-              isOver ? "bg-red-500" : utilization > 95 ? "bg-amber-400" : "bg-emerald-500",
+              isOver ? "bg-danger" : utilization > 95 ? "bg-warning" : "bg-success",
             )}
             style={{ width: `${Math.min(utilization, 100)}%` }}
           />
         )}
-        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white drop-shadow-[0_0_3px_rgba(0,0,0,0.5)]">
+        <span className="absolute inset-0 flex items-center justify-center text-3xs font-bold text-white drop-shadow-[0_0_3px_rgba(0,0,0,0.5)]">
           {utilization.toFixed(0)}%
         </span>
       </div>

@@ -238,7 +238,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             <Button
               size="sm"
               variant="ghost"
-              className="text-red-600 dark:text-red-400"
+              className="text-danger-foreground"
               onClick={() => setCloseOpen(true)}
             >
               {t("Close Account")}
@@ -249,13 +249,13 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
 
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Balance")}</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Balance")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Target")}</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Target")}</p>
           <p className="mt-1 text-sm font-semibold">
             {account.targetAmountMinor > 0 ? (
               <AmountDisplay value={account.targetAmountMinor} currency={account.currencyCode} />
@@ -265,7 +265,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Interest Rate")}
           </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
@@ -319,7 +319,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             </tbody>
           </table>
         </div>
-        <p className="text-muted-foreground mt-2 text-[11px]">
+        <p className="text-muted-foreground mt-2 text-xs">
           {t(
             "This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR 376.12(k); interest accrues at least quarterly.",
           )}
@@ -344,7 +344,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 placeholder={t("Amount (e.g. 250.00 or -400.00)")}
                 inputMode="decimal"
               />
-              <p className="text-muted-foreground mt-1 text-[11px]">
+              <p className="text-muted-foreground mt-1 text-xs">
                 {t(
                   "Dollars, not cents; positive deposits into escrow, negative applies funds out.",
                 )}
@@ -356,7 +356,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 onChange={(e) => setAdjustDescription(e.target.value)}
                 placeholder={t("Description (required)")}
               />
-              <p className="text-muted-foreground mt-1 text-[11px]">
+              <p className="text-muted-foreground mt-1 text-xs">
                 {t(
                   "Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow transaction to be accounted for.",
                 )}

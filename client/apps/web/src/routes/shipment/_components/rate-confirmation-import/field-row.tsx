@@ -15,11 +15,11 @@ type FieldRowProps = {
 };
 
 const STATUS_STYLES: Record<FieldStatus, { dot: string; bg: string }> = {
-  accepted: { dot: "bg-emerald-500", bg: "" },
-  "needs-review": { dot: "bg-amber-500", bg: "bg-amber-500/[0.04]" },
+  accepted: { dot: "bg-success", bg: "" },
+  "needs-review": { dot: "bg-warning", bg: "bg-warning/[0.04]" },
   missing: { dot: "bg-muted-foreground/20", bg: "" },
-  conflicting: { dot: "bg-amber-500", bg: "bg-amber-500/[0.04]" },
-  edited: { dot: "bg-blue-500", bg: "bg-blue-500/[0.04]" },
+  conflicting: { dot: "bg-warning", bg: "bg-warning/[0.04]" },
+  edited: { dot: "bg-info", bg: "bg-info/[0.04]" },
 };
 
 function displayValue(value: unknown): string {

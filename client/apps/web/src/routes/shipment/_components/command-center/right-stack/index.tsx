@@ -99,7 +99,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
   if (visible.length === 0) {
     return (
       <aside className="border-border bg-card flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6">
-        <p className="text-[11.5px] font-medium">{t("All panels hidden")}</p>
+        <p className="text-xs font-medium">{t("All panels hidden")}</p>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

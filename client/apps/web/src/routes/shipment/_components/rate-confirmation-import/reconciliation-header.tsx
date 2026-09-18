@@ -31,14 +31,14 @@ export function ReconciliationHeader({
           <span className="font-medium tabular-nums">{t("{0}% confidence", pct)}</span>
           <span className="text-muted-foreground/30">|</span>
           <div className="flex items-center gap-1.5">
-            <div className="size-1.5 rounded-full bg-emerald-500" />
+            <div className="size-1.5 rounded-full bg-success" />
             <span className="text-muted-foreground">
               {t("{0} accepted", counts.accepted + counts.edited)}
             </span>
           </div>
           {counts.needsReview > 0 && (
             <div className="flex items-center gap-1.5">
-              <div className="size-1.5 rounded-full bg-amber-500" />
+              <div className="size-1.5 rounded-full bg-warning" />
               <span className="text-muted-foreground">{t("{0} review", counts.needsReview)}</span>
             </div>
           )}
@@ -50,7 +50,7 @@ export function ReconciliationHeader({
           )}
           {counts.conflicting > 0 && (
             <div className="flex items-center gap-1.5">
-              <div className="size-1.5 rounded-full bg-amber-500" />
+              <div className="size-1.5 rounded-full bg-warning" />
               <span className="text-muted-foreground">
                 {t("{0} conflicting", counts.conflicting)}
               </span>

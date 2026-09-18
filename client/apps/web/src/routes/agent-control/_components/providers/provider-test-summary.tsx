@@ -45,8 +45,8 @@ export function ProviderTestSummary({ outcome, className }: ProviderTestSummaryP
   const tone = !outcome.success ? "error" : outcome.schemaHonoured ? "ok" : "warn";
   const Icon = { ok: CheckCircle2Icon, warn: AlertTriangleIcon, error: XCircleIcon }[tone];
   const toneClass = {
-    ok: "text-emerald-600 dark:text-emerald-400",
-    warn: "text-amber-600 dark:text-amber-400",
+    ok: "text-success-foreground",
+    warn: "text-warning-foreground",
     error: "text-destructive",
   }[tone];
 
@@ -71,7 +71,7 @@ export function ProviderTestSummary({ outcome, className }: ProviderTestSummaryP
         <p className="font-medium">{outcome.message}</p>
         {outcome.detail && <p className="text-muted-foreground mt-1 text-xs">{outcome.detail}</p>}
         {outcome.modelIdentifier && (
-          <p className="text-muted-foreground mt-1 font-mono text-[11px]">
+          <p className="text-muted-foreground mt-1 font-mono text-xs">
             {outcome.modelIdentifier}
           </p>
         )}

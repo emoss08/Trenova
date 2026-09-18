@@ -60,12 +60,12 @@ export function getColumns(
         <span className="flex items-center gap-2 font-medium">
           {jurisdictionLabel(row.original.jurisdiction)}
           {row.original.jurisdiction.hasSurcharge ? (
-            <Badge variant="warning" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="warning" className="px-1.5 py-0 text-2xs">
               {t("Surcharge")}
             </Badge>
           ) : null}
           {row.original.jurisdiction.isIftaMember ? null : (
-            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t("Non-member")}
             </Badge>
           )}

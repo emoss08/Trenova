@@ -100,13 +100,13 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       {earnings && (
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium uppercase">
               {t("Unsettled Earnings")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "{0, plural, one {# pay event} other {# pay events}} awaiting settlement",
                 earnings.accruedEventCount,
@@ -114,7 +114,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium uppercase">
               {t("Outstanding Advances")}
             </p>
             <p className="mt-1 text-sm font-semibold">
@@ -123,18 +123,18 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
                 variant={earnings.outstandingAdvances > 0 ? "negative" : "neutral"}
               />
             </p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t("Recovered automatically from the next settlement")}
             </p>
           </div>
           <div className="bg-muted/30 rounded-lg border p-3">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium uppercase">
               {t("Escrow Balance")}
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.escrowBalanceMinor} />
             </p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t("Ledger under Payroll → Escrow Accounts")}
             </p>
           </div>
@@ -233,7 +233,7 @@ function CurrentAssignmentCard({
         <Button
           size="sm"
           variant="ghost"
-          className="ml-auto text-red-600 dark:text-red-400"
+          className="ml-auto text-danger-foreground"
           onClick={onEnd}
         >
           {t("End Assignment")}
@@ -270,7 +270,7 @@ function CurrentAssignmentCard({
                     </td>
                     <td className="px-3 py-1.5 text-right font-medium tabular-nums">
                       {override != null ? (
-                        <span className="text-blue-600 dark:text-blue-400">
+                        <span className="text-info-foreground">
                           {t("{0}{1} (override)", Number(override), suffix)}
                         </span>
                       ) : (
@@ -288,14 +288,14 @@ function CurrentAssignmentCard({
         </div>
       )}
       {profile != null && profile.guaranteedPeriodMinimumMinor > 0 && (
-        <p className="text-muted-foreground mt-2 text-[11px]">
+        <p className="text-muted-foreground mt-2 text-xs">
           {t("Guaranteed minimum")} <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} />{" "}
           {t(
             "per pay period — a top-up line is added automatically when period gross falls below the floor.",
           )}
         </p>
       )}
-      <p className="text-muted-foreground mt-2 text-[11px]">
+      <p className="text-muted-foreground mt-2 text-xs">
         {t("Need different rates for this driver? Use")}{" "}
         <Link to="/payroll/pay-profiles" className="underline">
           {t("shared profiles")}

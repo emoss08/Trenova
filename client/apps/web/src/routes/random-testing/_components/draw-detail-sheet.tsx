@@ -93,21 +93,21 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
               <h3 className="cc-label text-foreground mb-2">{t("How this round was drawn")}</h3>
               <dl className="grid grid-cols-2 gap-2">
                 <div>
-                  <dt className="text-muted-foreground text-[11px]">{t("Method")}</dt>
-                  <dd className="font-mono text-[11px]">{draw.method}</dd>
+                  <dt className="text-muted-foreground text-xs">{t("Method")}</dt>
+                  <dd className="font-mono text-xs">{draw.method}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground text-[11px]">{t("Period")}</dt>
+                  <dt className="text-muted-foreground text-xs">{t("Period")}</dt>
                   <dd className="tabular-nums">
                     {formatUnixDate(draw.periodStart)} – {formatUnixDate(draw.periodEnd)}
                   </dd>
                 </div>
                 <div className="col-span-2">
-                  <dt className="text-muted-foreground text-[11px]">{t("Seed")}</dt>
-                  <dd className="font-mono text-[11px] break-all">{draw.seed}</dd>
+                  <dt className="text-muted-foreground text-xs">{t("Seed")}</dt>
+                  <dd className="font-mono text-xs break-all">{draw.seed}</dd>
                 </div>
               </dl>
-              <p className="text-muted-foreground mt-2 text-[11px]">
+              <p className="text-muted-foreground mt-2 text-xs">
                 {t(
                   "The same seed over the same roster reproduces exactly these names, in this order.",
                 )}
@@ -212,7 +212,7 @@ export function DrawDetailSheet({ drawId, onOpenChange }: DrawDetailSheetProps) 
                   </li>
                 ))}
               </ul>
-              <p className="text-muted-foreground mt-2 text-[11px]">
+              <p className="text-muted-foreground mt-2 text-xs">
                 {t(
                   "A selection is marked collected by recording its test on the driver's Testing tab, not from here — that keeps the entry and the test from ever disagreeing.",
                 )}

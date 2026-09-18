@@ -179,7 +179,7 @@ export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string
             />
           </div>
           {connectionState !== "connected" && (
-            <div className="border-border text-2xs text-muted-foreground flex items-center gap-1.5 border-t bg-amber-500/5 px-4 py-1">
+            <div className="border-border text-2xs text-muted-foreground flex items-center gap-1.5 border-t bg-warning/5 px-4 py-1">
               <WifiOffIcon className="size-3" />
               {t("Live updates paused — reconnecting…")}
             </div>

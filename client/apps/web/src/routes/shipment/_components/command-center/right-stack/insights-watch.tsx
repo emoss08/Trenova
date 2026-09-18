@@ -34,17 +34,17 @@ function InsightRow({ insight, withDivider }: { insight: Insight; withDivider: b
         <div className="min-w-0">
           <Link
             to={insightHref(insight)}
-            className="line-clamp-2 text-[11px] leading-snug font-semibold hover:underline"
+            className="line-clamp-2 text-xs leading-snug font-semibold hover:underline"
           >
             {insight.headline}
           </Link>
           {insight.subject !== "" && (
-            <p className="text-muted-foreground truncate text-[10px]">{insight.subject}</p>
+            <p className="text-muted-foreground truncate text-2xs">{insight.subject}</p>
           )}
         </div>
       </div>
       {metric && (
-        <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+        <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
           {formatMetricValue(metric)}
         </span>
       )}
@@ -78,7 +78,7 @@ export function InsightsWatch({ enabled = true }: { enabled?: boolean }) {
   let body: React.ReactNode;
   if (!allowed) {
     body = (
-      <p className="text-muted-foreground px-4 py-6 text-center text-[10.5px]">
+      <p className="text-muted-foreground px-4 py-6 text-center text-2xs">
         {t("You do not have permission to read insights.")}
       </p>
     );
@@ -96,8 +96,8 @@ export function InsightsWatch({ enabled = true }: { enabled?: boolean }) {
         <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
           <SparklesIcon className="size-4" />
         </span>
-        <p className="text-[11.5px] font-medium">{t("Nothing needs attention right now")}</p>
-        <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
+        <p className="text-xs font-medium">{t("Nothing needs attention right now")}</p>
+        <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
           {t("Findings appear here when a customer's service moves in the wrong direction.")}
         </p>
       </div>

@@ -42,13 +42,13 @@ export function DeskLivePulse({ desk }: { desk: DetentionDeskState }) {
       aria-live="polite"
       className={cn(
         "inline-flex items-center gap-1.5 text-xs",
-        isError ? "text-red-600 dark:text-red-400" : "text-muted-foreground",
+        isError ? "text-danger-foreground" : "text-muted-foreground",
       )}
     >
       <span
         className={cn(
           "size-1.5 rounded-full",
-          isError ? "bg-red-500" : "bg-emerald-500",
+          isError ? "bg-danger" : "bg-success",
           isFetching && !isError && "animate-pulse motion-reduce:animate-none",
         )}
       />

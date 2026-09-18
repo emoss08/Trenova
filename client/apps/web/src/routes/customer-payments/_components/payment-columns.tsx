@@ -97,7 +97,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerPaymentRow>[] {
             value={row.original.unappliedAmountMinor}
             className={
               row.original.unappliedAmountMinor > 0
-                ? "text-xs font-medium text-amber-600 dark:text-amber-400"
+                ? "text-xs font-medium text-warning-foreground"
                 : "text-muted-foreground/60 text-xs"
             }
           />

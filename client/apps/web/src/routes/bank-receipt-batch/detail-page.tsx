@@ -46,7 +46,7 @@ function SummaryCard({
     <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
         <Icon className={`size-4 ${colorClass ?? "text-muted-foreground"}`} />
-        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {label}
         </p>
       </div>
@@ -102,7 +102,7 @@ export function BankReceiptBatchDetailPage() {
         }}
       >
         <div className="mx-4 mt-3">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
             {t(
               "Could not load this import batch. It may have been deleted or you may not have permission.",
             )}
@@ -153,14 +153,14 @@ export function BankReceiptBatchDetailPage() {
             count={batch.matchedCount}
             amount={batch.matchedAmountMinor}
             icon={CheckCircle2Icon}
-            colorClass="text-green-600 dark:text-green-400"
+            colorClass="text-success-foreground"
           />
           <SummaryCard
             label={t("Exceptions")}
             count={batch.exceptionCount}
             amount={batch.exceptionAmountMinor}
             icon={FileWarningIcon}
-            colorClass="text-red-600 dark:text-red-400"
+            colorClass="text-danger-foreground"
           />
         </div>
 

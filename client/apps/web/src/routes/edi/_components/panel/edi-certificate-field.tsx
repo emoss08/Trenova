@@ -116,7 +116,7 @@ function CertificateSummaryLine({
   }
   if (inspection.isError || !inspection.data) {
     return (
-      <p className="text-xs text-red-600 dark:text-red-400">
+      <p className="text-xs text-danger-foreground">
         {t("The value is not a valid PEM certificate.")}
       </p>
     );
@@ -128,9 +128,9 @@ function CertificateSummaryLine({
     ? `Expired on ${expiresOn}`
     : `Expires in ${summary.expiresInDays} day(s) (${expiresOn})`;
   const expiryTone = summary.expired
-    ? "text-red-600 dark:text-red-400"
+    ? "text-danger-foreground"
     : summary.expiresInDays <= CERTIFICATE_EXPIRY_WARNING_DAYS
-      ? "text-yellow-700 dark:text-yellow-400"
+      ? "text-warning-foreground"
       : "text-muted-foreground";
 
   return (

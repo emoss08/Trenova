@@ -76,7 +76,7 @@ export function DQFFileHeader({ file, canCreate, onAddEmployer, onOpenTab }: DQF
           const body = (
             <>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground truncate text-[11px] font-semibold uppercase">
+                <span className="text-muted-foreground truncate text-xs font-semibold uppercase">
                   {SPINE_LABELS[section.section]}
                 </span>
                 <span className="text-sm font-semibold tabular-nums">

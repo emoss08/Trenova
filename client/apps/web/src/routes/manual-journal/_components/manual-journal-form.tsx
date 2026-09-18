@@ -57,7 +57,7 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
       <div
         className={cn(
           "flex flex-col gap-1 px-4 py-3",
-          hasAmounts && (isBalanced ? "bg-green-600/10" : "bg-red-600/10"),
+          hasAmounts && (isBalanced ? "bg-success/10" : "bg-danger/10"),
         )}
       >
         <span
@@ -66,17 +66,17 @@ function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; total
             !hasAmounts && "text-muted-foreground",
             hasAmounts &&
               (isBalanced
-                ? "text-green-700 dark:text-green-400"
-                : "text-red-700 dark:text-red-400"),
+                ? "text-success-foreground"
+                : "text-danger-foreground"),
           )}
         >
           {isBalanced ? t("Balanced") : t("Difference")}
         </span>
         <span className="flex items-center gap-1.5">
           {isBalanced ? (
-            <CheckCircle2Icon className="size-4 text-green-600 dark:text-green-400" />
+            <CheckCircle2Icon className="size-4 text-success-foreground" />
           ) : hasAmounts ? (
-            <ScaleIcon className="size-4 text-red-600 dark:text-red-400" />
+            <ScaleIcon className="size-4 text-danger-foreground" />
           ) : null}
           <AmountDisplay
             value={difference}

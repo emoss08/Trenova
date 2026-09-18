@@ -274,7 +274,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
                 aria-hidden
               />
               <span className="min-w-0 flex-1 truncate text-xs">{t(row.label)}</span>
-              <span className="font-table text-[10.5px] tabular-nums">{row.value}</span>
+              <span className="font-table text-2xs tabular-nums">{row.value}</span>
             </div>
           ))}
           <Link

@@ -156,13 +156,13 @@ function CopyableSecretBlock({ value }: { value: string }) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
-    <div className="mx-2 rounded-lg border border-amber-600/30 bg-amber-600/10 p-3">
+    <div className="mx-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-sm font-medium text-amber-800 dark:text-amber-300">
+          <div className="text-sm font-medium text-warning-foreground">
             {t("Copy this token now")}
           </div>
-          <div className="text-xs text-amber-700/80 dark:text-amber-300/80">
+          <div className="text-xs text-warning-foreground/80">
             {t("The plaintext token is only shown once.")}
           </div>
         </div>

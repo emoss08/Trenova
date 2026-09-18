@@ -466,9 +466,9 @@ function TokenSuccessDialog({
         <pre className="border-border/70 bg-muted/30 overflow-x-auto rounded-md border p-4 font-mono text-xs">
           {token}
         </pre>
-        <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-          <AlertTriangleIcon className="size-4 shrink-0 text-amber-500" />
-          <p className="text-sm text-amber-700 dark:text-amber-400">
+        <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
+          <AlertTriangleIcon className="size-4 shrink-0 text-warning-foreground" />
+          <p className="text-sm text-warning-foreground">
             {t("Store this key securely. It will not be displayed again.")}
           </p>
         </div>

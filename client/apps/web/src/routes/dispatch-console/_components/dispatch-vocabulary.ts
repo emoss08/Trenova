@@ -29,13 +29,13 @@ export const URGENCY_META: Record<
     label: "Today",
     description: "Picks up later today",
     variant: "info",
-    dotClass: "bg-blue-500",
+    dotClass: "bg-info",
   },
   Tomorrow: {
     label: "Tomorrow",
     description: "Picks up tomorrow",
     variant: "info",
-    dotClass: "bg-purple-500",
+    dotClass: "bg-accent-violet",
   },
   Planned: {
     label: "Planned",
@@ -84,8 +84,8 @@ export const AVAILABILITY_META: Record<
   Working: {
     label: "Working",
     variant: "info",
-    dotClass: "bg-blue-500",
-    labelClass: "text-blue-600 dark:text-blue-400",
+    dotClass: "bg-info",
+    labelClass: "text-info-foreground",
   },
   Blocked: {
     label: "Blocked",
@@ -96,8 +96,8 @@ export const AVAILABILITY_META: Record<
   TimeOff: {
     label: "Time off",
     variant: "info",
-    dotClass: "bg-purple-500",
-    labelClass: "text-purple-600 dark:text-purple-400",
+    dotClass: "bg-accent-violet",
+    labelClass: "text-accent-violet-on-subtle",
   },
 };
 
@@ -179,8 +179,8 @@ export function dutyStatusMeta(value: string) {
 }
 
 export function scoreTone(score: number): string {
-  if (score >= 75) return "text-green-600 dark:text-green-400";
-  if (score >= 50) return "text-amber-600 dark:text-amber-400";
+  if (score >= 75) return "text-success-foreground";
+  if (score >= 50) return "text-warning-foreground";
   return "text-muted-foreground";
 }
 

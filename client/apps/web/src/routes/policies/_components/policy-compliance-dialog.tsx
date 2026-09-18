@@ -164,7 +164,7 @@ export function PolicyComplianceDialog({ policy, onOpenChange }: PolicyComplianc
                   return (
                     <li key={row.workerId} className="flex items-center gap-3 py-2 text-xs">
                       <Avatar className="size-7">
-                        <AvatarFallback className="text-[10px] font-medium">
+                        <AvatarFallback className="text-2xs font-medium">
                           {initials(first, last)}
                         </AvatarFallback>
                       </Avatar>

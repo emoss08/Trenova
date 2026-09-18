@@ -56,7 +56,7 @@ export function PayFlowExplainer() {
               <step.icon className="text-muted-foreground size-3.5" />
               {t(step.title)}
             </div>
-            <p className="text-muted-foreground text-[11px] leading-relaxed">{step.body}</p>
+            <p className="text-muted-foreground text-xs leading-relaxed">{step.body}</p>
           </div>
         ))}
       </div>

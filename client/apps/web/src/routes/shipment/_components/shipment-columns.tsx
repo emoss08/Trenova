@@ -127,10 +127,10 @@ export function getColumns(
       accessorFn: (row) => row.proNumber ?? row.bol ?? "",
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
-          <span className="font-table truncate text-[11.5px] font-semibold tabular-nums">
+          <span className="font-table truncate text-xs font-semibold tabular-nums">
             {row.original.proNumber || "—"}
           </span>
-          <span className="font-table text-muted-foreground truncate text-[10px] tabular-nums">
+          <span className="font-table text-muted-foreground truncate text-2xs tabular-nums">
             {row.original.bol || "—"}
           </span>
         </div>
@@ -157,7 +157,7 @@ export function getColumns(
         return (
           <Link
             to={`/shipment-management/orders?panelType=edit&panelEntityId=${orderId}`}
-            className="font-table truncate text-[11.5px] tabular-nums hover:underline"
+            className="font-table truncate text-xs tabular-nums hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {orderNumber || orderId.slice(0, 12)}
@@ -199,7 +199,7 @@ export function getColumns(
               parent={row.original}
             />
             {typeof weight === "number" && weight > 0 && (
-              <span className="font-table text-muted-foreground text-[10px] tabular-nums">
+              <span className="font-table text-muted-foreground text-2xs tabular-nums">
                 {t("{0} lb", weight.toLocaleString())}
               </span>
             )}
@@ -240,7 +240,7 @@ export function getColumns(
       header: t("Pickup Appt"),
       accessorFn: (row) => getAppointmentStop(getOriginStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
-        <span className="font-table text-[11.5px] tabular-nums">
+        <span className="font-table text-xs tabular-nums">
           {formatAppointment(getOriginStop(row.original))}
         </span>
       ),
@@ -262,7 +262,7 @@ export function getColumns(
       accessorFn: (row) =>
         getAppointmentStop(getDestinationStop(row))?.scheduledWindowStart ?? null,
       cell: ({ row }) => (
-        <span className="font-table text-[11.5px] tabular-nums">
+        <span className="font-table text-xs tabular-nums">
           {formatAppointment(getDestinationStop(row.original))}
         </span>
       ),

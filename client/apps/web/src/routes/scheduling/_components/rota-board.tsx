@@ -112,7 +112,7 @@ export function RotaBoard({
           <tr>
             <th
               scope="row"
-              className="bg-background sticky left-0 z-30 border-t border-b px-3 py-1 text-left align-middle text-[11px] font-medium"
+              className="bg-background sticky left-0 z-30 border-t border-b px-3 py-1 text-left align-middle text-xs font-medium"
             >
               <span className="text-muted-foreground">{t("Cover")}</span>
             </th>
@@ -127,7 +127,7 @@ export function RotaBoard({
                 <CoverageCell coverage={coverage[index]} peak={peak} compact={compact} />
               </td>
             ))}
-            <td className="bg-background text-muted-foreground border-t border-b px-3 py-1 text-right align-middle text-[11px] tabular-nums">
+            <td className="bg-background text-muted-foreground border-t border-b px-3 py-1 text-right align-middle text-xs tabular-nums">
               {t("{0} of {1}", rows.length, rota.rows.length)}
             </td>
           </tr>
@@ -184,7 +184,7 @@ function WorkerCell({ row, compact }: { row: RotaBoardRow; compact: boolean }) {
   const t = useT();
 
   const shift = (
-    <span className="text-muted-foreground flex min-w-0 items-center gap-1 truncate text-[11px]">
+    <span className="text-muted-foreground flex min-w-0 items-center gap-1 truncate text-xs">
       {row.shiftColor ? (
         <span
           className="size-1.5 shrink-0 rounded-full"
@@ -211,7 +211,7 @@ function WorkerCell({ row, compact }: { row: RotaBoardRow; compact: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       <Avatar className="size-7">
-        <AvatarFallback className="text-[10px] font-medium">
+        <AvatarFallback className="text-2xs font-medium">
           {initials(...splitName(row.name))}
         </AvatarFallback>
       </Avatar>
@@ -296,7 +296,7 @@ function CoverageCell({
       <span
         className={cn(
           "font-mono leading-none tabular-nums",
-          compact ? "text-[10px]" : "text-[11px]",
+          compact ? "text-2xs" : "text-xs",
           tone === "strong" ? "text-foreground" : "text-muted-foreground",
           tone === "thin" && "text-warning font-semibold",
         )}
@@ -398,13 +398,13 @@ function RotaCell({
           <span
             className={cn(
               "leading-none font-medium tabular-nums",
-              mode === "time" && "text-[11px]",
+              mode === "time" && "text-xs",
             )}
           >
             {minutesToClock(day.startMinute)}
           </span>
           {mode === "detail" ? (
-            <span className="text-[10px] leading-none opacity-75">
+            <span className="text-2xs leading-none opacity-75">
               {formatHours(day.durationMinutes)}
             </span>
           ) : null}
@@ -415,7 +415,7 @@ function RotaCell({
       {day.assignmentCount > 0 ? (
         <span
           className={cn(
-            "bg-background/80 absolute rounded-full px-1 text-[9px] leading-none font-semibold tabular-nums",
+            "bg-background/80 absolute rounded-full px-1 text-3xs leading-none font-semibold tabular-nums",
             mode === "detail" ? "top-1 right-1" : "top-0.5 right-0.5",
           )}
         >

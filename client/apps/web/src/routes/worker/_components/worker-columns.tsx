@@ -141,7 +141,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
           {row.original.leaveType ? (
             <Badge
               variant="neutral" appearance="outline"
-              className="border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:text-amber-400"
+              className="border-warning/40 bg-warning/10 px-1.5 py-0 text-2xs text-warning-foreground"
               title={t("On leave")}
             >
               {t("{0} leave", WORKER_LEAVE_TYPE_LABELS[row.original.leaveType])}
@@ -395,8 +395,8 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
             <span
               className={cn(
                 "text-xs",
-                days < 0 && "text-red-600 dark:text-red-400",
-                days >= 0 && days <= 30 && "text-amber-600 dark:text-amber-400",
+                days < 0 && "text-danger-foreground",
+                days >= 0 && days <= 30 && "text-warning-foreground",
                 days > 30 && "text-muted-foreground",
               )}
             >

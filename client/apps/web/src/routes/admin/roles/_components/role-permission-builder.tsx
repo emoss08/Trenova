@@ -329,7 +329,7 @@ export function RolePermissionBuilder({
                 {template.icon}
               </div>
               <span className="text-xs font-medium">{template.name}</span>
-              <span className="text-muted-foreground text-[10px] leading-tight">
+              <span className="text-muted-foreground text-2xs leading-tight">
                 {t(template.description)}
               </span>
             </button>
@@ -487,7 +487,7 @@ function ResourceRow({
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium">{resource.displayName}</span>
               {isGranted && (
-                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-[10px]">
+                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
                     ? t("Full Access")
                     : isViewOnly

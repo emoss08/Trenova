@@ -216,7 +216,7 @@ export function VersionHistoryPanel({
             )}
 
             {template?.sourceTemplateId && (
-              <div className="m-2 flex items-center gap-2 rounded-sm border border-amber-500 bg-amber-500/20 p-1 text-sm text-amber-500">
+              <div className="m-2 flex items-center gap-2 rounded-sm border border-warning bg-warning/20 p-1 text-sm text-warning-foreground">
                 <GitBranchIcon className="size-4" />
                 <p>{t("Forked from version {0}", template.sourceVersionNumber)}</p>
               </div>
@@ -348,7 +348,7 @@ function getChangeBadges(
   if (hasExpression) {
     badges.push({
       label: translate("Expr"),
-      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+      color: "bg-info-subtle text-info-foreground dark:bg-info-subtle/40 dark:text-info-foreground",
       tooltip: translate("Expression changed"),
     });
   }
@@ -356,7 +356,7 @@ function getChangeBadges(
   if (variableChanges.length > 0) {
     badges.push({
       label: `Vars${variableChanges.length > 1 ? ` (${variableChanges.length})` : ""}`,
-      color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+      color: "bg-accent-violet-subtle text-accent-violet-on-subtle dark:bg-accent-violet-subtle/40 dark:text-accent-violet-on-subtle",
       tooltip: `${variableChanges.length} variable change${variableChanges.length > 1 ? "s" : ""}`,
     });
   }
@@ -364,7 +364,7 @@ function getChangeBadges(
   if (hasStatus) {
     badges.push({
       label: translate("Status"),
-      color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+      color: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle/40 dark:text-warning-foreground",
       tooltip: translate("Status changed"),
     });
   }
@@ -531,7 +531,7 @@ function VersionItem({
                           render={
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium",
                                 tagOption?.color ?? "bg-muted text-muted-foreground",
                               )}
                             >
@@ -558,7 +558,7 @@ function VersionItem({
                       render={
                         <span
                           className={cn(
-                            "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
+                            "inline-flex items-center rounded px-1.5 py-0.5 text-2xs font-medium",
                             badge.color,
                           )}
                         >

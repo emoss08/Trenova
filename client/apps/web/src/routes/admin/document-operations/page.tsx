@@ -101,20 +101,20 @@ function statusDotColor(status: string): string {
     case "Extracted":
     case "Indexed":
     case "Ready":
-      return "bg-emerald-500";
+      return "bg-success";
     case "Failed":
     case "Rejected":
     case "Canceled":
     case "Expired":
     case "Quarantined":
-      return "bg-red-500";
+      return "bg-danger";
     case "Pending":
     case "Extracting":
     case "Uploading":
     case "Verifying":
     case "Finalizing":
     case "Completing":
-      return "bg-blue-500";
+      return "bg-info";
     default:
       return "bg-muted-foreground";
   }
@@ -138,7 +138,7 @@ function CopyableId({ value, truncate = true }: { value: string; truncate?: bool
           {truncate && value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-6)}` : value}
         </span>
         {isCopied ? (
-          <CheckIcon className="size-3 shrink-0 text-emerald-500" />
+          <CheckIcon className="size-3 shrink-0 text-success-foreground" />
         ) : (
           <CopyIcon className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
         )}
@@ -164,7 +164,7 @@ function SectionHeader({
       </span>
       <h3 className="text-sm font-medium">{title}</h3>
       {count != null && (
-        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
+        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-2xs font-medium tabular-nums">
           {count}
         </span>
       )}
@@ -175,7 +175,7 @@ function SectionHeader({
 function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border p-3">
-      <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </div>
       <div className="mt-1.5 text-sm">{children}</div>
@@ -272,14 +272,14 @@ function ActionButton({
           </span>
           {mutation.isPending && (
             <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-blue-400 opacity-75" />
-              <span className="relative inline-flex size-2 rounded-full bg-blue-500" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-info opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-info" />
             </span>
           )}
         </div>
         <div>
           <div className="text-sm font-medium">{label}</div>
-          <div className="text-muted-foreground mt-0.5 text-[11px]">{detail}</div>
+          <div className="text-muted-foreground mt-0.5 text-xs">{detail}</div>
         </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -318,7 +318,7 @@ function StatusPipeline({ doc }: { doc: Document }) {
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
             >
               <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-[10px] font-medium tracking-wide uppercase">
+              <span className="text-2xs font-medium tracking-wide uppercase">
                 {t(stage.label)}
               </span>
             </TooltipTrigger>
@@ -460,31 +460,31 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
   return (
     <div className="grid gap-2.5 sm:grid-cols-2">
       <div
-        className={`flex items-center gap-3 rounded-lg border p-3 ${hasContent ? "border-emerald-500/20 bg-emerald-500/5" : "border-dashed"}`}
+        className={`flex items-center gap-3 rounded-lg border p-3 ${hasContent ? "border-success/20 bg-success/5" : "border-dashed"}`}
       >
         <span
-          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasContent ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}
+          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasContent ? "bg-success/10 text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
           <FileSearchIcon className="size-4" />
         </span>
         <div>
           <div className="text-sm font-medium">{t("Extracted Content")}</div>
-          <div className="text-muted-foreground text-[11px]">
+          <div className="text-muted-foreground text-xs">
             {hasContent ? t("Content available") : t("Not extracted yet")}
           </div>
         </div>
       </div>
       <div
-        className={`flex items-center gap-3 rounded-lg border p-3 ${hasDraft ? "border-emerald-500/20 bg-emerald-500/5" : "border-dashed"}`}
+        className={`flex items-center gap-3 rounded-lg border p-3 ${hasDraft ? "border-success/20 bg-success/5" : "border-dashed"}`}
       >
         <span
-          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasDraft ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}
+          className={`inline-flex size-8 shrink-0 items-center justify-center rounded-md ${hasDraft ? "bg-success/10 text-success-foreground" : "bg-muted text-muted-foreground"}`}
         >
           <LayersIcon className="size-4" />
         </span>
         <div>
           <div className="text-sm font-medium">{t("Shipment Draft")}</div>
-          <div className="text-muted-foreground text-[11px]">
+          <div className="text-muted-foreground text-xs">
             {hasDraft ? t("Draft available") : t("No draft generated")}
           </div>
         </div>
@@ -515,7 +515,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
                 <CopyableId value={v.id} />
                 {v.isCurrentVersion && <Badge variant="success">{t("Current")}</Badge>}
               </div>
-              <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
+              <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
                 <ClockIcon className="size-3" />
                 {formatTimestamp(v.createdAt)}
               </div>
@@ -550,7 +550,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
                   <CopyableId value={s.id} />
                   <Badge variant={statusVariant(s.status)}>{s.status}</Badge>
                 </div>
-                <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+                <div className="text-muted-foreground flex items-center gap-1 text-xs">
                   <ClockIcon className="size-3" />
                   {relativeTime(s.lastActivityAt)}
                 </div>
@@ -579,7 +579,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
               </div>
 
               {hasFailure && (
-                <div className="border-destructive/20 bg-destructive/5 text-destructive mt-2 rounded-md border px-2.5 py-1.5 font-mono text-[11px]">
+                <div className="border-destructive/20 bg-destructive/5 text-destructive mt-2 rounded-md border px-2.5 py-1.5 font-mono text-xs">
                   {s.failureCode && <span className="font-semibold">{s.failureCode}: </span>}
                   {s.failureMessage}
                 </div>
@@ -610,7 +610,7 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
               <WorkflowIcon className="text-muted-foreground size-3.5" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {ref.kind.replace(/_/g, " ")}
               </div>
               <div className="mt-0.5">
@@ -639,7 +639,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
         {errors.map((err, i) => (
           <div
             key={i}
-            className="bg-destructive/10 text-destructive rounded-md px-2.5 py-1.5 font-mono text-[11px]"
+            className="bg-destructive/10 text-destructive rounded-md px-2.5 py-1.5 font-mono text-xs"
           >
             {err}
           </div>

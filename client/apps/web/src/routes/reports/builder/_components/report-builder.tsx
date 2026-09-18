@@ -242,8 +242,8 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       </header>
 
       {definition && definition.diagnostics.length > 0 && (
-        <div className="border-border flex items-start gap-2 border-b bg-amber-500/5 px-4 py-2 text-xs">
-          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="border-border flex items-start gap-2 border-b bg-warning/5 px-4 py-2 text-xs">
+          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">{t("This report needs attention")}</p>
             {definition.diagnostics.map((diagnostic, i) => (

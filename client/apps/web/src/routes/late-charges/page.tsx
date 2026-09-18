@@ -186,8 +186,8 @@ export function LateChargesPage() {
           <div
             className={
               notice.tone === "warning"
-                ? "flex gap-2 rounded-md border border-amber-300 bg-amber-50/60 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
-                : "flex gap-2 rounded-md border border-blue-300 bg-blue-50/60 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200"
+                ? "flex gap-2 rounded-md border border-warning-border bg-warning-subtle/60 p-3 text-sm text-warning-foreground dark:border-warning-border dark:bg-warning-subtle/30 dark:text-warning-foreground"
+                : "flex gap-2 rounded-md border border-info-border bg-info-subtle/60 p-3 text-sm text-info-foreground dark:border-info-border dark:bg-info-subtle/30 dark:text-info-foreground"
             }
           >
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
@@ -203,7 +203,7 @@ export function LateChargesPage() {
         {previewQuery.isLoading && !result ? (
           <Skeleton className="h-64 w-full rounded-md" />
         ) : previewQuery.isError && !result ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
             {t("Failed to load the late charge preview. Try refreshing the page.")}
           </div>
         ) : result ? (

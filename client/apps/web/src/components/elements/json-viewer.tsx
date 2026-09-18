@@ -120,14 +120,14 @@ function JsonNode({
       return <span className="text-muted-foreground italic">null</span>;
     }
     if (type === "boolean") {
-      return <span className="text-amber-500">{value === true ? "true" : "false"}</span>;
+      return <span className="text-warning-foreground">{value === true ? "true" : "false"}</span>;
     }
     if (type === "number") {
-      return <span className="text-blue-500">{value as number}</span>;
+      return <span className="text-info-foreground">{value as number}</span>;
     }
     if (type === "string") {
       return (
-        <span className="text-green-600 dark:text-green-400">&quot;{value as string}&quot;</span>
+        <span className="text-success-foreground">&quot;{value as string}&quot;</span>
       );
     }
     return null;

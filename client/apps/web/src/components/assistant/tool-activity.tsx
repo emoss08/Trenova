@@ -103,7 +103,7 @@ function ToolStepRow({ step, live }: { step: ToolStep; live: boolean }) {
             {description.title}
           </span>
           {description.subject !== "" && (
-            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-px font-mono text-[10px]">
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-px font-mono text-2xs">
               {description.subject}
             </span>
           )}
@@ -128,7 +128,7 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
     <div className="mt-1.5 flex flex-col gap-2 text-xs">
       {rows.length > 0 && (
         <section className="flex flex-col gap-1">
-          <h4 className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+          <h4 className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
             {t("Asked for")}
           </h4>
           <div className="flex flex-wrap gap-1">
@@ -147,14 +147,14 @@ function ToolStepDetails({ step }: { step: ToolStep }) {
 
       <section className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+          <h4 className="text-muted-foreground text-2xs font-medium tracking-wider uppercase">
             {step.status === "proposed" ? t("Outcome") : t("Returned")}
           </h4>
           {result?.kind === "json" && (
             <Button
               size="xs"
               variant="ghost"
-              className="text-muted-foreground h-5 px-1.5 text-[10px]"
+              className="text-muted-foreground h-5 px-1.5 text-2xs"
               onClick={() => setRaw((value) => !value)}
             >
               <CodeIcon className="size-3" />
@@ -206,7 +206,7 @@ function ToolResultBody({
     default:
       return (
         <div className="flex flex-col gap-1">
-          <pre className="bg-muted/40 scrollbar-overlay max-h-72 overflow-auto rounded-md p-2 font-mono text-[11px] whitespace-pre-wrap">
+          <pre className="bg-muted/40 scrollbar-overlay max-h-72 overflow-auto rounded-md p-2 font-mono text-xs whitespace-pre-wrap">
             {result.text}
           </pre>
           {result.truncated && (
@@ -285,7 +285,7 @@ function StatusLabel({ status }: { status: ToolActivityStatus }) {
       return null;
     case "proposed":
       return (
-        <Badge variant="warning" className="h-4 shrink-0 px-1 text-[10px]">
+        <Badge variant="warning" className="h-4 shrink-0 px-1 text-2xs">
           {t("Needs approval")}
         </Badge>
       );

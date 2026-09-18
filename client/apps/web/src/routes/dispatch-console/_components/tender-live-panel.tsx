@@ -227,24 +227,24 @@ function OfferRow({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
+          <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums">
             #{offer.rank}
           </Badge>
           <span className="truncate text-xs font-medium">
             {offer.carrier?.name ?? t("Unknown carrier")}
           </span>
         </div>
-        <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />
+        <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-3xs" />
       </div>
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs">
         <span className="tabular-nums">{formatOfferRate(offer.rate, offer.rateMethod)}</span>
         <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
         {countdown && (
           <span
             className={cn(
               "tabular-nums",
-              countdown === "expired" && "text-red-600 dark:text-red-400",
+              countdown === "expired" && "text-danger-foreground",
             )}
           >
             · {countdown}
@@ -261,10 +261,10 @@ function OfferRow({
       </div>
 
       {offer.status === "Declined" && offer.declineReason && (
-        <span className="text-muted-foreground text-[10px] italic">“{offer.declineReason}”</span>
+        <span className="text-muted-foreground text-2xs italic">“{offer.declineReason}”</span>
       )}
       {offer.status === "DeliveryFailed" && offer.deliveryError && (
-        <span className="text-[10px] text-red-600 dark:text-red-400">{offer.deliveryError}</span>
+        <span className="text-2xs text-danger-foreground">{offer.deliveryError}</span>
       )}
 
       {offer.status === "Sent" && onRecordResponse && (
@@ -272,7 +272,7 @@ function OfferRow({
           <Button
             size="sm"
             variant="outline"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-2xs"
             onClick={() => onRecordResponse(offer)}
           >
             {t("Record response")}
@@ -351,11 +351,11 @@ export function TenderLivePanel({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
         <TenderStatusBadge status={tender.status} />
-        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (
-          <span className="text-muted-foreground text-[10px]">
+          <span className="text-muted-foreground text-2xs">
             {t("via {0}", tender.routingGuide.name)}
           </span>
         )}
@@ -373,7 +373,7 @@ export function TenderLivePanel({
               <Button
                 size="sm"
                 variant="outline"
-                className="mt-2 h-6 px-2 text-[10px]"
+                className="mt-2 h-6 px-2 text-2xs"
                 onClick={onAssignManually}
               >
                 {t("Assign manually")}
@@ -394,7 +394,7 @@ export function TenderLivePanel({
           />
         ))}
         {offers.length === 0 && (
-          <p className="text-muted-foreground py-3 text-center text-[11px]">
+          <p className="text-muted-foreground py-3 text-center text-xs">
             {t("No offers on this tender.")}
           </p>
         )}
@@ -405,7 +405,7 @@ export function TenderLivePanel({
           <Button
             size="sm"
             variant="outline"
-            className="text-destructive hover:text-destructive h-6 px-2 text-[10px]"
+            className="text-destructive hover:text-destructive h-6 px-2 text-2xs"
             disabled={isTendering}
             onClick={() => setCancelOpen(true)}
           >

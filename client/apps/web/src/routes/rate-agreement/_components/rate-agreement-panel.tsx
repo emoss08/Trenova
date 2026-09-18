@@ -111,7 +111,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               type="button"
               variant="outline"
               size="xs"
-              className="gap-1.5 text-emerald-600 dark:text-emerald-400"
+              className="gap-1.5 text-success-foreground"
               onClick={() => onReviewAction("approve")}
             >
               <CheckIcon className="size-3" />

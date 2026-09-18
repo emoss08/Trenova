@@ -38,12 +38,12 @@ function CertificationRow({
         <AlertTriangleIcon className="text-warning size-3 shrink-0" />
         <Link
           to={`/hr/workers?panelType=edit&panelEntityId=${summary.workerId}&tab=hos`}
-          className="truncate text-[11px] font-semibold hover:underline"
+          className="truncate text-xs font-semibold hover:underline"
         >
           {summary.workerName}
         </Link>
       </div>
-      <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+      <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
         {t("{0} of {1} days", summary.uncertifiedDays, summary.totalDays)}
       </span>
     </div>
@@ -73,8 +73,8 @@ function ConnectSamsaraState() {
       <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
-      <p className="text-[11.5px] font-medium">{t("Connect Samsara to track log certification")}</p>
-      <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
+      <p className="text-xs font-medium">{t("Connect Samsara to track log certification")}</p>
+      <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
         {t(
           "Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled for your organization.",
         )}
@@ -97,7 +97,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
-      <p className="text-muted-foreground text-[10.5px]">
+      <p className="text-muted-foreground text-2xs">
         {t("Certification data could not be loaded from Samsara.")}
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
@@ -160,10 +160,10 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
         <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
           <ShieldCheckIcon className="size-4" />
         </span>
-        <p className="text-[11.5px] font-medium">
+        <p className="text-xs font-medium">
           {t("All drivers certified — no outstanding logs.")}
         </p>
-        <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
+        <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
           {t(
             "Every driver has certified their ELD logs for the last {0} days.",
             CERTIFICATION_WINDOW_DAYS,

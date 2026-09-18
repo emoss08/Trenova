@@ -55,7 +55,7 @@ export function CarrierContextRail({
         <div className="flex flex-col gap-3 p-3">
           <div>
             <h3 className="text-sm font-semibold">{carrierName ?? t("Carrier")}</h3>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.",
               )}
@@ -91,7 +91,7 @@ function RailSection({
           <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {title}
           </h4>
-          <p className="text-muted-foreground text-[10px]">{hint}</p>
+          <p className="text-muted-foreground text-2xs">{hint}</p>
         </div>
         {action}
       </div>
@@ -124,7 +124,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
       hint={t("Accrued purchased-transportation cost waiting for the next settlement run.")}
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("Nothing waiting. New cost accrues automatically as carrier-covered moves complete.")}
         </p>
       ) : (
@@ -132,10 +132,10 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
           {list.map((event) => (
             <li key={event.id} className="rounded-md border p-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground font-mono text-[10px]">
+                <span className="text-muted-foreground font-mono text-2xs">
                   {event.proNumber || t("No PRO")}
                 </span>
-                <span className="text-muted-foreground text-[10px]">
+                <span className="text-muted-foreground text-2xs">
                   {formatSettlementMonthDay(event.eventDate)}
                 </span>
                 <span className="ml-auto text-xs font-semibold">
@@ -144,7 +144,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
               </div>
               <div className="mt-1 flex items-center gap-1.5">
                 <CarrierCostEventStatusBadge status={event.status as CarrierCostEventStatus} />
-                <span className="text-muted-foreground truncate text-[10px]">
+                <span className="text-muted-foreground truncate text-2xs">
                   {t(event.description)}
                 </span>
               </div>
@@ -183,22 +183,22 @@ function RecentSettlementsSection({
   return (
     <RailSection title={t("Recent Settlements")} hint={t("Latest statements for this carrier.")}>
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("No other settlements on record.")}</p>
+        <p className="text-muted-foreground text-xs">{t("No other settlements on record.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((settlement) => (
             <li key={settlement.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-[11px] font-medium">
+                <p className="truncate font-mono text-xs font-medium">
                   {settlement.settlementNumber}
                 </p>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="text-muted-foreground text-2xs">
                   {formatSettlementMonthDay(settlement.periodStart)} –{" "}
                   {formatSettlementMonthDay(settlement.periodEnd)}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <span className="text-[11px] font-semibold">
+                <span className="text-xs font-semibold">
                   <AmountDisplay
                     value={settlement.netPayableMinor}
                     currency={settlement.currencyCode}
@@ -242,7 +242,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
     >
       <p className="text-sm font-semibold">
         <AmountDisplay value={balance} currency="USD" />
-        <span className="text-muted-foreground ml-1 text-[10px] font-normal">
+        <span className="text-muted-foreground ml-1 text-2xs font-normal">
           {t("open balance{0}", list.length >= 100 ? ` ${t("(latest 100 entries)")}` : "")}
         </span>
       </p>
@@ -251,10 +251,10 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
           {list.slice(0, 8).map((entry) => (
             <li
               key={entry.id}
-              className="flex items-center gap-2 rounded-md border px-2 py-1 text-[11px]"
+              className="flex items-center gap-2 rounded-md border px-2 py-1 text-xs"
             >
               <span className="font-medium">{ledgerEntryTypeLabel(entry.entryType)}</span>
-              <span className="text-muted-foreground truncate font-mono text-[10px]">
+              <span className="text-muted-foreground truncate font-mono text-2xs">
                 {entry.documentNumber}
               </span>
               <span className="ml-auto shrink-0 tabular-nums">

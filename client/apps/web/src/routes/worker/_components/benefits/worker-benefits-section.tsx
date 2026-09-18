@@ -176,9 +176,9 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
 function Figure({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="rounded-md border px-2.5 py-1.5">
-      <p className="text-muted-foreground text-[11px]">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-sm font-semibold tabular-nums">{value}</p>
-      {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}
+      {detail ? <p className="text-muted-foreground text-xs">{detail}</p> : null}
     </div>
   );
 }

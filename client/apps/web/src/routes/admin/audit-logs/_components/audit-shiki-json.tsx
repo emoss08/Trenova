@@ -22,7 +22,7 @@ function escapeRegExp(str: string): string {
 
 function injectSensitiveBadgesIntoHtml(html: string): string {
   const badge =
-    '<span title="Sensitive data omitted" class="ml-1 inline-flex h-4 select-none items-center rounded border border-amber-500/40 bg-amber-500/15 px-1 text-[10px] leading-none text-amber-700 dark:text-amber-300">Sensitive</span>';
+    '<span title="Sensitive data omitted" class="ml-1 inline-flex h-4 select-none items-center rounded border border-warning/40 bg-warning/15 px-1 text-2xs leading-none text-warning-foreground">Sensitive</span>';
 
   return html
     .split("\n")
@@ -56,7 +56,7 @@ function injectSearchHighlightsIntoHtml(
       if (part.startsWith("<")) return part;
       return part.replace(regex, (match) => {
         count++;
-        return `<mark class="bg-yellow-300/50 dark:bg-yellow-500/30 rounded-sm">${match}</mark>`;
+        return `<mark class="bg-warning/50 rounded-sm">${match}</mark>`;
       });
     })
     .join("");
@@ -260,7 +260,7 @@ export function ShikiJsonBlock({
             leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             rightElement={
               debouncedQuery ? (
-                <span className="text-muted-foreground pr-1 text-[10px]">
+                <span className="text-muted-foreground pr-1 text-2xs">
                   {matchCount} {matchCount === 1 ? "match" : "matches"}
                 </span>
               ) : undefined
@@ -269,7 +269,7 @@ export function ShikiJsonBlock({
           />
         )}
         {copyPath && (
-          <span className="text-muted-foreground shrink-0 text-[10px]">
+          <span className="text-muted-foreground shrink-0 text-2xs">
             {t("Click line to copy path")}
           </span>
         )}

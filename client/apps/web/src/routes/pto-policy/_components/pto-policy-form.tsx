@@ -295,7 +295,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-muted-foreground text-[11px] font-medium uppercase">
+        <p className="text-muted-foreground text-xs font-medium uppercase">
           {t("Rule {0}", index + 1)}
         </p>
         {onRemove ? (
@@ -396,7 +396,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-xs font-medium">{t("Tenure tiers")}</p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {accrues
                 ? t(
                     "Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.",
@@ -424,7 +424,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
         </div>
         {tiersArray.fields.length > 0 ? (
           <div className="mt-2 flex flex-col gap-2">
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.",
               )}

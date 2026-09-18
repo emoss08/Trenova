@@ -14,7 +14,7 @@ import { formatMinor } from "@trenova/shared/lib/benefits";
 import { BanknoteIcon, HeartHandshakeIcon, LayersIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
 
 type BenefitsOverviewProps = {
   plans: readonly BenefitPlanRow[] | undefined;

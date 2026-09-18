@@ -80,7 +80,7 @@ export function RouteTimelineBlock({ stops }: { stops: Stop[] }) {
   return (
     <ScrollArea className="h-70" viewportClassName="pr-2">
       {stops.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("No stops on this shipment.")}</p>
+        <p className="text-muted-foreground text-xs">{t("No stops on this shipment.")}</p>
       ) : (
         <div className="relative pl-4">
           <div
@@ -96,17 +96,17 @@ export function RouteTimelineBlock({ stops }: { stops: Stop[] }) {
             return (
               <div
                 key={stop.id ?? `${stop.locationId}-${i}`}
-                className="relative pb-2 text-[11px] last:pb-0"
+                className="relative pb-2 text-xs last:pb-0"
               >
                 <StopDot state={state} />
                 <div className="grid grid-cols-[88px_1fr] gap-x-2 leading-tight">
-                  <span className="font-table text-muted-foreground text-[10px] tabular-nums">
+                  <span className="font-table text-muted-foreground text-2xs tabular-nums">
                     {time}
                   </span>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <div className="flex min-w-0 items-baseline gap-2">
                       <span
-                        className={`font-table shrink-0 text-[9.5px] font-semibold tracking-wider ${
+                        className={`font-table shrink-0 text-3xs font-semibold tracking-wider ${
                           state === "current" ? "text-brand" : "text-muted-foreground"
                         }`}
                       >
@@ -114,7 +114,7 @@ export function RouteTimelineBlock({ stops }: { stops: Stop[] }) {
                       </span>
                       <span className="text-foreground truncate font-medium">{loc}</span>
                     </div>
-                    <span className="font-table text-muted-foreground truncate text-[10.5px] tabular-nums">
+                    <span className="font-table text-muted-foreground truncate text-2xs tabular-nums">
                       {stopNote(stop)}
                     </span>
                   </div>

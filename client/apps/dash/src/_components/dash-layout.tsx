@@ -122,7 +122,7 @@ export function DashLayout() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  "relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground",
+                  "relative flex flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground",
                   isActive && "text-foreground",
                 )
               }

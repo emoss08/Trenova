@@ -31,7 +31,7 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     label: "Current",
     light: "#10b981",
     dark: "#34d399",
-    dotClass: "bg-emerald-500 dark:bg-emerald-400",
+    dotClass: "bg-success",
   },
   {
     key: "days1To30Minor",
@@ -39,7 +39,7 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     label: "1–30",
     light: "#f59e0b",
     dark: "#fbbf24",
-    dotClass: "bg-amber-500 dark:bg-amber-400",
+    dotClass: "bg-warning",
   },
   {
     key: "days31To60Minor",
@@ -47,7 +47,7 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     label: "31–60",
     light: "#f97316",
     dark: "#fb923c",
-    dotClass: "bg-orange-500 dark:bg-orange-400",
+    dotClass: "bg-warning",
   },
   {
     key: "days61To90Minor",
@@ -55,7 +55,7 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     label: "61–90",
     light: "#ef4444",
     dark: "#f87171",
-    dotClass: "bg-red-500 dark:bg-red-400",
+    dotClass: "bg-danger",
   },
   {
     key: "daysOver90Minor",
@@ -63,7 +63,7 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     label: "90+",
     light: "#991b1b",
     dark: "#dc2626",
-    dotClass: "bg-red-800 dark:bg-red-600",
+    dotClass: "bg-danger",
   },
 ] as const;
 
@@ -113,7 +113,7 @@ export function AgingDistributionBar({
           return (
             <span
               key={bucket.key}
-              className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]"
+              className="text-muted-foreground inline-flex items-center gap-1.5 text-xs"
             >
               <span className={cn("size-2 rounded-full", bucket.dotClass)} />
               {t(bucket.label)} · {share.toFixed(0)}%

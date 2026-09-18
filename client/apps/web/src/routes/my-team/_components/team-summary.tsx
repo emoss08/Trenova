@@ -16,7 +16,7 @@ type TeamSummaryStripProps = {
   now: number;
 };
 
-const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
 
 export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
   const t = useT();
@@ -80,7 +80,7 @@ export function TeamSummaryStrip({ summary, now }: TeamSummaryStripProps) {
           />
           <div className="flex items-baseline gap-1">
             <NumberFlow value={summary.goodStanding} className={VALUE_CLASS} />
-            <span className="text-muted-foreground font-mono text-[11px]">
+            <span className="text-muted-foreground font-mono text-xs">
               {t("of {0}", summary.total)}
             </span>
           </div>

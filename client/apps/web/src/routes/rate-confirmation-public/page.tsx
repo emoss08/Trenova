@@ -135,7 +135,7 @@ function RateConfirmationSummary({
           >
             {t("Confirm rate")}
           </Button>
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-muted-foreground text-xs">
             {t(
               "By confirming, you agree to the rate and terms shown above on behalf of {0}.",
               rateConfirmation.carrierName,
@@ -208,7 +208,7 @@ export function RateConfirmationPublicPage() {
   if (submitted) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-green-600" aria-hidden />}
+        icon={<CheckCircle2Icon className="size-8 text-success-foreground" aria-hidden />}
         title={t("Rate confirmed")}
         body={t("Thank you — your signature has been recorded and the broker has been notified.")}
       />

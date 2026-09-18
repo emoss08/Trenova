@@ -456,7 +456,7 @@ function ResourceRow({
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium">{resource.displayName}</span>
               {isGranted && (
-                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-[10px]">
+                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
                     ? t("Full Access")
                     : isViewOnly

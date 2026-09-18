@@ -137,16 +137,16 @@ export function getColumns(t: TranslateFn): ColumnDef<TrainingCourseRow>[] {
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1">
           {row.original.passingScore ? (
-            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t("Pass ≥ {0}%", Number(row.original.passingScore).toFixed(0))}
             </Badge>
           ) : null}
           {row.original.validityMonths ? (
-            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t("Every {0} mo", row.original.validityMonths)}
             </Badge>
           ) : (
-            <Badge variant="neutral" appearance="outline" className="text-muted-foreground px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="text-muted-foreground px-1.5 py-0 text-2xs">
               {t("One-time")}
             </Badge>
           )}

@@ -124,7 +124,7 @@ export function AssistantHome({
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="truncate">{agent.name}</span>
-                      <Badge variant="neutral" className="h-4 px-1 text-[10px]">
+                      <Badge variant="neutral" className="h-4 px-1 text-2xs">
                         {agent.toolNames.length === 0
                           ? t("Answers only")
                           : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}

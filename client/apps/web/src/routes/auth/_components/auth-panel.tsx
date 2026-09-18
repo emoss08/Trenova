@@ -51,14 +51,14 @@ export function AuthPanel({ receipt }: { receipt: CredentialReceipt }) {
 
       <div className="relative flex items-center gap-2.5">
         <img src={logoRainbow} alt="" className="size-6 object-contain" />
-        <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
-        <span className="border-border text-subtle-foreground font-table ml-0.5 border-l pl-2.5 text-[10.5px]">
+        <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
+        <span className="border-border text-subtle-foreground font-table ml-0.5 border-l pl-2.5 text-2xs">
           {t("Enterprise")}
         </span>
       </div>
 
       <div className="relative flex flex-col gap-6">
-        <h2 className="m-0 max-w-[19ch] text-[31px] leading-[1.14] font-medium tracking-[-0.038em] text-balance">
+        <h2 className="m-0 max-w-[19ch] text-4xl leading-[1.14] font-medium tracking-[-0.038em] text-balance">
           {AUTH_PITCH}
         </h2>
         <NetworkPulseMetrics pulse={pulse} />
@@ -103,10 +103,10 @@ function NetworkPulseMetrics({ pulse }: { pulse?: NetworkPulse }) {
 function Metric({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <b className="block text-[24px] leading-[1.1] font-medium tracking-[-0.035em] tabular-nums">
+      <b className="block text-3xl leading-[1.1] font-medium tracking-[-0.035em] tabular-nums">
         {children}
       </b>
-      <span className="text-subtle-foreground mt-0.5 block text-[11.5px]">{label}</span>
+      <span className="text-subtle-foreground mt-0.5 block text-xs">{label}</span>
     </div>
   );
 }
@@ -158,7 +158,7 @@ function LaneTrack({
       {chips.map((lane, index) => (
         <span
           key={`${lane.from}-${lane.to}-${lane.status}-${index}`}
-          className="border-border-2 text-subtle-foreground font-table inline-flex items-center gap-2 rounded-full border bg-[color-mix(in_oklch,var(--card)_40%,transparent)] px-2.5 py-[5px] text-[10.5px] whitespace-nowrap"
+          className="border-border-2 text-subtle-foreground font-table inline-flex items-center gap-2 rounded-full border bg-[color-mix(in_oklch,var(--card)_40%,transparent)] px-2.5 py-[5px] text-2xs whitespace-nowrap"
         >
           <span className="text-muted-foreground">{lane.from}</span>→
           <span className="text-muted-foreground">{lane.to}</span>
@@ -176,10 +176,10 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
   return (
     <div className="auth-receipt border-border-2 relative w-full max-w-[392px] rounded-xl border">
       <div className="border-border-2 flex items-center justify-between border-b border-dashed px-3.5 py-[11px]">
-        <span className="text-subtle-foreground font-table text-[10.5px] whitespace-nowrap">
+        <span className="text-subtle-foreground font-table text-2xs whitespace-nowrap">
           {t("Credential")}
         </span>
-        <span className="text-subtle-foreground font-table text-[10.5px] whitespace-nowrap">
+        <span className="text-subtle-foreground font-table text-2xs whitespace-nowrap">
           {receipt.issued ? t("Issued") : t("Assembling")}
         </span>
       </div>
@@ -192,11 +192,11 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
             receipt.issued && index === receipt.rows.length - 1 && "pr-[104px]",
           )}
         >
-          <span className="text-subtle-foreground font-table text-[10.5px]">{row.key}</span>
+          <span className="text-subtle-foreground font-table text-2xs">{row.key}</span>
           {row.value ? (
             <span
               key={row.value}
-              className="auth-receipt-fill min-w-0 truncate text-[12.5px]"
+              className="auth-receipt-fill min-w-0 truncate text-sm"
               title={row.value}
             >
               {row.value}
@@ -207,7 +207,7 @@ function CredentialReceiptCard({ receipt }: { receipt: CredentialReceipt }) {
         </div>
       ))}
       {receipt.issued && (
-        <span className="auth-stamp border-foreground font-table absolute right-3.5 bottom-3 rounded border px-[7px] py-[3px] text-[10.5px] tracking-[0.04em] uppercase">
+        <span className="auth-stamp border-foreground font-table absolute right-3.5 bottom-3 rounded border px-[7px] py-[3px] text-2xs tracking-[0.04em] uppercase">
           {t("Authorized")}
         </span>
       )}
@@ -229,7 +229,7 @@ function PanelFooter() {
   const reachable = versionQuery.isSuccess;
 
   return (
-    <div className="text-subtle-foreground font-table relative flex flex-wrap items-center gap-4 text-[10.5px] whitespace-nowrap">
+    <div className="text-subtle-foreground font-table relative flex flex-wrap items-center gap-4 text-2xs whitespace-nowrap">
       <span className="inline-flex items-center gap-1.5">
         <i
           className={cn(

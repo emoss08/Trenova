@@ -150,7 +150,7 @@ export function SelectField<T extends FieldValues>({
                       fieldState.invalid && "data-pressed:ring-destructive/20",
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
                       warning?.show &&
-                        "border-amber-500 bg-amber-500/10 ring-0 ring-amber-500 placeholder:text-amber-600 focus:outline-hidden focus-visible:border-amber-600 focus-visible:ring-4 focus-visible:ring-amber-400/20",
+                        "border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden focus-visible:border-warning focus-visible:ring-4 focus-visible:ring-warning/20",
                     )}
                   >
                     <div

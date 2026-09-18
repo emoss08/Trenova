@@ -95,7 +95,7 @@ function ForgotPasswordSent({ onBack }: { onBack: () => void }) {
         )}
       </StepHeading>
 
-      <p className="text-subtle-foreground mt-4 mb-0 text-[11.5px]">
+      <p className="text-subtle-foreground mt-4 mb-0 text-xs">
         {t(
           "Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.",
         )}

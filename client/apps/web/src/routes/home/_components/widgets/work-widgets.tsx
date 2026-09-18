@@ -60,7 +60,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
       <span className="min-w-0 flex-1 truncate text-xs">{t(row.label)}</span>
       <span
         className={cn(
-          "font-table text-[10.5px] tabular-nums",
+          "font-table text-2xs tabular-nums",
           hasWork ? "text-foreground font-semibold" : "text-muted-foreground",
         )}
       >
@@ -90,7 +90,7 @@ export function UnassignedWidget({ widget }: WidgetProps) {
       badge={<WidgetCount value={summary.totalCount} tone="warning" />}
       actions={
         summary.pendingRevenue > 0 ? (
-          <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+          <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
             {t("{0} waiting", formatCurrency(summary.pendingRevenue))}
           </span>
         ) : undefined
@@ -167,7 +167,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
                 )}
               />
               <span className="min-w-0 flex-1 truncate text-xs">{item.customer}</span>
-              <span className="font-table text-muted-foreground shrink-0 text-[10px] tabular-nums">
+              <span className="font-table text-muted-foreground shrink-0 text-2xs tabular-nums">
                 {item.dwellLabel}
               </span>
             </Link>
@@ -203,17 +203,17 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
               className="hover:bg-muted/60 flex flex-col gap-0.5 rounded px-1.5 py-1 transition-colors"
             >
               <div className="flex items-baseline justify-between gap-2">
-                <span className="font-table truncate text-[10.5px] font-semibold tabular-nums">
+                <span className="font-table truncate text-2xs font-semibold tabular-nums">
                   {item.proNumber}
                 </span>
-                <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+                <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
                   {formatToUserTimezone(item.pickupWindowStart, {
                     showTimeZone: false,
                     showSeconds: false,
                   })}
                 </span>
               </div>
-              <div className="text-muted-foreground flex items-baseline justify-between gap-2 text-[10px]">
+              <div className="text-muted-foreground flex items-baseline justify-between gap-2 text-2xs">
                 <span className="truncate">
                   {item.customer} · {item.origin} → {item.destination}
                 </span>
@@ -261,7 +261,7 @@ function CountWidget({
         <div className="flex flex-1 flex-col items-start justify-center gap-1">
           <span
             className={cn(
-              "font-mono text-[28px] leading-none font-semibold tracking-tight tabular-nums",
+              "font-mono text-4xl leading-none font-semibold tracking-tight tabular-nums",
               tone === "danger" && "text-destructive",
               tone === "warning" && "text-warning",
             )}

@@ -24,7 +24,7 @@ import { useLoadingOptimization } from "./use-loading-optimization";
 import { AxleWeightDisplay } from "./weight-distribution-bar";
 
 const gradeColors: Record<string, string> = {
-  Excellent: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  Excellent: "bg-success/15 text-success-foreground",
   Good: "bg-primary/15 text-primary",
   Fair: "bg-warning/15 text-warning",
   Poor: "bg-destructive/15 text-destructive",

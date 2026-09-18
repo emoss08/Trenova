@@ -34,7 +34,7 @@ function PreviewBadge({ status }: { status: string }) {
 
   const variant = status === "Ready" ? "success" : status === "Pending" ? "warning" : "neutral";
   return (
-    <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
+    <Badge variant={variant} className="h-5 px-1.5 py-0 text-2xs">
       {t("Preview {0}", status)}
     </Badge>
   );
@@ -50,7 +50,7 @@ function ContentBadge({ status }: { status: string }) {
         ? "warning"
         : "neutral";
   return (
-    <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
+    <Badge variant={variant} className="h-5 px-1.5 py-0 text-2xs">
       {t("Text {0}", status)}
     </Badge>
   );
@@ -150,7 +150,7 @@ function VersionStatusBadges({ version }: { version: Document }) {
   return (
     <div className="flex flex-wrap gap-1">
       {version.detectedKind && version.detectedKind !== "Other" && (
-        <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
+        <Badge variant="info" className="h-5 px-1.5 py-0 text-2xs">
           {version.detectedKind}
         </Badge>
       )}

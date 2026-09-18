@@ -14,14 +14,14 @@ import { Panel, PanelEmpty, PanelError, PanelRowsSkeleton } from "./intelligence
  * loudest no matter which reason it turns out to be.
  */
 const LEAKAGE_TONES = [
-  "bg-amber-500 dark:bg-amber-400",
-  "bg-orange-500 dark:bg-orange-400",
-  "bg-rose-500 dark:bg-rose-400",
-  "bg-violet-500 dark:bg-violet-400",
-  "bg-sky-500 dark:bg-sky-400",
-  "bg-teal-500 dark:bg-teal-400",
-  "bg-lime-500 dark:bg-lime-400",
-  "bg-slate-400 dark:bg-slate-500",
+  "bg-warning",
+  "bg-warning",
+  "bg-danger",
+  "bg-accent-violet",
+  "bg-accent-sky",
+  "bg-accent-teal",
+  "bg-success",
+  "bg-accent-slate",
 ];
 
 function reasonLabel(reason: string): string {
@@ -170,7 +170,7 @@ export function WaiverLeakage({
         <>
           <div className="border-border border-b px-3 py-3">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="text-2xl leading-none font-semibold tracking-tight text-amber-600 tabular-nums dark:text-amber-400">
+              <p className="text-2xl leading-none font-semibold tracking-tight text-warning-foreground tabular-nums dark:text-warning-foreground">
                 {formatCurrency(total)}
               </p>
               <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">

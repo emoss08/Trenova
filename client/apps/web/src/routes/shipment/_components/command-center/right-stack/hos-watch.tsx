@@ -95,14 +95,14 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
           <Link
             to={`/hr/workers?panelType=edit&panelEntityId=${state.workerId}&tab=hos`}
             className={cn(
-              "truncate text-[11px] font-semibold hover:underline",
+              "truncate text-xs font-semibold hover:underline",
               severity !== "normal" && SEVERITY_TEXT[severity],
             )}
           >
             {state.workerName}
           </Link>
         </div>
-        <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[8.5px]">
+        <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
           {t(duty.label)}
         </Badge>
       </div>
@@ -149,8 +149,8 @@ function ConnectSamsaraState() {
       <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
-      <p className="text-[11.5px] font-medium">{t("Connect Samsara to watch driver clocks")}</p>
-      <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
+      <p className="text-xs font-medium">{t("Connect Samsara to watch driver clocks")}</p>
+      <p className="text-muted-foreground max-w-55 text-2xs leading-snug">
         {t(
           "Live hours-of-service visibility turns on once the Samsara telematics integration is enabled for your organization.",
         )}
@@ -173,7 +173,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
-      <p className="text-muted-foreground text-[10.5px]">
+      <p className="text-muted-foreground text-2xs">
         {t("HOS data could not be loaded from Samsara.")}
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
@@ -240,7 +240,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
     body = <ErrorState onRetry={() => void hosQuery.refetch()} />;
   } else if (rows.length === 0) {
     body = (
-      <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">
+      <p className="text-muted-foreground px-2 py-4 text-center text-2xs">
         {t("No HOS data yet — drivers appear once Samsara reports clocks.")}
       </p>
     );
@@ -251,7 +251,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
           <HosRow key={state.workerId} state={state} withDivider={i > 0} />
         ))}
         <div className="border-border flex items-center justify-between gap-2 border-t px-0.5 py-1.5">
-          <span className="font-table text-muted-foreground flex items-center gap-1 text-[9px] tabular-nums">
+          <span className="font-table text-muted-foreground flex items-center gap-1 text-3xs tabular-nums">
             <span
               aria-hidden
               className={cn(
@@ -262,7 +262,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
             {live ? t("Live") : t("Offline")}
           </span>
           {freshestRecordedAt > 0 && (
-            <span className="font-table text-muted-foreground text-[9px] tabular-nums">
+            <span className="font-table text-muted-foreground text-3xs tabular-nums">
               {t("Updated {0}", formatElapsedTime(freshestRecordedAt * 1000, now))}
             </span>
           )}

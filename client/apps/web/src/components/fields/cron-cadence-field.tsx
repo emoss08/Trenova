@@ -125,7 +125,7 @@ export function CadenceToggleChip({
         "transition-[border-color,background-color,color] duration-150",
         "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
         active
-          ? "border-blue-600 bg-blue-600/10 text-blue-600 dark:text-blue-400"
+          ? "border-info bg-info/10 text-info-foreground"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
       )}
     >

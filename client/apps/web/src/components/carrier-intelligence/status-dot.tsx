@@ -4,12 +4,12 @@ import { cn } from "@trenova/shared/lib/utils";
 export type StatusTone = "critical" | "high" | "medium" | "low" | "info" | "success" | "neutral";
 
 const TONE_CLASSES: Record<StatusTone, string> = {
-  critical: "bg-red-500",
-  high: "bg-orange-500",
-  medium: "bg-amber-500",
-  low: "bg-sky-500",
+  critical: "bg-danger",
+  high: "bg-warning",
+  medium: "bg-warning",
+  low: "bg-accent-sky",
   info: "bg-muted-foreground/60",
-  success: "bg-emerald-500",
+  success: "bg-success",
   neutral: "bg-muted-foreground/40",
 };
 

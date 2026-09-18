@@ -173,7 +173,7 @@ export function ChecklistItemRow({
         {item.description ? (
           <p className="text-muted-foreground text-xs">{t(item.description)}</p>
         ) : null}
-        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
           <span>{CHECKLIST_ITEM_KIND_LABELS[kind]}</span>
           {pending && item.dueAt ? (
             <span>

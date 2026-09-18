@@ -130,12 +130,12 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
   return (
     <>
       {isLoading && (
-        <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-[10.5px]">
+        <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-2xs">
           <Spinner className="size-3" /> {t("Loading…")}
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">
+        <p className="text-muted-foreground px-2 py-4 text-center text-2xs">
           {t("All clear ✓")}
         </p>
       )}
@@ -160,12 +160,12 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-[11px] font-semibold">{t(it.title)}</span>
-                <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+                <span className="truncate text-xs font-semibold">{t(it.title)}</span>
+                <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
                   {it.time}
                 </span>
               </div>
-              <p className="font-table text-muted-foreground truncate text-[10px] tabular-nums">
+              <p className="font-table text-muted-foreground truncate text-2xs tabular-nums">
                 {it.body}
               </p>
               <div className="mt-0.5 flex items-center gap-1">

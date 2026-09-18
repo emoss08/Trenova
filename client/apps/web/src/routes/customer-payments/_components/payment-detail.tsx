@@ -118,15 +118,15 @@ function PaymentDetailView({
       </div>
 
       {isReversed ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900 dark:bg-red-950">
-          <p className="text-xs font-medium text-red-700 dark:text-red-300">
+        <div className="rounded-md border border-danger-border bg-danger-subtle px-3 py-2.5 dark:border-danger-border dark:bg-danger-subtle">
+          <p className="text-xs font-medium text-danger-foreground">
             {t(
               "Reversed {0} — cash was backed out and the applied invoices were reopened.",
               formatAccountingDate(payment.reversedAt),
             )}
           </p>
           {payment.reversalReason ? (
-            <p className="mt-0.5 text-xs text-red-600/90 dark:text-red-400/90">
+            <p className="mt-0.5 text-xs text-danger-foreground/90">
               {payment.reversalReason}
             </p>
           ) : null}
@@ -186,7 +186,7 @@ function CashAllocationBar({
       <div className="bg-muted flex h-2.5 w-full gap-px overflow-hidden rounded-full">
         {appliedMinor > 0 ? (
           <m.div
-            className="h-full bg-emerald-500"
+            className="h-full bg-success"
             initial={{ width: 0 }}
             animate={{ width: `${appliedShare}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
@@ -194,7 +194,7 @@ function CashAllocationBar({
         ) : null}
         {unappliedMinor > 0 ? (
           <m.div
-            className="h-full bg-sky-500"
+            className="h-full bg-accent-sky"
             initial={{ width: 0 }}
             animate={{ width: `${unappliedShare}%` }}
             transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
@@ -202,17 +202,17 @@ function CashAllocationBar({
         ) : null}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
-          <span className="size-2 rounded-full bg-emerald-500" />
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+          <span className="size-2 rounded-full bg-success" />
           {t("Applied · {0}", formatCurrency(appliedMinor / 100))}
         </span>
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
-          <span className="size-2 rounded-full bg-sky-500" />
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+          <span className="size-2 rounded-full bg-accent-sky" />
           {t("Unapplied · {0}", formatCurrency(unappliedMinor / 100))}
         </span>
         {shortPayMinor > 0 ? (
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
-            <span className="size-2 rounded-full bg-amber-500" />
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+            <span className="size-2 rounded-full bg-warning" />
             {t("Short-pay written off · {0}", formatCurrency(shortPayMinor / 100))}
           </span>
         ) : null}
@@ -275,7 +275,7 @@ function ApplicationsSection({
                         </span>
                       )}
                       {application.invoice ? (
-                        <span className="text-muted-foreground text-[11px]">
+                        <span className="text-muted-foreground text-xs">
                           {application.invoice.billToName}
                         </span>
                       ) : null}
@@ -303,7 +303,7 @@ function ApplicationsSection({
                     {application.shortPayAmountMinor > 0 ? (
                       <AmountDisplay
                         value={application.shortPayAmountMinor}
-                        className="text-xs text-amber-600 dark:text-amber-400"
+                        className="text-xs text-warning-foreground"
                       />
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
@@ -334,7 +334,7 @@ function ApplicationsSection({
                   {shortPayMinor > 0 ? (
                     <AmountDisplay
                       value={shortPayMinor}
-                      className="text-xs font-semibold text-amber-600 dark:text-amber-400"
+                      className="text-xs font-semibold text-warning-foreground"
                     />
                   ) : (
                     <span className="text-muted-foreground text-xs">—</span>
@@ -415,7 +415,7 @@ function CopyIdButton({ id }: { id: string }) {
       }}
     >
       {copied ? (
-        <CheckIcon className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+        <CheckIcon className="size-3.5 text-success-foreground" />
       ) : (
         <CopyIcon className="size-3.5" />
       )}

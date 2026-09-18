@@ -24,7 +24,7 @@ function ViewTab({
       onClick={() => onSelect(id)}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-1.5 text-[11.5px] transition-colors",
+        "-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-1.5 text-xs transition-colors",
         isActive
           ? "border-brand text-foreground font-semibold"
           : "text-muted-foreground hover:text-foreground border-transparent font-medium",
@@ -33,7 +33,7 @@ function ViewTab({
       <span>{label}</span>
       <span
         className={cn(
-          "font-table inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-px text-[10px] tabular-nums",
+          "font-table inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-px text-2xs tabular-nums",
           isActive ? "bg-brand/15 text-brand" : "bg-muted text-muted-foreground",
         )}
       >

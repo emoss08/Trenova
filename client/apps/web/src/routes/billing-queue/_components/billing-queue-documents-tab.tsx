@@ -153,10 +153,10 @@ export function BillingQueueDocumentsTab({
       {billingReadiness && billingReadiness.requirements.length > 0 && (
         <div className="shrink-0 border-b px-3 py-2">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {requirementTitle}
             </span>
-            <span className="text-muted-foreground text-[11px] tabular-nums">
+            <span className="text-muted-foreground text-xs tabular-nums">
               {billingReadiness.requirements.length - billingReadiness.missingRequirements.length}/
               {billingReadiness.requirements.length}
             </span>
@@ -169,7 +169,7 @@ export function BillingQueueDocumentsTab({
               >
                 <div className="flex min-w-0 items-center gap-1.5">
                   {req.satisfied ? (
-                    <CheckCircle2Icon className="size-3.5 shrink-0 text-green-500" />
+                    <CheckCircle2Icon className="size-3.5 shrink-0 text-success-foreground" />
                   ) : (
                     <CircleDashedIcon className="text-muted-foreground size-3.5 shrink-0" />
                   )}
@@ -248,7 +248,7 @@ export function BillingQueueDocumentsTab({
                   <Icon className="text-muted-foreground size-4 shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm">{doc.originalName}</span>
-                    <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                    <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
                       <span>{formatSize(doc.fileSize)}</span>
                       <span>&middot;</span>
                       <span>

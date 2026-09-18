@@ -86,17 +86,17 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         <StatTile
           label={t("Increased")}
           value={String(summary.increasedCount)}
-          tone="text-emerald-600 dark:text-emerald-400"
+          tone="text-success-foreground"
         />
         <StatTile
           label={t("Decreased")}
           value={String(summary.decreasedCount)}
-          tone="text-red-600 dark:text-red-400"
+          tone="text-danger-foreground"
         />
         <StatTile
           label={t("Clamped")}
           value={String(summary.guardrailCount)}
-          tone={summary.guardrailCount > 0 ? "text-blue-600 dark:text-blue-400" : undefined}
+          tone={summary.guardrailCount > 0 ? "text-info-foreground" : undefined}
         />
         <StatTile
           label={t("Failed")}
@@ -183,7 +183,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
           {result.guardrailApplied && (
             <Tooltip>
               <TooltipTrigger
-                render={<ShieldIcon className="size-3.5 text-blue-500 dark:text-blue-400" />}
+                render={<ShieldIcon className="size-3.5 text-info-foreground" />}
               />
               <TooltipContent side="left" className="text-xs">
                 {t("Guardrail clamped the candidate amount")}

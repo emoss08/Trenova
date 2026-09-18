@@ -16,8 +16,8 @@ type StatCardProps = {
 
 const TONE_CLASS: Record<NonNullable<StatCardProps["tone"]>, string> = {
   default: "bg-muted text-muted-foreground",
-  success: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  warning: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  success: "bg-success/15 text-success-foreground",
+  warning: "bg-warning/15 text-warning-foreground",
 };
 
 export function StatCard({

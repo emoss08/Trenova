@@ -29,7 +29,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ReviewTemplateRow>[] {
         <span className="flex items-center gap-2 font-medium">
           {row.original.code}
           {row.original.isDefault ? (
-            <Badge variant="info" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="info" className="px-1.5 py-0 text-2xs">
               {t("Default")}
             </Badge>
           ) : null}
@@ -70,7 +70,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ReviewTemplateRow>[] {
       cell: ({ row }) => (
         <span className="flex flex-wrap gap-1">
           {row.original.items.slice(0, 3).map((item) => (
-            <Badge key={item.key} variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+            <Badge key={item.key} variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
               {t(item.label)} ×{item.weight}
             </Badge>
           ))}

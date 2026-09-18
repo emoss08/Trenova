@@ -54,13 +54,13 @@ function formatCompactRelativeTime(timestamp: number): string {
 function CommentRow({ comment }: { comment: ShipmentComment }) {
   return (
     <li className="min-w-0">
-      <p className="hover:bg-muted/40 flex min-w-0 items-baseline gap-1.5 rounded px-1.5 py-1 text-[11px] leading-tight transition-colors">
+      <p className="hover:bg-muted/40 flex min-w-0 items-baseline gap-1.5 rounded px-1.5 py-1 text-xs leading-tight transition-colors">
         <span className="font-table text-foreground shrink-0 font-semibold">
           {formatUserHandle(comment)}
         </span>
         <time
           dateTime={new Date(comment.createdAt * 1000).toISOString()}
-          className="font-table text-muted-foreground shrink-0 text-[10px] tabular-nums"
+          className="font-table text-muted-foreground shrink-0 text-2xs tabular-nums"
         >
           {formatCompactRelativeTime(comment.createdAt)}
         </time>
@@ -178,7 +178,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
     <div className="min-w-0">
       <div className="mb-1 flex items-center justify-between gap-2">
         <h5 className="cc-label">{t("Comments")}</h5>
-        <span className="font-table text-muted-foreground text-[10px] tabular-nums">{total}</span>
+        <span className="font-table text-muted-foreground text-2xs tabular-nums">{total}</span>
       </div>
       <ScrollArea
         ref={scrollAreaRef}
@@ -197,7 +197,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
               <CommentRow key={comment.id} comment={comment} />
             ))}
             {isFetchingNextPage && (
-              <li className="text-muted-foreground px-1.5 py-1 text-[10px]">
+              <li className="text-muted-foreground px-1.5 py-1 text-2xs">
                 {t("Loading older comments...")}
               </li>
             )}

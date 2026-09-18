@@ -17,11 +17,11 @@ export function RevokedKeysCard({ data }: Props) {
       <div className="mt-1.5 space-y-1">
         <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
           <div
-            className="h-full rounded-full bg-red-500 transition-all"
+            className="h-full rounded-full bg-danger transition-all"
             style={{ width: `${Math.min(percentOfTotal, 100)}%` }}
           />
         </div>
-        <div className="text-muted-foreground flex justify-between text-[10px]">
+        <div className="text-muted-foreground flex justify-between text-2xs">
           <span>{t("{0}% of total", percentOfTotal)}</span>
         </div>
       </div>

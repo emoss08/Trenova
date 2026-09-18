@@ -328,7 +328,7 @@ function CategorySection({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-[11px]"
+              className="h-6 px-2 text-xs"
               onClick={() => onToggleAllForCategory(category, "select")}
             >
               {t("All")}
@@ -337,7 +337,7 @@ function CategorySection({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-[11px]"
+              className="h-6 px-2 text-xs"
               onClick={() => onToggleAllForCategory(category, "clear")}
             >
               {t("None")}

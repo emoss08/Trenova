@@ -23,11 +23,11 @@ type StopReconciliationCardProps = {
 };
 
 const DOT_STYLE: Record<FieldStatus, string> = {
-  accepted: "bg-emerald-500",
-  "needs-review": "bg-amber-500",
+  accepted: "bg-success",
+  "needs-review": "bg-warning",
   missing: "bg-muted-foreground/20",
-  conflicting: "bg-amber-500",
-  edited: "bg-blue-500",
+  conflicting: "bg-warning",
+  edited: "bg-info",
 };
 
 function InlineField({

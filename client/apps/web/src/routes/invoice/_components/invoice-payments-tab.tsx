@@ -195,8 +195,8 @@ function TotalCell({
       <p
         className={cn(
           "mt-1 text-base font-semibold tabular-nums",
-          tone === "negative" && "text-red-600 dark:text-red-400",
-          tone === "positive" && "text-emerald-600 dark:text-emerald-400",
+          tone === "negative" && "text-danger-foreground",
+          tone === "positive" && "text-success-foreground",
         )}
       >
         {value}

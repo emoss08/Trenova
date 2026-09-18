@@ -92,8 +92,8 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
                 className={cn(
                   "font-semibold tabular-nums",
                   line.count === 0 && "text-muted-foreground",
-                  line.count > 0 && line.tone === "critical" && "text-red-600 dark:text-red-400",
-                  line.count > 0 && line.tone === "warning" && "text-amber-600 dark:text-amber-400",
+                  line.count > 0 && line.tone === "critical" && "text-danger-foreground",
+                  line.count > 0 && line.tone === "warning" && "text-warning-foreground",
                 )}
               >
                 {line.count}
@@ -121,7 +121,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
               muted={data.leaveCertificationsOutstanding === 0}
             />
           </dl>
-          <p className="text-muted-foreground mt-1.5 px-1.5 text-[11px]">
+          <p className="text-muted-foreground mt-1.5 px-1.5 text-xs">
             {t(
               "{0} active {1}",
               data.activeWorkers,
@@ -143,7 +143,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
 function Standing({ label, value, muted }: { label: string; value: string; muted: boolean }) {
   return (
     <div className="px-1.5">
-      <dt className="text-muted-foreground text-[11px]">{label}</dt>
+      <dt className="text-muted-foreground text-xs">{label}</dt>
       <dd
         className={cn(
           "text-sm font-semibold tabular-nums",

@@ -23,28 +23,28 @@ const RATING_META: Record<SafetyRating, SafetyRatingMeta> = {
   Excellent: {
     label: "Excellent",
     badgeVariant: "success",
-    textClass: "text-green-600 dark:text-green-400",
+    textClass: "text-success-foreground",
     ringTone: "success",
     rank: 0,
   },
   Good: {
     label: "Good",
     badgeVariant: "neutral",
-    textClass: "text-sky-600 dark:text-sky-400",
+    textClass: "text-accent-sky-on-subtle",
     ringTone: "success",
     rank: 1,
   },
   Watch: {
     label: "Watch",
     badgeVariant: "warning",
-    textClass: "text-amber-600 dark:text-amber-400",
+    textClass: "text-warning-foreground",
     ringTone: "warning",
     rank: 2,
   },
   AtRisk: {
     label: "At risk",
     badgeVariant: "danger",
-    textClass: "text-red-600 dark:text-red-400",
+    textClass: "text-danger-foreground",
     ringTone: "critical",
     rank: 3,
   },
@@ -78,12 +78,12 @@ const LADDER: DisciplinaryLevel[] = [
 ];
 
 const LEVEL_TONE: Record<DisciplinaryLevel, string> = {
-  Coaching: "text-sky-600 dark:text-sky-400",
-  VerbalWarning: "text-sky-600 dark:text-sky-400",
-  WrittenWarning: "text-amber-600 dark:text-amber-400",
-  FinalWarning: "text-amber-600 dark:text-amber-400",
-  Suspension: "text-red-600 dark:text-red-400",
-  Termination: "text-red-600 dark:text-red-400",
+  Coaching: "text-accent-sky-on-subtle",
+  VerbalWarning: "text-accent-sky-on-subtle",
+  WrittenWarning: "text-warning-foreground",
+  FinalWarning: "text-warning-foreground",
+  Suspension: "text-danger-foreground",
+  Termination: "text-danger-foreground",
 };
 
 export function disciplinaryLevelMeta(level: DisciplinaryLevel): DisciplinaryLevelMeta {

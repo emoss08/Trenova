@@ -13,7 +13,7 @@ export function MarginCell({ shipment }: { shipment: Shipment }) {
   if (!estimate || estimate.totalMiles <= 0) {
     return (
       <div className="flex flex-col items-end gap-0.5 text-right">
-        <span className="font-table text-muted-foreground text-[11.5px] tabular-nums">—</span>
+        <span className="font-table text-muted-foreground text-xs tabular-nums">—</span>
       </div>
     );
   }
@@ -37,12 +37,12 @@ export function MarginCell({ shipment }: { shipment: Shipment }) {
           onClick={(event) => event.stopPropagation()}
         >
           <span
-            className="font-table text-[11.5px] font-semibold tabular-nums"
+            className="font-table text-xs font-semibold tabular-nums"
             style={{ color: toneVar(tone) }}
           >
             {marginPct !== null ? formatPercent(marginPct) : "—"}
           </span>
-          <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
+          <span className="font-table text-muted-foreground text-3xs tabular-nums">
             {t("CPM {0}", formatCurrency(parseDecimal(estimate.costPerMile)))}
           </span>
         </div>

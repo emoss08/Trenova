@@ -420,7 +420,7 @@ function CategoryRail({
             <span className="min-w-0 flex-1 truncate">{t(tab.label)}</span>
             <span
               className={cn(
-                "shrink-0 text-[10px] tabular-nums",
+                "shrink-0 text-2xs tabular-nums",
                 active ? "text-muted-foreground" : "text-muted-foreground/70",
               )}
             >
@@ -496,13 +496,13 @@ function WidgetCard({
               {onCanvas > 0 && (
                 <Badge
                   variant="neutral" appearance="outline"
-                  className="border-border/70 h-4 shrink-0 border px-1 text-[9px]"
+                  className="border-border/70 h-4 shrink-0 border px-1 text-3xs"
                 >
                   {onCanvas > 1 ? t("{0}× on canvas", onCanvas) : t("On canvas")}
                 </Badge>
               )}
             </span>
-            <span className="text-muted-foreground line-clamp-2 text-[11px] leading-snug">
+            <span className="text-muted-foreground line-clamp-2 text-xs leading-snug">
               {t(option.description)}
             </span>
           </span>
@@ -573,8 +573,8 @@ function GalleryFooter({
           <>
             {t("Room for {0} more.", remaining)}
             <span className="hidden sm:inline">
-              {t("Use")} <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd>{" "}
-              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd>{" "}
+              {t("Use")} <Kbd className="h-4 px-1 text-2xs">&darr;</Kbd>{" "}
+              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-2xs">&crarr;</Kbd>{" "}
               {t("to add one.")}
             </span>
           </>

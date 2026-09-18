@@ -51,9 +51,9 @@ describe("gaugeTone", () => {
 
 describe("dutyStatusInfo", () => {
   it("maps known duty statuses", () => {
-    expect(dutyStatusInfo("driving")).toEqual({ label: "Driving", variant: "info" });
-    expect(dutyStatusInfo("sleeperBed")).toEqual({ label: "Sleeper Berth", variant: "purple" });
-    expect(dutyStatusInfo("onDuty")).toEqual({ label: "On Duty", variant: "warning" });
+    expect(dutyStatusInfo("driving")).toEqual({ label: "Driving", variant: "accent-emerald" });
+    expect(dutyStatusInfo("sleeperBed")).toEqual({ label: "Sleeper Berth", variant: "accent-violet" });
+    expect(dutyStatusInfo("onDuty")).toEqual({ label: "On Duty", variant: "accent-amber" });
   });
 
   it("title-cases unknown statuses", () => {
@@ -63,8 +63,8 @@ describe("dutyStatusInfo", () => {
   });
 
   it("falls back to Unknown when missing", () => {
-    expect(dutyStatusInfo(null)).toEqual({ label: "Unknown", variant: "secondary" });
-    expect(dutyStatusInfo(undefined)).toEqual({ label: "Unknown", variant: "secondary" });
-    expect(dutyStatusInfo("")).toEqual({ label: "Unknown", variant: "secondary" });
+    expect(dutyStatusInfo(null)).toEqual({ label: "Unknown", variant: "neutral" });
+    expect(dutyStatusInfo(undefined)).toEqual({ label: "Unknown", variant: "neutral" });
+    expect(dutyStatusInfo("")).toEqual({ label: "Unknown", variant: "neutral" });
   });
 });

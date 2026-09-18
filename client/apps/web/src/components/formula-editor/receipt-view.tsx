@@ -11,21 +11,21 @@ import { Braces, TableIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const SOURCE_LABELS: Record<FormulaValueSource, { label: string; className: string }> = {
-  field: { label: "shipment", className: "bg-sky-500/15 text-sky-700 dark:text-sky-300" },
+  field: { label: "shipment", className: "bg-accent-sky/15 text-accent-sky-on-subtle" },
   computed: {
     label: "computed",
-    className: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+    className: "bg-accent-violet/15 text-accent-violet-on-subtle",
   },
-  input: { label: "input", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
+  input: { label: "input", className: "bg-success/15 text-success-foreground" },
   override: {
     label: "override",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    className: "bg-warning/15 text-warning-foreground",
   },
   default: { label: "default", className: "bg-muted text-muted-foreground" },
   sample: { label: "sample", className: "bg-muted text-muted-foreground" },
   provided: {
     label: "market data",
-    className: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+    className: "bg-warning/15 text-warning-foreground",
   },
 };
 

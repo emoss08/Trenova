@@ -129,7 +129,7 @@ export function TimelineBarItem({
         {showLabel && (
           <span
             className={cn(
-              "font-table min-w-0 truncate text-[10px] font-semibold tabular-nums",
+              "font-table min-w-0 truncate text-2xs font-semibold tabular-nums",
               bar.isCanceled && "line-through",
             )}
           >
@@ -143,7 +143,7 @@ export function TimelineBarItem({
           <span
             aria-hidden
             className={cn(
-              "font-table ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[8.5px] font-semibold tabular-nums",
+              "font-table ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-3xs font-semibold tabular-nums",
               bar.dwell.severity === "critical"
                 ? "bg-destructive/90 text-white"
                 : "bg-warning/90 text-white",
@@ -190,17 +190,17 @@ export function TimelineBarItem({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-72">
         <div className="flex flex-col gap-1 py-0.5">
-          <p className="font-table text-[11px] font-semibold tabular-nums">
+          <p className="font-table text-xs font-semibold tabular-nums">
             {shipment.proNumber ?? "—"}
             <span className="ml-1.5 font-normal opacity-80">
               {originCode} → {destCode}
             </span>
           </p>
-          <p className="text-[10.5px] opacity-80">{shipment.customer?.name ?? t("No customer")}</p>
+          <p className="text-2xs opacity-80">{shipment.customer?.name ?? t("No customer")}</p>
           {bar.dwell && (
             <p
               className={cn(
-                "flex items-center gap-1 text-[10.5px] font-semibold",
+                "flex items-center gap-1 text-2xs font-semibold",
                 bar.dwell.severity === "critical" ? "text-destructive" : "text-warning",
               )}
             >
@@ -213,13 +213,13 @@ export function TimelineBarItem({
             </p>
           )}
           {bar.hasOverlap && (
-            <p className="text-warning text-[10.5px] font-semibold">
+            <p className="text-warning text-2xs font-semibold">
               {t("Overlaps another load on this driver")}
             </p>
           )}
           <div className="mt-0.5 flex flex-col gap-0.5">
             {bar.stops.map((stop) => (
-              <p key={stop.id} className="font-table text-[10px] tabular-nums opacity-80">
+              <p key={stop.id} className="font-table text-2xs tabular-nums opacity-80">
                 {STOP_LABEL[stop.type]} · {stop.locationCode} · {stopTimesLabel(stop)}
               </p>
             ))}

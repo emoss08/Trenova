@@ -72,7 +72,7 @@ export function StatementGroupCard({
           <span className="text-foreground truncate text-sm font-medium">{t(group.label)}</span>
         </button>
 
-        <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
+        <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
           {heldCount > 0
             ? t(
                 "{0} of {1, plural, one {# shipment} other {# shipments}}",
@@ -90,7 +90,7 @@ export function StatementGroupCard({
               render={
                 <span
                   tabIndex={0}
-                  className="inline-flex shrink-0 text-amber-600 dark:text-amber-400"
+                  className="inline-flex shrink-0 text-warning-foreground"
                   aria-label={t("Under the customer's invoice minimum")}
                 >
                   <PauseCircleIcon className="size-3.5" />

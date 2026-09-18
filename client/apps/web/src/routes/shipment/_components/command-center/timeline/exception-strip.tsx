@@ -68,11 +68,11 @@ export function ExceptionStrip({
 
   return (
     <div className="border-border bg-muted/30 flex min-h-7 flex-wrap items-center gap-1.5 border-b px-3 py-1">
-      <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
+      <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
         {t("Attention")}
       </span>
       {allClear ? (
-        <span className="text-muted-foreground inline-flex items-center gap-1 text-[10.5px]">
+        <span className="text-muted-foreground inline-flex items-center gap-1 text-2xs">
           <CircleCheckIcon className="text-success size-3" />
           {t("All clear in this window")}
         </span>
@@ -86,13 +86,13 @@ export function ExceptionStrip({
               aria-pressed={isActive}
               onClick={() => onFocusChange(isActive ? null : id)}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-medium transition-colors",
+                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-medium transition-colors",
                 isActive ? CHIP_TONE_CLASS[tone].active : CHIP_TONE_CLASS[tone].idle,
               )}
             >
               <Icon className="size-3" />
               {label}
-              <span className="font-table text-[10px] font-semibold tabular-nums">
+              <span className="font-table text-2xs font-semibold tabular-nums">
                 {exceptions[id]}
               </span>
             </button>
@@ -101,7 +101,7 @@ export function ExceptionStrip({
       )}
       {focus && (
         <div className="ml-auto flex items-center gap-0.5">
-          <span className="font-table text-muted-foreground mr-1 text-[10px] tabular-nums">
+          <span className="font-table text-muted-foreground mr-1 text-2xs tabular-nums">
             {matchCount === 0 ? t("No matches") : `${matchIndex + 1} / ${matchCount}`}
           </span>
           <button

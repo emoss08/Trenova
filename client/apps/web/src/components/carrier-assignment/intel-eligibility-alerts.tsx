@@ -27,8 +27,8 @@ import { toast } from "sonner";
 export type EligibilityTone = "blocker" | "warning" | "advisory";
 
 const TONE_ICON: Record<EligibilityTone, { icon: LucideIcon; className: string }> = {
-  blocker: { icon: OctagonXIcon, className: "text-red-600 dark:text-red-400" },
-  warning: { icon: TriangleAlertIcon, className: "text-amber-600 dark:text-amber-400" },
+  blocker: { icon: OctagonXIcon, className: "text-danger-foreground" },
+  warning: { icon: TriangleAlertIcon, className: "text-warning-foreground" },
   advisory: { icon: InfoIcon, className: "text-muted-foreground" },
 };
 

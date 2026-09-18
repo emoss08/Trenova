@@ -46,7 +46,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
 
   if (!guardrail.applied) {
     return (
-      <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+      <div className="mt-2 flex items-center gap-1.5 text-xs text-success-foreground">
         <ShieldIcon className="size-3" />
         {t("Within guardrails")}
       </div>
@@ -57,7 +57,7 @@ function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
   const limit = guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge;
 
   return (
-    <div className="mt-2 flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
+    <div className="mt-2 flex items-start gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-xs text-warning-foreground">
       <ShieldIcon className="mt-0.5 size-3 shrink-0" />
       <span>
         {t(
@@ -125,7 +125,7 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
         {warnings.map((warning) => (
           <div
             key={`${warning.scope}:${warning.field}`}
-            className="flex items-start justify-between gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200"
+            className="flex items-start justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground"
           >
             <div className="min-w-0 space-y-0.5">
               <p>{warning.message}</p>
@@ -216,7 +216,7 @@ function BreakdownResultTable({
           <div
             className={cn(
               "bg-muted/40 flex items-center justify-between gap-3 border-t px-3 py-1.5 text-xs",
-              !reconciliation.balanced && "text-amber-700 dark:text-amber-300",
+              !reconciliation.balanced && "text-warning-foreground",
             )}
           >
             <span className="font-medium">
@@ -242,7 +242,7 @@ function BreakdownResultTable({
         )}
       </div>
       {reconciliation?.clampMismatch && (
-        <div className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
+        <div className="flex items-start gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-xs text-warning-foreground">
           <ShieldIcon className="mt-0.5 size-3 shrink-0" />
           <span>
             {t(
@@ -473,7 +473,7 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
               className={cn(
                 "overflow-hidden rounded-lg border transition-opacity",
                 isValid
-                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  ? "border-success/30 bg-success/5"
                   : "border-destructive/30 bg-destructive/5",
                 (isPending || requestError) && "opacity-60",
               )}
@@ -482,12 +482,12 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 className={cn(
                   "flex items-center gap-2 border-b px-4 py-2",
                   isValid
-                    ? "border-emerald-500/20 bg-emerald-500/10"
+                    ? "border-success/20 bg-success/10"
                     : "border-destructive/20 bg-destructive/10",
                 )}
               >
                 {isValid ? (
-                  <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="size-4 text-success-foreground" />
                 ) : (
                   <XCircle className="text-destructive size-4" />
                 )}
@@ -495,8 +495,8 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                   className={cn(
                     "text-sm font-medium",
                     isValid
-                      ? "text-emerald-700 dark:text-emerald-300"
-                      : "text-red-700 dark:text-red-300",
+                      ? "text-success-foreground"
+                      : "text-danger-foreground",
                   )}
                 >
                   {isValid ? t("Expression Valid") : t("Expression Invalid")}

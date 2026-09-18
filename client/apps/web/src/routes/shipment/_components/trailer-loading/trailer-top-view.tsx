@@ -149,7 +149,7 @@ export function TrailerTopView({
                         y={innerH / 2 - 10}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${palette.text} text-[11px] font-bold`}
+                        className={`${palette.text} text-xs font-bold`}
                       >
                         {p.commodityName.length > Math.floor(bw / 8)
                           ? p.commodityName.slice(0, Math.floor(bw / 8)) + "\u2026"
@@ -161,7 +161,7 @@ export function TrailerTopView({
                         y={innerH / 2 + 4}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${palette.text} text-[9px] opacity-70`}
+                        className={`${palette.text} text-3xs opacity-70`}
                       >
                         {t("{0} lbs", p.weight.toLocaleString())}
                       </text>
@@ -171,7 +171,7 @@ export function TrailerTopView({
                         y={innerH / 2 + 17}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className={`${palette.text} text-[8px] opacity-50`}
+                        className={`${palette.text} text-3xs opacity-50`}
                       >
                         {t(
                           "{0}ft{1} · {2}pc",
@@ -187,14 +187,14 @@ export function TrailerTopView({
                             cx={bx + m + 14}
                             cy={m + 18}
                             r={8}
-                            className="fill-amber-400 dark:fill-amber-600"
+                            className="fill-warning"
                           />
                           <text
                             x={bx + m + 14}
                             y={m + 19}
                             textAnchor="middle"
                             dominantBaseline="middle"
-                            className="text-[10px]"
+                            className="text-2xs"
                           >
                             {"\u2623"}
                           </text>
@@ -207,14 +207,14 @@ export function TrailerTopView({
                             cx={bx + m + 14}
                             cy={m + 18}
                             r={8}
-                            className="fill-red-400 dark:fill-red-600"
+                            className="fill-danger"
                           />
                           <text
                             x={bx + m + 14}
                             y={m + 19}
                             textAnchor="middle"
                             dominantBaseline="middle"
-                            className="text-[10px]"
+                            className="text-2xs"
                           >
                             {"\u26a0"}
                           </text>
@@ -251,7 +251,7 @@ export function TrailerTopView({
                       x={dx}
                       y={-7}
                       textAnchor="middle"
-                      className="fill-primary text-[8px] font-semibold"
+                      className="fill-primary text-3xs font-semibold"
                     >
                       {t(divider.label)}
                     </text>
@@ -275,7 +275,7 @@ export function TrailerTopView({
                     x={innerW - 4}
                     y={innerH + 12}
                     textAnchor="end"
-                    className="fill-destructive text-[8px] font-semibold"
+                    className="fill-destructive text-3xs font-semibold"
                   >
                     OVER
                   </text>
@@ -298,7 +298,7 @@ export function TrailerTopView({
                 x={-6}
                 y={-8}
                 textAnchor="middle"
-                className="fill-muted-foreground text-[8px] font-semibold"
+                className="fill-muted-foreground text-3xs font-semibold"
               >
                 NOSE
               </text>
@@ -306,7 +306,7 @@ export function TrailerTopView({
                 x={innerW + 4}
                 y={-8}
                 textAnchor="middle"
-                className="fill-muted-foreground text-[8px] font-semibold"
+                className="fill-muted-foreground text-3xs font-semibold"
               >
                 DOORS
               </text>
@@ -347,7 +347,7 @@ export function TrailerTopView({
                         x={tx}
                         y={11}
                         textAnchor="middle"
-                        className="fill-muted-foreground text-[7px]"
+                        className="fill-muted-foreground text-3xs"
                       >
                         {tick}
                       </text>
@@ -358,7 +358,7 @@ export function TrailerTopView({
                   x={innerW / 2}
                   y={20}
                   textAnchor="middle"
-                  className="fill-muted-foreground text-[8px]"
+                  className="fill-muted-foreground text-3xs"
                 >
                   {t("{0} ft total", trailerLenFt)}
                 </text>

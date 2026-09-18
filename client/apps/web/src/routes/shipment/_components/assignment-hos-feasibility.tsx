@@ -69,24 +69,24 @@ function FeasibilityRow({
           </span>
           {selected && <CheckIcon className="text-brand size-3 shrink-0" />}
           {duty && (
-            <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+            <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
               {t(duty.label)}
             </Badge>
           )}
           {driver.tractorCode && (
             <Badge
               variant="neutral" appearance="outline"
-              className="border-border h-4 shrink-0 rounded px-1 font-mono text-[9px]"
+              className="border-border h-4 shrink-0 rounded px-1 font-mono text-3xs"
             >
               {driver.tractorCode}
             </Badge>
           )}
         </div>
-        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
           {t(verdict.label)}
         </Badge>
       </div>
-      <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums">
+      <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs tabular-nums">
         <span>{t("Drive {0}", formatClockDurationMs(driver.driveRemainingMs))}</span>
         <span aria-hidden>·</span>
         <span>{t("Shift {0}", formatClockDurationMs(driver.shiftRemainingMs))}</span>
@@ -100,7 +100,7 @@ function FeasibilityRow({
         )}
       </div>
       {driver.verdict !== "feasible" && driver.reasons.length > 0 && (
-        <p className="text-muted-foreground line-clamp-2 text-[10px] leading-snug">
+        <p className="text-muted-foreground line-clamp-2 text-2xs leading-snug">
           {driver.reasons.join(" · ")}
         </p>
       )}
@@ -203,7 +203,7 @@ export function AssignmentHosFeasibility({
   } else if (feasibilityQuery.isError) {
     body = (
       <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
-        <p className="text-muted-foreground text-[10.5px]">
+        <p className="text-muted-foreground text-2xs">
           {t("Driver feasibility could not be loaded from Samsara.")}
         </p>
         <Button
@@ -218,7 +218,7 @@ export function AssignmentHosFeasibility({
     );
   } else if (drivers.length === 0) {
     body = (
-      <p className="text-muted-foreground px-3 py-4 text-center text-[10.5px]">
+      <p className="text-muted-foreground px-3 py-4 text-center text-2xs">
         {t("No HOS data for any drivers yet.")}
       </p>
     );
@@ -261,7 +261,7 @@ export function AssignmentHosFeasibility({
             {!feasibilityQuery.isLoading && !feasibilityQuery.isError && drivers.length > 0 && (
               <Badge
                 variant={feasibleCount > 0 ? "success" : "warning"}
-                className="h-4 rounded px-1 text-[9px]"
+                className="h-4 rounded px-1 text-3xs"
               >
                 {t("{0} feasible", feasibleCount)}
               </Badge>

@@ -96,7 +96,7 @@ export default function IndexSection() {
                       variant="neutral" appearance="outline"
                       className={
                         entry.index.isActive
-                          ? "text-2xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                          ? "text-2xs border-success/40 text-success-foreground"
                           : "text-2xs text-muted-foreground"
                       }
                     >

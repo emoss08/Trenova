@@ -71,7 +71,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
         value={entitlementUsedPercent(entitlement.usedHours, entitlement.totalHours)}
         className="mt-2"
       />
-      <p className="text-muted-foreground mt-1.5 text-[11px]">
+      <p className="text-muted-foreground mt-1.5 text-xs">
         {t(
           "{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}",
           measurementMethodLabel(entitlement.method),

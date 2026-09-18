@@ -102,7 +102,7 @@ export function RateConfirmationActions({
             {latest.generatedVia === "TenderAcceptance" && (
               <Badge
                 variant="neutral" appearance="outline"
-                className="max-h-5 text-[10px]"
+                className="max-h-5 text-2xs"
                 title={t("Generated automatically when the carrier accepted the tender")}
               >
                 {t("Auto-issued from tender")}
@@ -111,7 +111,7 @@ export function RateConfirmationActions({
             {latest.status === "Confirmed" && latest.confirmedVia && (
               <Badge
                 variant="neutral" appearance="outline"
-                className="max-h-5 text-[10px]"
+                className="max-h-5 text-2xs"
                 title={t("How the carrier's confirmation was captured")}
               >
                 {RATE_CONFIRMATION_VIA_LABEL[latest.confirmedVia]}
@@ -139,7 +139,7 @@ export function RateConfirmationActions({
           type="button"
           size="sm"
           variant="outline"
-          className="h-6 px-2 text-[10px]"
+          className="h-6 px-2 text-2xs"
           disabled={generateMutation.isPending}
           onClick={() => generateMutation.mutate()}
           title={
@@ -157,7 +157,7 @@ export function RateConfirmationActions({
               type="button"
               size="sm"
               variant="outline"
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-2xs"
               disabled={sendMutation.isPending}
               onClick={() => sendMutation.mutate(latest.id)}
               title={t("Email the rate confirmation to the carrier's rate confirmation contacts")}
@@ -169,7 +169,7 @@ export function RateConfirmationActions({
               type="button"
               size="sm"
               variant="outline"
-              className="h-6 px-2 text-[10px]"
+              className="h-6 px-2 text-2xs"
               onClick={() => setConfirmOpen(true)}
               title={t("Record that the carrier confirmed this rate")}
             >
@@ -183,7 +183,7 @@ export function RateConfirmationActions({
             type="button"
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[10px] text-red-600 hover:text-red-700 dark:text-red-400"
+            className="h-6 px-2 text-2xs text-danger-foreground hover:text-danger-foreground"
             onClick={() => setVoidOpen(true)}
           >
             <XIcon className="size-3" aria-hidden />
@@ -195,7 +195,7 @@ export function RateConfirmationActions({
             href={documentContentUrl(latest.documentId, "view")}
             target="_blank"
             rel="noreferrer"
-            className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-[10px] font-medium"
+            className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-2xs font-medium"
             title={t("Open the filed rate confirmation document")}
           >
             <FileTextIcon className="size-3" aria-hidden />

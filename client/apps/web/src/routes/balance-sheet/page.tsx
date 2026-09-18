@@ -89,7 +89,7 @@ export function BalanceSheetPage() {
             <div
               className={cn(
                 "flex items-center justify-between rounded-md border px-4 py-4",
-                isBalanced ? "bg-green-50 dark:bg-green-950/20" : "bg-red-50 dark:bg-red-950/20",
+                isBalanced ? "bg-success-subtle" : "bg-danger-subtle",
               )}
             >
               <span className="text-base font-bold">

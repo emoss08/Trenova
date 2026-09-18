@@ -64,7 +64,7 @@ function RuleExplanation({ rule }: { rule: ResolvedCapabilityRule }) {
     <li className="px-4 py-3">
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-xs font-medium">{t(rule.label)}</p>
-        <span className={cn("text-[11px] font-medium", enforcementTone(rule.enforcement))}>
+        <span className={cn("text-xs font-medium", enforcementTone(rule.enforcement))}>
           {enforcementLabel(rule.enforcement)}
         </span>
       </div>
@@ -73,14 +73,14 @@ function RuleExplanation({ rule }: { rule: ResolvedCapabilityRule }) {
 
       {provenance.overridden && (
         <div className="mt-2 rounded-md bg-muted px-2.5 py-2">
-          <p className="text-[11px] font-medium">
+          <p className="text-xs font-medium">
             {t(
               "Your organization changed this from {0}",
               enforcementLabel(provenance.defaultEnforcement),
             )}
           </p>
           {provenance.overrideReason && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">{provenance.overrideReason}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{provenance.overrideReason}</p>
           )}
         </div>
       )}

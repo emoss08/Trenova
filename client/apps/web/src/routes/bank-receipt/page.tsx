@@ -337,21 +337,21 @@ function ReceiptDetail({
           </div>
 
           {receipt.status === "Exception" && receipt.exceptionReason ? (
-            <div className="rounded-lg border border-red-200 bg-red-50/50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
+            <div className="rounded-lg border border-danger-border bg-danger-subtle/50 p-3 dark:border-danger-border/50 dark:bg-danger-subtle/20">
               <div className="flex items-center gap-1.5">
-                <TriangleAlertIcon className="size-3.5 text-red-600 dark:text-red-400" />
+                <TriangleAlertIcon className="size-3.5 text-danger-foreground" />
                 <SectionLabel>{t("Exception Reason")}</SectionLabel>
               </div>
-              <p className="mt-1.5 text-xs text-red-700 dark:text-red-300">
+              <p className="mt-1.5 text-xs text-danger-foreground">
                 {receipt.exceptionReason}
               </p>
             </div>
           ) : null}
 
           {receipt.status === "Matched" ? (
-            <div className="rounded-lg border border-green-200 bg-green-50/50 p-3 dark:border-green-900/50 dark:bg-green-950/20">
+            <div className="rounded-lg border border-success-border bg-success-subtle/50 p-3 dark:border-success-border/50 dark:bg-success-subtle/20">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
+                <CheckCircle2Icon className="size-3.5 text-success-foreground" />
                 <SectionLabel>{t("Matched Payment")}</SectionLabel>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
@@ -452,7 +452,7 @@ function SuggestionTable({
                 <Button
                   size="xs"
                   type="button"
-                  className="bg-green-600 text-white hover:bg-green-700"
+                  className="bg-success text-white hover:bg-success"
                   onClick={() => onMatch(suggestion.customerPaymentId)}
                   disabled={isMatching}
                 >
@@ -479,7 +479,7 @@ function ScoreBadge({ score }: { score: number }) {
 function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>

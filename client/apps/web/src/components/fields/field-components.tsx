@@ -11,7 +11,7 @@ export function ErrorMessage({ formError, id }: { formError?: string; id?: strin
     <span
       id={id}
       role="alert"
-      className="text-destructive dark:bg-destructive/40 mt-1 inline-block rounded-md bg-red-50 px-2 py-1 text-left text-xs leading-tight dark:text-red-50"
+      className="text-destructive dark:bg-destructive/40 mt-1 inline-block rounded-md bg-danger-subtle px-2 py-1 text-left text-xs leading-tight dark:text-danger-foreground"
     >
       {formError ? formError : t("An Error has occurred. Please try again.")}
     </span>
@@ -29,7 +29,7 @@ export function FieldDescription({
 }) {
   if (warning?.show) {
     return (
-      <p id={id} className="text-2xs text-left text-amber-600">
+      <p id={id} className="text-2xs text-left text-warning-foreground">
         {warning.message}
       </p>
     );

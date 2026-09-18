@@ -74,7 +74,7 @@ export function ReviewCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t(review.title)}</p>
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-muted-foreground text-xs">
             {formatUnixDate(review.periodStart)} – {formatUnixDate(review.periodEnd)}
             {review.reviewer?.name ? ` · ${review.reviewer.name}` : ""}
             {review.template?.name ? ` · ${review.template.name}` : ""}
@@ -133,7 +133,7 @@ export function ReviewCard({
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="text-muted-foreground size-3.5" />
               <span>{t(goal.title)}</span>
-              <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-[10px]">
+              <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
               {goal.dueAt ? (
@@ -154,7 +154,7 @@ export function ReviewCard({
       ) : null}
 
       {isClosed && review.nextReviewAt ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("Next review due {0}.", formatUnixDate(review.nextReviewAt))}
         </p>
       ) : null}

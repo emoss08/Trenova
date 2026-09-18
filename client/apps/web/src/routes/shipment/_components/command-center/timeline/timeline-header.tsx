@@ -37,7 +37,7 @@ export function TimelineHeader({
         className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
         style={{ width: RAIL_WIDTH_PX }}
       >
-        <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
+        <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
           {t("Drivers · {0}", driverCount)}
         </span>
       </div>
@@ -51,7 +51,7 @@ export function TimelineHeader({
             )}
             style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
           >
-            <span className="truncate text-[10px] font-semibold tracking-wide uppercase">
+            <span className="truncate text-2xs font-semibold tracking-wide uppercase">
               {t(day.label)}
             </span>
           </div>
@@ -60,7 +60,7 @@ export function TimelineHeader({
           hourTicks.map((tick) => (
             <span
               key={tick.time}
-              className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
+              className="font-table text-muted-foreground absolute -translate-x-1/2 text-3xs tabular-nums"
               style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
             >
               {t(tick.label)}
@@ -68,7 +68,7 @@ export function TimelineHeader({
           ))}
         {nowInRange && (
           <span
-            className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-[8.5px] font-semibold tabular-nums"
+            className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-3xs font-semibold tabular-nums"
             style={{ left: nowX }}
           >
             {formatUnixInUserTimezone(now, { hour: "2-digit", minute: "2-digit", hour12: false })}

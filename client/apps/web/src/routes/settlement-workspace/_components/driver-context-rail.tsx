@@ -69,7 +69,7 @@ export function DriverContextRail({
         <div className="flex flex-col gap-3 p-3">
           <div>
             <h3 className="text-sm font-semibold">{workerName ?? t("Driver")}</h3>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "Everything affecting this driver's pay — manage it without leaving the workspace.",
               )}
@@ -108,7 +108,7 @@ function RailSection({
           <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {title}
           </h4>
-          <p className="text-muted-foreground text-[10px]">{hint}</p>
+          <p className="text-muted-foreground text-2xs">{hint}</p>
         </div>
         {action}
       </div>
@@ -174,7 +174,7 @@ function UnsettledPaySection({
       hint={t("Accrued pay not yet on a settlement — attach it, or hold it for a later period.")}
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("Nothing waiting. New pay accrues automatically as moves complete.")}
         </p>
       ) : (
@@ -185,14 +185,14 @@ function UnsettledPaySection({
               className={cn(
                 "rounded-md border p-2",
                 event.onHold &&
-                  "border-blue-200 bg-blue-50/40 dark:border-blue-900 dark:bg-blue-950/20",
+                  "border-info-border bg-info-subtle/40 dark:border-info-border dark:bg-info-subtle/20",
               )}
             >
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground font-mono text-[10px]">
+                <span className="text-muted-foreground font-mono text-2xs">
                   {event.proNumber || t("No PRO")}
                 </span>
-                <span className="text-muted-foreground text-[10px]">
+                <span className="text-muted-foreground text-2xs">
                   {formatSettlementMonthDay(event.eventDate)}
                 </span>
                 <span className="ml-auto text-xs font-semibold">
@@ -200,7 +200,7 @@ function UnsettledPaySection({
                 </span>
               </div>
               {event.onHold && (
-                <p className="mt-1 text-[10px] text-blue-700 dark:text-blue-300">
+                <p className="mt-1 text-2xs text-info-foreground">
                   {t("On hold: {0}", event.holdReason)}
                 </p>
               )}
@@ -209,7 +209,7 @@ function UnsettledPaySection({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-6 px-2 text-[10px]"
+                    className="h-6 px-2 text-2xs"
                     disabled={attachMutation.isPending}
                     onClick={() => attachMutation.mutate(event.id)}
                     title={t("Add this pay event to the selected draft settlement")}
@@ -222,7 +222,7 @@ function UnsettledPaySection({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 px-2 text-[10px]"
+                    className="h-6 px-2 text-2xs"
                     disabled={releaseMutation.isPending}
                     onClick={() => releaseMutation.mutate(event.id)}
                   >
@@ -233,7 +233,7 @@ function UnsettledPaySection({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-muted-foreground h-6 px-2 text-[10px]"
+                    className="text-muted-foreground h-6 px-2 text-2xs"
                     onClick={() => setHoldTarget(event)}
                     title={t(
                       "Defer this pay to a later settlement — it will skip generation until released",
@@ -367,7 +367,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
         <Link
           to="/payroll/earnings"
           title={t("Create or edit earnings on the full page")}
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
           <PlusCircle className="size-3" />
           {t("Manage")}
@@ -375,7 +375,7 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("No active earnings for this driver.")}
         </p>
       ) : (
@@ -383,8 +383,8 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
           {list.map((earning) => (
             <li key={earning.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium">{t(earning.description)}</p>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="truncate text-xs font-medium">{t(earning.description)}</p>
+                <p className="text-muted-foreground text-2xs">
                   <AmountDisplay value={earning.amountMinor} currency="USD" /> ·{" "}
                   {earning.frequency === "Monthly" ? "monthly" : t("every settlement")}
                   {earning.status === "Paused" && ` ${t("· paused")}`}
@@ -470,7 +470,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
         <Link
           to="/payroll/deductions"
           title={t("Create or edit deductions on the full page")}
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
           <PlusCircle className="size-3" />
           {t("Manage")}
@@ -478,7 +478,7 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
       }
     >
       {list.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("No active deductions for this driver.")}
         </p>
       ) : (
@@ -486,8 +486,8 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
           {list.map((deduction) => (
             <li key={deduction.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium">{t(deduction.description)}</p>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="truncate text-xs font-medium">{t(deduction.description)}</p>
+                <p className="text-muted-foreground text-2xs">
                   <AmountDisplay value={deduction.amountMinor} currency="USD" /> ·{" "}
                   {deduction.frequency === "Monthly" ? "monthly" : t("every settlement")}
                   {deduction.status === "Paused" && ` ${t("· paused")}`}
@@ -548,7 +548,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
         <Link
           to="/payroll/advances"
           title={t("Issue or write off advances on the full page")}
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
           <PlusCircle className="size-3" />
           {t("Manage")}
@@ -556,20 +556,20 @@ function AdvancesSection({ workerId }: { workerId: string }) {
       }
     >
       {outstanding.length === 0 ? (
-        <p className="text-muted-foreground text-[11px]">{t("No outstanding advances.")}</p>
+        <p className="text-muted-foreground text-xs">{t("No outstanding advances.")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {outstanding.map((advance) => (
             <li key={advance.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[11px] font-medium">
+                <p className="truncate text-xs font-medium">
                   {advance.reference || advance.source}
                 </p>
-                <p className="text-muted-foreground text-[10px]">
+                <p className="text-muted-foreground text-2xs">
                   {t("issued {0}", formatSettlementMonthDay(advance.issuedDate))}
                 </p>
               </div>
-              <span className="text-[11px] font-semibold">
+              <span className="text-xs font-semibold">
                 <AmountDisplay
                   value={advance.amountMinor - advance.recoveredMinor}
                   currency="USD"
@@ -609,7 +609,7 @@ function EscrowSection({ workerId }: { workerId: string }) {
         <Link
           to="/payroll/escrow-accounts"
           title={t("Open the escrow ledger")}
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-[10px]")}
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-6 px-1.5 text-2xs")}
         >
           {t("View ledger")}
         </Link>

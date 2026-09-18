@@ -71,7 +71,7 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
         />
         <Card className="gap-0 overflow-hidden rounded-md">
           <CardHeader className="pb-1">
-            <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               {t("Match Rate")}
             </CardTitle>
           </CardHeader>
@@ -115,7 +115,7 @@ function SummaryBody({ data }: { data: ReconciliationSummary }) {
                   </tr>
                   <tr className="border-t">
                     <td className="px-3 py-2 text-xs">{t("7+ Days")}</td>
-                    <td className="px-3 py-2 text-right font-mono text-xs font-semibold text-red-600 dark:text-red-400">
+                    <td className="px-3 py-2 text-right font-mono text-xs font-semibold text-danger-foreground">
                       {data.exceptionAging.daysOver7Count}
                     </td>
                   </tr>
@@ -178,14 +178,14 @@ function SummaryKPICard({
   return (
     <Card className="gap-0 overflow-hidden rounded-md">
       <CardHeader className="pb-1">
-        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+        <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p
           className={`text-2xl font-semibold tracking-tight tabular-nums ${
-            variant === "danger" ? "text-red-600 dark:text-red-400" : ""
+            variant === "danger" ? "text-danger-foreground" : ""
           }`}
         >
           {count}

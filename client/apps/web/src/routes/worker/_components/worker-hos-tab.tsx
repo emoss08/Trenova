@@ -73,7 +73,7 @@ const eldLaneByStatus: Record<string, number> = {
 const eldStrokeClassByStatus: Record<string, string> = {
   offDuty: "text-muted-foreground",
   personalConveyance: "text-muted-foreground",
-  sleeperBed: "text-purple-600 dark:text-purple-400",
+  sleeperBed: "text-accent-violet-on-subtle",
   driving: "text-brand",
   onDuty: "text-warning",
   yardMove: "text-warning",
@@ -229,8 +229,8 @@ function HosClockCard({
       </RingGauge>
       <div className="text-center">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-muted-foreground text-[11px]">{limitLabel}</p>
-        {extra ? <p className="text-muted-foreground mt-0.5 text-[11px]">{extra}</p> : null}
+        <p className="text-muted-foreground text-xs">{limitLabel}</p>
+        {extra ? <p className="text-muted-foreground mt-0.5 text-xs">{extra}</p> : null}
       </div>
     </div>
   );
@@ -362,7 +362,7 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
         />
       ) : violationsQuery.data.length === 0 ? (
         <HosEmptyState
-          icon={<ShieldCheckIcon className="mx-auto size-5 text-green-600 dark:text-green-400" />}
+          icon={<ShieldCheckIcon className="mx-auto size-5 text-success-foreground" />}
           title={t("No violations in the last 30 days")}
           description={t("This driver has a clean hours-of-service record for the past month.")}
         />
@@ -411,7 +411,7 @@ function DayPillButton({
           aria-label={t("Certified")}
           className={cn(
             "size-1.5 rounded-full",
-            isSelected ? "bg-primary-foreground" : "bg-green-600 dark:bg-green-400",
+            isSelected ? "bg-primary-foreground" : "bg-success",
           )}
         />
       ) : null}
@@ -475,7 +475,7 @@ function EldGraph({
         {eldLaneLabels.map((label) => (
           <div
             key={label}
-            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] font-medium"
+            className="text-muted-foreground flex h-8 items-center justify-end text-2xs font-medium"
           >
             {label}
           </div>
@@ -487,7 +487,7 @@ function EldGraph({
             <span
               key={tick.key}
               className={cn(
-                "text-muted-foreground absolute top-0 -translate-x-1/2 text-[10px] tabular-nums",
+                "text-muted-foreground absolute top-0 -translate-x-1/2 text-2xs tabular-nums",
                 !tick.isMajor && "max-sm:hidden",
               )}
               style={{ left: `${tick.fraction * 100}%` }}
@@ -605,7 +605,7 @@ function EldGraph({
         {laneTotals.map((totalMs, lane) => (
           <div
             key={eldLaneLabels[lane]}
-            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] tabular-nums"
+            className="text-muted-foreground flex h-8 items-center justify-end text-2xs tabular-nums"
           >
             {formatDurationMs(totalMs)}
           </div>
@@ -648,7 +648,7 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
           key={chip.label}
           className="border-border flex items-center gap-1.5 rounded-md border px-2 py-1"
         >
-          <span className="text-muted-foreground text-[11px]">{t(chip.label)}</span>
+          <span className="text-muted-foreground text-xs">{t(chip.label)}</span>
           <span className="text-xs font-medium tabular-nums">{chip.value}</span>
         </div>
       ))}
@@ -878,7 +878,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
-                <dt className="text-muted-foreground text-[11px]">{t(field.label)}</dt>
+                <dt className="text-muted-foreground text-xs">{t(field.label)}</dt>
                 <dd className="text-sm break-words">{field.value || "—"}</dd>
               </div>
             ))}

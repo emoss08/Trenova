@@ -192,7 +192,7 @@ function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflic
               </div>
             ) : null}
             {conflict.evidenceExcerpt ? (
-              <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
+              <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs">
                 {conflict.evidenceExcerpt}
               </div>
             ) : null}
@@ -245,13 +245,13 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Address")}
               </div>
               <div className="mt-1 text-sm">{formatStopSummary(stop)}</div>
             </div>
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Timing")}
               </div>
               <div className="mt-1 text-sm">
@@ -260,7 +260,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
             </div>
           </div>
           {stop.evidenceExcerpt ? (
-            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px] whitespace-pre-wrap">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs whitespace-pre-wrap">
               {stop.evidenceExcerpt}
             </div>
           ) : null}
@@ -378,19 +378,19 @@ function AnalysisSnapshotCard({
       </div>
       <div className="grid gap-2 md:grid-cols-3">
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Fields")}
           </div>
           <div className="mt-1 text-sm">{fieldCount}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Stops")}
           </div>
           <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Source")}
           </div>
           <div className="mt-1 text-sm">{analysis.classifierSource || t("Unknown")}</div>
@@ -398,7 +398,7 @@ function AnalysisSnapshotCard({
       </div>
       {analysis.missingFields?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
             {t("Missing Fields")}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -412,7 +412,7 @@ function AnalysisSnapshotCard({
       ) : null}
       {analysis.stops?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
             {t("Stops")}
           </div>
           <StopsSection stops={analysis.stops.slice(0, 3)} />
@@ -544,13 +544,13 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       </div>
 
       {draft.attachedShipmentId ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-success-border bg-success-subtle/70 p-3 text-sm text-success-foreground">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="font-medium">
                 {t("This document is already attached to a shipment.")}
               </div>
-              <div className="mt-1 text-emerald-900/80">
+              <div className="mt-1 text-success-foreground/80">
                 {t(
                   "Shipment {0} attached {1} .",
                   draft.attachedShipmentId,
@@ -628,9 +628,9 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
           <div className="mt-2 text-sm whitespace-pre-wrap">{formatValue(field.value)}</div>
           {field.excerpt ? (
-            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs">
               {field.pageNumber ? (
-                <div className="mb-1 font-sans text-[10px] uppercase">
+                <div className="mb-1 font-sans text-2xs uppercase">
                   {t("Page {0}", field.pageNumber)}
                 </div>
               ) : null}
@@ -719,7 +719,7 @@ function ContentSection({
                     {t("OCR confidence: {0}", formatConfidence(page.ocrConfidence))}
                   </div>
                 ) : null}
-                <div className="line-clamp-4 font-mono text-[11px] whitespace-pre-wrap">
+                <div className="line-clamp-4 font-mono text-xs whitespace-pre-wrap">
                   {page.extractedText?.trim() || t("No extracted text")}
                 </div>
               </div>

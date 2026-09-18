@@ -177,7 +177,7 @@ function ShortcutsColumn({
                 key={favorite.id}
                 to={favorite.pageUrl}
                 onNavigate={onNavigate}
-                icon={<StarIcon className="size-3 shrink-0 fill-amber-400 text-amber-400" />}
+                icon={<StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />}
               >
                 {favorite.pageTitle}
               </SideRow>

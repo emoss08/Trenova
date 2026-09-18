@@ -117,27 +117,27 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       running: {
         icon: <Loader2 className="size-3.5 animate-spin" />,
         label: t("Running"),
-        className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+        className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       },
       completed: {
         icon: <Check className="size-3.5" />,
         label: t("Completed"),
-        className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
+        className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       },
       error: {
         icon: <X className="size-3.5" />,
         label: t("Error"),
-        className: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+        className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       },
       "awaiting-approval": {
         icon: <ShieldQuestion className="size-3.5" />,
         label: t("Awaiting Approval"),
-        className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+        className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       },
       denied: {
         icon: <AlertTriangle className="size-3.5" />,
         label: t("Denied"),
-        className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+        className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       },
     };
     return configs[state];
@@ -246,10 +246,10 @@ function AiToolCallError({ error, className }: AiToolCallErrorProps) {
 
   return (
     <div data-slot="ai-tool-call-error" className={cn("space-y-1.5", className)}>
-      <span className="text-xs font-medium tracking-wider text-red-600 uppercase dark:text-red-400">
+      <span className="text-xs font-medium tracking-wider text-danger-foreground uppercase dark:text-danger-foreground">
         {t("Error")}
       </span>
-      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+      <div className="rounded-md border border-danger-border bg-danger-subtle p-3 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle/30 dark:text-danger-foreground">
         {error}
       </div>
     </div>

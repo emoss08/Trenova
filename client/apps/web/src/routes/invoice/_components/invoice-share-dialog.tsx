@@ -125,7 +125,7 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
                 onClick={copyLink}
                 className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mr-1 flex h-7 items-center gap-1 rounded-md px-2 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
               >
-                {isCopied ? <CheckIcon className="size-3.5 text-green-600" /> : null}
+                {isCopied ? <CheckIcon className="size-3.5 text-success-foreground" /> : null}
                 {isCopied ? t("Copied") : t("Copy")}
               </button>
             }
@@ -441,7 +441,7 @@ function PersonAvatar({ user }: { user: InvoiceShareUser }) {
       size="sm"
       className="rounded-full after:rounded-full"
       imageClassName="rounded-full"
-      fallbackClassName="rounded-full text-[10px]"
+      fallbackClassName="rounded-full text-2xs"
     />
   );
 }

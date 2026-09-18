@@ -201,7 +201,7 @@ export function ApplyCreditMemoDialog({
           <span
             className={
               overRemaining || overOpen
-                ? "font-semibold text-red-600 tabular-nums dark:text-red-400"
+                ? "font-semibold text-danger-foreground tabular-nums dark:text-danger-foreground"
                 : "font-semibold tabular-nums"
             }
           >

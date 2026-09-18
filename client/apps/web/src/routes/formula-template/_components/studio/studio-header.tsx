@@ -231,7 +231,7 @@ export function StudioHeader({
               <button
                 type="button"
                 onClick={onLineage}
-                className="flex items-center gap-1 rounded-sm border border-amber-500/50 bg-amber-500/15 px-1.5 py-0.5 text-xs text-amber-600 dark:text-amber-400"
+                className="flex items-center gap-1 rounded-sm border border-warning/50 bg-warning/15 px-1.5 py-0.5 text-xs text-warning-foreground"
               >
                 <GitBranchIcon className="size-3" />
                 {t("Forked from v{0}", template.sourceVersionNumber)}
@@ -282,7 +282,7 @@ export function StudioHeader({
                 type="button"
                 variant="outline"
                 size="xs"
-                className="gap-1.5 text-emerald-600 dark:text-emerald-400"
+                className="gap-1.5 text-success-foreground"
                 onClick={() => onApprovalAction("approve")}
               >
                 <CheckIcon className="size-3" />
@@ -295,7 +295,7 @@ export function StudioHeader({
                   type="button"
                   variant="outline"
                   size="xs"
-                  className="gap-1.5 text-amber-700 dark:text-amber-300"
+                  className="gap-1.5 text-warning-foreground"
                   onClick={() => onApprovalAction("requestChanges")}
                 >
                   <MessageSquareWarningIcon className="size-3" />

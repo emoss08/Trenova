@@ -44,7 +44,7 @@ export const DeskClockTrack = memo(function DeskClockTrack({
       />
       {track.noticePercent !== null && !track.noticePassed && (
         <span
-          className="absolute -top-0.5 -bottom-0.5 w-px bg-amber-500"
+          className="absolute -top-0.5 -bottom-0.5 w-px bg-warning"
           style={{ left: `${track.noticePercent}%` }}
         />
       )}

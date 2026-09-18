@@ -153,7 +153,7 @@ export default function ReconciliationWorkspace({
               <div className="text-muted-foreground text-xs">
                 {counts.total} fields
                 {issueCount > 0 && (
-                  <span className="ml-1 text-amber-500">
+                  <span className="ml-1 text-warning-foreground">
                     {t("· {0} need attention", issueCount)}
                   </span>
                 )}

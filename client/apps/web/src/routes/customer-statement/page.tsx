@@ -57,7 +57,7 @@ function MetricCard({
     <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
         <Icon className={cn("text-muted-foreground size-4", colorClass)} />
-        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           {label}
         </p>
       </div>
@@ -179,7 +179,7 @@ export function CustomerStatementPage() {
         pageHeaderProps={{ title: t("Customer Statement"), description: t("Failed to load.") }}
       >
         <div className="mx-4 mt-3 space-y-3">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
             {t(
               "Could not load the statement. The customer may not exist or you may not have permission.",
             )}
@@ -260,7 +260,7 @@ export function CustomerStatementPage() {
             label={t("Payments")}
             value={statement.totalPaymentsMinor}
             icon={WalletIcon}
-            colorClass="text-green-600 dark:text-green-400"
+            colorClass="text-success-foreground"
           />
           <MetricCard
             label={t("Ending Balance")}
@@ -268,8 +268,8 @@ export function CustomerStatementPage() {
             icon={ReceiptTextIcon}
             colorClass={
               statement.endingBalanceMinor > 0
-                ? "text-red-600 dark:text-red-400"
-                : "text-green-600 dark:text-green-400"
+                ? "text-danger-foreground"
+                : "text-success-foreground"
             }
           />
         </div>
@@ -281,31 +281,31 @@ export function CustomerStatementPage() {
               label={t("Current")}
               amount={aging.currentMinor}
               total={agingTotal}
-              colorClass="bg-green-500"
+              colorClass="bg-success"
             />
             <AgingBar
               label={t("1-30 Days")}
               amount={aging.days1To30Minor}
               total={agingTotal}
-              colorClass="bg-yellow-500"
+              colorClass="bg-warning"
             />
             <AgingBar
               label={t("31-60 Days")}
               amount={aging.days31To60Minor}
               total={agingTotal}
-              colorClass="bg-orange-500"
+              colorClass="bg-warning"
             />
             <AgingBar
               label={t("61-90 Days")}
               amount={aging.days61To90Minor}
               total={agingTotal}
-              colorClass="bg-red-400"
+              colorClass="bg-danger"
             />
             <AgingBar
               label={t("90+ Days")}
               amount={aging.daysOver90Minor}
               total={agingTotal}
-              colorClass="bg-red-600"
+              colorClass="bg-danger"
             />
           </div>
         </div>
@@ -365,7 +365,7 @@ export function CustomerStatementPage() {
                         {txn.paymentMinor > 0 ? (
                           <AmountDisplay
                             value={txn.paymentMinor}
-                            className="text-xs text-green-600 dark:text-green-400"
+                            className="text-xs text-success-foreground"
                           />
                         ) : (
                           <span className="text-muted-foreground text-xs">{"\u2014"}</span>

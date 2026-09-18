@@ -18,9 +18,9 @@ const progressIndicatorVariants = cva("h-full transition-all duration-300 ease-o
   variants: {
     variant: {
       default: "bg-primary",
-      success: "bg-green-500",
+      success: "bg-success",
       error: "bg-destructive",
-      warning: "bg-amber-600",
+      warning: "bg-warning",
     },
   },
   defaultVariants: {

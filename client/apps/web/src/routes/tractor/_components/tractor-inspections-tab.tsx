@@ -144,7 +144,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
           <Badge variant="neutral" appearance="outline">{toTitleCase(inspection.inspectionType)}</Badge>
           <Badge variant={safetyMeta.variant}>{t(safetyMeta.label)}</Badge>
           {inspection.signed ? (
-            <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
+            <span className="inline-flex items-center gap-0.5 text-xs text-success-foreground">
               <CheckIcon className="size-3" />
               {t("Signed")}
             </span>

@@ -100,9 +100,9 @@ export function BillStatementDialog({
           )}
 
           {statement.heldCount > 0 && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-              <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-xs text-amber-800 dark:text-amber-200">
+            <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
+              <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
+              <p className="text-xs text-warning-foreground">
                 {t(
                   "{0, plural, one {# more shipment for this period is} other {# more shipments for this period are}} still in review and will not be on this invoice. Billing now leaves {1} unbilled.",
                   statement.heldCount,
@@ -124,10 +124,10 @@ export function BillStatementDialog({
           )}
 
           {offCycle ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+            <div className="flex flex-col gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
               <div className="flex items-start gap-2">
-                <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-amber-800 dark:text-amber-200">
+                <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
+                <p className="text-xs text-warning-foreground">
                   {t(
                     "This period has not closed yet. Billing now does not move {0}'s cycle — anything delivered for the rest of the period still bills on the original date.",
                     statement.customerName,

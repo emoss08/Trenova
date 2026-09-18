@@ -179,7 +179,7 @@ export function DateComponentsSection({ index }: SectionProps) {
                         className={cn(
                           "flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm transition-colors",
                           isActive
-                            ? "border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                            ? "border-info/40 bg-info/15 text-info-foreground"
                             : "border-input bg-background text-foreground hover:bg-muted",
                         )}
                       >
@@ -281,7 +281,7 @@ export function AdvancedSection({ index }: SectionProps) {
               </div>
               <div className="flex items-center gap-2">
                 {enabledCount > 0 ? (
-                  <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                     {t("{0} enabled", enabledCount)}
                   </span>
                 ) : null}

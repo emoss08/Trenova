@@ -10,8 +10,8 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { ArrowRightIcon } from "lucide-react";
 
 const statusStyles: Record<RecurringShipmentStatus, string> = {
-  Active: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",
-  Paused: "border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400",
+  Active: "border-success/30 bg-success/10 text-success-foreground",
+  Paused: "border-warning/30 bg-warning/10 text-warning-foreground",
   Expired: "border-muted-foreground/30 bg-muted text-muted-foreground",
 };
 

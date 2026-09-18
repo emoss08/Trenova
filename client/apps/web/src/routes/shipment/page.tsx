@@ -100,14 +100,14 @@ export function ShipmentsPage() {
                   minute: "2-digit",
                   second: "2-digit",
                 })}`}
-                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[10px] tabular-nums"
+                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded border px-1.5 text-2xs tabular-nums"
               >
                 <span className="bg-success size-1 rounded-full" />
                 {t("Live · {0}", formattedCount)}
               </div>
             )}
             {currentOrg && (
-              <span className="font-table text-muted-foreground text-[10px] tabular-nums">
+              <span className="font-table text-muted-foreground text-2xs tabular-nums">
                 {t("org · {0}", currentOrg.name)}
               </span>
             )}

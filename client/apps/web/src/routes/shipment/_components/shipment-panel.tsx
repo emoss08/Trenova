@@ -50,7 +50,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
     return (
       <div className="flex items-center gap-1">
         <span className="text-2xs text-muted-foreground">{t("Owner:")}</span>
-        <span className="text-2xs text-blue-500">{owner?.name}</span>
+        <span className="text-2xs text-info-foreground">{owner?.name}</span>
       </div>
     );
   }

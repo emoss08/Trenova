@@ -296,7 +296,7 @@ export default function SchedulingConsole() {
               />
             )}
 
-            <div className="flex flex-wrap items-center gap-4 text-[11px]">
+            <div className="flex flex-wrap items-center gap-4 text-xs">
               {LEGEND_STATES.map((state) => {
                 const tone = rotaStateTone(state);
                 return (
@@ -446,7 +446,7 @@ function ShiftCard({ template, onEdit }: { template: ShiftTemplateRow; onEdit?: 
             <span
               key={label}
               className={cn(
-                "grid h-6 flex-1 place-items-center rounded-md text-[10px] font-medium",
+                "grid h-6 flex-1 place-items-center rounded-md text-2xs font-medium",
                 on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
               )}
             >

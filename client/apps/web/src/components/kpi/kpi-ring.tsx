@@ -54,13 +54,13 @@ export function KpiRing({
         <Ring value={pct} color={ringColor} />
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex items-baseline gap-0.5">
-            <span className="font-mono text-[22px] leading-none font-semibold tracking-tight tabular-nums">
+            <span className="font-mono text-2xl leading-none font-semibold tracking-tight tabular-nums">
               {value}
             </span>
-            {unit && <span className="text-muted-foreground font-mono text-[11px]">{unit}</span>}
+            {unit && <span className="text-muted-foreground font-mono text-xs">{unit}</span>}
           </div>
           {target !== undefined && (
-            <span className="text-muted-foreground/80 font-mono text-[9.5px] tracking-wide uppercase">
+            <span className="text-muted-foreground/80 font-mono text-3xs tracking-wide uppercase">
               {t("Target {0}{1}", target, unit ?? "")}
             </span>
           )}

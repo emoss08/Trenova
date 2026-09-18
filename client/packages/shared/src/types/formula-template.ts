@@ -183,31 +183,31 @@ export const VERSION_TAG_OPTIONS: {
   {
     value: "Stable",
     label: "Stable",
-    color: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    color: "bg-success-subtle text-success-foreground dark:bg-success-subtle/40 dark:text-success-foreground",
     description: "Tested and ready for use",
   },
   {
     value: "Production",
     label: "Production",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    color: "bg-info-subtle text-info-foreground dark:bg-info-subtle/40 dark:text-info-foreground",
     description: "Currently in production",
   },
   {
     value: "Draft",
     label: "Draft",
-    color: "bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-300",
+    color: "bg-sunken text-foreground dark:bg-sunken dark:text-foreground-subtle",
     description: "Work in progress",
   },
   {
     value: "Testing",
     label: "Testing",
-    color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    color: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle/40 dark:text-warning-foreground",
     description: "Under testing",
   },
   {
     value: "Deprecated",
     label: "Deprecated",
-    color: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    color: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/40 dark:text-danger-foreground",
     description: "No longer recommended",
   },
 ];

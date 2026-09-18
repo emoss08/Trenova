@@ -99,34 +99,34 @@ export function DashHomePage() {
         initial={{ opacity: 0, y: 10, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.25, ease: "easeOut", delay: 0.04 }}
-        className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-50"
+        className="relative overflow-hidden rounded-2xl border border-border bg-sunken p-5 text-foreground-subtle"
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full bg-teal-500/20 blur-3xl"
+          className="pointer-events-none absolute -top-24 -right-16 size-56 rounded-full bg-accent-teal/20 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-28 -left-10 size-56 rounded-full bg-indigo-500/15 blur-3xl"
+          className="pointer-events-none absolute -bottom-28 -left-10 size-56 rounded-full bg-accent-indigo/15 blur-3xl"
         />
-        <p className="text-2xs font-medium tracking-wide text-zinc-400 uppercase">
+        <p className="text-2xs font-medium tracking-wide text-foreground-subtle uppercase">
           {t("Earned this period")}
         </p>
         {period.isPending ? (
-          <Skeleton className="mt-2 h-10 w-40 bg-zinc-800" />
+          <Skeleton className="mt-2 h-10 w-40 bg-surface-active" />
         ) : period.data ? (
           <>
             <p className="mt-1 text-4xl font-semibold tracking-tight tabular-nums">
               {formatCurrency(period.data.accruedGrossMinor / 100)}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
+              <span className="rounded-full bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
                 {t("{0, plural, one {# load} other {# loads}}", period.data.eventCount)}
               </span>
-              <span className="rounded-full bg-zinc-800/80 px-2.5 py-1 text-xs text-zinc-300">
+              <span className="rounded-full bg-surface-active/80 px-2.5 py-1 text-xs text-foreground-subtle">
                 {formatRange(period.data.periodStart, period.data.periodEnd)}
               </span>
-              <span className="rounded-full bg-teal-500/15 px-2.5 py-1 text-xs font-medium text-teal-300">
+              <span className="rounded-full bg-accent-teal/15 px-2.5 py-1 text-xs font-medium text-accent-teal-on-subtle">
                 {Math.max(0, daysUntil(period.data.payDate)) === 0
                   ? t("Settles today")
                   : t("Settles in {0}d", Math.max(0, daysUntil(period.data.payDate)))}
@@ -134,7 +134,7 @@ export function DashHomePage() {
             </div>
           </>
         ) : (
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-foreground-subtle">
             {t("We couldn't load your pay period right now.")}
           </p>
         )}

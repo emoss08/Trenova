@@ -45,15 +45,15 @@ function getStatusBadgeVariant(
 function getStatusIcon(status: DocumentPacketItem["status"]) {
   switch (status) {
     case "Complete":
-      return <CheckCircle2Icon className="size-4 text-teal-600" />;
+      return <CheckCircle2Icon className="size-4 text-accent-teal-on-subtle" />;
     case "Missing":
-      return <XCircleIcon className="size-4 text-red-500" />;
+      return <XCircleIcon className="size-4 text-danger-foreground" />;
     case "Expired":
-      return <FileWarningIcon className="size-4 text-pink-500" />;
+      return <FileWarningIcon className="size-4 text-accent-rose-on-subtle" />;
     case "ExpiringSoon":
-      return <ClockIcon className="size-4 text-amber-500" />;
+      return <ClockIcon className="size-4 text-warning-foreground" />;
     case "NeedsReview":
-      return <AlertTriangleIcon className="size-4 text-purple-500" />;
+      return <AlertTriangleIcon className="size-4 text-accent-violet-on-subtle" />;
   }
 }
 

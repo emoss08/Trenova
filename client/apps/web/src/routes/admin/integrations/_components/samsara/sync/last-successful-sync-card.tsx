@@ -12,7 +12,7 @@ export function LastSuccessfulSyncCard() {
   }
 
   return (
-    <div className="grid gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs sm:grid-cols-2 lg:grid-cols-6">
+    <div className="grid gap-2 rounded-md border border-success/30 bg-success/5 p-3 text-xs sm:grid-cols-2 lg:grid-cols-6">
       <ContentSection title={t("Last Successful Sync")}>
         {formatToUserTimezone(lastSuccessfulSync.closedAt)}
       </ContentSection>
@@ -34,7 +34,7 @@ export function LastSuccessfulSyncCard() {
 
 function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-background/70 rounded-md border border-emerald-600/20 p-3">
+    <div className="bg-background/70 rounded-md border border-success/20 p-3">
       <p className="text-muted-foreground">{title}</p>
       <p className="text-foreground mt-1 font-semibold">{children}</p>
     </div>

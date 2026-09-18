@@ -185,7 +185,7 @@ export function ExploreView({
           {t("{0, plural, one {# row} other {# rows}}", rows.length)}
         </Badge>
         {preview.data?.truncated && (
-          <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">
+          <span className="text-2xs rounded-sm bg-warning/10 px-1.5 py-px text-warning-foreground">
             {t("row limit reached")}
           </span>
         )}

@@ -39,7 +39,7 @@ function TenderChip({ move }: { move: DispatchBoardMove }) {
       : "";
 
   return (
-    <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-[9px]">
+    <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-3xs">
       <SendIcon className="mr-0.5 size-2.5" aria-hidden />
       {t(meta.label)}
       {countdown ? ` · ${countdown}` : ""}
@@ -86,16 +86,16 @@ function MoveCard({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{move.proNumber}</span>
           {move.moveCount > 1 && (
-            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px]">
+            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs">
               {t("Leg {0}/{1}", move.sequence + 1, move.moveCount)}
             </Badge>
           )}
         </div>
         <span
           className={cn(
-            "shrink-0 text-[10px] tabular-nums",
+            "shrink-0 text-2xs tabular-nums",
             move.minutesToPickup < 0
-              ? "font-medium text-red-600 dark:text-red-400"
+              ? "font-medium text-danger-foreground"
               : "text-muted-foreground",
           )}
         >
@@ -103,7 +103,7 @@ function MoveCard({
         </span>
       </div>
 
-      <div className="flex items-center gap-1 text-[11px]">
+      <div className="flex items-center gap-1 text-xs">
         <span className="truncate">
           {move.originCity || move.originName || "—"}
           {move.originState ? `, ${move.originState}` : ""}
@@ -116,35 +116,35 @@ function MoveCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
-        <span className="text-muted-foreground text-[10px]">
+        <span className="text-muted-foreground text-2xs">
           {move.originWindowStart > 0
             ? formatUnixDateTime(move.originWindowStart)
             : t("No appointment")}
         </span>
         {move.distance != null && (
-          <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
+          <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
             {formatMiles(move.distance)}
           </Badge>
         )}
         {move.revenue != null && (
-          <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
+          <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
             {formatCompactCurrency(move.revenue)}
           </Badge>
         )}
         {move.hasHazmat && (
-          <Badge variant="danger" className="h-4 rounded px-1 text-[9px]">
+          <Badge variant="danger" className="h-4 rounded px-1 text-3xs">
             <FlameIcon className="mr-0.5 size-2.5" aria-hidden />
             {t("Hazmat")}
           </Badge>
         )}
         {move.temperatureMin != null && (
-          <Badge variant="info" className="h-4 rounded px-1 text-[9px]">
+          <Badge variant="info" className="h-4 rounded px-1 text-3xs">
             <SnowflakeIcon className="mr-0.5 size-2.5" aria-hidden />
             {t("{0}–{1}°F", move.temperatureMin, move.temperatureMax)}
           </Badge>
         )}
         {move.hasActiveHold && (
-          <Badge variant="danger" className="h-4 rounded px-1 text-[9px]">
+          <Badge variant="danger" className="h-4 rounded px-1 text-3xs">
             <TriangleAlertIcon className="mr-0.5 size-2.5" aria-hidden />
             {t("On hold")}
           </Badge>
@@ -153,10 +153,10 @@ function MoveCard({
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-[10px]">{move.customerName}</span>
+        <span className="text-muted-foreground truncate text-2xs">{move.customerName}</span>
         {move.isCovered &&
           (move.coverageType === "carrier" ? (
-            <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-[9px]">
+            <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-3xs">
               <Building2Icon className="mr-0.5 size-2.5" aria-hidden />
               {move.assignedCarrierName}
               {move.carrierTotalCost != null
@@ -164,7 +164,7 @@ function MoveCard({
                 : ""}
             </Badge>
           ) : (
-            <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-[9px]">
+            <Badge variant="success" className="h-4 shrink-0 rounded px-1 text-3xs">
               {move.assignedWorkerName}
               {move.assignedTractorCode ? ` · ${move.assignedTractorCode}` : ""}
             </Badge>
@@ -196,8 +196,8 @@ function UrgencyColumn({
         title={t(meta.description)}
       >
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
-        <span className="text-[10.5px] font-semibold tracking-wide uppercase">{t(meta.label)}</span>
-        <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
+        <span className="text-2xs font-semibold tracking-wide uppercase">{t(meta.label)}</span>
+        <span className="text-muted-foreground ml-auto text-2xs tabular-nums">
           {moves.length}
         </span>
       </header>
@@ -212,7 +212,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-[11px]">
+            <p className="text-muted-foreground py-6 text-center text-xs">
               {t("Nothing here.")}
             </p>
           )}

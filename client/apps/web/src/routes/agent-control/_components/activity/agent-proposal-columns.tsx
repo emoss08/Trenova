@@ -85,7 +85,7 @@ export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[
       accessorKey: "runId",
       header: t("Run"),
       cell: ({ row }) => (
-        <span className="text-muted-foreground font-mono text-[11px]">{row.original.runId}</span>
+        <span className="text-muted-foreground font-mono text-xs">{row.original.runId}</span>
       ),
       size: 220,
       meta: {

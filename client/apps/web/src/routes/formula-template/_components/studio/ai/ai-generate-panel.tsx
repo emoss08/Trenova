@@ -274,8 +274,8 @@ export function AiGeneratePanel({
                     className={cn(
                       "flex items-center gap-2 rounded-md border px-3 py-2 text-xs",
                       validation.valid
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                        : "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                        ? "border-success/30 bg-success/10 text-success-foreground"
+                        : "border-warning/40 bg-warning/10 text-warning-foreground",
                     )}
                   >
                     {validation.valid ? (
@@ -332,7 +332,7 @@ export function AiGeneratePanel({
                                   {t("Expects {0}", formatCurrency(scenario.expectedAmount))}
                                 </p>
                               ) : (
-                                <p className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
+                                <p className="flex items-center gap-1 text-warning-foreground">
                                   <AlertTriangleIcon className="size-3 shrink-0" />
                                   {scenario.error || t("Could not be priced")}
                                 </p>

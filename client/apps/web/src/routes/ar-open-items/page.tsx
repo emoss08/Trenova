@@ -172,7 +172,7 @@ export function AROpenItemsPage() {
             <Skeleton className="h-64 w-full rounded-md" />
           </>
         ) : isError ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
             {t("Failed to load open items. Try refreshing the page.")}
           </div>
         ) : (
@@ -189,7 +189,7 @@ export function AROpenItemsPage() {
                 label={t("Current")}
                 value={formatCurrency(stats.currentAmount / 100)}
                 detail={`${stats.currentCount} items`}
-                valueClassName="text-emerald-600 dark:text-emerald-400"
+                valueClassName="text-success-foreground"
               />
               <SummaryCard
                 index={2}
@@ -197,7 +197,7 @@ export function AROpenItemsPage() {
                 value={formatCurrency(stats.overdueAmount / 100)}
                 detail={`${stats.overdueCount} items`}
                 valueClassName={
-                  stats.overdueAmount > 0 ? "text-red-600 dark:text-red-400" : undefined
+                  stats.overdueAmount > 0 ? "text-danger-foreground" : undefined
                 }
               />
               <SummaryCard
@@ -314,7 +314,7 @@ function SummaryCard({
     >
       <Card className="h-full gap-0 rounded-lg py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {label}
           </p>
           <p

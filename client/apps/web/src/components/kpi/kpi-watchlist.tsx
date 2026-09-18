@@ -27,7 +27,7 @@ export function KpiWatchlist({ label, items, icon, info, span = 3 }: KpiWatchlis
         label={label}
         info={info}
         right={
-          <span className="text-muted-foreground/80 font-mono text-[10px] tabular-nums">
+          <span className="text-muted-foreground/80 font-mono text-2xs tabular-nums">
             {items.length}
           </span>
         }
@@ -54,10 +54,10 @@ export function KpiWatchlist({ label, items, icon, info, span = 3 }: KpiWatchlis
                   className="size-1.25 shrink-0 rounded-full"
                   style={{ background: toneVar(item.tone) }}
                 />
-                <span className="text-foreground truncate font-mono text-[11px]">{item.who}</span>
+                <span className="text-foreground truncate font-mono text-xs">{item.who}</span>
               </span>
               <span
-                className="shrink-0 font-mono text-[10.5px] tabular-nums"
+                className="shrink-0 font-mono text-2xs tabular-nums"
                 style={{ color: toneVar(item.tone) }}
               >
                 {item.meta}

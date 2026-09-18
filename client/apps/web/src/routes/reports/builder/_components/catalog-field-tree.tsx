@@ -64,7 +64,7 @@ function FieldRow({
       <span className="flex shrink-0 items-center gap-1">
         <Badge
           variant="neutral" appearance="outline"
-          className="font-mono text-[10px] transition-opacity group-hover/field:opacity-0"
+          className="font-mono text-2xs transition-opacity group-hover/field:opacity-0"
         >
           {FIELD_TYPE_BADGES[field.type] ?? field.type}
         </Badge>
@@ -152,7 +152,7 @@ function EntityFields({
               )}
               <span className="truncate">{t(edge.label)}</span>
               {edge.cardinality !== "one" && (
-                <Badge variant="neutral" appearance="outline" className="text-[10px]">
+                <Badge variant="neutral" appearance="outline" className="text-2xs">
                   many
                 </Badge>
               )}

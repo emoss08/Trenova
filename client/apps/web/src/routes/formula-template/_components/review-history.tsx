@@ -11,10 +11,10 @@ import { useMemo } from "react";
 import { describeReviewDecision, groupReviewRounds, type ReviewRound } from "./review-rounds";
 
 const TONE_CLASSES: Record<ReturnType<typeof describeReviewDecision>["tone"], string> = {
-  neutral: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  positive: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  neutral: "bg-accent-sky/15 text-accent-sky-on-subtle",
+  positive: "bg-success/15 text-success-foreground",
   negative: "bg-destructive/15 text-destructive",
-  warning: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  warning: "bg-warning/15 text-warning-foreground",
   muted: "bg-muted text-muted-foreground",
 };
 

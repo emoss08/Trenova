@@ -59,7 +59,7 @@ export function BillingQueueItemCard({
           title={proNumber}
           auxiliary={
             item.number ? (
-              <span className="text-muted-foreground font-mono text-[10px]">{item.number}</span>
+              <span className="text-muted-foreground font-mono text-2xs">{item.number}</span>
             ) : null
           }
           amount={totalCharges != null ? formatCurrency(Number(totalCharges)) : undefined}
@@ -67,7 +67,7 @@ export function BillingQueueItemCard({
           meta={
             <div className="flex flex-col gap-1">
               {onBehalfOf ? (
-                <span className="text-muted-foreground truncate text-[11px]">
+                <span className="text-muted-foreground truncate text-xs">
                   {t("On behalf of {0}", onBehalfOf)}
                 </span>
               ) : null}
@@ -75,19 +75,19 @@ export function BillingQueueItemCard({
                 <div className="flex items-center gap-1.5">
                   <PlainBillingQueueStatusBadge status={item.status} />
                   {item.isAdjustmentOrigin ? (
-                    <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="inline-flex items-center rounded-full bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
                       {t("Rebill")}
                     </span>
                   ) : null}
                   {isPartial ? (
-                    <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                    <span className="inline-flex items-center rounded-full bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
                       {t("Split")}
                     </span>
                   ) : null}
                 </div>
                 <Tooltip>
                   <TooltipTrigger
-                    render={<span className="text-muted-foreground/70 text-[11px]">{age}</span>}
+                    render={<span className="text-muted-foreground/70 text-xs">{age}</span>}
                   />
                   <TooltipContent side="left" sideOffset={10}>
                     {generateDateTimeStringFromUnixTimestamp(item.createdAt)}

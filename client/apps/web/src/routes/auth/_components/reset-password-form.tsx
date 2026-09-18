@@ -95,7 +95,7 @@ export function ResetPasswordForm({
             <button
               type="button"
               onClick={onRequestNewLink}
-              className="text-muted-foreground hover:text-foreground cursor-pointer text-left text-[11.5px] underline underline-offset-[3px] transition-colors duration-150"
+              className="text-muted-foreground hover:text-foreground cursor-pointer text-left text-xs underline underline-offset-[3px] transition-colors duration-150"
             >
               {t("Request a new link")}
             </button>

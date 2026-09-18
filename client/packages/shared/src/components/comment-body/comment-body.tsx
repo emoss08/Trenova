@@ -46,7 +46,7 @@ function attrString(node: BodyNode, key: string): string {
 
 function defaultMention(attrs: CommentBodyMentionAttrs, key: string): ReactNode {
   return (
-    <span key={key} className="rounded bg-blue-500/10 px-0.5 font-medium text-blue-500">
+    <span key={key} className="rounded bg-info/10 px-0.5 font-medium text-info-foreground">
       @{translate(attrs.label)}
     </span>
   );
@@ -54,7 +54,7 @@ function defaultMention(attrs: CommentBodyMentionAttrs, key: string): ReactNode 
 
 function defaultEntityRef(attrs: CommentBodyEntityRefAttrs, key: string): ReactNode {
   return (
-    <span key={key} className="rounded bg-violet-500/10 px-0.5 font-medium text-violet-500">
+    <span key={key} className="rounded bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle">
       #{translate(attrs.label)}
     </span>
   );
@@ -67,7 +67,7 @@ function defaultLink(href: string, children: ReactNode, key: string): ReactNode 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-500 underline underline-offset-2 hover:text-blue-600"
+      className="text-info-foreground underline underline-offset-2 hover:text-info-foreground"
     >
       {children}
     </a>

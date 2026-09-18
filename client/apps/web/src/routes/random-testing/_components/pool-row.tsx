@@ -103,7 +103,7 @@ export function PoolRow({
                     role="img"
                     aria-label={`${slot.label}: ${SLOT_STATE_LABELS[slot.state]}`}
                     className={cn(
-                      "flex h-7 w-9 items-center justify-center rounded-md border text-[11px] tabular-nums",
+                      "flex h-7 w-9 items-center justify-center rounded-md border text-xs tabular-nums",
                       SLOT_CLASS[slot.state],
                     )}
                   />

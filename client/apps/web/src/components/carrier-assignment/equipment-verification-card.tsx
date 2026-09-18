@@ -37,19 +37,19 @@ export function useEquipmentVerificationLabels() {
           label: t("Match"),
           description: t("The equipment is registered to this carrier."),
           icon: CircleCheckIcon,
-          iconClassName: "text-emerald-600 dark:text-emerald-400",
+          iconClassName: "text-success-foreground",
         },
         Mismatch: {
           label: t("Mismatch"),
           description: t("The equipment is registered to a different carrier."),
           icon: CircleXIcon,
-          iconClassName: "text-red-600 dark:text-red-400",
+          iconClassName: "text-danger-foreground",
         },
         NotFound: {
           label: t("Not found"),
           description: t("No carrier is registered to this equipment."),
           icon: SearchXIcon,
-          iconClassName: "text-amber-600 dark:text-amber-400",
+          iconClassName: "text-warning-foreground",
         },
         Unverifiable: {
           label: t("Unverifiable"),
@@ -61,7 +61,7 @@ export function useEquipmentVerificationLabels() {
           label: t("Provider error"),
           description: t("The provider failed to answer. Try again shortly."),
           icon: TriangleAlertIcon,
-          iconClassName: "text-amber-600 dark:text-amber-400",
+          iconClassName: "text-warning-foreground",
         },
       } satisfies Record<CarrierEquipmentVerificationResult, ResultMeta>,
       unitType: {

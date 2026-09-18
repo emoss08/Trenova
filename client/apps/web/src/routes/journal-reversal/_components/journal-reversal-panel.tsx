@@ -208,7 +208,7 @@ function ReversalDetailPanel({
         {reversal.rejectionReason ? (
           <div className="col-span-2">
             <dt className="text-2xs text-muted-foreground font-medium">{t("Rejection Reason")}</dt>
-            <dd className="mt-0.5 text-xs text-red-600 dark:text-red-400">
+            <dd className="mt-0.5 text-xs text-danger-foreground">
               {reversal.rejectionReason}
             </dd>
           </div>

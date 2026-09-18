@@ -98,7 +98,7 @@ export function ProposalCard({
           </span>
           {view.severity && (
             <span
-              className="shrink-0 text-[10px] font-medium tracking-wide uppercase"
+              className="shrink-0 text-2xs font-medium tracking-wide uppercase"
               style={{ color: toneVar(view.severity.tone) }}
             >
               {view.severity.label}
@@ -149,7 +149,7 @@ export function ProposalCard({
               undone reassures nobody; saying it cannot is the thing to read. */}
           {!view.reversible && (
             <span
-              className="flex items-center gap-1 text-[11px]"
+              className="flex items-center gap-1 text-xs"
               style={{ color: toneVar("warning") }}
             >
               <TriangleAlertIcon className="size-3" />

@@ -58,7 +58,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   if (readiness.uncovered.length === 0) {
     return (
       <Alert>
-        <CheckCircle2Icon className="size-4 text-emerald-500" />
+        <CheckCircle2Icon className="size-4 text-success-foreground" />
         <AlertTitle>{t("Every AI task has a provider")}</AlertTitle>
         <AlertDescription>
           {t("Agents you enable will run. Routing is managed on the Providers tab.")}

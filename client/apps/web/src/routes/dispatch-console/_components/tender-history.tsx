@@ -42,23 +42,23 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
         ) : (
           <ChevronRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         )}
-        <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
-        <TenderStatusBadge status={tender.status} className="shrink-0 text-[9px]" />
-        <span className="text-muted-foreground ml-auto shrink-0 text-[10px]">
+        <TenderStatusBadge status={tender.status} className="shrink-0 text-3xs" />
+        <span className="text-muted-foreground ml-auto shrink-0 text-2xs">
           {formatUnixDateTime(tender.createdAt)}
         </span>
       </button>
 
       {acceptedCarrier && (
-        <span className="text-muted-foreground px-2 pb-1 text-[10px]">
+        <span className="text-muted-foreground px-2 pb-1 text-2xs">
           {t("Accepted by")} <span className="text-foreground font-medium">{acceptedCarrier}</span>
           {tender.acceptedAt != null ? ` · ${formatUnixDateTime(tender.acceptedAt)}` : ""}
         </span>
       )}
       {tender.status === "Canceled" && tender.cancellationReason && (
-        <span className="text-muted-foreground px-2 pb-1 text-[10px] italic">
+        <span className="text-muted-foreground px-2 pb-1 text-2xs italic">
           “{tender.cancellationReason}”
         </span>
       )}
@@ -74,17 +74,17 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 <div className="flex min-w-0 items-center gap-1.5">
                   <Badge
                     variant="neutral" appearance="outline"
-                    className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums"
+                    className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums"
                   >
                     #{offer.rank}
                   </Badge>
-                  <span className="truncate text-[11px]">
+                  <span className="truncate text-xs">
                     {offer.carrier?.name ?? t("Unknown carrier")}
                   </span>
                 </div>
-                <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />
+                <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-3xs" />
               </div>
-              <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[10px]">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-2xs">
                 <span className="tabular-nums">
                   {formatOfferRate(offer.rate, offer.rateMethod)}
                 </span>
@@ -102,14 +102,14 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 )}
               </div>
               {offer.status === "Declined" && offer.declineReason && (
-                <span className="text-muted-foreground text-[10px] italic">
+                <span className="text-muted-foreground text-2xs italic">
                   “{offer.declineReason}”
                 </span>
               )}
             </div>
           ))}
           {offers.length === 0 && (
-            <p className="text-muted-foreground py-1 text-center text-[10px]">{t("No offers.")}</p>
+            <p className="text-muted-foreground py-1 text-center text-2xs">{t("No offers.")}</p>
           )}
         </div>
       )}
@@ -142,7 +142,7 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+      <span className="text-muted-foreground text-2xs tracking-wide uppercase">
         {t("Tenders")}
       </span>
       {isLoading ? (

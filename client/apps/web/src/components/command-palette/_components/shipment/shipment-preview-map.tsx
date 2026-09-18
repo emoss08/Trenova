@@ -103,15 +103,15 @@ function StopMarker({
   const color = (stopType: Stop["type"]) => {
     switch (stopType) {
       case "Pickup":
-        return "bg-green-600";
+        return "bg-success";
       case "Delivery":
-        return "bg-red-600";
+        return "bg-danger";
       case "SplitPickup":
-        return "bg-blue-600";
+        return "bg-info";
       case "SplitDelivery":
-        return "bg-yellow-600";
+        return "bg-warning";
       default:
-        return "bg-gray-600";
+        return "bg-foreground-subtle";
     }
   };
   return (

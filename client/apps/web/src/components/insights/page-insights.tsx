@@ -15,15 +15,15 @@ import { Link } from "react-router";
 import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
 
 const SEVERITY_STYLES: Record<InsightSeverity, string> = {
-  Critical: "bg-red-500/15 text-red-700 dark:text-red-400",
-  Warning: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  Info: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+  Critical: "bg-danger/15 text-danger-foreground",
+  Warning: "bg-warning/15 text-warning-foreground",
+  Info: "bg-info/15 text-info-foreground",
 };
 
 const SEVERITY_DOT: Record<InsightSeverity, string> = {
-  Critical: "bg-red-500",
-  Warning: "bg-amber-500",
-  Info: "bg-blue-500",
+  Critical: "bg-danger",
+  Warning: "bg-warning",
+  Info: "bg-info",
 };
 
 export function insightHref(insight: Insight): string {
@@ -61,7 +61,7 @@ export function PageInsightsCard({
           <SparklesIcon className="text-muted-foreground size-3.5" />
           {title ?? t("Insights")}
           {insights.length > 0 ? (
-            <span className="bg-muted text-muted-foreground ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
+            <span className="bg-muted text-muted-foreground ml-1 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
               {insights.length}
             </span>
           ) : null}
@@ -82,7 +82,7 @@ export function PageInsightsCard({
           </div>
         ) : insights.length === 0 ? (
           <div className="text-muted-foreground flex h-32 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircle2Icon className="size-5 text-emerald-500" />
+            <CheckCircle2Icon className="size-5 text-success-foreground" />
             {t("Nothing needs attention right now")}
           </div>
         ) : (
@@ -127,7 +127,7 @@ function InsightRow({ insight }: { insight: Insight }) {
     >
       <span
         className={cn(
-          "mt-0.5 inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-[11px] font-medium",
+          "mt-0.5 inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
           SEVERITY_STYLES[insight.severity],
         )}
       >
@@ -142,7 +142,7 @@ function InsightRow({ insight }: { insight: Insight }) {
               {change && (
                 <span
                   className={cn(
-                    "ml-1 text-[11px] font-medium",
+                    "ml-1 text-xs font-medium",
                     adverse ? "text-destructive" : "text-success",
                   )}
                 >
@@ -152,7 +152,7 @@ function InsightRow({ insight }: { insight: Insight }) {
             </span>
           )}
         </div>
-        <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[11px]">
+        <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">
           {insight.subject !== "" && <span className="truncate">{insight.subject}</span>}
           {metric && (
             <span className="truncate">
@@ -194,7 +194,7 @@ export function PageInsightsStrip({
       className={cn("flex min-w-0 items-center gap-1.5 overflow-x-auto", className)}
       aria-label={t("Insights for this page")}
     >
-      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-[11px] font-medium tracking-wide uppercase">
+      <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-xs font-medium tracking-wide uppercase">
         <SparklesIcon className="size-3" />
         {t("Insights")}
       </span>
@@ -203,7 +203,7 @@ export function PageInsightsStrip({
       ))}
       <Link
         to="/insights"
-        className="text-muted-foreground hover:text-foreground shrink-0 text-[11px] hover:underline"
+        className="text-muted-foreground hover:text-foreground shrink-0 text-xs hover:underline"
       >
         {t("All insights")}
       </Link>

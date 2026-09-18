@@ -41,11 +41,11 @@ export function formatSignedCurrency(value: number, currency = "USD"): string {
 /** Green when the carrier gains, red when it loses, neutral at zero. */
 export function deltaToneClass(value: number): string {
   if (value > 0) {
-    return "text-emerald-600 dark:text-emerald-400";
+    return "text-success-foreground";
   }
 
   if (value < 0) {
-    return "text-red-600 dark:text-red-400";
+    return "text-danger-foreground";
   }
 
   return "text-muted-foreground";
@@ -102,14 +102,14 @@ export type UrgencyStyle = {
  */
 export const URGENCY_STYLES: Record<DeskUrgency, UrgencyStyle> = {
   NoticeOverdue: {
-    bar: "bg-amber-500",
-    dot: "bg-amber-500",
-    text: "text-amber-700 dark:text-amber-500",
+    bar: "bg-warning",
+    dot: "bg-warning",
+    text: "text-warning-foreground",
   },
   NoticeDueSoon: {
-    bar: "bg-amber-400",
-    dot: "bg-amber-400",
-    text: "text-amber-700 dark:text-amber-500",
+    bar: "bg-warning",
+    dot: "bg-warning",
+    text: "text-warning-foreground",
   },
   Accruing: {
     bar: "bg-foreground/70",
@@ -144,10 +144,10 @@ export const NOTIFICATION_STATUS_LABEL: Record<DetentionNotificationStatus, stri
 };
 
 export const SCORE_BAND_STYLES: Record<ScoreBand, string> = {
-  Strong: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  Adequate: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
-  Weak: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  AtRisk: "bg-red-500/15 text-red-700 dark:text-red-400",
+  Strong: "bg-success/15 text-success-foreground",
+  Adequate: "bg-accent-sky/15 text-accent-sky-on-subtle",
+  Weak: "bg-warning/15 text-warning-foreground",
+  AtRisk: "bg-danger/15 text-danger-foreground",
 };
 
 /** Maps a 0-100 collectability score onto its qualitative band. */
@@ -175,11 +175,11 @@ export const OCCURRENCE_STATUS_LABEL: Record<OccurrenceStatus, string> = {
  */
 export const OCCURRENCE_STATUS_DOT: Record<OccurrenceStatus, string> = {
   Accruing: "bg-foreground/70",
-  Pending: "bg-amber-500",
+  Pending: "bg-warning",
   Approved: "bg-foreground/70",
   Billed: "bg-foreground/40",
   Waived: "bg-muted-foreground/30",
-  Disputed: "bg-amber-500",
+  Disputed: "bg-warning",
   NotBillable: "bg-muted-foreground/30",
 };
 
@@ -189,17 +189,17 @@ export const NOTICE_DELIVERY_DOT: Record<NoticeDeliveryStatus, string> = {
   Sent: "bg-foreground/40",
   Delivered: "bg-foreground/70",
   Opened: "bg-foreground/70",
-  Bounced: "bg-red-500",
-  Failed: "bg-red-500",
+  Bounced: "bg-danger",
+  Failed: "bg-danger",
 };
 
 export const OCCURRENCE_STATUS_STYLES: Record<OccurrenceStatus, string> = {
-  Accruing: "bg-red-500/15 text-red-700 dark:text-red-400",
-  Pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  Approved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  Billed: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  Accruing: "bg-danger/15 text-danger-foreground",
+  Pending: "bg-warning/15 text-warning-foreground",
+  Approved: "bg-success/15 text-success-foreground",
+  Billed: "bg-accent-sky/15 text-accent-sky-on-subtle",
   Waived: "bg-muted text-muted-foreground",
-  Disputed: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+  Disputed: "bg-warning/15 text-warning-foreground",
   NotBillable: "bg-muted text-muted-foreground",
 };
 

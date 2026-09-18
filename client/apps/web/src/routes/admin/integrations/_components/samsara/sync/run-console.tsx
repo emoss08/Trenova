@@ -12,15 +12,15 @@ import { formatDateInUserTimezone } from "@trenova/shared/lib/date";
 function getLogLevelStyles(level: WorkerSyncLogLevel): string {
   switch (level) {
     case "success":
-      return "text-emerald-500";
+      return "text-success-foreground";
     case "warn":
-      return "text-amber-500";
+      return "text-warning-foreground";
     case "error":
-      return "text-red-500";
+      return "text-danger-foreground";
     case "debug":
-      return "text-purple-500";
+      return "text-accent-violet-on-subtle";
     case "info":
-      return "text-blue-500";
+      return "text-info-foreground";
     default:
       return "text-foreground";
   }

@@ -79,11 +79,11 @@ const PRIORITY_INDICATOR: Record<CommentPriority, { icon: string; className: str
   Normal: null,
   High: {
     icon: "▲",
-    className: "border-amber-600 bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    className: "border-warning bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
   },
   Urgent: {
     icon: "!",
-    className: "border-red-600 bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
+    className: "border-danger bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
   },
 };
 
@@ -147,7 +147,7 @@ export function CommentItem({
       className={cn(
         "group/comment hover:bg-muted/50 flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors",
         comment.pending && "opacity-60",
-        comment.failed && "bg-red-500/5",
+        comment.failed && "bg-danger/5",
         highlighted && "animate-comment-highlight",
       )}
     >
@@ -161,12 +161,12 @@ export function CommentItem({
           fallbackClassName="text-xs"
         />
         {isOnline && (
-          <span className="border-background absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 bg-emerald-500" />
+          <span className="border-background absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 bg-success" />
         )}
         {PRIORITY_INDICATOR[comment.priority] && (
           <span
             className={cn(
-              "absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border text-[10px] leading-none font-bold",
+              "absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full border text-2xs leading-none font-bold",
               PRIORITY_INDICATOR[comment.priority]!.className,
             )}
           >
@@ -193,7 +193,7 @@ export function CommentItem({
           )}
           {isPinned && (
             <Tooltip>
-              <TooltipTrigger render={<PinIcon className="size-3 shrink-0 text-amber-500" />} />
+              <TooltipTrigger render={<PinIcon className="size-3 shrink-0 text-warning-foreground" />} />
               <TooltipContent side="top">
                 {t(
                   "Pinned{0}",
@@ -237,7 +237,7 @@ export function CommentItem({
 
         {comment.failed && (
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-2xs font-medium text-red-500">{t("Failed to send")}</span>
+            <span className="text-2xs font-medium text-danger-foreground">{t("Failed to send")}</span>
             <Button
               type="button"
               variant="outline"
@@ -263,7 +263,7 @@ export function CommentItem({
 
         {isResolved && !isEditing && (
           <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
-            <CheckCircle2Icon className="size-3 text-emerald-500" />
+            <CheckCircle2Icon className="size-3 text-success-foreground" />
             {t(
               "Resolved {0} {1}",
               comment.resolvedBy?.name ? ` ${t("by {0}", comment.resolvedBy.name)}` : "",

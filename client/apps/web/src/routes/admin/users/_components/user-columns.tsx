@@ -54,7 +54,7 @@ function UserNameCell({ user, isOnline }: { user: UserRow; isOnline: boolean }) 
           {user.name}
           <span
             className={`size-2 rounded-full ${
-              isOnline ? "bg-green-500" : "bg-muted-foreground/40"
+              isOnline ? "bg-success" : "bg-muted-foreground/40"
             }`}
             title={isOnline ? "Online" : "Offline"}
           />

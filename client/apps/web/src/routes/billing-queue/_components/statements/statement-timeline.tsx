@@ -84,7 +84,7 @@ export function StatementTimeline({
             >
               {t(step.label)}
             </span>
-            <span className="text-muted-foreground block truncate text-[11px]">{step.detail}</span>
+            <span className="text-muted-foreground block truncate text-xs">{step.detail}</span>
           </span>
           {index < steps.length - 1 && (
             <span

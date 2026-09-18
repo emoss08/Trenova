@@ -24,7 +24,7 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+        <h4 className="text-muted-foreground text-xs font-semibold uppercase">
           {t("Recognition")}
         </h4>
         <p className="text-muted-foreground truncate text-xs">

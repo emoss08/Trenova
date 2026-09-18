@@ -392,35 +392,35 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
 
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
-      className: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       text: t("Ready for Review"),
     },
     InReview: {
-      className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+      className: "bg-accent-indigo-subtle text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle",
       text: t("In Review"),
     },
     Approved: {
-      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Approved"),
     },
     Posted: {
-      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     OnHold: {
-      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("On Hold"),
     },
     SentBackToOps: {
-      className: "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Sent Back to Ops"),
     },
     Exception: {
-      className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+      className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Exception"),
     },
     Canceled: {
-      className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      className: "bg-sunken text-foreground-subtle dark:text-foreground-subtle",
       text: t("Canceled"),
     },
   };
@@ -428,7 +428,7 @@ export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueS
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -475,15 +475,15 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
 
   const statusAttributes: Record<SettlementStatus, PlainBadgeAttrProps> = {
     Paid: {
-      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Paid"),
     },
     PartiallyPaid: {
-      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Partial"),
     },
     Unpaid: {
-      className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      className: "bg-sunken text-foreground-subtle dark:text-foreground-subtle",
       text: t("Unpaid"),
     },
   };
@@ -491,7 +491,7 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -505,11 +505,11 @@ export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPa
 
   const statusAttributes: Record<CustomerPaymentStatus, PlainBadgeAttrProps> = {
     Posted: {
-      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     Reversed: {
-      className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+      className: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Reversed"),
     },
   };
@@ -517,7 +517,7 @@ export function PlainCustomerPaymentStatusBadge({ status }: { status: CustomerPa
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -531,15 +531,15 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
 
   const statusAttributes: Record<InvoiceStatus, PlainBadgeAttrProps> = {
     Draft: {
-      className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      className: "bg-sunken text-foreground dark:text-foreground-subtle",
       text: t("Draft"),
     },
     Posted: {
-      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground",
       text: t("Posted"),
     },
     Voided: {
-      className: "bg-red-50 text-red-700 line-through dark:bg-red-950 dark:text-red-300",
+      className: "bg-danger-subtle text-danger-foreground line-through dark:bg-danger-subtle dark:text-danger-foreground",
       text: t("Voided"),
     },
   };
@@ -547,7 +547,7 @@ export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         statusAttributes[status].className,
       )}
     >
@@ -573,7 +573,7 @@ export function PlainInvoiceDisputeBadge({
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+    <span className="inline-flex items-center rounded-full bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
       {t("Disputed")}
     </span>
   );
@@ -651,7 +651,7 @@ export function PlainInvoiceSplitBadge({
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+    <span className="inline-flex items-center rounded-full bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
       {t("Split bill")}
     </span>
   );
@@ -667,19 +667,19 @@ export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
 
   const scopeAttributes: Record<Exclude<InvoiceScope, "Shipment">, PlainBadgeAttrProps> = {
     Order: {
-      className: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      className: "bg-info-subtle text-info-foreground dark:bg-info-subtle dark:text-info-foreground",
       text: t("Order"),
     },
     Consolidated: {
-      className: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+      className: "bg-accent-violet-subtle text-accent-violet-on-subtle dark:bg-accent-violet-subtle dark:text-accent-violet-on-subtle",
       text: t("Consolidated"),
     },
     Adjustment: {
-      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      className: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
       text: t("Adjustment"),
     },
     Memo: {
-      className: "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+      className: "bg-accent-teal-subtle text-accent-teal-on-subtle dark:bg-accent-teal-subtle dark:text-accent-teal-on-subtle",
       text: t("Memo"),
     },
   };
@@ -691,7 +691,7 @@ export function PlainInvoiceScopeBadge({ scope }: { scope: InvoiceScope }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         scopeAttributes[scope].className,
       )}
     >

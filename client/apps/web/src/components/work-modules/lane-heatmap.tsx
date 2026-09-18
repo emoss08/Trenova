@@ -21,11 +21,11 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
       <header className="border-border flex items-center justify-between border-b px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="cc-label text-foreground">{t("Lane heatmap")}</h3>
-          <span className="text-muted-foreground font-mono text-[10px]">
+          <span className="text-muted-foreground font-mono text-2xs">
             {t("origin → destination · {0} loads", total)}
           </span>
         </div>
-        <span className="text-muted-foreground font-mono text-[10px]">
+        <span className="text-muted-foreground font-mono text-2xs">
           {t("{0}d", data.windowDays)}
         </span>
       </header>
@@ -36,7 +36,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
           {REGIONS.map((r) => (
             <span
               key={r}
-              className="text-muted-foreground text-center font-mono text-[9.5px] tracking-wider uppercase"
+              className="text-muted-foreground text-center font-mono text-3xs tracking-wider uppercase"
             >
               {r}
             </span>
@@ -44,7 +44,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         </div>
         {REGIONS.map((origin, rowIdx) => (
           <div key={origin} className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
-            <span className="text-muted-foreground flex items-center font-mono text-[9.5px] tracking-wider uppercase">
+            <span className="text-muted-foreground flex items-center font-mono text-3xs tracking-wider uppercase">
               {origin}
             </span>
             {REGIONS.map((destination, colIdx) => (
@@ -61,7 +61,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         ))}
       </div>
 
-      <footer className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-[10px]">
+      <footer className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-2xs">
         <span className="font-mono">
           {top
             ? t("Top: {0} → {1} ({2})", top.origin, top.destination, top.count)
@@ -86,7 +86,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
     return (
       <div
         aria-hidden
-        className="border-border-2 text-muted-foreground flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-[11px] tabular-nums"
+        className="border-border-2 text-muted-foreground flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-xs tabular-nums"
       >
         ·
       </div>
@@ -107,7 +107,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
         render={
           <div
             className={cn(
-              "border-border-2 flex h-6.5 items-center justify-center rounded-[3px] border font-mono text-[11px] tabular-nums",
+              "border-border-2 flex h-6.5 items-center justify-center rounded-[3px] border font-mono text-xs tabular-nums",
               value === 0 && "text-muted-foreground",
               value > 0 && !isHighIntensity && "text-foreground",
               isHighIntensity && "text-white",
@@ -131,7 +131,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
 function ScaleLegend({ max }: { max: number }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className="font-mono text-[9px]">0</span>
+      <span className="font-mono text-3xs">0</span>
       <span
         aria-hidden
         className="block h-1.5 w-20 rounded-full"
@@ -140,7 +140,7 @@ function ScaleLegend({ max }: { max: number }) {
             "linear-gradient(to right, color-mix(in oklch, var(--color-brand) 5%, transparent), var(--color-brand))",
         }}
       />
-      <span className="font-mono text-[9px]">{max}</span>
+      <span className="font-mono text-3xs">{max}</span>
     </span>
   );
 }

@@ -121,7 +121,7 @@ export function TimelineToolbar({
 
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
-          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
+          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors"
           aria-label={t("Jump to date")}
         >
           <CalendarIcon className="text-muted-foreground size-3" />
@@ -154,7 +154,7 @@ export function TimelineToolbar({
             onClick={() => onZoomChange(option.id)}
             aria-pressed={zoom === option.id}
             className={cn(
-              "px-2 py-1 text-[11px] transition-colors",
+              "px-2 py-1 text-xs transition-colors",
               index > 0 && "border-border border-l",
               zoom === option.id
                 ? "bg-muted text-foreground"
@@ -224,14 +224,14 @@ export function TimelineToolbar({
 
       <div className="ml-auto flex items-center gap-3">
         {isFetching && (
-          <span className="text-muted-foreground inline-flex items-center gap-1 text-[10px]">
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-2xs">
             <Spinner className="size-3" />
             {t("Refreshing")}
           </span>
         )}
         {truncated && (
           <span
-            className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px]"
+            className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs"
             title={t("Narrow the window or filters to see everything at once.")}
           >
             <TriangleAlertIcon className="size-3" />
@@ -242,14 +242,14 @@ export function TimelineToolbar({
           {LEGEND_ITEMS.map((item) => (
             <span
               key={item.label}
-              className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
+              className="text-muted-foreground inline-flex items-center gap-1 text-2xs"
             >
               <span className={cn("size-1.5 rounded-full", item.dotClass)} />
               {t(item.label)}
             </span>
           ))}
         </div>
-        <p className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
+        <p className="font-table text-muted-foreground shrink-0 text-2xs tabular-nums">
           {t("{0} {1} in view", barCount, barCount === 1 ? "load" : "loads")}
         </p>
       </div>

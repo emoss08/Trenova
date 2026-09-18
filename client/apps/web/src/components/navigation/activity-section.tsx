@@ -74,7 +74,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
           profilePicUrl={entry.user?.profilePicUrl ?? undefined}
           thumbnailUrl={entry.user?.thumbnailUrl ?? undefined}
           className="mt-0.5 size-4"
-          fallbackClassName="bg-muted text-[7px] font-medium text-muted-foreground"
+          fallbackClassName="bg-muted text-3xs font-medium text-muted-foreground"
         />
         <span className="grid min-w-0 flex-1 leading-snug">
           <span className="text-muted-foreground truncate text-xs">

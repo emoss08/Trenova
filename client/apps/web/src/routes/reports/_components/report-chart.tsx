@@ -324,7 +324,7 @@ function KpiTile({
         <p
           className={cn(
             "flex items-center gap-1 text-xs tabular-nums",
-            delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+            delta >= 0 ? "text-success-foreground" : "text-destructive",
           )}
         >
           {delta >= 0 ? (

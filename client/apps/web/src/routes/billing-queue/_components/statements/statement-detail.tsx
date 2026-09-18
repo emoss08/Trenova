@@ -146,7 +146,7 @@ export function StatementDetail({
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{statement.customerName}</p>
-          <p className="text-muted-foreground truncate text-[11px]">
+          <p className="text-muted-foreground truncate text-xs">
             {periodRange(statement.periodStart, statement.periodEnd)}
             {statement.customerCode ? ` · ${statement.customerCode}` : ""}
           </p>
@@ -222,9 +222,9 @@ export function StatementDetail({
               </div>
             )}
             {statement.heldCount > 0 && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/60 p-2.5 dark:border-amber-900 dark:bg-amber-950/30">
-                <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-amber-800 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-lg border border-warning-border bg-warning-subtle/60 p-2.5 dark:border-warning-border dark:bg-warning-subtle/30">
+                <ClockIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
+                <p className="text-xs text-warning-foreground">
                   {t(
                     "{0, plural, one {# shipment} other {# shipments}} worth {1} {0, plural, one {is} other {are}} still in review and will not be on this invoice.",
                     statement.heldCount,
@@ -239,7 +239,7 @@ export function StatementDetail({
                 </p>
               </div>
             )}
-            <p className="text-muted-foreground px-1 text-[11px]">
+            <p className="text-muted-foreground px-1 text-xs">
               {describeBillingSchedule({
                 invoiceDelivery: "Consolidated",
                 billingCycle: statement.cycle,
@@ -275,7 +275,7 @@ export function StatementDetail({
 
       {groups.length > 0 && (
         <div className="bg-muted/40 flex flex-wrap items-center gap-2 border-t p-2">
-          <span className="text-muted-foreground text-[11px]">
+          <span className="text-muted-foreground text-xs">
             {heldCount > 0
               ? t("{0, plural, one {# shipment} other {# shipments}} held back", heldCount)
               : t(

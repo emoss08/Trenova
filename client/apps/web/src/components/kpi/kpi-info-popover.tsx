@@ -51,7 +51,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
         <dl className="grid gap-2">
           {rows.map((row) => (
             <div key={row.label} className="grid gap-0.5">
-              <dt className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+              <dt className="text-muted-foreground font-mono text-2xs tracking-wide uppercase">
                 {t(row.label)}
               </dt>
               <dd className="text-foreground/90 text-xs leading-snug">{row.value}</dd>

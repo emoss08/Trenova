@@ -87,7 +87,7 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
           {data && (
             <div className="space-y-2 pr-6">
               {status === "stale" && (
-                <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-800 dark:text-amber-200">
+                <div className="flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs text-warning-foreground">
                   <span>{t("The formula changed since this explanation was written.")}</span>
                   <Button type="button" variant="ghost" size="xs" onClick={handleExplain}>
                     {t("Explain again")}

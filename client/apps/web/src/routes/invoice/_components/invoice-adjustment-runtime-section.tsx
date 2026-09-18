@@ -330,7 +330,7 @@ function InvoiceAdjustmentLatestCard({
               <Button
                 size="sm"
                 type="button"
-                className="bg-green-600 text-white hover:bg-green-700"
+                className="bg-success text-white hover:bg-success"
                 onClick={() => approveMutation.mutate(latestAdjustment.id)}
                 disabled={approveMutation.isPending}
               >

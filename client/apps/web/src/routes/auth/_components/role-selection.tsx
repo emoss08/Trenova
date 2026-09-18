@@ -174,7 +174,7 @@ export function RoleSelection({
           }
         />
       ) : (
-        <div className="text-subtle-foreground mt-3.5 flex items-center justify-end gap-1.5 text-[11.5px] whitespace-nowrap">
+        <div className="text-subtle-foreground mt-3.5 flex items-center justify-end gap-1.5 text-xs whitespace-nowrap">
           <KeyHint>{formatShortcut("1–9")}</KeyHint> toggle <KeyHint>{formatShortcut("↵")}</KeyHint>{" "}
           activate
         </div>

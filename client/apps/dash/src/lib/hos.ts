@@ -32,15 +32,15 @@ export function gaugeTone(remainingMs: number, defaultTone: RingGaugeTone): Ring
 export type DutyStatusInfo = { label: string; variant: BadgeVariant };
 
 const dutyStatuses: Record<string, DutyStatusInfo> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On Duty", variant: "warning" },
-  offDuty: { label: "Off Duty", variant: "secondary" },
-  sleeperBed: { label: "Sleeper Berth", variant: "purple" },
-  yardMove: { label: "Yard Move", variant: "teal" },
-  personalConveyance: { label: "Personal Conveyance", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On Duty", variant: "accent-amber" },
+  offDuty: { label: "Off Duty", variant: "accent-slate" },
+  sleeperBed: { label: "Sleeper Berth", variant: "accent-violet" },
+  yardMove: { label: "Yard Move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal Conveyance", variant: "accent-teal" },
 };
 
 export function dutyStatusInfo(status: string | null | undefined): DutyStatusInfo {
-  if (!status) return { label: translate("Unknown"), variant: "secondary" };
-  return dutyStatuses[status] ?? { label: toTitleCase(status), variant: "secondary" };
+  if (!status) return { label: translate("Unknown"), variant: "neutral" };
+  return dutyStatuses[status] ?? { label: toTitleCase(status), variant: "neutral" };
 }

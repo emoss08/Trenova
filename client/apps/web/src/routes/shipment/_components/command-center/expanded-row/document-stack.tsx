@@ -88,7 +88,7 @@ export function DocumentsBlock({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1 text-[11px]">
+      <div className="flex flex-col gap-1 text-xs">
         {isLoading ? (
           <PanelSkeleton />
         ) : isError ? (
@@ -100,7 +100,7 @@ export function DocumentsBlock({
             <div key={row.id} className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground truncate">{t(row.label)}</span>
               {row.matchedDocumentCount > 0 ? (
-                <span className="font-table text-success max-w-32 truncate text-right text-[10.5px] tabular-nums">
+                <span className="font-table text-success max-w-32 truncate text-right text-2xs tabular-nums">
                   {getUploadedCountLabel(row.matchedDocumentCount)}
                 </span>
               ) : (
@@ -108,7 +108,7 @@ export function DocumentsBlock({
                   type="button"
                   variant="link"
                   size="xxs"
-                  className="h-auto px-0 py-0 text-[10.5px] text-blue-500 hover:underline"
+                  className="h-auto px-0 py-0 text-2xs text-info-foreground hover:underline"
                   disabled={!hasShipmentId}
                   onClick={() =>
                     onUpload(shipment, {

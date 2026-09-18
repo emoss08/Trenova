@@ -20,28 +20,28 @@ const sizeClasses: Record<IconSize, { container: string; icon: string }> = {
 
 const categoryStyles: Record<string, { bg: string; text: string; icon: typeof FileIcon }> = {
   pdf: {
-    bg: "bg-red-100 dark:bg-red-950/50",
-    text: "text-red-600 dark:text-red-400",
+    bg: "bg-danger-subtle",
+    text: "text-danger-foreground",
     icon: FileTextIcon,
   },
   image: {
-    bg: "bg-purple-100 dark:bg-purple-950/50",
-    text: "text-purple-600 dark:text-purple-400",
+    bg: "bg-accent-violet-subtle",
+    text: "text-accent-violet-on-subtle",
     icon: ImageIcon,
   },
   spreadsheet: {
-    bg: "bg-green-100 dark:bg-green-950/50",
-    text: "text-green-600 dark:text-green-400",
+    bg: "bg-success-subtle",
+    text: "text-success-foreground",
     icon: FileSpreadsheetIcon,
   },
   document: {
-    bg: "bg-blue-100 dark:bg-blue-950/50",
-    text: "text-blue-600 dark:text-blue-400",
+    bg: "bg-info-subtle",
+    text: "text-info-foreground",
     icon: FileTextIcon,
   },
   data: {
-    bg: "bg-amber-100 dark:bg-amber-950/50",
-    text: "text-amber-600 dark:text-amber-400",
+    bg: "bg-warning-subtle",
+    text: "text-warning-foreground",
     icon: FileCodeIcon,
   },
   default: {

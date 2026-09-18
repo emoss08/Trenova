@@ -16,7 +16,7 @@ export function PublicPageShell({
       <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
         <LazyImage src={logoRainbow} alt={t("Trenova Logo")} className="size-12 object-contain" />
         {children}
-        <p className="text-muted-foreground text-center text-[11px]">{footer}</p>
+        <p className="text-muted-foreground text-center text-xs">{footer}</p>
       </div>
     </div>
   );

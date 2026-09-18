@@ -58,7 +58,7 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
           {typeof count === "number" && (
             <span
               className={cn(
-                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-[9px] tabular-nums",
+                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-3xs tabular-nums",
                 COUNT_CLASS[countTone],
               )}
             >

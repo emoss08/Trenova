@@ -28,7 +28,7 @@ export function PayEventPanel({
         <div className="flex items-center gap-2">
           <DriverPayEventStatusBadge status={row.status as DriverPayEventStatus} />
           {row.voidReason && (
-            <span className="text-xs text-red-600 dark:text-red-400">{row.voidReason}</span>
+            <span className="text-xs text-danger-foreground">{row.voidReason}</span>
           )}
         </div>
         <div className="overflow-hidden rounded-lg border">
@@ -71,7 +71,7 @@ export function PayEventPanel({
             </tbody>
           </table>
         </div>
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t(
             "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.",
           )}

@@ -97,13 +97,13 @@ function InvoicedBanner() {
   const t = useT();
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/50">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-        <FileTextIcon className="size-4 text-blue-600 dark:text-blue-400" />
+    <div className="flex items-center gap-3 rounded-lg border border-info-border bg-info-subtle px-4 py-3 dark:border-info-border dark:bg-info-subtle/50">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info-subtle">
+        <FileTextIcon className="size-4 text-info-foreground" />
       </div>
       <div>
-        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{t("Invoiced")}</p>
-        <p className="text-xs text-blue-700 dark:text-blue-300">
+        <p className="text-sm font-medium text-info-foreground">{t("Invoiced")}</p>
+        <p className="text-xs text-info-foreground">
           {t(
             "This shipment has been invoiced. Billing and charge fields are locked. To make financial corrections, issue a credit memo and rebill.",
           )}

@@ -84,10 +84,10 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-medium">{guide.name}</span>
-        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-[9px]">
+        <Badge variant="neutral" appearance="outline" className="h-4 rounded px-1 text-3xs">
           {ROUTING_GUIDE_TIER_LABEL[guide.specificity] ?? t("Unranked")}
         </Badge>
-        <span className="text-muted-foreground text-[10px]">{formatRoutingGuideLane(guide)}</span>
+        <span className="text-muted-foreground text-2xs">{formatRoutingGuideLane(guide)}</span>
       </div>
       {entries.map((entry) => (
         <div
@@ -95,14 +95,14 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
           className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-[9px] tabular-nums">
+            <Badge variant="neutral" appearance="outline" className="h-4 shrink-0 rounded px-1 text-3xs tabular-nums">
               #{entry.rank}
             </Badge>
-            <span className="truncate text-[11px] font-medium">
+            <span className="truncate text-xs font-medium">
               {entry.carrier?.name ?? t("Unknown carrier")}
             </span>
           </div>
-          <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
+          <span className="text-muted-foreground shrink-0 text-2xs tabular-nums">
             {formatOfferRate(entry.rate, entry.rateMethod)} ·{" "}
             {formatDurationFromSeconds(entry.offerTtlSeconds)} ·{" "}
             {TENDER_CHANNEL_LABEL[entry.channel]}
@@ -110,7 +110,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
         </div>
       ))}
       {entries.length === 0 && (
-        <p className="text-muted-foreground py-2 text-center text-[11px]">
+        <p className="text-muted-foreground py-2 text-center text-xs">
           {t("This guide has no carrier entries.")}
         </p>
       )}
@@ -155,7 +155,7 @@ function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
         )}
         {hasWarned && (
           <div className="mt-1 flex flex-col gap-0.5">
-            <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+            <span className="text-muted-foreground text-2xs tracking-wide uppercase">
               {t("Offered with warnings")}
             </span>
             <ul className="flex flex-col gap-0.5">
@@ -232,7 +232,7 @@ function WaterfallTab({
       ) : selectedGuide ? (
         <>
           {!usingOverride && (
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.",
               )}
@@ -241,7 +241,7 @@ function WaterfallTab({
           <GuideEntriesPreview guide={selectedGuide} />
         </>
       ) : (
-        <p className="text-muted-foreground py-2 text-[11px]">
+        <p className="text-muted-foreground py-2 text-xs">
           {t("No routing guide matches this lane. Pick one explicitly below, or")}{" "}
           <Link to="/dispatch/routing-guides" className="underline">
             {t("create a routing guide")}
@@ -251,7 +251,7 @@ function WaterfallTab({
       )}
 
       <div className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+        <span className="text-muted-foreground text-2xs tracking-wide uppercase">
           {t("Override guide")}
         </span>
         <Select

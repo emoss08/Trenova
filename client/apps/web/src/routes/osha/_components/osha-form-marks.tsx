@@ -19,7 +19,7 @@ export function FormMark({
     <span
       title={title}
       className={cn(
-        "inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/60 px-1 text-[10px] leading-none font-semibold text-muted-foreground tabular-nums",
+        "inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-sm border border-border bg-muted/60 px-1 text-2xs leading-none font-semibold text-muted-foreground tabular-nums",
         className,
       )}
     >
@@ -70,7 +70,7 @@ export function FormFigure({
       <span
         className={cn(
           "text-lg leading-none font-semibold tabular-nums",
-          alarm && "text-red-600 dark:text-red-400",
+          alarm && "text-danger-foreground",
           muted && value === 0 && "text-muted-foreground/70",
         )}
       >

@@ -28,7 +28,7 @@ export function FavoritesSection() {
               to={favorite.pageUrl}
               active={isRouteActive(pathname, favorite.pageUrl)}
             >
-              <Star className="size-3 shrink-0 fill-amber-400 text-amber-400" />
+              <Star className="size-3 shrink-0 fill-warning text-warning-foreground" />
               <span className="truncate">{favorite.pageTitle}</span>
             </SidebarNavLink>
           ))}

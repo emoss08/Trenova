@@ -521,7 +521,7 @@ function ApprovalDetail({
                   <Button
                     size="sm"
                     type="button"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-success text-white hover:bg-success"
                     onClick={() => approveMutation.mutate(selectedRow.adjustmentId)}
                     disabled={approveMutation.isPending}
                   >
@@ -583,7 +583,7 @@ function ApprovalDetail({
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
