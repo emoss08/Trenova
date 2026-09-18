@@ -21,6 +21,11 @@ type billingTransferAttemptParams struct {
 	BillType                    billingqueue.BillType
 	MarkCompletedReadyToInvoice bool
 	Actor                       *services.RequestActor
+	SuppressExceptionNotices    bool
+	// Cache holds the answers that do not vary by shipment, so a run of five
+	// thousand does not ask the same organization-level question five thousand
+	// times. It lives for exactly one bulk call.
+	Cache *billingReadinessCache
 }
 
 type billingTransferAttempt struct {
@@ -55,6 +60,7 @@ func (s *service) BulkTransferToBilling(
 	}
 
 	shipmentIDs := sliceutils.Dedupe(req.ShipmentIDs)
+	cache := new(billingReadinessCache)
 	response := &services.BulkTransferToBillingResponse{
 		Results:    make([]services.BulkTransferToBillingResult, 0, len(shipmentIDs)),
 		TotalCount: len(shipmentIDs),
@@ -70,6 +76,8 @@ func (s *service) BulkTransferToBilling(
 			BillType:                    req.BillType,
 			MarkCompletedReadyToInvoice: req.MarkCompletedReadyToInvoice,
 			Actor:                       actor,
+			SuppressExceptionNotices:    req.SuppressExceptionNotifications,
+			Cache:                       cache,
 		})
 
 		result := newBulkTransferResult(shipmentID, attempt)
@@ -77,6 +85,13 @@ func (s *service) BulkTransferToBilling(
 			response.SuccessCount++
 		}
 		response.Results = append(response.Results, result)
+
+		// Reported before the loop continues, so a caller watching a long run
+		// sees each shipment as it happens rather than only at the end — and
+		// still holds every answer given if the request dies partway.
+		if req.OnResult != nil {
+			req.OnResult(result)
+		}
 	}
 
 	response.ErrorCount = response.TotalCount - response.SuccessCount
@@ -166,13 +181,15 @@ func (s *service) attemptBillingTransfer(
 		)
 	}
 
-	readiness, err := s.evaluateBillingReadiness(ctx, entity)
+	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, p.Cache)
 	if err != nil {
 		log.Error("failed to evaluate billing readiness for transfer", zap.Error(err))
 		return attempt.fail(services.BillingTransferFailureUnexpected, err)
 	}
 	attempt.readiness = readiness
-	s.notifyBillingExceptions(ctx, entity, readiness)
+	if !p.SuppressExceptionNotices {
+		s.notifyBillingExceptions(ctx, entity, readiness)
+	}
 
 	if code, policyErr := billingTransferPolicyViolation(readiness); policyErr != nil {
 		return attempt.fail(code, policyErr)

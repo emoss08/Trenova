@@ -1607,6 +1607,21 @@ models:
   BillingQueueStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.Status
+  BillingTransferRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.RunStatus
+  BillingTransferRunScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.RunScope
+  BillingTransferItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.ItemStatus
+  BillingTransferRequirement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.MissingRequirement
+  BillingTransferValidation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingtransfer.ValidationFailure
   BillType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.BillType

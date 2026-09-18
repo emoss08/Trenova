@@ -15,6 +15,11 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   workers: ["worker-list", "dispatch-board"],
   "audit-logs": ["audit-entry-list"],
   billing_queue: ["billing-queue-list", "billingQueue"],
+  "billing-transfer-run": [
+    "billing-transfer-run",
+    "billing-transfer-active-run",
+    "billing-transfer-run-items",
+  ],
   shipmentEvents: ["shipment-events"],
   "report-run": ["report-run-list"],
   routing_guides: ["routing-guide-list"],

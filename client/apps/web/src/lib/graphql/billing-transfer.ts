@@ -1,9 +1,18 @@
 import {
   BillingTransferCandidateIdsDocument,
   BillingTransferCandidatesDocument,
+  BillingTransferRunDocument,
+  BillingTransferRunItemsDocument,
   BulkTransferShipmentsToBillingDocument,
+  CancelBillingTransferRunDocument,
+  MyActiveBillingTransferRunDocument,
+  RetryBillingTransferRunDocument,
+  StartBillingTransferRunDocument,
   type BillingTransferCandidateIdsQuery,
   type BillingTransferCandidatesQuery,
+  type BillingTransferRunItemsQuery,
+  type BillingTransferRunQuery,
+  type BillingTransferRunScope,
   type BulkTransferShipmentsToBillingMutation,
   type ShipmentBillingTransferFailureCode,
 } from "@trenova/graphql/generated/graphql";
@@ -89,4 +98,114 @@ export async function bulkTransferShipmentsToBillingGraphQL(
     },
   });
   return data.bulkTransferShipmentsToBilling;
+}
+
+export type BillingTransferRun = BillingTransferRunQuery["billingTransferRun"];
+export type BillingTransferRunItemConnection =
+  BillingTransferRunItemsQuery["billingTransferRunItems"];
+export type BillingTransferRunItem = BillingTransferRunItemConnection["edges"][number]["node"];
+export type BillingTransferRunStatus = BillingTransferRun["status"];
+export type BillingTransferItemStatus = BillingTransferRunItem["status"];
+
+export type StartBillingTransferRunVariables = {
+  scope: BillingTransferRunScope;
+  shipmentIds?: string[];
+  query?: string;
+  status?: BillingTransferCandidateStatus | null;
+};
+
+export async function startBillingTransferRunGraphQL(
+  req: StartBillingTransferRunVariables,
+  options?: RequestOptions,
+): Promise<BillingTransferRun> {
+  const data = await requestGraphQL({
+    document: StartBillingTransferRunDocument,
+    operationName: "StartBillingTransferRun",
+    variables: {
+      input: {
+        scope: req.scope,
+        shipmentIds: req.shipmentIds,
+        query: searchValue(req.query ?? ""),
+        status: req.status ?? undefined,
+        billType: "Invoice",
+        markCompletedReadyToInvoice: true,
+      },
+    },
+    signal: options?.signal,
+  });
+  return data.startBillingTransferRun;
+}
+
+export async function getBillingTransferRunGraphQL(
+  id: string,
+  options?: RequestOptions,
+): Promise<BillingTransferRun> {
+  const data = await requestGraphQL({
+    document: BillingTransferRunDocument,
+    operationName: "BillingTransferRun",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.billingTransferRun;
+}
+
+export async function getMyActiveBillingTransferRunGraphQL(
+  options?: RequestOptions,
+): Promise<BillingTransferRun | null> {
+  const data = await requestGraphQL({
+    document: MyActiveBillingTransferRunDocument,
+    operationName: "MyActiveBillingTransferRun",
+    variables: {},
+    signal: options?.signal,
+  });
+  return data.myActiveBillingTransferRun;
+}
+
+export async function cancelBillingTransferRunGraphQL(
+  id: string,
+  options?: RequestOptions,
+): Promise<BillingTransferRun> {
+  const data = await requestGraphQL({
+    document: CancelBillingTransferRunDocument,
+    operationName: "CancelBillingTransferRun",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.cancelBillingTransferRun;
+}
+
+export async function retryBillingTransferRunGraphQL(
+  id: string,
+  options?: RequestOptions,
+): Promise<BillingTransferRun> {
+  const data = await requestGraphQL({
+    document: RetryBillingTransferRunDocument,
+    operationName: "RetryBillingTransferRun",
+    variables: { id },
+    signal: options?.signal,
+  });
+  return data.retryBillingTransferRun;
+}
+
+export async function listBillingTransferRunItemsGraphQL(
+  req: {
+    runId: string;
+    first: number;
+    after?: string | null;
+    statuses?: BillingTransferItemStatus[];
+  },
+  options?: RequestOptions,
+): Promise<BillingTransferRunItemConnection> {
+  const data = await requestGraphQL({
+    document: BillingTransferRunItemsDocument,
+    operationName: "BillingTransferRunItems",
+    variables: {
+      runId: req.runId,
+      input: { first: req.first, after: req.after ?? undefined },
+      filter: req.statuses?.length ? { statuses: req.statuses } : undefined,
+      includeTotalCount: !req.after,
+    },
+    signal: options?.signal,
+  });
+  return data.billingTransferRunItems;
 }

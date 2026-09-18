@@ -1,43 +1,32 @@
-import type { BulkBillingTransferResult } from "@/lib/graphql/billing-transfer";
+import type { BillingTransferRun, BillingTransferRunItem } from "@/lib/graphql/billing-transfer";
 import { shipmentPanelPath } from "@/lib/shipment-utils";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, ExternalLinkIcon, InfoIcon } from "lucide-react";
-import { useState } from "react";
-import {
-  BILLING_TRANSFER_FAILURE_REASONS,
-  summarizeBulkBillingTransfer,
-  type BulkBillingTransferOutcome,
-} from "./bulk-billing-transfer-report";
+import { useMemo, useState } from "react";
+import { billingTransferRunItemsQuery } from "../../billing-queue-queries";
+import { BILLING_TRANSFER_FAILURE_REASONS } from "./bulk-billing-transfer-report";
+import { summarizeRun } from "./bulk-billing-transfer-run";
 
 type ResultView = "notTransferred" | "transferred" | "notProcessed";
 
-type BulkBillingTransferResultsProps = {
-  outcome: BulkBillingTransferOutcome;
-  stopped: boolean;
-  error: unknown;
-  unmatchedCount: number;
-  proNumbers: ReadonlyMap<string, string>;
+const VIEW_STATUSES: Record<ResultView, BillingTransferRunItem["status"][]> = {
+  notTransferred: ["NotTransferred"],
+  transferred: ["Transferred"],
+  notProcessed: ["Skipped", "Pending"],
 };
 
-function errorMessage(error: unknown): string | null {
-  return error instanceof Error && error.message ? error.message : null;
-}
-
-export function BulkBillingTransferResults({
-  outcome,
-  stopped,
-  error,
-  unmatchedCount,
-  proNumbers,
-}: BulkBillingTransferResultsProps) {
+export function BulkBillingTransferResults({ run }: { run: BillingTransferRun }) {
   const t = useT();
-  const summary = summarizeBulkBillingTransfer(outcome);
+  const summary = summarizeRun(run);
 
   const [preferredView, setPreferredView] = useState<ResultView | null>(null);
   const defaultView: ResultView =
@@ -48,8 +37,11 @@ export function BulkBillingTransferResults({
         : "notProcessed";
   const view = preferredView ?? defaultView;
 
-  const transferred = outcome.results.filter((result) => result.success);
-  const notTransferred = outcome.results.filter((result) => !result.success);
+  const itemsQuery = useInfiniteQuery(billingTransferRunItemsQuery(run.id, VIEW_STATUSES[view]));
+  const items = useMemo<BillingTransferRunItem[]>(
+    () => itemsQuery.data?.pages.flatMap((page) => page.edges.map((edge) => edge.node)) ?? [],
+    [itemsQuery.data],
+  );
 
   const viewItems = [
     {
@@ -92,25 +84,22 @@ export function BulkBillingTransferResults({
         ) : null}
       </dl>
 
-      {error ? (
+      {run.status === "Failed" ? (
         <Notice tone="danger" title={t("The transfer stopped early")}>
-          {errorMessage(error) ? `${errorMessage(error)} ` : ""}
-          {t(
-            "Shipments in the batch that was running may still have transferred. Their queue entries appear once the list refreshes.",
-          )}
+          {run.failureMessage ?? t("The transfer stopped because of an unexpected error.")}
         </Notice>
       ) : null}
-      {stopped ? (
+      {run.status === "Canceled" ? (
         <Notice tone="muted">
           {t("You stopped the transfer. The remaining shipments were not sent.")}
         </Notice>
       ) : null}
-      {unmatchedCount > 0 ? (
+      {summary.unmatched > 0 ? (
         <Notice tone="muted">
           {t(
             "{1} more {0, plural, one {shipment} other {shipments}} matched than one run transfers. Run Transfer all again for the rest.",
-            unmatchedCount,
-            formatNumber(unmatchedCount),
+            summary.unmatched,
+            formatNumber(summary.unmatched),
           )}
         </Notice>
       ) : null}
@@ -128,39 +117,73 @@ export function BulkBillingTransferResults({
             onValueChange={setPreferredView}
           />
           <ScrollArea className="h-[min(22rem,45vh)] rounded-lg border">
-            {view === "notTransferred" ? (
-              <ResultList label={t("Not transferred")} empty={t("Every shipment transferred.")}>
-                {notTransferred.map((result) => (
-                  <FailureItem key={result.shipmentId} result={result} />
-                ))}
-              </ResultList>
-            ) : view === "transferred" ? (
-              <ResultList label={t("Transferred")} empty={t("No shipment transferred.")}>
-                {transferred.map((result) => (
-                  <TransferredItem key={result.shipmentId} result={result} />
-                ))}
-              </ResultList>
+            {itemsQuery.isPending ? (
+              <div className="flex items-center justify-center py-10">
+                <Spinner className="size-4" />
+              </div>
+            ) : itemsQuery.isError ? (
+              <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
+                <p className="text-muted-foreground text-sm">
+                  {t("The transfer report could not be loaded.")}
+                </p>
+                <Button variant="outline" size="xs" onClick={() => void itemsQuery.refetch()}>
+                  {t("Try again")}
+                </Button>
+              </div>
             ) : (
-              <ResultList label={t("Not processed")} empty={t("Every shipment was processed.")}>
-                {outcome.notProcessedIds.map((shipmentId) => (
-                  <li
-                    key={shipmentId}
-                    className="flex items-center justify-between gap-3 px-3 py-2.5"
-                  >
-                    <ShipmentLink
-                      shipmentId={shipmentId}
-                      proNumber={proNumbers.get(shipmentId) ?? null}
-                    />
-                    <span className="text-muted-foreground text-xs">{t("Not sent")}</span>
-                  </li>
-                ))}
-              </ResultList>
+              <>
+                <ResultList label={viewLabel(view, t)} empty={emptyLabel(view, t)}>
+                  {items.map((item) =>
+                    view === "notTransferred" ? (
+                      <FailureItem key={item.id} item={item} />
+                    ) : view === "transferred" ? (
+                      <TransferredItem key={item.id} item={item} />
+                    ) : (
+                      <NotProcessedItem key={item.id} item={item} />
+                    ),
+                  )}
+                </ResultList>
+                {itemsQuery.hasNextPage ? (
+                  <div className="flex justify-center py-2">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      disabled={itemsQuery.isFetchingNextPage}
+                      onClick={() => void itemsQuery.fetchNextPage()}
+                    >
+                      {itemsQuery.isFetchingNextPage ? t("Loading...") : t("Load more")}
+                    </Button>
+                  </div>
+                ) : null}
+              </>
             )}
           </ScrollArea>
         </>
       )}
     </div>
   );
+}
+
+function viewLabel(view: ResultView, t: ReturnType<typeof useT>): string {
+  switch (view) {
+    case "notTransferred":
+      return t("Not transferred");
+    case "transferred":
+      return t("Transferred");
+    default:
+      return t("Not processed");
+  }
+}
+
+function emptyLabel(view: ResultView, t: ReturnType<typeof useT>): string {
+  switch (view) {
+    case "notTransferred":
+      return t("Every shipment transferred.");
+    case "transferred":
+      return t("No shipment transferred.");
+    default:
+      return t("Every shipment was processed.");
+  }
 }
 
 function SummaryTile({
@@ -262,22 +285,22 @@ function ShipmentLink({ shipmentId, proNumber }: { shipmentId: string; proNumber
   );
 }
 
-function DocumentChips({ result }: { result: BulkBillingTransferResult }) {
+function DocumentChips({ item }: { item: BillingTransferRunItem }) {
   const t = useT();
 
-  if (result.missingRequirements.length === 0 && result.validationFailures.length === 0) {
+  if (item.missingRequirements.length === 0 && item.validationFailures.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-col gap-1">
-      {result.missingRequirements.length > 0 ? (
+      {item.missingRequirements.length > 0 ? (
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-muted-foreground text-xs">{t("Missing documents:")}</span>
-          {result.missingRequirements.map((requirement) => (
+          {item.missingRequirements.map((requirement) => (
             <Badge
               key={requirement.documentTypeId}
-              variant="neutral" appearance="outline"
+              variant="outline"
               className="max-h-5 text-2xs"
             >
               {requirement.documentTypeName}
@@ -285,9 +308,9 @@ function DocumentChips({ result }: { result: BulkBillingTransferResult }) {
           ))}
         </div>
       ) : null}
-      {result.validationFailures.length > 0 ? (
+      {item.validationFailures.length > 0 ? (
         <ul className="text-muted-foreground list-disc pl-4 text-xs">
-          {result.validationFailures.map((failure) => (
+          {item.validationFailures.map((failure) => (
             <li key={`${failure.field}-${failure.code}`}>{failure.message}</li>
           ))}
         </ul>
@@ -296,16 +319,16 @@ function DocumentChips({ result }: { result: BulkBillingTransferResult }) {
   );
 }
 
-function FailureItem({ result }: { result: BulkBillingTransferResult }) {
+function FailureItem({ item }: { item: BillingTransferRunItem }) {
   const t = useT();
-  const reason = BILLING_TRANSFER_FAILURE_REASONS[result.failureCode ?? "Unexpected"];
+  const reason = BILLING_TRANSFER_FAILURE_REASONS[item.failureCode ?? "Unexpected"];
 
   return (
     <li className="flex flex-col gap-1.5 px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
-        <ShipmentLink shipmentId={result.shipmentId} proNumber={result.proNumber} />
+        <ShipmentLink shipmentId={item.shipmentId} proNumber={item.proNumber} />
         <div className="flex items-center gap-1.5">
-          {result.markedReadyToInvoice ? (
+          {item.markedReadyToInvoice ? (
             <Badge variant="info" className="max-h-5 text-2xs">
               {t("Marked Ready to Invoice")}
             </Badge>
@@ -315,34 +338,35 @@ function FailureItem({ result }: { result: BulkBillingTransferResult }) {
           </span>
         </div>
       </div>
-      {result.error ? <p className="text-muted-foreground text-xs">{result.error}</p> : null}
-      <DocumentChips result={result} />
+      {item.errorMessage ? (
+        <p className="text-muted-foreground text-xs">{item.errorMessage}</p>
+      ) : null}
+      <DocumentChips item={item} />
     </li>
   );
 }
 
-function TransferredItem({ result }: { result: BulkBillingTransferResult }) {
+function TransferredItem({ item }: { item: BillingTransferRunItem }) {
   const t = useT();
-  const hasOpenItems =
-    result.missingRequirements.length > 0 || result.validationFailures.length > 0;
+  const hasOpenItems = item.missingRequirements.length > 0 || item.validationFailures.length > 0;
 
   return (
     <li className="flex flex-col gap-1.5 px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
-        <ShipmentLink shipmentId={result.shipmentId} proNumber={result.proNumber} />
+        <ShipmentLink shipmentId={item.shipmentId} proNumber={item.proNumber} />
         <div className="flex items-center gap-1.5">
-          {result.markedReadyToInvoice ? (
+          {item.markedReadyToInvoice ? (
             <Badge variant="info" className="max-h-5 text-2xs">
               {t("Marked Ready to Invoice")}
             </Badge>
           ) : null}
-          {result.billingQueueItem ? (
-            <>
-              <span className="text-muted-foreground font-mono text-xs">
-                {result.billingQueueItem.number}
-              </span>
-              <PlainBillingQueueStatusBadge status={result.billingQueueItem.status} />
-            </>
+          {item.billingQueueNumber ? (
+            <span className="text-muted-foreground font-mono text-xs">
+              {item.billingQueueNumber}
+            </span>
+          ) : null}
+          {item.billingQueueStatus ? (
+            <PlainBillingQueueStatusBadge status={item.billingQueueStatus} />
           ) : null}
         </div>
       </div>
@@ -351,9 +375,20 @@ function TransferredItem({ result }: { result: BulkBillingTransferResult }) {
           <p className="text-muted-foreground text-xs">
             {t("Transferred for billing review with open items:")}
           </p>
-          <DocumentChips result={result} />
+          <DocumentChips item={item} />
         </>
       ) : null}
+    </li>
+  );
+}
+
+function NotProcessedItem({ item }: { item: BillingTransferRunItem }) {
+  const t = useT();
+
+  return (
+    <li className="flex items-center justify-between gap-3 px-3 py-2.5">
+      <ShipmentLink shipmentId={item.shipmentId} proNumber={item.proNumber} />
+      <span className="text-muted-foreground text-xs">{t("Not sent")}</span>
     </li>
   );
 }

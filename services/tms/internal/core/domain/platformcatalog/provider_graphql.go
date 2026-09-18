@@ -42,6 +42,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	FeatureBilling: {
 		"accessorial_charge.graphqls",
 		"billing_queue.graphqls",
+		"billing_transfer.graphqls",
 		"costing.graphqls",
 		"customer_payment.graphqls",
 		"formula_template.graphqls",

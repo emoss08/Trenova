@@ -86,7 +86,7 @@ export function CarrierIntelProfileView({
           }}
           className="gap-4"
         >
-          <TabsList variant="underline" className="w-full justify-start overflow-x-auto border-b">
+          <TabsList variant="underline" className="w-full justify-start border-b">
             {sections.map((id) => (
               <TabsTab key={id} value={id} className="grow-0 px-2 text-sm">
                 {tabLabels[id]}

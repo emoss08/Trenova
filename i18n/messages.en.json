@@ -4192,6 +4192,15 @@
       "routes/scheduling"
     ]
   },
+  "A retry is started from the transfer it retries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
   "A retry must name the transfer it retries": {
     "sites": 1,
     "scope": [
@@ -5325,6 +5334,24 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "A user is required to read a transfer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
+  "A user is required to start a transfer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
     ]
   },
   "A user notification must name its recipient": {
@@ -31237,6 +31264,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Close out billing transfer runs whose workflow is no longer running": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Close panel": {
@@ -61491,6 +61527,15 @@
       "packages/shared/components"
     ]
   },
+  "Fail billing transfer runs whose workflow is no longer running": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fail closed (block until verified)": {
     "sites": 1,
     "scope": [
@@ -64479,7 +64524,7 @@
     ]
   },
   "Finding eligible shipments...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -64615,6 +64660,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Finishing the batch in progress...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Fire": {
@@ -78795,15 +78849,6 @@
       "packages/shared/types"
     ]
   },
-  "Keep this window open. Shipments are sent in batches, and stopping takes effect once the current batch finishes.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
   "Keep typing to search records...": {
     "sites": 1,
     "scope": [
@@ -82592,7 +82637,7 @@
     ]
   },
   "Load more": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -83495,6 +83540,15 @@
       "routes/reconciliation-summary"
     ]
   },
+  "Loading the transfer...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Loading versions...": {
     "sites": 1,
     "scope": [
@@ -83523,7 +83577,7 @@
     ]
   },
   "Loading...": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -90135,6 +90189,15 @@
     ],
     "areas": [
       "domain/modeprofile"
+    ]
+  },
+  "Move a run's shipments into the billing queue, batch by batch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Move assigned to carrier": {
@@ -98736,6 +98799,15 @@
       "routes/customer-statement"
     ]
   },
+  "Nothing in this transfer can be retried": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
   "Nothing is running for this employment.": {
     "sites": 1,
     "scope": [
@@ -101570,6 +101642,15 @@
       "service/orderservice"
     ]
   },
+  "Only a Selected transfer names its shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Only a US jurisdiction can be linked to a US state": {
     "sites": 1,
     "scope": [
@@ -103010,6 +103091,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Only the person who started a transfer can stop it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
     ]
   },
   "Only the report owner can delete this report": {
@@ -114801,6 +114891,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Preparing...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Preprocessed": {
@@ -132202,6 +132301,15 @@
       "domain/agent"
     ]
   },
+  "Run in background": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Run key is required": {
     "sites": 1,
     "scope": [
@@ -134853,6 +134961,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Scope is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
     ]
   },
   "Scope is required": {
@@ -143011,15 +143128,6 @@
       "apps/web/lib"
     ]
   },
-  "Shipments in the batch that was running may still have transferred. Their queue entries appear once the list refreshes.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
   "Shipments moving on or after this date price against this contract": {
     "sites": 1,
     "scope": [
@@ -146766,6 +146874,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Starting the transfer...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Starting...": {
@@ -154734,15 +154851,6 @@
       "apps/web/components"
     ]
   },
-  "The eligible shipments could not be found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/billing-queue"
-    ]
-  },
   "The email address the VAN provider uses for service notifications.": {
     "sites": 1,
     "scope": [
@@ -157358,6 +157466,15 @@
       "routes/carrier"
     ]
   },
+  "The provider has no U.S. address for DOT {0}, so the carrier can't be imported. Create it manually instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierintelservice"
+    ]
+  },
   "The provider has no record for DOT {0}": {
     "sites": 1,
     "scope": [
@@ -159179,6 +159296,42 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The transfer could not be queued — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
+  "The transfer could not be started": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "The transfer report could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "The transfer stopped because of an unexpected error.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The transfer stopped early": {
@@ -162370,6 +162523,24 @@
       "routes/reports"
     ]
   },
+  "This transfer has already finished": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
+  "This transfer keeps running if you close this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "This user is not an active member of your organization": {
     "sites": 1,
     "scope": [
@@ -164487,6 +164658,15 @@
       "service/customerpaymentservice"
     ]
   },
+  "Total cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/billingtransfer"
+    ]
+  },
   "Total cap must be greater than zero when provided": {
     "sites": 2,
     "scope": [
@@ -165911,6 +166091,15 @@
       "apps/web/hooks"
     ]
   },
+  "Transferring to billing is temporarily unavailable — the background worker is not connected": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
   "Transferring...": {
     "sites": 1,
     "scope": [
@@ -166464,7 +166653,7 @@
     ]
   },
   "Try again": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -172574,6 +172763,15 @@
       "domain/permission"
     ]
   },
+  "View report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "View reports": {
     "sites": 1,
     "scope": [
@@ -173455,6 +173653,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Wait for this transfer to finish before retrying it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
     ]
   },
   "Waiting": {
@@ -179314,6 +179521,15 @@
       "service/selfserviceservice"
     ]
   },
+  "You already have a transfer running — wait for it to finish or stop it first": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingtransferservice"
+    ]
+  },
   "You already have an open dispute for this item": {
     "sites": 1,
     "scope": [
@@ -179402,6 +179618,24 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "You can close this window — the transfer keeps going.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "You can close this window. The transfer runs in the background and you will be notified when it finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "You can view these settings but not change them.": {
@@ -184712,24 +184946,6 @@
       "api/graphql"
     ]
   },
-  "state not found in cache": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "states not cached": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "still holds": {
     "sites": 1,
     "scope": [
@@ -185145,15 +185361,6 @@
     ],
     "areas": [
       "routes/my-team"
-    ]
-  },
-  "us state not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "vLLM (self-hosted)": {

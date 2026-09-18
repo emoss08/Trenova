@@ -38,6 +38,12 @@ export const queueSearchParamsParser = {
   payer: parseAsString,
   includePosted: parseAsBoolean.withDefault(false),
   preset: parseAsString,
+  /**
+   * The transfer run the bulk dialog is watching. It lives in the URL so the
+   * toast announcing a finished transfer can link straight back to its report,
+   * and so a refresh mid-run reattaches instead of losing sight of it.
+   */
+  transferRun: parseAsString,
 };
 
 export const queueViewSearchParamsParser = {
@@ -50,6 +56,10 @@ export const queueSelectionSearchParamsParser = {
 
 export const statementSelectionSearchParamsParser = {
   customer: queueSearchParamsParser.customer,
+};
+
+export const transferRunSearchParamsParser = {
+  transferRun: queueSearchParamsParser.transferRun,
 };
 
 export const queueToolbarSearchParamsParser = {

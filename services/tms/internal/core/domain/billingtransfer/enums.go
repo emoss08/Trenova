@@ -49,6 +49,12 @@ const (
 	ItemStatusSkipped        = ItemStatus("Skipped")
 )
 
+// IsTerminal reports whether the item has an answer. Everything still Pending
+// when a run ends becomes Skipped, so Pending is the only non-terminal state.
+func (v ItemStatus) IsTerminal() bool {
+	return v == ItemStatusTransferred || v == ItemStatusNotTransferred || v == ItemStatusSkipped
+}
+
 func (v ItemStatus) IsValid() bool {
 	switch v {
 	case ItemStatusPending, ItemStatusTransferred, ItemStatusNotTransferred, ItemStatusSkipped:

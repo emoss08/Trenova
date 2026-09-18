@@ -1,76 +1,61 @@
 import {
-  bulkTransferShipmentsToBillingGraphQL,
-  listBillingTransferCandidateIdsGraphQL,
+  cancelBillingTransferRunGraphQL,
+  retryBillingTransferRunGraphQL,
+  startBillingTransferRunGraphQL,
   type BillingTransferCandidateFilters,
-  type BulkBillingTransferResult,
+  type BillingTransferRun,
 } from "@/lib/graphql/billing-transfer";
 import { queries } from "@/lib/queries";
 import { SHIPMENT_LIST_KEY } from "@/routes/shipment/_components/shipment-queries";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BILLING_QUEUE_LIST_KEY,
+  BILLING_TRANSFER_ACTIVE_RUN_KEY,
   BILLING_TRANSFER_CANDIDATES_KEY,
+  BILLING_TRANSFER_RUN_ITEMS_KEY,
+  BILLING_TRANSFER_RUN_KEY,
+  billingTransferRunQuery,
+  myActiveBillingTransferRunQuery,
 } from "../../billing-queue-queries";
 import { invalidateStatements } from "../../statement-queries";
-import {
-  mergeBulkBillingTransferRetry,
-  type BulkBillingTransferOutcome,
-} from "./bulk-billing-transfer-report";
-import { runBulkBillingTransfer } from "./run-bulk-billing-transfer";
+import { isRunTerminal } from "./bulk-billing-transfer-run";
 
 export type BulkBillingTransferTarget =
   | { kind: "selected"; shipmentIds: string[] }
   | { kind: "all"; filters: BillingTransferCandidateFilters };
 
-export type BulkBillingTransferState =
-  | { phase: "idle"; error: unknown }
-  | { phase: "resolving" }
-  | {
-      phase: "running";
-      totalCount: number;
-      processedCount: number;
-      results: BulkBillingTransferResult[];
-      stopRequested: boolean;
-    }
-  | {
-      phase: "finished";
-      outcome: BulkBillingTransferOutcome;
-      stopped: boolean;
-      error: unknown;
-      unmatchedCount: number;
-    };
-
-const IDLE: BulkBillingTransferState = { phase: "idle", error: null };
-
-export function useBulkBillingTransfer() {
+/**
+ * Watches a transfer run.
+ *
+ * The run belongs to the server, so this hook starts one, reads it, and asks it
+ * to stop — it never does the work itself. That is what lets the dialog be
+ * closed, the tab be refreshed, and a second tab pick the same run up, none of
+ * which the old client-driven loop could survive.
+ */
+export function useBulkBillingTransfer(runId: string | null, onRunIdChange: (id: string) => void) {
   const queryClient = useQueryClient();
-  const [state, setState] = useState<BulkBillingTransferState>(IDLE);
-  const stopRef = useRef(false);
-  const mountedRef = useRef(true);
-  const resolveControllerRef = useRef<AbortController | null>(null);
+  const [startError, setStartError] = useState<unknown>(null);
+  const settledRunRef = useRef<string | null>(null);
 
-  const isBusy = state.phase === "resolving" || state.phase === "running";
+  const runQuery = useQuery(billingTransferRunQuery(runId));
+  const run = runQuery.data ?? null;
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      stopRef.current = true;
-      resolveControllerRef.current?.abort();
-    };
-  }, []);
+  // Only consulted when there is nothing to show yet, so an explicitly opened
+  // run is never overridden by whatever else the user has going.
+  const activeQuery = useQuery({
+    ...myActiveBillingTransferRunQuery(),
+    enabled: !runId,
+  });
 
   useEffect(() => {
-    if (!isBusy) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [isBusy]);
+    const active = activeQuery.data;
+    if (!runId && active) {
+      onRunIdChange(active.id);
+    }
+  }, [activeQuery.data, runId, onRunIdChange]);
 
-  const invalidate = useCallback(() => {
+  const invalidateBillingViews = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
     void queryClient.invalidateQueries({ queryKey: queries.billingQueue._def });
     void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_CANDIDATES_KEY] });
@@ -78,102 +63,100 @@ export function useBulkBillingTransfer() {
     invalidateStatements(queryClient);
   }, [queryClient]);
 
-  const transfer = useCallback(
-    async (
-      shipmentIds: string[],
-      options: { previous: BulkBillingTransferOutcome | null; unmatchedCount: number },
-    ) => {
-      stopRef.current = false;
-      setState({
-        phase: "running",
-        totalCount: new Set(shipmentIds).size,
-        processedCount: 0,
-        results: [],
-        stopRequested: false,
-      });
+  // The queue only settles once, when the run reaches a terminal state: every
+  // batch moves shipments, but refetching the whole billing queue after each of
+  // them is the throttling this change exists to remove.
+  useEffect(() => {
+    if (!run || !isRunTerminal(run)) return;
+    if (settledRunRef.current === run.id) return;
 
-      const run = await runBulkBillingTransfer({
-        shipmentIds,
-        transfer: bulkTransferShipmentsToBillingGraphQL,
-        shouldStop: () => stopRef.current,
-        onProgress: ({ processedCount, results }) => {
-          if (!mountedRef.current) return;
-          setState((current) =>
-            current.phase === "running" ? { ...current, processedCount, results } : current,
-          );
-        },
-      });
+    settledRunRef.current = run.id;
+    invalidateBillingViews();
+    void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_ACTIVE_RUN_KEY] });
+  }, [run, invalidateBillingViews, queryClient]);
 
-      if (shipmentIds.length > 0) invalidate();
-      if (!mountedRef.current) return;
-
-      const outcome = { results: run.results, notProcessedIds: run.notProcessedIds };
-      setState({
-        phase: "finished",
-        outcome: options.previous
-          ? mergeBulkBillingTransferRetry(options.previous, outcome)
-          : outcome,
-        stopped: run.stopped,
-        error: run.error,
-        unmatchedCount: options.unmatchedCount,
-      });
+  const adoptRun = useCallback(
+    (next: BillingTransferRun) => {
+      queryClient.setQueryData([BILLING_TRANSFER_RUN_KEY, next.id], next);
+      void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_ACTIVE_RUN_KEY] });
+      onRunIdChange(next.id);
     },
-    [invalidate],
+    [queryClient, onRunIdChange],
   );
+
+  const startMutation = useMutation({
+    mutationFn: (target: BulkBillingTransferTarget) =>
+      target.kind === "selected"
+        ? startBillingTransferRunGraphQL({
+            scope: "Selected",
+            shipmentIds: target.shipmentIds,
+          })
+        : startBillingTransferRunGraphQL({
+            scope: "AllMatching",
+            query: target.filters.query,
+            status: target.filters.status,
+          }),
+    onSuccess: adoptRun,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (id: string) => retryBillingTransferRunGraphQL(id),
+    onSuccess: adoptRun,
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => cancelBillingTransferRunGraphQL(id),
+    onSuccess: (next) => {
+      queryClient.setQueryData([BILLING_TRANSFER_RUN_KEY, next.id], next);
+    },
+  });
 
   const start = useCallback(
     async (target: BulkBillingTransferTarget) => {
-      if (target.kind === "selected") {
-        await transfer(target.shipmentIds, { previous: null, unmatchedCount: 0 });
-        return;
-      }
-
-      setState({ phase: "resolving" });
-      const controller = new AbortController();
-      resolveControllerRef.current = controller;
+      setStartError(null);
       try {
-        const candidates = await listBillingTransferCandidateIdsGraphQL(target.filters, {
-          signal: controller.signal,
-        });
-        if (!mountedRef.current) return;
-        await transfer(candidates.ids, {
-          previous: null,
-          unmatchedCount: candidates.truncated
-            ? Math.max(candidates.totalCount - candidates.ids.length, 0)
-            : 0,
-        });
+        await startMutation.mutateAsync(target);
       } catch (error) {
-        if (!mountedRef.current || controller.signal.aborted) return;
-        setState({ phase: "idle", error });
-      } finally {
-        resolveControllerRef.current = null;
+        setStartError(error);
       }
     },
-    [transfer],
+    [startMutation],
   );
 
-  const retry = useCallback(
-    async (shipmentIds: string[]) => {
-      if (state.phase !== "finished" || shipmentIds.length === 0) return;
-      await transfer(shipmentIds, {
-        previous: state.outcome,
-        unmatchedCount: state.unmatchedCount,
-      });
-    },
-    [state, transfer],
-  );
+  const retry = useCallback(async () => {
+    if (!run) return;
+    setStartError(null);
+    try {
+      await retryMutation.mutateAsync(run.id);
+    } catch (error) {
+      setStartError(error);
+    }
+  }, [run, retryMutation]);
 
   const stop = useCallback(() => {
-    stopRef.current = true;
-    setState((current) =>
-      current.phase === "running" ? { ...current, stopRequested: true } : current,
-    );
-  }, []);
+    if (!run) return;
+    cancelMutation.mutate(run.id);
+  }, [run, cancelMutation]);
 
-  const reset = useCallback(() => {
-    stopRef.current = false;
-    setState(IDLE);
-  }, []);
+  // Clearing only drops what this dialog is looking at. The run itself, if one
+  // is still going, keeps going — that is the point of it living server side.
+  const clear = useCallback(() => {
+    setStartError(null);
+    settledRunRef.current = null;
+    void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_RUN_ITEMS_KEY] });
+  }, [queryClient]);
 
-  return { state, isBusy, start, retry, stop, reset };
+  return {
+    run,
+    isLoadingRun: Boolean(runId) && runQuery.isPending,
+    isReattaching: !runId && activeQuery.isPending,
+    isStarting: startMutation.isPending || retryMutation.isPending,
+    isStopping: cancelMutation.isPending,
+    startError,
+    runError: runQuery.error,
+    start,
+    retry,
+    stop,
+    clear,
+  };
 }

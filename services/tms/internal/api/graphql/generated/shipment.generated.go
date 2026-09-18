@@ -33227,6 +33227,25 @@ func (ec *executionContext) marshalOBillingQueueItem2ᚖgithubᚗcomᚋemoss08�
 	return ec._BillingQueueItem(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, v any) (*billingqueue.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := billingqueue.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, sel ast.SelectionSet, v *billingqueue.Status) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) marshalOCarrierAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierAssignment(ctx context.Context, sel ast.SelectionSet, v *shipment.CarrierAssignment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null

@@ -1,5 +1,3 @@
-import type { CarrierSourcingSort } from "@trenova/graphql/generated/graphql";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { IntelInlineError } from "@/components/carrier-intelligence/intel-inline-error";
 import { useCarrierIntelRuleLabels } from "@/components/carrier-intelligence/use-carrier-intel-rule-labels";
 import { usePermission } from "@/hooks/use-permission";
@@ -33,10 +31,12 @@ import {
 } from "@/lib/graphql/carrier-sourcing";
 import { queries } from "@/lib/queries";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import type { CarrierSourcingSort } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatNumber } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -46,12 +46,12 @@ import {
   type CarrierSheetTarget,
 } from "./carrier-detail-sheet";
 import { ImportCarrierDialog, type ImportCandidate } from "./import-carrier-dialog";
-import { SourcingSearchBar } from "./sourcing-search-bar";
 import {
   SourcingResultList,
   SourcingResultListSkeleton,
   formatCarrierCount,
 } from "./sourcing-result-list";
+import { SourcingSearchBar } from "./sourcing-search-bar";
 import {
   SourcingIntro,
   SourcingListSketch,

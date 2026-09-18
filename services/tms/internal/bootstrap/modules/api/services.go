@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -208,6 +209,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		reportingcompiler.New,
 		fx.As(new(services.ReportCompiler)),
 	),
+	billingtransferservice.New,
 	reportingservice.New,
 	equipmentmanufacturerservice.New,
 	equipmenttypeservice.New,

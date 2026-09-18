@@ -1,5 +1,3 @@
-import type { CarrierSourcingSort } from "@trenova/graphql/generated/graphql";
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AddFilterMenu,
   FilterChip,
@@ -16,6 +14,7 @@ import {
   type SourcingScreen,
 } from "@/lib/carrier-sourcing";
 import { usStateAbbreviationChoices } from "@/lib/choices";
+import type { CarrierSourcingSort } from "@trenova/graphql/generated/graphql";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +25,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { ArrowDownWideNarrowIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSourcingLabels } from "./use-sourcing-labels";
@@ -150,7 +150,7 @@ export function SourcingToolbar({
   const any = t("Any");
 
   return (
-    <div className="flex min-h-8 flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {showFilters ? (
         <>
           <AddFilterMenu
@@ -218,9 +218,6 @@ export function SourcingToolbar({
         </>
       ) : null}
       <div className="ml-auto flex items-center gap-2">
-        <span className="text-muted-foreground text-xs tabular-nums" aria-live="polite">
-          {summary}
-        </span>
         {showFilters ? (
           <DropdownMenu>
             <DropdownMenuTrigger

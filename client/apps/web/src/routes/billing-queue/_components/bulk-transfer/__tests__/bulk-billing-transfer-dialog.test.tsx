@@ -1,28 +1,36 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setLocale } from "@trenova/shared/i18n/runtime";
-import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   BillingTransferCandidate,
   BillingTransferCandidateConnection,
-  BulkBillingTransferResponse,
-  BulkBillingTransferResult,
+  BillingTransferRun,
+  BillingTransferRunItem,
+  BillingTransferRunItemConnection,
 } from "@/lib/graphql/billing-transfer";
 import { BulkBillingTransferDialog } from "../bulk-billing-transfer-dialog";
 
 const mocks = vi.hoisted(() => ({
   candidates: vi.fn(),
-  candidateIds: vi.fn(),
-  transfer: vi.fn(),
+  startRun: vi.fn(),
+  getRun: vi.fn(),
+  activeRun: vi.fn(),
+  cancelRun: vi.fn(),
+  retryRun: vi.fn(),
+  listItems: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/billing-transfer", () => ({
   listBillingTransferCandidatesGraphQL: mocks.candidates,
-  listBillingTransferCandidateIdsGraphQL: mocks.candidateIds,
-  bulkTransferShipmentsToBillingGraphQL: mocks.transfer,
+  startBillingTransferRunGraphQL: mocks.startRun,
+  getBillingTransferRunGraphQL: mocks.getRun,
+  getMyActiveBillingTransferRunGraphQL: mocks.activeRun,
+  cancelBillingTransferRunGraphQL: mocks.cancelRun,
+  retryBillingTransferRunGraphQL: mocks.retryRun,
+  listBillingTransferRunItemsGraphQL: mocks.listItems,
 }));
 
 function candidate(
@@ -50,37 +58,44 @@ function connection(nodes: BillingTransferCandidate[]): BillingTransferCandidate
   };
 }
 
-function transferred(shipmentId: string, overrides: Partial<BulkBillingTransferResult> = {}) {
+function run(overrides: Partial<BillingTransferRun> = {}): BillingTransferRun {
   return {
-    shipmentId,
-    proNumber: `PRO-${shipmentId}`,
-    success: true,
-    markedReadyToInvoice: false,
-    failureCode: null,
-    error: null,
-    billingQueueItem: {
-      id: `bqi-${shipmentId}`,
-      number: `INV-${shipmentId}`,
-      status: "ReadyForReview",
-    },
-    missingRequirements: [],
-    validationFailures: [],
+    id: "btr_1",
+    status: "Running",
+    scope: "Selected",
+    billType: "Invoice",
+    searchQuery: null,
+    shipmentStatus: null,
+    sourceRunId: null,
+    totalCount: 10,
+    processedCount: 4,
+    transferredCount: 3,
+    notTransferredCount: 1,
+    skippedCount: 0,
+    markedReadyToInvoiceCount: 0,
+    retryableCount: 1,
+    unmatchedCount: 0,
+    failureMessage: null,
+    cancelRequestedAt: null,
+    queuedAt: 1_788_000_000,
+    startedAt: 1_788_000_010,
+    completedAt: null,
     ...overrides,
-  } satisfies BulkBillingTransferResult;
+  };
 }
 
-function notTransferred(
-  shipmentId: string,
-  overrides: Partial<BulkBillingTransferResult> = {},
-): BulkBillingTransferResult {
+function item(overrides: Partial<BillingTransferRunItem> = {}): BillingTransferRunItem {
   return {
-    shipmentId,
-    proNumber: `PRO-${shipmentId}`,
-    success: false,
-    markedReadyToInvoice: false,
+    id: "btri_1",
+    shipmentId: "shp_1",
+    sequence: 0,
+    proNumber: "PRO-1",
+    status: "NotTransferred",
     failureCode: "RequirementsUnmet",
-    error: "Shipment billing requirements must be resolved before transfer to billing",
-    billingQueueItem: null,
+    errorMessage: "Billing requirements must be resolved first",
+    markedReadyToInvoice: false,
+    billingQueueNumber: null,
+    billingQueueStatus: null,
     missingRequirements: [
       { documentTypeId: "dt_pod", documentTypeCode: "POD", documentTypeName: "Proof of Delivery" },
     ],
@@ -89,309 +104,158 @@ function notTransferred(
   };
 }
 
-function respond(results: BulkBillingTransferResult[]): BulkBillingTransferResponse {
-  const successCount = results.filter((r) => r.success).length;
+function itemConnection(nodes: BillingTransferRunItem[]): BillingTransferRunItemConnection {
   return {
-    results,
-    totalCount: results.length,
-    successCount,
-    errorCount: results.length - successCount,
+    edges: nodes.map((node) => ({ node })),
+    totalCount: nodes.length,
+    pageInfo: { hasNextPage: false, endCursor: null },
   };
 }
 
-function renderDialog(
-  ui: ReactElement = <BulkBillingTransferDialog open onOpenChange={vi.fn()} />,
-) {
+function renderDialog(runId: string | null = null) {
+  const onRunIdChange = vi.fn();
+  const onOpenChange = vi.fn();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const invalidate = vi.spyOn(client, "invalidateQueries");
+
   render(
     <MemoryRouter>
-      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <BulkBillingTransferDialog
+          open
+          onOpenChange={onOpenChange}
+          runId={runId}
+          onRunIdChange={onRunIdChange}
+        />
+      </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { client, invalidate };
+
+  return { onRunIdChange, onOpenChange };
 }
 
-afterEach(async () => {
+afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  await act(() => setLocale("en"));
+  setLocale("en");
 });
 
 describe("BulkBillingTransferDialog", () => {
-  it("transfers the picked shipments and says why the rest did not transfer", async () => {
-    mocks.candidates.mockResolvedValue(
-      connection([
-        candidate("shp_1"),
-        candidate("shp_2", { status: "Completed", customer: null }),
-        candidate("shp_3"),
-      ]),
-    );
-    mocks.transfer.mockResolvedValue(
-      respond([transferred("shp_1", { markedReadyToInvoice: false }), notTransferred("shp_2")]),
-    );
+  it("starts a run for the picked shipments and hands back its id", async () => {
     const user = userEvent.setup();
-    const { invalidate } = renderDialog();
+    mocks.candidates.mockResolvedValue(connection([candidate("shp_1"), candidate("shp_2")]));
+    mocks.activeRun.mockResolvedValue(null);
+    mocks.startRun.mockResolvedValue(run({ status: "Queued", processedCount: 0 }));
+    mocks.getRun.mockResolvedValue(run({ status: "Queued", processedCount: 0 }));
 
-    await user.click(await screen.findByRole("checkbox", { name: "Select PRO-shp_1" }));
-    await user.click(screen.getByRole("checkbox", { name: "Select PRO-shp_2" }));
-    await user.click(screen.getByRole("button", { name: "Transfer 2 selected" }));
-
-    expect(mocks.transfer).toHaveBeenCalledTimes(1);
-    expect(mocks.transfer).toHaveBeenCalledWith(["shp_1", "shp_2"]);
-
-    const failures = await screen.findByRole("list", { name: "Not transferred" });
-    const failure = within(failures).getByRole("listitem");
-    expect(within(failure).getByText("PRO-shp_2")).toBeInTheDocument();
-    expect(within(failure).getByText("Missing billing requirements")).toBeInTheDocument();
-    expect(
-      within(failure).getByText(
-        "Shipment billing requirements must be resolved before transfer to billing",
-      ),
-    ).toBeInTheDocument();
-    expect(within(failure).getByText("Proof of Delivery")).toBeInTheDocument();
-    expect(screen.queryByText("PRO-shp_1")).not.toBeInTheDocument();
-
-    const summary = screen.getByRole("group", { name: "Transfer summary" });
-    expect(within(summary).getByText("Transferred").nextSibling).toHaveTextContent("1");
-    expect(within(summary).getByText("Not transferred").nextSibling).toHaveTextContent("1");
-
-    await user.click(screen.getByRole("radio", { name: /Transferred/ }));
-    const successes = screen.getByRole("list", { name: "Transferred" });
-    expect(within(successes).getByText("PRO-shp_1")).toBeInTheDocument();
-    expect(within(successes).getByText("INV-shp_1")).toBeInTheDocument();
-
-    await waitFor(() =>
-      expect(invalidate).toHaveBeenCalledWith({ queryKey: ["billing-queue-list"] }),
-    );
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["billing-transfer-candidates"] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["shipment-list"] });
-  });
-
-  it("confirms before transferring everything that matches the current filters", async () => {
-    mocks.candidates.mockImplementation(async ({ query, status }) =>
-      connection(
-        query === "ACME" && status === "Completed"
-          ? [candidate("shp_7", { status: "Completed" })]
-          : [candidate("shp_1"), candidate("shp_2")],
-      ),
-    );
-    mocks.candidateIds.mockResolvedValue({
-      ids: ["shp_7", "shp_8"],
-      totalCount: 2,
-      truncated: false,
-    });
-    mocks.transfer.mockImplementation(async (ids: string[]) =>
-      respond(ids.map((id) => transferred(id))),
-    );
-    const user = userEvent.setup();
-    renderDialog();
+    const { onRunIdChange } = renderDialog();
 
     await screen.findByText("PRO-shp_1");
-    await user.type(screen.getByPlaceholderText("Search PRO, BOL..."), "ACME");
-    await user.click(screen.getByRole("radio", { name: "Completed" }));
-    await screen.findByText("PRO-shp_7");
+    await user.click(screen.getByRole("checkbox", { name: /PRO-shp_1/i }));
+    await user.click(screen.getByRole("button", { name: /Transfer 1 selected/i }));
 
-    await user.click(screen.getByRole("button", { name: "Transfer all 1" }));
-    expect(mocks.transfer).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("Transfer all 1 shipment that matches the current search and status?"),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Start transfer" }));
-
-    await waitFor(() => expect(mocks.transfer).toHaveBeenCalledWith(["shp_7", "shp_8"]));
-    expect(mocks.candidateIds).toHaveBeenCalledWith(
-      { query: "ACME", status: "Completed" },
-      expect.anything(),
+    await waitFor(() => expect(mocks.startRun).toHaveBeenCalledTimes(1));
+    expect(mocks.startRun).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: "Selected", shipmentIds: ["shp_1"] }),
     );
-    const summary = await screen.findByRole("group", { name: "Transfer summary" });
-    expect(within(summary).getByText("Transferred").nextSibling).toHaveTextContent("2");
+    await waitFor(() => expect(onRunIdChange).toHaveBeenCalledWith("btr_1"));
   });
 
-  it("warns when more shipments matched than one run transfers", async () => {
+  // The whole point of moving the run server-side: the biller can walk away.
+  it("reattaches to a run already in flight instead of offering to start another", async () => {
     mocks.candidates.mockResolvedValue(connection([candidate("shp_1")]));
-    mocks.candidateIds.mockResolvedValue({ ids: ["shp_1"], totalCount: 5200, truncated: true });
-    mocks.transfer.mockResolvedValue(respond([transferred("shp_1")]));
-    const user = userEvent.setup();
-    renderDialog();
+    mocks.activeRun.mockResolvedValue(run());
 
-    await user.click(await screen.findByRole("button", { name: "Transfer all 1" }));
-    await user.click(screen.getByRole("button", { name: "Start transfer" }));
+    const { onRunIdChange } = renderDialog(null);
 
-    expect(
-      await screen.findByText(
-        "5,199 more shipments matched than one run transfers. Run Transfer all again for the rest.",
-      ),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(onRunIdChange).toHaveBeenCalledWith("btr_1"));
   });
 
-  it("stops after the batch in flight and lists the rest as not processed", async () => {
-    const ids = Array.from({ length: 30 }, (_, i) => `shp_${i + 1}`);
-    mocks.candidates.mockResolvedValue(connection([candidate("shp_1")]));
-    mocks.candidateIds.mockResolvedValue({ ids, totalCount: 30, truncated: false });
-    let releaseFirstBatch: (value: BulkBillingTransferResponse) => void = () => undefined;
-    mocks.transfer.mockImplementationOnce(
-      (batch: string[]) =>
-        new Promise<BulkBillingTransferResponse>((resolve) => {
-          releaseFirstBatch = () => resolve(respond(batch.map((id) => transferred(id))));
-        }),
-    );
+  it("shows progress from the run's own counters", async () => {
+    mocks.getRun.mockResolvedValue(run({ processedCount: 4, totalCount: 10 }));
+
+    renderDialog("btr_1");
+
+    expect(await screen.findByText("4 of 10 shipments checked")).toBeInTheDocument();
+    const bar = screen.getByRole("progressbar", { name: "Transfer progress" });
+    expect(bar).toHaveAttribute("aria-valuenow", "4");
+    expect(bar).toHaveAttribute("aria-valuemax", "10");
+  });
+
+  // A running transfer must not trap the dialog open the way the old one did.
+  it("can be closed while the transfer is still running", async () => {
     const user = userEvent.setup();
-    renderDialog();
+    mocks.getRun.mockResolvedValue(run());
 
-    await user.click(await screen.findByRole("button", { name: "Transfer all 1" }));
-    await user.click(screen.getByRole("button", { name: "Start transfer" }));
-    await waitFor(() => expect(mocks.transfer).toHaveBeenCalledTimes(1));
+    const { onOpenChange } = renderDialog("btr_1");
 
+    await screen.findByText("4 of 10 shipments checked");
+    await user.click(screen.getByRole("button", { name: "Run in background" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("asks the run to stop and says so until it does", async () => {
+    const user = userEvent.setup();
+    mocks.getRun.mockResolvedValue(run());
+    mocks.cancelRun.mockResolvedValue(run({ cancelRequestedAt: 1_788_000_020 }));
+
+    renderDialog("btr_1");
+
+    await screen.findByText("4 of 10 shipments checked");
     await user.click(screen.getByRole("button", { name: "Stop" }));
-    expect(screen.getByRole("button", { name: "Stopping after this batch..." })).toBeDisabled();
-    await act(async () => releaseFirstBatch(respond([])));
 
-    const summary = await screen.findByRole("group", { name: "Transfer summary" });
-    expect(mocks.transfer).toHaveBeenCalledTimes(1);
-    expect(within(summary).getByText("Transferred").nextSibling).toHaveTextContent("25");
-    expect(within(summary).getByText("Not processed").nextSibling).toHaveTextContent("5");
+    await waitFor(() => expect(mocks.cancelRun).toHaveBeenCalledWith("btr_1"));
     expect(
-      screen.getByText("You stopped the transfer. The remaining shipments were not sent."),
-    ).toBeInTheDocument();
+      await screen.findByRole("button", { name: /Stopping after this batch/i }),
+    ).toBeDisabled();
   });
 
-  it("explains a run that ended because a request failed", async () => {
-    mocks.candidates.mockResolvedValue(connection([candidate("shp_1"), candidate("shp_2")]));
-    mocks.transfer.mockRejectedValue(new Error("Network request failed"));
-    const user = userEvent.setup();
-    renderDialog();
-
-    await user.click(await screen.findByRole("checkbox", { name: "Select all shown shipments" }));
-    await user.click(screen.getByRole("button", { name: "Transfer 2 selected" }));
-
-    expect(await screen.findByText("The transfer stopped early")).toBeInTheDocument();
-    expect(screen.getByText(/Network request failed/)).toBeInTheDocument();
-    const summary = screen.getByRole("group", { name: "Transfer summary" });
-    expect(within(summary).getByText("Not processed").nextSibling).toHaveTextContent("2");
-  });
-
-  it("retries only the shipments that could transfer now", async () => {
-    mocks.candidates.mockResolvedValue(
-      connection([candidate("shp_1"), candidate("shp_2"), candidate("shp_3")]),
+  it("reports what happened once the run finishes", async () => {
+    mocks.getRun.mockResolvedValue(
+      run({
+        status: "Completed",
+        processedCount: 10,
+        transferredCount: 9,
+        notTransferredCount: 1,
+        completedAt: 1_788_000_100,
+      }),
     );
-    mocks.transfer
-      .mockResolvedValueOnce(
-        respond([
-          notTransferred("shp_1"),
-          notTransferred("shp_2", { failureCode: "AlreadyTransferred", missingRequirements: [] }),
-          transferred("shp_3"),
-        ]),
-      )
-      .mockResolvedValueOnce(respond([transferred("shp_1")]));
-    const user = userEvent.setup();
-    renderDialog();
+    mocks.listItems.mockResolvedValue(itemConnection([item()]));
 
-    await user.click(await screen.findByRole("checkbox", { name: "Select all shown shipments" }));
-    await user.click(screen.getByRole("button", { name: "Transfer 3 selected" }));
-    await user.click(await screen.findByRole("button", { name: "Retry 1" }));
+    renderDialog("btr_1");
 
-    await waitFor(() => expect(mocks.transfer).toHaveBeenCalledTimes(2));
-    expect(mocks.transfer).toHaveBeenLastCalledWith(["shp_1"]);
     const summary = await screen.findByRole("group", { name: "Transfer summary" });
-    await waitFor(() =>
-      expect(within(summary).getByText("Transferred").nextSibling).toHaveTextContent("2"),
-    );
-    expect(within(summary).getByText("Not transferred").nextSibling).toHaveTextContent("1");
-    const failures = screen.getByRole("list", { name: "Not transferred" });
-    expect(within(failures).getByText("PRO-shp_2")).toBeInTheDocument();
-    expect(within(failures).getByText("Already in billing")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^Retry/ })).not.toBeInTheDocument();
+    expect(summary).toHaveTextContent("9");
+    expect(await screen.findByText("Missing billing requirements")).toBeInTheDocument();
+    expect(screen.getByText("Proof of Delivery")).toBeInTheDocument();
   });
 
-  it("keeps the dialog open while a transfer is running", async () => {
-    mocks.candidates.mockResolvedValue(connection([candidate("shp_1")]));
-    mocks.transfer.mockReturnValue(new Promise(() => undefined));
-    const onOpenChange = vi.fn();
+  it("starts a second run over what a retry could still move", async () => {
     const user = userEvent.setup();
-    renderDialog(<BulkBillingTransferDialog open onOpenChange={onOpenChange} />);
+    mocks.getRun.mockResolvedValue(
+      run({ status: "Completed", processedCount: 10, retryableCount: 2 }),
+    );
+    mocks.listItems.mockResolvedValue(itemConnection([item()]));
+    mocks.retryRun.mockResolvedValue(run({ id: "btr_2", status: "Queued" }));
 
-    await user.click(await screen.findByRole("checkbox", { name: "Select PRO-shp_1" }));
-    await user.click(screen.getByRole("button", { name: "Transfer 1 selected" }));
-    await screen.findByRole("button", { name: "Stop" });
+    const { onRunIdChange } = renderDialog("btr_1");
 
-    await user.keyboard("{Escape}");
-    expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Retry 2/i }));
+
+    await waitFor(() => expect(mocks.retryRun).toHaveBeenCalledWith("btr_1"));
+    await waitFor(() => expect(onRunIdChange).toHaveBeenCalledWith("btr_2"));
   });
 
-  it("loads the next page as the list scrolls to its end", async () => {
-    const observed: Element[] = [];
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class {
-        constructor(private readonly callback: IntersectionObserverCallback) {}
-        observe(element: Element) {
-          observed.push(element);
-          queueMicrotask(() =>
-            this.callback(
-              [{ isIntersecting: true, target: element } as unknown as IntersectionObserverEntry],
-              this as unknown as IntersectionObserver,
-            ),
-          );
-        }
-        unobserve() {}
-        disconnect() {}
-        takeRecords() {
-          return [];
-        }
-      },
+  // A run that has not been told its size yet must not show an empty bar, which
+  // reads as "nothing has happened" rather than "we are still working it out".
+  it("does not draw an empty bar before the run knows its size", async () => {
+    mocks.getRun.mockResolvedValue(
+      run({ status: "Running", scope: "AllMatching", totalCount: 0, processedCount: 0 }),
     );
-    const firstPage = Array.from({ length: 50 }, (_, i) => candidate(`shp_${i + 1}`));
-    const secondPage = Array.from({ length: 12 }, (_, i) => candidate(`shp_${i + 51}`));
-    mocks.candidates.mockImplementation(async ({ after }: { after?: string | null }) =>
-      after === "cursor-50"
-        ? {
-            edges: secondPage.map((node) => ({ node })),
-            totalCount: null,
-            pageInfo: { hasNextPage: false, endCursor: "cursor-62" },
-          }
-        : {
-            edges: firstPage.map((node) => ({ node })),
-            totalCount: 62,
-            pageInfo: { hasNextPage: true, endCursor: "cursor-50" },
-          },
-    );
-    mocks.transfer.mockImplementation(async (ids: string[]) =>
-      respond(ids.map((id) => transferred(id))),
-    );
-    const user = userEvent.setup();
 
-    try {
-      renderDialog();
+    renderDialog("btr_1");
 
-      expect(await screen.findByText("PRO-shp_62")).toBeInTheDocument();
-      expect(observed.length).toBeGreaterThan(0);
-      expect(mocks.candidates).toHaveBeenCalledTimes(2);
-      expect(mocks.candidates).toHaveBeenLastCalledWith(
-        expect.objectContaining({ after: "cursor-50" }),
-        expect.anything(),
-      );
-      expect(screen.getByText("62 shipments can transfer")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Transfer all 62" })).toBeInTheDocument();
-
-      await user.click(screen.getByRole("checkbox", { name: "Select all shown shipments" }));
-      await user.click(screen.getByRole("button", { name: "Transfer 62 selected" }));
-
-      await waitFor(() => expect(mocks.transfer).toHaveBeenCalledTimes(3));
-      expect(mocks.transfer.mock.calls.flatMap(([ids]) => ids)).toHaveLength(62);
-    } finally {
-      vi.unstubAllGlobals();
-    }
-  });
-
-  it("says there is nothing to transfer when every shipment is already in billing", async () => {
-    mocks.candidates.mockResolvedValue(connection([]));
-    renderDialog();
-
-    expect(await screen.findByText("Nothing to transfer")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Transfer 0 selected" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: /Transfer all/ })).not.toBeInTheDocument();
+    expect(await screen.findByText("Finding eligible shipments...")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 });

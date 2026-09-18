@@ -196,6 +196,19 @@ type BulkTransferShipmentToBillingRequest struct {
 	ShipmentIDs                 []pulid.ID            `json:"shipmentIds"`
 	BillType                    billingqueue.BillType `json:"billType"`
 	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice"`
+
+	// OnResult is called as each shipment is answered for, before the whole
+	// batch returns. A caller that has to report progress — or that must not
+	// lose what already happened if the batch dies partway — records from here
+	// rather than waiting for the response.
+	OnResult func(BulkTransferToBillingResult) `json:"-"`
+
+	// SuppressExceptionNotifications stops the per-shipment billing-exception
+	// notification. A bulk run can carry thousands of shipments, and one global
+	// notification per problem shipment is a storm nobody reads; the run's own
+	// item rows carry the same missing requirements and validation failures in
+	// a form somebody can actually work through.
+	SuppressExceptionNotifications bool `json:"-"`
 }
 
 func (r *BulkTransferShipmentToBillingRequest) Validate() *errortypes.MultiError {
