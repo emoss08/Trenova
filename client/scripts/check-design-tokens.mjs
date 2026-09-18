@@ -2,7 +2,7 @@
 /**
  * Fails the build on styling that bypasses the design tokens.
  *
- * These four rules are the ones the codebase actually broke. Before the token
+ * These five rules are the ones the codebase actually broke. Before the token
  * layer was rebuilt there were 1,914 raw palette classes, 961 arbitrary font
  * sizes and 253 hand-written line-height patches across 267 files, and nothing
  * stopped any of them landing. Tokens alone do not hold; the check does.
@@ -18,7 +18,9 @@
  */
 
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join, relative } from "node:path";
+import { pathToFileURL } from "node:url";
 import { glob } from "node:fs/promises";
 
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -112,8 +114,104 @@ for (const rel of files.sort()) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   The token layer itself.
+
+   A stylesheet fails in a way no type checker or test sees. A stray comment
+   terminator in tokens.css once ended a comment early, and Tailwind silently
+   dropped every `@utility` after it: the build stayed green, the classes stayed
+   in the markup, and the focus indicator was gone. So the file is compiled here
+   and its output checked, rather than trusted.
+   --------------------------------------------------------------------------- */
+
+const TOKENS = join(ROOT, "packages/shared/src/styles/tokens.css");
+
+/** Utility names declared outside a comment, so one a broken comment has
+ *  swallowed does not count as declared. */
+function declaredUtilities(src) {
+  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  return [...stripped.matchAll(/@utility\s+([a-z][a-z0-9-]*)/g)].map((m) => m[1]);
+}
+
+async function auditTokenLayer() {
+  const src = readFileSync(TOKENS, "utf8");
+  const problems = [];
+
+  // `/* */` does not nest, so an extra terminator means a comment ended early
+  // and the CSS after it was swallowed.
+  if (src.split("/*").length !== src.split("*/").length) {
+    problems.push(
+      "tokens.css has unbalanced comment markers. A comment terminator inside a comment body ends it early, and every @utility after it stops emitting.",
+    );
+  }
+
+  // Every themed token must exist in both blocks; one defined only in :root is
+  // the bug that left light mode with no --shadow-* at all.
+  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  const darkAt = stripped.indexOf(".dark {");
+  if (darkAt !== -1) {
+    const names = (block) =>
+      new Set([...block.matchAll(/^\s{2}(--[a-z0-9-]+):/gm)].map((m) => m[1]));
+    const dark = names(stripped.slice(darkAt));
+    const themeIndependent = /^--(hue-|radius$|ring-width|ring-opacity|kpi-|elevation-flat)/;
+    for (const name of names(stripped.slice(0, darkAt))) {
+      if (!dark.has(name) && !themeIndependent.test(name)) {
+        problems.push(`${name} is defined for light only; a themed token needs a value in .dark too.`);
+      }
+    }
+  }
+
+  // Compile for real and confirm each declared utility reaches the output.
+  const names = declaredUtilities(src);
+  if (names.length === 0) {
+    problems.push("tokens.css declares no @utility at all, which means the file did not parse.");
+  } else {
+    const require = createRequire(join(ROOT, "packages/shared/package.json"));
+    // require.resolve lands on the CJS entry, whose ESM namespace carries the
+    // API under `default`; the ESM entry exposes it directly.
+    const mod = await import(pathToFileURL(require.resolve("tailwindcss")).href);
+    const compile = mod.compile ?? mod.default?.compile;
+    if (typeof compile !== "function") {
+      problems.push("could not load tailwindcss to compile the token layer.");
+      return problems;
+    }
+    const sheets = {
+      // resolve via package.json to land on the package root, not dist/
+      tailwindcss: readFileSync(
+        require.resolve("tailwindcss/package.json").replace(/package\.json$/, "index.css"),
+        "utf8",
+      ),
+      "./tokens.css": src,
+    };
+    const compiler = await compile('@import "tailwindcss";\n@import "./tokens.css";', {
+      base: "/",
+      loadStylesheet: async (id, base) => ({ base, content: sheets[id], path: id }),
+    });
+    const css = compiler.build(names);
+    for (const name of names) {
+      if (!new RegExp(`\\.${name}[:{\\s]`).test(css)) {
+        problems.push(
+          `@utility ${name} is declared in tokens.css but generates no rule. A utility that does not emit removes its styling without failing a build, a test or a type check.`,
+        );
+      }
+    }
+  }
+  return problems;
+}
+
+const tokenProblems = await auditTokenLayer();
+for (const problem of tokenProblems) {
+  violations += 1;
+  byRule.set("token-layer", (byRule.get("token-layer") ?? 0) + 1);
+  if (GITHUB) {
+    console.log(`::error file=client/packages/shared/src/styles/tokens.css::${problem}`);
+  } else {
+    console.log(`packages/shared/src/styles/tokens.css\n  token-layer: ${problem}\n`);
+  }
+}
+
 if (violations === 0) {
-  console.log(`design tokens: clean (${files.length} files)`);
+  console.log(`design tokens: clean (${files.length} files, ${declaredUtilities(readFileSync(TOKENS, "utf8")).length} utilities verified)`);
   process.exit(0);
 }
 

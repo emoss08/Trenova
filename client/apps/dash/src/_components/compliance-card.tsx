@@ -55,7 +55,7 @@ export function ComplianceCard() {
           )}
           <h2 className="text-sm font-semibold">{t("Qualification file")}</h2>
         </div>
-        <Badge variant={data.isQualified ? "active" : "inactive"}>
+        <Badge variant={data.isQualified ? "success" : "danger"}>
           {data.isQualified ? t("Qualified") : t("Action needed")}
         </Badge>
       </div>

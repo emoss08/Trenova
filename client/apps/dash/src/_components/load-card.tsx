@@ -59,7 +59,7 @@ export function LoadPayChip({ load }: { load: PortalLoad }) {
     );
   }
   return (
-    <Badge variant={load.payStatus === "Settled" ? "active" : "teal"}>
+    <Badge variant={load.payStatus === "Settled" ? "success" : "info"}>
       <AmountDisplay value={load.payGrossMinor} />
       {load.payStatus === "Settled" ? " paid" : ""}
     </Badge>
