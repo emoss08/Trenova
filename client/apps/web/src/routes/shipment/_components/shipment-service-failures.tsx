@@ -138,7 +138,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-medium">
-          <AlertTriangleIcon className="size-4 text-amber-500" />
+          <AlertTriangleIcon className="size-4 text-warning-foreground" />
           {t("{0, plural, one {# service failure} other {# service failures}}", failures.length)}
         </div>
         <div className="flex items-center gap-1">
@@ -298,7 +298,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
 
           <div className="bg-muted/20 max-h-[28rem] overflow-y-auto rounded-md border">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
-              <InfoIcon className="size-4 text-amber-500" />
+              <InfoIcon className="size-4 text-warning-foreground" />
               {t("Stop Results")}
             </div>
             <EvaluationStopGroup
@@ -413,28 +413,28 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
       className={cn(
         "mt-2 flex flex-wrap items-center gap-2 rounded border px-2 py-1.5 text-xs",
         blocked
-          ? "border-red-200 bg-red-50 text-red-700"
+          ? "border-danger-border bg-danger-subtle text-danger-foreground"
           : available || ready
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            ? "border-success-border bg-success-subtle text-success-foreground"
             : "border-muted bg-muted/30 text-muted-foreground",
       )}
     >
       {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
       <span className="font-medium">{t("Customer EDI 214 {0}", trigger)}</span>
-      <Badge variant={blocked ? "inactive" : available || ready ? "active" : "secondary"}>
+      <Badge variant={blocked ? "danger" : available || ready ? "success" : "neutral"}>
         {label}
       </Badge>
-      {readiness.mandatory && <Badge variant="outline">{t("Mandatory")}</Badge>}
+      {readiness.mandatory && <Badge variant="neutral" appearance="outline">{t("Mandatory")}</Badge>}
       {readiness.messageId && (
-        <span className="font-mono text-[11px]">{t("Message {0}", readiness.messageId)}</span>
+        <span className="font-mono text-xs">{t("Message {0}", readiness.messageId)}</span>
       )}
       {ediStatus?.lastMessageId && (
-        <span className="font-mono text-[11px]">{t("Last {0}", ediStatus.lastMessageId)}</span>
+        <span className="font-mono text-xs">{t("Last {0}", ediStatus.lastMessageId)}</span>
       )}
       {ediStatus?.deliveryStatus && (
-        <Badge variant="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
+        <Badge variant="neutral" appearance="outline">{t("Delivery {0}", ediStatus.deliveryStatus)}</Badge>
       )}
-      {ediStatus?.ackStatus && <Badge variant="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
+      {ediStatus?.ackStatus && <Badge variant="neutral" appearance="outline">{t("ACK {0}", ediStatus.ackStatus)}</Badge>}
       {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
       {!diagnostic && ediStatus?.lastDiagnostic && (
         <span className="min-w-0 flex-1 truncate">{ediStatus.lastDiagnostic}</span>

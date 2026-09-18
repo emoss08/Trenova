@@ -34,7 +34,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
-              "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden",
+"ui-focus-ring",
             )}
           >
             <InfoIcon className="size-3" />
@@ -51,7 +51,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
         <dl className="grid gap-2">
           {rows.map((row) => (
             <div key={row.label} className="grid gap-0.5">
-              <dt className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+              <dt className="text-muted-foreground font-mono text-2xs tracking-wide uppercase">
                 {t(row.label)}
               </dt>
               <dd className="text-foreground/90 text-xs leading-snug">{row.value}</dd>

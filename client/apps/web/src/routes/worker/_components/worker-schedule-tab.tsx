@@ -181,7 +181,7 @@ export default function WorkerScheduleTab({ workerId }: { workerId: string }) {
                 <span
                   key={label}
                   className={cn(
-                    "grid h-7 flex-1 place-items-center rounded-md text-[11px] font-medium",
+                    "grid h-7 flex-1 place-items-center rounded-md text-xs font-medium",
                     on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
                   )}
                 >

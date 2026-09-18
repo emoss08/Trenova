@@ -49,10 +49,10 @@ export function AuthHandoff({
         </svg>
       </span>
       <div className="text-center">
-        <div className="text-[14px] font-[550] tracking-[-0.01em]">
+        <div className="text-lg font-[550] tracking-[-0.01em]">
           {organizationName ? t("Entering {0}", organizationName) : t("Entering Trenova")}
         </div>
-        <div className="text-subtle-foreground font-table mt-1.5 text-[11.5px]">
+        <div className="text-subtle-foreground font-table mt-1.5 text-xs">
           {t(
             "{0, plural, one {# role} other {# roles}}{1}",
             roleCount,

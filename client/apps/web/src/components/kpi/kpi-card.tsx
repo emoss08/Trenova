@@ -59,7 +59,7 @@ export function Delta({ delta, deltaLabel, deltaTone }: DeltaProps) {
 
   return (
     <span
-      className="inline-flex items-center gap-0.5 rounded-sm px-1.5 py-px font-mono text-[10.5px] tabular-nums"
+      className="inline-flex items-center gap-0.5 rounded-sm px-1.5 py-px font-mono text-2xs tabular-nums"
       style={{
         color,
         background: `color-mix(in oklch, ${color} 12%, transparent)`,
@@ -78,6 +78,6 @@ type KpiSubProps = {
 
 export function KpiSub({ children }: KpiSubProps) {
   return (
-    <div className="text-muted-foreground/80 mt-auto text-[10.5px] leading-snug">{children}</div>
+    <div className="text-muted-foreground/80 mt-auto text-2xs leading-snug">{children}</div>
   );
 }

@@ -174,9 +174,9 @@ export function enforcementLabel(level: EnforcementLevel): string {
 
 const ENFORCEMENT_TONES: Record<EnforcementLevel, string> = {
   Ignore: "text-muted-foreground",
-  Warn: "text-amber-600 dark:text-amber-500",
-  RequireReview: "text-blue-600 dark:text-blue-500",
-  Block: "text-red-600 dark:text-red-500",
+  Warn: "text-warning-foreground",
+  RequireReview: "text-info-foreground",
+  Block: "text-danger-foreground",
 };
 
 export function enforcementTone(level: EnforcementLevel): string {

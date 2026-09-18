@@ -61,7 +61,7 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementBatchRow>[] {
       header: () => <div className="text-right">{t("Exceptions")}</div>,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1 text-xs tabular-nums">
-          {row.original.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
+          {row.original.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-warning-foreground" />}
           {row.original.exceptionCount}
         </div>
       ),

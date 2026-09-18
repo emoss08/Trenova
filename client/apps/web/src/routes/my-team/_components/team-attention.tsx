@@ -51,7 +51,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
             {t("Needs your attention")}
           </h3>
           {flagged.length > 0 ? (
-            <Badge variant="inactive" className="text-2xs h-4 px-1 tabular-nums">
+            <Badge variant="danger" className="text-2xs h-4 px-1 tabular-nums">
               {flagged.length}
             </Badge>
           ) : null}
@@ -95,7 +95,7 @@ export function TeamAttention({ rows }: TeamAttentionProps) {
                     {reasons.map((reason) => (
                       <Badge
                         key={reason.key}
-                        variant={reason.severity === "critical" ? "inactive" : "warning"}
+                        variant={reason.severity === "critical" ? "danger" : "warning"}
                         className="text-2xs h-4 px-1"
                       >
                         {t(reason.label)}

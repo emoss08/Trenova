@@ -94,7 +94,7 @@ export default function VersionAndSegmentRail() {
                   <span className="min-w-0">
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-sm font-medium">{segment.segmentId}</span>
-                      <Badge variant={segment.required ? "active" : "outline"}>
+                      <Badge variant={segment.required ? "success" : "neutral"}>
                         {segment.required ? t("Req") : t("Opt")}
                       </Badge>
                     </span>
@@ -106,7 +106,7 @@ export default function VersionAndSegmentRail() {
                     <Badge
                       variant={
                         segmentDiagnostics.some((item) => item.severity === "Error")
-                          ? "inactive"
+                          ? "danger"
                           : "warning"
                       }
                     >

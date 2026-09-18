@@ -94,8 +94,8 @@ export const ALERT_CATEGORY_CONFIG: Record<WeatherAlertCategory, AlertCategoryCo
 };
 
 export const SEVERITY_BADGE_MAP: Record<string, BadgeVariant> = {
-  Extreme: "inactive",
-  Severe: "orange",
+  Extreme: "danger",
+  Severe: "warning",
   Moderate: "warning",
   Minor: "info",
 };

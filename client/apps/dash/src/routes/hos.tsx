@@ -131,13 +131,13 @@ function DailyLogRow({ log }: { log: MyHosDailyLog }) {
           )}
         </p>
         {!log.isCertified ? (
-          <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+          <p className="mt-0.5 text-xs text-warning-foreground">
             {t("Not yet certified")}
           </p>
         ) : null}
       </div>
       {log.isCertified ? (
-        <Badge variant="active">{t("Certified")}</Badge>
+        <Badge variant="success">{t("Certified")}</Badge>
       ) : (
         <Badge variant="warning">{t("Uncertified")}</Badge>
       )}
@@ -211,7 +211,7 @@ function ViolationRow({ violation }: { violation: MyHosViolation }) {
           </p>
         ) : null}
       </div>
-      <TriangleAlertIcon className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+      <TriangleAlertIcon className="size-4 shrink-0 text-warning-foreground" />
     </li>
   );
 }
@@ -256,7 +256,7 @@ function ViolationsSection({ enabled }: { enabled: boolean }) {
         </ul>
       ) : (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-8 text-center">
-          <CircleCheckIcon className="size-6 text-green-600 dark:text-green-400" />
+          <CircleCheckIcon className="size-6 text-success-foreground" />
           <p className="text-sm text-muted-foreground">{t("No violations — nice work.")}</p>
         </div>
       )}

@@ -331,11 +331,11 @@ function SectionHeading({
   return (
     <div className="flex items-baseline justify-between">
       <span className="flex items-center gap-1.5">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{children}</h4>
+        <h4 className="text-muted-foreground text-xs font-semibold uppercase">{children}</h4>
         {help ? <InfoPopover title={children}>{help}</InfoPopover> : null}
       </span>
       {count !== undefined && count > 0 ? (
-        <span className="text-muted-foreground font-mono text-[11px] tabular-nums">{count}</span>
+        <span className="text-muted-foreground font-mono text-xs tabular-nums">{count}</span>
       ) : null}
     </div>
   );
@@ -379,7 +379,7 @@ function EmploymentProcess({ cycle }: { cycle: EmploymentCycle<WorkerChecklistRo
               >
                 <span
                   className={cn(
-                    "inline-flex size-5 items-center justify-center rounded-full border text-[10px] font-medium tabular-nums",
+                    "inline-flex size-5 items-center justify-center rounded-full border text-2xs font-medium tabular-nums",
                     active && "border-primary bg-primary text-primary-foreground",
                     done && "border-primary/40 text-primary",
                     !active && !done && "text-muted-foreground",

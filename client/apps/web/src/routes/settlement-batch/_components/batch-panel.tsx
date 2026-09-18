@@ -90,7 +90,7 @@ function GenerateBatchPanel({
       notice={
         period ? (
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
-            <p className="text-muted-foreground text-[11px] font-medium uppercase">
+            <p className="text-muted-foreground text-xs font-medium uppercase">
               {t("Current Pay Period")}
             </p>
             <p className="mt-1 font-medium">
@@ -215,22 +215,22 @@ function BatchDetail({ batchId }: { batchId: string }) {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Settlements")}
           </p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Exceptions")}
           </p>
           <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
-            {data.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
+            {data.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-warning-foreground" />}
             {data.exceptionCount}
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Total Gross")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -238,7 +238,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Total Net")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -277,7 +277,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
                       status={settlement.status as DriverSettlementStatus}
                     />
                     {settlement.hasExceptions && (
-                      <TriangleAlert className="size-3 text-amber-500" />
+                      <TriangleAlert className="size-3 text-warning-foreground" />
                     )}
                   </div>
                 </td>

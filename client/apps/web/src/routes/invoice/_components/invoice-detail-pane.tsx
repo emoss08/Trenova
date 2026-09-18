@@ -162,7 +162,7 @@ export default function InvoiceDetailPane({
           <div className="flex items-center gap-2">
             {invoice.status === "Posted" ? (
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                <CheckIcon className="size-3.5 text-green-600" />
+                <CheckIcon className="size-3.5 text-success-foreground" />
                 {t("Posted")}
               </span>
             ) : isVoided ? null : (
@@ -318,10 +318,10 @@ function VoidedNotice({ invoice }: { invoice: Invoice }) {
   const t = useT();
 
   return (
-    <div className="flex gap-3 rounded-md border border-red-300 bg-red-50/60 p-3 dark:border-red-900 dark:bg-red-950/30">
-      <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400" />
+    <div className="flex gap-3 rounded-md border border-danger-border bg-danger-subtle/60 p-3 dark:border-danger-border dark:bg-danger-subtle/30">
+      <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-danger-foreground" />
       <div className="min-w-0 text-sm">
-        <p className="font-medium text-red-800 dark:text-red-200">
+        <p className="font-medium text-danger-foreground">
           <span>{t("Voided {0}", formatUnixDateTime(invoice.voidedAt))}</span>
           <span className="mx-1">·</span>
           <span>
@@ -331,7 +331,7 @@ function VoidedNotice({ invoice }: { invoice: Invoice }) {
           </span>
         </p>
         {invoice.voidReason ? (
-          <p className="mt-0.5 text-red-800/80 dark:text-red-200/80">{invoice.voidReason}</p>
+          <p className="mt-0.5 text-danger-foreground/80">{invoice.voidReason}</p>
         ) : null}
       </div>
     </div>
@@ -567,7 +567,7 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
           render={
             <button
               type="button"
-              className="focus-visible:ring-ring shrink-0 rounded-sm text-xs font-medium text-blue-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none dark:text-blue-400"
+ className="ui-focus-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline dark:text-info-foreground"
               aria-label={`Show ${recipients.length} To recipients`}
             >
               {t("+{0} more", remainingCount)}
@@ -614,7 +614,7 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
         </span>
         <span className="flex items-center gap-1.5">
           {t("Read receipt")}
-          <Badge variant={sendPlan.openTracking ? "active" : "outline"}>
+          <Badge variant={sendPlan.openTracking ? "success" : "neutral"}>
             {sendPlan.openTracking ? t("Enabled") : t("Disabled")}
           </Badge>
         </span>
@@ -656,13 +656,13 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="text-sm font-semibold">{t("Part {0}", part.partNumber)}</span>
-                <Badge variant="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
+                <Badge variant="neutral" appearance="outline">{formatFileSize(part.estimatedSizeBytes)}</Badge>
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <Badge variant="outline">
+                <Badge variant="neutral" appearance="outline">
                   {formatCount(part.attachments.length, "attachment")}
                 </Badge>
-                <Badge variant="outline">{formatCount(part.links.length, "link")}</Badge>
+                <Badge variant="neutral" appearance="outline">{formatCount(part.links.length, "link")}</Badge>
               </div>
             </div>
 
@@ -671,7 +671,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
                 {part.warnings.map((warning) => (
                   <div
                     key={warning}
-                    className="flex gap-1.5 text-xs text-yellow-700 dark:text-yellow-400"
+                    className="flex gap-1.5 text-xs text-warning-foreground"
                   >
                     <AlertTriangleIcon className="mt-0.5 size-3 shrink-0" />
                     <span>{warning}</span>
@@ -818,7 +818,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
             <Skeleton className="h-28 w-full" />
           </div>
         ) : query.isError ? (
-          <p className="rounded-md border border-red-600/30 bg-red-600/10 p-3 text-sm text-red-700 dark:text-red-400">
+          <p className="rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger-foreground">
             {t("Send history could not be loaded.")}
           </p>
         ) : attempts.length === 0 ? (
@@ -933,8 +933,8 @@ function DeliveryNotice({ tone, message }: { tone: "error" | "warning"; message:
     <div
       className={
         tone === "error"
-          ? "mt-3 flex gap-2 rounded-md border border-red-600/30 bg-red-600/10 p-2 text-sm text-red-700 dark:text-red-400"
-          : "mt-3 flex gap-2 rounded-md border border-yellow-600/30 bg-yellow-600/10 p-2 text-sm text-yellow-700 dark:text-yellow-400"
+          ? "mt-3 flex gap-2 rounded-md border border-danger/30 bg-danger/10 p-2 text-sm text-danger-foreground"
+          : "mt-3 flex gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-sm text-warning-foreground"
       }
     >
       <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
@@ -953,9 +953,9 @@ function MetadataCell({ label, value }: { label: string; value: string }) {
 }
 
 const SEND_STATUS_VARIANTS: Record<InvoiceSendStatus, BadgeVariant> = {
-  NotSent: "outline",
+  NotSent: "neutral",
   Sending: "info",
-  Sent: "active",
+  Sent: "success",
   PartiallySent: "warning",
-  Failed: "inactive",
+  Failed: "danger",
 };

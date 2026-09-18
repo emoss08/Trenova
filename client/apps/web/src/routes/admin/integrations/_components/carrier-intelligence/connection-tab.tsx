@@ -208,11 +208,11 @@ function ProviderStatusCard({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{t("Provider role")}</span>
           {role === "primary" ? (
-            <Badge variant="active">{t("Primary provider")}</Badge>
+            <Badge variant="success">{t("Primary provider")}</Badge>
           ) : role === "fallback" ? (
             <Badge variant="info">{t("Fallback provider")}</Badge>
           ) : (
-            <Badge variant="outline">{t("Not in use")}</Badge>
+            <Badge variant="neutral" appearance="outline">{t("Not in use")}</Badge>
           )}
           {isActivePrimary && provider && !provider.configured ? (
             <Badge variant="warning">{t("Needs setup")}</Badge>
@@ -277,7 +277,7 @@ function BadgeList({
       ) : (
         <div className="flex flex-wrap gap-1">
           {values.map((value) => (
-            <Badge key={value} variant="secondary">
+            <Badge key={value} variant="neutral">
               {value}
             </Badge>
           ))}

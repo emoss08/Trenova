@@ -94,16 +94,16 @@ export function safetyRatingLabel(value: string): string {
   return SAFETY_RATING_LABELS[value] ?? value;
 }
 
-export function safetyRatingTone(value: string): "active" | "inactive" | "warning" | "secondary" {
+export function safetyRatingTone(value: string): "success" | "danger" | "warning" | "neutral" {
   switch (value) {
     case "Excellent":
-      return "active";
+      return "success";
     case "AtRisk":
-      return "inactive";
+      return "danger";
     case "Watch":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 

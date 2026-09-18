@@ -41,7 +41,7 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
     >
       {copied ? (
-        <CheckIcon className="size-3 text-green-600" />
+        <CheckIcon className="size-3 text-success-foreground" />
       ) : (
         <CopyIcon className="size-3 text-muted-foreground" />
       )}
@@ -209,7 +209,7 @@ export function DashLoadDetailPage() {
       <div className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t("Route")}</h2>
-          <Badge variant="secondary">
+          <Badge variant="neutral">
             {t("{0, plural, one {# stop} other {# stops}}", load.stops.length)}
           </Badge>
         </div>

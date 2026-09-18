@@ -101,14 +101,14 @@ function TagInputInner({
       <div
         className={cn(
           "border-input bg-muted flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
-          "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4",
+"ui-container-focus-ring",
           error && "border-destructive",
           disabled && "pointer-events-none opacity-50",
         )}
         onClick={() => inputRef.current?.focus()}
       >
         {value.map((tag, i) => (
-          <Badge key={`${tag}-${i}`} variant="secondary" className="gap-1 pr-1">
+          <Badge key={`${tag}-${i}`} variant="neutral" className="gap-1 pr-1">
             {tag}
             {!disabled && (
               <button

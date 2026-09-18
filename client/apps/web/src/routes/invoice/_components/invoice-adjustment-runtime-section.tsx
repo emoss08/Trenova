@@ -34,13 +34,13 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 const STATUS_BADGE_VARIANT: Record<InvoiceAdjustmentStatus, string> = {
-  Draft: "secondary",
+  Draft: "neutral",
   PendingApproval: "warning",
-  Approved: "active",
-  Rejected: "inactive",
+  Approved: "success",
+  Rejected: "danger",
   Executing: "info",
-  Executed: "active",
-  ExecutionFailed: "inactive",
+  Executed: "success",
+  ExecutionFailed: "danger",
 };
 
 export function InvoiceAdjustmentRuntimeSection({
@@ -114,7 +114,7 @@ export function InvoiceAdjustmentRuntimeSection({
                           {lineageInvoice.billType} · {lineageInvoice.status}
                         </p>
                       </div>
-                      <Badge variant={isCurrent ? "active" : "secondary"} className="shrink-0">
+                      <Badge variant={isCurrent ? "success" : "neutral"} className="shrink-0">
                         {isCurrent ? t("Current") : t("Historical")}
                       </Badge>
                     </div>
@@ -138,11 +138,11 @@ export function InvoiceAdjustmentRuntimeSection({
                           <Badge
                             variant={
                               STATUS_BADGE_VARIANT[adjustment.status] as
-                                | "active"
-                                | "inactive"
+                                | "success"
+                                | "danger"
                                 | "warning"
                                 | "info"
-                                | "secondary"
+                                | "neutral"
                             }
                           >
                             {formatStatus(adjustment.status)}
@@ -243,11 +243,11 @@ function InvoiceAdjustmentLatestCard({
           <Badge
             variant={
               STATUS_BADGE_VARIANT[latestAdjustment.status] as
-                | "active"
-                | "inactive"
+                | "success"
+                | "danger"
                 | "warning"
                 | "info"
-                | "secondary"
+                | "neutral"
             }
           >
             {formatStatus(latestAdjustment.status)}
@@ -330,7 +330,7 @@ function InvoiceAdjustmentLatestCard({
               <Button
                 size="sm"
                 type="button"
-                className="bg-green-600 text-white hover:bg-green-700"
+                className="bg-success text-foreground-on-solid hover:bg-success"
                 onClick={() => approveMutation.mutate(latestAdjustment.id)}
                 disabled={approveMutation.isPending}
               >

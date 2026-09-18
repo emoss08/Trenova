@@ -56,8 +56,8 @@ describe("labels and tones", () => {
   });
 
   it("grades severity", () => {
-    expect(classificationTone("Death")).toBe("inactive");
+    expect(classificationTone("Death")).toBe("danger");
     expect(classificationTone("JobTransferOrRestriction")).toBe("warning");
-    expect(classificationTone("FirstAidOnly")).toBe("secondary");
+    expect(classificationTone("FirstAidOnly")).toBe("neutral");
   });
 });

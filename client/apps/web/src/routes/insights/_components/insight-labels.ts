@@ -21,10 +21,10 @@ export const CATEGORY_DESCRIPTIONS: Record<InsightCategory, string> = {
   Compliance: "Exposure that takes capacity off the road",
 };
 
-export const SEVERITY_TONE: Record<InsightSeverity, "inactive" | "warning" | "outline"> = {
-  Critical: "inactive",
+export const SEVERITY_TONE: Record<InsightSeverity, "danger" | "warning" | "neutral"> = {
+  Critical: "danger",
   Warning: "warning",
-  Info: "outline",
+  Info: "neutral",
 };
 
 export const STATUS_LABELS: Record<InsightStatusFilter, string> = {

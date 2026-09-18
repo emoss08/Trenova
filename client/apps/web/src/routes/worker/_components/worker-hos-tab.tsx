@@ -73,7 +73,7 @@ const eldLaneByStatus: Record<string, number> = {
 const eldStrokeClassByStatus: Record<string, string> = {
   offDuty: "text-muted-foreground",
   personalConveyance: "text-muted-foreground",
-  sleeperBed: "text-purple-600 dark:text-purple-400",
+  sleeperBed: "text-accent-violet-on-subtle",
   driving: "text-brand",
   onDuty: "text-warning",
   yardMove: "text-warning",
@@ -85,17 +85,17 @@ const CYCLE_LIMIT_MS = 70 * HOUR_MS;
 const BREAK_LIMIT_MS = 8 * HOUR_MS;
 
 const dutyStatusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On Duty", variant: "warning" },
-  offDuty: { label: "Off Duty", variant: "secondary" },
-  sleeperBed: { label: "Sleeper Berth", variant: "purple" },
-  yardMove: { label: "Yard Move", variant: "teal" },
-  personalConveyance: { label: "Personal Conveyance", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On Duty", variant: "accent-amber" },
+  offDuty: { label: "Off Duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper Berth", variant: "accent-violet" },
+  yardMove: { label: "Yard Move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal Conveyance", variant: "accent-teal" },
 };
 
 function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant: BadgeVariant } {
   if (!dutyStatus) {
-    return { label: translate("Unknown"), variant: "secondary" };
+    return { label: translate("Unknown"), variant: "neutral" };
   }
   return dutyStatusMeta[dutyStatus] ?? { label: toTitleCase(dutyStatus), variant: "secondary" };
 }
@@ -229,8 +229,8 @@ function HosClockCard({
       </RingGauge>
       <div className="text-center">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-muted-foreground text-[11px]">{limitLabel}</p>
-        {extra ? <p className="text-muted-foreground mt-0.5 text-[11px]">{extra}</p> : null}
+        <p className="text-muted-foreground text-xs">{limitLabel}</p>
+        {extra ? <p className="text-muted-foreground mt-0.5 text-xs">{extra}</p> : null}
       </div>
     </div>
   );
@@ -327,7 +327,7 @@ function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
         <span className="text-muted-foreground text-xs">
           {formatUnixDate(violation.violationStartAt)}
         </span>
-        <Badge variant="inactive">{formatDurationMs(violation.durationMs)}</Badge>
+        <Badge variant="danger">{formatDurationMs(violation.durationMs)}</Badge>
       </div>
     </li>
   );
@@ -362,7 +362,7 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
         />
       ) : violationsQuery.data.length === 0 ? (
         <HosEmptyState
-          icon={<ShieldCheckIcon className="mx-auto size-5 text-green-600 dark:text-green-400" />}
+          icon={<ShieldCheckIcon className="mx-auto size-5 text-success-foreground" />}
           title={t("No violations in the last 30 days")}
           description={t("This driver has a clean hours-of-service record for the past month.")}
         />
@@ -411,7 +411,7 @@ function DayPillButton({
           aria-label={t("Certified")}
           className={cn(
             "size-1.5 rounded-full",
-            isSelected ? "bg-primary-foreground" : "bg-green-600 dark:bg-green-400",
+            isSelected ? "bg-primary-foreground" : "bg-success",
           )}
         />
       ) : null}
@@ -475,7 +475,7 @@ function EldGraph({
         {eldLaneLabels.map((label) => (
           <div
             key={label}
-            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] font-medium"
+            className="text-muted-foreground flex h-8 items-center justify-end text-2xs font-medium"
           >
             {label}
           </div>
@@ -487,7 +487,7 @@ function EldGraph({
             <span
               key={tick.key}
               className={cn(
-                "text-muted-foreground absolute top-0 -translate-x-1/2 text-[10px] tabular-nums",
+                "text-muted-foreground absolute top-0 -translate-x-1/2 text-2xs tabular-nums",
                 !tick.isMajor && "max-sm:hidden",
               )}
               style={{ left: `${tick.fraction * 100}%` }}
@@ -605,7 +605,7 @@ function EldGraph({
         {laneTotals.map((totalMs, lane) => (
           <div
             key={eldLaneLabels[lane]}
-            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] tabular-nums"
+            className="text-muted-foreground flex h-8 items-center justify-end text-2xs tabular-nums"
           >
             {formatDurationMs(totalMs)}
           </div>
@@ -636,9 +636,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
   }
 
   const certifiedBadge = dailyLog.isCertified ? (
-    <Badge variant="active">{t("Certified")}</Badge>
+    <Badge variant="success">{t("Certified")}</Badge>
   ) : (
-    <Badge variant="outline">{t("Uncertified")}</Badge>
+    <Badge variant="neutral" appearance="outline">{t("Uncertified")}</Badge>
   );
 
   return (
@@ -648,7 +648,7 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
           key={chip.label}
           className="border-border flex items-center gap-1.5 rounded-md border px-2 py-1"
         >
-          <span className="text-muted-foreground text-[11px]">{t(chip.label)}</span>
+          <span className="text-muted-foreground text-xs">{t(chip.label)}</span>
           <span className="text-xs font-medium tabular-nums">{chip.value}</span>
         </div>
       ))}
@@ -695,7 +695,7 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
           </div>
         ) : null}
       </div>
-      <Badge variant="secondary">{formatDurationMs(durationMs)}</Badge>
+      <Badge variant="neutral">{formatDurationMs(durationMs)}</Badge>
     </li>
   );
 }
@@ -860,7 +860,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="secondary">
+          <Badge variant="neutral">
             {submission.fields.length} {pluralize("field", submission.fields.length)}
           </Badge>
           {hasFields ? (
@@ -878,7 +878,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
-                <dt className="text-muted-foreground text-[11px]">{t(field.label)}</dt>
+                <dt className="text-muted-foreground text-xs">{t(field.label)}</dt>
                 <dd className="text-sm break-words">{field.value || "—"}</dd>
               </div>
             ))}
@@ -969,7 +969,7 @@ function HosLiveState({
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={statusMeta.variant}>{t(statusMeta.label)}</Badge>
         {state.currentVehicleId ? (
-          <Badge variant="outline" className="gap-1">
+          <Badge variant="neutral" appearance="outline" className="gap-1">
             <TruckIcon className="size-3" />
             <span className="font-mono">{state.currentVehicleId}</span>
           </Badge>

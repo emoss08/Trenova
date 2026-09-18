@@ -63,7 +63,7 @@ export default function TimeAttendanceConsole() {
             <TimerIcon className="size-3.5" />
             {t("Clock")}
             {onClockCount > 0 ? (
-              <Badge variant="secondary" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
+              <Badge variant="neutral" className="text-2xs ml-1.5 h-4 px-1 tabular-nums">
                 {onClockCount}
               </Badge>
             ) : null}

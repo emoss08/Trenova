@@ -33,7 +33,7 @@ export function CostEventPanel({
         <div className="flex items-center gap-2">
           <CarrierCostEventStatusBadge status={row.status as CarrierCostEventStatus} />
           {row.voidReason && (
-            <span className="text-xs text-red-600 dark:text-red-400">{row.voidReason}</span>
+            <span className="text-xs text-danger-foreground">{row.voidReason}</span>
           )}
         </div>
         <div className="overflow-hidden rounded-lg border">
@@ -76,7 +76,7 @@ export function CostEventPanel({
             </tbody>
           </table>
         </div>
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t(
             "Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.",
           )}

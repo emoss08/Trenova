@@ -599,7 +599,7 @@ function DragGhost({ bar }: { bar: TimelineBar }) {
   const destCode = getDestinationLocation(bar.shipment)?.code ?? "—";
   return (
     <div className="border-brand/50 bg-brand/15 flex h-6.5 cursor-grabbing items-center rounded border px-2 shadow-lg backdrop-blur-sm">
-      <span className="font-table text-[10px] font-semibold tabular-nums">
+      <span className="font-table text-2xs font-semibold tabular-nums">
         {bar.shipment.proNumber ?? "—"}
         <span className="text-muted-foreground ml-1.5 font-normal">
           {originCode} → {destCode}

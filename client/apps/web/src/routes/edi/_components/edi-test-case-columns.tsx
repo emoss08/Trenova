@@ -58,8 +58,8 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
       cell: ({ row }) =>
         row.original.documentProfile ? (
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{row.original.documentProfile.transactionSet}</Badge>
-            <Badge variant="outline">{row.original.documentProfile.direction}</Badge>
+            <Badge variant="neutral">{row.original.documentProfile.transactionSet}</Badge>
+            <Badge variant="neutral" appearance="outline">{row.original.documentProfile.direction}</Badge>
           </div>
         ) : (
           <DataTablePlaceholder />
@@ -95,12 +95,12 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
       cell: ({ row }) => {
         const { expectedWarnings, expectedErrors } = row.original;
         if (expectedWarnings === 0 && expectedErrors === 0) {
-          return <Badge variant="outline">{t("Clean")}</Badge>;
+          return <Badge variant="neutral" appearance="outline">{t("Clean")}</Badge>;
         }
         return (
           <div className="flex items-center gap-1.5">
             {expectedWarnings > 0 && (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 {t("{0, plural, one {# warning} other {# warnings}}", expectedWarnings)}
               </Badge>
             )}

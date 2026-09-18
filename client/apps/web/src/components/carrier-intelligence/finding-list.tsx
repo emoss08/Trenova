@@ -12,8 +12,8 @@ export type FindingKind = "blocker" | "advisory" | "notice";
 export const ALL_FINDING_KINDS: readonly FindingKind[] = ["blocker", "advisory", "notice"];
 
 const KIND_ICON: Record<FindingKind, { icon: LucideIcon; className: string }> = {
-  blocker: { icon: OctagonXIcon, className: "text-red-600 dark:text-red-400" },
-  advisory: { icon: TriangleAlertIcon, className: "text-amber-600 dark:text-amber-400" },
+  blocker: { icon: OctagonXIcon, className: "text-danger-foreground" },
+  advisory: { icon: TriangleAlertIcon, className: "text-warning-foreground" },
   notice: { icon: InfoIcon, className: "text-muted-foreground" },
 };
 

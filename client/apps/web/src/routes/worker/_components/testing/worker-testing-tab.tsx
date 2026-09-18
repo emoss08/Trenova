@@ -109,7 +109,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
       <section
         className={cn(
           "rounded-lg border p-4",
-          file.standing.status === "Prohibited" && "border-red-500/60 bg-red-500/5",
+          file.standing.status === "Prohibited" && "border-danger/60 bg-danger/5",
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -117,7 +117,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
             <div className="flex items-center gap-2">
               <Badge variant={standing.tone}>{t(standing.label)}</Badge>
               {file.standing.returnToDuty !== "NotRequired" ? (
-                <Badge variant="secondary">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
+                <Badge variant="neutral">{returnToDutyLabel(file.standing.returnToDuty)}</Badge>
               ) : null}
               <InfoPopover title={t("Testing standing")}>
                 <p>
@@ -210,8 +210,8 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
           ) : null}
           <div className="rounded-md border p-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="inactive">{dotViolationTypeLabel(openViolation.violationType)}</Badge>
-              <Badge variant="secondary">{dotViolationStatusLabel(openViolation.status)}</Badge>
+              <Badge variant="danger">{dotViolationTypeLabel(openViolation.violationType)}</Badge>
+              <Badge variant="neutral">{dotViolationStatusLabel(openViolation.status)}</Badge>
               <span className="text-muted-foreground">
                 {formatUnixDate(openViolation.occurredAt)}
               </span>
@@ -306,7 +306,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
                         ? dotTestStatusLabel(test.status)
                         : dotTestResultLabel(test.result)}
                     </Badge>
-                    {test.isDot ? null : <Badge variant="secondary">{t("Non-DOT")}</Badge>}
+                    {test.isDot ? null : <Badge variant="neutral">{t("Non-DOT")}</Badge>}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground tabular-nums">
@@ -399,7 +399,7 @@ export default function WorkerTestingTab({ workerId }: { workerId: string }) {
           </ul>
         )}
         {pendingQuery ? (
-          <p className="text-muted-foreground mt-2 text-[11px]">
+          <p className="text-muted-foreground mt-2 text-xs">
             {t("A query logged but not answered does not restart the twelve-month clock.")}
           </p>
         ) : null}
@@ -462,8 +462,8 @@ function Section({
 function Figure({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
     <div>
-      <dt className="text-muted-foreground text-[11px]">{label}</dt>
-      <dd className={cn("font-medium tabular-nums", warn && "text-amber-600 dark:text-amber-400")}>
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dd className={cn("font-medium tabular-nums", warn && "text-warning-foreground")}>
         {value}
       </dd>
     </div>

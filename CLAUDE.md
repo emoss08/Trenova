@@ -205,6 +205,31 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Prefer named exports over default exports
 - Extract repeated logic into custom hooks or shared utilities
 
+## Design System
+
+Tokens live in `client/packages/shared/src/styles/tokens.css`; components consume them and
+define no colour, size or elevation of their own. **Read
+[docs/engineering/design-system.md](docs/engineering/design-system.md) before writing styles.**
+
+`pnpm lint:design` runs in CI and fails on the five ways the old set was bypassed: raw
+Tailwind palette classes (`bg-red-500`), arbitrary font sizes (`text-[11px]` — `text-xs` *is*
+11px and brings a line-height), hex colours in `className`/`style`, hand-rolled focus rings
+(`focus-visible:ring-*` — use `ui-focus-ring`), and retired Badge variants. Each message
+names the token to use instead.
+
+- Colour is a **tone** (`neutral`/`brand`/`info`/`success`/`warning`/`danger`) when the set has
+  a severity ordering, or a **categorical accent** (`accent-teal`, `accent-violet`, …) when it
+  does not — a HOS duty status and a pricing method are categories, not severities.
+- Status maps declare a lifecycle **phase** (`draft`/`queued`/`active`/`awaiting`/`attention`/
+  `complete`/`closed`/`failed`) and the tone follows, so a new status cannot pick a colour.
+- Missing colour? Add a token to `tokens.css` — in **both** `:root` and `.dark` — rather than
+  reaching for the palette. An incomplete set is what caused the drift in the first place.
+- Genuine exceptions take `design-tokens-ignore: <reason>` in a comment on or above the line.
+- Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
+  It ends the comment early and every `@utility` after it silently stops emitting — which
+  removes focus indicators without failing anything. `styles/__tests__/tokens.test.ts`
+  compiles the file and asserts each declared `@utility` reaches the output.
+
 ## Generated Code
 
 Several generators in this repo fail on code that compiles and passes every test, and the

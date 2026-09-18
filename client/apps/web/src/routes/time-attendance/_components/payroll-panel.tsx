@@ -346,7 +346,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
           <span className="text-sm font-medium tabular-nums">
             {formatShiftDate(run.periodStart)} – {formatShiftDate(run.periodEnd - SECONDS_IN_DAY)}
           </span>
-          <Badge variant={voided ? "inactive" : "active"}>{voided ? t("Voided") : t("Sent")}</Badge>
+          <Badge variant={voided ? "danger" : "success"}>{voided ? t("Voided") : t("Sent")}</Badge>
         </span>
         <span className="text-muted-foreground tabular-nums">
           {t(

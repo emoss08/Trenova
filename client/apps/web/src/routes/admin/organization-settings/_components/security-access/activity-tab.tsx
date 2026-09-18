@@ -209,7 +209,7 @@ const ActivityViewButton = memo(function ActivityViewButton({
         </span>
         {activityViewButtonLabels[view]}
       </span>
-      <Badge variant={active ? "info" : "outline"}>{count}</Badge>
+      <Badge variant={active ? "info" : "neutral"}>{count}</Badge>
     </button>
   );
 });
@@ -470,7 +470,7 @@ function MFAAuthenticatorsTable({
             <div className="text-muted-foreground text-xs">{item.type.toUpperCase()}</div>
           </TableCell>
           <TableCell>
-            <Badge variant={item.enabled ? "active" : "inactive"}>
+            <Badge variant={item.enabled ? "success" : "danger"}>
               {item.enabled ? t("Enabled") : t("Disabled")}
             </Badge>
           </TableCell>

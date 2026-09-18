@@ -18,7 +18,7 @@ import { formatUnixDateMedium, formatUnixInUserTimezone } from "@trenova/shared/
 const collectionsChartConfig = {
   collected: {
     label: "Collected",
-    theme: { light: "#10b981", dark: "#34d399" },
+    color: "var(--success)",
   },
 } satisfies ChartConfig;
 
@@ -73,18 +73,18 @@ export function CustomerSnapshotHeader({
   const utilizationPct = Math.min(utilization * 100, 100);
   const utilizationBarClass =
     utilization >= 1
-      ? "bg-red-500 dark:bg-red-400"
+      ? "bg-danger"
       : utilization >= 0.75
-        ? "bg-amber-500 dark:bg-amber-400"
-        : "bg-emerald-500 dark:bg-emerald-400";
+        ? "bg-warning"
+        : "bg-success";
 
   const score = profile.delinquencyScore;
   const scoreClass =
     score >= 60
-      ? "text-red-600 dark:text-red-400"
+      ? "text-danger-foreground"
       : score >= 30
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-emerald-600 dark:text-emerald-400";
+        ? "text-warning-foreground"
+        : "text-success-foreground";
 
   return (
     <div className="space-y-3">
@@ -93,7 +93,7 @@ export function CustomerSnapshotHeader({
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
+          <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
             {t(
               "{0} overdue · {1} open",
               formatCurrency(snapshot.overdueMinor / 100),
@@ -115,14 +115,14 @@ export function CustomerSnapshotHeader({
                   transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               </div>
-              <p className="text-muted-foreground mt-1 text-[11px] tabular-nums">
+              <p className="text-muted-foreground mt-1 text-xs tabular-nums">
                 {t("of {0} limit", formatCurrency(snapshot.creditLimitMinor / 100))}
               </p>
             </>
           ) : (
             <>
               <p className="text-muted-foreground text-2xl font-semibold tracking-tight">—</p>
-              <p className="text-muted-foreground mt-0.5 text-[11px]">{t("no credit limit set")}</p>
+              <p className="text-muted-foreground mt-0.5 text-xs">{t("no credit limit set")}</p>
             </>
           )}
         </SnapshotTile>
@@ -134,13 +134,13 @@ export function CustomerSnapshotHeader({
               {t("d avg")}
             </span>
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px]">trailing 91d / 12mo</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">trailing 91d / 12mo</p>
         </SnapshotTile>
         <SnapshotTile index={3} label={t("Delinquency Score")}>
           <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
             {score.toFixed(0)}
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px]">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             {t("0 low risk · 100 high risk")}
           </p>
         </SnapshotTile>
@@ -234,7 +234,7 @@ function SnapshotTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {label}
           </p>
           <div className="mt-1">{children}</div>

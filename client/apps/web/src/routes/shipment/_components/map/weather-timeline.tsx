@@ -260,7 +260,7 @@ export function WeatherTimeline({
             <span
               className={cn(
                 "inline-block size-2 rounded-full",
-                isLive ? "bg-green-500" : "bg-muted-foreground",
+                isLive ? "bg-success" : "bg-muted-foreground",
               )}
             />
             <span className="text-muted-foreground tabular-nums">{dateTimeLabel}</span>
@@ -282,7 +282,7 @@ export function WeatherTimeline({
             {ticks.map((tick, i) => (
               <span
                 key={tick.label}
-                className="text-muted-foreground absolute text-[10px] whitespace-nowrap tabular-nums"
+                className="text-muted-foreground absolute text-2xs whitespace-nowrap tabular-nums"
                 style={{
                   left: `${tick.position}%`,
                   transform:

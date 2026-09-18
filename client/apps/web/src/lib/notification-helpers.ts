@@ -32,23 +32,23 @@ export const PRIORITY_CONFIG: Record<
   { icon: React.ReactNode; badge: BadgeVariant; dot: string }
 > = {
   critical: {
-    icon: createElement(CircleAlertIcon, { className: "size-4 text-red-500" }),
-    badge: "inactive",
-    dot: "bg-red-500",
+    icon: createElement(CircleAlertIcon, { className: "size-4 text-danger-foreground" }),
+    badge: "danger",
+    dot: "bg-danger",
   },
   high: {
-    icon: createElement(TriangleAlertIcon, { className: "size-4 text-orange-500" }),
-    badge: "orange",
-    dot: "bg-orange-500",
+    icon: createElement(TriangleAlertIcon, { className: "size-4 text-warning-foreground" }),
+    badge: "warning",
+    dot: "bg-warning",
   },
   medium: {
-    icon: createElement(InfoIcon, { className: "size-4 text-blue-500" }),
+    icon: createElement(InfoIcon, { className: "size-4 text-info-foreground" }),
     badge: "info",
-    dot: "bg-blue-500",
+    dot: "bg-info",
   },
   low: {
     icon: createElement(CircleCheckIcon, { className: "size-4 text-muted-foreground" }),
-    badge: "outline",
+    badge: "neutral",
     dot: "bg-muted-foreground",
   },
 };

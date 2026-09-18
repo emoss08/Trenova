@@ -94,7 +94,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       <div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium">{t("Cost Estimate")}</p>
-          <Badge variant="secondary" className="text-2xs">
+          <Badge variant="neutral" className="text-2xs">
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>
         </div>
@@ -109,7 +109,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
       </div>
 
       {data.missingDistance && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-xs text-warning-foreground">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
           <span>
             {t(
@@ -129,7 +129,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
             >
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="text-muted-foreground truncate">{line.name}</span>
-                <Badge variant="outline" className={badge.className}>
+                <Badge variant="neutral" appearance="outline" className={badge.className}>
                   {t(badge.label)}
                 </Badge>
               </span>

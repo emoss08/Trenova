@@ -378,11 +378,11 @@ function FeedRow({ feed }: { feed: CarrierIntelFeedState }) {
           </div>
         ) : feed.lastError ? (
           <div className="space-y-0.5">
-            <Badge variant="inactive">{t("Failing")}</Badge>
+            <Badge variant="danger">{t("Failing")}</Badge>
             <p className="text-muted-foreground text-xs">{feed.lastError}</p>
           </div>
         ) : (
-          <Badge variant="active">{t("Healthy")}</Badge>
+          <Badge variant="success">{t("Healthy")}</Badge>
         )}
       </TableCell>
       <TableCell className="text-xs">{formatUnixDateTimeOrDash(feed.lastSuccessAt)}</TableCell>

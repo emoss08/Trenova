@@ -50,7 +50,7 @@ export function AutocompleteTrigger<TOption>({
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         disabled && "cursor-not-allowed opacity-50",
         isInvalid &&
-          "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 hover:border-red-500 hover:bg-red-500/20 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 data-pressed:border-red-500 data-pressed:bg-red-500/20 data-pressed:ring-red-500/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden data-pressed:border-danger data-pressed:bg-danger/20 data-pressed:ring-danger/20",
         triggerClassName,
       )}
       disabled={disabled}
@@ -117,7 +117,7 @@ export function AutocompleteInputInner<TOption>({
 
   return (
     <div className="truncate">
-      <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>{placeholder}</p>
+      <p className={cn("text-muted-foreground", isInvalid && "text-danger-foreground")}>{placeholder}</p>
     </div>
   );
 }

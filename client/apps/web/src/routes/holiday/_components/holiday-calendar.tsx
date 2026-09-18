@@ -231,7 +231,7 @@ export function HolidayCalendar() {
             {byMonth.map((entries, month) =>
               entries.length > 0 ? (
                 <section key={MONTH_NAMES[month]} className="flex flex-col gap-1.5">
-                  <p className="text-muted-foreground px-1 text-[11px] font-medium uppercase">
+                  <p className="text-muted-foreground px-1 text-xs font-medium uppercase">
                     {MONTH_NAMES[month]}
                   </p>
                   {entries.map((occurrence) => (
@@ -296,13 +296,13 @@ function Legend() {
   const t = useT();
 
   return (
-    <div className="text-muted-foreground hidden items-center gap-3 text-[11px] sm:flex">
+    <div className="text-muted-foreground hidden items-center gap-3 text-xs sm:flex">
       <span className="flex items-center gap-1">
-        <span className="size-2 rounded-full bg-emerald-500" />
+        <span className="size-2 rounded-full bg-success" />
         {t("Holidays")}
       </span>
       <span className="flex items-center gap-1">
-        <span className="size-2 rounded-full bg-rose-500" />
+        <span className="size-2 rounded-full bg-danger" />
         {t("Blackouts")}
       </span>
     </div>
@@ -336,7 +336,7 @@ function MonthCard({
       <h3 className="mb-2 text-sm font-semibold">{name}</h3>
       <div className="grid grid-cols-7 gap-y-0.5 text-center">
         {WEEKDAY_LETTERS.map((letter, index) => (
-          <span key={`${letter}-${index}`} className="text-muted-foreground text-[10px]">
+          <span key={`${letter}-${index}`} className="text-muted-foreground text-2xs">
             {letter}
           </span>
         ))}
@@ -357,10 +357,10 @@ function MonthCard({
               title={label}
               onClick={() => onDayClick(key, month, day)}
               className={cn(
-                "mx-auto flex size-6 items-center justify-center rounded-full text-[11px] tabular-nums transition-colors",
+                "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums transition-colors",
                 kind === "Holiday" &&
-                  "bg-emerald-500 font-semibold text-white hover:bg-emerald-600",
-                kind === "Blackout" && "bg-rose-500 font-semibold text-white hover:bg-rose-600",
+                  "bg-success font-semibold text-foreground-on-solid hover:bg-success",
+                kind === "Blackout" && "bg-danger font-semibold text-foreground-on-solid hover:bg-danger",
                 !kind && "text-foreground/80 hover:bg-muted",
                 todayKey === key && !kind && "ring-primary ring-1",
               )}
@@ -395,10 +395,10 @@ function EntryRow({
     <div className="bg-card group flex items-center gap-3 rounded-lg border px-3 py-2">
       <span
         className={cn(
-          "flex size-9 shrink-0 flex-col items-center justify-center rounded-md text-[10px] font-semibold uppercase",
+          "flex size-9 shrink-0 flex-col items-center justify-center rounded-md text-2xs font-semibold uppercase",
           isBlackout
-            ? "bg-rose-500/10 text-rose-700 dark:text-rose-400"
-            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+            ? "bg-danger/10 text-danger-foreground"
+            : "bg-success/10 text-success-foreground",
         )}
       >
         <span className="text-sm leading-none tabular-nums">{occurrence.day}</span>
@@ -406,25 +406,25 @@ function EntryRow({
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{entry.name}</p>
-        <p className="text-muted-foreground truncate text-[11px]">
+        <p className="text-muted-foreground truncate text-xs">
           {formatUtcDate(occurrence.date, { weekday: "short" })}
           {entry.description ? ` · ${entry.description}` : ""}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {entry.recursAnnually ? (
-          <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="gap-1 px-1.5 py-0 text-2xs">
             <RepeatIcon className="size-3" />
             {t("Every year")}
           </Badge>
         ) : null}
         <Badge
-          variant="outline"
+          variant="neutral" appearance="outline"
           className={cn(
-            "px-1.5 py-0 text-[10px]",
+            "px-1.5 py-0 text-2xs",
             isBlackout
-              ? "border-rose-500/40 text-rose-700 dark:text-rose-400"
-              : "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
+              ? "border-danger/40 text-danger-foreground"
+              : "border-success/40 text-success-foreground",
           )}
         >
           {ORG_HOLIDAY_KIND_LABELS[entry.kind]}

@@ -20,8 +20,8 @@ export function AmountDisplay({
     <span
       className={cn(
         "tabular-nums",
-        resolvedVariant === "positive" && "text-green-600 dark:text-green-400",
-        resolvedVariant === "negative" && "text-red-600 dark:text-red-400",
+        resolvedVariant === "positive" && "text-success-foreground",
+        resolvedVariant === "negative" && "text-danger-foreground",
         className,
       )}
     >

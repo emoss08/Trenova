@@ -50,13 +50,13 @@ export default function PayProfilesTable() {
           {
             value: "Active",
             label: t("Activate"),
-            color: "#15803d",
+            color: "var(--success)",
             description: t("Profiles become assignable to drivers again."),
           },
           {
             value: "Inactive",
             label: t("Deactivate"),
-            color: "#dc2626",
+            color: "var(--danger)",
             description: t("Profiles can no longer be assigned; existing assignments keep paying."),
           },
         ],

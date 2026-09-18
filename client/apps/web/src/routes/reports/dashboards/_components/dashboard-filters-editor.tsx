@@ -313,7 +313,7 @@ export function DashboardFiltersEditor({
                 >
                   {refLabel(index, candidate.entity, candidate.ref)}
                 </span>
-                <Badge variant="outline" className="shrink-0 text-[10px]">
+                <Badge variant="neutral" appearance="outline" className="shrink-0 text-2xs">
                   {candidate.source === "filter" ? "filtered" : "grouped"}
                 </Badge>
               </label>

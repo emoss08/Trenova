@@ -32,7 +32,7 @@ export function SegmentedBar({ segments }: SegmentedBarProps) {
         {segments.map((segment) => (
           <span
             key={segment.label}
-            className="text-muted-foreground inline-flex items-center gap-1 text-[9.5px] tracking-wide"
+            className="text-muted-foreground inline-flex items-center gap-1 text-3xs tracking-wide"
           >
             <span
               aria-hidden

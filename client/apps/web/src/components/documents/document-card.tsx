@@ -109,7 +109,7 @@ export function DocumentCard({
         </p>
         <div className="mt-1 flex flex-wrap gap-1">
           {document.detectedKind && document.detectedKind !== "Other" && (
-            <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="info" className="h-5 px-1.5 py-0 text-2xs">
               {document.detectedKind}
             </Badge>
           )}
@@ -122,8 +122,8 @@ export function DocumentCard({
               }}
             >
               <Badge
-                variant="secondary"
-                className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-[10px]"
+                variant="neutral"
+                className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-2xs"
               >
                 <HistoryIcon className="mr-0.5 size-3" />
                 {t("v{0}", document.versionNumber)}
@@ -131,17 +131,17 @@ export function DocumentCard({
             </button>
           )}
           {document.contentStatus === "Extracting" && (
-            <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="warning" className="h-5 px-1.5 py-0 text-2xs">
               {t("Extracting text")}
             </Badge>
           )}
           {document.contentStatus === "Failed" && (
-            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="h-5 px-1.5 py-0 text-2xs">
               {t("Extraction failed")}
             </Badge>
           )}
           {document.shipmentDraftStatus === "Ready" && (
-            <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="success" className="h-5 px-1.5 py-0 text-2xs">
               {t("Shipment draft ready")}
             </Badge>
           )}

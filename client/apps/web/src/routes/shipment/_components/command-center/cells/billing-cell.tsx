@@ -10,7 +10,7 @@ export function BillingCell({ shipment }: { shipment: Shipment }) {
   );
 
   if (!choice) {
-    return <span className="font-table text-muted-foreground text-[11.5px]">—</span>;
+    return <span className="font-table text-muted-foreground text-xs">—</span>;
   }
 
   const label = t(choice.label);
@@ -21,7 +21,7 @@ export function BillingCell({ shipment }: { shipment: Shipment }) {
         value={label}
         color={choice.color}
         className="h-auto"
-        textClassName="font-table text-[11.5px]"
+        textClassName="font-table text-xs"
       />
     </div>
   );

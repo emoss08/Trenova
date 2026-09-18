@@ -108,7 +108,7 @@ export function CalculationReceipt({
                   className={cn(
                     "shrink-0 text-xs tabular-nums",
                     isFinal ? "font-medium" : "text-muted-foreground",
-                    step.isReduction && "text-red-600 dark:text-red-400",
+                    step.isReduction && "text-danger-foreground",
                   )}
                 >
                   {step.isReduction ? "−" : ""}

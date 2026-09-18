@@ -49,10 +49,10 @@ export function KpiGoalBar({
         right={<Delta delta={delta} deltaLabel={deltaLabel} deltaTone={deltaTone} />}
       />
       <div className="flex items-baseline gap-1">
-        <span className="font-mono text-[22px] leading-none font-semibold tracking-tight tabular-nums">
+        <span className="font-mono text-2xl leading-none font-semibold tracking-tight tabular-nums">
           {value}
         </span>
-        {unit && <span className="text-muted-foreground font-mono text-[11px]">{unit}</span>}
+        {unit && <span className="text-muted-foreground font-mono text-xs">{unit}</span>}
       </div>
       <div className="bg-muted relative mt-0.5 h-1.5 rounded-sm">
         <div

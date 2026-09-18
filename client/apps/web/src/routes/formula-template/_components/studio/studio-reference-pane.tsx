@@ -65,7 +65,7 @@ function VariableRow({
           >
             <span className="truncate font-mono text-xs">{variable.name}</span>
             <span className="flex shrink-0 items-center gap-1.5">
-              <Badge variant="outline" className="text-2xs px-1 py-0">
+              <Badge variant="neutral" appearance="outline" className="text-2xs px-1 py-0">
                 {variable.type}
               </Badge>
               <PlusIcon className="text-muted-foreground size-3 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -79,11 +79,11 @@ function VariableRow({
           {variable.description || t("No description available.")}
         </p>
         <div className="flex items-center gap-1.5">
-          <Badge variant="outline" className="text-2xs">
+          <Badge variant="neutral" appearance="outline" className="text-2xs">
             {variable.type}
           </Badge>
           {variable.nullable && (
-            <Badge variant="outline" className="text-2xs">
+            <Badge variant="neutral" appearance="outline" className="text-2xs">
               nullable
             </Badge>
           )}
@@ -185,7 +185,7 @@ export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferen
         {schemaUnavailable && (
           <div
             role="status"
-            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
+            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-warning-foreground"
           >
             <span>
               {t(

@@ -71,7 +71,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
       >
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <Badge variant="outline" className="max-w-full truncate">
+            <Badge variant="neutral" appearance="outline" className="max-w-full truncate">
               {submission.templateName}
             </Badge>
           </div>
@@ -85,7 +85,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {submission.applied ? (
-            <Badge variant="active">
+            <Badge variant="success">
               {t(
                 "Applied {0} {1}",
                 submission.appliedFields,
@@ -93,7 +93,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
               )}
             </Badge>
           ) : (
-            <Badge variant="secondary">{t("Not applied")}</Badge>
+            <Badge variant="neutral">{t("Not applied")}</Badge>
           )}
           {hasFields ? (
             <ChevronDownIcon
@@ -111,9 +111,9 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
                 <dt className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground text-[11px]">{t(field.label)}</span>
+                  <span className="text-muted-foreground text-xs">{t(field.label)}</span>
                   {field.type ? (
-                    <span className="bg-muted text-muted-foreground rounded px-1 py-px text-[9.5px] font-medium">
+                    <span className="bg-muted text-muted-foreground rounded px-1 py-px text-3xs font-medium">
                       {field.type}
                     </span>
                   ) : null}

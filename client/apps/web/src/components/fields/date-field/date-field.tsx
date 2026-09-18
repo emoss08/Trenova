@@ -28,10 +28,10 @@ export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps & FormCon
 const styles = {
   base: "w-full h-7 text-sm justify-start text-left font-normal border border-input bg-muted rounded-md",
   invalid:
-    "border-red-500 bg-red-500/20 text-red-500 hover:text-red-500 hover:bg-red-500/20 data-[state=open]:border-red-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-red-400/20",
+    "border-danger bg-danger/20 text-danger-foreground hover:text-danger-foreground hover:bg-danger/20 data-[state=open]:border-danger data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-danger/20",
   open: "text-sm data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
   focusVisible:
-    "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
+"ui-focus-ring",
   hover: "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };

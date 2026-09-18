@@ -75,10 +75,10 @@ export function SafetyCard() {
               className={cn(
                 "h-full rounded-full",
                 meta.ringTone === "success"
-                  ? "bg-green-500"
+                  ? "bg-success"
                   : meta.ringTone === "warning"
-                    ? "bg-amber-500"
-                    : "bg-red-500",
+                    ? "bg-warning"
+                    : "bg-danger",
               )}
               style={{ width: `${percent}%` }}
             />
@@ -105,13 +105,13 @@ export function SafetyCard() {
         <ul className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
           {recognitions.data.slice(0, 3).map((recognition) => (
             <li key={recognition.id} className="flex items-start gap-2">
-              <AwardIcon className="mt-0.5 size-4 shrink-0 text-amber-500" />
+              <AwardIcon className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
               <div className="min-w-0">
                 <p className="text-sm font-medium">{t(recognition.title)}</p>
                 {recognition.message ? (
                   <p className="text-xs text-muted-foreground">{recognition.message}</p>
                 ) : null}
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {RECOGNITION_KIND_LABELS[recognition.kind as RecognitionKind] ?? recognition.kind}
                   {" · "}
                   {formatUnixDate(recognition.occurredAt)}
@@ -136,7 +136,7 @@ export function SafetyCard() {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-2">
-      <dt className="text-[11px] uppercase text-muted-foreground">{label}</dt>
+      <dt className="text-xs uppercase text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 font-medium">{value}</dd>
     </div>
   );
@@ -167,14 +167,14 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
         <div className="min-w-0">
           <p className="text-sm font-medium">{level}</p>
           <p className="text-xs">{action.reason}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {formatUnixDate(action.issuedAt)}
             {action.issuedBy?.name ? ` · ${action.issuedBy.name}` : ""}
             {action.suspensionDays ? ` ${t("· {0} days", action.suspensionDays)}` : ""}
           </p>
         </div>
         {acknowledged ? (
-          <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="shrink-0 px-1.5 py-0 text-2xs">
             {t("Read")}
           </Badge>
         ) : null}
@@ -186,7 +186,7 @@ function DisciplineRow({ action }: { action: PortalDisciplinaryAction }) {
         ) : null
       ) : (
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] text-muted-foreground" htmlFor={`reply-${action.id}`}>
+          <label className="text-xs text-muted-foreground" htmlFor={`reply-${action.id}`}>
             {t("Your response")}
           </label>
           <textarea

@@ -40,22 +40,22 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
       : 0;
   const ceiClass =
     performance.cei >= AR_CEI_HEALTHY_THRESHOLD
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-success-foreground"
       : performance.cei >= AR_CEI_WARNING_THRESHOLD
-        ? "text-amber-600 dark:text-amber-400"
-        : "text-red-600 dark:text-red-400";
+        ? "text-warning-foreground"
+        : "text-danger-foreground";
   const ceiBarClass =
     performance.cei >= AR_CEI_HEALTHY_THRESHOLD
-      ? "bg-emerald-500 dark:bg-emerald-400"
+      ? "bg-success"
       : performance.cei >= AR_CEI_WARNING_THRESHOLD
-        ? "bg-amber-500 dark:bg-amber-400"
-        : "bg-red-500 dark:bg-red-400";
+        ? "bg-warning"
+        : "bg-danger";
 
   return (
     <div className="flex h-56 flex-col justify-between">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {t("Collection Effectiveness")}
           </p>
           <p className={cn("mt-1 text-3xl font-semibold tracking-tight tabular-nums", ceiClass)}>
@@ -71,13 +71,13 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
           </div>
         </div>
         <div>
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {t("Avg Days to Pay")}
           </p>
           <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
             {t("{0}d", totals.avgDaysToPay.toFixed(1))}
           </p>
-          <p className="text-muted-foreground mt-2 text-[11px] tabular-nums">
+          <p className="text-muted-foreground mt-2 text-xs tabular-nums">
             {t("{0} applications in period", totals.applicationCount)}
           </p>
         </div>
@@ -93,7 +93,7 @@ function PerformanceBody({ performance }: { performance: ARCollectionPerformance
         </div>
         <div className="bg-muted mt-1.5 h-1.5 w-full overflow-hidden rounded-full">
           <m.div
-            className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400"
+            className="h-full rounded-full bg-success"
             initial={{ width: 0 }}
             animate={{ width: `${collectedShare}%` }}
             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -138,18 +138,18 @@ function RateStat({
 }) {
   return (
     <div className="px-3 py-2.5">
-      <p className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
+      <p className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
         {label}
       </p>
       <p
         className={cn(
           "mt-0.5 text-lg font-semibold tabular-nums",
-          alert && "text-red-600 dark:text-red-400",
+          alert && "text-danger-foreground",
         )}
       >
         {value}
       </p>
-      <p className="text-muted-foreground text-[10px] tabular-nums">{detail}</p>
+      <p className="text-muted-foreground text-2xs tabular-nums">{detail}</p>
     </div>
   );
 }

@@ -13,10 +13,10 @@ export function RevenueCell({ shipment }: { shipment: Shipment }) {
 
   return (
     <div className="flex flex-col items-end gap-0.5 text-right">
-      <span className="font-table text-[11.5px] font-semibold tabular-nums">
+      <span className="font-table text-xs font-semibold tabular-nums">
         {formatCurrency(total)}
       </span>
-      <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
+      <span className="font-table text-muted-foreground text-3xs tabular-nums">
         {rpm !== null ? t("RPM {0}", formatCurrency(rpm)) : t("RPM —")}
       </span>
     </div>

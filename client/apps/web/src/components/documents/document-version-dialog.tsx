@@ -32,9 +32,9 @@ interface DocumentVersionDialogProps {
 function PreviewBadge({ status }: { status: string }) {
   const t = useT();
 
-  const variant = status === "Ready" ? "teal" : status === "Pending" ? "warning" : "outline";
+  const variant = status === "Ready" ? "success" : status === "Pending" ? "warning" : "neutral";
   return (
-    <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
+    <Badge variant={variant} className="h-5 px-1.5 py-0 text-2xs">
       {t("Preview {0}", status)}
     </Badge>
   );
@@ -45,12 +45,12 @@ function ContentBadge({ status }: { status: string }) {
 
   const variant =
     status === "Indexed" || status === "Extracted"
-      ? "teal"
+      ? "success"
       : status === "Extracting" || status === "Pending"
         ? "warning"
-        : "outline";
+        : "neutral";
   return (
-    <Badge variant={variant} className="h-5 px-1.5 py-0 text-[10px]">
+    <Badge variant={variant} className="h-5 px-1.5 py-0 text-2xs">
       {t("Text {0}", status)}
     </Badge>
   );
@@ -150,7 +150,7 @@ function VersionStatusBadges({ version }: { version: Document }) {
   return (
     <div className="flex flex-wrap gap-1">
       {version.detectedKind && version.detectedKind !== "Other" && (
-        <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
+        <Badge variant="info" className="h-5 px-1.5 py-0 text-2xs">
           {version.detectedKind}
         </Badge>
       )}
@@ -222,7 +222,7 @@ export function DocumentVersionDialog({
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{currentVersion.originalName}</span>
-                        <Badge variant="teal">{t("v{0}", currentVersion.versionNumber)}</Badge>
+                        <Badge variant="neutral">{t("v{0}", currentVersion.versionNumber)}</Badge>
                         <Badge variant="info">{t("Current")}</Badge>
                       </div>
                       <p className="text-muted-foreground text-sm">
@@ -256,7 +256,7 @@ export function DocumentVersionDialog({
                             >
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium">{version.originalName}</span>
-                                <Badge variant="secondary">
+                                <Badge variant="neutral">
                                   {t("v{0}", version.versionNumber)}
                                 </Badge>
                                 <ChevronDownIcon

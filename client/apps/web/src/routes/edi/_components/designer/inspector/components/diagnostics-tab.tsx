@@ -29,9 +29,9 @@ export default function DiagnosticsTab({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        <SummaryCard label={t("Errors")} value={summary.errors} variant="inactive" />
+        <SummaryCard label={t("Errors")} value={summary.errors} variant="danger" />
         <SummaryCard label={t("Warnings")} value={summary.warnings} variant="warning" />
-        <SummaryCard label={t("Info")} value={summary.info} variant="outline" />
+        <SummaryCard label={t("Info")} value={summary.info} variant="neutral" />
       </div>
       <div className="space-y-2">
         {groups.map((group) => {
@@ -47,10 +47,10 @@ export default function DiagnosticsTab({
               className="hover:bg-muted block w-full rounded-md border p-3 text-left"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={group.severity === "Error" ? "inactive" : "warning"}>
+                <Badge variant={group.severity === "Error" ? "danger" : "warning"}>
                   {group.severity}
                 </Badge>
-                <Badge variant="outline">{diagnosticFamilyLabel(group.code)}</Badge>
+                <Badge variant="neutral" appearance="outline">{diagnosticFamilyLabel(group.code)}</Badge>
                 <span className="font-mono text-xs">
                   {group.segmentId || t("Payload")}
                   {group.elementPosition ? `:${group.elementPosition}` : ""}
@@ -85,7 +85,7 @@ function SummaryCard({
 }: {
   label: string;
   value: number;
-  variant: "inactive" | "warning" | "outline";
+  variant: "danger" | "warning" | "neutral";
 }) {
   return (
     <div className="rounded-md border p-3">

@@ -154,7 +154,7 @@ export function InvoiceAdjustmentTypeSelector({
                   isSelected ? "border-brand bg-brand" : "border-muted-foreground/30",
                 )}
               >
-                {isSelected ? <div className="size-1.5 rounded-full bg-white" /> : null}
+                {isSelected ? <div className="size-1.5 rounded-full bg-foreground-on-solid" /> : null}
               </div>
             </button>
           );
@@ -453,10 +453,10 @@ export function InvoiceAdjustmentPreviewPanel({
       preview.requiresReconciliationException ||
       preview.requiresReplacementInvoiceReview ||
       preview.wouldCreateUnappliedCredit ? (
-        <div className="rounded-lg border border-yellow-600/20 bg-yellow-600/5 px-4 py-3">
+        <div className="rounded-lg border border-warning/20 bg-warning/5 px-4 py-3">
           <div className="flex items-center gap-2">
-            <ShieldAlertIcon className="size-3.5 text-yellow-600 dark:text-yellow-400" />
-            <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+            <ShieldAlertIcon className="size-3.5 text-warning-foreground" />
+            <p className="text-xs font-medium text-warning-foreground">
               {t("Policy Implications")}
             </p>
           </div>
@@ -520,9 +520,9 @@ export function InvoiceAdjustmentPreviewPanel({
           </div>
         </div>
       ) : !hasIssues ? (
-        <div className="flex items-center gap-2 rounded-lg border border-green-600/20 bg-green-600/5 px-4 py-2.5">
-          <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
-          <p className="text-xs font-medium text-green-700 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-lg border border-success/20 bg-success/5 px-4 py-2.5">
+          <CheckCircle2Icon className="size-3.5 text-success-foreground" />
+          <p className="text-xs font-medium text-success-foreground">
             {t("Preview passed validation")}
           </p>
         </div>
@@ -570,8 +570,8 @@ function PreviewRow({
 function PolicyItem({ text }: { text: string }) {
   return (
     <div className="flex items-start gap-2">
-      <div className="mt-1 size-1 shrink-0 rounded-full bg-yellow-600 dark:bg-yellow-400" />
-      <p className="text-xs text-yellow-700 dark:text-yellow-300">{text}</p>
+      <div className="mt-1 size-1 shrink-0 rounded-full bg-warning" />
+      <p className="text-xs text-warning-foreground">{text}</p>
     </div>
   );
 }

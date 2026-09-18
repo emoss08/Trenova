@@ -131,7 +131,7 @@ function DriverRow({
                 alt={`${driver.firstName} ${driver.lastName}`}
               />
             )}
-            <AvatarFallback className="text-[9px]">
+            <AvatarFallback className="text-3xs">
               {workerInitials(driver.firstName, driver.lastName)}
             </AvatarFallback>
           </Avatar>
@@ -143,7 +143,7 @@ function DriverRow({
               </span>
               <span
                 className={cn(
-                  "flex shrink-0 items-center gap-1 text-[10px] leading-none font-medium",
+                  "flex shrink-0 items-center gap-1 text-2xs leading-none font-medium",
                   availability.labelClass,
                 )}
               >
@@ -151,7 +151,7 @@ function DriverRow({
                 {statusLabel}
               </span>
             </div>
-            <p className="text-muted-foreground truncate text-[10.5px] leading-none">
+            <p className="text-muted-foreground truncate text-2xs leading-none">
               {context.join(" · ")}
             </p>
           </div>
@@ -166,7 +166,7 @@ function DriverRow({
         />
 
         {blockingReason && (
-          <p className="text-destructive text-[10px] leading-tight">{blockingReason}</p>
+          <p className="text-destructive text-2xs leading-tight">{blockingReason}</p>
         )}
       </div>
     </div>
@@ -249,7 +249,7 @@ export function CapacityRail({
                 type="button"
                 onClick={() => setCapacityFilter(option.id)}
                 className={cn(
-                  "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
                   filter === option.id
                     ? "border-primary bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted",
@@ -263,10 +263,10 @@ export function CapacityRail({
       </header>
 
       <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <span className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
+        <span className="text-muted-foreground text-2xs font-semibold tracking-wide uppercase">
           {t("Capacity")}
         </span>
-        <span className="text-muted-foreground text-[10.5px] tabular-nums">
+        <span className="text-muted-foreground text-2xs tabular-nums">
           {t("{0} of {1}", visible.length, drivers.length)}
         </span>
       </div>

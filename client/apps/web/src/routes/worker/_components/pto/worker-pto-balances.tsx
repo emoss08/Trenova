@@ -211,7 +211,7 @@ function PolicyChip({ assignment }: { assignment: PTOPolicyAssignment | null }) 
   }
   return (
     <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-      <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+      <Badge variant="neutral" className="px-1.5 py-0 text-2xs">
         {assignment.ptoPolicy.code}
       </Badge>
       {t(
@@ -257,11 +257,11 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
       data-testid={`pto-balance-${balance.ptoType}`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-[11px] font-medium uppercase">
+        <p className="text-muted-foreground text-xs font-medium uppercase">
           {typeLabel(balance.ptoType)}
         </p>
         {!balance.enforced ? (
-          <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
             {t("Not enforced")}
           </Badge>
         ) : null}
@@ -275,7 +275,7 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
         {formatPtoDays(balance.availableDays)}
         <span className="text-muted-foreground ml-1 text-xs font-normal">available</span>
       </p>
-      <dl className="text-muted-foreground mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+      <dl className="text-muted-foreground mt-2 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
         <dt>{t("Balance")}</dt>
         <dd className="text-right tabular-nums">{formatPtoDays(balance.balanceDays)}</dd>
         <dt>{t("Pending")}</dt>
@@ -290,13 +290,13 @@ function BalanceCard({ balance }: { balance: WorkerPTOBalanceView }) {
           <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
             <div className="bg-primary h-full rounded-full" style={{ width: `${ratio * 100}%` }} />
           </div>
-          <p className="text-muted-foreground mt-0.5 text-[10px]">
+          <p className="text-muted-foreground mt-0.5 text-2xs">
             {t("Cap {0} days", formatPtoDays(balance.maxBalanceDays ?? "0"))}
           </p>
         </div>
       ) : null}
       {balance.nextAccrual ? (
-        <p className="text-muted-foreground mt-2 flex items-center gap-1 text-[11px]">
+        <p className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
           <CalendarSyncIcon className="size-3" />
           {t(
             "+{0} on {1}",
@@ -391,7 +391,7 @@ function LedgerTable({ workerId }: { workerId: string }) {
                   <td className="px-3 py-2">
                     {PTO_LEDGER_ENTRY_LABELS[entry.entryType]}
                     {entry.periodKey ? (
-                      <span className="text-muted-foreground ml-1 text-[10px]">
+                      <span className="text-muted-foreground ml-1 text-2xs">
                         {entry.periodKey}
                       </span>
                     ) : null}
@@ -433,7 +433,7 @@ function AssignmentHistory({ assignments }: { assignments: PTOPolicyAssignment[]
       <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs">
         {assignments.map((assignment) => (
           <li key={assignment.id} className="flex items-center gap-2">
-            <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" className="px-1.5 py-0 text-2xs">
               {assignment.ptoPolicy?.code ?? "—"}
             </Badge>
             <span>

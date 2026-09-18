@@ -41,9 +41,9 @@ export function LatestChange() {
         "transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0",
       )}
     >
-      <span className="text-muted-foreground font-mono text-[10px] font-light">UPDATE</span>
+      <span className="text-muted-foreground font-mono text-2xs font-light">UPDATE</span>
       <p className="text-xs font-medium">{t("v{0} available", status.latestVersion)}</p>
-      <span className="text-muted-foreground text-[10px]">
+      <span className="text-muted-foreground text-2xs">
         {t("Running v{0}", status.currentVersion)}
       </span>
       {status.latestRelease.htmlUrl && (

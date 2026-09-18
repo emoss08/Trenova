@@ -39,7 +39,7 @@ export function PaymentStatsRow() {
           stats.unappliedPaymentCount === 1 ? "payment" : "payments"
         } with remainder`}
         valueClassName={
-          stats.unappliedCashMinor > 0 ? "text-amber-600 dark:text-amber-400" : undefined
+          stats.unappliedCashMinor > 0 ? "text-warning-foreground" : undefined
         }
       />
       <StatTile
@@ -50,7 +50,7 @@ export function PaymentStatsRow() {
           stats.reversedLast30Count === 1 ? "reversal" : "reversals"
         }`}
         valueClassName={
-          stats.reversedLast30Count > 0 ? "text-red-600 dark:text-red-400" : undefined
+          stats.reversedLast30Count > 0 ? "text-danger-foreground" : undefined
         }
       />
     </div>
@@ -78,7 +78,7 @@ function StatTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {label}
           </p>
           <p
@@ -86,7 +86,7 @@ function StatTile({
           >
             {value}
           </p>
-          <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">{detail}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">{detail}</p>
         </CardContent>
       </Card>
     </m.div>

@@ -263,7 +263,7 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       ) : (
         <div className="flex flex-col gap-6">
           {isSystemRole && (
-            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <div className="flex items-center gap-2 rounded-md border border-warning-border bg-warning-subtle p-3 text-sm text-warning-foreground dark:border-warning-border dark:bg-warning-subtle dark:text-warning-foreground">
               <AlertTriangleIcon className="size-4 shrink-0" />
               <span>{t("This is a system role and cannot be modified.")}</span>
             </div>

@@ -16,8 +16,8 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 
 const STATUS_BADGE_VARIANT = {
   Draft: "warning",
-  Published: "active",
-  Archived: "secondary",
+  Published: "success",
+  Archived: "neutral",
 } as const;
 
 const PARSER_MODE_LABELS: Record<string, string> = {
@@ -184,7 +184,7 @@ function VersionList({
                 <Badge
                   variant={
                     STATUS_BADGE_VARIANT[v.status as keyof typeof STATUS_BADGE_VARIANT] ??
-                    "secondary"
+                    "neutral"
                   }
                 >
                   {v.status}

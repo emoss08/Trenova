@@ -128,9 +128,9 @@ export function RoleEditPage() {
 
   const systemRoleBanner = role.isSystem ? (
     <div className="mx-auto w-full max-w-5xl px-6 pt-8">
-      <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-        <AlertTriangleIcon className="size-4 shrink-0 text-amber-500" />
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+      <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3">
+        <AlertTriangleIcon className="size-4 shrink-0 text-warning-foreground" />
+        <p className="text-xs text-warning-foreground">
           {t("This is a system role. Some properties may be restricted.")}
         </p>
       </div>

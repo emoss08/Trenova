@@ -86,11 +86,11 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
                   </TooltipTrigger>
                   <TooltipContent className="max-w-64">{csaBasicHint(basic.basic)}</TooltipContent>
                 </Tooltip>
-                {tone === "critical" ? <Badge variant="inactive">{t("Highest")}</Badge> : null}
+                {tone === "critical" ? <Badge variant="danger">{t("Highest")}</Badge> : null}
                 {tone === "warning" ? <Badge variant="warning">{t("Elevated")}</Badge> : null}
-                {basic.inferred ? <Badge variant="secondary">{t("Inferred")}</Badge> : null}
+                {basic.inferred ? <Badge variant="neutral">{t("Inferred")}</Badge> : null}
                 {basic.outOfService > 0 ? (
-                  <Badge variant="outline" className="tabular-nums">
+                  <Badge variant="neutral" appearance="outline" className="tabular-nums">
                     {t("{0} OOS", basic.outOfService)}
                   </Badge>
                 ) : null}

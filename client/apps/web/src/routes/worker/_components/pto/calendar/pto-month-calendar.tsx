@@ -286,7 +286,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
           <Button
             size="xxs"
             variant="ghost"
-            className="px-1.5 text-[11px]"
+            className="px-1.5 text-xs"
             disabled={isCurrentMonth}
             onClick={goToToday}
           >
@@ -318,7 +318,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
               onToggle={() => toggleType(entry.type)}
             />
           ))}
-          <span className="text-muted-foreground ml-1 text-[11px] tabular-nums">
+          <span className="text-muted-foreground ml-1 text-xs tabular-nums">
             {visibleItems.length === 0
               ? t("Nothing scheduled")
               : t("{0} on the calendar", visibleItems.length)}
@@ -375,7 +375,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
                     key={weekday}
                     role="columnheader"
                     className={cn(
-                      "text-muted-foreground px-1.5 py-1 text-[10px] font-medium tracking-wide uppercase",
+                      "text-muted-foreground px-1.5 py-1 text-2xs font-medium tracking-wide uppercase",
                       (index === 0 || index === 6) && "text-muted-foreground/70",
                     )}
                   >
@@ -403,7 +403,7 @@ export function PTOMonthCalendar({ filters, onMonthChange }: PTOMonthCalendarPro
             </div>
           </ScrollArea>
           {visibleItems.length === 0 ? (
-            <p className="text-muted-foreground/70 pointer-events-none absolute inset-x-0 bottom-2 z-20 text-center text-[11px]">
+            <p className="text-muted-foreground/70 pointer-events-none absolute inset-x-0 bottom-2 z-20 text-center text-xs">
               {hiddenTypes.size > 0
                 ? t("Every type on this month is hidden by the legend")
                 : canCreate
@@ -460,7 +460,7 @@ function LegendChip({
       title={hidden ? `Show ${entry.label}` : `Hide ${entry.label}`}
       onClick={onToggle}
       className={cn(
-        "focus-visible:ring-ring/50 inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition-colors outline-none focus-visible:ring-[3px]",
+"ui-focus-ring inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none",
         hidden
           ? "text-muted-foreground/60 border-transparent line-through decoration-1"
           : "bg-accent/40 border-border/60 hover:bg-accent",
@@ -592,7 +592,7 @@ function DayCell({
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       className={cn(
-        "border-border/70 relative border-r px-1 pt-0.5 text-[11px] transition-colors last:border-r-0",
+        "border-border/70 relative border-r px-1 pt-0.5 text-xs transition-colors last:border-r-0",
         !day.inMonth && "text-muted-foreground/50 bg-muted/25",
         day.isWeekend && day.inMonth && "bg-muted/10",
         canCreate && "hover:bg-accent/40 cursor-pointer",
@@ -616,7 +616,7 @@ function DayCell({
         {selectionDays !== null ? (
           <span
             data-testid="pto-selection-pill"
-            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold shadow-sm duration-150"
+            className="bg-primary text-primary-foreground animate-in fade-in-0 zoom-in-95 z-30 rounded-full px-1.5 py-0.5 text-2xs leading-none font-semibold shadow-sm duration-150"
           >
             {t("{0, plural, one {# day} other {# days}}", selectionDays)}
           </span>
@@ -651,7 +651,7 @@ function DayOverflow({
             data-testid={`pto-overflow-${day.key}`}
             aria-label={`${count} more on ${day.key}`}
             onMouseDown={(event) => event.stopPropagation()}
-            className="text-muted-foreground hover:bg-accent hover:text-foreground absolute left-1 z-10 inline-flex h-4 items-center rounded px-1 text-[10px] font-medium tabular-nums transition-colors"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground absolute left-1 z-10 inline-flex h-4 items-center rounded px-1 text-2xs font-medium tabular-nums transition-colors"
             style={{ top }}
           />
         }
@@ -701,7 +701,7 @@ function SpanBar({
             onBlur={() => onActiveChange(null)}
             className={cn(
               badgeVariants({ variant: meta.badgeVariant }),
-              "absolute z-10 h-[18px] w-auto justify-start gap-1 rounded-md px-1.5 text-[11px] leading-none transition-[box-shadow,filter,opacity] outline-none",
+              "absolute z-10 h-[18px] w-auto justify-start gap-1 rounded-md px-1.5 text-xs leading-none transition-[box-shadow,filter,opacity] outline-none",
               PTO_STATUS_BAR_CLASS[pto.status],
               segment.continuesBefore && "rounded-l-none border-l-0",
               segment.continuesAfter && "rounded-r-none border-r-0",

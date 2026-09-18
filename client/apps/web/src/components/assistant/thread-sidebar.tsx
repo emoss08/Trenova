@@ -109,7 +109,7 @@ export function ThreadSidebar({
           <div className="flex flex-col gap-3 p-2">
             {groups.map((group) => (
               <section key={group.label} className="flex flex-col gap-0.5">
-                <h3 className="text-muted-foreground px-2 pb-1 text-[10px] font-medium tracking-wider uppercase">
+                <h3 className="text-muted-foreground px-2 pb-1 text-2xs font-medium tracking-wider uppercase">
                   {t(group.label)}
                 </h3>
                 {group.threads.map((thread) => (
@@ -167,7 +167,7 @@ function ThreadRow({
           <span className="block truncate text-sm">
             {thread.title || t("Untitled conversation")}
           </span>
-          <span className="text-muted-foreground block truncate text-[11px]">
+          <span className="text-muted-foreground block truncate text-xs">
             {agentName ?? t("Agent unavailable")} · {formatSecondsAgo(now - touched)}
           </span>
         </span>

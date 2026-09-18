@@ -154,11 +154,11 @@ export function UnsettledDriversDialog({
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{worker.workerName}</p>
-                      <p className="text-muted-foreground text-[11px]">
+                      <p className="text-muted-foreground text-xs">
                         {t("{0, plural, one {# event} other {# events}} ·", worker.eventCount)}
                         <AmountDisplay value={worker.grossAmountMinor} currency="USD" />
                         {worker.heldCount > 0 && (
-                          <span className="ml-1.5 inline-flex items-center gap-0.5 text-blue-600 dark:text-blue-400">
+                          <span className="ml-1.5 inline-flex items-center gap-0.5 text-info-foreground">
                             <PauseCircle className="size-3" />
                             {t("{0} held (", worker.heldCount)}
                             <AmountDisplay value={worker.heldGrossMinor} currency="USD" />)
@@ -168,7 +168,7 @@ export function UnsettledDriversDialog({
                     </div>
                     {worker.hasSettlement ? (
                       <span
-                        className="text-muted-foreground text-[10px]"
+                        className="text-muted-foreground text-2xs"
                         title={t(
                           "This driver already has a settlement for the period; accrued pay attaches to their open draft automatically",
                         )}
@@ -177,7 +177,7 @@ export function UnsettledDriversDialog({
                       </span>
                     ) : worker.eventCount === 0 ? (
                       <span
-                        className="text-muted-foreground text-[10px]"
+                        className="text-muted-foreground text-2xs"
                         title={t(
                           "All of this driver's pay is on hold — release it before settling",
                         )}
@@ -189,7 +189,7 @@ export function UnsettledDriversDialog({
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2 text-[11px]"
+                          className="h-7 px-2 text-xs"
                           disabled={settleMutation.isPending}
                           onClick={() => settleMutation.mutate(worker)}
                           title={t(
@@ -200,7 +200,7 @@ export function UnsettledDriversDialog({
                         </Button>
                         <Button
                           size="sm"
-                          className="h-7 px-2 text-[11px]"
+                          className="h-7 px-2 text-xs"
                           onClick={() => setInstantPayWorker(worker)}
                           title={t(
                             "Pay this driver immediately — approve, post, and mark paid in one pass",

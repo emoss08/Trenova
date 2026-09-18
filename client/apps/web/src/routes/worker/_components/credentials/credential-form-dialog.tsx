@@ -365,7 +365,7 @@ export function CredentialFormDialog({
                   {attached ? (
                     <div className="border-border bg-muted/40 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        <CheckCircle2Icon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+                        <CheckCircle2Icon className="size-4 shrink-0 text-success-foreground" />
                         <span className="truncate">{attached.name}</span>
                         {attached.size > 0 ? (
                           <span className="text-muted-foreground shrink-0 text-xs">

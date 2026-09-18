@@ -187,7 +187,7 @@ function TemplateFilterPopover({
             <FilterIcon className="size-3" />
             <span className="text-xs">{t("Filter")}</span>
             {activeFilterCount > 0 ? (
-              <Badge variant="active" className="ml-0.5 px-1.5 py-0 text-[10px]">
+              <Badge variant="success" className="ml-0.5 px-1.5 py-0 text-2xs">
                 {activeFilterCount}
               </Badge>
             ) : null}

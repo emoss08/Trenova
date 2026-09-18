@@ -69,11 +69,11 @@ function formatFieldName(path: string): string {
 function getChangeBadgeStyle(type: string) {
   switch (type) {
     case "created":
-      return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 uppercase";
+      return "bg-success-subtle text-success-foreground dark:bg-success-subtle/30 dark:text-success-foreground uppercase";
     case "deleted":
-      return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 uppercase";
+      return "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/30 dark:text-danger-foreground uppercase";
     case "updated":
-      return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase";
+      return "bg-info-subtle text-info-foreground dark:bg-info-subtle/30 dark:text-info-foreground uppercase";
     default:
       return "bg-muted text-muted-foreground uppercase";
   }
@@ -123,12 +123,12 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
           <div className="flex items-center gap-2">
             <div className="flex flex-wrap gap-1">
               {summaryParts.slice(0, 3).map((part) => (
-                <Badge key={part} variant="secondary" className="text-[10px] font-normal">
+                <Badge key={part} variant="neutral" className="text-2xs font-normal">
                   {part}
                 </Badge>
               ))}
               {summaryParts.length > 3 && (
-                <Badge variant="secondary" className="text-[10px] font-normal">
+                <Badge variant="neutral" className="text-2xs font-normal">
                   +{summaryParts.length - 3}
                 </Badge>
               )}
@@ -149,7 +149,7 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
                 className="hover:bg-muted flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
               >
                 <span className="text-foreground font-medium">{formatFieldName(path)}</span>
-                <Badge className={cn("text-[10px]", getChangeBadgeStyle(change.type))}>
+                <Badge className={cn("text-2xs", getChangeBadgeStyle(change.type))}>
                   {change.type}
                 </Badge>
               </div>
@@ -228,7 +228,7 @@ export function RollbackConfirmDialog({
                 ) : null}
 
                 {usageData?.inUse && (
-                  <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-sm text-amber-600 dark:text-amber-400">
+                  <div className="flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 p-2 text-sm text-warning-foreground">
                     <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
                     <span>
                       {t("This template is currently used by")} {totalUsageCount}{" "}

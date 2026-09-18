@@ -17,7 +17,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { BanknoteIcon, CalendarRangeIcon, ClipboardCheckIcon, TimerIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
 
 type OverviewProps = {
   awaiting: readonly TimesheetRow[] | undefined;

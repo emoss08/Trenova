@@ -40,13 +40,13 @@ interface DocumentIntelligenceDialogProps {
 function statusBadgeVariant(status: Document["contentStatus"]) {
   switch (status) {
     case "Indexed":
-      return "active";
+      return "success";
     case "Extracting":
       return "warning";
     case "Failed":
-      return "outline";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -107,10 +107,10 @@ function normalizeDraftFields(
 }
 
 function confidenceVariant(confidence?: number) {
-  if (confidence == null) return "secondary";
-  if (confidence >= 0.85) return "active";
+  if (confidence == null) return "neutral";
+  if (confidence >= 0.85) return "success";
   if (confidence >= 0.7) return "warning";
-  return "outline";
+  return "neutral";
 }
 
 function formatStopSummary(stop: DocumentIntelligenceStop) {
@@ -138,13 +138,13 @@ function formatAIAcceptanceStatus(status?: string) {
 function aiAcceptanceVariant(status?: string) {
   switch (status) {
     case "accepted":
-      return "active";
+      return "success";
     case "rejected":
-      return "outline";
+      return "neutral";
     case "not_attempted":
-      return "secondary";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -179,20 +179,20 @@ function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflic
                 {conflict.label || conflict.key || t("Conflict")}
               </span>
               {conflict.pageNumbers.length > 0 ? (
-                <Badge variant="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
+                <Badge variant="neutral" appearance="outline">{t("Pages {0}", conflict.pageNumbers.join(", "))}</Badge>
               ) : null}
             </div>
             {conflict.values.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 {conflict.values.map((value) => (
-                  <Badge key={value} variant="secondary">
+                  <Badge key={value} variant="neutral">
                     {value}
                   </Badge>
                 ))}
               </div>
             ) : null}
             {conflict.evidenceExcerpt ? (
-              <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
+              <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs">
                 {conflict.evidenceExcerpt}
               </div>
             ) : null}
@@ -237,21 +237,21 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                   {formatConfidence(stop.confidence)}
                 </Badge>
               ) : null}
-              {stop.reviewRequired ? <Badge variant="outline">{t("Review")}</Badge> : null}
+              {stop.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
               {stop.pageNumber ? (
-                <Badge variant="secondary">{t("Page {0}", stop.pageNumber)}</Badge>
+                <Badge variant="neutral">{t("Page {0}", stop.pageNumber)}</Badge>
               ) : null}
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Address")}
               </div>
               <div className="mt-1 text-sm">{formatStopSummary(stop)}</div>
             </div>
             <div className="bg-muted/20 rounded-md p-2">
-              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("Timing")}
               </div>
               <div className="mt-1 text-sm">
@@ -260,7 +260,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
             </div>
           </div>
           {stop.evidenceExcerpt ? (
-            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px] whitespace-pre-wrap">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs whitespace-pre-wrap">
               {stop.evidenceExcerpt}
             </div>
           ) : null}
@@ -370,7 +370,7 @@ function AnalysisSnapshotCard({
             {formatConfidence(analysis.overallConfidence)}
           </Badge>
           {analysis.reviewStatus ? (
-            <Badge variant={analysis.reviewStatus === "Ready" ? "active" : "outline"}>
+            <Badge variant={analysis.reviewStatus === "Ready" ? "success" : "neutral"}>
               {analysis.reviewStatus}
             </Badge>
           ) : null}
@@ -378,19 +378,19 @@ function AnalysisSnapshotCard({
       </div>
       <div className="grid gap-2 md:grid-cols-3">
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Fields")}
           </div>
           <div className="mt-1 text-sm">{fieldCount}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Stops")}
           </div>
           <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
         </div>
         <div className="bg-muted/20 rounded-md p-2">
-          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Source")}
           </div>
           <div className="mt-1 text-sm">{analysis.classifierSource || t("Unknown")}</div>
@@ -398,12 +398,12 @@ function AnalysisSnapshotCard({
       </div>
       {analysis.missingFields?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
             {t("Missing Fields")}
           </div>
           <div className="flex flex-wrap gap-2">
             {analysis.missingFields.map((field) => (
-              <Badge key={field} variant="secondary">
+              <Badge key={field} variant="neutral">
                 {field}
               </Badge>
             ))}
@@ -412,7 +412,7 @@ function AnalysisSnapshotCard({
       ) : null}
       {analysis.stops?.length ? (
         <div className="mt-3">
-          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
+          <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
             {t("Stops")}
           </div>
           <StopsSection stops={analysis.stops.slice(0, 3)} />
@@ -453,7 +453,7 @@ function AIDiagnosticsSection({
               {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
             </Badge>
             {diagnostics.rejectionReason ? (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 {formatDiagnosticReason(diagnostics.rejectionReason)}
               </Badge>
             ) : null}
@@ -544,13 +544,13 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       </div>
 
       {draft.attachedShipmentId ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
+        <div className="rounded-lg border border-success-border bg-success-subtle/70 p-3 text-sm text-success-foreground">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="font-medium">
                 {t("This document is already attached to a shipment.")}
               </div>
-              <div className="mt-1 text-emerald-900/80">
+              <div className="mt-1 text-success-foreground/80">
                 {t(
                   "Shipment {0} attached {1} .",
                   draft.attachedShipmentId,
@@ -577,7 +577,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {signals.map((signal) => (
-              <Badge key={signal} variant="secondary">
+              <Badge key={signal} variant="neutral">
                 {signal}
               </Badge>
             ))}
@@ -593,7 +593,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
           <div className="flex flex-wrap gap-2">
             {missingFields.map((field) => (
-              <Badge key={field} variant="outline">
+              <Badge key={field} variant="neutral" appearance="outline">
                 {field}
               </Badge>
             ))}
@@ -622,15 +622,15 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
                   {formatConfidence(field.confidence)}
                 </Badge>
               ) : null}
-              {field.reviewRequired ? <Badge variant="outline">{t("Review")}</Badge> : null}
-              {field.conflict ? <Badge variant="outline">{t("Conflict")}</Badge> : null}
+              {field.reviewRequired ? <Badge variant="neutral" appearance="outline">{t("Review")}</Badge> : null}
+              {field.conflict ? <Badge variant="neutral" appearance="outline">{t("Conflict")}</Badge> : null}
             </div>
           </div>
           <div className="mt-2 text-sm whitespace-pre-wrap">{formatValue(field.value)}</div>
           {field.excerpt ? (
-            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-xs">
               {field.pageNumber ? (
-                <div className="mb-1 font-sans text-[10px] uppercase">
+                <div className="mb-1 font-sans text-2xs uppercase">
                   {t("Page {0}", field.pageNumber)}
                 </div>
               ) : null}
@@ -670,12 +670,12 @@ function ContentSection({
                 {formatConfidence(intelligence.overallConfidence)}
               </Badge>
               {intelligence.reviewStatus !== "Ready" ? (
-                <Badge variant="outline">{t("Review")}</Badge>
+                <Badge variant="neutral" appearance="outline">{t("Review")}</Badge>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {intelligence.signals.map((signal) => (
-                <Badge key={signal} variant="secondary">
+                <Badge key={signal} variant="neutral">
                   {signal}
                 </Badge>
               ))}
@@ -708,9 +708,9 @@ function ContentSection({
                     {t("Page {0}", page.pageNumber)}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{page.sourceKind}</Badge>
+                    <Badge variant="neutral">{page.sourceKind}</Badge>
                     {page.preprocessingApplied ? (
-                      <Badge variant="outline">{t("Preprocessed")}</Badge>
+                      <Badge variant="neutral" appearance="outline">{t("Preprocessed")}</Badge>
                     ) : null}
                   </div>
                 </div>
@@ -719,7 +719,7 @@ function ContentSection({
                     {t("OCR confidence: {0}", formatConfidence(page.ocrConfidence))}
                   </div>
                 ) : null}
-                <div className="line-clamp-4 font-mono text-[11px] whitespace-pre-wrap">
+                <div className="line-clamp-4 font-mono text-xs whitespace-pre-wrap">
                   {page.extractedText?.trim() || t("No extracted text")}
                 </div>
               </div>
@@ -843,10 +843,10 @@ export function DocumentIntelligenceDialog({
                     <Badge variant="info">{document.detectedKind}</Badge>
                   ) : null}
                   {document.shipmentDraftStatus === "Ready" ? (
-                    <Badge variant="teal">{t("Shipment draft ready")}</Badge>
+                    <Badge variant="success">{t("Shipment draft ready")}</Badge>
                   ) : null}
                   {shipmentDraft?.attachedShipmentId ? (
-                    <Badge variant="active">{t("Attached to shipment")}</Badge>
+                    <Badge variant="success">{t("Attached to shipment")}</Badge>
                   ) : null}
                 </div>
                 <DialogDescription>

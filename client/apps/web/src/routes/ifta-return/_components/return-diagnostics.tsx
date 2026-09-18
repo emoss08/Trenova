@@ -37,9 +37,9 @@ import { toast } from "sonner";
 export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
 
 const TONE_BADGE: Record<IftaProblemTone, BadgeVariant> = {
-  danger: "inactive",
+  danger: "danger",
   warn: "warning",
-  info: "outline",
+  info: "neutral",
 };
 
 const TONE_LABEL: Record<IftaProblemTone, string> = {
@@ -73,13 +73,13 @@ function CountFigure({
 
   return (
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-sm font-semibold tabular-nums">
         {count} {pluralize("move", count)}
       </p>
-      <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
+      <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
         {t("{0} miles", formatIftaMeasure(miles, IFTA_MILES_DISPLAY_SCALE))}
       </p>
     </div>
@@ -144,7 +144,7 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
 
         {ret.problems.length === 0 ? (
           <div className="text-muted-foreground flex items-center gap-2 text-xs">
-            <CheckCircle2Icon className="size-3.5 text-green-600 dark:text-green-400" />
+            <CheckCircle2Icon className="size-3.5 text-success-foreground" />
             {t("The computation flagged nothing on this quarter.")}
           </div>
         ) : (

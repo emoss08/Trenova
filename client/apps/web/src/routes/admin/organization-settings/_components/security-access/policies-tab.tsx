@@ -232,7 +232,7 @@ const PolicyRow = memo(function PolicyRow({
           <EffectIcon
             className={cn(
               "size-3.5",
-              isAllow ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400",
+              isAllow ? "text-success-foreground" : "text-danger-foreground",
               !policy.enabled && "text-muted-foreground",
             )}
           />
@@ -249,8 +249,8 @@ const PolicyRow = memo(function PolicyRow({
               className={cn(
                 "font-medium",
                 isAllow
-                  ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-red-700 dark:text-red-400",
+                  ? "text-success-foreground"
+                  : "text-danger-foreground",
                 !policy.enabled && "text-muted-foreground",
               )}
             >
@@ -267,13 +267,13 @@ const PolicyRow = memo(function PolicyRow({
           </div>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
             <span className="text-muted-foreground">{t("Scope")}</span>
-            <span className="text-foreground/80 max-w-full truncate font-mono text-[11px]">
+            <span className="text-foreground/80 max-w-full truncate font-mono text-xs">
               {resourceLabel}
             </span>
             <span className="text-muted-foreground" aria-hidden="true">
               /
             </span>
-            <span className="text-foreground/80 font-mono text-[11px]">{policy.operation}</span>
+            <span className="text-foreground/80 font-mono text-xs">{policy.operation}</span>
           </div>
         </div>
       </div>

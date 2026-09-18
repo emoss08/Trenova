@@ -300,7 +300,7 @@ function SortableColumnRow({
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {column.ref ? refLabel(index, ir.entity, column.ref) : (column.label ?? t("Calculation"))}
         </span>
-        <Badge variant={isComputed ? "orange" : column.kind === "measure" ? "purple" : "info"}>
+        <Badge variant={isComputed ? "warning" : column.kind === "measure" ? "info" : "info"}>
           {isComputed ? "calc" : column.kind}
         </Badge>
         {column.kind === "measure" && (

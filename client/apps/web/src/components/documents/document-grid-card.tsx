@@ -155,7 +155,7 @@ export function DocumentGridCard({
         {document.versionNumber > 1 && onVersions && (
           <button
             type="button"
-            className="text-muted-foreground hover:text-foreground mt-0.5 text-[10px]"
+            className="text-muted-foreground hover:text-foreground mt-0.5 text-2xs"
             onClick={(e) => {
               e.stopPropagation();
               onVersions(document);

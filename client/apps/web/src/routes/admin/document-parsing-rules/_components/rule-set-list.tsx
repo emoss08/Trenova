@@ -147,7 +147,7 @@ function RuleSetCard({
                 <TooltipTrigger
                   render={
                     <span className="inline-flex shrink-0">
-                      <CircleCheckIcon className="size-3.5 text-green-500" />
+                      <CircleCheckIcon className="size-3.5 text-success-foreground" />
                     </span>
                   }
                 />

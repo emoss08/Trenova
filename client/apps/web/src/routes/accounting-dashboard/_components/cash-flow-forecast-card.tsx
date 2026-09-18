@@ -19,15 +19,15 @@ import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 const cashFlowChartConfig = {
   actual: {
     label: "Collected",
-    theme: { light: "#10b981", dark: "#34d399" },
+    color: "var(--success)",
   },
   expected: {
     label: "Invoiced due",
-    theme: { light: "#94a3b8", dark: "#64748b" },
+    color: "var(--foreground-subtle)",
   },
   forecast: {
     label: "Open due (forecast)",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
 } satisfies ChartConfig;
 

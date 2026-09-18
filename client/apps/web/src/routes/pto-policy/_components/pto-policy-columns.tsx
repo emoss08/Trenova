@@ -9,7 +9,7 @@ import { PTO_YEAR_BASIS_LABELS } from "@trenova/shared/types/pto-policy";
 
 const POLICY_STATUS_CHOICES = [
   ...statusChoices,
-  { value: "Draft", label: "Draft", color: "#6b7280" },
+  { value: "Draft", label: "Draft", color: "var(--foreground-subtle)" },
 ];
 
 function ruleSummary(row: PTOPolicyRow): string[] {
@@ -45,7 +45,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
         <span className="flex items-center gap-2 font-medium">
           {row.original.code}
           {row.original.isDefault ? (
-            <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="info" className="px-1.5 py-0 text-2xs">
               {t("Default")}
             </Badge>
           ) : null}
@@ -86,7 +86,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
           {ruleSummary(row.original).map((summary) => (
-            <Badge key={summary} variant="secondary" className="px-1.5 py-0 text-[10px]">
+            <Badge key={summary} variant="neutral" className="px-1.5 py-0 text-2xs">
               {summary}
             </Badge>
           ))}

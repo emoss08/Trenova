@@ -18,21 +18,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const STATUS_VARIANTS: Record<string, BadgeVariant> = {
-  active: "active",
-  inactive: "inactive",
-  draft: "secondary",
-  pending: "outline",
-  completed: "default",
-  cancelled: "inactive",
-  processing: "secondary",
+  active: "success",
+  inactive: "danger",
+  draft: "neutral",
+  pending: "neutral",
+  completed: "neutral",
+  cancelled: "danger",
+  processing: "neutral",
   inreview: "warning",
   paused: "warning",
   outstanding: "warning",
-  posted: "purple",
-  paid: "active",
-  voided: "inactive",
+  posted: "info",
+  paid: "success",
+  voided: "danger",
   open: "info",
-  closed: "secondary",
+  closed: "neutral",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {

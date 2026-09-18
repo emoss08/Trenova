@@ -252,7 +252,7 @@ export default function WorkerPTOTab({ workerId }: { workerId: string }) {
 function SummaryTile({ label, value }: { label: string; value: number }) {
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
-      <p className="text-muted-foreground text-[11px] font-medium uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs font-medium uppercase">{label}</p>
       <p className="mt-1 text-sm font-semibold tabular-nums">{value}</p>
     </div>
   );

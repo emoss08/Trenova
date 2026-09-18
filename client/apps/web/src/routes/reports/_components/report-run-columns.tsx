@@ -43,7 +43,7 @@ function StatusCell({ run }: { run: ReportRun }) {
       {run.cacheHit && (
         <Tooltip>
           <TooltipTrigger>
-            <ZapIcon className="size-4 text-yellow-500" />
+            <ZapIcon className="size-4 text-warning-foreground" />
           </TooltipTrigger>
           <TooltipContent>{t("Served from the result cache")}</TooltipContent>
         </Tooltip>

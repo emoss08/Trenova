@@ -130,7 +130,7 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
         label={t("Net margin")}
         value={formatCurrency(occurrence.netMargin, occurrence.currency)}
         sub={marginNegative ? "You pay more than you bill" : "After driver pay"}
-        valueClassName={cn(marginNegative && "text-red-600 dark:text-red-400")}
+        valueClassName={cn(marginNegative && "text-danger-foreground")}
         className="pl-4"
       />
     </dl>
@@ -146,7 +146,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
     <>
       <div className="bg-border h-1 w-full rounded-full">
         <m.div
-          className={cn("h-1 rounded-full", isWeak ? "bg-amber-500" : "bg-foreground/70")}
+          className={cn("h-1 rounded-full", isWeak ? "bg-warning" : "bg-foreground/70")}
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(100, Math.max(0, collectability.score))}%` }}
           transition={METER_TRANSITION}
@@ -160,7 +160,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
       <p
         className={cn(
           "text-2xs mt-1",
-          collectability.chainValid ? "text-muted-foreground/70" : "text-red-600 dark:text-red-400",
+          collectability.chainValid ? "text-muted-foreground/70" : "text-danger-foreground",
         )}
       >
         {collectability.chainValid
@@ -178,7 +178,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
                 <p className="text-xs">{t(factor.label)}</p>
                 {factor.detail && <p className="text-2xs text-muted-foreground">{factor.detail}</p>}
                 {!full && factor.remedy && (
-                  <p className="text-2xs mt-0.5 text-amber-700 dark:text-amber-500">
+                  <p className="text-2xs mt-0.5 text-warning-foreground">
                     {factor.remedy}
                   </p>
                 )}
@@ -278,7 +278,7 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
             </p>
           )}
           {notice.failureReason && (
-            <p className="text-2xs text-red-600 dark:text-red-400">{notice.failureReason}</p>
+            <p className="text-2xs text-danger-foreground">{notice.failureReason}</p>
           )}
         </li>
       ))}

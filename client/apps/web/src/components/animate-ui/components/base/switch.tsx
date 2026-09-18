@@ -26,7 +26,7 @@ function Switch({
   return (
     <SwitchPrimitive
       className={cn(
-        "peer focus-visible:border-ring focus-visible:ring-ring/50 relative flex h-5 w-8 shrink-0 items-center justify-start rounded-full border border-transparent px-px shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+"ui-focus-ring peer relative flex h-5 w-8 shrink-0 items-center justify-start rounded-full border border-transparent px-px shadow-xs outline-none disabled:cursor-not-allowed disabled:opacity-50",
         "data-[checked]:bg-primary data-[unchecked]:bg-input dark:data-[unchecked]:bg-input/80 data-[checked]:justify-end",
         className,
       )}
@@ -41,7 +41,7 @@ function Switch({
         {thumbIcon && (
           <SwitchIconPrimitive
             position="thumb"
-            className="absolute top-1/2 left-1/2 -translate-1/2 text-neutral-400 dark:text-neutral-500 [&_svg]:size-[9px]"
+            className="absolute top-1/2 left-1/2 -translate-1/2 text-foreground-subtle [&_svg]:size-[9px]"
           >
             {thumbIcon}
           </SwitchIconPrimitive>
@@ -51,7 +51,7 @@ function Switch({
       {startIcon && (
         <SwitchIconPrimitive
           position="left"
-          className="absolute top-1/2 left-0.5 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 [&_svg]:size-[9px]"
+          className="absolute top-1/2 left-0.5 -translate-y-1/2 text-foreground-subtle [&_svg]:size-[9px]"
         >
           {startIcon}
         </SwitchIconPrimitive>
@@ -59,7 +59,7 @@ function Switch({
       {endIcon && (
         <SwitchIconPrimitive
           position="right"
-          className="absolute top-1/2 right-0.5 -translate-y-1/2 text-neutral-500 dark:text-neutral-400 [&_svg]:size-[9px]"
+          className="absolute top-1/2 right-0.5 -translate-y-1/2 text-foreground-subtle [&_svg]:size-[9px]"
         >
           {endIcon}
         </SwitchIconPrimitive>

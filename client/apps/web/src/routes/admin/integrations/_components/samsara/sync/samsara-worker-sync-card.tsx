@@ -142,9 +142,9 @@ function getStatusLabel(status?: string): string {
 function getStatusVariant(
   status: NormalizedWorkflowStatus,
   failedCount: number,
-): "active" | "inactive" | "info" | "warning" | "secondary" {
+): "success" | "danger" | "info" | "warning" | "neutral" {
   if (status === "completed") {
-    return failedCount > 0 ? "warning" : "active";
+    return failedCount > 0 ? "warning" : "success";
   }
 
   switch (status) {
@@ -153,11 +153,11 @@ function getStatusVariant(
     case "failed":
     case "terminated":
     case "timed_out":
-      return "inactive";
+      return "danger";
     case "canceled":
       return "warning";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -192,13 +192,13 @@ function getDriftTypeVariant(type: string): BadgeVariant {
     case "missing_mapping":
       return "warning";
     case "missing_remote_driver":
-      return "inactive";
+      return "danger";
     case "mapping_mismatch":
-      return "orange";
+      return "warning";
     case "remote_deactivated":
-      return "secondary";
+      return "neutral";
     default:
-      return "secondary";
+      return "neutral";
   }
 }
 
@@ -698,7 +698,7 @@ export function SamsaraWorkerSyncCard({
         <div className="border-border flex flex-col border-b p-4 leading-tight">
           <div className="flex flex-row items-center gap-2">
             <p className="text-2xl font-semibold">{t("Samsara Worker Sync")}</p>
-            <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
+            <Badge variant={isTrackingWorkflow ? activeStatusVariant : "neutral"}>
               {currentStatusLabel}
             </Badge>
           </div>
@@ -783,7 +783,7 @@ export function SamsaraWorkerSyncCard({
             <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>{t("Workflow")}</p>
               <div className="mt-1">
-                <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
+                <Badge variant={isTrackingWorkflow ? activeStatusVariant : "neutral"}>
                   {currentStatusLabel}
                 </Badge>
               </div>

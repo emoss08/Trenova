@@ -131,7 +131,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     disabled={fields.length <= 2}
                     className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 disabled:opacity-0"
                   >
-                    <Trash2Icon className="text-muted-foreground size-3.5 hover:text-red-600" />
+                    <Trash2Icon className="text-muted-foreground size-3.5 hover:text-danger-foreground" />
                   </Button>
                 </td>
               </tr>
@@ -162,12 +162,12 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
 
         {hasAmounts &&
           (isBalanced ? (
-            <p className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-success-foreground">
               <CheckCircle2Icon className="size-3.5" />
               {t("Balanced")}
             </p>
           ) : (
-            <p className="text-xs font-medium text-red-600 dark:text-red-400">
+            <p className="text-xs font-medium text-danger-foreground">
               {t("Out of balance by")}{" "}
               <AmountDisplay value={Math.abs(difference)} className="font-semibold" />
             </p>

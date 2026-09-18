@@ -11,9 +11,9 @@ import { m } from "motion/react";
 import { Link } from "react-router";
 
 const SEVERITY_STYLES: Record<string, string> = {
-  Critical: "bg-red-500/15 text-red-700 dark:text-red-400",
-  Warning: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  Watch: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+  Critical: "bg-danger/15 text-danger-foreground",
+  Warning: "bg-warning/15 text-warning-foreground",
+  Watch: "bg-info/15 text-info-foreground",
 };
 
 export function CollectionsWorklistCard() {
@@ -29,7 +29,7 @@ export function CollectionsWorklistCard() {
         <CardTitle className="text-sm font-medium">
           {t("Collections worklist")}
           {rows.length > 0 ? (
-            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
+            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums">
               {rows.length}
             </span>
           ) : null}
@@ -50,7 +50,7 @@ export function CollectionsWorklistCard() {
           </div>
         ) : rows.length === 0 ? (
           <div className="text-muted-foreground flex h-56 flex-col items-center justify-center gap-2 text-sm">
-            <CheckCircle2Icon className="size-5 text-emerald-500" />
+            <CheckCircle2Icon className="size-5 text-success-foreground" />
             {t("Nothing needs attention right now")}
           </div>
         ) : (
@@ -80,7 +80,7 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
       >
         <span
           className={cn(
-            "inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-[11px] font-medium",
+            "inline-flex w-16 shrink-0 justify-center rounded-full px-1.5 py-0.5 text-xs font-medium",
             SEVERITY_STYLES[item.severity] ?? SEVERITY_STYLES.Watch,
           )}
         >
@@ -98,14 +98,14 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
           </div>
           <div className="mt-0.5 flex items-center gap-1.5">
             {item.daysPastDue > 0 ? (
-              <span className="text-muted-foreground text-[11px] tabular-nums">
+              <span className="text-muted-foreground text-xs tabular-nums">
                 {t("{0}d past due", item.daysPastDue)}
               </span>
             ) : (
-              <span className="text-muted-foreground text-[11px]">{t("not yet due")}</span>
+              <span className="text-muted-foreground text-xs">{t("not yet due")}</span>
             )}
             {item.isDisputed ? (
-              <Badge variant="orange">
+              <Badge variant="warning">
                 {item.openDisputeReasonCode
                   ? t("Disputed · {0}", item.openDisputeReasonCode)
                   : t("Disputed")}
@@ -114,7 +114,7 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
                   : ""}
               </Badge>
             ) : null}
-            {item.hasShortPay ? <Badge variant="inactive">{t("Short-paid")}</Badge> : null}
+            {item.hasShortPay ? <Badge variant="danger">{t("Short-paid")}</Badge> : null}
           </div>
         </div>
       </Link>

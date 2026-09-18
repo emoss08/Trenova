@@ -246,7 +246,7 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
       <AlertTriangleIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">
+          <Badge variant="neutral" appearance="outline">
             {isMessage ? t("Dead-lettered message") : t("Quarantined file")}
           </Badge>
           {item.reference && <span className="truncate text-sm font-medium">{item.reference}</span>}

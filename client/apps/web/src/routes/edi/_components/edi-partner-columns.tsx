@@ -58,10 +58,10 @@ export function getPartnerColumns(t: TranslateFn): ColumnDef<EDIPartner>[] {
       header: t("Direction"),
       cell: ({ row }) => (
         <div className="flex gap-1">
-          <Badge variant={row.original.enabledForInbound ? "secondary" : "outline"}>
+          <Badge variant={row.original.enabledForInbound ? "neutral" : "neutral"}>
             {t("Inbound")}
           </Badge>
-          <Badge variant={row.original.enabledForOutbound ? "secondary" : "outline"}>
+          <Badge variant={row.original.enabledForOutbound ? "neutral" : "neutral"}>
             {t("Outbound")}
           </Badge>
         </div>

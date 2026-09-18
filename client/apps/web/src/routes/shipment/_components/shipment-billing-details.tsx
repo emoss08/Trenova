@@ -476,7 +476,7 @@ function RatingBreakdownCard() {
         </div>
         <div className="flex items-center gap-1">
           {ratingDetail.versionNumber ? (
-            <Badge variant="outline" className="text-2xs font-mono">
+            <Badge variant="neutral" appearance="outline" className="text-2xs font-mono">
               {` ${t("v{0}", ratingDetail.versionNumber)}`}
             </Badge>
           ) : null}
@@ -510,7 +510,7 @@ function RatingBreakdownCard() {
             breakdown.length > 0 && "mt-3",
           )}
         >
-          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
+          <ShieldIcon className="mt-0.5 size-3.5 shrink-0 text-info-foreground" />
           <p className="text-2xs text-muted-foreground">
             {t(
               "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .",

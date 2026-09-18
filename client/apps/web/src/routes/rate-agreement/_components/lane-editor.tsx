@@ -177,11 +177,11 @@ function LaneRow({
             {rule ? laneDisplayLabel(rule, index) : t("Lane {0}", index + 1)}
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="font-mono text-[10px]">
+            <Badge variant="neutral" appearance="outline" className="font-mono text-2xs">
               {laneKey ?? t("matched by radius")}
             </Badge>
             {rule && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="neutral" className="text-2xs">
                 {t("specificity {0}", laneSpecificity(rule))}
               </Badge>
             )}

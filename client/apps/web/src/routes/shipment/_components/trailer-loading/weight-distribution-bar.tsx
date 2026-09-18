@@ -56,7 +56,7 @@ export function AxleWeightDisplay({
                 {axleLabel(axle.axle)}
               </span>
               {!axle.compliant && (
-                <span className="bg-destructive/15 text-destructive rounded-full px-1.5 py-px text-[9px] font-semibold">
+                <span className="bg-destructive/15 text-destructive rounded-full px-1.5 py-px text-3xs font-semibold">
                   OVER
                 </span>
               )}
@@ -65,7 +65,7 @@ export function AxleWeightDisplay({
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
-                  axle.compliant ? "bg-emerald-500" : "bg-destructive",
+                  axle.compliant ? "bg-success" : "bg-destructive",
                 )}
                 style={{ width: `${Math.min(axle.percentage, 100)}%` }}
               />

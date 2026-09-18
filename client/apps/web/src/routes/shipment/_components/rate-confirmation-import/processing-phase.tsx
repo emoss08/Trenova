@@ -114,7 +114,7 @@ function StepDot({ state }: { state: StepState }) {
       <div
         className={cn(
           "flex size-5 items-center justify-center rounded-full border transition-all duration-500",
-          state === "complete" && "border-emerald-500 bg-emerald-500",
+          state === "complete" && "border-success bg-success",
           state === "active" && "border-foreground/25",
           state === "pending" && "border-border",
           state === "error" && "border-destructive/50 bg-destructive/10",
@@ -126,7 +126,7 @@ function StepDot({ state }: { state: StepState }) {
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 500, damping: 25 }}
           >
-            <CheckIcon className="size-2.5 stroke-[3] text-white" />
+            <CheckIcon className="size-2.5 stroke-[3] text-foreground-on-solid" />
           </m.div>
         )}
         {state === "active" && (
@@ -175,11 +175,11 @@ export function ProcessingPhase({
             {/* Header */}
             <div className="text-center">
               {!hasFailed ? (
-                <TextShimmer as="span" className="text-[13px] font-medium" duration={2.5}>
+                <TextShimmer as="span" className="text-base font-medium" duration={2.5}>
                   {t("Analyzing rate confirmation")}
                 </TextShimmer>
               ) : (
-                <span className="text-destructive text-[13px] font-medium">
+                <span className="text-destructive text-base font-medium">
                   {t("Extraction failed")}
                 </span>
               )}
@@ -229,7 +229,7 @@ export function ProcessingPhase({
                     <div className={cn(i < steps.length - 1 ? "pb-3" : "")}>
                       <span
                         className={cn(
-                          "text-[13px] leading-5 transition-all duration-500",
+                          "text-base leading-5 transition-all duration-500",
                           step.state === "complete" && "text-foreground",
                           step.state === "active" && "text-foreground font-medium",
                           step.state === "pending" && "text-muted-foreground/30",

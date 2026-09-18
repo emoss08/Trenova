@@ -99,7 +99,7 @@ export function LocaleFlag({ locale, className }: { locale: Locale; className?: 
         aria-hidden="true"
         className={cn(
           "bg-muted text-muted-foreground inline-flex h-3.5 w-5 shrink-0 items-center",
-          "justify-center rounded-[2px] text-[8px] font-semibold",
+          "justify-center rounded-[2px] text-3xs font-semibold",
           className,
         )}
       >

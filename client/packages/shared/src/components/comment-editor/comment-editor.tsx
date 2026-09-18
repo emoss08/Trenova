@@ -334,7 +334,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         }),
         Mention.configure({
           HTMLAttributes: {
-            class: "rounded bg-blue-500/10 px-0.5 font-medium text-blue-500",
+            class: "rounded bg-info/10 px-0.5 font-medium text-info-foreground",
           },
           deleteTriggerWithBackspace: true,
           suggestion: {
@@ -356,7 +356,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
         }),
         EntityRefMention.configure({
           HTMLAttributes: {
-            class: "rounded bg-violet-500/10 px-0.5 font-medium text-violet-500",
+            class: "rounded bg-accent-violet/10 px-0.5 font-medium text-accent-violet-on-subtle",
           },
           deleteTriggerWithBackspace: true,
           suggestion: {
@@ -461,7 +461,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
     return (
       <div
         className={cn(
-          "relative rounded-md border border-border bg-background transition-[border-color,box-shadow] duration-200 ease-in-out focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/20",
+          "relative rounded-md border border-border bg-background transition-[border-color,box-shadow] duration-200 ease-in-out ui-container-focus-ring",
           disabled && "opacity-60",
         )}
       >
@@ -544,7 +544,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
             <span
               className={cn(
                 "ml-1 text-2xs tabular-nums",
-                overLimit ? "font-medium text-red-500" : "text-muted-foreground",
+                overLimit ? "font-medium text-danger-foreground" : "text-muted-foreground",
               )}
             >
               {characterCount}/{COMMENT_EDITOR_MAX_LENGTH}

@@ -24,9 +24,9 @@ const ROLE_OPTIONS = [
 ];
 
 const ROLE_BADGE_VARIANT = {
-  pickup: "active",
+  pickup: "success",
   delivery: "info",
-  stop: "secondary",
+  stop: "neutral",
 } as const;
 
 const FIELD_KEY_OPTIONS = [
@@ -135,7 +135,7 @@ function StopItem({
 
   const currentRole = role || defaultRole || "stop";
   const badgeVariant =
-    ROLE_BADGE_VARIANT[currentRole as keyof typeof ROLE_BADGE_VARIANT] ?? "secondary";
+    ROLE_BADGE_VARIANT[currentRole as keyof typeof ROLE_BADGE_VARIANT] ?? "neutral";
 
   return (
     <Collapsible defaultOpen>

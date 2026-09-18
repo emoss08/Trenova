@@ -170,7 +170,7 @@ function DiagnosticsList({
                   className="hover:bg-muted block w-full rounded-md border p-2 text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <Badge variant={diagnostic.severity === "Error" ? "inactive" : "warning"}>
+                    <Badge variant={diagnostic.severity === "Error" ? "danger" : "warning"}>
                       {diagnostic.severity}
                     </Badge>
                     <span className="font-mono text-xs">
@@ -226,7 +226,7 @@ function VersionStatusBadge({ version }: { version: EDITemplateVersion }) {
   const t = useT();
 
   const variant =
-    version.status === "Active" ? "active" : version.status === "Draft" ? "warning" : "outline";
+    version.status === "Active" ? "success" : version.status === "Draft" ? "warning" : "neutral";
   return <Badge variant={variant}>{version.isActive ? t("Active") : version.status}</Badge>;
 }
 

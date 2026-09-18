@@ -32,7 +32,7 @@ function formatTimestamp(unix: number): string {
 function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
@@ -105,7 +105,7 @@ export function BankReceiptBatchPage() {
         ) : null}
 
         {isError ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div className="rounded-lg border border-danger-border bg-danger-subtle p-4 text-sm text-danger-foreground dark:border-danger-border dark:bg-danger-subtle dark:text-danger-foreground">
             {t("Failed to load import batches. Try refreshing the page.")}
           </div>
         ) : null}
@@ -166,12 +166,12 @@ export function BankReceiptBatchPage() {
                       <span className="text-xs font-medium">{batch.importedCount}</span>
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
-                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                      <span className="text-xs font-medium text-success-foreground">
                         {batch.matchedCount}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums">
-                      <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                      <span className="text-xs font-medium text-danger-foreground">
                         {batch.exceptionCount}
                       </span>
                     </td>

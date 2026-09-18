@@ -63,7 +63,7 @@ export function getExceptionColumns(t: TranslateFn): ColumnDef<AgentExceptionRow
       cell: ({ row }) => (
         <span className="flex flex-col leading-tight">
           <span>{row.original.subjectType}</span>
-          <span className="text-muted-foreground font-mono text-[11px]">
+          <span className="text-muted-foreground font-mono text-xs">
             {row.original.subjectId}
           </span>
         </span>

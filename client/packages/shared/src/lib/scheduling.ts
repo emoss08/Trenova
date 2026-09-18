@@ -236,39 +236,39 @@ export type RotaTone = {
 
 const ROTA_TONES: Record<string, RotaTone> = {
   Off: {
-    variant: "outline",
+    variant: "neutral",
     cell: "bg-muted/30 text-muted-foreground border-transparent",
     dot: "bg-muted-foreground/40",
     label: "Off",
   },
   Scheduled: {
     variant: "info",
-    cell: "border-blue-600/30 bg-blue-600/10 text-blue-700 dark:text-blue-400",
-    dot: "bg-blue-600",
+    cell: "border-info/30 bg-info/10 text-info-foreground",
+    dot: "bg-info",
     label: "Scheduled",
   },
   Assigned: {
-    variant: "active",
-    cell: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",
-    dot: "bg-green-600",
+    variant: "success",
+    cell: "border-success/30 bg-success/10 text-success-foreground",
+    dot: "bg-success",
     label: "Assigned",
   },
   TimeOff: {
     variant: "warning",
-    cell: "border-yellow-600/30 bg-yellow-600/10 text-yellow-700 dark:text-yellow-400",
-    dot: "bg-yellow-600",
+    cell: "border-warning/30 bg-warning/10 text-warning-foreground",
+    dot: "bg-warning",
     label: "Time off",
   },
   Leave: {
-    variant: "purple",
-    cell: "border-purple-600/30 bg-purple-600/10 text-purple-700 dark:text-purple-400",
-    dot: "bg-purple-600",
+    variant: "info",
+    cell: "border-accent-violet/30 bg-accent-violet/10 text-accent-violet-on-subtle",
+    dot: "bg-accent-violet",
     label: "Leave",
   },
   Unavailable: {
-    variant: "inactive",
-    cell: "border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400",
-    dot: "bg-red-600",
+    variant: "danger",
+    cell: "border-danger/30 bg-danger/10 text-danger-foreground",
+    dot: "bg-danger",
     label: "Unavailable",
   },
 };
@@ -281,18 +281,18 @@ export function rotaStateTone(state: string): RotaTone {
 export type StatusTone = { variant: BadgeVariant; label: string };
 
 export const AVAILABILITY_TONES: Record<string, StatusTone> = {
-  Preferred: { variant: "active", label: "Preferred" },
+  Preferred: { variant: "success", label: "Preferred" },
   Available: { variant: "info", label: "Available" },
-  Unavailable: { variant: "inactive", label: "Unavailable" },
+  Unavailable: { variant: "danger", label: "Unavailable" },
 };
 
 export const SWAP_STATUS_TONES: Record<string, StatusTone> = {
   Proposed: { variant: "info", label: "Awaiting colleague" },
   Accepted: { variant: "warning", label: "Awaiting approval" },
-  Approved: { variant: "active", label: "Approved" },
-  Declined: { variant: "inactive", label: "Declined" },
-  Rejected: { variant: "inactive", label: "Rejected" },
-  Withdrawn: { variant: "secondary", label: "Withdrawn" },
+  Approved: { variant: "success", label: "Approved" },
+  Declined: { variant: "danger", label: "Declined" },
+  Rejected: { variant: "danger", label: "Rejected" },
+  Withdrawn: { variant: "neutral", label: "Withdrawn" },
 };
 
 export type SwapAction = "accept" | "decline" | "withdraw";

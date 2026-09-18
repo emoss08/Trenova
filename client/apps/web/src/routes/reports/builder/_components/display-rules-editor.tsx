@@ -27,8 +27,8 @@ type DisplayRulesEditorProps = {
 
 /** Same emphasis vocabulary the grid and the exports use. */
 const TONE_SWATCH: Record<ReportDisplayTone, string> = {
-  positive: "bg-emerald-500",
-  warning: "bg-amber-500",
+  positive: "bg-success",
+  warning: "bg-warning",
   negative: "bg-destructive",
   neutral: "bg-foreground",
 };

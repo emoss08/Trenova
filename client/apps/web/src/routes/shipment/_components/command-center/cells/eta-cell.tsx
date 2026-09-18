@@ -17,7 +17,7 @@ export function EtaCell({ shipment }: { shipment: Shipment }) {
   const tone = getShipmentEtaTone(shipment);
 
   if (!etaTimestamp) {
-    return <span className="font-table text-muted-foreground text-[11.5px]">—</span>;
+    return <span className="font-table text-muted-foreground text-xs">—</span>;
   }
 
   const eta = formatToUserTimezone(etaTimestamp, {
@@ -27,7 +27,7 @@ export function EtaCell({ shipment }: { shipment: Shipment }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span className={cn("font-table text-[11.5px] font-medium tabular-nums", TONE_CLASS[tone])}>
+      <span className={cn("font-table text-xs font-medium tabular-nums", TONE_CLASS[tone])}>
         {eta}
       </span>
     </div>

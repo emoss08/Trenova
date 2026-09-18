@@ -45,7 +45,7 @@ export function LoadingRecommendations({
               <div className="flex items-center gap-2">
                 <span className="text-foreground text-xs font-semibold">{t(rec.title)}</span>
                 <span
-                  className={cn("rounded-full px-1.5 py-px text-[9px] font-medium", config.badge)}
+                  className={cn("rounded-full px-1.5 py-px text-3xs font-medium", config.badge)}
                 >
                   {t(config.label)}
                 </span>

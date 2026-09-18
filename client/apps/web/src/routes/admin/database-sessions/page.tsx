@@ -55,7 +55,7 @@ function durationLabel(seconds: number) {
 }
 
 function ageSeverityClass(seconds: number) {
-  if (seconds > 120) return "text-orange-600 dark:text-orange-400";
+  if (seconds > 120) return "text-warning-foreground";
   if (seconds >= 30) return "text-foreground";
   return "text-muted-foreground";
 }
@@ -91,7 +91,7 @@ function SessionSide({
     <div
       className={`flex min-w-0 flex-col gap-1 ${align === "end" ? "items-end text-right" : "items-start text-left"}`}
     >
-      <Badge variant="outline" className="w-fit px-0 font-mono">
+      <Badge variant="neutral" appearance="outline" className="w-fit px-0 font-mono">
         {t("PID {0}", pid)}
       </Badge>
       <span className="text-sm font-medium">{appName || t("Unknown app")}</span>
@@ -112,7 +112,7 @@ function QueryBlock({ label, query }: { label: string; query: string }) {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="text-muted-foreground text-[10px] tracking-wider uppercase">{label}</span>
+      <span className="text-muted-foreground text-2xs tracking-wider uppercase">{label}</span>
       {query ? (
         <div className="max-h-32 overflow-auto">
           <ShikiCodeBlock code={query} lang="plsql" darkTheme="vitesse-dark" />
@@ -185,7 +185,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
         <CardHeader className="border-b">
           <CardTitle>{t("PID {0} blocked by PID {1}", row.blockedPid, row.blockingPid)}</CardTitle>
           <CardDescription className="flex items-center gap-2">
-            <Badge variant="secondary">{row.blockedWaitEventType || t("Unknown")}</Badge>
+            <Badge variant="neutral">{row.blockedWaitEventType || t("Unknown")}</Badge>
             <span>{row.databaseName}</span>
           </CardDescription>
           <CardAction>
@@ -296,8 +296,8 @@ function StatusBar({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span className="relative flex size-1.5">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex size-1.5 rounded-full bg-success" />
           </span>
           <span className="text-muted-foreground text-xs">{t("Live")}</span>
         </div>

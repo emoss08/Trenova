@@ -88,7 +88,7 @@ export function ShipmentResultItem({
             <span className="text-border">&bull;</span>
           )}
           {meta?.serviceTypeCode && (
-            <Badge variant="secondary" className="max-h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" className="max-h-5 px-1.5 py-0 text-2xs">
               {meta.serviceTypeCode}
             </Badge>
           )}
@@ -166,7 +166,7 @@ export function WorkerResultItem({
         </p>
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.workerType && (
-            <Badge variant="secondary" className="max-h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" className="max-h-5 px-1.5 py-0 text-2xs">
               {meta.workerType}
             </Badge>
           )}
@@ -206,7 +206,7 @@ export function DocumentResultItem({
         </p>
         <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.documentType && (
-            <Badge variant="secondary" className="max-h-5 px-1.5 py-0 text-[10px]">
+            <Badge variant="neutral" className="max-h-5 px-1.5 py-0 text-2xs">
               {meta.documentType}
             </Badge>
           )}

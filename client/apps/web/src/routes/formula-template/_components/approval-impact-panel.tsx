@@ -25,7 +25,7 @@ function MoverRow({ result }: { result: BacktestResult }) {
         <span
           className={cn(
             "font-medium",
-            increased ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+            increased ? "text-success-foreground" : "text-destructive",
           )}
         >
           {formatSignedCurrency(result.delta)}
@@ -100,7 +100,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
             noChange
               ? "text-muted-foreground"
               : totalIncreased
-                ? "text-emerald-600 dark:text-emerald-400"
+                ? "text-success-foreground"
                 : "text-destructive",
           )}
         />
@@ -116,7 +116,7 @@ export function ApprovalImpactPanel({ templateId }: { templateId: string }) {
             <span
               className={cn(
                 "font-medium tabular-nums",
-                totalIncreased ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+                totalIncreased ? "text-success-foreground" : "text-destructive",
               )}
             >
               {formatSignedCurrency(summary.totalDelta)}

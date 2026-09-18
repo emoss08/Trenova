@@ -80,7 +80,7 @@ function LineageNode({
             )}
           </div>
           {isCurrent && (
-            <Badge variant="outline" className="ml-2 text-xs">
+            <Badge variant="neutral" appearance="outline" className="ml-2 text-xs">
               {t("Current")}
             </Badge>
           )}

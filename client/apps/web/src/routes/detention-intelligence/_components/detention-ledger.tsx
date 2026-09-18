@@ -68,21 +68,21 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
       key: "kept",
       label: t("Kept"),
       value: kept,
-      className: "bg-emerald-500 dark:bg-emerald-400",
+      className: "bg-success",
       caption: formatCurrency(kept),
     },
     {
       key: "driverPay",
       label: t("Driver pay"),
       value: driverPay,
-      className: "bg-blue-500 dark:bg-blue-400",
+      className: "bg-info",
       caption: formatCurrency(driverPay),
     },
     {
       key: "waived",
       label: t("Forgiven"),
       value: waived,
-      className: "bg-amber-500 dark:bg-amber-400",
+      className: "bg-warning",
       caption: formatCurrency(waived),
     },
   ];
@@ -133,7 +133,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           </div>
 
           {overrun ? (
-            <p className="text-2xs mt-3 text-red-600 dark:text-red-400">
+            <p className="text-2xs mt-3 text-danger-foreground">
               {t(
                 "Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.",
               )}
@@ -185,7 +185,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
               ? `${Math.round((waived / exposure) * 100)}% of exposure`
               : "nothing waived"
           }
-          valueClassName={waived > 0 ? "text-amber-600 dark:text-amber-400" : undefined}
+          valueClassName={waived > 0 ? "text-warning-foreground" : undefined}
         />
         <LedgerStat
           label={t("Margin per stop")}

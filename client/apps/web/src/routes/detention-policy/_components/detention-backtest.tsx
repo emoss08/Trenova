@@ -57,8 +57,8 @@ function RiskChip({ tone, children }: { tone: "warn" | "bad" | "neutral"; childr
       className={cn(
         "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
-        tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-        tone === "bad" && "bg-red-500/15 text-red-700 dark:text-red-400",
+        tone === "warn" && "bg-warning/15 text-warning-foreground",
+        tone === "bad" && "bg-danger/15 text-danger-foreground",
       )}
     >
       {children}
@@ -375,9 +375,9 @@ export function DetentionBacktest() {
         <button
           type="button"
           onClick={run}
-          className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-left transition-colors hover:bg-amber-500/15"
+          className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-left transition-colors hover:bg-warning/15"
         >
-          <TriangleAlertIcon className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <TriangleAlertIcon className="size-3.5 shrink-0 text-warning-foreground" />
           <span className="text-xs">
             {t("The terms changed since this run — re-run to see what they are worth.")}
           </span>
@@ -393,7 +393,7 @@ export function DetentionBacktest() {
 
       {mutation.isError && (
         <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
-          <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
+          <TriangleAlertIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
           <div className="min-w-0">
             <p className="text-xs font-medium">{t("The backtest could not run")}</p>
             <p className="text-muted-foreground mt-0.5 text-xs">

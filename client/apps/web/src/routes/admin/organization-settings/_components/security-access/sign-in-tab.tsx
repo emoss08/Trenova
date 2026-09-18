@@ -344,7 +344,7 @@ const ProviderRow = memo(function ProviderRow({
               <span className="font-medium">
                 {formatIdentityProviderName(provider.name) || t("OIDC provider")}
               </span>
-              <Badge variant={provider.enabled ? "active" : "inactive"}>
+              <Badge variant={provider.enabled ? "success" : "danger"}>
                 {provider.enabled ? t("Enabled") : t("Disabled")}
               </Badge>
               {provider.enforceSso && <Badge variant="warning">{t("SSO enforced")}</Badge>}

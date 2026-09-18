@@ -147,7 +147,7 @@ function ProgramCard({
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          {inactive && <Badge variant="outline">{t("Inactive")}</Badge>}
+          {inactive && <Badge variant="neutral" appearance="outline">{t("Inactive")}</Badge>}
           <Button
             type="button"
             variant="ghost"
@@ -175,18 +175,18 @@ function ProgramCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <Badge variant="secondary" className="text-2xs">
+        <Badge variant="neutral" className="text-2xs">
           {methodLabel(entry.program.method)}
         </Badge>
         {entry.price && (
-          <Badge variant="outline" className="text-2xs tabular-nums">
+          <Badge variant="neutral" appearance="outline" className="text-2xs tabular-nums">
             {t("DOE ${0}", Number(entry.price.price).toFixed(3))}
           </Badge>
         )}
         {entry.usedFallback && (
           <Badge
-            variant="outline"
-            className="text-2xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400"
+            variant="neutral" appearance="outline"
+            className="text-2xs gap-1 border-warning/50 text-warning-foreground"
           >
             <AlertTriangle className="size-3" />
             {t("Prior week price")}

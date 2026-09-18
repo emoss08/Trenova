@@ -235,7 +235,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
               {postmarkWebhookEvents.map((event) => (
                 <code
                   key={event}
-                  className="bg-muted text-foreground rounded px-1.5 py-0.5 text-[11px]"
+                  className="bg-muted text-foreground rounded px-1.5 py-0.5 text-xs"
                 >
                   {event}
                 </code>

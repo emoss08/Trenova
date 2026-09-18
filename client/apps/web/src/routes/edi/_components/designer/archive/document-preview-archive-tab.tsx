@@ -807,7 +807,7 @@ function MessageArchive({
                   <TableCell className="font-mono">{message.transactionSet}</TableCell>
                   <TableCell>{message.direction}</TableCell>
                   <TableCell>
-                    <Badge variant={message.status === "Generated" ? "active" : "inactive"}>
+                    <Badge variant={message.status === "Generated" ? "success" : "danger"}>
                       {message.status === "Generated" ? t("Archived") : message.status}
                     </Badge>
                     {message.deliveryStatus && (
@@ -830,7 +830,7 @@ function MessageArchive({
                   <TableCell className="font-mono text-xs">{message.shipmentId ?? "-"}</TableCell>
                   <TableCell className="font-mono text-xs">{message.transferId ?? "-"}</TableCell>
                   <TableCell>
-                    <Badge variant={message.diagnosticCount > 0 ? "warning" : "outline"}>
+                    <Badge variant={message.diagnosticCount > 0 ? "warning" : "neutral"}>
                       {message.diagnosticCount}
                     </Badge>
                   </TableCell>

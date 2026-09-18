@@ -87,7 +87,7 @@ export function JournalEntryDetailPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CardTitle className="font-mono">{entry.entryNumber}</CardTitle>
-                <Badge variant="outline">{entry.entryType}</Badge>
+                <Badge variant="neutral" appearance="outline">{entry.entryType}</Badge>
                 <AccountingStatusBadge status={entry.status} />
               </div>
               <span className="text-muted-foreground text-sm">{accountingDate}</span>
@@ -112,7 +112,7 @@ export function JournalEntryDetailPage() {
               <div>
                 <dt className="text-muted-foreground">{t("Is Reversal")}</dt>
                 <dd className="mt-0.5">
-                  <Badge variant={entry.isReversal ? "orange" : "secondary"}>
+                  <Badge variant={entry.isReversal ? "warning" : "neutral"}>
                     {entry.isReversal ? t("Yes") : t("No")}
                   </Badge>
                 </dd>

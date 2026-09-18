@@ -59,7 +59,7 @@ function SectionHeader({
       <ChevronDownIcon className={cn("size-3 transition-transform", collapsed && "-rotate-90")} />
       <span>{label}</span>
       {issueCount > 0 && (
-        <span className="text-2xs flex size-4 items-center justify-center rounded-full bg-amber-500/15 font-medium text-amber-500">
+        <span className="text-2xs flex size-4 items-center justify-center rounded-full bg-warning/15 font-medium text-warning-foreground">
           {issueCount}
         </span>
       )}

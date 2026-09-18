@@ -11,7 +11,7 @@ function RowList({ rows }: { rows: FinancialRow[] }) {
   const t = useT();
 
   return (
-    <dl className="grid grid-cols-1 gap-1 text-[11px]">
+    <dl className="grid grid-cols-1 gap-1 text-xs">
       {rows.map((row) => (
         <div
           key={row.label}
@@ -101,7 +101,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
       {estimate && hasEstimate && (
         <div className="border-border border-t pt-2">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+            <span className="text-muted-foreground text-2xs font-medium tracking-wide uppercase">
               {t("Cost estimate")}
             </span>
             <ProfitabilityBreakdownPopover
@@ -110,7 +110,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
               trigger={
                 <button
                   type="button"
-                  className="text-primary cursor-pointer text-[10px] font-medium hover:underline"
+                  className="text-primary cursor-pointer text-2xs font-medium hover:underline"
                 >
                   {t("View breakdown")}
                 </button>

@@ -74,10 +74,10 @@ export function BarDetailPopover({
       <PopoverContent anchor={anchor} side="top" className="w-72 gap-0 p-0">
         <div className="border-border flex items-start justify-between gap-2 border-b px-3 py-2">
           <div className="flex min-w-0 flex-col">
-            <span className="font-table truncate text-[12px] font-semibold tabular-nums">
+            <span className="font-table truncate text-sm font-semibold tabular-nums">
               {shipment.proNumber ?? shipment.bol ?? t("Shipment")}
             </span>
-            <span className="text-muted-foreground truncate text-[10.5px]">
+            <span className="text-muted-foreground truncate text-2xs">
               {shipment.customer?.name ?? t("No customer")}
             </span>
           </div>
@@ -87,7 +87,7 @@ export function BarDetailPopover({
         {bar.dwell && (
           <div
             className={cn(
-              "border-border flex items-center gap-1.5 border-b px-3 py-1.5 text-[10.5px] font-semibold",
+              "border-border flex items-center gap-1.5 border-b px-3 py-1.5 text-2xs font-semibold",
               bar.dwell.severity === "critical"
                 ? "bg-destructive/10 text-destructive"
                 : "bg-warning/10 text-warning",
@@ -105,10 +105,10 @@ export function BarDetailPopover({
 
         <div className="flex flex-col gap-1.5 px-3 py-2">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-table truncate text-[11px] font-medium tabular-nums">
+            <span className="font-table truncate text-xs font-medium tabular-nums">
               {origin?.code ?? "—"} → {dest?.code ?? "—"}
             </span>
-            <span className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
+            <span className="font-table text-muted-foreground shrink-0 text-2xs tabular-nums">
               {t("{0} · {1}mi", formatCurrency(revenue), miles)}
             </span>
           </div>
@@ -121,7 +121,7 @@ export function BarDetailPopover({
                 !stop.actualDeparture &&
                 stop.status !== "Canceled";
               return (
-                <li key={stop.id} className="flex items-center gap-1.5 text-[10.5px]">
+                <li key={stop.id} className="flex items-center gap-1.5 text-2xs">
                   {isDone ? (
                     <CircleCheckIcon className="text-success size-3 shrink-0" />
                   ) : isAtStop ? (
@@ -132,14 +132,14 @@ export function BarDetailPopover({
                   <span className={cn("truncate", isDone && "text-muted-foreground")}>
                     {stop.locationName}
                   </span>
-                  <span className="font-table text-muted-foreground ml-auto shrink-0 text-[9.5px] tabular-nums">
+                  <span className="font-table text-muted-foreground ml-auto shrink-0 text-3xs tabular-nums">
                     {stopTimeDetail(stop)}
                   </span>
                 </li>
               );
             })}
           </ol>
-          <p className="font-table text-muted-foreground text-[10px] tabular-nums">
+          <p className="font-table text-muted-foreground text-2xs tabular-nums">
             {carrierName
               ? t("Carrier: {0}", carrierName)
               : workerName

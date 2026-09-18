@@ -91,19 +91,19 @@ export function ErrorBoundaryUi({
       aria-live="assertive"
       aria-atomic="true"
       className={cn(
-        "overflow-hidden rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30",
+        "overflow-hidden rounded-lg border border-danger-border bg-danger-subtle dark:border-danger-border dark:bg-danger-subtle/30",
         className,
       )}
     >
       <div className="flex items-start gap-3 p-4">
         <div className="mt-0.5 shrink-0">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertTriangle className="h-5 w-5 text-danger-foreground" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-red-700 dark:text-red-300">
+          <h3 className="font-semibold text-danger-foreground">
             {isDev ? error.name || t("Error") : t("Something went wrong")}
           </h3>
-          <p className="mt-1 text-sm break-words text-red-600 dark:text-red-400">
+          <p className="mt-1 text-sm break-words text-danger-foreground">
             {isDev ? error.message : t("An unexpected error occurred. Please try again.")}
           </p>
         </div>
@@ -115,7 +115,7 @@ export function ErrorBoundaryUi({
             type="button"
             onClick={resetError}
             aria-label={t("Try again")}
-            className="flex items-center gap-1.5 rounded bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900"
+            className="flex items-center gap-1.5 rounded bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             {t("Try again")}
@@ -125,7 +125,7 @@ export function ErrorBoundaryUi({
           type="button"
           onClick={handleCopy}
           aria-label={copied ? "Copied to clipboard" : "Copy error details"}
-          className="flex items-center gap-1.5 rounded bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900"
+          className="flex items-center gap-1.5 rounded bg-danger-subtle px-3 py-1.5 text-sm font-medium text-danger-foreground transition-colors hover:bg-danger-subtle/50 dark:text-danger-foreground dark:hover:bg-danger-subtle"
         >
           <Copy className="h-3.5 w-3.5" />
           {copied ? t("Copied!") : t("Copy error")}
@@ -133,14 +133,14 @@ export function ErrorBoundaryUi({
       </div>
 
       {isDev && error.stack && (
-        <div className="border-t border-red-200 dark:border-red-900">
+        <div className="border-t border-danger-border">
           <button
             type="button"
             onClick={handleToggleStack}
             aria-expanded={showStack}
             aria-controls="stack-trace-content"
             aria-label={t("Toggle stack trace")}
-            className="flex w-full items-center justify-between px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+            className="flex w-full items-center justify-between px-4 py-2 text-sm text-danger-foreground transition-colors hover:bg-danger-subtle dark:text-danger-foreground dark:hover:bg-danger-subtle/30"
           >
             <span className="font-medium">{t("Stack Trace")}</span>
             {showStack ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -153,10 +153,10 @@ export function ErrorBoundaryUi({
             >
               <div className="space-y-1 font-mono text-xs">
                 {stackFrames.map((frame, idx) => (
-                  <div key={idx} className="flex gap-2 text-red-600 dark:text-red-400">
-                    <span className="shrink-0 text-red-400 dark:text-red-600">at</span>
-                    <span className="text-red-700 dark:text-red-300">{frame.fn}</span>
-                    <span className="truncate text-red-500">
+                  <div key={idx} className="flex gap-2 text-danger-foreground">
+                    <span className="shrink-0 text-danger-foreground">at</span>
+                    <span className="text-danger-foreground">{frame.fn}</span>
+                    <span className="truncate text-danger-foreground">
                       ({frame.file}:{frame.line}:{frame.column})
                     </span>
                   </div>
@@ -168,14 +168,14 @@ export function ErrorBoundaryUi({
       )}
 
       {isDev && componentStack && (
-        <div className="border-t border-red-200 dark:border-red-900">
+        <div className="border-t border-danger-border">
           <button
             type="button"
             onClick={handleToggleComponentStack}
             aria-expanded={showComponentStack}
             aria-controls="component-stack-content"
             aria-label={t("Toggle component stack")}
-            className="flex w-full items-center justify-between px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+            className="flex w-full items-center justify-between px-4 py-2 text-sm text-danger-foreground transition-colors hover:bg-danger-subtle dark:text-danger-foreground dark:hover:bg-danger-subtle/30"
           >
             <span className="font-medium">{t("Component Stack")}</span>
             {showComponentStack ? (
@@ -190,7 +190,7 @@ export function ErrorBoundaryUi({
               className="overflow-auto px-4 pb-4"
               aria-label={t("Component stack trace")}
             >
-              <pre className="font-mono text-xs whitespace-pre-wrap text-red-600 dark:text-red-400">
+              <pre className="font-mono text-xs whitespace-pre-wrap text-danger-foreground">
                 {componentStack}
               </pre>
             </div>

@@ -270,15 +270,15 @@ export function APIKeyPermissionsEditor() {
             {t("Clear All")}
           </Button>
           <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="secondary">
+            <Badge variant="neutral">
               {selectionSummary.selectedResources}{" "}
               {pluralize("resource", selectionSummary.selectedResources)}
             </Badge>
-            <Badge variant="secondary">
+            <Badge variant="neutral">
               {selectionSummary.selectedOperations}{" "}
               {pluralize("operation", selectionSummary.selectedOperations)}
             </Badge>
-            <Badge variant="outline">{selectionSummary.modeLabel}</Badge>
+            <Badge variant="neutral" appearance="outline">{selectionSummary.modeLabel}</Badge>
           </div>
         </div>
       </div>
@@ -349,7 +349,7 @@ function CategorySection({
           </div>
           <div className="flex items-center gap-2">
             {grantedInCategory > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="neutral" className="text-xs">
                 {t("{0} granted", grantedInCategory)}
               </Badge>
             )}
@@ -456,7 +456,7 @@ function ResourceRow({
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium">{resource.displayName}</span>
               {isGranted && (
-                <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
+                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
                     ? t("Full Access")
                     : isViewOnly

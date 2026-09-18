@@ -104,18 +104,18 @@ export function PresetPicker({ control, presets, isLoading = false, onSelect }: 
               <span className="flex items-center gap-1.5">
                 <span className="truncate font-medium">{t(option.label)}</span>
                 {hint === "local" && (
-                  <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                  <Badge variant="neutral" appearance="outline" className="h-4 px-1 text-2xs">
                     {t("Local")}
                   </Badge>
                 )}
                 {hint === "key" && (
-                  <Badge variant="inactive" className="h-4 px-1 text-[10px]">
+                  <Badge variant="danger" className="h-4 px-1 text-2xs">
                     {t("Key")}
                   </Badge>
                 )}
               </span>
               {option.description && (
-                <span className="text-muted-foreground block truncate font-mono text-[10px]">
+                <span className="text-muted-foreground block truncate font-mono text-2xs">
                   {option.description}
                 </span>
               )}

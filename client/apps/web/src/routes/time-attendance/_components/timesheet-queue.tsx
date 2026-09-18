@@ -333,7 +333,7 @@ function QueueRow({
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-3 py-2.5 text-xs md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto]">
       <button
         type="button"
-        className="focus-visible:ring-ring/60 flex min-w-0 items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2"
+ className="ui-focus-ring flex min-w-0 items-center gap-3 rounded-md text-left outline-none"
         onClick={onOpen}
       >
         <Avatar size="sm">
@@ -512,7 +512,7 @@ function TimesheetSheet({
                             {entry.clockedOutAt ? ` – ${formatPunchTime(entry.clockedOutAt)}` : ""}
                           </span>
                           {entry.source !== "Clock" ? (
-                            <Badge variant="secondary">{entry.source}</Badge>
+                            <Badge variant="neutral">{entry.source}</Badge>
                           ) : null}
                         </span>
                         {entry.editReason ? (

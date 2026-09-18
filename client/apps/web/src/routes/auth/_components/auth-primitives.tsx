@@ -60,8 +60,8 @@ export function Tally({ value }: { value: number }) {
 export function StepCrumbs({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
     <div className="mb-3.5 flex items-center justify-between">
-      <span className="text-subtle-foreground font-table text-[11px]">{left}</span>
-      <span className="text-subtle-foreground font-table text-[11px]">{right}</span>
+      <span className="text-subtle-foreground font-table text-xs">{left}</span>
+      <span className="text-subtle-foreground font-table text-xs">{right}</span>
     </div>
   );
 }
@@ -69,9 +69,9 @@ export function StepCrumbs({ left, right }: { left: ReactNode; right: ReactNode 
 export function StepHeading({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <>
-      <h1 className="m-0 text-[17px] font-semibold tracking-[-0.028em]">{title}</h1>
+      <h1 className="m-0 text-xl font-semibold tracking-[-0.028em]">{title}</h1>
       {children ? (
-        <p className="text-muted-foreground mt-1 mb-0 text-[12.5px]">{children}</p>
+        <p className="text-muted-foreground mt-1 mb-0 text-sm">{children}</p>
       ) : null}
     </>
   );
@@ -79,7 +79,7 @@ export function StepHeading({ title, children }: { title: string; children?: Rea
 
 export function KeyHint({ children }: { children: ReactNode }) {
   return (
-    <span className="border-border-2 text-subtle-foreground font-table rounded border px-[5px] py-px text-[10px] whitespace-nowrap">
+    <span className="border-border-2 text-subtle-foreground font-table rounded border px-[5px] py-px text-2xs whitespace-nowrap">
       {children}
     </span>
   );
@@ -89,11 +89,11 @@ export function AuthTray({ onBack, hints }: { onBack: () => void; hints: ReactNo
   const t = useT();
 
   return (
-    <div className="text-subtle-foreground mt-3.5 flex items-center justify-between gap-3 text-[11.5px] whitespace-nowrap">
+    <div className="text-subtle-foreground mt-3.5 flex items-center justify-between gap-3 text-xs whitespace-nowrap">
       <button
         type="button"
         onClick={onBack}
-        className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1.5 text-[12px] transition-colors duration-150"
+        className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1.5 text-sm transition-colors duration-150"
       >
         <BackArrow />
         {t("Back")}
@@ -161,27 +161,27 @@ export function AuthOption({
       <span
         className={cn(
           "border-border-2 bg-popover grid size-8 shrink-0 place-items-center rounded-lg border transition-colors duration-[180ms]",
-          "font-table text-[11px] font-medium",
+          "font-table text-xs font-medium",
           selected ? "border-border text-foreground" : "text-muted-foreground",
         )}
       >
         {leading}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-[550] tracking-[-0.005em]">{name}</span>
+        <span className="block truncate text-base font-[550] tracking-[-0.005em]">{name}</span>
         {meta ? (
-          <span className="text-subtle-foreground block truncate text-[11.5px]">{meta}</span>
+          <span className="text-subtle-foreground block truncate text-xs">{meta}</span>
         ) : null}
       </span>
       {chip ? (
-        <span className="border-border-2 text-subtle-foreground rounded-full border px-2 py-0.5 text-[10.5px] font-medium whitespace-nowrap">
+        <span className="border-border-2 text-subtle-foreground rounded-full border px-2 py-0.5 text-2xs font-medium whitespace-nowrap">
           {chip}
         </span>
       ) : null}
       {shortcut ? (
         <span
           aria-hidden="true"
-          className="border-border-2 text-subtle-foreground font-table hidden rounded border px-[5px] py-px text-[10px] opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
+          className="border-border-2 text-subtle-foreground font-table hidden rounded border px-[5px] py-px text-2xs opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 sm:inline"
         >
           {shortcut}
         </span>

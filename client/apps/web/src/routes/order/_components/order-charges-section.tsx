@@ -115,7 +115,7 @@ export function OrderChargesSection() {
                     <span className="truncate">{t(charge.description)}</span>
                     <ChargePayerChip allocations={charge.allocations} currencyCode={currency} />
                     {invoiced && (
-                      <Badge variant="outline" className="shrink-0">
+                      <Badge variant="neutral" appearance="outline" className="shrink-0">
                         {t("Invoiced")}
                       </Badge>
                     )}

@@ -61,7 +61,7 @@ export function TrainingCard() {
             {t("{0, plural, one {# needs} other {# need}} attention", attention)}
           </Badge>
         ) : (
-          <Badge variant="active">{t("All current")}</Badge>
+          <Badge variant="success">{t("All current")}</Badge>
         )}
       </div>
 
@@ -128,7 +128,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
           <p className="truncate text-sm font-medium">
             {item.name}
             {item.required ? (
-              <span className="ml-1 text-[10px] font-normal uppercase text-muted-foreground">
+              <span className="ml-1 text-2xs font-normal uppercase text-muted-foreground">
                 {t("Required")}
               </span>
             ) : null}
@@ -167,7 +167,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
             </span>
           ) : null}
           {awaitingResult ? (
-            <span className="text-amber-600 dark:text-amber-400">
+            <span className="text-warning-foreground">
               {t("Waiting for your result")}
             </span>
           ) : null}

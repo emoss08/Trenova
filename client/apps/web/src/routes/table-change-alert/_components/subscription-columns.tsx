@@ -5,10 +5,10 @@ import type { NotificationPriority } from "@/types/table-change-alert";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const PRIORITY_BADGE_VARIANT: Record<NotificationPriority, BadgeVariant> = {
-  critical: "inactive",
-  high: "orange",
-  medium: "secondary",
-  low: "teal",
+  critical: "danger",
+  high: "warning",
+  medium: "neutral",
+  low: "info",
 };
 
 export function getColumns(t: TranslateFn): ColumnDef<TCASubscriptionRow>[] {
@@ -28,7 +28,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TCASubscriptionRow>[] {
       cell: ({ row }) => (
         <div className="flex gap-1">
           {row.original.eventTypes.map((et) => (
-            <Badge key={et} variant="outline" className="text-2xs">
+            <Badge key={et} variant="neutral" appearance="outline" className="text-2xs">
               {et}
             </Badge>
           ))}
@@ -39,7 +39,7 @@ export function getColumns(t: TranslateFn): ColumnDef<TCASubscriptionRow>[] {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "Active" ? "active" : "secondary"}>
+        <Badge variant={row.original.status === "Active" ? "success" : "neutral"}>
           {row.original.status}
         </Badge>
       ),

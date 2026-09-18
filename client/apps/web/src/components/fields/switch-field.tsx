@@ -53,11 +53,11 @@ export function SwitchField<T extends FieldValues>({
           className={cn(
             "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
             outlined &&
-              "border-input bg-muted transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-blue-600 has-data-checked:bg-blue-600/10 has-data-checked:text-blue-500 has-data-checked:ring-4 has-data-checked:ring-blue-600/20 dark:has-data-checked:text-blue-400",
+              "border-input bg-muted transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info/10 has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
             fieldState.error &&
-              "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden",
             warning?.show &&
-              "border-amber-500 bg-amber-500/10 ring-0 ring-amber-500 placeholder:text-amber-600 focus:outline-hidden focus-visible:border-amber-600 focus-visible:ring-4 focus-visible:ring-amber-400/20",
+"ui-focus-ring border-warning bg-warning/10 ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
             className,
           )}
         >
@@ -93,7 +93,7 @@ export function SwitchField<T extends FieldValues>({
                       <button
                         type="button"
                         aria-label={`About ${label}`}
-                        className="text-muted-foreground/70 hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden"
+ className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
                       >
                         <InfoIcon className="size-3" />
                       </button>
@@ -109,9 +109,9 @@ export function SwitchField<T extends FieldValues>({
                 className={cn(
                   "text-2xs text-muted-foreground",
                   outlined &&
-                    "group-has-data-checked:text-blue-500 dark:group-has-data-checked:text-blue-400",
-                  fieldState.error && "text-red-500",
-                  warning?.show && "text-amber-600",
+                    "group-has-data-checked:text-info-foreground dark:group-has-data-checked:text-info-foreground",
+                  fieldState.error && "text-danger-foreground",
+                  warning?.show && "text-warning-foreground",
                 )}
               >
                 {fieldState.error

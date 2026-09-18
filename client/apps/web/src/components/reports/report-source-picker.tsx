@@ -289,7 +289,7 @@ function PickerRow({ row }: { row: Row }) {
       onClick={row.onSelect}
       className={cn(
         "flex w-full items-start gap-2 rounded px-2 py-1.5 text-left transition-colors",
-        "focus-visible:ring-brand/40 focus-visible:ring-2 focus-visible:outline-none",
+"ui-focus-ring",
         row.selected
           ? "border-brand/50 bg-brand/10 border"
           : "hover:bg-muted/70 border border-transparent",
@@ -304,11 +304,11 @@ function PickerRow({ row }: { row: Row }) {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-xs font-medium">{row.name}</span>
         {row.description && (
-          <span className="text-muted-foreground truncate text-[11px]">{t(row.description)}</span>
+          <span className="text-muted-foreground truncate text-xs">{t(row.description)}</span>
         )}
       </span>
       {row.meta && (
-        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-[9px] tracking-wide uppercase">
+        <span className="text-muted-foreground/80 mt-0.5 shrink-0 text-3xs tracking-wide uppercase">
           {row.meta}
         </span>
       )}

@@ -259,9 +259,9 @@ function RecordSections({
 function SectionHeading({ children, count }: { children: string; count?: number }) {
   return (
     <div className="flex items-baseline justify-between">
-      <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">{children}</h4>
+      <h4 className="text-muted-foreground text-xs font-semibold uppercase">{children}</h4>
       {count !== undefined && count > 0 ? (
-        <span className="text-muted-foreground font-mono text-[11px] tabular-nums">{count}</span>
+        <span className="text-muted-foreground font-mono text-xs tabular-nums">{count}</span>
       ) : null}
     </div>
   );
@@ -305,7 +305,7 @@ function MetricCard({
       className="border-border/80 hover:border-border hover:bg-muted/30 group flex flex-col gap-2 rounded-lg border p-3 text-left transition-colors"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase">{title}</span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase">{title}</span>
         <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
           <Icon className="size-3.5" />
         </span>
@@ -318,7 +318,7 @@ function MetricCard({
       </div>
       {children}
       <div className="mt-auto flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-[11px]">{detail}</span>
+        <span className="text-muted-foreground truncate text-xs">{detail}</span>
         {state ? (
           <Badge variant={state.variant} className="shrink-0">
             {t(state.label)}
@@ -341,7 +341,7 @@ function CredentialsCard({
   const problems = summary.expiredCount + summary.missingCount;
   const state: CardState =
     problems > 0
-      ? { variant: "inactive", label: `${problems} lapsed` }
+      ? { variant: "danger", label: `${problems} lapsed` }
       : summary.expiringCount > 0
         ? { variant: "warning", label: `${summary.expiringCount} expiring` }
         : null;
@@ -373,7 +373,7 @@ function TrainingCard({ summary, onOpen }: { summary: OverviewTraining; onOpen: 
   const soon = summary.dueCount + summary.expiringCount;
   const state: CardState =
     problems > 0
-      ? { variant: "inactive", label: `${problems} behind` }
+      ? { variant: "danger", label: `${problems} behind` }
       : soon > 0
         ? { variant: "warning", label: `${soon} due soon` }
         : null;
@@ -404,7 +404,7 @@ function SafetyCard({ card, onOpen }: { card: OverviewSafety; onOpen: () => void
 
   const state: CardState =
     card.rating === "AtRisk"
-      ? { variant: "inactive", label: t("At risk") }
+      ? { variant: "danger", label: t("At risk") }
       : card.rating === "Watch"
         ? { variant: "warning", label: t("Watch") }
         : null;

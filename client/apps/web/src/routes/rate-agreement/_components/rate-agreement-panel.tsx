@@ -111,7 +111,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               type="button"
               variant="outline"
               size="xs"
-              className="gap-1.5 text-emerald-600 dark:text-emerald-400"
+              className="gap-1.5 text-success-foreground"
               onClick={() => onReviewAction("approve")}
             >
               <CheckIcon className="size-3" />
@@ -169,7 +169,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
         </Button>
       )}
       {agreement.currentVersionNumber ? (
-        <Badge variant="outline" className="mr-1 font-mono text-xs">
+        <Badge variant="neutral" appearance="outline" className="mr-1 font-mono text-xs">
           {t("v{0}", agreement.currentVersionNumber)}
         </Badge>
       ) : null}

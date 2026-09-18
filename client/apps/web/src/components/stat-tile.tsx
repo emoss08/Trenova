@@ -29,19 +29,19 @@ export function StatTile({
       className={cn(
         "rounded-lg border p-3 text-left",
         tone === "warn" &&
-          "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/30",
-        tone === "danger" && "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/30",
-        tone === "info" && "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
+          "border-warning-border bg-warning-subtle/50 dark:border-warning-border dark:bg-warning-subtle/30",
+        tone === "danger" && "border-danger-border bg-danger-subtle/50 dark:border-danger-border dark:bg-danger-subtle/30",
+        tone === "info" && "border-info-border bg-info-subtle/50 dark:border-info-border dark:bg-info-subtle/30",
         !tone && "bg-muted/30",
         clickable && "hover:bg-muted/60 cursor-pointer transition-colors",
         active && "ring-brand ring-1",
       )}
     >
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{value}</div>
-      <p className="text-muted-foreground mt-0.5 text-[11px]">{sub}</p>
+      <p className="text-muted-foreground mt-0.5 text-xs">{sub}</p>
     </Comp>
   );
 }

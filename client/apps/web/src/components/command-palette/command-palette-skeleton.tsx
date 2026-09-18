@@ -8,7 +8,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 export function CommandPaletteSkeleton() {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      <div className="fixed inset-0 bg-black/40" />
+      <div className="fixed inset-0 bg-scrim" />
       <div className="border-border bg-popover relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-lg border shadow-lg">
         <div className="border-border flex h-11 items-center gap-2 border-b px-3">
           <Skeleton className="size-4 shrink-0 rounded" />

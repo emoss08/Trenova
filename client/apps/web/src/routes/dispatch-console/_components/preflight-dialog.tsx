@@ -45,18 +45,18 @@ const VERDICT_BANNER: Record<
 > = {
   feasible: {
     Icon: CircleCheckIcon,
-    panelClass: "bg-green-500/10",
-    iconClass: "text-green-600 dark:text-green-400",
+    panelClass: "bg-success/10",
+    iconClass: "text-success-foreground",
   },
   tight: {
     Icon: TriangleAlertIcon,
-    panelClass: "bg-amber-500/10",
-    iconClass: "text-amber-600 dark:text-amber-400",
+    panelClass: "bg-warning/10",
+    iconClass: "text-warning-foreground",
   },
   infeasible: {
     Icon: OctagonXIcon,
-    panelClass: "bg-red-500/10",
-    iconClass: "text-red-600 dark:text-red-400",
+    panelClass: "bg-danger/10",
+    iconClass: "text-danger-foreground",
   },
   unknown: {
     Icon: CircleHelpIcon,
@@ -113,12 +113,12 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "la
       <span
         className={cn(
           "text-sm leading-none font-semibold tabular-nums",
-          tone === "late" && "text-red-600 dark:text-red-400",
+          tone === "late" && "text-danger-foreground",
         )}
       >
         {value}
       </span>
-      <span className="text-muted-foreground text-[9.5px] font-medium tracking-wider uppercase">
+      <span className="text-muted-foreground text-3xs font-medium tracking-wider uppercase">
         {label}
       </span>
     </div>
@@ -196,11 +196,11 @@ export function PreflightDialog({
               <DialogTitle className="truncate text-sm leading-none font-semibold">
                 {move.isCovered ? t("Reassign") : t("Assign")} {driver.firstName} {driver.lastName}
               </DialogTitle>
-              <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] leading-none">
+              <div className="text-muted-foreground flex items-center gap-1.5 text-xs leading-none">
                 {tractorId ? (
                   <span className="font-mono">{driver.tractorCode || tractorId}</span>
                 ) : (
-                  <span className="text-red-600 dark:text-red-400">{t("No tractor assigned")}</span>
+                  <span className="text-danger-foreground">{t("No tractor assigned")}</span>
                 )}
                 {data?.trailerId ? (
                   <>
@@ -213,7 +213,7 @@ export function PreflightDialog({
           </div>
 
           <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border px-3 py-2.5">
-            <div className="flex items-center justify-between gap-2 text-[10.5px] leading-none">
+            <div className="flex items-center justify-between gap-2 text-2xs leading-none">
               <span className="text-muted-foreground flex min-w-0 items-center gap-1.5">
                 <span className="text-foreground/80 truncate font-mono font-medium">
                   {move.proNumber}
@@ -227,7 +227,7 @@ export function PreflightDialog({
                   className={cn(
                     "shrink-0 font-medium tabular-nums",
                     minutesToPickup < 0
-                      ? "text-red-600 dark:text-red-400"
+                      ? "text-danger-foreground"
                       : "text-muted-foreground",
                   )}
                 >
@@ -241,7 +241,7 @@ export function PreflightDialog({
                 <span className="truncate text-xs leading-none font-semibold">
                   {move.originCity}, {move.originState}
                 </span>
-                <span className="text-muted-foreground text-[10.5px] tabular-nums">
+                <span className="text-muted-foreground text-2xs tabular-nums">
                   {move.originWindowStart > 0
                     ? formatUnixDateTimeShort(move.originWindowStart)
                     : t("Unscheduled")}
@@ -256,7 +256,7 @@ export function PreflightDialog({
                   {move.destinationCity}, {move.destinationState}
                 </span>
                 {move.destinationWindowStart > 0 ? (
-                  <span className="text-muted-foreground text-[10.5px] tabular-nums">
+                  <span className="text-muted-foreground text-2xs tabular-nums">
                     {formatUnixDateTimeShort(move.destinationWindowStart)}
                   </span>
                 ) : null}
@@ -287,7 +287,7 @@ export function PreflightDialog({
                     <span className={cn("text-xs leading-none font-semibold", banner.iconClass)}>
                       {t(verdict.label)}
                     </span>
-                    <span className="text-foreground/80 text-[11px] leading-snug">
+                    <span className="text-foreground/80 text-xs leading-snug">
                       {lead.message}
                     </span>
                   </div>
@@ -311,7 +311,7 @@ export function PreflightDialog({
               </motion.div>
 
               {!tractorId ? (
-                <motion.p {...section(2)} className="text-[11px] text-red-600 dark:text-red-400">
+                <motion.p {...section(2)} className="text-xs text-danger-foreground">
                   {t("This driver has no tractor assigned; assign one before dispatching.")}
                 </motion.p>
               ) : null}

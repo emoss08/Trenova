@@ -47,7 +47,7 @@ export function AuthTextField<T extends FieldValues>({
           <div className="flex items-baseline justify-between gap-3">
             <label
               htmlFor={inputId}
-              className="text-muted-foreground text-[11.5px] font-medium whitespace-nowrap"
+              className="text-muted-foreground text-xs font-medium whitespace-nowrap"
             >
               {label} {required && <span className="text-auth-danger">*</span>}
             </label>
@@ -70,13 +70,13 @@ export function AuthTextField<T extends FieldValues>({
               disabled={disabled}
               aria-invalid={fieldState.invalid}
               aria-describedby={fieldState.error ? errorId : undefined}
-              className="text-foreground placeholder:text-subtle-foreground min-w-0 flex-1 rounded-[8px] border-0 bg-transparent px-3 py-2.5 text-[13px] outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              className="text-foreground placeholder:text-subtle-foreground min-w-0 flex-1 rounded-[8px] border-0 bg-transparent px-3 py-2.5 text-base outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
             {revealable && (
               <button
                 type="button"
                 onClick={() => setRevealed((current) => !current)}
-                className="text-subtle-foreground hover:text-foreground cursor-pointer bg-transparent px-3 text-[11.5px] font-medium transition-colors duration-150"
+                className="text-subtle-foreground hover:text-foreground cursor-pointer bg-transparent px-3 text-xs font-medium transition-colors duration-150"
               >
                 {revealed ? "hide" : "show"}
               </button>
@@ -93,7 +93,7 @@ export function AuthTextField<T extends FieldValues>({
 
 export function AuthErrorText({ id, children }: { id?: string; children: ReactNode }) {
   return (
-    <span id={id} role="alert" className="text-auth-danger auth-step-enter text-[11.5px]">
+    <span id={id} role="alert" className="text-auth-danger auth-step-enter text-xs">
       {children}
     </span>
   );
@@ -126,7 +126,7 @@ export function AuthSubmit({
       isLoading={isLoading}
       loadingText={loadingText}
       className={cn(
-        "bg-foreground text-background border-foreground h-10 w-full rounded-[9px] border text-[13px] font-[550]",
+        "bg-foreground text-background border-foreground h-10 w-full rounded-[9px] border text-base font-[550]",
         "hover:bg-foreground hover:opacity-90 active:scale-[0.988] disabled:opacity-40",
       )}
     >

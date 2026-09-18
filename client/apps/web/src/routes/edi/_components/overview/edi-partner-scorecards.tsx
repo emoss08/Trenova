@@ -28,7 +28,7 @@ function formatSeconds(seconds?: number | null) {
 }
 
 function attentionCellClass(count: number) {
-  return cn("text-right tabular-nums", count > 0 && "font-semibold text-red-600 dark:text-red-400");
+  return cn("text-right tabular-nums", count > 0 && "font-semibold text-danger-foreground");
 }
 
 export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerScorecard[] }) {
@@ -90,7 +90,7 @@ export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerSco
                     successRate !== null &&
                       successRate !== undefined &&
                       successRate < 0.95 &&
-                      "font-semibold text-yellow-700 dark:text-yellow-400",
+                      "font-semibold text-warning-foreground",
                   )}
                 >
                   {formatRate(successRate)}

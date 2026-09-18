@@ -45,14 +45,14 @@ export function InvoiceOverviewTab({
           latestAdjustmentDetail={latestAdjustmentDetail}
         />
         {invoice.offCycleReason ? (
-          <div className="rounded-lg border border-amber-300 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
             <div className="flex items-start gap-2">
-              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
               <div>
-                <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                <p className="text-xs font-medium text-warning-foreground">
                   {t("Billed outside this customer's statement")}
                 </p>
-                <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
+                <p className="mt-0.5 text-xs text-warning-foreground/80">
                   {invoice.offCycleReason}
                 </p>
               </div>
@@ -265,7 +265,7 @@ export function InvoiceOverviewTab({
                             {lineageInvoice.billType} · {lineageInvoice.status}
                           </p>
                         </div>
-                        <Badge variant={current ? "active" : "secondary"} className="shrink-0">
+                        <Badge variant={current ? "success" : "neutral"} className="shrink-0">
                           {current ? t("Current") : t("Superseded")}
                         </Badge>
                       </div>
@@ -337,8 +337,8 @@ function LifecycleStep({
   tone?: "default" | "danger";
   isLast?: boolean;
 }) {
-  const dot = tone === "danger" ? "bg-red-600" : "bg-green-600";
-  const line = tone === "danger" ? "bg-red-600/30" : "bg-green-600/30";
+  const dot = tone === "danger" ? "bg-danger" : "bg-success";
+  const line = tone === "danger" ? "bg-danger/30" : "bg-success/30";
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
@@ -350,7 +350,7 @@ function LifecycleStep({
           className={cn(
             "text-xs font-medium",
             !active && "text-muted-foreground",
-            tone === "danger" && active && "text-red-700 dark:text-red-400",
+            tone === "danger" && active && "text-danger-foreground",
           )}
         >
           {label}

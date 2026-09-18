@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card } from "@trenova/shared/components/ui/card";
@@ -25,12 +26,12 @@ import { AgentTile } from "@/components/agent-identity/agent-tile";
 
 const TRIGGER_META: Record<
   TriggerMode,
-  { label: string; icon: typeof BoltIcon; variant: "info" | "teal" | "orange" | "pink" }
+  { label: string; icon: typeof BoltIcon; variant: BadgeVariant }
 > = {
   Chat: { label: "Chat", icon: MessageSquareIcon, variant: "info" },
-  Scheduled: { label: "Scheduled", icon: CalendarClockIcon, variant: "teal" },
-  Event: { label: "Event", icon: BoltIcon, variant: "orange" },
-  Continuous: { label: "Continuous", icon: RepeatIcon, variant: "pink" },
+  Scheduled: { label: "Scheduled", icon: CalendarClockIcon, variant: "accent-teal" },
+  Event: { label: "Event", icon: BoltIcon, variant: "accent-amber" },
+  Continuous: { label: "Continuous", icon: RepeatIcon, variant: "accent-violet" },
 };
 
 const RUN_TIME_FORMAT = {
@@ -104,7 +105,7 @@ export function AgentCard({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <Badge variant="purple" className="gap-1">
+                    <Badge variant="brand" className="gap-1">
                       <EyeOffIcon className="size-3" />
                       {t("Shadow")}
                     </Badge>
@@ -119,7 +120,7 @@ export function AgentCard({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <Badge variant="outline" className="gap-1">
+                    <Badge variant="neutral" appearance="outline" className="gap-1">
                       <LockIcon className="size-3" />
                       {t("System")}
                     </Badge>

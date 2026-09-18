@@ -37,8 +37,8 @@ const COLUMN_WIDTH = "w-44";
 
 /** Conditional-formatting emphasis, resolved from the column's rules. */
 const TONE_CLASS: Record<Exclude<ReportDisplayTone, "">, string> = {
-  positive: "text-emerald-600 dark:text-emerald-400",
-  warning: "text-amber-600 dark:text-amber-400",
+  positive: "text-success-foreground",
+  warning: "text-warning-foreground",
   negative: "text-destructive",
   neutral: "text-foreground",
 };

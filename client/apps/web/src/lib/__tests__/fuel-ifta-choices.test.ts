@@ -68,13 +68,19 @@ describe("fuel and IFTA choices", () => {
 
   it("colour the statuses that appear in filters", () => {
     expect(fuelCardStatusChoices).toEqual([
-      { label: "Active", value: "Active", color: "#15803d" },
-      { label: "Suspended", value: "Suspended", color: "#b45309" },
-      { label: "Cancelled", value: "Cancelled", color: "#dc2626" },
+      { label: "Active", value: "Active", color: "var(--success)" },
+      { label: "Suspended", value: "Suspended", color: "var(--warning)" },
+      { label: "Cancelled", value: "Cancelled", color: "var(--danger)" },
     ]);
-    expect(iftaReturnStatusChoices.map((c) => c.color)).toEqual(["#6b7280", "#1d4ed8", "#15803d"]);
+    expect(iftaReturnStatusChoices.map((c) => c.color)).toEqual([
+      "var(--foreground-subtle)",
+      "var(--info)",
+      "var(--success)",
+    ]);
     for (const choice of fuelPurchaseImportStatusChoices) {
-      expect(choice.color).toMatch(/^#[0-9a-f]{6}$/);
+      // A choice colour is a design token, not a literal: it renders through an
+      // inline style, so only a token follows the theme.
+      expect(choice.color).toMatch(/^var\(--[a-z-]+\)$/);
     }
   });
 });

@@ -95,8 +95,8 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
   };
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-blue-600/30 bg-blue-600/5 p-3">
-      <CalendarSyncIcon className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+    <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/5 p-3">
+      <CalendarSyncIcon className="mt-0.5 size-4 shrink-0 text-info-foreground" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">{t("A recurring shipment already covers this lane")}</p>
         <p className="text-muted-foreground text-xs">

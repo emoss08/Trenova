@@ -180,12 +180,12 @@ function PolicyCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="outline">{t("v{0}", policy.versionLabel)}</Badge>
-        <Badge variant="secondary">{policyAudienceLabel(policy.appliesTo)}</Badge>
-        <Badge variant={policy.requiresSignature ? "warning" : "secondary"}>
+        <Badge variant="neutral" appearance="outline">{t("v{0}", policy.versionLabel)}</Badge>
+        <Badge variant="neutral">{policyAudienceLabel(policy.appliesTo)}</Badge>
+        <Badge variant={policy.requiresSignature ? "warning" : "neutral"}>
           {policy.requiresSignature ? t("Signature") : t("Read only")}
         </Badge>
-        {retired ? <Badge variant="inactive">{t("Retired")}</Badge> : null}
+        {retired ? <Badge variant="danger">{t("Retired")}</Badge> : null}
       </div>
 
       <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">

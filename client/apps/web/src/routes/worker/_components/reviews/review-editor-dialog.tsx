@@ -420,7 +420,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
           {label}
-          <span className="text-muted-foreground ml-1.5 text-[11px]">
+          <span className="text-muted-foreground ml-1.5 text-xs">
             {t("weight {0}", weight)}
           </span>
         </p>
@@ -448,7 +448,7 @@ function RatingRow({ index, label, weight }: { index: number; label: string; wei
           ))}
         </div>
       </div>
-      <p className="text-muted-foreground mt-1 text-[11px]">
+      <p className="text-muted-foreground mt-1 text-xs">
         {score == null ? t("Not rated yet") : REVIEW_SCORE_LABELS[score]}
       </p>
       <TextareaField<ReviewDraftFormValues>

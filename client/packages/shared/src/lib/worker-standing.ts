@@ -6,7 +6,7 @@ import {
 
 export type StandingMeta = {
   label: string;
-  badgeVariant: "active" | "warning" | "inactive" | "outline";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringTone: "success" | "warning" | "critical";
   /** A one-line reading of the verdict, for the summary line under the badge. */
@@ -18,8 +18,8 @@ export type StandingMeta = {
 const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Good: {
     label: WORKER_STANDING_LABELS.Good,
-    badgeVariant: "active",
-    textClass: "text-green-600 dark:text-green-400",
+    badgeVariant: "success",
+    textClass: "text-success-foreground",
     ringTone: "success",
     blurb: "Nothing on the record needs attention.",
     rank: 0,
@@ -27,23 +27,23 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
   Watch: {
     label: WORKER_STANDING_LABELS.Watch,
     badgeVariant: "warning",
-    textClass: "text-amber-600 dark:text-amber-400",
+    textClass: "text-warning-foreground",
     ringTone: "warning",
     blurb: "Something is coming due soon.",
     rank: 1,
   },
   AtRisk: {
     label: WORKER_STANDING_LABELS.AtRisk,
-    badgeVariant: "inactive",
-    textClass: "text-red-600 dark:text-red-400",
+    badgeVariant: "danger",
+    textClass: "text-danger-foreground",
     ringTone: "critical",
     blurb: "Something on the record has already lapsed.",
     rank: 2,
   },
   Blocked: {
     label: WORKER_STANDING_LABELS.Blocked,
-    badgeVariant: "inactive",
-    textClass: "text-red-600 dark:text-red-400",
+    badgeVariant: "danger",
+    textClass: "text-danger-foreground",
     ringTone: "critical",
     blurb: "The worker cannot be put on a load today.",
     rank: 3,
@@ -52,7 +52,7 @@ const STANDING_META: Record<WorkerStanding, StandingMeta> = {
 
 const FALLBACK: StandingMeta = {
   label: "Unknown",
-  badgeVariant: "outline",
+  badgeVariant: "neutral",
   textClass: "text-muted-foreground",
   ringTone: "warning",
   blurb: "The standing could not be worked out.",
@@ -75,15 +75,15 @@ export type ConcernSeverityMeta = {
 const SEVERITY_META: Record<ConcernSeverity, ConcernSeverityMeta> = {
   Critical: {
     label: "Needs action",
-    textClass: "text-red-600 dark:text-red-400",
-    borderClass: "border-red-500/40 bg-red-500/5",
+    textClass: "text-danger-foreground",
+    borderClass: "border-danger/40 bg-danger/5",
     dotClass: "bg-destructive",
     rank: 0,
   },
   Warning: {
     label: "Coming due",
-    textClass: "text-amber-600 dark:text-amber-400",
-    borderClass: "border-amber-500/40 bg-amber-500/5",
+    textClass: "text-warning-foreground",
+    borderClass: "border-warning/40 bg-warning/5",
     dotClass: "bg-warning",
     rank: 1,
   },

@@ -162,7 +162,7 @@ const ScrollArea = React.forwardRef<
             <ScrollAreaPrimitive.Viewport
               ref={viewportRef}
               data-slot="scroll-area-viewport"
-              className={cn("focus-ring size-full rounded-[inherit]", viewportClassName)}
+              className={cn("ui-focus-ring size-full rounded-[inherit]", viewportClassName)}
             >
               {children}
             </ScrollAreaPrimitive.Viewport>

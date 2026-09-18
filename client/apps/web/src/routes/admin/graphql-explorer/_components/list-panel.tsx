@@ -51,13 +51,13 @@ function itemSelection(item: ListItem): CatalogSelection | null {
 
 function KindGlyph({ kind }: { kind: GlyphKind }) {
   const config: Record<GlyphKind, { letter: string; className: string }> = {
-    query: { letter: "Q", className: "bg-sky-500/15 text-sky-600 dark:text-sky-400" },
-    mutation: { letter: "M", className: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
+    query: { letter: "Q", className: "bg-accent-sky/15 text-accent-sky-on-subtle" },
+    mutation: { letter: "M", className: "bg-warning/15 text-warning-foreground" },
     subscription: {
       letter: "S",
-      className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+      className: "bg-success/15 text-success-foreground",
     },
-    fragment: { letter: "F", className: "bg-violet-500/15 text-violet-600 dark:text-violet-400" },
+    fragment: { letter: "F", className: "bg-accent-violet/15 text-accent-violet-on-subtle" },
   };
   const { letter, className } = config[kind];
   return (

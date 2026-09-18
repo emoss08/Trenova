@@ -182,10 +182,10 @@ function JurisdictionRuleEditPanel({
                   <Badge
                     variant={
                       row.verificationState === "Verified"
-                        ? "active"
+                        ? "success"
                         : row.verificationState === "Disputed"
                           ? "warning"
-                          : "inactive"
+                          : "danger"
                     }
                   >
                     {row.verificationState}

@@ -27,7 +27,7 @@ function PeriodProgress({
   return (
     <div className="bg-muted h-0.5 w-full overflow-hidden rounded-full" aria-hidden>
       <div
-        className={cn("h-full rounded-full transition-[width]", due ? "bg-amber-500" : "bg-brand")}
+        className={cn("h-full rounded-full transition-[width]", due ? "bg-warning" : "bg-brand")}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -56,7 +56,7 @@ export function StatementCard({
         title={statement.customerName}
         auxiliary={
           statement.customerCode ? (
-            <span className="text-muted-foreground font-mono text-[10px]">
+            <span className="text-muted-foreground font-mono text-2xs">
               {statement.customerCode}
             </span>
           ) : null
@@ -79,7 +79,7 @@ export function StatementCard({
             <PeriodProgress statement={statement} nowSeconds={nowSeconds} />
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-muted-foreground text-[11px]">
+                <span className="text-muted-foreground text-xs">
                   {cadenceLabel(statement.cycle)}
                 </span>
                 {statement.autoBill && (
@@ -106,7 +106,7 @@ export function StatementCard({
                       render={
                         <span
                           tabIndex={0}
-                          className="inline-flex text-amber-600 dark:text-amber-400"
+                          className="inline-flex text-warning-foreground"
                           aria-label={t("Under the customer's minimum")}
                         >
                           <PauseCircleIcon className="size-3" />
@@ -123,9 +123,9 @@ export function StatementCard({
               </div>
               <span
                 className={cn(
-                  "text-[11px]",
+                  "text-xs",
                   due
-                    ? "font-medium text-amber-600 dark:text-amber-400"
+                    ? "font-medium text-warning-foreground"
                     : "text-muted-foreground/70",
                 )}
               >

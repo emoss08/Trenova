@@ -297,8 +297,8 @@ export function DetentionPolicyForm() {
         </FormGroup>
 
         {lateArrivalRule === "Forfeit" && (
-          <div className="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
-            <Badge className="border-none bg-amber-500/20 text-amber-700 dark:text-amber-400">
+          <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 p-3">
+            <Badge className="border-none bg-warning/20 text-warning-foreground">
               {t("Check the contract")}
             </Badge>
             <p className="mt-2 text-sm">

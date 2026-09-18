@@ -8,7 +8,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { CalendarCheckIcon, CalendarClockIcon, FlaskConicalIcon, UsersIcon } from "lucide-react";
 
-const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
 
 type RandomTestingOverviewProps = {
   overview: ProgrammeOverview;
@@ -38,7 +38,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
               )}
             </InfoPopover>
           }
-          right={overview.missed > 0 ? <Badge variant="inactive">{t("Missed")}</Badge> : null}
+          right={overview.missed > 0 ? <Badge variant="danger">{t("Missed")}</Badge> : null}
         />
         <NumberFlow value={overview.owedNow} className={VALUE_CLASS} aria-label={t("Owed now")} />
         <KpiSub>
@@ -103,7 +103,7 @@ export function RandomTestingOverview({ overview }: RandomTestingOverviewProps) 
             aria-label={t("Selected this year")}
           />
           {target > 0 ? (
-            <span className="text-muted-foreground font-mono text-[11px] tabular-nums">
+            <span className="text-muted-foreground font-mono text-xs tabular-nums">
               / {target}
             </span>
           ) : null}
@@ -176,7 +176,7 @@ function RateLine({ label, selected, target }: RateLineProps) {
     <div
       role="img"
       aria-label={`${label}: ${selected} of ${target}`}
-      className="grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-2 text-[11px]"
+      className="grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-2 text-xs"
     >
       <span className="text-muted-foreground">{label}</span>
       <span className="bg-muted flex h-1 overflow-hidden rounded-full">

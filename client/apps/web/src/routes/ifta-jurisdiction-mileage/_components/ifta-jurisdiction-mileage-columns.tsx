@@ -18,14 +18,14 @@ import {
 import { IFTA_MILES_SCALE } from "@trenova/shared/types/ifta-jurisdiction-mileage";
 
 const LOADED_OPTIONS = [
-  { value: true, label: "Loaded", color: "#15803d" },
-  { value: false, label: "Empty", color: "#6b7280" },
+  { value: true, label: "Loaded", color: "var(--success)" },
+  { value: false, label: "Empty", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<boolean>>;
 
 const SOURCE_VARIANTS: Record<IftaMileageSource, BadgeVariant> = {
-  Manual: "purple",
+  Manual: "info",
   RouteCalculation: "info",
-  Telematics: "secondary",
+  Telematics: "neutral",
 };
 
 export function getColumns(
@@ -133,7 +133,7 @@ export function getColumns(
       accessorKey: "source",
       header: t("Source"),
       cell: ({ row }) => (
-        <Badge variant={SOURCE_VARIANTS[row.original.source]} className="px-1.5 py-0 text-[10px]">
+        <Badge variant={SOURCE_VARIANTS[row.original.source]} className="px-1.5 py-0 text-2xs">
           {IFTA_MILEAGE_SOURCE_LABELS[row.original.source]}
         </Badge>
       ),

@@ -78,7 +78,7 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
             isMine
               ? "self-end rounded-br-md bg-primary text-primary-foreground"
               : "rounded-bl-md bg-muted",
-            urgent && !isMine && "border border-orange-500/40 bg-orange-500/10",
+            urgent && !isMine && "border border-warning/40 bg-warning/10",
           )}
         >
           {comment.comment}
@@ -130,7 +130,7 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
         <MessageSquareTextIcon className="size-4 text-muted-foreground" />
         <h2 className="text-sm font-semibold">{t("Dispatch chat")}</h2>
         <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-green-500" />
+          <span className="size-1.5 rounded-full bg-success" />
           {t("Live")}
         </span>
       </div>

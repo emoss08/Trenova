@@ -163,7 +163,7 @@ function renderTimestamp(label: string, timestamp?: number | null) {
       <span>{label}</span>
       <HoverCardTimestamp
         timestamp={timestamp}
-        className="max-w-[132px] text-[11px]"
+        className="max-w-[132px] text-xs"
         side="top"
         align="start"
       />

@@ -10,8 +10,8 @@ export const emailProviderChoices: SelectOption[] = [
 ];
 
 export const emailProfileStatusChoices: SelectOption[] = [
-  { value: "Active", label: "Active", color: "#15803d" },
-  { value: "Inactive", label: "Inactive", color: "#dc2626" },
+  { value: "Active", label: "Active", color: "var(--success)" },
+  { value: "Inactive", label: "Inactive", color: "var(--danger)" },
 ];
 
 export const emailPurposes = [

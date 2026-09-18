@@ -16,7 +16,7 @@ export const URGENCY_META: Record<
   Late: {
     label: "Late",
     description: "Pickup window already open",
-    variant: "inactive",
+    variant: "danger",
     dotClass: "bg-destructive",
   },
   Now: {
@@ -29,18 +29,18 @@ export const URGENCY_META: Record<
     label: "Today",
     description: "Picks up later today",
     variant: "info",
-    dotClass: "bg-blue-500",
+    dotClass: "bg-info",
   },
   Tomorrow: {
     label: "Tomorrow",
     description: "Picks up tomorrow",
-    variant: "purple",
-    dotClass: "bg-purple-500",
+    variant: "info",
+    dotClass: "bg-accent-violet",
   },
   Planned: {
     label: "Planned",
     description: "Further out",
-    variant: "outline",
+    variant: "neutral",
     dotClass: "bg-muted-foreground/50",
   },
 };
@@ -71,7 +71,7 @@ export const AVAILABILITY_META: Record<
 > = {
   Open: {
     label: "Open",
-    variant: "active",
+    variant: "success",
     dotClass: "bg-success",
     labelClass: "text-success",
   },
@@ -84,20 +84,20 @@ export const AVAILABILITY_META: Record<
   Working: {
     label: "Working",
     variant: "info",
-    dotClass: "bg-blue-500",
-    labelClass: "text-blue-600 dark:text-blue-400",
+    dotClass: "bg-info",
+    labelClass: "text-info-foreground",
   },
   Blocked: {
     label: "Blocked",
-    variant: "inactive",
+    variant: "danger",
     dotClass: "bg-destructive",
     labelClass: "text-destructive",
   },
   TimeOff: {
     label: "Time off",
-    variant: "purple",
-    dotClass: "bg-purple-500",
-    labelClass: "text-purple-600 dark:text-purple-400",
+    variant: "info",
+    dotClass: "bg-accent-violet",
+    labelClass: "text-accent-violet-on-subtle",
   },
 };
 
@@ -145,10 +145,10 @@ export const AVAILABILITY_SORT_RANK: Record<string, number> = {
  * shows, so the console and that dialog never disagree about what "tight" means.
  */
 export const VERDICT_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  feasible: { label: "Feasible", variant: "active" },
+  feasible: { label: "Feasible", variant: "success" },
   tight: { label: "Tight", variant: "warning" },
-  infeasible: { label: "Infeasible", variant: "inactive" },
-  unknown: { label: "Unknown", variant: "outline" },
+  infeasible: { label: "Infeasible", variant: "danger" },
+  unknown: { label: "Unknown", variant: "neutral" },
 };
 
 export function verdictMeta(value: string) {
@@ -156,9 +156,9 @@ export function verdictMeta(value: string) {
 }
 
 export const SEVERITY_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  Block: { label: "Blocking", variant: "inactive" },
+  Block: { label: "Blocking", variant: "danger" },
   Warn: { label: "Warning", variant: "warning" },
-  Info: { label: "Info", variant: "outline" },
+  Info: { label: "Info", variant: "neutral" },
 };
 
 export function severityMeta(value: string) {
@@ -168,10 +168,10 @@ export function severityMeta(value: string) {
 export const DUTY_STATUS_META: Record<string, { label: string; variant: BadgeVariant }> = {
   driving: { label: "Driving", variant: "info" },
   onDuty: { label: "On duty", variant: "warning" },
-  offDuty: { label: "Off duty", variant: "outline" },
-  sleeperBed: { label: "Sleeper", variant: "purple" },
-  yardMove: { label: "Yard move", variant: "teal" },
-  personalConveyance: { label: "Personal", variant: "teal" },
+  offDuty: { label: "Off duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper", variant: "info" },
+  yardMove: { label: "Yard move", variant: "info" },
+  personalConveyance: { label: "Personal", variant: "info" },
 };
 
 export function dutyStatusMeta(value: string) {
@@ -179,8 +179,8 @@ export function dutyStatusMeta(value: string) {
 }
 
 export function scoreTone(score: number): string {
-  if (score >= 75) return "text-green-600 dark:text-green-400";
-  if (score >= 50) return "text-amber-600 dark:text-amber-400";
+  if (score >= 75) return "text-success-foreground";
+  if (score >= 50) return "text-warning-foreground";
   return "text-muted-foreground";
 }
 

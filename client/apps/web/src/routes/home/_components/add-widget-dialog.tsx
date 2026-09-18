@@ -420,7 +420,7 @@ function CategoryRail({
             <span className="min-w-0 flex-1 truncate">{t(tab.label)}</span>
             <span
               className={cn(
-                "shrink-0 text-[10px] tabular-nums",
+                "shrink-0 text-2xs tabular-nums",
                 active ? "text-muted-foreground" : "text-muted-foreground/70",
               )}
             >
@@ -472,7 +472,7 @@ function WidgetCard({
             onKeyDown={handleKeyDown}
             className={cn(
               "group/widget-card border-border bg-card relative flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all",
-              "focus-visible:ring-brand/40 focus-visible:border-brand focus-visible:ring-4 focus-visible:outline-none",
+"ui-focus-ring",
               disabled
                 ? "cursor-not-allowed opacity-45"
                 : "hover:border-brand/45 hover:bg-accent/30 hover:shadow-sm",
@@ -495,14 +495,14 @@ function WidgetCard({
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{t(option.label)}</span>
               {onCanvas > 0 && (
                 <Badge
-                  variant="outline"
-                  className="border-border/70 h-4 shrink-0 border px-1 text-[9px]"
+                  variant="neutral" appearance="outline"
+                  className="border-border/70 h-4 shrink-0 border px-1 text-3xs"
                 >
                   {onCanvas > 1 ? t("{0}× on canvas", onCanvas) : t("On canvas")}
                 </Badge>
               )}
             </span>
-            <span className="text-muted-foreground line-clamp-2 text-[11px] leading-snug">
+            <span className="text-muted-foreground line-clamp-2 text-xs leading-snug">
               {t(option.description)}
             </span>
           </span>
@@ -573,8 +573,8 @@ function GalleryFooter({
           <>
             {t("Room for {0} more.", remaining)}
             <span className="hidden sm:inline">
-              {t("Use")} <Kbd className="h-4 px-1 text-[10px]">&darr;</Kbd>{" "}
-              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-[10px]">&crarr;</Kbd>{" "}
+              {t("Use")} <Kbd className="h-4 px-1 text-2xs">&darr;</Kbd>{" "}
+              {t("to reach the cards and")} <Kbd className="h-4 px-1 text-2xs">&crarr;</Kbd>{" "}
               {t("to add one.")}
             </span>
           </>

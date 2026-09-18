@@ -60,10 +60,10 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
       cell: ({ row }) => (
         <span
           className={cn(
-            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
             row.original.direction === "Earning"
-              ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-              : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+              ? "bg-success-subtle text-success-foreground dark:bg-success-subtle dark:text-success-foreground"
+              : "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground",
           )}
         >
           {row.original.direction}
@@ -86,7 +86,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
         <span className="text-xs">
           {row.original.name}
           {row.original.isSystem && (
-            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-[10px]">
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-2xs">
               {t("System")}
             </span>
           )}
@@ -101,7 +101,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
       cell: ({ row }) => {
         if (row.original.direction !== "Earning") return null;
         return (
-          <span className="text-muted-foreground text-[11px]">
+          <span className="text-muted-foreground text-xs">
             {row.original.taxable ? t("Taxable") : t("Reimbursement")}
             {!row.original.countsTowardGuarantee && ` ${t("· excl. guarantee")}`}
           </span>
@@ -119,7 +119,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PayCodeRow>[] {
             <span className="text-muted-foreground">{row.original.glAccount.name}</span>
           </span>
         ) : (
-          <span className="text-muted-foreground text-[11px]">{t("Default")}</span>
+          <span className="text-muted-foreground text-xs">{t("Default")}</span>
         ),
       size: 200,
     },

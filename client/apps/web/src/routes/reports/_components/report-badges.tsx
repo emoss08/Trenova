@@ -8,17 +8,17 @@ import {
 
 const RUN_STATUS_VARIANTS: Record<string, BadgeVariant> = {
   queued: "info",
-  running: "purple",
-  succeeded: "active",
-  failed: "inactive",
-  canceled: "outline",
+  running: "info",
+  succeeded: "success",
+  failed: "danger",
+  canceled: "neutral",
   expired: "warning",
 };
 
 const DEFINITION_STATUS_VARIANTS: Record<string, BadgeVariant> = {
-  draft: "outline",
-  active: "active",
-  archived: "secondary",
+  draft: "neutral",
+  active: "success",
+  archived: "neutral",
   needs_attention: "warning",
 };
 
@@ -41,12 +41,12 @@ export function ReportDefinitionStatusBadge({ status }: { status: string }) {
 
 export function ReportVisibilityBadge({ visibility }: { visibility: string }) {
   return (
-    <Badge variant={visibility === "shared" ? "teal" : "outline"}>
+    <Badge variant={visibility === "shared" ? "info" : "neutral"}>
       {REPORT_VISIBILITY_LABELS[visibility] ?? visibility}
     </Badge>
   );
 }
 
 export function ReportFormatBadge({ format }: { format: string }) {
-  return <Badge variant="secondary">{format.toUpperCase()}</Badge>;
+  return <Badge variant="neutral">{format.toUpperCase()}</Badge>;
 }

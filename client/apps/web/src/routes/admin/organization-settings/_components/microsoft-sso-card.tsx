@@ -374,7 +374,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <CopyableInput value={tenantLoginUrl} label={t("Login URL")} />
                         <p className="text-muted-foreground text-xs">
                           {t("Replace")}{" "}
-                          <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
+                          <code className="bg-muted rounded px-1 py-0.5 font-mono text-xs">
                             {t("{loginSlug}")}
                           </code>{" "}
                           {t("with your organization's login slug from General settings.")}

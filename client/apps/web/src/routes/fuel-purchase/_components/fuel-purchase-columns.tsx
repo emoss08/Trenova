@@ -17,8 +17,8 @@ import {
 import { FUEL_QUANTITY_SCALE } from "@trenova/shared/types/fuel-purchase";
 
 const TAX_PAID_OPTIONS = [
-  { value: true, label: "Tax paid", color: "#15803d" },
-  { value: false, label: "Untaxed", color: "#b45309" },
+  { value: true, label: "Tax paid", color: "var(--success)" },
+  { value: false, label: "Untaxed", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<boolean>>;
 
 export function getColumns(
@@ -200,8 +200,8 @@ export function getColumns(
       header: t("Tax"),
       cell: ({ row }) => (
         <Badge
-          variant={row.original.taxPaid ? "active" : "warning"}
-          className="px-1.5 py-0 text-[10px]"
+          variant={row.original.taxPaid ? "success" : "warning"}
+          className="px-1.5 py-0 text-2xs"
         >
           {row.original.taxPaid ? t("Paid") : t("Untaxed")}
         </Badge>

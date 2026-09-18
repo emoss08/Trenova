@@ -150,7 +150,7 @@ export const SuggestionList = forwardRef<SuggestionListHandle, SuggestionListPro
 
     if (isError) {
       return (
-        <div className="p-2 text-sm text-red-500">{translate("Failed to load suggestions")}</div>
+        <div className="p-2 text-sm text-danger-foreground">{translate("Failed to load suggestions")}</div>
       );
     }
 

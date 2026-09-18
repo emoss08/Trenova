@@ -104,7 +104,7 @@ describe("compileFormatRules", () => {
       leafColumns,
     );
 
-    expect(evaluate?.(makeRow({ status: "active" }))).toContain("emerald");
+    expect(evaluate?.(makeRow({ status: "active" }))).toContain("success");
     expect(evaluate?.(makeRow({ status: "Inactive" }))).toBeUndefined();
   });
 
@@ -117,8 +117,8 @@ describe("compileFormatRules", () => {
       leafColumns,
     );
 
-    expect(evaluate?.(makeRow({ amount: 200 }))).toContain("red");
-    expect(evaluate?.(makeRow({ amount: 75 }))).toContain("amber");
+    expect(evaluate?.(makeRow({ amount: 200 }))).toContain("danger");
+    expect(evaluate?.(makeRow({ amount: 75 }))).toContain("warning");
     expect(evaluate?.(makeRow({ amount: 10 }))).toBeUndefined();
   });
 

@@ -46,7 +46,7 @@ export function AssistantLauncher({ pendingCount, onClick }: AssistantLauncherPr
                 ? t("Open the assistant, {0} changes await your decision", pendingCount)
                 : t("Open the assistant")
             }
-            className="bg-foreground text-background ring-foreground/10 focus-visible:ring-ring/50 fixed right-5 bottom-5 z-50 flex size-12 items-center justify-center shadow-lg shadow-black/15 ring-1 outline-none transition-shadow hover:shadow-xl focus-visible:ring-[3px]"
+ className="ui-focus-ring bg-foreground text-background ring-foreground/10 fixed right-5 bottom-5 z-50 flex size-12 items-center justify-center shadow-lg shadow-black/15 ring-1 outline-none transition-shadow hover:shadow-xl"
           />
         }
       >

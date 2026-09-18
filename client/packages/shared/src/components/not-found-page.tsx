@@ -60,18 +60,18 @@ export function NotFoundPage({
 
           <div className="grid gap-5 text-left text-sm text-muted-foreground sm:grid-cols-3">
             <div>
-              <p className="text-[11px] tracking-wide uppercase">{t("Need Help?")}</p>
+              <p className="text-xs tracking-wide uppercase">{t("Need Help?")}</p>
               <p className="mt-2 text-base font-medium text-foreground">
                 {t("support@trenova.com")}
               </p>
             </div>
             <div>
-              <p className="text-[11px] tracking-wide uppercase">{t("Quick Links")}</p>
+              <p className="text-xs tracking-wide uppercase">{t("Quick Links")}</p>
               <p className="mt-2">{t("Dashboard")}</p>
               <p>{t("Shipments")}</p>
             </div>
             <div className="sm:text-right">
-              <p className="text-[11px] tracking-wide uppercase">{t("Navigation")}</p>
+              <p className="text-xs tracking-wide uppercase">{t("Navigation")}</p>
               <p className="mt-2">{t("Go back to top")}</p>
             </div>
           </div>

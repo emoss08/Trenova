@@ -46,7 +46,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerChecklistTemplateRow
         <span className="flex items-center gap-2 font-medium">
           {row.original.code}
           {row.original.isDefault ? (
-            <Badge variant="purple" className="px-1.5 py-0 text-[10px]">
+            <Badge variant="info" className="px-1.5 py-0 text-2xs">
               {t("Default")}
             </Badge>
           ) : null}

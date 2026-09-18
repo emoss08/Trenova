@@ -101,7 +101,7 @@ export default function EscrowTable() {
             </DialogDescription>
           </DialogHeader>
           {withBalance > 0 && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
+            <p className="text-xs text-warning-foreground">
               {t(
                 "{0} selected account{1} a balance and will fail to close until the funds are refunded or applied.",
                 withBalance,

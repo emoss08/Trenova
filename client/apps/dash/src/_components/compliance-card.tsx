@@ -49,9 +49,9 @@ export function ComplianceCard() {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {data.isQualified ? (
-            <ShieldCheckIcon className="size-4 text-green-600 dark:text-green-400" />
+            <ShieldCheckIcon className="size-4 text-success-foreground" />
           ) : (
-            <ShieldAlertIcon className="size-4 text-red-600 dark:text-red-400" />
+            <ShieldAlertIcon className="size-4 text-danger-foreground" />
           )}
           <h2 className="text-sm font-semibold">{t("Qualification file")}</h2>
         </div>

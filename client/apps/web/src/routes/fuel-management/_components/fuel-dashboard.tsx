@@ -20,7 +20,7 @@ import { FuelDashboardEmpty } from "./fuel-management-empty";
 const priceChartConfig = {
   price: {
     label: "Diesel $/gal",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
 } satisfies ChartConfig;
 
@@ -176,8 +176,8 @@ function IndexPriceCard({
           <span
             className={cn(
               "flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              isUp && "text-red-600 dark:text-red-400",
-              isDown && "text-emerald-600 dark:text-emerald-400",
+              isUp && "text-danger-foreground",
+              isDown && "text-success-foreground",
             )}
           >
             {isUp ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}

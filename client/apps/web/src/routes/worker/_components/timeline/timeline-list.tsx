@@ -84,7 +84,7 @@ export function TimelineList({ events, canAmend, onAmend }: TimelineListProps) {
         <section key={group.year} className="flex flex-col gap-3">
           <h4
             data-testid={`timeline-year-${group.year}`}
-            className="text-muted-foreground sticky top-0 z-10 bg-background/95 py-1 text-[11px] font-semibold tracking-wide uppercase backdrop-blur"
+            className="text-muted-foreground sticky top-0 z-10 bg-background/95 py-1 text-xs font-semibold tracking-wide uppercase backdrop-blur"
           >
             {group.year}
           </h4>
@@ -137,7 +137,7 @@ function TimelineItem({
           {formatUnixDateMedium(event.effectiveAt)}
         </span>
         {event.amendedAt ? (
-          <Badge variant="warning" className="px-1.5 py-0 text-[10px]">
+          <Badge variant="warning" className="px-1.5 py-0 text-2xs">
             {t("Amended")}
           </Badge>
         ) : null}
@@ -162,7 +162,7 @@ function TimelineItem({
           {pairs.map((pair) => (
             <li
               key={pair.key}
-              className="bg-muted/50 border-border flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]"
+              className="bg-muted/50 border-border flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs"
             >
               <span className="text-muted-foreground">{t(pair.label)}:</span>
               {pair.from ? <span className="line-through opacity-70">{pair.from}</span> : null}
@@ -179,7 +179,7 @@ function TimelineItem({
         <p className="text-muted-foreground text-xs whitespace-pre-wrap">{event.notes}</p>
       ) : null}
 
-      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[11px]">
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
         <span>{t("Recorded by {0}", recordedBy)}</span>
         {event.document ? (
           <span className="flex items-center gap-1" title={event.document.originalName}>

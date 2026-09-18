@@ -36,11 +36,11 @@ const MIN_SPAN_SECONDS = 1800;
 const NOW_TICK_MS = 60_000;
 
 const UNCOVERED_TONE: Record<UrgencyBucket, string> = {
-  Late: "bg-destructive/75 text-white hover:bg-destructive/90",
+  Late: "bg-destructive/75 text-foreground-on-solid hover:bg-destructive/90",
   Now: "bg-warning/80 text-warning-foreground hover:bg-warning",
-  Today: "bg-blue-500/70 text-white hover:bg-blue-500/85",
-  Tomorrow: "bg-purple-500/65 text-white hover:bg-purple-500/80",
-  Planned: "bg-muted-foreground/40 text-white hover:bg-muted-foreground/55",
+  Today: "bg-info/70 text-foreground-on-solid hover:bg-info/85",
+  Tomorrow: "bg-accent-violet/65 text-foreground-on-solid hover:bg-accent-violet/80",
+  Planned: "bg-muted-foreground/40 text-foreground-on-solid hover:bg-muted-foreground/55",
 };
 
 type MoveSpan = {
@@ -183,7 +183,7 @@ function UncoveredBar({
       title={`${span.move.proNumber} · ${span.move.originCity} → ${span.move.destinationCity}`}
       onClick={() => onSelect(span.move.moveId)}
       className={cn(
-        "focus-visible:ring-brand absolute flex cursor-grab items-center overflow-hidden rounded px-1.5 transition-[opacity,box-shadow] outline-none focus-visible:ring-2 active:cursor-grabbing",
+"ui-focus-ring absolute flex cursor-grab items-center overflow-hidden rounded px-1.5 transition-[opacity,box-shadow] outline-none active:cursor-grabbing",
         tone,
         isDragging && "opacity-40",
         isSelected && "shadow-[0_0_0_2px_var(--brand)]",
@@ -195,7 +195,7 @@ function UncoveredBar({
         top: ROW_PADDING_PX / 2 + lane * LANE_HEIGHT_PX + (LANE_HEIGHT_PX - BAR_HEIGHT_PX) / 2,
       }}
     >
-      <span className="truncate font-mono text-[10px] font-semibold tabular-nums">
+      <span className="truncate font-mono text-2xs font-semibold tabular-nums">
         {span.move.proNumber}
       </span>
     </button>
@@ -224,7 +224,7 @@ function CommitmentBar({
       title={`${span.commitment.proNumber} → ${span.commitment.destinationCity}, ${span.commitment.destinationState}`}
       onClick={() => onSelect(span.commitment.moveId)}
       className={cn(
-        "focus-visible:ring-brand absolute flex cursor-pointer items-center overflow-hidden rounded px-1.5 transition-colors outline-none focus-visible:ring-2",
+"ui-focus-ring absolute flex cursor-pointer items-center overflow-hidden rounded px-1.5 transition-colors outline-none",
         inTransit
           ? "bg-brand text-brand-foreground hover:bg-brand/85"
           : "bg-brand/60 text-brand-foreground hover:bg-brand/75",
@@ -236,7 +236,7 @@ function CommitmentBar({
         top: ROW_PADDING_PX / 2 + lane * LANE_HEIGHT_PX + (LANE_HEIGHT_PX - BAR_HEIGHT_PX) / 2,
       }}
     >
-      <span className="truncate font-mono text-[10px] font-semibold tabular-nums">
+      <span className="truncate font-mono text-2xs font-semibold tabular-nums">
         {span.commitment.proNumber}
       </span>
     </button>
@@ -305,15 +305,15 @@ function DriverLaneRow({
               alt={`${driver.firstName} ${driver.lastName}`}
             />
           )}
-          <AvatarFallback className="text-[9px]">
+          <AvatarFallback className="text-3xs">
             {workerInitials(driver.firstName, driver.lastName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex min-w-0 flex-col">
-          <span className="truncate text-[11.5px] font-medium">
+          <span className="truncate text-xs font-medium">
             {driver.firstName} {driver.lastName}
           </span>
-          <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
+          <span className="text-muted-foreground truncate text-3xs tabular-nums">
             {driver.tractorCode || t("No tractor")} · {t(availability.label)}
           </span>
         </div>
@@ -333,10 +333,10 @@ function DriverLaneRow({
             <div
               key={`${pto.startDate}-${pto.endDate}-${pto.type}`}
               title={`${pto.type} time off`}
-              className="absolute inset-y-0 flex items-center justify-center bg-purple-500/15"
+              className="absolute inset-y-0 flex items-center justify-center bg-accent-violet/15"
               style={{ left: geometry.left, width: geometry.width }}
             >
-              <MoonIcon className="size-3 text-purple-500/70" aria-hidden />
+              <MoonIcon className="size-3 text-accent-violet-on-subtle/70" aria-hidden />
             </div>
           );
         })}
@@ -384,8 +384,8 @@ function UnassignedLaneRow({
           <InboxIcon className="size-3.5" />
         </span>
         <div className="flex min-w-0 flex-col">
-          <span className="text-warning truncate text-[11.5px] font-medium">{t("Uncovered")}</span>
-          <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
+          <span className="text-warning truncate text-xs font-medium">{t("Uncovered")}</span>
+          <span className="text-muted-foreground truncate text-3xs tabular-nums">
             {t(
               "{0} {1} · drag onto a driver",
               row.spans.length,
@@ -508,7 +508,7 @@ export function DispatchTimeline({
             className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
             style={{ width: RAIL_WIDTH_PX }}
           >
-            <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
+            <span className="text-muted-foreground text-3xs font-semibold tracking-wide uppercase">
               {t("Drivers · {0}", drivers.length)}
             </span>
           </div>
@@ -522,7 +522,7 @@ export function DispatchTimeline({
                 )}
                 style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
               >
-                <span className="truncate text-[10px] font-semibold tracking-wide uppercase">
+                <span className="truncate text-2xs font-semibold tracking-wide uppercase">
                   {t(day.label)}
                 </span>
               </div>
@@ -531,7 +531,7 @@ export function DispatchTimeline({
               hourTicks.map((tick) => (
                 <span
                   key={tick.time}
-                  className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
+                  className="font-table text-muted-foreground absolute -translate-x-1/2 text-3xs tabular-nums"
                   style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
                 >
                   {t(tick.label)}
@@ -539,7 +539,7 @@ export function DispatchTimeline({
               ))}
             {nowInRange && (
               <span
-                className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-[8.5px] font-semibold tabular-nums"
+                className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-3xs font-semibold tabular-nums"
                 style={{ left: nowX }}
               >
                 {formatUnixInUserTimezone(now, {

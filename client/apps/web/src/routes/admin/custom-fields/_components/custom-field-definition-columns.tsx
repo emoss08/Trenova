@@ -9,11 +9,11 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const fieldTypeBadgeVariants: Record<FieldType, BadgeVariant> = {
   text: "info",
-  number: "teal",
-  date: "purple",
+  number: "info",
+  date: "info",
   boolean: "warning",
-  select: "orange",
-  multiSelect: "pink",
+  select: "warning",
+  multiSelect: "info",
 };
 
 export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[] {
@@ -50,7 +50,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
       accessorKey: "resourceType",
       header: t("Resource Type"),
       cell: ({ row }) => (
-        <Badge variant="outline" className="capitalize">
+        <Badge variant="neutral" appearance="outline" className="capitalize">
           {row.original.resourceType}
         </Badge>
       ),
@@ -86,7 +86,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
       accessorKey: "isRequired",
       header: t("Required"),
       cell: ({ row }) => (
-        <Badge variant={row.original.isRequired ? "active" : "inactive"}>
+        <Badge variant={row.original.isRequired ? "success" : "danger"}>
           {row.original.isRequired ? t("Yes") : t("No")}
         </Badge>
       ),
@@ -96,7 +96,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomFieldDefinitionRow>[
       accessorKey: "isActive",
       header: t("Active"),
       cell: ({ row }) => (
-        <Badge variant={row.original.isActive ? "active" : "inactive"}>
+        <Badge variant={row.original.isActive ? "success" : "danger"}>
           {row.original.isActive ? t("Active") : t("Inactive")}
         </Badge>
       ),

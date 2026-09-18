@@ -99,7 +99,7 @@ function HistoryEntry({ entry }: { readonly entry: RateAgreementRule }) {
         </p>
       </div>
       {isCurrent && (
-        <Badge variant="secondary" className="text-[10px]">
+        <Badge variant="neutral" className="text-2xs">
           current
         </Badge>
       )}

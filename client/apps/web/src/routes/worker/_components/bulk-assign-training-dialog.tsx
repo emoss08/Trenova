@@ -158,7 +158,7 @@ export function BulkAssignTrainingDialog({
                               aria-label={course.name}
                             />
                             <span className="flex-1 truncate text-sm">{course.name}</span>
-                            <Badge variant="outline" className="shrink-0">
+                            <Badge variant="neutral" appearance="outline" className="shrink-0">
                               {TRAINING_CATEGORY_LABELS[
                                 course.category as keyof typeof TRAINING_CATEGORY_LABELS
                               ] ?? course.category}

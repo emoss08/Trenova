@@ -169,7 +169,7 @@ function SuggestionButton({
       <button
         type="button"
         onClick={() => onAction?.(suggestion.action!)}
-        className="text-2xs rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-left font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+        className="text-2xs rounded-md border border-success/30 bg-success/10 px-2.5 py-1.5 text-left font-medium text-success-foreground transition-colors hover:bg-success/20 dark:text-success-foreground"
       >
         {t(suggestion.label)}
       </button>
@@ -349,14 +349,14 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     }
 
     if (data.accepted)
-      return <span className="text-2xs text-emerald-500">{t("Accepted: {0}", data.accepted)}</span>;
+      return <span className="text-2xs text-success-foreground">{t("Accepted: {0}", data.accepted)}</span>;
     if (data.set)
       return <span className="text-2xs">{t("Set {0} = {1}", data.set, data.value)}</span>;
     if (data.set_required) {
       const label = data.entity_id
         ? `Set to ${data.label || data.entity_id}`
         : `Set ${data.set_required}`;
-      return <span className="text-2xs text-emerald-500">{label}</span>;
+      return <span className="text-2xs text-success-foreground">{label}</span>;
     }
 
     return <span className="text-2xs text-muted-foreground">{result.slice(0, 100)}</span>;
@@ -823,7 +823,7 @@ export default function AIActivityPanel({
           </div>
           <div className="bg-muted h-0.5 overflow-hidden rounded-full">
             <m.div
-              className={cn("h-full rounded-full", isReady ? "bg-emerald-500" : "bg-foreground/40")}
+              className={cn("h-full rounded-full", isReady ? "bg-success" : "bg-foreground/40")}
               animate={{ width: `${(filledRequired / 4) * 100}%` }}
               transition={{ duration: 0.4 }}
             />
@@ -851,10 +851,10 @@ export default function AIActivityPanel({
             <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex items-center gap-2 rounded-md bg-emerald-500/10 px-2.5 py-1.5"
+              className="flex items-center gap-2 rounded-md bg-success/10 px-2.5 py-1.5"
             >
-              <CheckCircle2Icon className="size-3 text-emerald-500" />
-              <span className="text-2xs text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2Icon className="size-3 text-success-foreground" />
+              <span className="text-2xs text-success-foreground">
                 {t("Ready to create shipment")}
               </span>
             </m.div>
@@ -899,7 +899,7 @@ export default function AIActivityPanel({
                   )}
 
                   {/* Message text — streams in real-time */}
-                  <div className="text-foreground text-[13px] leading-relaxed">
+                  <div className="text-foreground text-base leading-relaxed">
                     {msg.text}
                     {isStreaming && msg.id === streamingMsgId.current && msg.text.length > 0 && (
                       <span className="bg-foreground/40 ml-0.5 inline-block h-[13px] w-[1.5px] animate-pulse align-text-bottom" />
@@ -911,7 +911,7 @@ export default function AIActivityPanel({
                     msg.id === streamingMsgId.current &&
                     msg.text.length === 0 &&
                     msg.toolCalls?.length === 0 && (
-                      <TextShimmer as="span" className="text-[13px]" duration={2}>
+                      <TextShimmer as="span" className="text-base" duration={2}>
                         {t("Thinking")}
                       </TextShimmer>
                     )}
@@ -953,7 +953,7 @@ export default function AIActivityPanel({
 
       {/* Input */}
       <div className="shrink-0 border-t p-2">
-        <div className="bg-background focus-within:ring-ring flex items-end gap-1.5 rounded-lg border px-3 py-1.5 focus-within:ring-1">
+ <div className="ui-container-focus-ring bg-background flex items-end gap-1.5 rounded-lg border px-3 py-1.5">
           <textarea
             ref={inputRef}
             value={inputValue}

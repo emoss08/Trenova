@@ -58,7 +58,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
   if (readiness.uncovered.length === 0) {
     return (
       <Alert>
-        <CheckCircle2Icon className="size-4 text-emerald-500" />
+        <CheckCircle2Icon className="size-4 text-success-foreground" />
         <AlertTitle>{t("Every AI task has a provider")}</AlertTitle>
         <AlertDescription>
           {t("Agents you enable will run. Routing is managed on the Providers tab.")}
@@ -87,7 +87,7 @@ export function AIReadinessBanner({ onOpenProviders }: AIReadinessBannerProps) {
         </p>
         <div className="flex flex-wrap gap-1.5">
           {readiness.uncovered.map((task) => (
-            <Badge key={task.task} variant="outline">
+            <Badge key={task.task} variant="neutral" appearance="outline">
               {task.label}
               {task.requiresTrust ? ` · ${t("needs a trusted provider")}` : ""}
             </Badge>

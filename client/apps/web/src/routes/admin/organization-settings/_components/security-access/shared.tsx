@@ -36,9 +36,9 @@ export function StatusTile({
         <span
           className={cn(
             "flex size-8 shrink-0 items-center justify-center rounded-md border [&_svg]:size-4",
-            tone === "active" && "border-green-600/30 bg-green-600/10 text-green-700",
-            tone === "warning" && "border-yellow-600/30 bg-yellow-600/10 text-yellow-700",
-            tone === "info" && "border-blue-600/30 bg-blue-600/10 text-blue-700",
+            tone === "active" && "border-success/30 bg-success/10 text-success-foreground",
+            tone === "warning" && "border-warning/30 bg-warning/10 text-warning-foreground",
+            tone === "info" && "border-info/30 bg-info/10 text-info-foreground",
             tone === "muted" && "bg-muted text-muted-foreground",
           )}
         >
@@ -286,7 +286,7 @@ export function ErrorState({ label, compact }: { label: string; compact?: boolea
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg border border-red-600/30 bg-red-600/10 text-sm text-red-700 dark:text-red-400",
+        "flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 text-sm text-danger-foreground",
         compact ? "m-3 p-3" : "p-4",
       )}
     >

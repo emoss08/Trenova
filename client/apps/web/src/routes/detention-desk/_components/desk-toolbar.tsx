@@ -93,7 +93,7 @@ export function DeskToolbar({
               onClick={() => onLane(filter.id)}
               className={cn(
                 "-mb-px border-b-2 pt-1 pb-2 text-xs transition-colors",
-                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none",
+"ui-focus-ring focus-visible:-outline-offset-2",
                 "disabled:pointer-events-none disabled:opacity-40",
                 isActive
                   ? "border-foreground text-foreground"

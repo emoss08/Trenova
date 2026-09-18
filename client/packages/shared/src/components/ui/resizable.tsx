@@ -24,7 +24,7 @@ function ResizableHandle({
   return (
     <Separator
       className={cn(
-        "relative flex shrink-0 items-center justify-center bg-border after:absolute focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-hidden",
+        "relative flex shrink-0 items-center justify-center bg-border after:absolute ui-focus-ring",
         "aria-[orientation=vertical]:w-px aria-[orientation=vertical]:cursor-col-resize aria-[orientation=vertical]:self-stretch aria-[orientation=vertical]:after:inset-y-0 aria-[orientation=vertical]:after:-right-1 aria-[orientation=vertical]:after:-left-1",
         "aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:w-full aria-[orientation=horizontal]:cursor-row-resize aria-[orientation=horizontal]:after:inset-x-0 aria-[orientation=horizontal]:after:-top-1 aria-[orientation=horizontal]:after:-bottom-1 [&[aria-orientation=horizontal]>div]:rotate-90",
         className,

@@ -166,7 +166,7 @@ export function DelegationPanel() {
                     />
                     <span className="truncate">{delegation.delegate?.name ?? "someone"}</span>
                   </span>
-                  <Badge variant="secondary">{approvalScopeLabel(delegation.scope)}</Badge>
+                  <Badge variant="neutral">{approvalScopeLabel(delegation.scope)}</Badge>
                   <Badge variant={delegationStateTone(state)}>
                     {DELEGATION_STATE_LABELS[state]}
                   </Badge>

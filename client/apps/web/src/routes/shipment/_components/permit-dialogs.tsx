@@ -319,8 +319,8 @@ export function PermitWaiveDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-start gap-2 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-4 py-3">
-          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
+        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3">
+          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-warning-foreground" />
           <p className="text-muted-foreground text-xs">
             {t(
               "Waiving does not make the movement legal. It records that your organization accepts the compliance risk and releases the dispatch block. Your reason is the audit trail if the load is stopped.",

@@ -121,7 +121,7 @@ export function Composer({
 
             <div
               className={cn(
-                "assistant-focus-ring border-input focus-within:border-brand relative flex flex-col overflow-hidden rounded-2xl border transition-colors duration-150",
+"ui-container-focus-ring assistant-focus-ring border-input relative flex flex-col overflow-hidden rounded-2xl border transition-colors duration-150",
                 "bg-muted/50 focus-within:bg-muted",
               )}
             >
@@ -158,7 +158,7 @@ export function Composer({
                 minRows={1}
                 maxRows={compact ? 5 : 8}
                 aria-label={t("Message the assistant")}
-                className="resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-sm"
+ className="ui-focus-ring resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none md:text-sm"
               />
 
               <div className="flex items-end justify-between gap-2 px-2 pb-2">

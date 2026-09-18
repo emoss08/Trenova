@@ -181,7 +181,7 @@ export function SegmentedControl<TValue extends string>({
             onClick={() => onValueChange(item.value)}
             className={cn(
               "flex min-w-0 flex-col items-center justify-center rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              "focus-visible:ring-ring/60 outline-none focus-visible:ring-2",
+              "ui-focus-ring outline-none",
               "disabled:pointer-events-none disabled:opacity-50",
               fullWidth && "flex-1",
               isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",

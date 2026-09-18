@@ -71,7 +71,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           <span className="text-xs font-medium">
             {winner?.agreementName || t("No contract covered this lane")}
           </span>
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="neutral" appearance="outline" className="text-2xs">
             {outcome ? t(outcome.label) : quote.outcome}
           </Badge>
         </div>

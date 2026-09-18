@@ -18,7 +18,7 @@ describe("urgency", () => {
   });
 
   it("marks an already-open pickup window as the most severe", () => {
-    expect(urgencyMeta("Late").variant).toBe("inactive");
+    expect(urgencyMeta("Late").variant).toBe("danger");
   });
 
   it("falls back to Planned for an unrecognized bucket", () => {
@@ -28,8 +28,8 @@ describe("urgency", () => {
 
 describe("availability and verdict", () => {
   it("reads an open driver as active and a blocked one as inactive", () => {
-    expect(availabilityMeta("Open").variant).toBe("active");
-    expect(availabilityMeta("Blocked").variant).toBe("inactive");
+    expect(availabilityMeta("Open").variant).toBe("success");
+    expect(availabilityMeta("Blocked").variant).toBe("danger");
   });
 
   it("keeps the verdict vocabulary the assignment dialog already uses", () => {

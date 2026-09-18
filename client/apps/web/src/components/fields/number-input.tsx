@@ -74,7 +74,7 @@ export function NumberInput({
         className={cn(
           "border-input bg-muted flex h-7 w-full min-w-0 rounded-md border px-2 py-0.5 text-base outline-none md:text-sm",
           "placeholder:text-muted-foreground",
-          "focus-visible:border-brand focus-visible:ring-brand/20 focus-visible:ring-4 focus-visible:outline-hidden",
+"ui-focus-ring",
           "disabled:bg-input/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
           "transition-[border-color,box-shadow] duration-200 ease-in-out",
           sideText ? "pr-16" : "pr-12",

@@ -24,8 +24,8 @@ type CustomerMixProps = {
 };
 
 const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant }> = {
-  scheduled: { label: "Scheduled", variant: "outline" },
-  confirmed: { label: "Confirmed", variant: "active" },
+  scheduled: { label: "Scheduled", variant: "neutral" },
+  confirmed: { label: "Confirmed", variant: "success" },
   tentative: { label: "Tentative", variant: "warning" },
   unassigned: { label: "Needs coverage", variant: "warning" },
 };
@@ -51,14 +51,14 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
             variant="underline"
             className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"
           >
-            <TabsTab value="customers" className="h-6 px-2 text-[11px] hover:bg-transparent">
+            <TabsTab value="customers" className="h-6 px-2 text-xs hover:bg-transparent">
               {t("Customers")}
             </TabsTab>
-            <TabsTab value="pickups" className="h-7 px-2 text-[11px] hover:bg-transparent">
+            <TabsTab value="pickups" className="h-7 px-2 text-xs hover:bg-transparent">
               {t("Tomorrow's pickups")}
             </TabsTab>
           </TabsList>
-          <span className="text-muted-foreground font-mono text-[10px]">
+          <span className="text-muted-foreground font-mono text-2xs">
             {t("{0}d", customerMix.windowDays)}
           </span>
         </header>
@@ -90,9 +90,9 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
         <li key={entry.customerId} className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-[11.5px] font-medium">{entry.name}</span>
+              <span className="truncate text-xs font-medium">{entry.name}</span>
               <span
-                className="text-muted-foreground font-mono text-[10.5px] tabular-nums"
+                className="text-muted-foreground font-mono text-2xs tabular-nums"
                 title={`${formatCurrency(entry.revenue)} · ${entry.loads} ${pluralize("load", entry.loads)}`}
               >
                 {formatCompactCurrency(entry.revenue)} · {entry.loads}
@@ -110,7 +110,7 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
           </div>
           <span
             className={cn(
-              "w-10 text-right font-mono text-[10px] tabular-nums",
+              "w-10 text-right font-mono text-2xs tabular-nums",
               entry.trend > 0 && "text-success",
               entry.trend < 0 && "text-destructive",
               entry.trend === 0 && "text-muted-foreground",
@@ -231,12 +231,12 @@ function PickupsList({
               })
             }
           >
-            <span className="w-10 font-mono text-[11px] font-semibold tabular-nums">
+            <span className="w-10 font-mono text-xs font-semibold tabular-nums">
               {formatPickupTime(pickup.pickupWindowStart)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium">{pickup.customer}</p>
-              <p className="text-muted-foreground truncate font-mono text-[9.5px]">
+              <p className="truncate text-xs font-medium">{pickup.customer}</p>
+              <p className="text-muted-foreground truncate font-mono text-3xs">
                 {pickup.origin} → {pickup.destination}
               </p>
             </div>
@@ -245,7 +245,7 @@ function PickupsList({
                 {t(PICKUP_STATUS[pickup.status].label)}
               </Badge>
             ) : (
-              <span className="text-muted-foreground max-w-20 truncate font-mono text-[10px]">
+              <span className="text-muted-foreground max-w-20 truncate font-mono text-2xs">
                 {pickup.driver || PICKUP_STATUS[pickup.status].label}
               </span>
             )}
@@ -254,7 +254,7 @@ function PickupsList({
       ))}
       {isFetchingNextPage && (
         <li className="flex items-center justify-center py-3">
-          <TextShimmer className="font-mono text-[11px]" duration={1}>
+          <TextShimmer className="font-mono text-xs" duration={1}>
             {t("Loading more...")}
           </TextShimmer>
         </li>
@@ -266,7 +266,7 @@ function PickupsList({
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="text-muted-foreground flex h-full min-h-32 items-center justify-center px-3 py-6 text-center text-[11px]">
+    <div className="text-muted-foreground flex h-full min-h-32 items-center justify-center px-3 py-6 text-center text-xs">
       {label}
     </div>
   );

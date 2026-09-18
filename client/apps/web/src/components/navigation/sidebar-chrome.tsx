@@ -21,9 +21,9 @@ import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { SearchIcon } from "lucide-react";
 
 const ATTENTION_PILL_CLASSES: Record<AttentionTone, string> = {
-  default: "bg-info text-white",
+  default: "bg-info text-foreground-on-solid",
   warning: "bg-warning text-warning-foreground",
-  destructive: "bg-destructive text-white",
+  destructive: "bg-destructive text-foreground-on-solid",
 };
 
 const EMPTY_ATTENTION: ReadonlyMap<string, ModuleAttention> = new Map();

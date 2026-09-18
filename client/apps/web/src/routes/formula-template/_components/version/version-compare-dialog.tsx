@@ -44,7 +44,7 @@ export function VersionCompareDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("Compare Versions")}
-            <Badge variant="outline" className="font-mono">
+            <Badge variant="neutral" appearance="outline" className="font-mono">
               {t("v{0} → v{1}", fromVersion, toVersion)}
             </Badge>
           </DialogTitle>
@@ -91,11 +91,11 @@ function ChangeItem({ path, change }: ChangeItemProps) {
   const getChangeIcon = () => {
     switch (change.type) {
       case "created":
-        return <PlusIcon className="size-4 text-green-500" />;
+        return <PlusIcon className="size-4 text-success-foreground" />;
       case "deleted":
-        return <MinusIcon className="size-4 text-red-500" />;
+        return <MinusIcon className="size-4 text-danger-foreground" />;
       case "updated":
-        return <RefreshCwIcon className="size-4 text-blue-500" />;
+        return <RefreshCwIcon className="size-4 text-info-foreground" />;
       default:
         return null;
     }
@@ -104,11 +104,11 @@ function ChangeItem({ path, change }: ChangeItemProps) {
   const getChangeBadgeVariant = () => {
     switch (change.type) {
       case "created":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+        return "bg-success-subtle text-success-foreground dark:bg-success-subtle/30 dark:text-success-foreground";
       case "deleted":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/30 dark:text-danger-foreground";
       case "updated":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+        return "bg-info-subtle text-info-foreground dark:bg-info-subtle/30 dark:text-info-foreground";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -152,7 +152,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
               <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 {t("Before")}
               </span>
-              <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
+              <pre className="overflow-x-auto rounded bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-foreground dark:bg-danger-subtle/20 dark:text-danger-foreground">
                 {formatValue(change.from)}
               </pre>
             </div>
@@ -160,7 +160,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
               <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 {t("After")}
               </span>
-              <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
+              <pre className="overflow-x-auto rounded bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-foreground dark:bg-success-subtle/20 dark:text-success-foreground">
                 {formatValue(change.to)}
               </pre>
             </div>
@@ -170,7 +170,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
             <span className="text-muted-foreground mb-1 block text-xs font-medium">
               {t("Added")}
             </span>
-            <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
+            <pre className="overflow-x-auto rounded bg-success-subtle p-2 font-mono text-xs whitespace-pre-wrap text-success-foreground dark:bg-success-subtle/20 dark:text-success-foreground">
               {formatValue(change.to)}
             </pre>
           </div>
@@ -179,7 +179,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
             <span className="text-muted-foreground mb-1 block text-xs font-medium">
               {t("Removed")}
             </span>
-            <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
+            <pre className="overflow-x-auto rounded bg-danger-subtle p-2 font-mono text-xs whitespace-pre-wrap text-danger-foreground dark:bg-danger-subtle/20 dark:text-danger-foreground">
               {formatValue(change.from)}
             </pre>
           </div>

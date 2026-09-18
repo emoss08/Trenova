@@ -55,7 +55,7 @@ export function getColumns(
       accessorKey: "required",
       header: t("Required"),
       cell: ({ row }) => (
-        <Badge variant={row.original.required ? "active" : "outline"}>
+        <Badge variant={row.original.required ? "success" : "neutral"}>
           {row.original.required ? t("Yes") : t("No")}
         </Badge>
       ),
@@ -75,7 +75,7 @@ export function getColumns(
       accessorKey: "allowMultiple",
       header: t("Allow Multiple"),
       cell: ({ row }) => (
-        <Badge variant={row.original.allowMultiple ? "info" : "outline"}>
+        <Badge variant={row.original.allowMultiple ? "info" : "neutral"}>
           {row.original.allowMultiple ? t("Yes") : t("No")}
         </Badge>
       ),
@@ -107,7 +107,7 @@ export function getColumns(
       accessorKey: "expirationRequired",
       header: t("Expiration Req."),
       cell: ({ row }) => (
-        <Badge variant={row.original.expirationRequired ? "warning" : "outline"}>
+        <Badge variant={row.original.expirationRequired ? "warning" : "neutral"}>
           {row.original.expirationRequired ? t("Yes") : t("No")}
         </Badge>
       ),

@@ -256,7 +256,7 @@ function ResolveForm({
           placeholder={t("Explain the outcome — the driver sees this in Dash.")}
           rows={3}
         />
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {t("Shown to the driver verbatim; say what was checked and why the outcome is right.")}
         </p>
       </div>
@@ -265,7 +265,7 @@ function ResolveForm({
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="dispute-with-adjustment">{t("Apply a correcting adjustment")}</Label>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {t(
                 "Adds a line to the driver's open settlement (an off-cycle draft is created if none exists).",
               )}
@@ -287,7 +287,7 @@ function ResolveForm({
               onChange={(event) => setAdjustmentDescription(event.target.value)}
               placeholder={t("Description (e.g. Detention correction - PRO 12345)")}
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Appears as the line item on the driver's statement.")}
             </p>
           </div>
@@ -298,7 +298,7 @@ function ResolveForm({
               placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Dollars, not cents; positive adds pay, negative deducts.")}
             </p>
           </div>

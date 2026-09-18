@@ -124,7 +124,7 @@ export function ScheduleCard() {
             </p>
           </div>
         </div>
-        {week.shiftCode ? <Badge variant="secondary">{week.shiftCode}</Badge> : null}
+        {week.shiftCode ? <Badge variant="neutral">{week.shiftCode}</Badge> : null}
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
@@ -143,7 +143,7 @@ export function ScheduleCard() {
                   aria-pressed={isFocused}
                   aria-label={`${DAY_LABELS_LONG[date.getUTCDay()]} ${date.getUTCDate()}: ${tone.label}`}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-[11px] transition-colors active:brightness-95",
+                    "flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-xs transition-colors active:brightness-95",
                     tone.cell,
                     isFocused && "ring-primary/60 ring-2",
                   )}

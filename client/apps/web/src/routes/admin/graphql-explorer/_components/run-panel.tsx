@@ -147,13 +147,13 @@ function HistoryPopover({
                       <span
                         className={cn(
                           "size-1.5 shrink-0 rounded-full",
-                          entry.status === "success" ? "bg-emerald-500" : "bg-destructive",
+                          entry.status === "success" ? "bg-success" : "bg-destructive",
                         )}
                       />
                       <span
                         className={
                           entry.status === "success"
-                            ? "text-emerald-600 dark:text-emerald-400"
+                            ? "text-success-foreground"
                             : "text-destructive"
                         }
                       >
@@ -396,7 +396,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
             onClear={clearHistory}
           />
           {operation.kind === "mutation" && (
-            <span className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+            <span className="flex items-center gap-1 text-xs text-warning-foreground">
               <AlertTriangleIcon className="size-3.5" />
               {t("Mutation — executes against live data")}
             </span>
@@ -404,8 +404,8 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         </div>
         {runState.status === "success" && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
+            <span className="flex items-center gap-1.5 text-success-foreground">
+              <span className="size-1.5 rounded-full bg-success" />
               {t("OK")}
             </span>
             <span className="text-muted-foreground">{formatElapsed(runState.elapsedMs)}</span>
@@ -446,7 +446,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         </div>
         <div
           className={cn(
-            "focus-within:border-primary/40 overflow-hidden rounded-md border transition-colors",
+"ui-container-focus-ring overflow-hidden rounded-md border transition-colors",
             parseError && "border-destructive",
           )}
         >

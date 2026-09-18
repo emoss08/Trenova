@@ -56,14 +56,14 @@ export function TopOverdueCustomersCard() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-xs font-medium">{row.customerName}</span>
-                      <span className="shrink-0 text-xs font-semibold text-red-600 tabular-nums dark:text-red-400">
+                      <span className="shrink-0 text-xs font-semibold text-danger-foreground tabular-nums dark:text-danger-foreground">
                         {formatCurrency(row.overdueMinor / 100)}
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-2">
                       <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
                         <m.div
-                          className="h-full rounded-full bg-red-500/70 dark:bg-red-400/70"
+                          className="h-full rounded-full bg-danger/70"
                           initial={{ width: 0 }}
                           animate={{
                             width:
@@ -72,7 +72,7 @@ export function TopOverdueCustomersCard() {
                           transition={{ duration: 0.5, delay: index * 0.03, ease: "easeOut" }}
                         />
                       </div>
-                      <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
+                      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
                         {t("{0} inv · oldest {1}d", row.openInvoiceCount, row.oldestDaysPastDue)}
                       </span>
                     </div>

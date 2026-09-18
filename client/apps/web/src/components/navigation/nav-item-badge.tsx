@@ -10,7 +10,7 @@ function EDIAttentionNavBadge() {
 
   return (
     <Badge
-      variant="inactive"
+      variant="danger"
       className="text-2xs ml-auto max-h-4 px-1.5 tabular-nums"
       title={`${attentionCount} EDI item(s) need attention: dead-lettered messages, quarantined files, or overdue acknowledgments`}
     >

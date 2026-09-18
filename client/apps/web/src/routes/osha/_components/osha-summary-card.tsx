@@ -58,11 +58,11 @@ export function OshaSummaryCard({
               {t("Summary of work-related injuries and illnesses, {0}", log.year)}
             </h2>
             {certified ? (
-              <Badge variant="active">{t("Certified")}</Badge>
+              <Badge variant="success">{t("Certified")}</Badge>
             ) : summary ? (
-              <Badge variant="secondary">{t("Draft")}</Badge>
+              <Badge variant="neutral">{t("Draft")}</Badge>
             ) : (
-              <Badge variant="outline">{t("Not started")}</Badge>
+              <Badge variant="neutral" appearance="outline">{t("Not started")}</Badge>
             )}
           </div>
           <p className="text-muted-foreground mt-0.5 text-xs">

@@ -14,9 +14,9 @@ import { toast } from "sonner";
 import { FixtureDetail } from "../fixture-detail/fixture-detail";
 
 const REVIEW_STATUS_VARIANT = {
-  Ready: "active",
+  Ready: "success",
   NeedsReview: "warning",
-  Unavailable: "inactive",
+  Unavailable: "danger",
 } as const;
 
 const NEW_FIXTURE_TEMPLATE = {
@@ -164,7 +164,7 @@ function FixtureList({
                     variant={
                       REVIEW_STATUS_VARIANT[
                         f.assertions.reviewStatus as keyof typeof REVIEW_STATUS_VARIANT
-                      ] ?? "secondary"
+                      ] ?? "neutral"
                     }
                   >
                     {f.assertions.reviewStatus}

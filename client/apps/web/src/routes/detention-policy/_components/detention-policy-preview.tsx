@@ -124,16 +124,16 @@ function dwellSegments(result: PreviewResult, suppressed: boolean): Segment[] {
       key: "billed",
       minutes: billed,
       className: suppressed
-        ? "bg-red-500/60 dark:bg-red-400/60"
-        : "bg-emerald-500 dark:bg-emerald-400",
+        ? "bg-danger/60"
+        : "bg-success",
       legend: "Billed",
     },
     {
       key: "rounding",
       minutes: uplift,
       className: suppressed
-        ? "bg-red-500/30 dark:bg-red-400/30"
-        : "bg-emerald-500/45 dark:bg-emerald-400/45",
+        ? "bg-danger/30"
+        : "bg-success/45",
       legend: "Rounding",
     },
     {
@@ -206,8 +206,8 @@ function Signal({ tone, children }: { tone: "neutral" | "warn" | "bad"; children
       className={cn(
         "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
-        tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-        tone === "bad" && "bg-red-500/15 text-red-700 dark:text-red-400",
+        tone === "warn" && "bg-warning/15 text-warning-foreground",
+        tone === "bad" && "bg-danger/15 text-danger-foreground",
       )}
     >
       {children}
@@ -348,7 +348,7 @@ function LiveIndicator({ pricing }: { pricing: boolean }) {
       <m.span
         className={cn(
           "size-1.5 rounded-full",
-          pricing ? "bg-amber-500" : "bg-emerald-500 dark:bg-emerald-400",
+          pricing ? "bg-warning" : "bg-success",
         )}
         animate={pricing ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
         transition={pricing ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" } : undefined}
@@ -468,7 +468,7 @@ export function DetentionPolicyPreview() {
 
             {active.isError ? (
               <div className="flex items-start gap-2.5 px-4 py-6">
-                <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
+                <TriangleAlertIcon className="mt-px size-4 shrink-0 text-warning-foreground" />
                 <div className="min-w-0">
                   <p className="text-xs font-medium">{t("This scenario could not be priced")}</p>
                   <p className="text-muted-foreground mt-0.5 text-xs">

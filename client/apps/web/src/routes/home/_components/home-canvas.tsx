@@ -182,7 +182,7 @@ export function HomeCanvas({
                     <span className="cc-label text-foreground min-w-0 flex-1 truncate">
                       {widget.title || optionsByKey.get(widget.key)?.label || widget.key}
                     </span>
-                    <span className="text-muted-foreground shrink-0 font-mono text-[9px] tabular-nums">
+                    <span className="text-muted-foreground shrink-0 font-mono text-3xs tabular-nums">
                       {widget.w}×{widget.h}
                     </span>
                     <WidgetControls

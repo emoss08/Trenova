@@ -207,7 +207,7 @@ export function LocationGeofenceControls({ className }: { className?: string }) 
             className={cn(
               "flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                ? "border-info/40 bg-info/15 text-info-foreground"
                 : "border-border bg-background text-foreground hover:bg-muted",
             )}
           >
@@ -310,6 +310,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
                   }}
                 >
                   <div
+                    // design-tokens-ignore: a geofence handle sits on map imagery, not on a themed surface.
                     className="size-3 rounded-full border-2 border-white shadow-md ring-1 ring-black/20"
                     style={{ backgroundColor: SHAPE_COLORS.center }}
                   />
@@ -382,7 +383,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
       )}
 
       {errorMessages.length > 0 && (
-        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600 shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger-foreground shadow-sm backdrop-blur">
           {errorMessages[0]}
         </div>
       )}

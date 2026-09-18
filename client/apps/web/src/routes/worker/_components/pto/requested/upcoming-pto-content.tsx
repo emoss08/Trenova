@@ -36,7 +36,7 @@ function PTOHeader({ pto }: { pto: WorkerPTO }) {
       </span>
       <Badge
         variant={badgeVariant as BadgeVariant}
-        className="shrink-0 gap-1 px-2 py-0.5 text-[11px] leading-4"
+        className="shrink-0 gap-1 px-2 py-0.5 text-xs leading-4"
       >
         {label}
       </Badge>

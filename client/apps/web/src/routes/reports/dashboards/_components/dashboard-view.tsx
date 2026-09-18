@@ -540,7 +540,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             </div>
           ))}
           {Object.entries(crossFilters).map(([id, entry]) => (
-            <Badge key={id} variant="secondary" className="h-7 gap-1 px-2">
+            <Badge key={id} variant="neutral" className="h-7 gap-1 px-2">
               <span className="max-w-48 truncate">
                 {(index
                   ? refLabel(index, entry.filter.entity, entry.filter.ref)

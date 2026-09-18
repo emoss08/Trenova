@@ -190,10 +190,10 @@ function BandCell({
             "placeholder:text-muted-foreground/50",
             "transition-[border-color,box-shadow,background-color] duration-150 ease-in-out",
             "hover:bg-muted/70",
-            "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-brand/20 focus-visible:ring-4",
+"ui-focus-ring focus-visible:bg-background",
             "disabled:cursor-not-allowed disabled:opacity-50",
             fieldState.invalid &&
-              "border-red-500/60 bg-red-500/10 focus-visible:border-red-500 focus-visible:ring-red-400/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger/60 bg-danger/10",
           )}
         />
       )}
@@ -346,7 +346,7 @@ function RowsErrorBanner({ control }: { control: Control<FuelSurchargeProgramFor
   if (!message) return null;
 
   return (
-    <p className="flex items-center gap-1.5 border-b bg-red-500/5 px-4 py-2 text-xs text-red-500">
+    <p className="flex items-center gap-1.5 border-b bg-danger/5 px-4 py-2 text-xs text-danger-foreground">
       <CircleAlert className="size-3.5 shrink-0" />
       {message}
     </p>
@@ -383,8 +383,8 @@ function IssuesStrip({
             className={cn(
               "flex items-center justify-between gap-3 px-4 py-2 text-xs",
               issue.severity === "error"
-                ? "bg-red-500/5 text-red-600 dark:text-red-400"
-                : "bg-amber-500/5 text-amber-600 dark:text-amber-400",
+                ? "bg-danger/5 text-danger-foreground"
+                : "bg-warning/5 text-warning-foreground",
             )}
           >
             <span className="flex items-center gap-1.5">
@@ -459,7 +459,7 @@ function FooterSummary({
           {t("This week's price:")}{" "}
           <span className="font-medium tabular-nums">{money(currentPrice, 3)}</span>
           {uncovered && (
-            <span className="ml-1 text-amber-600 dark:text-amber-400">
+            <span className="ml-1 text-warning-foreground">
               {t("— no band covers it")}
             </span>
           )}

@@ -245,24 +245,24 @@ function AdjustmentOriginBanner({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="mx-4 mt-2 shrink-0 overflow-hidden rounded-lg border border-blue-600/20 bg-blue-600/5">
+    <div className="mx-4 mt-2 shrink-0 overflow-hidden rounded-lg border border-info/20 bg-info/5">
       <button
         type="button"
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <RefreshCwIcon className="size-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+        <RefreshCwIcon className="size-3.5 shrink-0 text-info-foreground" />
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+          <span className="text-xs font-medium text-info-foreground">
             {t("Adjustment-Origin Rebill")}
           </span>
           {rebillStrategy ? (
-            <span className="text-2xs rounded bg-blue-600/10 px-1.5 py-0.5 font-medium text-blue-600 dark:text-blue-400">
+            <span className="text-2xs rounded bg-info/10 px-1.5 py-0.5 font-medium text-info-foreground">
               {rebillStrategy}
             </span>
           ) : null}
           {requiresReplacementReview ? (
-            <span className="text-2xs rounded bg-yellow-600/10 px-1.5 py-0.5 font-medium text-yellow-700 dark:text-yellow-400">
+            <span className="text-2xs rounded bg-warning/10 px-1.5 py-0.5 font-medium text-warning-foreground">
               {t("Review required")}
             </span>
           ) : null}
@@ -271,31 +271,31 @@ function AdjustmentOriginBanner({
           {sourceInvoiceId ? (
             <Link
               to={`/billing/invoices?item=${sourceInvoiceId}`}
-              className="text-2xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+              className="text-2xs font-medium text-info-foreground hover:underline dark:text-info-foreground"
               onClick={(e) => e.stopPropagation()}
             >
               {t("Original")}
             </Link>
           ) : null}
           {sourceInvoiceId && sourceCreditMemoInvoiceId ? (
-            <span className="text-blue-600/30 dark:text-blue-400/30">/</span>
+            <span className="text-info-foreground/30">/</span>
           ) : null}
           {sourceCreditMemoInvoiceId ? (
             <Link
               to={`/billing/invoices?item=${sourceCreditMemoInvoiceId}`}
-              className="text-2xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+              className="text-2xs font-medium text-info-foreground hover:underline dark:text-info-foreground"
               onClick={(e) => e.stopPropagation()}
             >
               {t("Credit Memo")}
             </Link>
           ) : null}
           <ChevronDownIcon
-            className={`size-3.5 text-blue-600/50 transition-transform duration-150 dark:text-blue-400/50 ${expanded ? "rotate-180" : ""}`}
+            className={`size-3.5 text-info-foreground/50 transition-transform duration-150 dark:text-info-foreground/50 ${expanded ? "rotate-180" : ""}`}
           />
         </div>
       </button>
       {expanded ? (
-        <div className="border-t border-blue-600/10 px-3 py-2">
+        <div className="border-t border-info/10 px-3 py-2">
           <div className="text-2xs flex flex-wrap gap-x-5 gap-y-1">
             {sourceInvoiceAdjustmentId ? (
               <span className="text-muted-foreground">

@@ -13,9 +13,9 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useLocation } from "react-router";
 
 const TONE_BADGE_VARIANTS: Record<AttentionTone, BadgeVariant> = {
-  default: "secondary",
+  default: "neutral",
   warning: "warning",
-  destructive: "inactive",
+  destructive: "danger",
 };
 
 function AttentionRow({
@@ -42,7 +42,7 @@ function AttentionRow({
       <span className="min-w-0 flex-1 truncate">{t(row.label)}</span>
       <span className="text-2xs text-muted-foreground/70">{row.module}</span>
       <Badge
-        variant={hasWork ? TONE_BADGE_VARIANTS[row.tone] : "secondary"}
+        variant={hasWork ? TONE_BADGE_VARIANTS[row.tone] : "neutral"}
         className="text-2xs max-h-4 min-w-5 justify-center px-1.5 tabular-nums"
       >
         {count > 99 ? "99+" : count}

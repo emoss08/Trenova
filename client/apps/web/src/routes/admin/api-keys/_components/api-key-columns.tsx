@@ -50,7 +50,7 @@ export function getColumns(t: TranslateFn): ColumnDef<ApiKeyRow>[] {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => (
-        <Badge variant={row.original.status === "active" ? "active" : "inactive"}>
+        <Badge variant={row.original.status === "active" ? "success" : "danger"}>
           {row.original.status}
         </Badge>
       ),

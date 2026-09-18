@@ -103,7 +103,7 @@ export function StudioEditorPane({
                   description={t("Name, type, and description")}
                 />
                 {detailErrorCount > 0 && !detailsOpen && (
-                  <Badge variant="inactive" className="text-2xs mr-2">
+                  <Badge variant="danger" className="text-2xs mr-2">
                     {detailErrorCount} {detailErrorCount === 1 ? "issue" : "issues"}
                   </Badge>
                 )}

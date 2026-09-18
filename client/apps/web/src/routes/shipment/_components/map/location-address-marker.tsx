@@ -15,8 +15,8 @@ export function LocationAddressMarker({ location }: { location: AddressMarkerLoc
       title={location.name}
     >
       <div className="relative">
-        <MapPin className="size-3 fill-blue-600 text-blue-600" />
-        <span className="absolute top-1/2 left-full ml-1 -translate-y-1/2 text-[10px] font-semibold whitespace-nowrap text-black [-webkit-text-stroke:2px_white] [paint-order:stroke] dark:text-white dark:[-webkit-text-stroke:2px_black]">
+        <MapPin className="size-3 fill-info text-info-foreground" />
+        <span className="absolute top-1/2 left-full ml-1 -translate-y-1/2 text-2xs font-semibold whitespace-nowrap text-foreground [-webkit-text-stroke:2px_var(--canvas)] [paint-order:stroke]">
           {location.name}
         </span>
       </div>

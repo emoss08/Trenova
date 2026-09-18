@@ -113,7 +113,7 @@ function SectionItem({
           <div className="flex items-center gap-2">
             <span>{defaultName || t("Section {0}", index + 1)}</span>
             {anchorCount > 0 && (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 {t("{0, plural, one {# anchor} other {# anchors}}", anchorCount)}
               </Badge>
             )}

@@ -46,8 +46,8 @@ import { SimulationResultViewer } from "../simulation/simulation-result-viewer";
 
 const VERSION_STATUS_BADGE: Record<RuleVersionStatus, BadgeVariant> = {
   Draft: "warning",
-  Published: "active",
-  Archived: "secondary",
+  Published: "success",
+  Archived: "neutral",
 };
 
 function VersionSelect({

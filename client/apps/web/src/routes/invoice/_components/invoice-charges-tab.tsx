@@ -33,8 +33,8 @@ import { Link } from "react-router";
 const COLLAPSE_THRESHOLD = 8;
 
 const LINE_TYPE_DOTS: Record<InvoiceLineType, string> = {
-  Freight: "bg-blue-600 dark:bg-blue-400",
-  Accessorial: "bg-purple-600 dark:bg-purple-400",
+  Freight: "bg-info",
+  Accessorial: "bg-accent-violet",
 };
 
 const EMPTY_COLUMNS: readonly EmptyTableColumn[] = [
@@ -193,7 +193,7 @@ function ChargeSection({
           onClick={onToggle}
           aria-expanded={!isCollapsed}
           aria-controls={bodyId}
-          className="hover:text-foreground text-muted-foreground focus-visible:ring-ring flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+ className="ui-focus-ring hover:text-foreground text-muted-foreground flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors"
         >
           <ChevronRightIcon
             className={cn(
@@ -377,12 +377,12 @@ function ChargeRowLayout({
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-sm">{label}</span>
           {code ? (
-            <span className="bg-muted text-muted-foreground shrink-0 rounded border px-1 font-mono text-[10px] leading-4">
+            <span className="bg-muted text-muted-foreground shrink-0 rounded border px-1 font-mono text-2xs leading-4">
               {code}
             </span>
           ) : null}
         </span>
-        <span className="text-muted-foreground truncate text-[11px]">{details.join(" · ")}</span>
+        <span className="text-muted-foreground truncate text-xs">{details.join(" · ")}</span>
       </div>
       <span
         className={cn(

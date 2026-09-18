@@ -89,7 +89,7 @@ export function TerminalsPanel({
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5">
                       {terminal.atRisk > 0 ? (
-                        <Badge variant="inactive">{t("{0} at risk", terminal.atRisk)}</Badge>
+                        <Badge variant="danger">{t("{0} at risk", terminal.atRisk)}</Badge>
                       ) : null}
                       {terminal.watch > 0 ? (
                         <Badge variant="warning">{t("{0} watch", terminal.watch)}</Badge>

@@ -18,10 +18,10 @@ interface RecommendedBadgeProps {
 }
 
 const variantClasses = {
-  default: "from-purple-500 via-pink-500 to-orange-400",
-  premium: "from-yellow-400 via-yellow-500 to-amber-500",
-  success: "from-emerald-400 via-green-500 to-teal-500",
-  warning: "from-orange-400 via-red-500 to-pink-500",
+  default: "from-accent-violet via-accent-rose to-warning",
+  premium: "from-warning via-warning to-warning",
+  success: "from-success via-success to-accent-teal",
+  warning: "from-warning via-danger to-accent-rose",
 };
 
 const sparklePositions = [
@@ -60,14 +60,14 @@ export function RecommendedBadge({
             repeatDelay: 3,
           }}
         >
-          <Sparkles className="size-3 text-yellow-300" />
+          <Sparkles className="size-3 text-warning-foreground" />
         </m.div>
       ))}
 
       {/* Main badge */}
       <m.div
         className={cn(
-          "relative overflow-hidden rounded px-2 text-xs font-semibold text-white select-none",
+          "relative overflow-hidden rounded px-2 text-xs font-semibold text-foreground-on-solid select-none",
           className,
         )}
         initial={{ scale: 0.9, opacity: 0 }}

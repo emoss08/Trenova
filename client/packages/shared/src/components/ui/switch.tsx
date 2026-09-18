@@ -14,10 +14,10 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 data-checked:bg-brand data-unchecked:bg-input",
-        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
-        "shrink-0 rounded-full border border-transparent dark:aria-invalid:border-destructive/50 dark:data-unchecked:bg-input/80",
-        "focus-visible:ring-[3px] aria-invalid:ring-[3px] data-[size=default]:h-[18.4px] data-[size=default]:w-[32px]",
+        "ui-focus-ring data-checked:bg-brand data-unchecked:bg-input",
+        "aria-invalid:border-danger aria-invalid:[--ring:var(--ring-danger)]",
+        "shrink-0 rounded-full border border-transparent dark:data-unchecked:bg-input/80",
+        "data-[size=default]:h-[18.4px] data-[size=default]:w-[32px]",
         "peer group/switch relative inline-flex items-center transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}

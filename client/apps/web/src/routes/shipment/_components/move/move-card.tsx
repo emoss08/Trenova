@@ -189,11 +189,11 @@ export function MoveCard({
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Badge variant={statusConfig.variant}>{t(statusConfig.label)}</Badge>
-          {move?.loaded && <Badge variant="secondary">{t("Loaded")}</Badge>}
+          {move?.loaded && <Badge variant="neutral">{t("Loaded")}</Badge>}
           {move?.distance ? (
             <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>
           ) : null}
-          {move?.distanceSource ? <Badge variant="outline">{move.distanceSource}</Badge> : null}
+          {move?.distanceSource ? <Badge variant="neutral" appearance="outline">{move.distanceSource}</Badge> : null}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -415,14 +415,14 @@ const moveStatusConfig: Record<
   MoveStatus,
   {
     label: string;
-    variant: "secondary" | "info" | "orange" | "active" | "inactive";
+    variant: "neutral" | "info" | "warning" | "success" | "danger";
   }
 > = {
-  New: { label: "New", variant: "secondary" },
+  New: { label: "New", variant: "neutral" },
   Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In Transit", variant: "orange" },
-  Completed: { label: "Completed", variant: "active" },
-  Canceled: { label: "Canceled", variant: "inactive" },
+  InTransit: { label: "In Transit", variant: "info" },
+  Completed: { label: "Completed", variant: "success" },
+  Canceled: { label: "Canceled", variant: "danger" },
 };
 
 const stopTypeLabels: Record<StopType, string> = {
@@ -433,17 +433,17 @@ const stopTypeLabels: Record<StopType, string> = {
 };
 
 const stopStatusBgColor: Record<StopStatus, string> = {
-  New: "bg-purple-500",
-  InTransit: "bg-blue-500",
-  Completed: "bg-green-500",
-  Canceled: "bg-red-500",
+  New: "bg-accent-violet",
+  InTransit: "bg-info",
+  Completed: "bg-success",
+  Canceled: "bg-danger",
 };
 
 const stopStatusLineColor: Record<StopStatus, string> = {
-  New: "bg-purple-500",
-  InTransit: "bg-blue-500",
-  Completed: "bg-green-500",
-  Canceled: "bg-red-500",
+  New: "bg-accent-violet",
+  InTransit: "bg-info",
+  Completed: "bg-success",
+  Canceled: "bg-danger",
 };
 
 function getStatusIcon(status: StopStatus, isLast: boolean, moveStatus: MoveStatus) {
@@ -461,23 +461,23 @@ function getStatusIcon(status: StopStatus, isLast: boolean, moveStatus: MoveStat
 }
 
 const transitionGradients: Record<string, string> = {
-  "New-InTransit": "bg-linear-to-b from-purple-500 to-blue-500",
-  "New-Completed": "bg-linear-to-b from-purple-500 to-green-500",
-  "New-Canceled": "bg-linear-to-b from-purple-500 to-red-500",
-  "InTransit-New": "bg-linear-to-b from-blue-500 to-purple-500",
-  "InTransit-Completed": "bg-linear-to-b from-blue-500 to-green-500",
-  "InTransit-Canceled": "bg-linear-to-b from-blue-500 to-red-500",
-  "Completed-New": "bg-linear-to-b from-green-500 to-purple-500",
-  "Completed-InTransit": "bg-linear-to-b from-green-500 to-blue-500",
-  "Completed-Canceled": "bg-linear-to-b from-green-500 to-red-500",
-  "Canceled-New": "bg-linear-to-b from-red-500 to-purple-500",
-  "Canceled-InTransit": "bg-linear-to-b from-red-500 to-blue-500",
-  "Canceled-Completed": "bg-linear-to-b from-red-500 to-green-500",
+  "New-InTransit": "bg-linear-to-b from-accent-violet to-info",
+  "New-Completed": "bg-linear-to-b from-accent-violet to-success",
+  "New-Canceled": "bg-linear-to-b from-accent-violet to-danger",
+  "InTransit-New": "bg-linear-to-b from-info to-accent-violet",
+  "InTransit-Completed": "bg-linear-to-b from-info to-success",
+  "InTransit-Canceled": "bg-linear-to-b from-info to-danger",
+  "Completed-New": "bg-linear-to-b from-success to-accent-violet",
+  "Completed-InTransit": "bg-linear-to-b from-success to-info",
+  "Completed-Canceled": "bg-linear-to-b from-success to-danger",
+  "Canceled-New": "bg-linear-to-b from-danger to-accent-violet",
+  "Canceled-InTransit": "bg-linear-to-b from-danger to-info",
+  "Canceled-Completed": "bg-linear-to-b from-danger to-success",
 };
 
 function getConnectorLineClasses(status: StopStatus, prevStatus?: StopStatus): string {
   if (status === "InTransit") {
-    return "bg-linear-to-b from-blue-500 to-transparent bg-[length:100%_200%] animate-flow-down";
+    return "bg-linear-to-b from-info to-transparent bg-[length:100%_200%] animate-flow-down";
   }
   if (prevStatus && prevStatus !== status) {
     const key = `${prevStatus}-${status}`;
@@ -604,14 +604,14 @@ function StopTimelineItem({
         <div
           className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full ${stopStatusBgColor[status]}`}
         >
-          {createElement(statusIcon, { className: "size-3 text-white" })}
+          {createElement(statusIcon, { className: "size-3 text-foreground-on-solid" })}
         </div>
         {hasErrors && errorMessages && errorMessages.length > 0 && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <div className="bg-destructive absolute -top-1 -right-1 flex size-3 cursor-help items-center justify-center rounded-full">
-                  <span className="text-[8px] font-bold text-red-200">!</span>
+                  <span className="text-3xs font-bold text-danger-foreground">!</span>
                 </div>
               }
             />
@@ -716,7 +716,7 @@ function CarrierAssignmentDetails({
           </span>
           <CarrierAssignmentStatusBadge
             status={carrierAssignment.status}
-            className="h-4 shrink-0 rounded px-1 text-[9px]"
+            className="h-4 shrink-0 rounded px-1 text-3xs"
           />
         </div>
         {canCancel && (

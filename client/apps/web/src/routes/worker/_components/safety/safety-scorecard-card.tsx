@@ -173,7 +173,7 @@ function Metric({
   return (
     <div className="border-border/80 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-muted-foreground truncate text-[11px] font-semibold uppercase">
+        <span className="text-muted-foreground truncate text-xs font-semibold uppercase">
           {label}
         </span>
         <span className="bg-accent inline-flex size-6 shrink-0 items-center justify-center rounded-md">
@@ -187,7 +187,7 @@ function Metric({
         {unit ? <span className="text-muted-foreground shrink-0 text-xs">{unit}</span> : null}
       </div>
       {children}
-      <p className="text-muted-foreground truncate text-[11px]" title={sub}>
+      <p className="text-muted-foreground truncate text-xs" title={sub}>
         {sub}
       </p>
     </div>

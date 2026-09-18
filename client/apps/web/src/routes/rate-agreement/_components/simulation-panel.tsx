@@ -198,7 +198,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-xs font-medium">{run.name}</p>
                 <Badge
-                  variant={run.status === "Failed" ? "warning" : "secondary"}
+                  variant={run.status === "Failed" ? "warning" : "neutral"}
                   className="shrink-0"
                 >
                   {run.status}
@@ -336,7 +336,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
     <div className="space-y-3">
       <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-1.5 flex items-center gap-2">
-          <Badge variant={simulation.status === "Failed" ? "warning" : "secondary"}>
+          <Badge variant={simulation.status === "Failed" ? "warning" : "neutral"}>
             {simulation.status}
           </Badge>
           <span className="truncate text-sm font-medium">{simulation.name}</span>
@@ -362,12 +362,12 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             <StatTile
               label={t("Increased")}
               value={String(summary.increasedCount)}
-              tone="text-emerald-600 dark:text-emerald-400"
+              tone="text-success-foreground"
             />
             <StatTile
               label={t("Decreased")}
               value={String(summary.decreasedCount)}
-              tone="text-red-600 dark:text-red-400"
+              tone="text-danger-foreground"
             />
             <StatTile
               label={t("Errors")}

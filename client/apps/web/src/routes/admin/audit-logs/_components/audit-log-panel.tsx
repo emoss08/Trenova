@@ -62,13 +62,13 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
     return (
       <div className="space-y-1">
         {isSensitiveOmitted && (
-          <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
+          <Badge variant="warning" className="h-5 px-1.5 text-2xs">
             {t("Sensitive")}
           </Badge>
         )}
         <p className="text-foreground text-xs wrap-break-word">{formatted.value}</p>
         {formatted.transformed && (
-          <p className="text-muted-foreground font-mono text-[11px]">
+          <p className="text-muted-foreground font-mono text-xs">
             {t("Raw: {0}", formatAuditValue(value))}
           </p>
         )}
@@ -83,7 +83,7 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Badge variant="outline">{summary}</Badge>
+        <Badge variant="neutral" appearance="outline">{summary}</Badge>
         <Button
           type="button"
           variant="ghost"
@@ -125,14 +125,14 @@ function ChangeRow({
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <div className="space-y-1 rounded-md border border-red-500/20 bg-red-500/8 p-2.5">
-          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        <div className="space-y-1 rounded-md border border-danger/20 bg-danger/8 p-2.5">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Previous Value")}
           </p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
-        <div className="space-y-1 rounded-md border border-green-500/20 bg-green-500/8 p-2.5">
-          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+        <div className="space-y-1 rounded-md border border-success/20 bg-success/8 p-2.5">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {t("Current Value")}
           </p>
           <AuditValueCell value={to} path={`${path}.to`} />

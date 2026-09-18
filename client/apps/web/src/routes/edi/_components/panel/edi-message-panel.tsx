@@ -108,7 +108,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
       <div className="flex min-h-0 flex-col gap-3">
         <DetailSection title={t("Overview")}>
           <DetailField label={t("Transaction Set")}>
-            <Badge variant="secondary">{detail.transactionSet}</Badge>
+            <Badge variant="neutral">{detail.transactionSet}</Badge>
           </DetailField>
           <DetailField label={t("Direction")}>{detail.direction}</DetailField>
           <DetailField label={t("Partner")}>

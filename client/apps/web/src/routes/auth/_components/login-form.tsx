@@ -124,17 +124,17 @@ export function LoginForm({
 
       {isDriverAudience ? (
         <div className="flex flex-col gap-3.5">
-          <p className="text-muted-foreground m-0 text-[12.5px]">
+          <p className="text-muted-foreground m-0 text-sm">
             {t("Loads, settlement statements and pay — built for the phone.")}
           </p>
           <a
             href="/dash/login"
-            className="bg-foreground text-background border-foreground flex h-10 w-full items-center justify-center gap-2 rounded-[9px] border text-[13px] font-[550] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.988]"
+            className="bg-foreground text-background border-foreground flex h-10 w-full items-center justify-center gap-2 rounded-[9px] border text-base font-[550] transition-[opacity,transform] duration-150 hover:opacity-90 active:scale-[0.988]"
           >
             {t("Continue to Dash")}
             <ArrowRight />
           </a>
-          <p className="text-subtle-foreground m-0 text-[11.5px]">
+          <p className="text-subtle-foreground m-0 text-xs">
             {t("First time here? Use the invitation link your carrier sent you.")}
           </p>
         </div>
@@ -143,7 +143,7 @@ export function LoginForm({
           {ssoError && (
             <button
               type="button"
-              className="text-auth-danger cursor-pointer text-left text-[11.5px]"
+              className="text-auth-danger cursor-pointer text-left text-xs"
               onClick={() =>
                 setSearchParams((params) => {
                   params.delete("sso_error");
@@ -162,7 +162,7 @@ export function LoginForm({
                   <a
                     key={provider.id}
                     href={authService.getSSOStartUrl(provider.id, organizationSlug ?? "", returnTo)}
-                    className="border-border hover:border-input flex h-[38px] items-center justify-center gap-[9px] rounded-[9px] border bg-transparent text-[12.5px] font-medium whitespace-nowrap transition-colors duration-150 hover:bg-[color-mix(in_oklch,var(--foreground)_5%,transparent)]"
+                    className="border-border hover:border-input flex h-[38px] items-center justify-center gap-[9px] rounded-[9px] border bg-transparent text-sm font-medium whitespace-nowrap transition-colors duration-150 hover:bg-[color-mix(in_oklch,var(--foreground)_5%,transparent)]"
                   >
                     <ProviderLogo provider={provider.provider} />
                     {t("Continue with {0}", provider.name)}
@@ -170,7 +170,7 @@ export function LoginForm({
                 ))}
               </div>
               {passwordEnabled && (
-                <div className="text-subtle-foreground flex items-center gap-2.5 text-[11px] before:bg-border-2 after:bg-border-2 before:h-px before:flex-1 after:h-px after:flex-1 before:content-[''] after:content-['']">
+                <div className="text-subtle-foreground flex items-center gap-2.5 text-xs before:bg-border-2 after:bg-border-2 before:h-px before:flex-1 after:h-px after:flex-1 before:content-[''] after:content-['']">
                   or
                 </div>
               )}
@@ -203,7 +203,7 @@ export function LoginForm({
                   <button
                     type="button"
                     onClick={() => onForgotPassword(form.getValues("emailAddress"))}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent text-[11.5px] transition-colors duration-150"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent text-xs transition-colors duration-150"
                   >
                     {t("Forgot?")}
                   </button>
@@ -281,7 +281,7 @@ function AudienceToggle({
           aria-selected={value === option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "relative z-1 flex cursor-pointer items-center justify-center gap-[7px] rounded-md border-0 bg-transparent px-3 py-[7px] text-[12.5px] leading-[1.5] font-medium transition-colors duration-[180ms]",
+            "relative z-1 flex cursor-pointer items-center justify-center gap-[7px] rounded-md border-0 bg-transparent px-3 py-[7px] text-sm leading-[1.5] font-medium transition-colors duration-[180ms]",
             value === option.value ? "text-foreground" : "text-subtle-foreground",
           )}
         >
@@ -301,7 +301,7 @@ function ProviderLogo({ provider }: { provider: string }) {
     return <OktaLogo className="h-3.5 w-auto" />;
   }
   return (
-    <span className="border-border-2 text-subtle-foreground font-table flex size-3.5 items-center justify-center rounded-sm border text-[8px] font-semibold">
+    <span className="border-border-2 text-subtle-foreground font-table flex size-3.5 items-center justify-center rounded-sm border text-3xs font-semibold">
       S
     </span>
   );

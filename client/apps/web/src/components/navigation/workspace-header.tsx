@@ -34,7 +34,7 @@ function ModulesTrigger() {
           aria-label={activeModule ? `Switch module (current: ${label})` : "Open modules"}
           className={cn(
             "flex h-7 max-w-56 items-center gap-1.5 rounded-md pr-1.5 pl-1 text-sm font-medium transition-colors outline-none",
-            "text-foreground hover:bg-muted data-popup-open:bg-muted focus-visible:ring-ring/50 focus-visible:ring-2",
+"ui-focus-ring text-foreground hover:bg-muted data-popup-open:bg-muted",
           )}
         >
           {activeModule ? (

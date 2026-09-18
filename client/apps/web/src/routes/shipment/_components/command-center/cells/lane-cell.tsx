@@ -50,24 +50,24 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
       <div className="flex flex-row items-center gap-1.5">
         <span
           className={cn(
-            "font-table text-[11.5px] font-semibold tabular-nums",
+            "font-table text-xs font-semibold tabular-nums",
             isHighlighted && "text-brand",
           )}
         >
           {originCode}
         </span>
         <ArrowRight className="text-muted-foreground size-3 shrink-0" />
-        <span className="font-table truncate text-[11.5px] font-semibold tabular-nums">
+        <span className="font-table truncate text-xs font-semibold tabular-nums">
           {destinationCode}
         </span>
         <div className={cn("lane-bar ml-1 max-w-20 flex-1", toneClass(shipment.status))}>
           <span style={{ width: `${progress.value}%` }} />
         </div>
-        <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
+        <span className="font-table text-muted-foreground text-3xs tabular-nums">
           {progress.value}%
         </span>
       </div>
-      <div className="font-table text-muted-foreground text-[9.5px] tabular-nums">
+      <div className="font-table text-muted-foreground text-3xs tabular-nums">
         {t("{0}mi{1}", miles, commodityName ? ` · ${commodityName}` : "")}
       </div>
     </div>

@@ -86,7 +86,7 @@ export function PTOLiabilityDialog({
               <Stat
                 label={t("Owed on exit")}
                 value={formatPtoDays(data.liabilityDays)}
-                tone="text-amber-700 dark:text-amber-400"
+                tone="text-warning-foreground"
               />
               <Stat
                 label={t("Would be forfeited")}
@@ -135,11 +135,11 @@ export function PTOLiabilityDialog({
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant="outline"
+                            variant="neutral" appearance="outline"
                             className={cn(
-                              "px-1.5 py-0 text-[10px]",
+                              "px-1.5 py-0 text-2xs",
                               row.onTermination === "PayOut"
-                                ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                                ? "border-warning/40 text-warning-foreground"
                                 : "text-muted-foreground",
                             )}
                           >
@@ -170,7 +170,7 @@ export function PTOLiabilityDialog({
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
-      <p className="text-muted-foreground text-[11px] font-medium uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs font-medium uppercase">{label}</p>
       <p className={cn("mt-1 text-lg font-semibold tabular-nums", tone)}>{value}</p>
     </div>
   );

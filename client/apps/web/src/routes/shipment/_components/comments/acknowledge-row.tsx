@@ -66,7 +66,7 @@ export function AcknowledgeRow({
                             profilePicUrl={ack.user?.profilePicUrl}
                             thumbnailUrl={ack.user?.thumbnailUrl}
                             className="size-5"
-                            fallbackClassName="text-[9px]"
+                            fallbackClassName="text-3xs"
                           />
                         </span>
                       }

@@ -95,7 +95,7 @@ export function CashApplicationEditor({
                     key={row.invoiceId}
                     className={cn(
                       "transition-colors",
-                      isOverApplied && "bg-red-500/5",
+                      isOverApplied && "bg-danger/5",
                       !row.checked && "opacity-60",
                     )}
                   >
@@ -117,7 +117,7 @@ export function CashApplicationEditor({
                     <TableCell className="py-1.5">
                       <div className="flex flex-col">
                         <span className="font-mono text-xs font-medium">{row.invoiceNumber}</span>
-                        <span className="text-muted-foreground text-[11px]">
+                        <span className="text-muted-foreground text-xs">
                           {formatDate(row.invoiceDate)}
                         </span>
                       </div>
@@ -131,7 +131,7 @@ export function CashApplicationEditor({
                     <TableCell className="py-1.5 text-right">
                       <AmountDisplay value={row.openAmountMinor} className="text-xs" />
                       {isOverApplied ? (
-                        <p className="text-[10px] text-red-600 dark:text-red-400">
+                        <p className="text-2xs text-danger-foreground">
                           {t("exceeds open amount")}
                         </p>
                       ) : null}
@@ -169,7 +169,7 @@ export function CashApplicationEditor({
       <div
         className={cn(
           "bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2",
-          totals.isOverBudget && "border-red-500/50 bg-red-500/5",
+          totals.isOverBudget && "border-danger/50 bg-danger/5",
         )}
       >
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
@@ -179,11 +179,11 @@ export function CashApplicationEditor({
           <SummaryStat
             label={t("Unapplied")}
             value={totals.unappliedMinor}
-            className={totals.unappliedMinor > 0 ? "text-amber-600 dark:text-amber-400" : undefined}
+            className={totals.unappliedMinor > 0 ? "text-warning-foreground" : undefined}
           />
         </div>
         {totals.isOverBudget ? (
-          <p className="text-xs font-medium text-red-600 dark:text-red-400">
+          <p className="text-xs font-medium text-danger-foreground">
             {t(
               "Applied exceeds {0} by {1}",
               budgetLabel.toLowerCase(),

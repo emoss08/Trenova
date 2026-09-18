@@ -245,7 +245,7 @@ export function OshaCaseTable({
                           event.stopPropagation();
                           onOpen(entry);
                         }}
-                        className="focus-visible:ring-ring/60 rounded-sm font-medium tabular-nums outline-none focus-visible:ring-2"
+ className="ui-focus-ring rounded-sm font-medium tabular-nums outline-none"
                       >
                         {label}
                       </button>
@@ -300,7 +300,7 @@ export function OshaCaseTable({
                         </FormMark>
                       ) : (
                         <Badge
-                          variant="secondary"
+                          variant="neutral"
                           title={caseClassificationLabel(entry.classification)}
                         >
                           {t("Off the log")}

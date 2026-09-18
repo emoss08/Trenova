@@ -523,7 +523,7 @@ function DayGroup({ day, now, timezone, canCorrect, onEdit, onRemove }: DayGroup
                 {formatPunchTime(row.clockedInAt)}
                 {row.clockedOutAt ? ` – ${formatPunchTime(row.clockedOutAt)}` : ` ${t("– now")}`}
               </span>
-              {row.source !== "Clock" ? <Badge variant="secondary">{row.source}</Badge> : null}
+              {row.source !== "Clock" ? <Badge variant="neutral">{row.source}</Badge> : null}
               {row.editReason ? (
                 <span className="text-muted-foreground truncate">· {row.editReason}</span>
               ) : null}

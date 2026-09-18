@@ -131,12 +131,12 @@ export function UnassignedQueueList({
   return (
     <div className="flex flex-col gap-1.5">
       {isLoading && (
-        <div className="text-muted-foreground flex items-center gap-2 text-[10.5px]">
+        <div className="text-muted-foreground flex items-center gap-2 text-2xs">
           <Spinner className="size-3" /> {t("Loading…")}
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="text-muted-foreground py-3 text-center text-[10.5px]">
+        <p className="text-muted-foreground py-3 text-center text-2xs">
           {t("All loads are assigned ✓")}
         </p>
       )}
@@ -157,29 +157,29 @@ export function UnassignedQueueList({
             <div className="flex items-center justify-between gap-1.5">
               <div className="flex min-w-0 items-center gap-1">
                 <GripVerticalIcon className="text-muted-foreground size-2.5 shrink-0" />
-                <span className="font-table truncate text-[10.5px] font-semibold tabular-nums">
+                <span className="font-table truncate text-2xs font-semibold tabular-nums">
                   {origin} → {dest}
                 </span>
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded px-1 py-px text-[8.5px] font-bold tracking-wide uppercase",
+                  "shrink-0 rounded px-1 py-px text-3xs font-bold tracking-wide uppercase",
                   PILL_TONE[priority.tone],
                 )}
               >
                 {t(priority.label)}
               </span>
             </div>
-            <div className="text-muted-foreground flex items-center justify-between gap-2 text-[10px]">
+            <div className="text-muted-foreground flex items-center justify-between gap-2 text-2xs">
               <span className="truncate">{s.customer?.name ?? t("No Customer Found")}</span>
             </div>
             <div className="font-table flex items-baseline justify-between gap-2 tabular-nums">
-              <span className="text-muted-foreground truncate text-[9.5px]">
+              <span className="text-muted-foreground truncate text-3xs">
                 {t("pickup {0}", pickupDisplay(s))}
               </span>
-              <span className="text-[10.5px] font-semibold">
+              <span className="text-2xs font-semibold">
                 {formatCurrency(revenue)}{" "}
-                <span className="text-muted-foreground text-[9.5px] font-normal">
+                <span className="text-muted-foreground text-3xs font-normal">
                   {t("· {0}mi", miles)}
                 </span>
               </span>
@@ -189,7 +189,7 @@ export function UnassignedQueueList({
       })}
       {paging && isFetchingNextPage && (
         <div className="flex items-center justify-center py-2">
-          <TextShimmer className="font-mono text-[10px]" duration={1}>
+          <TextShimmer className="font-mono text-2xs" duration={1}>
             {t("Loading more…")}
           </TextShimmer>
         </div>

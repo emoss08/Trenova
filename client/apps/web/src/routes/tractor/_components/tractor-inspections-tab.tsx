@@ -35,8 +35,8 @@ type InspectionDefect = {
 };
 
 const SAFETY_STATUS_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  safe: { label: "Safe", variant: "active" },
-  unsafe: { label: "Unsafe", variant: "inactive" },
+  safe: { label: "Safe", variant: "success" },
+  unsafe: { label: "Unsafe", variant: "danger" },
   resolved: { label: "Resolved", variant: "warning" },
 };
 
@@ -110,7 +110,7 @@ function DefectRow({ defect }: { defect: InspectionDefect }) {
         {defect.resolved && defect.resolvedAt ? (
           <span className="text-muted-foreground text-xs">{formatUnixDate(defect.resolvedAt)}</span>
         ) : null}
-        <Badge variant={defect.resolved ? "active" : "inactive"}>
+        <Badge variant={defect.resolved ? "success" : "danger"}>
           {defect.resolved ? t("Resolved") : t("Open")}
         </Badge>
       </div>
@@ -141,10 +141,10 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
     <>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline">{toTitleCase(inspection.inspectionType)}</Badge>
+          <Badge variant="neutral" appearance="outline">{toTitleCase(inspection.inspectionType)}</Badge>
           <Badge variant={safetyMeta.variant}>{t(safetyMeta.label)}</Badge>
           {inspection.signed ? (
-            <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
+            <span className="inline-flex items-center gap-0.5 text-xs text-success-foreground">
               <CheckIcon className="size-3" />
               {t("Signed")}
             </span>

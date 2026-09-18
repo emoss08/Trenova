@@ -155,7 +155,7 @@ export function ToolPicker({
         <div className="border-border/70 divide-border/70 divide-y rounded-lg border">
           {groups.map((group) => (
             <section key={group.resource} className="flex flex-col">
-              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-[10px] font-medium tracking-wider uppercase">
+              <h4 className="bg-muted/40 text-muted-foreground px-3 py-1.5 text-2xs font-medium tracking-wider uppercase">
                 {resourceLabel(group.resource)}
               </h4>
               <ul className="divide-border/60 divide-y">
@@ -183,22 +183,22 @@ export function ToolPicker({
                       >
                         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                           <span className="text-sm font-medium">{title}</span>
-                          <span className="text-muted-foreground font-mono text-[11px]">
+                          <span className="text-muted-foreground font-mono text-xs">
                             {tool.name}
                           </span>
                           {tool.kind === "query" ? (
-                            <Badge variant="outline" className="h-4 gap-1 px-1 text-[10px]">
+                            <Badge variant="neutral" appearance="outline" className="h-4 gap-1 px-1 text-2xs">
                               <SearchIcon className="size-2.5" />
                               {t("Reads")}
                             </Badge>
                           ) : (
-                            <Badge variant="warning" className="h-4 gap-1 px-1 text-[10px]">
+                            <Badge variant="warning" className="h-4 gap-1 px-1 text-2xs">
                               <PencilLineIcon className="size-2.5" />
                               {t("Changes data")}
                             </Badge>
                           )}
                           {tool.kind === "action" && tool.reversible && (
-                            <span className="text-muted-foreground inline-flex items-center gap-0.5 text-[10px]">
+                            <span className="text-muted-foreground inline-flex items-center gap-0.5 text-2xs">
                               <RotateCcwIcon className="size-2.5" />
                               {t("Reversible")}
                             </span>
@@ -226,7 +226,7 @@ export function ToolPicker({
                                 onClick={() => setTier(tool.name, option)}
                                 title={allowed ? undefined : t("Above this agent's ceiling")}
                                 className={cn(
-                                  "rounded px-2 py-0.5 text-[11px] transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                                  "rounded px-2 py-0.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                                   tier === option
                                     ? "bg-background text-foreground shadow-xs"
                                     : "text-muted-foreground hover:text-foreground",

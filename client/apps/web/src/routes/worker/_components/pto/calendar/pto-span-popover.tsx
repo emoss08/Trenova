@@ -15,13 +15,13 @@ import { ptoTiming, spansOnDay, type PTOTimingTone } from "./calendar-layout";
 
 const TIMING_TONE_CLASS: Record<PTOTimingTone, string> = {
   upcoming: "text-foreground",
-  active: "text-green-700 dark:text-green-400",
+  active: "text-success-foreground",
   past: "text-muted-foreground",
 };
 
 const TIMING_DOT_CLASS: Record<PTOTimingTone, string> = {
-  upcoming: "bg-blue-600",
-  active: "bg-green-600",
+  upcoming: "bg-info",
+  active: "bg-success",
   past: "bg-muted-foreground/50",
 };
 
@@ -89,12 +89,12 @@ export function PTOSpanDetails({ pto, todayUnix }: PTOSpanDetailsProps) {
       ) : null}
 
       {decision ? (
-        <p className="text-muted-foreground text-[11px] leading-tight">
+        <p className="text-muted-foreground text-xs leading-tight">
           {decision.verb} <span className="text-foreground">{decision.actor}</span>
           {decision.note ? <> · {decision.note}</> : null}
         </p>
       ) : pto.autoApproved ? (
-        <p className="text-muted-foreground text-[11px] leading-tight">
+        <p className="text-muted-foreground text-xs leading-tight">
           {t("Auto-approved by policy")}
         </p>
       ) : null}
@@ -148,7 +148,7 @@ export function PTODayList({ items, dayUnix }: PTODayListProps) {
                 <span className={cn("size-2 shrink-0 rounded-full", meta.dotClass)} aria-hidden />
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-xs font-medium">{ptoWorkerName(pto)}</p>
-                  <p className="text-muted-foreground truncate text-[11px] tabular-nums">
+                  <p className="text-muted-foreground truncate text-xs tabular-nums">
                     {t(meta.label)} · {formatRange(pto.startDate, pto.endDate)}
                     {pto.status === "Requested" ? ` ${t("· awaiting decision")}` : ""}
                   </p>

@@ -81,7 +81,7 @@ export function ClockBoard({
             {t("On the clock now")}
           </h3>
           {ranked.length > 0 ? (
-            <Badge variant="secondary" className="text-2xs h-4 px-1 tabular-nums">
+            <Badge variant="neutral" className="text-2xs h-4 px-1 tabular-nums">
               {ranked.length}
             </Badge>
           ) : null}
@@ -182,7 +182,7 @@ function BoardList({
               onClick={() => onPick(entry.workerId)}
               aria-pressed={selected}
               aria-label={`Open the clock for ${name}`}
-              className="focus-visible:ring-ring/60 flex min-w-0 items-center gap-2.5 rounded-md text-left outline-none focus-visible:ring-2"
+ className="ui-focus-ring flex min-w-0 items-center gap-2.5 rounded-md text-left outline-none"
             >
               <Avatar size="sm">
                 {entry.worker?.profilePicUrl ? (

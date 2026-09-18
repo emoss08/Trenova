@@ -141,7 +141,7 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
 
   return (
     <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-[11px]">
+      <p className="text-muted-foreground text-xs">
         {isTerminal
           ? t("This settlement is finalized and shown here for record-keeping.")
           : t(
@@ -214,7 +214,7 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         </SummaryTile>
       </div>
       {settlement.carryForwardOutMinor < 0 && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p className="text-xs text-danger-foreground">
           {t("Deductions exceeded earnings.")}{" "}
           <AmountDisplay
             value={-settlement.carryForwardOutMinor}
@@ -241,11 +241,11 @@ function SummaryTile({
       className={cn(
         "rounded-lg border p-3",
         highlight
-          ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30"
+          ? "border-success-border bg-success-subtle/50 dark:border-success-border dark:bg-success-subtle/30"
           : "bg-muted/30",
       )}
     >
-      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -257,8 +257,8 @@ function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) 
   const t = useT();
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-      <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+    <div className="rounded-lg border border-warning-border bg-warning-subtle/60 p-3 dark:border-warning-border dark:bg-warning-subtle/30">
+      <div className="flex items-center gap-2 text-sm font-medium text-warning-foreground">
         <TriangleAlert className="size-4" />
         {t("Review required before approval")}
       </div>
@@ -267,15 +267,15 @@ function ExceptionsBanner({ settlement }: { settlement: SettlementDetailData }) 
           <li key={exception.code} className="flex items-start gap-2 text-xs">
             <span
               className={cn(
-                "mt-0.5 inline-flex rounded-full px-1.5 py-px text-[10px] font-medium",
+                "mt-0.5 inline-flex rounded-full px-1.5 py-px text-2xs font-medium",
                 exception.severity === "Critical"
-                  ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+                  ? "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle dark:text-danger-foreground"
+                  : "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground",
               )}
             >
               {exception.severity}
             </span>
-            <span className="text-amber-900 dark:text-amber-200">{exception.message}</span>
+            <span className="text-warning-foreground">{exception.message}</span>
           </li>
         ))}
       </ul>
@@ -394,7 +394,7 @@ function SettlementActions({
         <Button
           size="sm"
           variant="ghost"
-          className="text-red-600 hover:text-red-700 dark:text-red-400"
+          className="text-danger-foreground hover:text-danger-foreground"
           disabled={busy}
           onClick={() => setReasonAction("void")}
         >
@@ -540,7 +540,7 @@ function MarkPaidDialog({
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1 text-xs font-medium">{t("Payment method")}</p>
-            <p className="text-muted-foreground mb-1 text-[11px]">
+            <p className="text-muted-foreground mb-1 text-xs">
               {t(
                 "How the net pay was sent to the driver — recorded on the statement and audit trail.",
               )}
@@ -565,7 +565,7 @@ function MarkPaidDialog({
               onChange={(e) => setPaymentReference(e.target.value)}
               placeholder={t("ACH trace / check number (optional)")}
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("The ACH trace or check number so the payment can be reconciled with the bank.")}
             </p>
           </div>
@@ -638,7 +638,7 @@ function AddAdjustmentDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("Description (e.g. Layover pay - Detroit 6/12)")}
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Appears as the line item on the driver's statement — say what and when.")}
             </p>
           </div>
@@ -649,7 +649,7 @@ function AddAdjustmentDialog({
               placeholder={t("Amount (e.g. 150.00 or -75.00)")}
               inputMode="decimal"
             />
-            <p className="text-muted-foreground mt-1 text-[11px]">
+            <p className="text-muted-foreground mt-1 text-xs">
               {t("Dollars, not cents; positive adds pay, negative deducts.")}
             </p>
           </div>

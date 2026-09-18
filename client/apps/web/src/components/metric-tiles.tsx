@@ -21,8 +21,8 @@ export function DeltaValue({ delta, deltaPct }: { delta: number; deltaPct?: numb
         isZero
           ? "text-muted-foreground"
           : delta > 0
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400",
+            ? "text-success-foreground"
+            : "text-danger-foreground",
       )}
     >
       {!isZero &&

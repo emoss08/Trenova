@@ -101,12 +101,12 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
         </Badge>
       )}
       {tableName && (
-        <Badge variant="outline" className="text-2xs h-4.5 font-mono">
+        <Badge variant="neutral" appearance="outline" className="text-2xs h-4.5 font-mono">
           {tableName}
         </Badge>
       )}
       {visibleFields.map((field) => (
-        <Badge key={field} variant="secondary" className="text-2xs h-4.5 font-mono">
+        <Badge key={field} variant="neutral" className="text-2xs h-4.5 font-mono">
           {field}
         </Badge>
       ))}
@@ -200,12 +200,12 @@ function BankReceiptDetails({ notification }: { notification: Notification }) {
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {reference && (
-        <Badge variant="outline" className="text-2xs h-4.5 font-mono">
+        <Badge variant="neutral" appearance="outline" className="text-2xs h-4.5 font-mono">
           {t("Ref {0}", reference)}
         </Badge>
       )}
       {amountMinor !== null && (
-        <Badge variant="secondary" className="text-2xs h-4.5 tabular-nums">
+        <Badge variant="neutral" className="text-2xs h-4.5 tabular-nums">
           {formatCurrency(amountMinor / 100)}
         </Badge>
       )}

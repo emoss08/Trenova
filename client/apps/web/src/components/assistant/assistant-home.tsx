@@ -118,13 +118,13 @@ export function AssistantHome({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: 0.04 * index }}
-                  className="border-border/70 bg-card hover:border-border hover:bg-muted/40 hover:bg-muted/40 focus-visible:ring-ring/50 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-[3px] disabled:opacity-60"
+ className="ui-focus-ring border-border/70 bg-card hover:border-border hover:bg-muted/40 hover:bg-muted/40 group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors outline-none disabled:opacity-60"
                 >
                   <AgentTile agent={agent} size="lg" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-1.5 text-sm font-medium">
                       <span className="truncate">{agent.name}</span>
-                      <Badge variant="secondary" className="h-4 px-1 text-[10px]">
+                      <Badge variant="neutral" className="h-4 px-1 text-2xs">
                         {agent.toolNames.length === 0
                           ? t("Answers only")
                           : t("{0, plural, one {# tool} other {# tools}}", agent.toolNames.length)}

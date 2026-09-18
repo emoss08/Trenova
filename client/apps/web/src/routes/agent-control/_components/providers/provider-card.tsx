@@ -74,7 +74,7 @@ export function ProviderCard({
             >
               {provider.name}
             </button>
-            <Badge variant={provider.enabled ? "active" : "inactive"}>
+            <Badge variant={provider.enabled ? "success" : "danger"}>
               {provider.enabled ? t("Enabled") : t("Disabled")}
             </Badge>
             {provider.trusted && (
@@ -88,12 +88,12 @@ export function ProviderCard({
             {provider.model}
           </p>
         </div>
-        <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
+        <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
           {t("Priority {0}", provider.priority)}
         </span>
       </div>
 
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <span>{kindLabel}</span>
         <span aria-hidden>·</span>
         <span className="truncate font-mono">{provider.baseUrl || t("Provider default")}</span>
@@ -124,10 +124,10 @@ export function ProviderCard({
 
       <div className="flex flex-wrap gap-1">
         {taskLabels.length === 0 ? (
-          <span className="text-muted-foreground text-[11px]">{t("No tasks assigned")}</span>
+          <span className="text-muted-foreground text-xs">{t("No tasks assigned")}</span>
         ) : (
           taskLabels.map((label) => (
-            <Badge key={label} variant="secondary" className="text-[10px]">
+            <Badge key={label} variant="neutral" className="text-2xs">
               {label}
             </Badge>
           ))

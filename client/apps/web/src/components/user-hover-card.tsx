@@ -31,7 +31,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
     >
       <HoverCardTrigger
         render={
-          <span className="cursor-pointer font-medium text-blue-600 hover:underline dark:text-blue-400">
+          <span className="cursor-pointer font-medium text-info-foreground hover:underline dark:text-info-foreground">
             @{username}
           </span>
         }
@@ -47,7 +47,7 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
               />
               <div className="flex flex-col text-xs">
                 <h4 className="font-semibold">{hoveredUserData?.name || t("Loading...")}</h4>
-                <p className="text-blue-600 dark:text-blue-400">
+                <p className="text-info-foreground">
                   @{hoveredUserData?.username || username}
                 </p>
               </div>

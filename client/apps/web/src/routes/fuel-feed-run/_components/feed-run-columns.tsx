@@ -79,7 +79,7 @@ export function getColumns(t: TranslateFn): ColumnDef<FuelPurchaseImportBatch>[]
           return <span className="text-muted-foreground font-table tabular-nums">0</span>;
         }
 
-        return <Badge variant="inactive">{t("{0} waiting", held)}</Badge>;
+        return <Badge variant="danger">{t("{0} waiting", held)}</Badge>;
       },
       size: 120,
       meta: { apiField: "errorCount", sortable: true },

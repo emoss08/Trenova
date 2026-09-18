@@ -210,7 +210,7 @@ function ReviewForm({
           }
           rows={3}
         />
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {approve
             ? t(
                 "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).",

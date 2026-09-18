@@ -19,8 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const WORKER_TYPE_VARIANTS: Record<WorkerType, BadgeVariant> = {
-  Employee: "active",
-  Contractor: "purple",
+  Employee: "success",
+  Contractor: "info",
 };
 
 const WORKER_TYPE_LABELS: Record<WorkerType, string> = {

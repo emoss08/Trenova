@@ -16,8 +16,8 @@ type StatCardProps = {
 
 const TONE_CLASS: Record<NonNullable<StatCardProps["tone"]>, string> = {
   default: "bg-muted text-muted-foreground",
-  success: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  warning: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  success: "bg-success/15 text-success-foreground",
+  warning: "bg-warning/15 text-warning-foreground",
 };
 
 export function StatCard({
@@ -58,7 +58,7 @@ export function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className="border-border bg-card text-card-foreground hover:border-primary/40 hover:bg-muted/40 focus-visible:ring-ring/50 flex cursor-pointer flex-row items-center gap-3 rounded-xl border p-4 text-left text-sm transition-colors outline-none focus-visible:ring-[3px]"
+ className="ui-focus-ring border-border bg-card text-card-foreground hover:border-primary/40 hover:bg-muted/40 flex cursor-pointer flex-row items-center gap-3 rounded-xl border p-4 text-left text-sm transition-colors outline-none"
       >
         {body}
       </button>

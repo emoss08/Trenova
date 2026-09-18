@@ -303,7 +303,7 @@ export function RolePermissionBuilder({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">{t("Start with a template")}</h3>
           {grantedCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="neutral" className="text-xs">
               {t("{0, plural, one {# resource} other {# resources}} granted", grantedCount)}
             </Badge>
           )}
@@ -329,7 +329,7 @@ export function RolePermissionBuilder({
                 {template.icon}
               </div>
               <span className="text-xs font-medium">{template.name}</span>
-              <span className="text-muted-foreground text-[10px] leading-tight">
+              <span className="text-muted-foreground text-2xs leading-tight">
                 {t(template.description)}
               </span>
             </button>
@@ -416,7 +416,7 @@ function CategorySection({
             <span className="text-muted-foreground text-xs">({category.resources.length})</span>
           </div>
           {grantedInCategory > 0 && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="neutral" className="text-xs">
               {t("{0} granted", grantedInCategory)}
             </Badge>
           )}
@@ -487,7 +487,7 @@ function ResourceRow({
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-medium">{resource.displayName}</span>
               {isGranted && (
-                <Badge variant={isFullAccess ? "default" : "secondary"} className="text-[10px]">
+                <Badge variant={isFullAccess ? "neutral" : "neutral"} className="text-2xs">
                   {isFullAccess
                     ? t("Full Access")
                     : isViewOnly

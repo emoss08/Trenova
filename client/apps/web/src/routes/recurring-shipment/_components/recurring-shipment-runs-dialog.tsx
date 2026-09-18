@@ -16,9 +16,9 @@ import type { RecurringShipmentRun, RecurringShipmentRunStatus } from "@/types/r
 import { useQuery } from "@tanstack/react-query";
 
 const runStatusStyles: Record<RecurringShipmentRunStatus, string> = {
-  Generated: "border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400",
-  Skipped: "border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400",
-  Failed: "border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400",
+  Generated: "border-success/30 bg-success/10 text-success-foreground",
+  Skipped: "border-warning/30 bg-warning/10 text-warning-foreground",
+  Failed: "border-danger/30 bg-danger/10 text-danger-foreground",
 };
 
 function RunRow({ run }: { run: RecurringShipmentRun }) {
@@ -28,7 +28,7 @@ function RunRow({ run }: { run: RecurringShipmentRun }) {
     <div className="border-border flex flex-col gap-1 rounded-md border p-2.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={cn("font-medium", runStatusStyles[run.status])}>
+          <Badge variant="neutral" appearance="outline" className={cn("font-medium", runStatusStyles[run.status])}>
             {run.status}
           </Badge>
           <span className="text-2xs text-muted-foreground">{run.trigger}</span>

@@ -52,13 +52,13 @@ export default function PayCodesTable() {
           {
             value: "Active",
             label: t("Activate"),
-            color: "#15803d",
+            color: "var(--success)",
             description: t("Codes appear in dropdowns and can be used on new records."),
           },
           {
             value: "Inactive",
             label: t("Deactivate"),
-            color: "#dc2626",
+            color: "var(--danger)",
             description: t("Codes stay on historical records but leave new-entry dropdowns."),
           },
         ],

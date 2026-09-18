@@ -73,7 +73,7 @@ export function ExternalLink({
       <div
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex cursor-pointer gap-x-0.5 font-semibold text-blue-500 hover:underline",
+          "inline-flex cursor-pointer gap-x-0.5 font-semibold text-info-foreground hover:underline",
           className,
         )}
         {...props}

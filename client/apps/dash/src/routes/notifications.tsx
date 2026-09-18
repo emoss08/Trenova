@@ -23,9 +23,9 @@ function notificationTime(unix: number): string {
 }
 
 const priorityDot: Record<string, string> = {
-  critical: "bg-red-500",
-  high: "bg-orange-500",
-  medium: "bg-blue-500",
+  critical: "bg-danger",
+  high: "bg-warning",
+  medium: "bg-info",
   low: "bg-muted-foreground/50",
 };
 
@@ -99,7 +99,7 @@ export function DashNotificationsPage() {
                       className={cn(
                         "mt-1.5 size-2 shrink-0 rounded-full",
                         unread
-                          ? (priorityDot[notification.priority] ?? "bg-blue-500")
+                          ? (priorityDot[notification.priority] ?? "bg-info")
                           : "bg-transparent",
                       )}
                     />

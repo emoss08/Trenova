@@ -29,8 +29,8 @@ export function UserSummaryBar({
           <UserIcon className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">{t("Status:")}</span>
           <Badge
-            variant={status === "Active" ? "default" : "secondary"}
-            className={status === "Active" ? "bg-green-600 hover:bg-green-700" : ""}
+            variant={status === "Active" ? "neutral" : "neutral"}
+            className={status === "Active" ? "bg-success hover:bg-success" : ""}
           >
             {status || t("Active")}
           </Badge>

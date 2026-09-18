@@ -35,7 +35,7 @@ export function MappingReview({
             {t("Resolve required mappings before accepting and creating the receiving shipment.")}
           </div>
         </div>
-        <Badge variant={unresolved.length === 0 ? "active" : "outline"}>
+        <Badge variant={unresolved.length === 0 ? "success" : "neutral"}>
           {unresolved.length === 0 ? t("Ready") : t("{0} unresolved", unresolved.length)}
         </Badge>
       </div>
@@ -97,7 +97,7 @@ export function MappingSummary({ mappingRows }: { mappingRows: EDIMappingResolut
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-medium">{row.entityType}</span>
-            <Badge variant={row.resolved ? "active" : "outline"}>
+            <Badge variant={row.resolved ? "success" : "neutral"}>
               {row.resolved ? t("Resolved") : t("Unresolved")}
             </Badge>
           </div>

@@ -130,7 +130,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
               {t("Filter this tile")}
             </span>
             {active > 0 && (
-              <Badge variant="secondary" className="text-[10px]">
+              <Badge variant="neutral" className="text-2xs">
                 {active}
               </Badge>
             )}

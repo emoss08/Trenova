@@ -42,7 +42,7 @@ export function ResetPasswordPage() {
       <AuthShell step={isDone ? "done" : "login"} receipt={receipt}>
         <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
           <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
+          <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
         </div>
 
         <AuthCard stepKey={isDone ? "done" : "reset"}>
@@ -57,7 +57,7 @@ export function ResetPasswordPage() {
           )}
         </AuthCard>
 
-        <p className="text-subtle-foreground m-0 text-center text-[11.5px] text-balance">
+        <p className="text-subtle-foreground m-0 text-center text-xs text-balance">
           {t("By continuing you agree to our")}{" "}
           <a
             href={TERMS_URL}

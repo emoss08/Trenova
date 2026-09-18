@@ -42,7 +42,7 @@ export function HazmatZoneOverlay({
               y1={y}
               x2={bCenter}
               y2={y}
-              className={satisfied ? "stroke-emerald-500" : "stroke-destructive"}
+              className={satisfied ? "stroke-success" : "stroke-destructive"}
               strokeWidth={1.5}
               strokeDasharray="4 3"
             />
@@ -50,13 +50,13 @@ export function HazmatZoneOverlay({
               cx={aCenter}
               cy={y}
               r={3}
-              className={satisfied ? "fill-emerald-500" : "fill-destructive"}
+              className={satisfied ? "fill-success" : "fill-destructive"}
             />
             <circle
               cx={bCenter}
               cy={y}
               r={3}
-              className={satisfied ? "fill-emerald-500" : "fill-destructive"}
+              className={satisfied ? "fill-success" : "fill-destructive"}
             />
             <rect
               x={midX - 32}
@@ -64,7 +64,7 @@ export function HazmatZoneOverlay({
               width={64}
               height={16}
               rx={4}
-              className={`fill-background ${satisfied ? "stroke-emerald-500" : "stroke-destructive"}`}
+              className={`fill-background ${satisfied ? "stroke-success" : "stroke-destructive"}`}
               strokeWidth={1}
             />
             <text
@@ -72,7 +72,7 @@ export function HazmatZoneOverlay({
               y={y + 1}
               textAnchor="middle"
               dominantBaseline="middle"
-              className={`text-[8px] font-semibold ${satisfied ? "fill-emerald-600 dark:fill-emerald-400" : "fill-destructive"}`}
+              className={`text-3xs font-semibold ${satisfied ? "fill-success" : "fill-destructive"}`}
             >
               {t(
                 "{0}ft {1}",

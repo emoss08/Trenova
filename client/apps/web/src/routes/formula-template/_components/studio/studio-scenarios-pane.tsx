@@ -71,7 +71,7 @@ function ScenarioRow({
         "group flex items-center justify-between gap-2 rounded-md border px-3 py-2 transition-opacity",
         result &&
           (result.passed
-            ? "border-emerald-500/40 bg-emerald-500/5"
+            ? "border-success/40 bg-success/5"
             : "border-destructive/40 bg-destructive/5"),
         isStale && "opacity-60",
       )}
@@ -80,7 +80,7 @@ function ScenarioRow({
         <div className="flex items-center gap-1.5">
           {result &&
             (result.passed ? (
-              <CheckCircle2Icon className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2Icon className="size-3.5 shrink-0 text-success-foreground" />
             ) : (
               <XCircleIcon className="text-destructive size-3.5 shrink-0" />
             ))}
@@ -241,7 +241,7 @@ export function StudioScenariosPane({
           <span className="text-sm font-semibold">{t("Scenarios")}</span>
           {results && (
             <Badge
-              variant={results.failed === 0 ? "active" : "inactive"}
+              variant={results.failed === 0 ? "success" : "danger"}
               className={cn("text-2xs", isStale && "opacity-60")}
             >
               {t("{0}/{1} passing", results.passed, results.total)}

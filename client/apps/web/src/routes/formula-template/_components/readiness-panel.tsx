@@ -13,8 +13,8 @@ const STATUS_STYLES: Record<
   ReadinessCheck["status"],
   { icon: typeof CheckCircle2Icon; className: string }
 > = {
-  pass: { icon: CheckCircle2Icon, className: "text-emerald-600 dark:text-emerald-400" },
-  warn: { icon: AlertTriangleIcon, className: "text-amber-600 dark:text-amber-400" },
+  pass: { icon: CheckCircle2Icon, className: "text-success-foreground" },
+  warn: { icon: AlertTriangleIcon, className: "text-warning-foreground" },
   fail: { icon: XCircleIcon, className: "text-destructive" },
 };
 
@@ -102,7 +102,7 @@ export function ReadinessPanel({
       <div
         className={cn(
           "flex items-center justify-between gap-2 border-b px-3 py-2 text-xs font-semibold",
-          ready ? "bg-emerald-500/10" : "bg-destructive/10",
+          ready ? "bg-success/10" : "bg-destructive/10",
         )}
       >
         <span>{ready ? `${t("Ready to")} ` + step : `${t("Not ready to")} ` + step}</span>

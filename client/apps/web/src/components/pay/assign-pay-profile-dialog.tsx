@@ -201,7 +201,7 @@ export function AssignPayProfileDialog({
         {activeComponents.length > 0 && (
           <div className="rounded-lg border p-3">
             <p className="text-xs font-medium">{t("Driver-Specific Rate Overrides")}</p>
-            <p className="text-muted-foreground mb-2 text-[11px]">
+            <p className="text-muted-foreground mb-2 text-xs">
               {t(
                 "Leave blank to use the profile rate. An override replaces the component's base rate and any mileage bands for this driver only.",
               )}

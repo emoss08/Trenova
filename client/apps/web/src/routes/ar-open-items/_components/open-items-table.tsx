@@ -133,9 +133,9 @@ export function OpenItemsTable({
               status={row.original.settlementStatus as SettlementStatus}
             />
             {row.original.disputeStatus === "Disputed" ? (
-              <Badge variant="orange">{t("Disputed")}</Badge>
+              <Badge variant="warning">{t("Disputed")}</Badge>
             ) : null}
-            {row.original.hasShortPay ? <Badge variant="inactive">{t("Short-paid")}</Badge> : null}
+            {row.original.hasShortPay ? <Badge variant="danger">{t("Short-paid")}</Badge> : null}
           </div>
         ),
       },

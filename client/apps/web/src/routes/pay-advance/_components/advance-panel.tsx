@@ -214,13 +214,13 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">{t("Amount")}</p>
+          <p className="text-muted-foreground text-xs font-medium uppercase">{t("Amount")}</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.amountMinor} currency={row.currencyCode} />
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Recovered")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -228,7 +228,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
           </p>
         </div>
         <div className="bg-muted/30 rounded-lg border p-3">
-          <p className="text-muted-foreground text-[11px] font-medium uppercase">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
             {t("Outstanding")}
           </p>
           <p className="mt-1 text-sm font-semibold">
@@ -242,7 +242,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
       </div>
       {row.notes && <p className="text-muted-foreground text-xs">{row.notes}</p>}
       {row.writeOffReason && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p className="text-xs text-danger-foreground">
           {t("Write-off reason: {0}", row.writeOffReason)}
         </p>
       )}

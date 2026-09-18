@@ -38,7 +38,7 @@ export function WorkspaceNavRow({
       tabIndex={disabled ? -1 : undefined}
       className={cn(
         "flex items-center gap-2 rounded-md pr-2 pl-2 transition-colors outline-none",
-        "focus-visible:ring-ring/50 focus-visible:ring-2",
+"ui-focus-ring",
         sub ? "h-6.5 text-sm" : "h-7 text-base",
         active
           ? "bg-nav-active text-nav-active-foreground font-semibold"

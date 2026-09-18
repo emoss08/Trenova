@@ -44,7 +44,7 @@ export function RolePageLayout({
 
           <div className="flex items-center gap-3">
             {permissionCount !== undefined && permissionCount > 0 && (
-              <Badge variant="outline" className="text-xs font-normal">
+              <Badge variant="neutral" appearance="outline" className="text-xs font-normal">
                 {t("{0, plural, one {# resource} other {# resources}} configured", permissionCount)}
               </Badge>
             )}

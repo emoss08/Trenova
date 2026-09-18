@@ -89,11 +89,11 @@ function isAcceptedFileType(file: File, accept: string): boolean {
 function getErrorIcon(errorType?: string) {
   switch (errorType) {
     case "network":
-      return <WifiOffIcon className="size-4 text-orange-400" />;
+      return <WifiOffIcon className="size-4 text-warning-foreground" />;
     case "server":
-      return <ServerCrashIcon className="size-4 text-red-400" />;
+      return <ServerCrashIcon className="size-4 text-danger-foreground" />;
     default:
-      return <AlertCircleIcon className="size-4 text-red-400" />;
+      return <AlertCircleIcon className="size-4 text-danger-foreground" />;
   }
 }
 
@@ -144,9 +144,9 @@ function UploadItem({
         <div className="flex items-center gap-2">
           {status === "uploading" && (
             <>
-              <div className="h-1 flex-1 overflow-hidden rounded-full bg-blue-500/20">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-info/20">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300"
+                  className="h-full bg-info transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -172,7 +172,7 @@ function UploadItem({
             <span className="text-muted-foreground text-xs">{t("Finalizing...")}</span>
           )}
           {status === "quarantined" && (
-            <span className="text-xs text-red-400">{t("Quarantined")}</span>
+            <span className="text-xs text-danger-foreground">{t("Quarantined")}</span>
           )}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
@@ -183,7 +183,7 @@ function UploadItem({
             <span className="text-muted-foreground text-xs">{formatFileSize(file.size)}</span>
           )}
           {status === "error" && (
-            <span className="truncate text-xs text-red-400">
+            <span className="truncate text-xs text-danger-foreground">
               {getErrorMessage(error, errorType, retryCount)}
             </span>
           )}
@@ -191,14 +191,14 @@ function UploadItem({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {status === "uploading" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "processing" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "uploaded" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "verifying" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "paused" && <AlertCircleIcon className="size-4 text-amber-400" />}
-        {status === "retrying" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "completing" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
-        {status === "success" && <CheckCircleIcon className="size-4 text-green-400" />}
+        {status === "uploading" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "processing" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "uploaded" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "verifying" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "paused" && <AlertCircleIcon className="size-4 text-warning-foreground" />}
+        {status === "retrying" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "completing" && <Loader2Icon className="size-4 animate-spin text-info-foreground" />}
+        {status === "success" && <CheckCircleIcon className="size-4 text-success-foreground" />}
         {(status === "error" || status === "paused" || status === "quarantined") && (
           <>
             {status === "error" ? getErrorIcon(errorType) : null}

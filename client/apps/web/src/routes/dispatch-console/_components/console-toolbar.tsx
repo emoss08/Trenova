@@ -96,7 +96,7 @@ export function ConsoleToolbar({
 
       <Popover>
         <PopoverTrigger
-          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
+          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors"
           aria-label={t("Jump to date")}
         >
           <CalendarIcon className="text-muted-foreground size-3" />
@@ -124,7 +124,7 @@ export function ConsoleToolbar({
             onClick={() => setZoom(option.id)}
             aria-pressed={zoom === option.id}
             className={cn(
-              "px-2 py-1 text-[11px] transition-colors",
+              "px-2 py-1 text-xs transition-colors",
               index > 0 && "border-border border-l",
               zoom === option.id
                 ? "bg-muted text-foreground"
@@ -154,7 +154,7 @@ export function ConsoleToolbar({
               onFocus={() => preloadCenterView(option.id)}
               aria-pressed={mode === option.id}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
+                "flex items-center gap-1 px-2 py-1 text-xs transition-colors",
                 index > 0 && "border-border border-l",
                 mode === option.id
                   ? "bg-muted text-foreground"
@@ -168,7 +168,7 @@ export function ConsoleToolbar({
         </div>
       )}
 
-      <label className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+      <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
         {t("Show covered")}
       </label>
@@ -177,13 +177,13 @@ export function ConsoleToolbar({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 gap-1 px-2 text-[11px]"
+          className="h-7 gap-1 px-2 text-xs"
           disabled={!canUndo || isAssigning}
           onClick={onUndo}
         >
           <Undo2Icon className="size-3" aria-hidden />
           {t("Undo")}
-          <Kbd className="h-4 min-w-4 text-[9px]">u</Kbd>
+          <Kbd className="h-4 min-w-4 text-3xs">u</Kbd>
         </Button>
         {/* Auto-assign plans driver/tractor pairings, which the API refuses for an
             organization without asset operations. Withholding the button is the whole
@@ -191,7 +191,7 @@ export function ConsoleToolbar({
         <CapabilityGate capability={OrganizationCapability.AssetOperations}>
           <Button
             size="sm"
-            className="h-7 gap-1 px-2 text-[11px]"
+            className="h-7 gap-1 px-2 text-xs"
             disabled={isPlanning}
             isLoading={isPlanning}
             onClick={onPlan}

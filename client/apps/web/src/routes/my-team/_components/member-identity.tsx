@@ -58,7 +58,7 @@ export function MemberIdentity({ member, size = "default", className }: MemberId
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-sm font-medium">{member.name}</span>
           {left ? (
-            <Badge variant="inactive" className="text-2xs h-4 px-1">
+            <Badge variant="danger" className="text-2xs h-4 px-1">
               {t("Left")}
             </Badge>
           ) : null}

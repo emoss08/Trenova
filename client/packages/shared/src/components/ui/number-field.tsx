@@ -38,7 +38,7 @@ function NumberFieldGroup({ className, ...props }: NumberFieldPrimitive.Group.Pr
   return (
     <NumberFieldPrimitive.Group
       className={cn(
-        "relative flex w-full justify-between rounded-lg border border-input bg-background text-base shadow-xs/5 ring-ring/24 transition-shadow not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] not-data-disabled:not-focus-within:not-aria-invalid:before:shadow-[0_1px_--theme(--color-black/6%)] focus-within:border-ring focus-within:ring-[3px] has-aria-invalid:border-destructive/36 focus-within:has-aria-invalid:border-destructive/64 focus-within:has-aria-invalid:ring-destructive/48 sm:text-sm dark:bg-input/32 dark:not-data-disabled:not-focus-within:not-aria-invalid:before:shadow-[0_-1px_--theme(--color-white/6%)] dark:has-aria-invalid:ring-destructive/24 data-disabled:pointer-events-none data-disabled:opacity-64 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [[data-disabled],:focus-within,[aria-invalid]]:shadow-none",
+        "relative flex w-full justify-between rounded-lg border border-input bg-background text-base shadow-xs/5 ring-ring/24 transition-shadow not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] not-data-disabled:not-focus-within:not-aria-invalid:before:shadow-[0_1px_--theme(--color-black/6%)] ui-container-focus-ring has-aria-invalid:border-danger has-aria-invalid:[--ring:var(--ring-danger)] sm:text-sm dark:bg-input/32 dark:not-data-disabled:not-focus-within:not-aria-invalid:before:shadow-[0_-1px_--theme(--color-white/6%)] data-disabled:pointer-events-none data-disabled:opacity-64 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [[data-disabled],:focus-within,[aria-invalid]]:shadow-none",
         className,
       )}
       data-slot="number-field-group"
@@ -114,6 +114,9 @@ function NumberFieldScrubArea({
       <Label className="cursor-ew-resize" htmlFor={context.fieldId}>
         {label}
       </Label>
+      {/* design-tokens-ignore: the scrub cursor floats over arbitrary page
+          content, so its halo stays a neutral black in both themes rather than
+          tracking the surface underneath it. */}
       <NumberFieldPrimitive.ScrubAreaCursor className="drop-shadow-[0_1px_1px_#0008] filter">
         <CursorGrowIcon />
       </NumberFieldPrimitive.ScrubAreaCursor>

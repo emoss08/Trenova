@@ -48,7 +48,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-2">
           <h4 className="text-xs font-medium">{t("Leave standing")}</h4>
-          {entitlement.exhausted ? <Badge variant="inactive">{t("Exhausted")}</Badge> : null}
+          {entitlement.exhausted ? <Badge variant="danger">{t("Exhausted")}</Badge> : null}
           {entitlement.eligibleOnTenure ? null : (
             <Badge variant="warning">{t("Under 12 months' service")}</Badge>
           )}
@@ -71,7 +71,7 @@ export function LeaveStandingStrip({ workerId }: { workerId: string }) {
         value={entitlementUsedPercent(entitlement.usedHours, entitlement.totalHours)}
         className="mt-2"
       />
-      <p className="text-muted-foreground mt-1.5 text-[11px]">
+      <p className="text-muted-foreground mt-1.5 text-xs">
         {t(
           "{0} · {1} to {2} · {3, plural, one {# case} other {# cases}}",
           measurementMethodLabel(entitlement.method),

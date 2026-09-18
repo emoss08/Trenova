@@ -68,7 +68,7 @@ export function getColumns(t: TranslateFn): ColumnDef<RoutingGuideRow>[] {
       accessorKey: "specificity",
       header: t("Match Level"),
       cell: ({ row }) => (
-        <Badge variant="outline" className="text-[10px]">
+        <Badge variant="neutral" appearance="outline" className="text-2xs">
           {ROUTING_GUIDE_TIER_LABEL[row.original.specificity ?? 0] ?? "—"}
         </Badge>
       ),

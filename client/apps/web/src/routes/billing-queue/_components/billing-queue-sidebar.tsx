@@ -245,7 +245,7 @@ export function BillingQueueSidebar({
                   <FilterIcon className="size-3" />
                   <span className="text-xs">{t("Filters")}</span>
                   {activeFilterCount > 0 && (
-                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-[10px] font-medium">
+                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-2xs font-medium">
                       {activeFilterCount}
                     </span>
                   )}
@@ -267,7 +267,7 @@ export function BillingQueueSidebar({
               <div className="flex flex-col gap-1">
                 <div className="flex flex-row gap-2">
                   <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-[11px]">{t("Status")}</p>
+                    <p className="text-muted-foreground text-xs">{t("Status")}</p>
                     <Select
                       value={statusFilter ?? "all"}
                       items={billingQueueStatusChoices}
@@ -289,7 +289,7 @@ export function BillingQueueSidebar({
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-[11px]">{t("Bill Type")}</p>
+                    <p className="text-muted-foreground text-xs">{t("Bill Type")}</p>
                     <Select
                       value={billTypeFilter ?? "all"}
                       items={billTypeChoices}
@@ -314,7 +314,7 @@ export function BillingQueueSidebar({
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-[11px]">{t("Payer")}</p>
+                  <p className="text-muted-foreground text-xs">{t("Payer")}</p>
                   <Autocomplete<GraphQLSelectOption, FieldValues>
                     graphql={CUSTOMER_SELECT_OPTIONS}
                     value={payerFilter}
@@ -331,7 +331,7 @@ export function BillingQueueSidebar({
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-[11px]">{t("Assigned Billers")}</p>
+                  <p className="text-muted-foreground text-xs">{t("Assigned Billers")}</p>
                   <MultiSelectAutocomplete<User>
                     link="/users/select-options/"
                     label={t("Billers")}
@@ -361,7 +361,7 @@ export function BillingQueueSidebar({
                   />
                   <div className="space-y-0.5">
                     <p className="text-xs font-medium">{t("Include posted items")}</p>
-                    <p className="text-muted-foreground text-[11px]">
+                    <p className="text-muted-foreground text-xs">
                       {t("Show historical queue records that already produced a posted invoice.")}
                     </p>
                   </div>

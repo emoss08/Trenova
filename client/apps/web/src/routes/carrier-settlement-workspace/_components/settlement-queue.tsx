@@ -153,7 +153,7 @@ export function SettlementQueue({
                 type="button"
                 onClick={() => onFilterChange(chip.value)}
                 className={cn(
-                  "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
                   filter === chip.value
                     ? "border-primary bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted",
@@ -171,7 +171,7 @@ export function SettlementQueue({
           onCheckedChange={toggleAllVisible}
           aria-label={t("Select all visible settlements")}
         />
-        <span className="text-muted-foreground text-[11px]">
+        <span className="text-muted-foreground text-xs">
           {checkedIds.size > 0
             ? t("{0} selected", checkedIds.size)
             : t("Select settlements to act on several at once")}
@@ -232,7 +232,7 @@ export function SettlementQueue({
                       </span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5">
-                      <span className="text-muted-foreground font-mono text-[10px]">
+                      <span className="text-muted-foreground font-mono text-2xs">
                         {settlement.settlementNumber}
                       </span>
                       <CarrierSettlementStatusBadge

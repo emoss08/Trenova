@@ -221,19 +221,19 @@ export function AuthForm({
       <AuthShell step={step} receipt={receipt}>
         <div className="mb-1 flex items-center justify-center gap-2.5 min-[900px]:hidden">
           <img src={logoRainbow} alt="" className="size-6 object-contain" />
-          <span className="text-[14px] font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
+          <span className="text-lg font-semibold tracking-[-0.02em]">{t("Trenova")}</span>
         </div>
 
         <AuthCard stepKey={step}>
           {tenantQuery?.isLoading ? (
             <AuthCardBody>
-              <p className="text-muted-foreground m-0 text-[12.5px]">
+              <p className="text-muted-foreground m-0 text-sm">
                 {t("Loading organization sign-in…")}
               </p>
             </AuthCardBody>
           ) : tenantQuery?.isError ? (
             <AuthCardBody>
-              <p className="text-auth-danger m-0 text-[12.5px]">
+              <p className="text-auth-danger m-0 text-sm">
                 {t("We couldn't load this tenant login page.")}
               </p>
             </AuthCardBody>
@@ -272,7 +272,7 @@ export function AuthForm({
           )}
         </AuthCard>
 
-        <p className="text-subtle-foreground m-0 text-center text-[11.5px] text-balance">
+        <p className="text-subtle-foreground m-0 text-center text-xs text-balance">
           {t("By continuing you agree to our")}{" "}
           <a
             href={TERMS_URL}

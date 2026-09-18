@@ -171,16 +171,16 @@ export function SourceDrillDownPage() {
                 label={t("Ledger Status")}
                 value={
                   summary.fullyReversed ? (
-                    <span className="inline-flex items-center gap-1.5 text-orange-600 dark:text-orange-400">
+                    <span className="inline-flex items-center gap-1.5 text-warning-foreground">
                       {t("Fully reversed")}
                     </span>
                   ) : summary.allBalanced ? (
-                    <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1.5 text-success-foreground">
                       <CheckCircle2Icon className="size-4" />
                       {t("Balanced")}
                     </span>
                   ) : (
-                    <span className="text-red-600 dark:text-red-400">{t("Out of balance")}</span>
+                    <span className="text-danger-foreground">{t("Out of balance")}</span>
                   )
                 }
                 detail={
@@ -297,7 +297,7 @@ function SummaryTile({
     >
       <Card className="h-full gap-0 rounded-lg py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {label}
           </p>
           <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">{value}</p>

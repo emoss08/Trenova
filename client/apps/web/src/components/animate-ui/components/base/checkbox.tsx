@@ -9,7 +9,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const checkboxVariants = cva(
-  "peer focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&[data-checked],&[data-indeterminate]]:bg-brand flex shrink-0 items-center justify-center transition-colors duration-500 outline-none focus-visible:ring-[3px] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&[data-checked],&[data-indeterminate]]:text-white",
+"ui-focus-ring peer aria-invalid:[--ring:var(--ring-danger)] [&[data-checked],&[data-indeterminate]]:bg-brand flex shrink-0 items-center justify-center transition-colors duration-500 outline-none disabled:cursor-not-allowed disabled:opacity-50 [&[data-checked],&[data-indeterminate]]:text-foreground-on-solid",
   {
     variants: {
       variant: {

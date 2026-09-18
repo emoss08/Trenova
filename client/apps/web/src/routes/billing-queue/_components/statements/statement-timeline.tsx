@@ -68,7 +68,7 @@ export function StatementTimeline({
             aria-hidden
             className={cn(
               "flex size-5 shrink-0 items-center justify-center rounded-full border",
-              step.state === "done" && "border-brand bg-brand text-white",
+              step.state === "done" && "border-brand bg-brand text-foreground-on-solid",
               step.state === "active" && "border-brand text-brand",
               step.state === "pending" && "text-muted-foreground border-dashed",
             )}
@@ -84,7 +84,7 @@ export function StatementTimeline({
             >
               {t(step.label)}
             </span>
-            <span className="text-muted-foreground block truncate text-[11px]">{step.detail}</span>
+            <span className="text-muted-foreground block truncate text-xs">{step.detail}</span>
           </span>
           {index < steps.length - 1 && (
             <span

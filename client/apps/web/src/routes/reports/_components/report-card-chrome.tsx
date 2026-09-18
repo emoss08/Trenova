@@ -20,13 +20,13 @@ type CategoryChrome = {
 };
 
 const CATEGORY_CHROME: Record<string, CategoryChrome> = {
-  operations: { icon: TruckIcon, tile: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  operations: { icon: TruckIcon, tile: "bg-info/10 text-info-foreground" },
   billing: {
     icon: ReceiptTextIcon,
-    tile: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    tile: "bg-success/10 text-success-foreground",
   },
-  compliance: { icon: ShieldCheckIcon, tile: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  fleet: { icon: WrenchIcon, tile: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  compliance: { icon: ShieldCheckIcon, tile: "bg-warning/10 text-warning-foreground" },
+  fleet: { icon: WrenchIcon, tile: "bg-accent-violet/10 text-accent-violet-on-subtle" },
 };
 
 const DEFAULT_CHROME: CategoryChrome = {

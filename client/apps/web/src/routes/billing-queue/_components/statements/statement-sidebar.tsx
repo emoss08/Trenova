@@ -108,7 +108,7 @@ export function StatementSidebar({
               onClick={() => setSort(option.key)}
               aria-pressed={sort === option.key}
               className={cn(
-                "rounded px-1.5 py-0.5 text-[11px] transition-colors",
+                "rounded px-1.5 py-0.5 text-xs transition-colors",
                 sort === option.key
                   ? "bg-muted text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground",
@@ -156,7 +156,7 @@ export function StatementSidebar({
       </ScrollArea>
 
       {!loading && visible.length > 0 && (
-        <p className="text-muted-foreground border-t px-3 py-1.5 text-[11px]">
+        <p className="text-muted-foreground border-t px-3 py-1.5 text-xs">
           {t(
             "{0} of {1, plural, one {# statement} other {# statements}} {2}",
             visible.length,

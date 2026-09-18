@@ -75,7 +75,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
         </div>
       </div>
       {!data.ready && exchangeEnabled && (
-        <div className="flex items-start gap-2 rounded-md border border-yellow-600/30 bg-yellow-600/10 p-3 text-sm text-yellow-800 dark:text-yellow-300">
+        <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning-foreground">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <p>
             {t(
@@ -94,7 +94,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           return (
             <div key={item.key} className="flex items-center gap-3 p-3">
               {item.complete ? (
-                <CheckCircle2Icon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+                <CheckCircle2Icon className="size-4 shrink-0 text-success-foreground" />
               ) : (
                 <CircleIcon className="text-muted-foreground size-4 shrink-0" />
               )}

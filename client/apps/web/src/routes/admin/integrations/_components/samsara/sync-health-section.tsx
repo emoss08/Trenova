@@ -127,7 +127,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <span className="text-muted-foreground max-w-48 truncate text-[11px] font-normal" />
+                      <span className="text-muted-foreground max-w-48 truncate text-xs font-normal" />
                     }
                   >
                     {status.lastError}
@@ -137,7 +137,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                   </TooltipContent>
                 </Tooltip>
               )}
-              <Badge variant="inactive" className="h-4 shrink-0 rounded px-1 text-[9.5px]">
+              <Badge variant="danger" className="h-4 shrink-0 rounded px-1 text-3xs">
                 {t("{0} failed", status.failureCount)}
               </Badge>
             </>

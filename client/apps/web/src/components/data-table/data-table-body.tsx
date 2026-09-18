@@ -87,7 +87,7 @@ function DataTableRowInner<TData extends RowData>({
       data-state={selected && "selected"}
       onClick={isClickable ? handleRowClick : undefined}
       className={cn(
-        "group/row outline-brand -outline-offset-2 transition-colors focus-visible:outline data-[state=selected]:outline",
+"ui-inset-focus-ring group/row outline-brand -outline-offset-2 transition-colors data-[state=selected]:outline",
         isClickable && "cursor-pointer",
         formatClass,
         table.options.meta?.getRowClassName?.(row),

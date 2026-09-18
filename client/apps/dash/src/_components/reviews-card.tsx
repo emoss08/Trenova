@@ -89,7 +89,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-medium">{t(review.title)}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {formatUnixDate(review.periodStart)} – {formatUnixDate(review.periodEnd)}
             {review.reviewer?.name ? ` · ${review.reviewer.name}` : ""}
           </p>
@@ -136,7 +136,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
             <li key={goal.id} className="flex items-center gap-1.5 text-xs">
               <TargetIcon className="size-3.5 text-muted-foreground" />
               <span>{t(goal.title)}</span>
-              <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+              <Badge variant="neutral" appearance="outline" className="px-1.5 py-0 text-2xs">
                 {REVIEW_GOAL_STATUS_LABELS[goal.status as ReviewGoalStatus] ?? goal.status}
               </Badge>
             </li>
@@ -150,7 +150,7 @@ function ReviewRow({ review }: { review: PortalReview }) {
 
       {needsSignOff ? (
         <div className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
-          <label className="text-[11px] text-muted-foreground" htmlFor={`comment-${review.id}`}>
+          <label className="text-xs text-muted-foreground" htmlFor={`comment-${review.id}`}>
             {t("Your comment")}
           </label>
           <textarea

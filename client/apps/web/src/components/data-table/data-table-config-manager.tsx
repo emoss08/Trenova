@@ -96,7 +96,7 @@ export default function DataTableConfigManager({
             </span>
             {activeViewName && isViewDirty && (
               <span
-                className="size-1.5 shrink-0 rounded-full bg-amber-500"
+                className="size-1.5 shrink-0 rounded-full bg-warning"
                 title={t("This view has unsaved changes")}
               />
             )}

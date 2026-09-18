@@ -23,7 +23,7 @@ export function SequenceConfigSidebar({ value, onChange, indexByType }: SidebarP
         <ul className="flex flex-col gap-5">
           {sidebarGroups.map((group) => (
             <li key={group.label}>
-              <div className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
+              <div className="text-muted-foreground mb-1.5 px-2 text-xs font-medium tracking-wide uppercase">
                 {t(group.label)}
               </div>
               <ul className="flex flex-col gap-0.5">
@@ -77,7 +77,7 @@ const SidebarItem = memo(function SidebarItem({ type, index, active, onSelect }:
         {isDirty ? (
           <span
             aria-label={t("Unsaved changes")}
-            className="size-1.5 shrink-0 rounded-full bg-amber-500"
+            className="size-1.5 shrink-0 rounded-full bg-warning"
           />
         ) : null}
       </button>

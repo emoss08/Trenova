@@ -203,13 +203,13 @@ function SummaryTile({
       <dd
         className={cn(
           "text-xl font-semibold tabular-nums",
-          tone === "success" && value > 0 && "text-green-700 dark:text-green-400",
+          tone === "success" && value > 0 && "text-success-foreground",
           tone === "danger" && value > 0 && "text-destructive",
         )}
       >
         {value}
       </dd>
-      {hint ? <p className="text-muted-foreground text-[11px]">{hint}</p> : null}
+      {hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null}
     </div>
   );
 }
@@ -296,12 +296,12 @@ function DocumentChips({ item }: { item: BillingTransferRunItem }) {
     <div className="flex flex-col gap-1">
       {item.missingRequirements.length > 0 ? (
         <div className="flex flex-wrap items-center gap-1">
-          <span className="text-muted-foreground text-[11px]">{t("Missing documents:")}</span>
+          <span className="text-muted-foreground text-xs">{t("Missing documents:")}</span>
           {item.missingRequirements.map((requirement) => (
             <Badge
               key={requirement.documentTypeId}
               variant="outline"
-              className="max-h-5 text-[10px]"
+              className="max-h-5 text-2xs"
             >
               {requirement.documentTypeName}
             </Badge>
@@ -309,7 +309,7 @@ function DocumentChips({ item }: { item: BillingTransferRunItem }) {
         </div>
       ) : null}
       {item.validationFailures.length > 0 ? (
-        <ul className="text-muted-foreground list-disc pl-4 text-[11px]">
+        <ul className="text-muted-foreground list-disc pl-4 text-xs">
           {item.validationFailures.map((failure) => (
             <li key={`${failure.field}-${failure.code}`}>{failure.message}</li>
           ))}
@@ -329,7 +329,7 @@ function FailureItem({ item }: { item: BillingTransferRunItem }) {
         <ShipmentLink shipmentId={item.shipmentId} proNumber={item.proNumber} />
         <div className="flex items-center gap-1.5">
           {item.markedReadyToInvoice ? (
-            <Badge variant="info" className="max-h-5 text-[10px]">
+            <Badge variant="info" className="max-h-5 text-2xs">
               {t("Marked Ready to Invoice")}
             </Badge>
           ) : null}
@@ -356,12 +356,12 @@ function TransferredItem({ item }: { item: BillingTransferRunItem }) {
         <ShipmentLink shipmentId={item.shipmentId} proNumber={item.proNumber} />
         <div className="flex items-center gap-1.5">
           {item.markedReadyToInvoice ? (
-            <Badge variant="info" className="max-h-5 text-[10px]">
+            <Badge variant="info" className="max-h-5 text-2xs">
               {t("Marked Ready to Invoice")}
             </Badge>
           ) : null}
           {item.billingQueueNumber ? (
-            <span className="text-muted-foreground font-mono text-[11px]">
+            <span className="text-muted-foreground font-mono text-xs">
               {item.billingQueueNumber}
             </span>
           ) : null}
@@ -372,7 +372,7 @@ function TransferredItem({ item }: { item: BillingTransferRunItem }) {
       </div>
       {hasOpenItems ? (
         <>
-          <p className="text-muted-foreground text-[11px]">
+          <p className="text-muted-foreground text-xs">
             {t("Transferred for billing review with open items:")}
           </p>
           <DocumentChips item={item} />

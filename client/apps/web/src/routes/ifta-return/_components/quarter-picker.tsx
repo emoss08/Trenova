@@ -89,10 +89,10 @@ export function QuarterPicker({
         {status ? (
           <IftaReturnStatusBadge status={status} />
         ) : (
-          <Badge variant="outline">{t("Not generated")}</Badge>
+          <Badge variant="neutral" appearance="outline">{t("Not generated")}</Badge>
         )}
         {amendmentNumber > 0 ? (
-          <Badge variant="purple">{t("Amendment {0}", amendmentNumber)}</Badge>
+          <Badge variant="info">{t("Amendment {0}", amendmentNumber)}</Badge>
         ) : null}
       </div>
       {detail ? (

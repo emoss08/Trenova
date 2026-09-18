@@ -82,7 +82,7 @@ export function ShipmentBillingPayerRows({
                   className="inline-flex items-center gap-1 hover:underline"
                 >
                   <PlainInvoiceStatusBadge status={invoice.status} />
-                  <span className="font-mono text-[10px]">{invoice.number}</span>
+                  <span className="font-mono text-2xs">{invoice.number}</span>
                   <ExternalLinkIcon className="size-2.5" />
                 </Link>
               ) : queueItem ? (

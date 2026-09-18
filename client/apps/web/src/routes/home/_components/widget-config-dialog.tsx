@@ -613,7 +613,7 @@ function DashboardPicker({
             >
               <span className="truncate text-xs font-medium">{entry.name}</span>
               {entry.description && (
-                <span className="text-muted-foreground truncate text-[11px]">
+                <span className="text-muted-foreground truncate text-xs">
                   {t(entry.description)}
                 </span>
               )}

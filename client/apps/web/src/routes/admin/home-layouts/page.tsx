@@ -164,7 +164,7 @@ function PresetRow({
           >
             {preset.name}
           </Link>
-          {preset.isOrgDefault && <Badge variant="secondary">{t("Org default")}</Badge>}
+          {preset.isOrgDefault && <Badge variant="neutral">{t("Org default")}</Badge>}
           {preset.locked && (
             <Badge variant="warning" className="gap-1">
               <LockIcon className="size-2.5" />

@@ -74,6 +74,8 @@ jobs:
         task:
           - name: Lint
             run: pnpm lint -- --format=github
+          - name: Design tokens
+            run: pnpm lint:design -- --format=github
           - name: Typecheck
             run: pnpm typecheck
           - name: Test

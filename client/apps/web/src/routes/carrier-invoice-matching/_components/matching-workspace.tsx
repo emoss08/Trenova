@@ -224,7 +224,7 @@ export default function MatchingWorkspace() {
       {settlementControl && (
         <p
           data-testid="carrier-match-automation-status"
-          className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-[11px]"
+          className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-xs"
         >
           <span>
             {t("Auto-match: {0}", settlementControl.autoMatchInboundInvoices ? t("On") : t("Off"))}
@@ -303,7 +303,7 @@ export default function MatchingWorkspace() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+                  <span className="text-muted-foreground text-2xs tracking-wide uppercase">
                     {t("Created")}
                   </span>
                   {matchViaFilterChips.map((chip) => (
@@ -381,7 +381,7 @@ export default function MatchingWorkspace() {
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card rounded-lg border px-4 py-3">
-      <p className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">{label}</p>
+      <p className="text-muted-foreground text-xs tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
@@ -401,7 +401,7 @@ function TabChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
+        "flex-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
         active ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
       )}
     >
@@ -424,7 +424,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+        "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
         active
           ? "border-primary bg-primary text-primary-foreground"
           : "text-muted-foreground hover:bg-muted",
@@ -490,21 +490,21 @@ function InvoiceList({
             <span className="font-mono text-xs font-medium">
               {invoice.invoiceNumber || t("No invoice #")}
             </span>
-            <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">
+            <span className="rounded-full border px-2 py-0.5 text-2xs uppercase">
               {invoice.reconciliationStatus}
             </span>
           </div>
-          <p className="text-muted-foreground mt-1 text-[11px]">
+          <p className="text-muted-foreground mt-1 text-xs">
             {invoice.proNumber ? `${t("PRO {0} ·", invoice.proNumber)} ` : ""}
             {invoice.billToName || t("Unknown bill-to")}
           </p>
-          <div className="mt-1 flex items-center justify-between text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-xs">
             <span
               className={cn(
                 "inline-flex items-center gap-1",
                 invoice.carrierId
-                  ? "text-green-700 dark:text-green-400"
-                  : "text-amber-700 dark:text-amber-400",
+                  ? "text-success-foreground"
+                  : "text-warning-foreground",
               )}
             >
               <Building2Icon className="size-3" aria-hidden />
@@ -579,7 +579,7 @@ function MatchList({
               {match.matchedVia === "Auto" && (
                 <Badge
                   variant="info"
-                  className="h-4 px-1 text-[9px]"
+                  className="h-4 px-1 text-3xs"
                   title={t("Created by the inbound EDI 210 auto-match sweep")}
                 >
                   {t("Auto-matched")}
@@ -587,8 +587,8 @@ function MatchList({
               )}
               {wasAutoAccepted(match) && (
                 <Badge
-                  variant="active"
-                  className="h-4 px-1 text-[9px]"
+                  variant="success"
+                  className="h-4 px-1 text-3xs"
                   title={t("Resolved automatically because the variance was within tolerance")}
                 >
                   {t("Auto-accepted")}
@@ -597,18 +597,18 @@ function MatchList({
               <CarrierInvoiceMatchStatusBadge status={match.status} />
             </div>
           </div>
-          <p className="text-muted-foreground mt-1 truncate text-[11px]">
+          <p className="text-muted-foreground mt-1 truncate text-xs">
             {match.carrier?.name ?? t("Unknown carrier")}
             {match.carrierAssignment?.proNumber
               ? ` ${t("· PRO {0}", match.carrierAssignment.proNumber)}`
               : ""}
           </p>
-          <div className="mt-1 flex items-center justify-between text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-xs">
             <span className="text-muted-foreground">
               billed <AmountDisplay value={match.invoiceTotalMinor} currency={match.currencyCode} />
             </span>
             {match.varianceMinor !== 0 && (
-              <span className="font-medium text-amber-700 tabular-nums dark:text-amber-400">
+              <span className="font-medium text-warning-foreground tabular-nums dark:text-warning-foreground">
                 Δ <AmountDisplay value={match.varianceMinor} currency={match.currencyCode} />
               </span>
             )}
@@ -709,7 +709,7 @@ function InvoiceDetail({
         <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
           {t("Carrier Link")}
         </h4>
-        <p className="text-muted-foreground mb-2 text-[11px]">
+        <p className="text-muted-foreground mb-2 text-xs">
           {invoice.carrierId
             ? t(
                 "This invoice is linked to a carrier in the master and can be matched against its assignments.",
@@ -770,7 +770,7 @@ function InvoiceDetail({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-background rounded-lg border px-3 py-2">
-      <p className="text-muted-foreground text-[10px] tracking-[0.16em] uppercase">{label}</p>
+      <p className="text-muted-foreground text-2xs tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
@@ -918,8 +918,8 @@ function MatchDetail({
         className={cn(
           "rounded-lg border p-4",
           match.varianceMinor === 0 || withinTolerance
-            ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/30"
-            : "border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/30",
+            ? "border-success-border bg-success-subtle/50 dark:border-success-border dark:bg-success-subtle/30"
+            : "border-warning-border bg-warning-subtle/60 dark:border-warning-border dark:bg-warning-subtle/30",
         )}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -928,7 +928,7 @@ function MatchDetail({
               {t("Variance:")}{" "}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />
             </p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {varianceToleranceMinor != null ? (
                 <>
                   {t("Invoice minus expected · tolerance")}{" "}
@@ -977,7 +977,7 @@ function MatchDetail({
           <Button
             size="sm"
             variant="ghost"
-            className="text-red-600 hover:text-red-700 dark:text-red-400"
+            className="text-danger-foreground hover:text-danger-foreground"
             disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
             onClick={() => setRejectOpen(true)}
           >

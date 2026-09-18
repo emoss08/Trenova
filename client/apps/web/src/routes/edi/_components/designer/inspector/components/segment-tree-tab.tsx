@@ -57,7 +57,7 @@ export default function SegmentTreeTab({
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                   {isControlSegment(segment) ? (
-                    <Badge variant="outline">{t("Control")}</Badge>
+                    <Badge variant="neutral" appearance="outline">{t("Control")}</Badge>
                   ) : null}
                 </span>
                 <span className="text-muted-foreground block truncate pl-10 text-xs">
@@ -68,7 +68,7 @@ export default function SegmentTreeTab({
                 <Badge
                   variant={
                     segmentDiagnostics.some((diagnostic) => diagnostic.severity === "Error")
-                      ? "inactive"
+                      ? "danger"
                       : "warning"
                   }
                 >
@@ -106,11 +106,11 @@ function SegmentDetail({
     <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] rounded-md border">
       <div className="border-b p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={isControlSegment(segment) ? "active" : "outline"}>
+          <Badge variant={isControlSegment(segment) ? "success" : "neutral"}>
             {segment.segmentId}
           </Badge>
           <div className="text-sm font-semibold">{segment.name}</div>
-          {segment.malformed ? <Badge variant="inactive">{t("Malformed")}</Badge> : null}
+          {segment.malformed ? <Badge variant="danger">{t("Malformed")}</Badge> : null}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <code className="bg-muted rounded-sm px-2 py-1 text-xs wrap-break-word">
@@ -165,7 +165,7 @@ function SegmentDetail({
                     ) : null}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={element.required ? "warning" : "outline"}>
+                    <Badge variant={element.required ? "warning" : "neutral"}>
                       {element.required ? t("Required") : t("Optional")}
                     </Badge>
                   </TableCell>
@@ -174,7 +174,7 @@ function SegmentDetail({
                       <Badge
                         variant={
                           elementDiagnostics.some((diagnostic) => diagnostic.severity === "Error")
-                            ? "inactive"
+                            ? "danger"
                             : "warning"
                         }
                       >
@@ -195,7 +195,7 @@ function SegmentDetail({
                 className="rounded-md border p-2 text-sm"
               >
                 <div className="flex items-center gap-2">
-                  <Badge variant={diagnostic.severity === "Error" ? "inactive" : "warning"}>
+                  <Badge variant={diagnostic.severity === "Error" ? "danger" : "warning"}>
                     {diagnostic.severity}
                   </Badge>
                   <span className="font-mono text-xs">{diagnostic.code}</span>

@@ -17,17 +17,17 @@ import { RunPanel } from "./run-panel";
 type BadgeKind = "query" | "mutation" | "subscription" | "fragment";
 
 const KIND_TEXT: Record<BadgeKind, string> = {
-  query: "text-sky-600 dark:text-sky-400",
-  mutation: "text-amber-600 dark:text-amber-400",
-  subscription: "text-emerald-600 dark:text-emerald-400",
-  fragment: "text-violet-600 dark:text-violet-400",
+  query: "text-accent-sky-on-subtle",
+  mutation: "text-warning-foreground",
+  subscription: "text-success-foreground",
+  fragment: "text-accent-violet-on-subtle",
 };
 
 const KIND_TINT: Record<BadgeKind, string> = {
-  query: "bg-sky-500/10",
-  mutation: "bg-amber-500/10",
-  subscription: "bg-emerald-500/10",
-  fragment: "bg-violet-500/10",
+  query: "bg-accent-sky/10",
+  mutation: "bg-warning/10",
+  subscription: "bg-success/10",
+  fragment: "bg-accent-violet/10",
 };
 
 function HashChip({ hash }: { hash: string }) {
@@ -85,7 +85,7 @@ function DocumentHeader({
           <CopyIconButton value={name} label={t("Copy name")} />
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <Badge variant="secondary" className="font-normal">
+          <Badge variant="neutral" className="font-normal">
             {domain}
           </Badge>
           <span className="text-muted-foreground font-mono text-xs">{sourceFile}</span>

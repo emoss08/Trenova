@@ -382,8 +382,8 @@ function TreeRow({
             <span className="truncate text-sm font-medium">{t(position.title)}</span>
             <span className="text-muted-foreground text-xs tabular-nums">{position.code}</span>
             {position.isDrivingPosition ? <Badge variant="info">{t("Driving")}</Badge> : null}
-            {position.flsaExempt ? <Badge variant="secondary">{t("Exempt")}</Badge> : null}
-            {archived ? <Badge variant="inactive">{t("Archived")}</Badge> : null}
+            {position.flsaExempt ? <Badge variant="neutral">{t("Exempt")}</Badge> : null}
+            {archived ? <Badge variant="danger">{t("Archived")}</Badge> : null}
           </span>
           <span className="text-muted-foreground text-xs">
             {jobDepartmentLabel(position.department)}

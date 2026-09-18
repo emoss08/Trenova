@@ -80,7 +80,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         type="button"
         disabled={pending}
         onClick={() => void release()}
-        className="inline-flex cursor-pointer rounded-full bg-blue-100 px-1.5 py-px text-[10px] font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
+        className="inline-flex cursor-pointer rounded-full bg-info-subtle px-1.5 py-px text-2xs font-medium text-info-foreground hover:bg-info-subtle dark:text-info-foreground dark:hover:bg-info-subtle"
         title={`On hold: ${row.holdReason}. Click to release so the event settles normally.`}
       >
         {t("Held")}

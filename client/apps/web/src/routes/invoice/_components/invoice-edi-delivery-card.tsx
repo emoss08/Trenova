@@ -85,7 +85,7 @@ export function InvoiceEdiDeliveryCard({
           {plan.blockers.map((item) => (
             <li
               key={item}
-              className="flex gap-2 rounded-md border border-yellow-600/30 bg-yellow-600/10 p-2 text-sm text-yellow-700 dark:text-yellow-400"
+              className="flex gap-2 rounded-md border border-warning/30 bg-warning/10 p-2 text-sm text-warning-foreground"
             >
               <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
               <span>{item}</span>
@@ -95,7 +95,7 @@ export function InvoiceEdiDeliveryCard({
       ) : null}
 
       {plan?.lastError ? (
-        <div className="mt-3 flex gap-2 rounded-md border border-red-600/30 bg-red-600/10 p-2 text-sm text-red-700 dark:text-red-400">
+        <div className="mt-3 flex gap-2 rounded-md border border-danger/30 bg-danger/10 p-2 text-sm text-danger-foreground">
           <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
           <span>{plan.lastError}</span>
         </div>

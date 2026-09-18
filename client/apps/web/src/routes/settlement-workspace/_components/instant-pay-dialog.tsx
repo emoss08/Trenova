@@ -182,7 +182,7 @@ export function InstantPayDialog({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px]"
+                  className="h-6 px-2 text-xs"
                   onClick={() =>
                     setCheckedIds(
                       allSelected
@@ -222,7 +222,7 @@ export function InstantPayDialog({
                 />
                 <Label htmlFor="instant-pay-recurring" className="text-xs font-normal">
                   {t("Apply recurring deductions, escrow, and advance recovery")}
-                  <span className="text-muted-foreground mt-0.5 block text-[11px]">
+                  <span className="text-muted-foreground mt-0.5 block text-xs">
                     {t(
                       "Off by default so this payout doesn't double-dip items the regular period settlement will take.",
                     )}
@@ -295,7 +295,7 @@ function EventRow({
       />
       <div className="min-w-0 flex-1">
         <p className="truncate font-mono text-xs font-medium">{event.proNumber || t("No pro #")}</p>
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {formatUnixDate(event.eventDate)}
           {Number(event.totalMiles) > 0
             ? ` ${t("· {0} mi", Number(event.totalMiles).toFixed(0))}`

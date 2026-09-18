@@ -11,7 +11,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, GaugeIcon, SirenIcon, UsersIcon } from "lucide-react";
 import { useMemo } from "react";
 
-const VALUE_CLASS = "font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums";
+const VALUE_CLASS = "font-mono text-3xl leading-none font-semibold tracking-tight tabular-nums";
 
 type FleetSafetyOverviewProps = {
   summary: FleetSafetySummary | undefined;
@@ -88,7 +88,7 @@ export function FleetSafetyOverview({ summary }: FleetSafetyOverviewProps) {
                 className={VALUE_CLASS}
                 aria-label={t("Average score")}
               />
-              <span className="text-muted-foreground font-mono text-[11px]">/ 100</span>
+              <span className="text-muted-foreground font-mono text-xs">/ 100</span>
             </div>
           </div>
         ) : (

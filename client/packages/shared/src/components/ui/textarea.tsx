@@ -15,12 +15,11 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
       data-slot="textarea"
       className={cn(
         "flex w-full rounded-md border border-input bg-muted px-2 py-0.5 text-base",
-        "shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden",
-        "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
-        "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",
+        "ui-focus-ring shadow-xs placeholder:text-muted-foreground",
+        "disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         isInvalid &&
-          "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-destructive focus-visible:ring-4 focus-visible:ring-destructive/20",
+          "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
         className,
       )}
       {...props}
@@ -33,27 +32,27 @@ const ITEMS = [
     text: "Summary",
     icon: <TextIcon />,
     colors: {
-      icon: "text-orange-600",
-      border: "border-orange-500",
-      bg: "bg-orange-500/10",
+      icon: "text-warning-foreground",
+      border: "border-warning",
+      bg: "bg-warning/10",
     },
   },
   {
     text: "Fix Spelling and Grammar",
     icon: <CheckIcon />,
     colors: {
-      icon: "text-emerald-600",
-      border: "border-emerald-500",
-      bg: "bg-emerald-500/10",
+      icon: "text-success-foreground",
+      border: "border-success",
+      bg: "bg-success/10",
     },
   },
   {
     text: "Make shorter",
     icon: <ArrowDownIcon />,
     colors: {
-      icon: "text-purple-600",
-      border: "border-purple-500",
-      bg: "bg-purple-500/10",
+      icon: "text-accent-violet-on-subtle",
+      border: "border-accent-violet",
+      bg: "bg-accent-violet/10",
     },
   },
 ];
@@ -86,10 +85,10 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
         <div
           className={cn(
             "relative rounded-md border border-muted-foreground/20 bg-muted",
-            "focus-within:border-foreground focus-within:ring-4 focus-within:ring-foreground/20 focus-within:outline-hidden",
+            "ui-container-focus-ring",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             isInvalid &&
-              "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+              "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
             className,
           )}
         >
@@ -99,8 +98,8 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                 ref={textareaRef}
                 id={id}
                 className={cn(
-                  "w-full max-w-xl rounded-md border-none pt-3 pr-10 pb-3 placeholder:text-black/70 focus:ring-3 dark:placeholder:text-white/70",
-                  "resize-none bg-transparent text-wrap text-black focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white",
+                  "w-full max-w-xl rounded-md border-none pt-3 pr-10 pb-3 placeholder:text-foreground-subtle",
+                  "resize-none bg-transparent text-wrap text-foreground",
                   "min-h-[70px]",
                   "max-h-[200px]",
                 )}
@@ -128,7 +127,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                     className={cn(
                       "inline-flex items-center gap-1.5",
                       "rounded-md border px-2 py-0.5 text-xs font-medium shadow-xs",
-                      "animate-fadeIn transition-colors duration-200 hover:bg-black/5 dark:hover:bg-white/5",
+                      "animate-fadeIn transition-colors duration-200 hover:bg-surface-hover",
                       currentItem.colors.bg,
                       currentItem.colors.border,
                     )}
@@ -156,7 +155,7 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
           >
             <div className="flex items-center gap-1.5">
               {icon}
-              <span className="whitespace-nowrap text-black/70 dark:text-white/70">{text}</span>
+              <span className="whitespace-nowrap text-foreground-muted">{text}</span>
             </div>
           </button>
         ))}

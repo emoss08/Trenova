@@ -69,7 +69,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <h4 className="text-muted-foreground text-[11px] font-semibold uppercase">
+        <h4 className="text-muted-foreground text-xs font-semibold uppercase">
           {t("Injuries & illnesses")}
         </h4>
         {canRecord ? (
@@ -120,7 +120,7 @@ export function InjuryList({ workerId }: { workerId: string }) {
                     {injury.recordable ? <Badge variant="info">{t("On the 300 log")}</Badge> : null}
                     {injury.status === "Open" ? <Badge variant="warning">{t("Open")}</Badge> : null}
                     {injury.privacyCase ? (
-                      <Badge variant="secondary">{t("Privacy case")}</Badge>
+                      <Badge variant="neutral">{t("Privacy case")}</Badge>
                     ) : null}
                   </span>
                   <span className="flex items-center gap-2">

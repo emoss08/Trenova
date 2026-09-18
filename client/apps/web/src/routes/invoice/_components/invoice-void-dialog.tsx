@@ -114,13 +114,13 @@ export function InvoiceVoidDialog({
         </DialogHeader>
 
         {pending ? (
-          <div className="flex gap-3 rounded-md border border-amber-300 bg-amber-50/60 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/30">
-            <ClockIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="flex gap-3 rounded-md border border-warning-border bg-warning-subtle/60 p-3 text-sm dark:border-warning-border dark:bg-warning-subtle/30">
+            <ClockIcon className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
             <div>
-              <p className="font-medium text-amber-800 dark:text-amber-200">
+              <p className="font-medium text-warning-foreground">
                 {t("Void requested; awaiting reversal approval")}
               </p>
-              <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
+              <p className="mt-0.5 text-xs text-warning-foreground/80">
                 {t(
                   "The full-reversal adjustment needs an approver. The invoice reads Voided the moment it executes.",
                 )}

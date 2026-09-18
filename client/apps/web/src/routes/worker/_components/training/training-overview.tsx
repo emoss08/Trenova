@@ -38,7 +38,7 @@ export function TrainingOverview({
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold">{t("Training matrix")}</h3>
-          <Badge variant={summary.compliant ? "active" : "inactive"}>
+          <Badge variant={summary.compliant ? "success" : "danger"}>
             {summary.compliant ? t("Qualified") : t("Not qualified")}
           </Badge>
           <InfoPopover title={t("Training matrix")}>

@@ -112,7 +112,7 @@ export function WidgetCount({
   return (
     <span
       className={cn(
-        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded px-1 text-[9px] tabular-nums",
+        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded px-1 text-3xs tabular-nums",
         toneClass,
       )}
     >

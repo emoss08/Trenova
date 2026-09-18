@@ -112,7 +112,7 @@ export function OverflowTabsList({
             <DropdownMenuTrigger
               className={cn(
                 measureTabClassName,
-                "cursor-pointer rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                "cursor-pointer rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground ui-focus-ring",
                 hiddenActive && "text-foreground",
               )}
               aria-label={hiddenActive ? `${hiddenActive.label} (more tabs)` : `${moreLabel} tabs`}

@@ -75,7 +75,7 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
-      <TriangleAlertIcon className="size-5 text-amber-500" />
+      <TriangleAlertIcon className="size-5 text-warning-foreground" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
         {t(
           "These figures could not be loaded. The window may be too wide, or the aggregation timed out.",
@@ -152,7 +152,7 @@ export function PanelExpandToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="text-2xs text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 ml-auto rounded-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
+ className="ui-focus-ring text-2xs text-muted-foreground hover:text-foreground ml-auto rounded-sm font-medium transition-colors outline-none"
     >
       {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
     </button>

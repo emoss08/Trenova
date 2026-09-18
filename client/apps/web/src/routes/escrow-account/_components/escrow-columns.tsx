@@ -72,7 +72,7 @@ export function getColumns(t: TranslateFn): ColumnDef<EscrowAccountRow>[] {
         return (
           <div className="flex items-center justify-end gap-2">
             <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
-              <div className="h-full rounded-full bg-green-500" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-success" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-xs tabular-nums">{pct}%</span>
           </div>

@@ -27,7 +27,7 @@ export function AuthShell({
   return (
     <div
       data-auth-step={step}
-      className="bg-background font-geist text-foreground fixed inset-0 grid h-svh w-full grid-cols-1 overflow-hidden text-[13.5px] tracking-[-0.006em] antialiased min-[900px]:grid-cols-[1fr_clamp(440px,42%,560px)]"
+      className="bg-background font-geist text-foreground fixed inset-0 grid h-svh w-full grid-cols-1 overflow-hidden text-base tracking-[-0.006em] antialiased min-[900px]:grid-cols-[1fr_clamp(440px,42%,560px)]"
     >
       <AuthPanel receipt={receipt} />
       <main className="relative grid min-w-0 grid-cols-[minmax(0,1fr)] items-center justify-items-center overflow-auto px-6 py-10 [scrollbar-gutter:stable]">

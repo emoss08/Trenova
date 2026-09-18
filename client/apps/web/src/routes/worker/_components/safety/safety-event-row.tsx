@@ -49,10 +49,10 @@ type SafetyEventRowProps = {
   onDiscipline: (event: WorkerSafetyEventRow) => void;
 };
 
-const STATUS_VARIANT: Record<SafetyEventStatus, "active" | "warning" | "inactive" | "outline"> = {
-  Open: "inactive",
+const STATUS_VARIANT: Record<SafetyEventStatus, "success" | "warning" | "danger" | "neutral"> = {
+  Open: "danger",
   UnderReview: "warning",
-  Closed: "outline",
+  Closed: "neutral",
 };
 
 const KIND_ICONS: Record<string, LucideIcon> = {
@@ -183,7 +183,7 @@ export function SafetyEventRow({
                 {SAFETY_EVENT_STATUS_LABELS[status] ?? status}
               </Badge>
               {event.activePoints > 0 ? (
-                <Badge variant="outline" className="tabular-nums">
+                <Badge variant="neutral" appearance="outline" className="tabular-nums">
                   {t("{0, plural, one {# pt} other {# pts}}", event.activePoints)}
                 </Badge>
               ) : null}

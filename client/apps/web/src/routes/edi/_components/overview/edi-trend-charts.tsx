@@ -18,22 +18,22 @@ type EDIVolumePoint = ResultOf<typeof EdiVolumeSeriesDocument>["ediVolumeSeries"
 const volumeChartConfig = {
   sentCount: {
     label: "Sent",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
   failedCount: {
     label: "Failed",
-    theme: { light: "#e34948", dark: "#e66767" },
+    color: "var(--danger)",
   },
   receivedCount: {
     label: "Received",
-    theme: { light: "#1baf7a", dark: "#199e70" },
+    color: "var(--success)",
   },
 } satisfies ChartConfig;
 
 const successRateChartConfig = {
   successRate: {
     label: "Success rate",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
 } satisfies ChartConfig;
 

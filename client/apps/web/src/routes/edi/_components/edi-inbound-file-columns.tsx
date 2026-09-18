@@ -68,7 +68,7 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
     {
       accessorKey: "method",
       header: t("Method"),
-      cell: ({ row }) => <Badge variant="outline">{row.original.method}</Badge>,
+      cell: ({ row }) => <Badge variant="neutral" appearance="outline">{row.original.method}</Badge>,
       size: 110,
       meta: {
         label: t("Method"),
@@ -85,7 +85,7 @@ export function getInboundFileColumns(t: TranslateFn): ColumnDef<EDIInboundFileR
       header: t("Transactions"),
       cell: ({ row }) =>
         row.original.transactionCount > 0 ? (
-          <Badge variant="secondary">{row.original.transactionCount}</Badge>
+          <Badge variant="neutral">{row.original.transactionCount}</Badge>
         ) : (
           <DataTablePlaceholder />
         ),

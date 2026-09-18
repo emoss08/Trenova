@@ -20,9 +20,9 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 const DRIVER_TYPE_VARIANTS: Record<DriverType, BadgeVariant> = {
   Local: "info",
-  Regional: "active",
+  Regional: "success",
   OTR: "warning",
-  Team: "purple",
+  Team: "info",
 };
 
 const DRIVER_TYPE_LABELS: Record<DriverType, string> = {

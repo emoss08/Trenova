@@ -64,7 +64,7 @@ export function ARKpiRow() {
         icon={AlertTriangleIcon}
         label={t("Overdue")}
         value={`${kpis.overduePercent.toFixed(1)}%`}
-        valueClassName={kpis.overduePercent >= 25 ? "text-red-600 dark:text-red-400" : undefined}
+        valueClassName={kpis.overduePercent >= 25 ? "text-danger-foreground" : undefined}
         detail={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
         to="/accounting/ar/open-items"
       />
@@ -86,7 +86,7 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
         <p
           className={cn(
             "text-2xl font-semibold tracking-tight tabular-nums",
-            overTarget && "text-red-600 dark:text-red-400",
+            overTarget && "text-danger-foreground",
           )}
         >
           {t("{0}d", kpis.currentDsoDays.toFixed(1))}
@@ -95,8 +95,8 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
           <span
             className={cn(
               "flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              isUp && "text-red-600 dark:text-red-400",
-              isDown && "text-emerald-600 dark:text-emerald-400",
+              isUp && "text-danger-foreground",
+              isDown && "text-success-foreground",
             )}
           >
             {isUp ? <TrendingUpIcon className="size-3" /> : <TrendingDownIcon className="size-3" />}
@@ -105,7 +105,7 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-[11px]">
+      <p className="text-muted-foreground text-xs">
         {t("target < {0}d · vs 4 weeks ago", AR_DSO_TARGET_DAYS)}
       </p>
     </KpiShell>
@@ -118,10 +118,10 @@ function CeiKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
   const cei = kpis.cei;
   const barClass =
     cei >= AR_CEI_HEALTHY_THRESHOLD
-      ? "bg-emerald-500 dark:bg-emerald-400"
+      ? "bg-success"
       : cei >= AR_CEI_WARNING_THRESHOLD
-        ? "bg-amber-500 dark:bg-amber-400"
-        : "bg-red-500 dark:bg-red-400";
+        ? "bg-warning"
+        : "bg-danger";
 
   return (
     <KpiShell index={2} icon={GaugeIcon} label={t("Collection Effectiveness")}>
@@ -159,7 +159,7 @@ function KpiShell({
       )}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+        <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           {label}
         </CardTitle>
         <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">
@@ -203,7 +203,7 @@ function KpiCard({
       <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", valueClassName)}>
         {value}
       </p>
-      {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}
+      {detail ? <p className="text-muted-foreground text-xs">{detail}</p> : null}
     </KpiShell>
   );
 }

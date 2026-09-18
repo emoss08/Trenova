@@ -139,7 +139,7 @@ export function TimelineRowItem({
               {row.workerProfilePicUrl && (
                 <AvatarImage src={row.workerProfilePicUrl} alt={row.workerName} />
               )}
-              <AvatarFallback className="text-[9px]">
+              <AvatarFallback className="text-3xs">
                 {workerInitials(row.workerName)}
               </AvatarFallback>
             </Avatar>
@@ -147,7 +147,7 @@ export function TimelineRowItem({
         <div className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
             <span
-              className={cn("truncate text-[11.5px] font-medium", isUnassigned && "text-warning")}
+              className={cn("truncate text-xs font-medium", isUnassigned && "text-warning")}
             >
               {isUnassigned ? t("Unassigned") : row.workerName}
             </span>
@@ -161,13 +161,13 @@ export function TimelineRowItem({
               />
             )}
             {collapsed && (
-              <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
+              <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
                 {row.bars.length} {row.bars.length === 1 ? "load" : "loads"}
               </span>
             )}
           </span>
           {!collapsed && (
-            <span className="font-table text-muted-foreground truncate text-[9.5px] tabular-nums">
+            <span className="font-table text-muted-foreground truncate text-3xs tabular-nums">
               {isUnassigned
                 ? t("Drop here to unassign")
                 : row.isCarrier
@@ -251,7 +251,7 @@ function CollapsedBarStrip({
       onMouseEnter={() => bar.shipment.id && onHoverChange(bar.shipment.id)}
       onMouseLeave={() => onHoverChange(null)}
       className={cn(
-        "focus-visible:ring-brand absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none focus-visible:ring-2",
+"ui-focus-ring absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none",
         STRIP_TONE_CLASS[bar.tone],
         bar.isCanceled && "opacity-40",
         dimmed && "opacity-20",

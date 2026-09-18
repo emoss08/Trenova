@@ -23,7 +23,7 @@ export function CopyIconButton({
         render={<Button size={size} variant="ghost" onClick={() => void copy(value)} />}
       >
         {isCopied ? (
-          <CheckIcon className="size-3.5 text-emerald-500" />
+          <CheckIcon className="size-3.5 text-success-foreground" />
         ) : (
           <CopyIcon className="size-3.5" />
         )}

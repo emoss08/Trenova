@@ -179,7 +179,7 @@ export function TenderOfferPublicPage() {
   if (submitted) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-green-600" aria-hidden />}
+        icon={<CheckCircle2Icon className="size-8 text-success-foreground" aria-hidden />}
         title={t("Response recorded")}
         body={t("Thank you — the dispatcher has been notified of your response.")}
       />

@@ -275,7 +275,7 @@ export default function AdditionalChargesSection() {
                               onClick={() =>
                                 setValue("fuelSurchargeLocked", false, { shouldDirty: true })
                               }
-                              className="text-2xs flex items-center gap-1 rounded bg-amber-500/10 px-1 py-0.5 text-amber-600 dark:text-amber-400"
+                              className="text-2xs flex items-center gap-1 rounded bg-warning/10 px-1 py-0.5 text-warning-foreground"
                             >
                               <LockIcon className="size-2.5" />
                               {t("Locked")}

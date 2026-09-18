@@ -6,12 +6,12 @@ import { CheckIcon, ChevronRightIcon } from "lucide-react";
 
 const statusColors = {
   danger:
-    "text-red-600 focus:text-red-600 focus:bg-red-600/10 hover:text-red-600 hover:bg-red-600/10 dark:text-red-600 dark:focus:text-red-600 dark:focus:bg-red-600/20 dark:hover:bg-red-600/20 dark:hover:text-red-400",
+    "text-danger-foreground focus:text-danger-foreground focus:bg-danger/10 hover:text-danger-foreground hover:bg-danger/10 dark:text-danger-foreground dark:focus:text-danger-foreground dark:focus:bg-danger/20 dark:hover:bg-danger/20 dark:hover:text-danger-foreground",
   warning:
-    "text-yellow-500 focus:text-yellow-600 focus:bg-yellow-600/10 hover:text-yellow-600 hover:bg-yellow-600/10 dark:text-yellow-600 dark:focus:text-yellow-600 dark:focus:bg-yellow-600/20 dark:hover:bg-yellow-600/20 dark:hover:text-yellow-400",
-  info: "text-blue-600 focus:text-blue-600 focus:bg-blue-600/10 hover:text-blue-600 hover:bg-blue-600/20 dark:text-blue-600 dark:focus:text-blue-600 dark:focus:bg-blue-600/20 dark:hover:bg-blue-600/20 dark:hover:text-blue-400",
+    "text-warning-foreground focus:text-warning-foreground focus:bg-warning/10 hover:text-warning-foreground hover:bg-warning/10 dark:text-warning-foreground dark:focus:text-warning-foreground dark:focus:bg-warning/20 dark:hover:bg-warning/20 dark:hover:text-warning-foreground",
+  info: "text-info-foreground focus:text-info-foreground focus:bg-info/10 hover:text-info-foreground hover:bg-info/20 dark:text-info-foreground dark:focus:text-info-foreground dark:focus:bg-info/20 dark:hover:bg-info/20 dark:hover:text-info-foreground",
   success:
-    "text-green-500 focus:text-green-600 focus:bg-green-600/10 hover:text-green-600 hover:bg-green-600/10 dark:text-green-600 dark:focus:text-green-600 dark:focus:bg-green-600/20 dark:hover:bg-green-600/20 dark:hover:text-green-400",
+    "text-success-foreground focus:text-success-foreground focus:bg-success/10 hover:text-success-foreground hover:bg-success/10 dark:text-success-foreground dark:focus:text-success-foreground dark:focus:bg-success/20 dark:hover:bg-success/20 dark:hover:text-success-foreground",
 };
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {

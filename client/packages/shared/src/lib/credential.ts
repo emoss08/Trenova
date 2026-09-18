@@ -5,7 +5,7 @@ export type CredentialHealthTone = "ok" | "soon" | "overdue" | "missing";
 export type CredentialHealthMeta = {
   label: string;
   tone: CredentialHealthTone;
-  badgeVariant: "active" | "warning" | "inactive" | "outline";
+  badgeVariant: "success" | "warning" | "danger" | "neutral";
   textClass: string;
   ringClass: string;
   dotClass: string;
@@ -17,7 +17,7 @@ const HEALTH_META: Record<CredentialHealth, CredentialHealthMeta> = {
   Missing: {
     label: "Missing",
     tone: "missing",
-    badgeVariant: "outline",
+    badgeVariant: "neutral",
     textClass: "text-muted-foreground",
     ringClass: "border-dashed border-muted-foreground/40",
     dotClass: "bg-muted-foreground/60",
@@ -26,28 +26,28 @@ const HEALTH_META: Record<CredentialHealth, CredentialHealthMeta> = {
   Expired: {
     label: "Expired",
     tone: "overdue",
-    badgeVariant: "inactive",
-    textClass: "text-red-600 dark:text-red-400",
-    ringClass: "border-red-500/40 bg-red-500/5",
-    dotClass: "bg-red-500",
+    badgeVariant: "danger",
+    textClass: "text-danger-foreground",
+    ringClass: "border-danger/40 bg-danger/5",
+    dotClass: "bg-danger",
     rank: 1,
   },
   ExpiringSoon: {
     label: "Expiring soon",
     tone: "soon",
     badgeVariant: "warning",
-    textClass: "text-amber-600 dark:text-amber-400",
-    ringClass: "border-amber-500/40 bg-amber-500/5",
-    dotClass: "bg-amber-500",
+    textClass: "text-warning-foreground",
+    ringClass: "border-warning/40 bg-warning/5",
+    dotClass: "bg-warning",
     rank: 2,
   },
   Valid: {
     label: "Valid",
     tone: "ok",
-    badgeVariant: "active",
-    textClass: "text-green-600 dark:text-green-400",
+    badgeVariant: "success",
+    textClass: "text-success-foreground",
     ringClass: "border-border",
-    dotClass: "bg-green-500",
+    dotClass: "bg-success",
     rank: 3,
   },
 };

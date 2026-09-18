@@ -19,21 +19,21 @@ import { useMemo, useState } from "react";
 const FEASIBILITY_STALE_MS = 30_000;
 
 const VERDICT_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  feasible: { label: "Feasible", variant: "active" },
+  feasible: { label: "Feasible", variant: "success" },
   tight: { label: "Tight", variant: "warning" },
-  infeasible: { label: "Infeasible", variant: "inactive" },
-  unknown: { label: "Unknown", variant: "outline" },
+  infeasible: { label: "Infeasible", variant: "danger" },
+  unknown: { label: "Unknown", variant: "neutral" },
 };
 
-const UNKNOWN_VERDICT = { label: "Unknown", variant: "outline" as BadgeVariant };
+const UNKNOWN_VERDICT = { label: "Unknown", variant: "neutral" as BadgeVariant };
 
 const DUTY_STATUS_META: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On duty", variant: "warning" },
-  offDuty: { label: "Off duty", variant: "outline" },
-  sleeperBed: { label: "Sleeper", variant: "purple" },
-  yardMove: { label: "Yard move", variant: "teal" },
-  personalConveyance: { label: "Personal", variant: "teal" },
+  driving: { label: "Driving", variant: "accent-emerald" },
+  onDuty: { label: "On duty", variant: "accent-amber" },
+  offDuty: { label: "Off duty", variant: "neutral" },
+  sleeperBed: { label: "Sleeper", variant: "accent-violet" },
+  yardMove: { label: "Yard move", variant: "accent-sky" },
+  personalConveyance: { label: "Personal", variant: "accent-teal" },
 };
 
 function verdictMeta(verdict: string): { label: string; variant: BadgeVariant } {
@@ -69,24 +69,24 @@ function FeasibilityRow({
           </span>
           {selected && <CheckIcon className="text-brand size-3 shrink-0" />}
           {duty && (
-            <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+            <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
               {t(duty.label)}
             </Badge>
           )}
           {driver.tractorCode && (
             <Badge
-              variant="outline"
-              className="border-border h-4 shrink-0 rounded px-1 font-mono text-[9px]"
+              variant="neutral" appearance="outline"
+              className="border-border h-4 shrink-0 rounded px-1 font-mono text-3xs"
             >
               {driver.tractorCode}
             </Badge>
           )}
         </div>
-        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+        <Badge variant={verdict.variant} className="h-4 shrink-0 rounded px-1 text-3xs">
           {t(verdict.label)}
         </Badge>
       </div>
-      <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums">
+      <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs tabular-nums">
         <span>{t("Drive {0}", formatClockDurationMs(driver.driveRemainingMs))}</span>
         <span aria-hidden>·</span>
         <span>{t("Shift {0}", formatClockDurationMs(driver.shiftRemainingMs))}</span>
@@ -100,7 +100,7 @@ function FeasibilityRow({
         )}
       </div>
       {driver.verdict !== "feasible" && driver.reasons.length > 0 && (
-        <p className="text-muted-foreground line-clamp-2 text-[10px] leading-snug">
+        <p className="text-muted-foreground line-clamp-2 text-2xs leading-snug">
           {driver.reasons.join(" · ")}
         </p>
       )}
@@ -114,7 +114,7 @@ function FeasibilityRow({
         onClick={() => onSelect(driver.workerId)}
         className={cn(
           "flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left transition-colors",
-          "hover:bg-muted/60 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+"ui-focus-ring hover:bg-muted/60",
           selected && "bg-muted/40",
         )}
       >
@@ -203,7 +203,7 @@ export function AssignmentHosFeasibility({
   } else if (feasibilityQuery.isError) {
     body = (
       <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
-        <p className="text-muted-foreground text-[10.5px]">
+        <p className="text-muted-foreground text-2xs">
           {t("Driver feasibility could not be loaded from Samsara.")}
         </p>
         <Button
@@ -218,7 +218,7 @@ export function AssignmentHosFeasibility({
     );
   } else if (drivers.length === 0) {
     body = (
-      <p className="text-muted-foreground px-3 py-4 text-center text-[10.5px]">
+      <p className="text-muted-foreground px-3 py-4 text-center text-2xs">
         {t("No HOS data for any drivers yet.")}
       </p>
     );
@@ -260,8 +260,8 @@ export function AssignmentHosFeasibility({
             <span className="text-xs font-semibold">{t("HOS feasibility")}</span>
             {!feasibilityQuery.isLoading && !feasibilityQuery.isError && drivers.length > 0 && (
               <Badge
-                variant={feasibleCount > 0 ? "active" : "warning"}
-                className="h-4 rounded px-1 text-[9px]"
+                variant={feasibleCount > 0 ? "success" : "warning"}
+                className="h-4 rounded px-1 text-3xs"
               >
                 {t("{0} feasible", feasibleCount)}
               </Badge>

@@ -33,7 +33,7 @@ const RATE_SCALE = 4;
 const COLUMN_COUNT = 10;
 
 function moneyClass(value: string): string {
-  return isNegativeDecimal(value) ? "text-emerald-600 dark:text-emerald-400" : "";
+  return isNegativeDecimal(value) ? "text-success-foreground" : "";
 }
 
 function milesBreakdown(line: IftaReturnLine): string {
@@ -87,7 +87,7 @@ function LineRow({ line }: { line: IftaReturnLine }) {
   return (
     <TableRow
       className={cn(
-        missingRate && "bg-red-50/60 dark:bg-red-950/20",
+        missingRate && "bg-danger-subtle/60",
         !line.isIftaMember && "text-muted-foreground",
       )}
     >
@@ -95,10 +95,10 @@ function LineRow({ line }: { line: IftaReturnLine }) {
         <div className="flex items-center gap-1.5">
           <span className="font-medium">{line.jurisdiction.code}</span>
           <span className="text-muted-foreground text-xs">{line.jurisdiction.name}</span>
-          {missingRate ? <Badge variant="inactive">{t("No rate")}</Badge> : null}
-          {line.isIftaMember ? null : <Badge variant="outline">{t("Non-member")}</Badge>}
+          {missingRate ? <Badge variant="danger">{t("No rate")}</Badge> : null}
+          {line.isIftaMember ? null : <Badge variant="neutral" appearance="outline">{t("Non-member")}</Badge>}
           {line.jurisdiction.hasSurcharge ? (
-            <Badge variant="outline">{t("Surcharge")}</Badge>
+            <Badge variant="neutral" appearance="outline">{t("Surcharge")}</Badge>
           ) : null}
         </div>
       </TableCell>

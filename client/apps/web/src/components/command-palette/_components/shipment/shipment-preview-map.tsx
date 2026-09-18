@@ -103,19 +103,20 @@ function StopMarker({
   const color = (stopType: Stop["type"]) => {
     switch (stopType) {
       case "Pickup":
-        return "bg-green-600";
+        return "bg-success";
       case "Delivery":
-        return "bg-red-600";
+        return "bg-danger";
       case "SplitPickup":
-        return "bg-blue-600";
+        return "bg-info";
       case "SplitDelivery":
-        return "bg-yellow-600";
+        return "bg-warning";
       default:
-        return "bg-gray-600";
+        return "bg-foreground-subtle";
     }
   };
   return (
     <div className="relative">
+      {/* design-tokens-ignore: a map pin sits on satellite imagery, not on a themed surface, so its halo stays absolute white. */}
       <div className={cn("size-2.5 rounded-full ring-2 ring-white", color(point.stop.type))} />
       {activeIdx === idx && (
         <div className="border-border bg-popover text-2xs text-popover-foreground absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border px-2 py-1 whitespace-nowrap shadow-md">

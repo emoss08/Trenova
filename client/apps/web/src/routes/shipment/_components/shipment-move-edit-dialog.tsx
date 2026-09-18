@@ -28,11 +28,11 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
 
-const stopStatusBadgeVariant: Record<StopStatus, "info" | "teal" | "active" | "inactive"> = {
+const stopStatusBadgeVariant: Record<StopStatus, "info" | "success" | "danger"> = {
   New: "info",
-  InTransit: "teal",
-  Completed: "active",
-  Canceled: "inactive",
+  InTransit: "info",
+  Completed: "success",
+  Canceled: "danger",
 };
 
 export function MoveEditDialog({

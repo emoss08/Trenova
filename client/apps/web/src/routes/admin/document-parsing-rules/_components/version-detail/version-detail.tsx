@@ -44,8 +44,8 @@ const PARSER_MODE_OPTIONS = [
 
 const STATUS_BADGE_VARIANT = {
   Draft: "warning",
-  Published: "active",
-  Archived: "secondary",
+  Published: "success",
+  Archived: "neutral",
 } as const;
 
 type VersionDetailProps = {
@@ -168,7 +168,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
               <Badge
                 variant={
                   STATUS_BADGE_VARIANT[version.status as keyof typeof STATUS_BADGE_VARIANT] ??
-                  "secondary"
+                  "neutral"
                 }
               >
                 {version.status}

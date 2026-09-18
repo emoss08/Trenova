@@ -29,7 +29,7 @@ export default function InspectorHeader({
       {context ? (
         <div className="flex flex-wrap gap-2 text-xs">
           {context.controlRows.slice(0, 3).map(([label, value]) => (
-            <Badge key={label} variant="outline" className="font-mono">
+            <Badge key={label} variant="neutral" appearance="outline" className="font-mono">
               {controlPrefix(label)} {value}
             </Badge>
           ))}

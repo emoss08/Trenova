@@ -92,7 +92,7 @@ function PinnedRows() {
           active={isRouteActive(pathname, favorite.pageUrl)}
           sub
         >
-          <StarIcon className="size-3 shrink-0 fill-amber-400 text-amber-400" />
+          <StarIcon className="size-3 shrink-0 fill-warning text-warning-foreground" />
           <WorkspaceRowLabel>{favorite.pageTitle}</WorkspaceRowLabel>
         </WorkspaceNavRow>
       ))}

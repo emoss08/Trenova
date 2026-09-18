@@ -106,7 +106,7 @@ function AgingSnapshot() {
           <span className="text-lg font-semibold tabular-nums">
             {formatCompactCurrency(totalOpen)}
           </span>
-          <span className="text-muted-foreground text-[11px]">{t("total open")}</span>
+          <span className="text-muted-foreground text-xs">{t("total open")}</span>
         </div>
       </div>
       <div className="w-44 shrink-0 space-y-2">

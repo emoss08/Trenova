@@ -101,9 +101,9 @@ export function ExpressionEditor<T extends FieldValues>({
             onFocusCapture={() => setActive?.(viewRef.current)}
             className={cn(
               "border-input overflow-hidden rounded-md border transition-all duration-200",
-              "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4 focus-within:outline-hidden",
+"ui-container-focus-ring",
               fieldState.invalid &&
-                "border-destructive focus-within:border-destructive focus-within:ring-destructive/20 focus-within:ring-4",
+"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive",
             )}
           >
             <CodeMirror

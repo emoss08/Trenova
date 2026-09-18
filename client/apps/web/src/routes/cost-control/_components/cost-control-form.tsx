@@ -337,7 +337,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{category.name}</span>
-          <Badge variant="secondary" className="text-2xs">
+          <Badge variant="neutral" className="text-2xs">
             {rateSourceBadge[category.rateSource]}
           </Badge>
         </div>

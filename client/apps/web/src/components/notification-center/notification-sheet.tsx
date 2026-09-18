@@ -16,7 +16,7 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
     <span className="relative">
       <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
       {unreadCount > 0 && (
-        <span className="bg-brand text-brand-foreground absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-[9px] leading-none font-semibold tabular-nums">
+        <span className="bg-brand text-brand-foreground absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-3xs leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}

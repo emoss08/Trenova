@@ -32,7 +32,7 @@ function SystemStatus() {
 
   return (
     <div className="flex flex-row items-center justify-center gap-1 text-center">
-      <div className="mb-0.5 size-1.5 rounded-full bg-green-500" />
+      <div className="mb-0.5 size-1.5 rounded-full bg-success" />
       <span className="text-muted-foreground text-xs">{t("Systems nominal")}</span>
     </div>
   );

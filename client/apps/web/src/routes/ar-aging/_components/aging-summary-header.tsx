@@ -45,14 +45,14 @@ export function AgingSummaryHeader({
           label={t("Current")}
           value={`${currentShare.toFixed(1)}%`}
           detail={formatCurrency(totals.currentMinor / 100)}
-          valueClassName="text-emerald-600 dark:text-emerald-400"
+          valueClassName="text-success-foreground"
         />
         <SummaryTile
           index={2}
           label={t("Overdue")}
           value={`${overdueShare.toFixed(1)}%`}
           detail={formatCurrency((totalOpen - totals.currentMinor) / 100)}
-          valueClassName={overdueShare > 0 ? "text-red-600 dark:text-red-400" : undefined}
+          valueClassName={overdueShare > 0 ? "text-danger-foreground" : undefined}
         />
         <SummaryTile
           index={3}
@@ -71,7 +71,7 @@ export function AgingSummaryHeader({
       {totalOpen > 0 ? (
         <Card className="gap-0 rounded-md p-0">
           <CardHeader className="px-4 pt-3 pb-2">
-            <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            <CardTitle className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               {t("Distribution")}
             </CardTitle>
           </CardHeader>
@@ -105,7 +105,7 @@ function SummaryTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {label}
           </p>
           <p
@@ -117,7 +117,7 @@ function SummaryTile({
             {value}
           </p>
           {detail ? (
-            <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">{detail}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">{detail}</p>
           ) : null}
         </CardContent>
       </Card>

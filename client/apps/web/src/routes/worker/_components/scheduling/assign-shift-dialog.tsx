@@ -180,7 +180,7 @@ export function AssignShiftDialog({
                           <span
                             key={label}
                             className={cn(
-                              "grid h-6 flex-1 place-items-center rounded-md text-[10px] font-medium",
+                              "grid h-6 flex-1 place-items-center rounded-md text-2xs font-medium",
                               on
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted text-muted-foreground",
