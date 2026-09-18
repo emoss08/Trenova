@@ -747,7 +747,23 @@
    the width, colour and offset change in one place.
    --------------------------------------------------------------------------- */
 
-@utility focus-ring {
+/* The focus ring, as three utilities.
+
+   Every focusable surface spends one of these instead of assembling a ring from
+   ring, border and outline classes. There were 34 distinct focus treatments
+   across 16 primitives before, which is why focus never read as one system.
+
+   An invalid control needs no rule of its own: it repoints --ring locally with
+   `aria-invalid:[--ring:var(--ring-danger)]` and the same utility turns red.
+
+   Never let a star-slash sequence appear inside a comment in this file. It ends
+   the comment early and the @utility blocks after it are dropped in silence — a
+   focus utility that emits no rule removes the focus indicator without failing a
+   build, a test or a type check. check-design-tokens.mjs asserts that every
+   @utility declared here reaches the compiled stylesheet. */
+
+/* Focus landed on the element itself. */
+@utility ui-focus-ring {
   &:focus-visible {
     outline: none;
     border-color: var(--ring);
@@ -756,11 +772,29 @@
   }
 }
 
-@utility focus-ring-within {
+/* Focus landed on a child and the wrapper draws the ring: a field with an affix,
+   a composer, a number field's button group. */
+@utility ui-container-focus-ring {
   &:focus-within {
     outline: none;
     border-color: var(--ring);
     box-shadow: 0 0 0 var(--ring-width)
+      color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+  }
+
+  /* The inner control owns the caret, not the ring, so it must not draw one. */
+  &:focus-within :is(input, textarea, select):focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+/* An inset ring, for a control with no room to bloom outward: a table cell
+   editor, a segmented-control thumb, a sidebar row. */
+@utility ui-inset-focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 var(--ring-width)
       color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   }
 }

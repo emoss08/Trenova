@@ -147,10 +147,31 @@ border, not a shadow. Reserve shadow for things that genuinely float.
 
 ## Focus
 
-One ring. Apply the `focus-ring` utility (or `focus-ring-within` for a composite
-control) rather than assembling a ring out of `ring-*` classes. There were five
-different focus treatments before this; that is why focus never looked like one
-system.
+One ring, three utilities. Never assemble a ring out of `focus-visible:ring-*`,
+`focus-visible:border-*` or `focus-visible:outline-*` — `pnpm lint:design` fails
+on those. There were **34 distinct focus treatments across 16 primitives** before
+this, which is why focus never looked like one system.
+
+| Utility | For |
+|---|---|
+| `ui-focus-ring` | focus lands on the element itself |
+| `ui-container-focus-ring` | focus lands on a child and the wrapper draws the ring — a field with an affix, a composer |
+| `ui-inset-focus-ring` | no room to bloom outward — a table row, a segmented-control thumb |
+
+An invalid control needs no second ring. Repoint `--ring` locally and the same
+utility turns red:
+
+```tsx
+<Input className="aria-invalid:[--ring:var(--ring-danger)]" />
+```
+
+**One caution when editing `tokens.css`:** never let a comment-terminator
+sequence appear inside a comment body. CSS comments do not nest, so it ends the
+comment early and every `@utility` after it silently stops generating a rule —
+a focus utility that emits nothing removes the focus indicator without failing a
+build, a test or a type check. This happened once. `styles/__tests__/tokens.test.ts`
+now compiles the real file and asserts every declared `@utility` reaches the
+output, so it cannot happen quietly again.
 
 ## Badge
 

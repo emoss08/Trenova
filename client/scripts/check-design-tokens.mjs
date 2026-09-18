@@ -56,6 +56,14 @@ const RULES = [
       `a hex colour in a className or style prop will not follow the theme. Use a token; add one to styles/tokens.css if none fits.`,
   },
   {
+    id: "hand-rolled-focus-ring",
+    // focus-visible:relative / focus-visible:z-10 are stacking, not a ring, and
+    // are not matched.
+    pattern: /\bfocus-(?:visible|within):(?:ring|border|outline)[a-z0-9/.[\]_-]*/g,
+    message: (m) =>
+      `\`${m}\` builds a focus ring by hand. Use ui-focus-ring, ui-container-focus-ring (focus lands on a child) or ui-inset-focus-ring (no room to bloom outward). For an invalid control add \`aria-invalid:[--ring:var(--ring-danger)]\` rather than a second ring.`,
+  },
+  {
     id: "legacy-badge-variant",
     pattern:
       /\bvariant\s*[:=]\s*["'](?:active|inactive|purple|orange|teal|pink|indigo)["']/g,

@@ -270,7 +270,7 @@ export function ModulesMenu({
               onClick={close}
               className={cn(
                 "text-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none",
-                "hover:text-nav-active-foreground focus-visible:ring-ring/50 focus-visible:ring-2",
+"ui-focus-ring hover:text-nav-active-foreground",
               )}
             >
               <SettingsIcon className="size-3" strokeWidth={1.75} />
@@ -281,7 +281,7 @@ export function ModulesMenu({
             trigger={
               <button
                 type="button"
-                className="text-foreground hover:text-nav-active-foreground focus-visible:ring-ring/50 flex items-center gap-1.5 rounded-sm transition-colors outline-none focus-visible:ring-2"
+ className="ui-focus-ring text-foreground hover:text-nav-active-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none"
               >
                 <SlidersHorizontalIcon className="size-3" strokeWidth={1.75} />
                 {t("Customize navigation")}

@@ -123,7 +123,7 @@ function InvoiceShareDialogContent({ invoice }: { invoice: Invoice }) {
               <button
                 type="button"
                 onClick={copyLink}
-                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mr-1 flex h-7 items-center gap-1 rounded-md px-2 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+ className="ui-focus-ring text-muted-foreground hover:text-foreground mr-1 flex h-7 items-center gap-1 rounded-md px-2 text-sm transition-colors"
               >
                 {isCopied ? <CheckIcon className="size-3.5 text-success-foreground" /> : null}
                 {isCopied ? t("Copied") : t("Copy")}

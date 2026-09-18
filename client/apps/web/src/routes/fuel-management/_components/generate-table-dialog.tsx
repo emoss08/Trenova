@@ -112,7 +112,7 @@ function WizardField({
         className={cn(
           "border-input bg-muted flex h-8 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none",
           "transition-[border-color,box-shadow] duration-150 ease-in-out",
-          "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-brand/20 focus-visible:ring-4",
+"ui-focus-ring focus-visible:bg-background",
           invalid && "border-danger/60 bg-danger/10",
         )}
       />

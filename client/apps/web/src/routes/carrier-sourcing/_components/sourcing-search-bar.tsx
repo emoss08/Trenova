@@ -165,7 +165,7 @@ export function SourcingSearchBar({
           aria-label={t("Search carriers by name, USDOT, MC, EIN or VIN")}
           className={cn(
             "border-input bg-muted placeholder:text-muted-foreground h-10 w-full rounded-md border pr-20 pl-9 text-sm outline-none",
-            "focus-visible:border-brand focus-visible:ring-brand/30 transition-[border-color,box-shadow] duration-200 focus-visible:ring-4",
+"ui-focus-ring transition-[border-color,box-shadow] duration-200",
           )}
         />
         <div className="absolute inset-y-0 right-2 flex items-center gap-1.5">

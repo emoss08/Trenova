@@ -251,7 +251,7 @@ function CollapsedBarStrip({
       onMouseEnter={() => bar.shipment.id && onHoverChange(bar.shipment.id)}
       onMouseLeave={() => onHoverChange(null)}
       className={cn(
-        "focus-visible:ring-brand absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none focus-visible:ring-2",
+"ui-focus-ring absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none",
         STRIP_TONE_CLASS[bar.tone],
         bar.isCanceled && "opacity-40",
         dimmed && "opacity-20",

@@ -34,7 +34,7 @@ export function KpiInfoPopover({ title, description, rows }: KpiInfoPopoverProps
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
               "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
-              "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-hidden",
+"ui-focus-ring",
             )}
           >
             <InfoIcon className="size-3" />

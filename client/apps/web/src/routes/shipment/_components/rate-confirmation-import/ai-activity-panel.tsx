@@ -953,7 +953,7 @@ export default function AIActivityPanel({
 
       {/* Input */}
       <div className="shrink-0 border-t p-2">
-        <div className="bg-background focus-within:ring-ring flex items-end gap-1.5 rounded-lg border px-3 py-1.5 focus-within:ring-1">
+ <div className="ui-container-focus-ring bg-background flex items-end gap-1.5 rounded-lg border px-3 py-1.5">
           <textarea
             ref={inputRef}
             value={inputValue}

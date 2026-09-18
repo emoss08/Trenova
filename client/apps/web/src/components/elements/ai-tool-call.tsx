@@ -147,7 +147,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
     <CollapsiblePrimitive.Trigger
       data-slot="ai-tool-call-header"
       className={cn(
-        "hover:bg-muted/50 focus-visible:ring-ring flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+"ui-focus-ring hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
         className,
       )}
     >

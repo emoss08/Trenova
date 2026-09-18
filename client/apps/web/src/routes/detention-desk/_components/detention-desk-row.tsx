@@ -74,7 +74,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       }}
       className={cn(
         "group flex cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition-colors",
-        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none",
+"ui-focus-ring focus-visible:-outline-offset-2",
         isSelected ? "bg-muted" : "hover:bg-muted/50",
         isLost && "opacity-60",
       )}

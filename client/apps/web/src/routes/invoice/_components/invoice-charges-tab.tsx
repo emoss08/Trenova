@@ -193,7 +193,7 @@ function ChargeSection({
           onClick={onToggle}
           aria-expanded={!isCollapsed}
           aria-controls={bodyId}
-          className="hover:text-foreground text-muted-foreground focus-visible:ring-ring flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+ className="ui-focus-ring hover:text-foreground text-muted-foreground flex min-w-0 items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors"
         >
           <ChevronRightIcon
             className={cn(

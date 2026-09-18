@@ -80,7 +80,7 @@ export function ShareBreakdown({
             onBlur={() => setHovered(null)}
             onClick={() => setPinned((current) => (current === segment.key ? null : segment.key))}
             className={cn(
-              "text-2xs hover:text-foreground focus-visible:ring-ring/50 inline-flex items-center gap-1.5 rounded-sm transition-colors outline-none focus-visible:ring-[3px]",
+"ui-focus-ring text-2xs hover:text-foreground inline-flex items-center gap-1.5 rounded-sm transition-colors outline-none",
               pinned === segment.key ? "text-foreground" : "text-muted-foreground",
             )}
           >

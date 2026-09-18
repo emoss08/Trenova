@@ -446,7 +446,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         </div>
         <div
           className={cn(
-            "focus-within:border-primary/40 overflow-hidden rounded-md border transition-colors",
+"ui-container-focus-ring overflow-hidden rounded-md border transition-colors",
             parseError && "border-destructive",
           )}
         >

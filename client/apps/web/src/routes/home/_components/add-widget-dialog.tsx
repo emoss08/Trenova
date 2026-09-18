@@ -472,7 +472,7 @@ function WidgetCard({
             onKeyDown={handleKeyDown}
             className={cn(
               "group/widget-card border-border bg-card relative flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all",
-              "focus-visible:ring-brand/40 focus-visible:border-brand focus-visible:ring-4 focus-visible:outline-none",
+"ui-focus-ring",
               disabled
                 ? "cursor-not-allowed opacity-45"
                 : "hover:border-brand/45 hover:bg-accent/30 hover:shadow-sm",

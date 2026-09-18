@@ -27,8 +27,8 @@ export function CapabilityExplainer({ profile, field, className }: CapabilityExp
         aria-label={t("Why does this field behave this way?")}
         className={cn(
           "inline-flex size-4 items-center justify-center rounded-full text-muted-foreground",
-          "transition-colors hover:text-foreground focus-visible:outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring",
+          "ui-focus-ring transition-colors hover:text-foreground",
+          "ui-focus-ring",
           className,
         )}
       >

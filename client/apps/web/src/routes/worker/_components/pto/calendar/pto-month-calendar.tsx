@@ -460,7 +460,7 @@ function LegendChip({
       title={hidden ? `Show ${entry.label}` : `Hide ${entry.label}`}
       onClick={onToggle}
       className={cn(
-        "focus-visible:ring-ring/50 inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-[3px]",
+"ui-focus-ring inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none",
         hidden
           ? "text-muted-foreground/60 border-transparent line-through decoration-1"
           : "bg-accent/40 border-border/60 hover:bg-accent",

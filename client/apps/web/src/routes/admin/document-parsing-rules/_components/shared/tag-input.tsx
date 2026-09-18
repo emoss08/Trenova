@@ -101,7 +101,7 @@ function TagInputInner({
       <div
         className={cn(
           "border-input bg-muted flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
-          "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4",
+"ui-container-focus-ring",
           error && "border-destructive",
           disabled && "pointer-events-none opacity-50",
         )}

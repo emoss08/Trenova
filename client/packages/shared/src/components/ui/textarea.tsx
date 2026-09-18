@@ -15,12 +15,11 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
       data-slot="textarea"
       className={cn(
         "flex w-full rounded-md border border-input bg-muted px-2 py-0.5 text-base",
-        "shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden",
-        "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
-        "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",
+        "ui-focus-ring shadow-xs placeholder:text-muted-foreground",
+        "disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         isInvalid &&
-          "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-destructive focus-visible:ring-4 focus-visible:ring-destructive/20",
+          "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
         className,
       )}
       {...props}
@@ -86,10 +85,10 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
         <div
           className={cn(
             "relative rounded-md border border-muted-foreground/20 bg-muted",
-            "focus-within:border-foreground focus-within:ring-4 focus-within:ring-foreground/20 focus-within:outline-hidden",
+            "ui-container-focus-ring",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             isInvalid &&
-              "border-destructive bg-destructive/20 ring-0 ring-destructive placeholder:text-destructive focus:outline-hidden focus-visible:border-danger focus-visible:ring-4 focus-visible:ring-danger/20",
+              "border-danger bg-danger/10 placeholder:text-danger-foreground [--ring:var(--ring-danger)]",
             className,
           )}
         >
@@ -99,8 +98,8 @@ function AITextarea({ className, isInvalid, onChange, ...props }: TextareaProps)
                 ref={textareaRef}
                 id={id}
                 className={cn(
-                  "w-full max-w-xl rounded-md border-none pt-3 pr-10 pb-3 placeholder:text-black/70 focus:ring-3 dark:placeholder:text-white/70",
-                  "resize-none bg-transparent text-wrap text-black focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-white",
+                  "w-full max-w-xl rounded-md border-none pt-3 pr-10 pb-3 placeholder:text-foreground-subtle",
+                  "resize-none bg-transparent text-wrap text-foreground",
                   "min-h-[70px]",
                   "max-h-[200px]",
                 )}

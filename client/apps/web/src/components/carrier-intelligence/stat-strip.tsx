@@ -42,7 +42,7 @@ export function StatStrip({ items, className }: StatStripProps) {
             key={item.id}
             type="button"
             onClick={item.onClick}
-            className="flex min-w-0 flex-col px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
+ className="ui-focus-ring flex min-w-0 flex-col px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50"
           >
             {body}
           </button>

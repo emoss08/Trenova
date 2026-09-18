@@ -379,7 +379,7 @@ function PathInput({
           disabled={disabled}
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}
-          className="border-input bg-background focus-visible:border-brand focus-visible:ring-brand/30 h-8 w-full rounded-md border px-7 text-sm outline-none focus-visible:ring-4 disabled:opacity-50"
+ className="ui-focus-ring border-input bg-background h-8 w-full rounded-md border px-7 text-sm outline-none disabled:opacity-50"
         />
       </div>
     </FieldWrapper>

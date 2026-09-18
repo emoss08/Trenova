@@ -31,7 +31,7 @@ const styles = {
     "border-danger bg-danger/20 text-danger-foreground hover:text-danger-foreground hover:bg-danger/20 data-[state=open]:border-danger data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-danger/20",
   open: "text-sm data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
   focusVisible:
-    "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
+"ui-focus-ring",
   hover: "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };

@@ -76,11 +76,11 @@ export function MoneyField<T extends FieldValues>({
               "placeholder:text-muted-foreground",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "read-only:text-muted-foreground read-only:cursor-default",
-              "focus-visible:border-brand focus-visible:ring-brand/20 focus-visible:ring-4 focus-visible:outline-hidden",
+"ui-focus-ring",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
               fieldState.invalid &&
-                "border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden focus-visible:border-danger focus-visible:ring-4 focus-visible:ring-danger/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground focus:outline-hidden",
               className,
             )}
           />

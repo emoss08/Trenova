@@ -152,7 +152,7 @@ export function PanelExpandToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="text-2xs text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 ml-auto rounded-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
+ className="ui-focus-ring text-2xs text-muted-foreground hover:text-foreground ml-auto rounded-sm font-medium transition-colors outline-none"
     >
       {expanded ? t("Show fewer") : t("Show {0} more {1}", hiddenCount, noun)}
     </button>

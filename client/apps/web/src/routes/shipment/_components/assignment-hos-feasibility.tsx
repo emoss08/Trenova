@@ -114,7 +114,7 @@ function FeasibilityRow({
         onClick={() => onSelect(driver.workerId)}
         className={cn(
           "flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left transition-colors",
-          "hover:bg-muted/60 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
+"ui-focus-ring hover:bg-muted/60",
           selected && "bg-muted/40",
         )}
       >

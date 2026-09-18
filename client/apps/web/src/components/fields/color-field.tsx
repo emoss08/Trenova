@@ -134,7 +134,7 @@ function ColorFieldInput<T extends FieldValues>({
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               disabled && "cursor-not-allowed opacity-50",
               fieldState.invalid &&
-                "border-destructive bg-destructive/20 text-destructive ring-destructive hover:border-destructive hover:bg-destructive/20 focus-visible:border-destructive focus-visible:ring-destructive/20 data-pressed:border-destructive data-pressed:bg-destructive/20 data-pressed:ring-destructive/20 ring-0 focus:outline-hidden focus-visible:ring-4",
+"ui-focus-ring [--ring:var(--ring-danger)] border-destructive bg-destructive/20 text-destructive ring-destructive hover:border-destructive hover:bg-destructive/20 data-pressed:border-destructive data-pressed:bg-destructive/20 data-pressed:ring-destructive/20 ring-0 focus:outline-hidden",
               !value && "text-muted-foreground",
               className,
             )}

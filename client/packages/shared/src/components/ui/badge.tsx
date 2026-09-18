@@ -20,7 +20,7 @@ import { cn } from "@trenova/shared/lib/utils";
    the categorical set is prefixed `accent-` to make it obvious at the call site
    that you are choosing an identity, not a severity. */
 const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border px-1.5 py-0 text-xs font-medium whitespace-nowrap transition-all focus-ring has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-invalid:border-danger [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-md border px-1.5 py-0 text-xs font-medium whitespace-nowrap transition-all ui-focus-ring has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-invalid:border-danger [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {

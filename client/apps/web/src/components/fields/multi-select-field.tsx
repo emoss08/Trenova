@@ -572,7 +572,7 @@ export function MultiSelectAutocomplete<T>({
                 "cursor-default whitespace-nowrap",
                 isLocked && "cursor-not-allowed opacity-50",
                 isInvalid &&
-                  "border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden focus-visible:border-danger focus-visible:ring-4 focus-visible:ring-danger/20 data-[state=open]:border-danger data-[state=open]:bg-danger/20 data-[state=open]:ring-danger/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger bg-danger/20 ring-0 ring-danger placeholder:text-danger-foreground hover:border-danger hover:bg-danger/20 focus:outline-hidden data-[state=open]:border-danger data-[state=open]:bg-danger/20 data-[state=open]:ring-danger/20",
                 triggerClassName,
               )}
               disabled={isLocked}

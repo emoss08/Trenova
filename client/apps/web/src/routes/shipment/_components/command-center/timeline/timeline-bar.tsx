@@ -108,7 +108,7 @@ export function TimelineBarItem({
         onMouseLeave={() => onHoverChange(null)}
         aria-label={`Shipment ${shipment.proNumber ?? ""}, ${originCode} to ${destCode}`}
         className={cn(
-          "group/bar focus-visible:ring-brand absolute flex cursor-pointer items-center overflow-hidden rounded border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none focus-visible:ring-2",
+"ui-focus-ring group/bar absolute flex cursor-pointer items-center overflow-hidden rounded border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none",
           BAR_TONE_CLASS[bar.tone],
           bar.isCanceled && "border-dashed opacity-60",
           isHighlighted && "ring-foreground/25 shadow-md ring-1",

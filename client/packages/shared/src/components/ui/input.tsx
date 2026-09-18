@@ -29,10 +29,9 @@ function Input({
       <InputPrimitive
         data-slot="input"
         className={cn(
-          "h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-base outline-none md:text-sm",
-          "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-hidden",
-          "aria-invalid:border-destructive aria-invalid:bg-destructive/20 aria-invalid:ring-destructive aria-invalid:focus:outline-hidden",
-          "aria-invalid:placeholder:text-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-4 aria-invalid:focus-visible:ring-destructive/20",
+          "ui-focus-ring h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-base outline-none md:text-sm",
+          "aria-invalid:border-danger aria-invalid:bg-danger/10 aria-invalid:[--ring:var(--ring-danger)]",
+          "aria-invalid:placeholder:text-danger-foreground",
           "disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 dark:disabled:bg-input/80",
           "file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground",
           "transition-[border-color,box-shadow] duration-200 ease-in-out",

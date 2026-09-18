@@ -92,9 +92,9 @@ export function EmailChipsField<T extends FieldValues>({
               className={cn(
                 "border-input bg-muted flex min-h-7 flex-wrap items-center gap-1 rounded-md border px-1.5 py-1",
                 "cursor-text transition-[border-color,box-shadow] duration-200 ease-in-out",
-                "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4",
+"ui-container-focus-ring",
                 (invalidDraft || fieldState.invalid) &&
-                  "border-destructive bg-destructive/20 focus-within:border-destructive focus-within:ring-destructive/20",
+"ui-container-focus-ring [--ring:var(--ring-danger)] border-destructive bg-destructive/20",
               )}
             >
               {emails.map((email) => (
@@ -106,7 +106,7 @@ export function EmailChipsField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label={`Remove ${email}`}
-                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+ className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-xs transition-colors"
                     onClick={(event) => {
                       event.stopPropagation();
                       remove(email);

@@ -567,7 +567,7 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
           render={
             <button
               type="button"
-              className="focus-visible:ring-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none dark:text-info-foreground"
+ className="ui-focus-ring shrink-0 rounded-sm text-xs font-medium text-info-foreground underline-offset-2 hover:underline dark:text-info-foreground"
               aria-label={`Show ${recipients.length} To recipients`}
             >
               {t("+{0} more", remainingCount)}

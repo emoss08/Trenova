@@ -58,7 +58,7 @@ export function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className="border-border bg-card text-card-foreground hover:border-primary/40 hover:bg-muted/40 focus-visible:ring-ring/50 flex cursor-pointer flex-row items-center gap-3 rounded-xl border p-4 text-left text-sm transition-colors outline-none focus-visible:ring-[3px]"
+ className="ui-focus-ring border-border bg-card text-card-foreground hover:border-primary/40 hover:bg-muted/40 flex cursor-pointer flex-row items-center gap-3 rounded-xl border p-4 text-left text-sm transition-colors outline-none"
       >
         {body}
       </button>

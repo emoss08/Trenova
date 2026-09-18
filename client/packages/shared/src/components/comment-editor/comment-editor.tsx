@@ -461,7 +461,7 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
     return (
       <div
         className={cn(
-          "relative rounded-md border border-border bg-background transition-[border-color,box-shadow] duration-200 ease-in-out focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/20",
+          "relative rounded-md border border-border bg-background transition-[border-color,box-shadow] duration-200 ease-in-out ui-container-focus-ring",
           disabled && "opacity-60",
         )}
       >

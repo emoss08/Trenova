@@ -190,10 +190,10 @@ function BandCell({
             "placeholder:text-muted-foreground/50",
             "transition-[border-color,box-shadow,background-color] duration-150 ease-in-out",
             "hover:bg-muted/70",
-            "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-brand/20 focus-visible:ring-4",
+"ui-focus-ring focus-visible:bg-background",
             "disabled:cursor-not-allowed disabled:opacity-50",
             fieldState.invalid &&
-              "border-danger/60 bg-danger/10 focus-visible:border-danger focus-visible:ring-danger/20",
+"ui-focus-ring [--ring:var(--ring-danger)] border-danger/60 bg-danger/10",
           )}
         />
       )}

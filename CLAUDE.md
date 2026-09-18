@@ -211,10 +211,11 @@ Tokens live in `client/packages/shared/src/styles/tokens.css`; components consum
 define no colour, size or elevation of their own. **Read
 [docs/engineering/design-system.md](docs/engineering/design-system.md) before writing styles.**
 
-`pnpm lint:design` runs in CI and fails on the four ways the old set was bypassed: raw
+`pnpm lint:design` runs in CI and fails on the five ways the old set was bypassed: raw
 Tailwind palette classes (`bg-red-500`), arbitrary font sizes (`text-[11px]` — `text-xs` *is*
-11px and brings a line-height), hex colours in `className`/`style`, and retired Badge
-variants. Each message names the token to use instead.
+11px and brings a line-height), hex colours in `className`/`style`, hand-rolled focus rings
+(`focus-visible:ring-*` — use `ui-focus-ring`), and retired Badge variants. Each message
+names the token to use instead.
 
 - Colour is a **tone** (`neutral`/`brand`/`info`/`success`/`warning`/`danger`) when the set has
   a severity ordering, or a **categorical accent** (`accent-teal`, `accent-violet`, …) when it
@@ -224,6 +225,10 @@ variants. Each message names the token to use instead.
 - Missing colour? Add a token to `tokens.css` — in **both** `:root` and `.dark` — rather than
   reaching for the palette. An incomplete set is what caused the drift in the first place.
 - Genuine exceptions take `design-tokens-ignore: <reason>` in a comment on or above the line.
+- Editing `tokens.css`: never let a comment-terminator sequence appear inside a comment body.
+  It ends the comment early and every `@utility` after it silently stops emitting — which
+  removes focus indicators without failing anything. `styles/__tests__/tokens.test.ts`
+  compiles the file and asserts each declared `@utility` reaches the output.
 
 ## Generated Code
 
