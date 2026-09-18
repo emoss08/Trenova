@@ -1,16 +1,16 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { fiscalYearStatusChoices } from "@/lib/choices";
 import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
-import { getUTCYearBounds } from "@trenova/shared/lib/date";
 import type { FiscalPeriod } from "@/types/fiscal-period";
 import type { FiscalYear } from "@/types/fiscal-year";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { getUTCYearBounds } from "@trenova/shared/lib/date";
 import { useCallback, useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { LazyLoadComponent } from "react-lazy-load-image-component";
@@ -147,7 +147,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               placeholder={t("Select start date")}
               description={t("First day of fiscal period (UTC)")}
               timezone={FISCAL_CALENDAR_TIMEZONE}
-              readOnly={isEdit || isCalendarYear}
+              // readOnly={isEdit || isCalendarYear}
             />
           </FormControl>
 
@@ -160,7 +160,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
               placeholder={t("Select end date")}
               description={t("Last day of fiscal period (UTC)")}
               timezone={FISCAL_CALENDAR_TIMEZONE}
-              readOnly={isEdit || isCalendarYear}
+              // readOnly={isEdit || isCalendarYear}
             />
           </FormControl>
         </FormGroup>

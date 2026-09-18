@@ -1,7 +1,6 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { StatusDot, riskTone } from "@/components/carrier-intelligence/status-dot";
-import { carrierPanelPath } from "@/lib/carrier-links";
 import { cityStateLabel } from "@/lib/carrier-intelligence";
+import { carrierPanelPath } from "@/lib/carrier-links";
 import {
   candidateAuthorityAgeDays,
   countFindings,
@@ -10,6 +9,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatNumber } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router";

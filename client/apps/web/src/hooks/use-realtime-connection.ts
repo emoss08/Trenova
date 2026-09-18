@@ -7,6 +7,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore, type RealtimeConnectionState } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import {
   CORE_QUERY_KEYS,
@@ -39,6 +40,11 @@ export function useRealtimeConnection() {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const pendingKeysRef = useRef<Set<string>>(new Set());
+  // Held in a ref so a new navigate identity never tears down and rebuilds the
+  // realtime subscription.
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const flushTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -170,6 +176,15 @@ export function useRealtimeConnection() {
                   ? notif.data.runId
                   : null;
 
+              // A bulk billing transfer runs unattended, so its result has to
+              // come back to whoever started it with a way into the report —
+              // the shipments that did not transfer are their next piece of work.
+              const transferRunId =
+                notif.eventType?.startsWith("billing_transfer_run_") &&
+                typeof notif.data?.runId === "string"
+                  ? notif.data.runId
+                  : null;
+
               toast.info(notif.title, {
                 description: notif.message,
                 action: runId
@@ -177,7 +192,15 @@ export function useRealtimeConnection() {
                       label: t("Download"),
                       onClick: () => downloadReportRun({ id: runId }),
                     }
-                  : undefined,
+                  : transferRunId
+                    ? {
+                        label: t("View report"),
+                        onClick: () =>
+                          navigateRef.current(
+                            `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
+                          ),
+                      }
+                    : undefined,
               });
             }
           }

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,6 +35,10 @@ type bulkTransferFixture struct {
 	audit        *mocks.MockAuditService
 	realtime     *mocks.MockRealtimeService
 	svc          *service
+
+	// billingControlExpected keeps the org-level read registered once, which is
+	// how many times a run makes it.
+	billingControlExpected bool
 }
 
 func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
@@ -133,10 +138,16 @@ func (f *bulkTransferFixture) expectReadiness(
 		})).
 		Return(&customer.Customer{ID: entity.CustomerID, BillingProfile: profile}, nil).
 		Once()
-	f.billingRepo.EXPECT().
-		GetByOrgID(mock.Anything, f.orgID).
-		Return(control, nil).
-		Once()
+	// The organization's billing policy is one row that every shipment in a run
+	// asks the same question of, so it is read once for the whole run rather
+	// than once per shipment.
+	if !f.billingControlExpected {
+		f.billingControlExpected = true
+		f.billingRepo.EXPECT().
+			GetByOrgID(mock.Anything, f.orgID).
+			Return(control, nil).
+			Once()
+	}
 	f.documentRepo.EXPECT().
 		GetByResourceID(mock.Anything, mock.MatchedBy(func(req *repositories.GetDocumentsByResourceRequest) bool {
 			return req.ResourceID == entity.ID.String()
@@ -649,4 +660,204 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, response)
 	})
+}
+
+// A caller that has to show progress cannot wait for the response: a bulk
+// transfer is exactly the thing that takes long enough to need watching. Each
+// shipment is reported as it is answered for, in the order it was asked about.
+func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
+	t.Parallel()
+
+	f := newBulkTransferFixture(t)
+
+	first := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	second := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
+	missing := f.newShipment("PRO-3", shipment.StatusReadyToInvoice)
+
+	profile := &customer.CustomerBillingProfile{}
+
+	f.expectShipment(first)
+	f.expectReadiness(first, profile, manualBillingControl(), []*document.Document{})
+	f.expectQueued(first)
+
+	f.expectShipment(second)
+	f.expectReadiness(second, profile, manualBillingControl(), []*document.Document{})
+	f.expectQueued(second)
+
+	f.repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == missing.ID && !req.ExpandShipmentDetails
+		})).
+		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
+		Once()
+
+	var reported []services.BulkTransferToBillingResult
+	response, err := f.svc.BulkTransferToBilling(
+		t.Context(),
+		&services.BulkTransferShipmentToBillingRequest{
+			ShipmentIDs: []pulid.ID{first.ID, second.ID, missing.ID},
+			BillType:    billingqueue.BillTypeInvoice,
+			OnResult: func(result services.BulkTransferToBillingResult) {
+				reported = append(reported, result)
+			},
+		},
+		f.actor(),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, reported, 3, "every shipment is reported, not only the ones that moved")
+
+	assert.Equal(t, first.ID, reported[0].ShipmentID)
+	assert.True(t, reported[0].Success)
+	assert.Equal(t, second.ID, reported[1].ShipmentID)
+	assert.True(t, reported[1].Success)
+
+	assert.Equal(t, missing.ID, reported[2].ShipmentID)
+	assert.False(t, reported[2].Success)
+	assert.Equal(t, services.BillingTransferFailureNotFound, reported[2].FailureCode)
+
+	// What was reported along the way and what came back at the end have to be
+	// the same answers, or a caller that recorded progress would disagree with
+	// a caller that read the response.
+	require.Len(t, response.Results, 3)
+	for i, result := range response.Results {
+		assert.Equal(t, result.ShipmentID, reported[i].ShipmentID)
+		assert.Equal(t, result.Success, reported[i].Success)
+		assert.Equal(t, result.FailureCode, reported[i].FailureCode)
+	}
+}
+
+// A run of thousands of shipments would otherwise put one global notification
+// on every screen in the organization for each shipment with a problem. The
+// run's own report carries the same detail in a form somebody can work through.
+func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	f := newBulkTransferFixture(t)
+
+	// No expectations: any notification written fails the test.
+	notificationRepo := mocks.NewMockNotificationRepository(t)
+	f.svc.notificationService = notificationservice.New(notificationservice.Params{
+		Logger:   zap.NewNop(),
+		Repo:     notificationRepo,
+		Realtime: f.realtime,
+	})
+
+	podType := &documenttype.DocumentType{
+		ID:   pulid.MustNew("dt_"),
+		Code: "POD",
+		Name: "Proof of Delivery",
+	}
+	profile := &customer.CustomerBillingProfile{
+		DocumentTypes: []*documenttype.DocumentType{podType},
+	}
+
+	missingDocs := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	f.expectShipment(missingDocs)
+	f.expectReadiness(missingDocs, profile, manualBillingControl(), []*document.Document{})
+
+	response, err := f.svc.BulkTransferToBilling(
+		t.Context(),
+		&services.BulkTransferShipmentToBillingRequest{
+			ShipmentIDs:                    []pulid.ID{missingDocs.ID},
+			BillType:                       billingqueue.BillTypeInvoice,
+			SuppressExceptionNotifications: true,
+		},
+		f.actor(),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, response.Results, 1)
+
+	// The reason is still recorded on the result — suppressing the broadcast
+	// must not lose what was wrong with the shipment.
+	assert.False(t, response.Results[0].Success)
+	assert.Equal(t,
+		services.BillingTransferFailureRequirementsUnmet,
+		response.Results[0].FailureCode,
+	)
+	require.Len(t, response.Results[0].MissingRequirements, 1)
+	assert.Equal(t, "Proof of Delivery", response.Results[0].MissingRequirements[0].DocumentTypeName)
+
+	notificationRepo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+// The organization's billing policy does not vary by shipment. Reading it per
+// shipment is the difference between one query and five thousand on a full run,
+// and it is the kind of N+1 that only shows up under load.
+func TestBulkTransferToBilling_ReadsTheBillingPolicyOncePerRun(t *testing.T) {
+	t.Parallel()
+
+	f := newBulkTransferFixture(t)
+
+	profile := &customer.CustomerBillingProfile{}
+	shipments := []*shipment.Shipment{
+		f.newShipment("PRO-1", shipment.StatusReadyToInvoice),
+		f.newShipment("PRO-2", shipment.StatusReadyToInvoice),
+		f.newShipment("PRO-3", shipment.StatusReadyToInvoice),
+	}
+
+	ids := make([]pulid.ID, 0, len(shipments))
+	for _, entity := range shipments {
+		f.expectShipment(entity)
+		f.expectReadiness(entity, profile, manualBillingControl(), []*document.Document{})
+		f.expectQueued(entity)
+		ids = append(ids, entity.ID)
+	}
+
+	response, err := f.svc.BulkTransferToBilling(
+		t.Context(),
+		&services.BulkTransferShipmentToBillingRequest{
+			ShipmentIDs: ids,
+			BillType:    billingqueue.BillTypeInvoice,
+		},
+		f.actor(),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, response.Results, 3)
+	assert.Equal(t, 3, response.SuccessCount)
+
+	// expectReadiness registers the policy read exactly once; mockery fails the
+	// test if the run asked for it a second time, or never asked at all.
+	f.billingRepo.AssertExpectations(t)
+}
+
+// The cache belongs to one call. Two runs must each read the policy, or a
+// policy change between them would be invisible to the second.
+func TestBulkTransferToBilling_DoesNotShareThePolicyAcrossRuns(t *testing.T) {
+	t.Parallel()
+
+	f := newBulkTransferFixture(t)
+	profile := &customer.CustomerBillingProfile{}
+
+	first := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	f.expectShipment(first)
+	f.expectReadiness(first, profile, manualBillingControl(), []*document.Document{})
+	f.expectQueued(first)
+
+	second := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
+	f.expectShipment(second)
+	f.expectReadiness(second, profile, manualBillingControl(), []*document.Document{})
+	f.expectQueued(second)
+
+	// A second read for the second run, on top of the one expectReadiness set.
+	f.billingRepo.EXPECT().
+		GetByOrgID(mock.Anything, f.orgID).
+		Return(manualBillingControl(), nil).
+		Once()
+
+	for _, entity := range []*shipment.Shipment{first, second} {
+		_, err := f.svc.BulkTransferToBilling(
+			t.Context(),
+			&services.BulkTransferShipmentToBillingRequest{
+				ShipmentIDs: []pulid.ID{entity.ID},
+				BillType:    billingqueue.BillTypeInvoice,
+			},
+			f.actor(),
+		)
+		require.NoError(t, err)
+	}
+
+	f.billingRepo.AssertExpectations(t)
 }

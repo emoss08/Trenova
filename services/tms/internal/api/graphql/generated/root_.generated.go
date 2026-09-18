@@ -862,6 +862,76 @@ type ComplexityRoot struct {
 		Version                   func(childComplexity int) int
 	}
 
+	BillingTransferRequirement struct {
+		DocumentTypeCode func(childComplexity int) int
+		DocumentTypeID   func(childComplexity int) int
+		DocumentTypeName func(childComplexity int) int
+	}
+
+	BillingTransferRun struct {
+		BillType                    func(childComplexity int) int
+		CancelRequestedAt           func(childComplexity int) int
+		CancelRequestedByID         func(childComplexity int) int
+		CompletedAt                 func(childComplexity int) int
+		CreatedAt                   func(childComplexity int) int
+		FailureMessage              func(childComplexity int) int
+		ID                          func(childComplexity int) int
+		MarkCompletedReadyToInvoice func(childComplexity int) int
+		MarkedReadyToInvoiceCount   func(childComplexity int) int
+		NotTransferredCount         func(childComplexity int) int
+		ProcessedCount              func(childComplexity int) int
+		QueuedAt                    func(childComplexity int) int
+		RequestedByID               func(childComplexity int) int
+		RetryableCount              func(childComplexity int) int
+		Scope                       func(childComplexity int) int
+		SearchQuery                 func(childComplexity int) int
+		ShipmentStatus              func(childComplexity int) int
+		SkippedCount                func(childComplexity int) int
+		SourceRunID                 func(childComplexity int) int
+		StartedAt                   func(childComplexity int) int
+		Status                      func(childComplexity int) int
+		TotalCount                  func(childComplexity int) int
+		TransferredCount            func(childComplexity int) int
+		UnmatchedCount              func(childComplexity int) int
+		UpdatedAt                   func(childComplexity int) int
+	}
+
+	BillingTransferRunItem struct {
+		BillingQueueItemID   func(childComplexity int) int
+		BillingQueueNumber   func(childComplexity int) int
+		BillingQueueStatus   func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		ErrorMessage         func(childComplexity int) int
+		FailureCode          func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		MarkedReadyToInvoice func(childComplexity int) int
+		MissingRequirements  func(childComplexity int) int
+		ProNumber            func(childComplexity int) int
+		ProcessedAt          func(childComplexity int) int
+		RunID                func(childComplexity int) int
+		Sequence             func(childComplexity int) int
+		ShipmentID           func(childComplexity int) int
+		Status               func(childComplexity int) int
+		ValidationFailures   func(childComplexity int) int
+	}
+
+	BillingTransferRunItemConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	BillingTransferRunItemEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BillingTransferValidation struct {
+		Code    func(childComplexity int) int
+		Field   func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	BulkAssignTrainingOutcome struct {
 		CourseID func(childComplexity int) int
 		Error    func(childComplexity int) int
@@ -5846,6 +5916,7 @@ type ComplexityRoot struct {
 		CalculateShipmentDistance             func(childComplexity int, input gqlmodel.ShipmentInput) int
 		CalculateShipmentLoadingOptimization  func(childComplexity int, input gqlmodel.ShipmentLoadingOptimizationInput) int
 		CalculateShipmentTotals               func(childComplexity int, input gqlmodel.ShipmentInput) int
+		CancelBillingTransferRun              func(childComplexity int, id string) int
 		CancelDOTRandomDraw                   func(childComplexity int, id string, reason string) int
 		CancelDOTTest                         func(childComplexity int, id string, reason string) int
 		CancelFuelCard                        func(childComplexity int, input gqlmodel.CancelFuelCardInput) int
@@ -6070,6 +6141,7 @@ type ComplexityRoot struct {
 		RestoreWorkerChecklistTemplate        func(childComplexity int, id string, version *int) int
 		RestoreWorkerCredentialType           func(childComplexity int, id string, version *int) int
 		ResumeCarrierIntelMonitoring          func(childComplexity int) int
+		RetryBillingTransferRun               func(childComplexity int, id string) int
 		ReverseCustomerPayment                func(childComplexity int, input gqlmodel.ReverseCustomerPaymentInput) int
 		ReviewDriverExpense                   func(childComplexity int, input gqlmodel.ReviewDriverExpenseInput) int
 		ReviewWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
@@ -6093,6 +6165,7 @@ type ComplexityRoot struct {
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		StageFuelPurchaseImport               func(childComplexity int, input gqlmodel.StageFuelPurchaseImportInput) int
+		StartBillingTransferRun               func(childComplexity int, input gqlmodel.StartBillingTransferRunInput) int
 		StartMyTraining                       func(childComplexity int, id string) int
 		StartSettlementDisputeReview          func(childComplexity int, id string) int
 		StartWorkerChecklist                  func(childComplexity int, input gqlmodel.StartWorkerChecklistInput) int
@@ -7072,6 +7145,8 @@ type ComplexityRoot struct {
 		BenefitEnrollments                  func(childComplexity int, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) int
 		BenefitPlan                         func(childComplexity int, id string) int
 		BenefitPlans                        func(childComplexity int, activeOnly *bool, planYear *int) int
+		BillingTransferRun                  func(childComplexity int, id string) int
+		BillingTransferRunItems             func(childComplexity int, runID string, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingTransferRunItemsFilterInput) int
 		CannedReports                       func(childComplexity int) int
 		Carrier                             func(childComplexity int, id string) int
 		CarrierCostEvents                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -7255,6 +7330,7 @@ type ComplexityRoot struct {
 		ManualJournal                       func(childComplexity int, id string) int
 		ManualJournals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		MatchRoutingGuide                   func(childComplexity int, input gqlmodel.MatchRoutingGuideInput) int
+		MyActiveBillingTransferRun          func(childComplexity int) int
 		MyAdvances                          func(childComplexity int) int
 		MyAvailability                      func(childComplexity int) int
 		MyCarrierIntelligence               func(childComplexity int, refresh *bool) int
@@ -14220,6 +14296,324 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BillingQueueItem.Version(childComplexity), true
+
+	case "BillingTransferRequirement.documentTypeCode":
+		if e.ComplexityRoot.BillingTransferRequirement.DocumentTypeCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRequirement.DocumentTypeCode(childComplexity), true
+	case "BillingTransferRequirement.documentTypeId":
+		if e.ComplexityRoot.BillingTransferRequirement.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRequirement.DocumentTypeID(childComplexity), true
+	case "BillingTransferRequirement.documentTypeName":
+		if e.ComplexityRoot.BillingTransferRequirement.DocumentTypeName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRequirement.DocumentTypeName(childComplexity), true
+
+	case "BillingTransferRun.billType":
+		if e.ComplexityRoot.BillingTransferRun.BillType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.BillType(childComplexity), true
+	case "BillingTransferRun.cancelRequestedAt":
+		if e.ComplexityRoot.BillingTransferRun.CancelRequestedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.CancelRequestedAt(childComplexity), true
+	case "BillingTransferRun.cancelRequestedById":
+		if e.ComplexityRoot.BillingTransferRun.CancelRequestedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.CancelRequestedByID(childComplexity), true
+	case "BillingTransferRun.completedAt":
+		if e.ComplexityRoot.BillingTransferRun.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.CompletedAt(childComplexity), true
+	case "BillingTransferRun.createdAt":
+		if e.ComplexityRoot.BillingTransferRun.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.CreatedAt(childComplexity), true
+	case "BillingTransferRun.failureMessage":
+		if e.ComplexityRoot.BillingTransferRun.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.FailureMessage(childComplexity), true
+	case "BillingTransferRun.id":
+		if e.ComplexityRoot.BillingTransferRun.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.ID(childComplexity), true
+	case "BillingTransferRun.markCompletedReadyToInvoice":
+		if e.ComplexityRoot.BillingTransferRun.MarkCompletedReadyToInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.MarkCompletedReadyToInvoice(childComplexity), true
+	case "BillingTransferRun.markedReadyToInvoiceCount":
+		if e.ComplexityRoot.BillingTransferRun.MarkedReadyToInvoiceCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.MarkedReadyToInvoiceCount(childComplexity), true
+	case "BillingTransferRun.notTransferredCount":
+		if e.ComplexityRoot.BillingTransferRun.NotTransferredCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.NotTransferredCount(childComplexity), true
+	case "BillingTransferRun.processedCount":
+		if e.ComplexityRoot.BillingTransferRun.ProcessedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.ProcessedCount(childComplexity), true
+	case "BillingTransferRun.queuedAt":
+		if e.ComplexityRoot.BillingTransferRun.QueuedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.QueuedAt(childComplexity), true
+	case "BillingTransferRun.requestedById":
+		if e.ComplexityRoot.BillingTransferRun.RequestedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.RequestedByID(childComplexity), true
+	case "BillingTransferRun.retryableCount":
+		if e.ComplexityRoot.BillingTransferRun.RetryableCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.RetryableCount(childComplexity), true
+	case "BillingTransferRun.scope":
+		if e.ComplexityRoot.BillingTransferRun.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.Scope(childComplexity), true
+	case "BillingTransferRun.searchQuery":
+		if e.ComplexityRoot.BillingTransferRun.SearchQuery == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.SearchQuery(childComplexity), true
+	case "BillingTransferRun.shipmentStatus":
+		if e.ComplexityRoot.BillingTransferRun.ShipmentStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.ShipmentStatus(childComplexity), true
+	case "BillingTransferRun.skippedCount":
+		if e.ComplexityRoot.BillingTransferRun.SkippedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.SkippedCount(childComplexity), true
+	case "BillingTransferRun.sourceRunId":
+		if e.ComplexityRoot.BillingTransferRun.SourceRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.SourceRunID(childComplexity), true
+	case "BillingTransferRun.startedAt":
+		if e.ComplexityRoot.BillingTransferRun.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.StartedAt(childComplexity), true
+	case "BillingTransferRun.status":
+		if e.ComplexityRoot.BillingTransferRun.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.Status(childComplexity), true
+	case "BillingTransferRun.totalCount":
+		if e.ComplexityRoot.BillingTransferRun.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.TotalCount(childComplexity), true
+	case "BillingTransferRun.transferredCount":
+		if e.ComplexityRoot.BillingTransferRun.TransferredCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.TransferredCount(childComplexity), true
+	case "BillingTransferRun.unmatchedCount":
+		if e.ComplexityRoot.BillingTransferRun.UnmatchedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.UnmatchedCount(childComplexity), true
+	case "BillingTransferRun.updatedAt":
+		if e.ComplexityRoot.BillingTransferRun.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRun.UpdatedAt(childComplexity), true
+
+	case "BillingTransferRunItem.billingQueueItemId":
+		if e.ComplexityRoot.BillingTransferRunItem.BillingQueueItemID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.BillingQueueItemID(childComplexity), true
+	case "BillingTransferRunItem.billingQueueNumber":
+		if e.ComplexityRoot.BillingTransferRunItem.BillingQueueNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.BillingQueueNumber(childComplexity), true
+	case "BillingTransferRunItem.billingQueueStatus":
+		if e.ComplexityRoot.BillingTransferRunItem.BillingQueueStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.BillingQueueStatus(childComplexity), true
+	case "BillingTransferRunItem.createdAt":
+		if e.ComplexityRoot.BillingTransferRunItem.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.CreatedAt(childComplexity), true
+	case "BillingTransferRunItem.errorMessage":
+		if e.ComplexityRoot.BillingTransferRunItem.ErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ErrorMessage(childComplexity), true
+	case "BillingTransferRunItem.failureCode":
+		if e.ComplexityRoot.BillingTransferRunItem.FailureCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.FailureCode(childComplexity), true
+	case "BillingTransferRunItem.id":
+		if e.ComplexityRoot.BillingTransferRunItem.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ID(childComplexity), true
+	case "BillingTransferRunItem.markedReadyToInvoice":
+		if e.ComplexityRoot.BillingTransferRunItem.MarkedReadyToInvoice == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.MarkedReadyToInvoice(childComplexity), true
+	case "BillingTransferRunItem.missingRequirements":
+		if e.ComplexityRoot.BillingTransferRunItem.MissingRequirements == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.MissingRequirements(childComplexity), true
+	case "BillingTransferRunItem.proNumber":
+		if e.ComplexityRoot.BillingTransferRunItem.ProNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ProNumber(childComplexity), true
+	case "BillingTransferRunItem.processedAt":
+		if e.ComplexityRoot.BillingTransferRunItem.ProcessedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ProcessedAt(childComplexity), true
+	case "BillingTransferRunItem.runId":
+		if e.ComplexityRoot.BillingTransferRunItem.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.RunID(childComplexity), true
+	case "BillingTransferRunItem.sequence":
+		if e.ComplexityRoot.BillingTransferRunItem.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.Sequence(childComplexity), true
+	case "BillingTransferRunItem.shipmentId":
+		if e.ComplexityRoot.BillingTransferRunItem.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ShipmentID(childComplexity), true
+	case "BillingTransferRunItem.status":
+		if e.ComplexityRoot.BillingTransferRunItem.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.Status(childComplexity), true
+	case "BillingTransferRunItem.validationFailures":
+		if e.ComplexityRoot.BillingTransferRunItem.ValidationFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItem.ValidationFailures(childComplexity), true
+
+	case "BillingTransferRunItemConnection.edges":
+		if e.ComplexityRoot.BillingTransferRunItemConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItemConnection.Edges(childComplexity), true
+	case "BillingTransferRunItemConnection.pageInfo":
+		if e.ComplexityRoot.BillingTransferRunItemConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItemConnection.PageInfo(childComplexity), true
+	case "BillingTransferRunItemConnection.totalCount":
+		if e.ComplexityRoot.BillingTransferRunItemConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItemConnection.TotalCount(childComplexity), true
+
+	case "BillingTransferRunItemEdge.cursor":
+		if e.ComplexityRoot.BillingTransferRunItemEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItemEdge.Cursor(childComplexity), true
+	case "BillingTransferRunItemEdge.node":
+		if e.ComplexityRoot.BillingTransferRunItemEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferRunItemEdge.Node(childComplexity), true
+
+	case "BillingTransferValidation.code":
+		if e.ComplexityRoot.BillingTransferValidation.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferValidation.Code(childComplexity), true
+	case "BillingTransferValidation.field":
+		if e.ComplexityRoot.BillingTransferValidation.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferValidation.Field(childComplexity), true
+	case "BillingTransferValidation.message":
+		if e.ComplexityRoot.BillingTransferValidation.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingTransferValidation.Message(childComplexity), true
 
 	case "BulkAssignTrainingOutcome.courseId":
 		if e.ComplexityRoot.BulkAssignTrainingOutcome.CourseID == nil {
@@ -37874,6 +38268,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CalculateShipmentTotals(childComplexity, args["input"].(gqlmodel.ShipmentInput)), true
+	case "Mutation.cancelBillingTransferRun":
+		if e.ComplexityRoot.Mutation.CancelBillingTransferRun == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelBillingTransferRun_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CancelBillingTransferRun(childComplexity, args["id"].(string)), true
 	case "Mutation.cancelDotRandomDraw":
 		if e.ComplexityRoot.Mutation.CancelDOTRandomDraw == nil {
 			break
@@ -40318,6 +40723,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResumeCarrierIntelMonitoring(childComplexity), true
+	case "Mutation.retryBillingTransferRun":
+		if e.ComplexityRoot.Mutation.RetryBillingTransferRun == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_retryBillingTransferRun_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RetryBillingTransferRun(childComplexity, args["id"].(string)), true
 	case "Mutation.reverseCustomerPayment":
 		if e.ComplexityRoot.Mutation.ReverseCustomerPayment == nil {
 			break
@@ -40571,6 +40987,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.StageFuelPurchaseImport(childComplexity, args["input"].(gqlmodel.StageFuelPurchaseImportInput)), true
+	case "Mutation.startBillingTransferRun":
+		if e.ComplexityRoot.Mutation.StartBillingTransferRun == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startBillingTransferRun_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.StartBillingTransferRun(childComplexity, args["input"].(gqlmodel.StartBillingTransferRunInput)), true
 	case "Mutation.startMyTraining":
 		if e.ComplexityRoot.Mutation.StartMyTraining == nil {
 			break
@@ -45886,6 +46313,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.BenefitPlans(childComplexity, args["activeOnly"].(*bool), args["planYear"].(*int)), true
+	case "Query.billingTransferRun":
+		if e.ComplexityRoot.Query.BillingTransferRun == nil {
+			break
+		}
+
+		args, err := ec.field_Query_billingTransferRun_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.BillingTransferRun(childComplexity, args["id"].(string)), true
+	case "Query.billingTransferRunItems":
+		if e.ComplexityRoot.Query.BillingTransferRunItems == nil {
+			break
+		}
+
+		args, err := ec.field_Query_billingTransferRunItems_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.BillingTransferRunItems(childComplexity, args["runId"].(string), args["input"].(gqlmodel.DataTableConnectionInput), args["filter"].(*gqlmodel.BillingTransferRunItemsFilterInput)), true
 	case "Query.cannedReports":
 		if e.ComplexityRoot.Query.CannedReports == nil {
 			break
@@ -47780,6 +48229,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MatchRoutingGuide(childComplexity, args["input"].(gqlmodel.MatchRoutingGuideInput)), true
+	case "Query.myActiveBillingTransferRun":
+		if e.ComplexityRoot.Query.MyActiveBillingTransferRun == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyActiveBillingTransferRun(childComplexity), true
 	case "Query.myAdvances":
 		if e.ComplexityRoot.Query.MyAdvances == nil {
 			break
@@ -67612,6 +68067,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBenefitPlanInput,
 		ec.unmarshalInputBillingQueueAssignInput,
 		ec.unmarshalInputBillingQueueUpdateStatusInput,
+		ec.unmarshalInputBillingTransferRunItemsFilterInput,
 		ec.unmarshalInputBulkAssignTrainingInput,
 		ec.unmarshalInputBulkSettlementActionInput,
 		ec.unmarshalInputBulkUpdateEquipmentManufacturerStatusInput,
@@ -67852,6 +68308,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSidebarSectionPreferenceInput,
 		ec.unmarshalInputSortFieldInput,
 		ec.unmarshalInputStageFuelPurchaseImportInput,
+		ec.unmarshalInputStartBillingTransferRunInput,
 		ec.unmarshalInputStartWorkerChecklistInput,
 		ec.unmarshalInputSubmitMyExpenseInput,
 		ec.unmarshalInputTableConfigurationInput,
@@ -69069,6 +69526,155 @@ input BillingQueueAssignInput {
 extend type Mutation {
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+}
+`, BuiltIn: false},
+	{Name: "../schema/billing_transfer.graphqls", Input: `"One bulk transfer of shipments into the billing queue, run in the background."
+type BillingTransferRun {
+  id: ID!
+  status: BillingTransferRunStatus!
+  scope: BillingTransferRunScope!
+  billType: BillType!
+  markCompletedReadyToInvoice: Boolean!
+  "The search a scope-AllMatching run replayed to find its shipments."
+  searchQuery: String
+  shipmentStatus: ShipmentStatus
+  "The transfer this one retries, when it is a retry."
+  sourceRunId: ID
+  requestedById: ID!
+
+  "How many shipments the run is working through. Zero until a scope-AllMatching run has resolved its search."
+  totalCount: Int!
+  "How many have been answered for, whatever the answer."
+  processedCount: Int!
+  transferredCount: Int!
+  notTransferredCount: Int!
+  "Shipments the run never reached, because it was stopped or it failed."
+  skippedCount: Int!
+  markedReadyToInvoiceCount: Int!
+  "How many of the failures a retry could still change."
+  retryableCount: Int!
+  "Shipments the search matched beyond the 5000 a single run carries. They were never attempted."
+  unmatchedCount: Int!
+
+  "Why the run as a whole stopped. A shipment's own reason lives on its item."
+  failureMessage: String
+  "Set as soon as somebody asks the run to stop; the run keeps going until the batch in flight finishes."
+  cancelRequestedAt: Timestamp
+  cancelRequestedById: ID
+
+  queuedAt: Timestamp!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+enum BillingTransferRunStatus {
+  Queued
+  Running
+  Completed
+  Canceled
+  Failed
+}
+
+enum BillingTransferRunScope {
+  "The shipments were picked one by one."
+  Selected
+  "Everything matching a search, resolved when the run starts."
+  AllMatching
+  "A second attempt at an earlier transfer."
+  Retry
+}
+
+enum BillingTransferItemStatus {
+  "Not reached yet."
+  Pending
+  Transferred
+  NotTransferred
+  "The run ended before reaching this shipment."
+  Skipped
+}
+
+"One shipment inside a transfer, and what became of it."
+type BillingTransferRunItem {
+  id: ID!
+  runId: ID!
+  shipmentId: ID!
+  "Position in the run, which is the order the shipments were given in."
+  sequence: Int!
+  proNumber: String
+  status: BillingTransferItemStatus!
+  failureCode: ShipmentBillingTransferFailureCode
+  errorMessage: String
+  markedReadyToInvoice: Boolean!
+  billingQueueItemId: ID
+  billingQueueNumber: String
+  billingQueueStatus: BillingQueueStatus
+  "Required documents the readiness check found missing, whether or not they blocked the transfer."
+  missingRequirements: [BillingTransferRequirement!]!
+  "Readiness validation failures, whether or not they blocked the transfer."
+  validationFailures: [BillingTransferValidation!]!
+  processedAt: Timestamp
+  createdAt: Timestamp!
+}
+
+type BillingTransferRequirement {
+  documentTypeId: String!
+  documentTypeCode: String!
+  documentTypeName: String!
+}
+
+type BillingTransferValidation {
+  field: String!
+  code: String!
+  message: String!
+}
+
+type BillingTransferRunItemEdge {
+  node: BillingTransferRunItem!
+  cursor: String!
+}
+
+type BillingTransferRunItemConnection {
+  edges: [BillingTransferRunItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input StartBillingTransferRunInput {
+  scope: BillingTransferRunScope!
+  "Required when scope is Selected."
+  shipmentIds: [ID!]
+  "The search a scope-AllMatching run replays when it starts."
+  query: String
+  "Narrow to Completed or ReadyToInvoice shipments."
+  status: ShipmentStatus
+  billType: BillType = Invoice
+  "Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it."
+  markCompletedReadyToInvoice: Boolean = false
+}
+
+input BillingTransferRunItemsFilterInput {
+  statuses: [BillingTransferItemStatus!]
+}
+
+extend type Query {
+  billingTransferRun(id: ID!): BillingTransferRun!
+  "The caller's own transfer that has not finished, so a reopened dialog reattaches to it instead of starting a second one."
+  myActiveBillingTransferRun: BillingTransferRun
+  billingTransferRunItems(
+    runId: ID!
+    input: DataTableConnectionInput!
+    filter: BillingTransferRunItemsFilterInput
+  ): BillingTransferRunItemConnection!
+}
+
+extend type Mutation {
+  startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
+  "Asks a transfer to stop. The batch already in flight finishes, so nothing is left half-recorded."
+  cancelBillingTransferRun(id: ID!): BillingTransferRun!
+  "Starts a fresh transfer over the shipments a second attempt could still move."
+  retryBillingTransferRun(id: ID!): BillingTransferRun!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier.graphqls", Input: `enum CarrierStatus {
@@ -89419,6 +90025,146 @@ func (ec *executionContext) childFields_BillingQueueItem(ctx context.Context, fi
 		return ec.fieldContext_BillingQueueItem_canceledBy(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type BillingQueueItem", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferRequirement(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "documentTypeId":
+		return ec.fieldContext_BillingTransferRequirement_documentTypeId(ctx, field)
+	case "documentTypeCode":
+		return ec.fieldContext_BillingTransferRequirement_documentTypeCode(ctx, field)
+	case "documentTypeName":
+		return ec.fieldContext_BillingTransferRequirement_documentTypeName(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferRequirement", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferRun(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BillingTransferRun_id(ctx, field)
+	case "status":
+		return ec.fieldContext_BillingTransferRun_status(ctx, field)
+	case "scope":
+		return ec.fieldContext_BillingTransferRun_scope(ctx, field)
+	case "billType":
+		return ec.fieldContext_BillingTransferRun_billType(ctx, field)
+	case "markCompletedReadyToInvoice":
+		return ec.fieldContext_BillingTransferRun_markCompletedReadyToInvoice(ctx, field)
+	case "searchQuery":
+		return ec.fieldContext_BillingTransferRun_searchQuery(ctx, field)
+	case "shipmentStatus":
+		return ec.fieldContext_BillingTransferRun_shipmentStatus(ctx, field)
+	case "sourceRunId":
+		return ec.fieldContext_BillingTransferRun_sourceRunId(ctx, field)
+	case "requestedById":
+		return ec.fieldContext_BillingTransferRun_requestedById(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BillingTransferRun_totalCount(ctx, field)
+	case "processedCount":
+		return ec.fieldContext_BillingTransferRun_processedCount(ctx, field)
+	case "transferredCount":
+		return ec.fieldContext_BillingTransferRun_transferredCount(ctx, field)
+	case "notTransferredCount":
+		return ec.fieldContext_BillingTransferRun_notTransferredCount(ctx, field)
+	case "skippedCount":
+		return ec.fieldContext_BillingTransferRun_skippedCount(ctx, field)
+	case "markedReadyToInvoiceCount":
+		return ec.fieldContext_BillingTransferRun_markedReadyToInvoiceCount(ctx, field)
+	case "retryableCount":
+		return ec.fieldContext_BillingTransferRun_retryableCount(ctx, field)
+	case "unmatchedCount":
+		return ec.fieldContext_BillingTransferRun_unmatchedCount(ctx, field)
+	case "failureMessage":
+		return ec.fieldContext_BillingTransferRun_failureMessage(ctx, field)
+	case "cancelRequestedAt":
+		return ec.fieldContext_BillingTransferRun_cancelRequestedAt(ctx, field)
+	case "cancelRequestedById":
+		return ec.fieldContext_BillingTransferRun_cancelRequestedById(ctx, field)
+	case "queuedAt":
+		return ec.fieldContext_BillingTransferRun_queuedAt(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_BillingTransferRun_startedAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_BillingTransferRun_completedAt(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_BillingTransferRun_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_BillingTransferRun_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferRun", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferRunItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_BillingTransferRunItem_id(ctx, field)
+	case "runId":
+		return ec.fieldContext_BillingTransferRunItem_runId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_BillingTransferRunItem_shipmentId(ctx, field)
+	case "sequence":
+		return ec.fieldContext_BillingTransferRunItem_sequence(ctx, field)
+	case "proNumber":
+		return ec.fieldContext_BillingTransferRunItem_proNumber(ctx, field)
+	case "status":
+		return ec.fieldContext_BillingTransferRunItem_status(ctx, field)
+	case "failureCode":
+		return ec.fieldContext_BillingTransferRunItem_failureCode(ctx, field)
+	case "errorMessage":
+		return ec.fieldContext_BillingTransferRunItem_errorMessage(ctx, field)
+	case "markedReadyToInvoice":
+		return ec.fieldContext_BillingTransferRunItem_markedReadyToInvoice(ctx, field)
+	case "billingQueueItemId":
+		return ec.fieldContext_BillingTransferRunItem_billingQueueItemId(ctx, field)
+	case "billingQueueNumber":
+		return ec.fieldContext_BillingTransferRunItem_billingQueueNumber(ctx, field)
+	case "billingQueueStatus":
+		return ec.fieldContext_BillingTransferRunItem_billingQueueStatus(ctx, field)
+	case "missingRequirements":
+		return ec.fieldContext_BillingTransferRunItem_missingRequirements(ctx, field)
+	case "validationFailures":
+		return ec.fieldContext_BillingTransferRunItem_validationFailures(ctx, field)
+	case "processedAt":
+		return ec.fieldContext_BillingTransferRunItem_processedAt(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_BillingTransferRunItem_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferRunItem", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferRunItemConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_BillingTransferRunItemConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_BillingTransferRunItemConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_BillingTransferRunItemConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferRunItemConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferRunItemEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_BillingTransferRunItemEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_BillingTransferRunItemEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferRunItemEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_BillingTransferValidation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "field":
+		return ec.fieldContext_BillingTransferValidation_field(ctx, field)
+	case "code":
+		return ec.fieldContext_BillingTransferValidation_code(ctx, field)
+	case "message":
+		return ec.fieldContext_BillingTransferValidation_message(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BillingTransferValidation", field.Name)
 }
 
 func (ec *executionContext) childFields_BulkAssignTrainingOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

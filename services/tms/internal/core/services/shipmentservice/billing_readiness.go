@@ -264,9 +264,62 @@ func (s *service) validateBillingReadinessForStatusChange(
 	return multiErr
 }
 
+// billingReadinessCache carries what every shipment in one bulk transfer shares.
+// It is scoped to a single call and never outlives it, so it cannot go stale
+// against a policy change the way a process-wide cache could.
+type billingReadinessCache struct {
+	billingControl      *tenant.BillingControl
+	billingControlKnown bool
+}
+
+// billingControlFor reads the organization's billing policy, at most once per
+// bulk transfer. The policy is one row per organization and every shipment in a
+// run asks the same question of it.
+func (s *service) billingControlFor(
+	ctx context.Context,
+	orgID pulid.ID,
+	cache *billingReadinessCache,
+) (*tenant.BillingControl, error) {
+	if cache != nil && cache.billingControlKnown {
+		return cache.billingControl, nil
+	}
+
+	control, err := s.billingRepo.GetByOrgID(ctx, orgID)
+	switch {
+	case err == nil:
+	case errortypes.IsNotFoundError(err):
+		// A tenant that has not configured billing has no policy, which is an
+		// answer worth caching rather than re-asking for every shipment.
+		control = nil
+	default:
+		return nil, err
+	}
+
+	if cache != nil {
+		cache.billingControl = control
+		cache.billingControlKnown = true
+	}
+
+	return control, nil
+}
+
 func (s *service) evaluateBillingReadiness(
 	ctx context.Context,
 	entity *shipment.Shipment,
+) (*services.ShipmentBillingReadiness, error) {
+	return s.evaluateBillingReadinessCached(ctx, entity, nil)
+}
+
+// evaluateBillingReadinessCached is the readiness check with somewhere to put
+// the answers that do not vary by shipment.
+//
+// A bulk transfer asks the same organization-level questions once per shipment,
+// which is the difference between one query and five thousand. A nil cache means
+// a single shipment is being evaluated on its own, and nothing is shared.
+func (s *service) evaluateBillingReadinessCached(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	cache *billingReadinessCache,
 ) (*services.ShipmentBillingReadiness, error) {
 	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
 		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
@@ -313,12 +366,8 @@ func (s *service) evaluateBillingReadiness(
 		payersByID[customerEntity.ID] = customerEntity
 	}
 
-	billingControl, err := s.billingRepo.GetByOrgID(ctx, entity.OrganizationID)
-	switch {
-	case err == nil:
-	case errortypes.IsNotFoundError(err):
-		billingControl = nil
-	default:
+	billingControl, err := s.billingControlFor(ctx, entity.OrganizationID, cache)
+	if err != nil {
 		return nil, err
 	}
 

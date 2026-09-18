@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
+	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -221,6 +222,7 @@ type Params struct {
 	TableConfigurationService    *tableconfigurationservice.Service
 	SidebarPreferenceService     *sidebarpreferenceservice.Service
 	HomeLayoutService            *homelayoutservice.Service
+	BillingTransferService       *billingtransferservice.Service
 	ReportingService             *reportingservice.Service
 	NotificationService          *notificationservice.Service
 	PermissionEngine             services.PermissionEngine
@@ -385,6 +387,7 @@ type Resolver struct {
 	fuelPurchaseService          *fuelpurchaseservice.Service
 	iftaService                  *iftaservice.Service
 	distanceCalculationService   services.DistanceCalculationService
+	billingTransferService       *billingtransferservice.Service
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -509,6 +512,7 @@ func New(p Params) *Resolver {
 		sidebarPreferenceService:     p.SidebarPreferenceService,
 		homeLayoutService:            p.HomeLayoutService,
 		notificationService:          p.NotificationService,
+		billingTransferService:       p.BillingTransferService,
 		reportingService:             p.ReportingService,
 		permissionEngine:             p.PermissionEngine,
 		driverPayService:             p.DriverPayService,

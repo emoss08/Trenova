@@ -31,3 +31,167 @@ query BillingTransferCandidateIds($input: ShipmentBillingTransferCandidateIdsInp
     truncated
   }
 }
+
+query BillingTransferRun($id: ID!) {
+  billingTransferRun(id: $id) {
+    id
+    status
+    scope
+    billType
+    searchQuery
+    shipmentStatus
+    sourceRunId
+    totalCount
+    processedCount
+    transferredCount
+    notTransferredCount
+    skippedCount
+    markedReadyToInvoiceCount
+    retryableCount
+    unmatchedCount
+    failureMessage
+    cancelRequestedAt
+    queuedAt
+    startedAt
+    completedAt
+  }
+}
+
+query MyActiveBillingTransferRun {
+  myActiveBillingTransferRun {
+    id
+    status
+    scope
+    billType
+    searchQuery
+    shipmentStatus
+    sourceRunId
+    totalCount
+    processedCount
+    transferredCount
+    notTransferredCount
+    skippedCount
+    markedReadyToInvoiceCount
+    retryableCount
+    unmatchedCount
+    failureMessage
+    cancelRequestedAt
+    queuedAt
+    startedAt
+    completedAt
+  }
+}
+
+query BillingTransferRunItems(
+  $runId: ID!
+  $input: DataTableConnectionInput!
+  $filter: BillingTransferRunItemsFilterInput
+  $includeTotalCount: Boolean = true
+) {
+  billingTransferRunItems(runId: $runId, input: $input, filter: $filter) {
+    edges {
+      node {
+        id
+        shipmentId
+        sequence
+        proNumber
+        status
+        failureCode
+        errorMessage
+        markedReadyToInvoice
+        billingQueueNumber
+        billingQueueStatus
+        missingRequirements {
+          documentTypeId
+          documentTypeCode
+          documentTypeName
+        }
+        validationFailures {
+          field
+          code
+          message
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+mutation StartBillingTransferRun($input: StartBillingTransferRunInput!) {
+  startBillingTransferRun(input: $input) {
+    id
+    status
+    scope
+    billType
+    searchQuery
+    shipmentStatus
+    sourceRunId
+    totalCount
+    processedCount
+    transferredCount
+    notTransferredCount
+    skippedCount
+    markedReadyToInvoiceCount
+    retryableCount
+    unmatchedCount
+    failureMessage
+    cancelRequestedAt
+    queuedAt
+    startedAt
+    completedAt
+  }
+}
+
+mutation CancelBillingTransferRun($id: ID!) {
+  cancelBillingTransferRun(id: $id) {
+    id
+    status
+    scope
+    billType
+    searchQuery
+    shipmentStatus
+    sourceRunId
+    totalCount
+    processedCount
+    transferredCount
+    notTransferredCount
+    skippedCount
+    markedReadyToInvoiceCount
+    retryableCount
+    unmatchedCount
+    failureMessage
+    cancelRequestedAt
+    queuedAt
+    startedAt
+    completedAt
+  }
+}
+
+mutation RetryBillingTransferRun($id: ID!) {
+  retryBillingTransferRun(id: $id) {
+    id
+    status
+    scope
+    billType
+    searchQuery
+    shipmentStatus
+    sourceRunId
+    totalCount
+    processedCount
+    transferredCount
+    notTransferredCount
+    skippedCount
+    markedReadyToInvoiceCount
+    retryableCount
+    unmatchedCount
+    failureMessage
+    cancelRequestedAt
+    queuedAt
+    startedAt
+    completedAt
+  }
+}

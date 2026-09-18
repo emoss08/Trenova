@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CarrierIntelProfileView,
   type CarrierIntelProfileSectionId,
@@ -25,11 +24,11 @@ import {
   CARRIER_INTEL_LOOKUP_KEY,
   lookupCarrierIntelProspect,
 } from "@/lib/graphql/carrier-sourcing";
+import { useQuery } from "@tanstack/react-query";
 import type {
   CarrierIntelDepth,
   CarrierIntelLookupInput,
 } from "@trenova/graphql/generated/graphql";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Sheet,
@@ -39,6 +38,7 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { ArrowUpRightIcon, LayersIcon } from "lucide-react";
 import { useState } from "react";
@@ -212,7 +212,7 @@ function CarrierSheetBody({
           ) : null}
         </div>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 py-5">
         <DecisionSummary
           findings={candidate.findings}
           ruleLabels={ruleLabels}

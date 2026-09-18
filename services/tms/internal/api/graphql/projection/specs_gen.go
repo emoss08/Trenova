@@ -32,6 +32,10 @@ var BenefitPlanSpec TypeSpec
 
 var BillingQueueItemSpec TypeSpec
 
+var BillingTransferRunSpec TypeSpec
+
+var BillingTransferRunItemSpec TypeSpec
+
 var BusinessUnitSpec TypeSpec
 
 var CarrierSpec TypeSpec
@@ -1760,6 +1764,192 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	BillingTransferRunSpec = TypeSpec{
+		TypeName: "BillingTransferRun",
+		FieldMap: buncolgen.BillingTransferRunFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "scope",
+				FieldMapKey: "scope",
+			},
+			{
+				Name:        "billType",
+				FieldMapKey: "billType",
+			},
+			{
+				Name:        "markCompletedReadyToInvoice",
+				FieldMapKey: "markCompletedReadyToInvoice",
+			},
+			{
+				Name:        "searchQuery",
+				FieldMapKey: "searchQuery",
+			},
+			{
+				Name:        "shipmentStatus",
+				FieldMapKey: "shipmentStatus",
+			},
+			{
+				Name:        "sourceRunId",
+				FieldMapKey: "sourceRunId",
+			},
+			{
+				Name:        "requestedById",
+				FieldMapKey: "requestedById",
+			},
+			{
+				Name:        "totalCount",
+				FieldMapKey: "totalCount",
+			},
+			{
+				Name:        "processedCount",
+				FieldMapKey: "processedCount",
+			},
+			{
+				Name:        "transferredCount",
+				FieldMapKey: "transferredCount",
+			},
+			{
+				Name:        "notTransferredCount",
+				FieldMapKey: "notTransferredCount",
+			},
+			{
+				Name:        "skippedCount",
+				FieldMapKey: "skippedCount",
+			},
+			{
+				Name:        "markedReadyToInvoiceCount",
+				FieldMapKey: "markedReadyToInvoiceCount",
+			},
+			{
+				Name:        "retryableCount",
+				FieldMapKey: "retryableCount",
+			},
+			{
+				Name:        "unmatchedCount",
+				FieldMapKey: "unmatchedCount",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "cancelRequestedAt",
+				FieldMapKey: "cancelRequestedAt",
+			},
+			{
+				Name:        "cancelRequestedById",
+				FieldMapKey: "cancelRequestedById",
+			},
+			{
+				Name:        "queuedAt",
+				FieldMapKey: "queuedAt",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	BillingTransferRunItemSpec = TypeSpec{
+		TypeName: "BillingTransferRunItem",
+		FieldMap: buncolgen.BillingTransferRunItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "proNumber",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "failureCode",
+				FieldMapKey: "failureCode",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "markedReadyToInvoice",
+				FieldMapKey: "markedReadyToInvoice",
+			},
+			{
+				Name:        "billingQueueItemId",
+				FieldMapKey: "billingQueueItemId",
+			},
+			{
+				Name:        "billingQueueNumber",
+				FieldMapKey: "billingQueueNumber",
+			},
+			{
+				Name:        "billingQueueStatus",
+				FieldMapKey: "billingQueueStatus",
+			},
+			{
+				Name:        "missingRequirements",
+				FieldMapKey: "missingRequirements",
+			},
+			{
+				Name:        "validationFailures",
+				FieldMapKey: "validationFailures",
+			},
+			{
+				Name:        "processedAt",
+				FieldMapKey: "processedAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 		},
 	}

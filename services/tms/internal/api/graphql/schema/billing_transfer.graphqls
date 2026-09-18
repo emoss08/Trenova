@@ -1,0 +1,148 @@
+"One bulk transfer of shipments into the billing queue, run in the background."
+type BillingTransferRun {
+  id: ID!
+  status: BillingTransferRunStatus!
+  scope: BillingTransferRunScope!
+  billType: BillType!
+  markCompletedReadyToInvoice: Boolean!
+  "The search a scope-AllMatching run replayed to find its shipments."
+  searchQuery: String
+  shipmentStatus: ShipmentStatus
+  "The transfer this one retries, when it is a retry."
+  sourceRunId: ID
+  requestedById: ID!
+
+  "How many shipments the run is working through. Zero until a scope-AllMatching run has resolved its search."
+  totalCount: Int!
+  "How many have been answered for, whatever the answer."
+  processedCount: Int!
+  transferredCount: Int!
+  notTransferredCount: Int!
+  "Shipments the run never reached, because it was stopped or it failed."
+  skippedCount: Int!
+  markedReadyToInvoiceCount: Int!
+  "How many of the failures a retry could still change."
+  retryableCount: Int!
+  "Shipments the search matched beyond the 5000 a single run carries. They were never attempted."
+  unmatchedCount: Int!
+
+  "Why the run as a whole stopped. A shipment's own reason lives on its item."
+  failureMessage: String
+  "Set as soon as somebody asks the run to stop; the run keeps going until the batch in flight finishes."
+  cancelRequestedAt: Timestamp
+  cancelRequestedById: ID
+
+  queuedAt: Timestamp!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+enum BillingTransferRunStatus {
+  Queued
+  Running
+  Completed
+  Canceled
+  Failed
+}
+
+enum BillingTransferRunScope {
+  "The shipments were picked one by one."
+  Selected
+  "Everything matching a search, resolved when the run starts."
+  AllMatching
+  "A second attempt at an earlier transfer."
+  Retry
+}
+
+enum BillingTransferItemStatus {
+  "Not reached yet."
+  Pending
+  Transferred
+  NotTransferred
+  "The run ended before reaching this shipment."
+  Skipped
+}
+
+"One shipment inside a transfer, and what became of it."
+type BillingTransferRunItem {
+  id: ID!
+  runId: ID!
+  shipmentId: ID!
+  "Position in the run, which is the order the shipments were given in."
+  sequence: Int!
+  proNumber: String
+  status: BillingTransferItemStatus!
+  failureCode: ShipmentBillingTransferFailureCode
+  errorMessage: String
+  markedReadyToInvoice: Boolean!
+  billingQueueItemId: ID
+  billingQueueNumber: String
+  billingQueueStatus: BillingQueueStatus
+  "Required documents the readiness check found missing, whether or not they blocked the transfer."
+  missingRequirements: [BillingTransferRequirement!]!
+  "Readiness validation failures, whether or not they blocked the transfer."
+  validationFailures: [BillingTransferValidation!]!
+  processedAt: Timestamp
+  createdAt: Timestamp!
+}
+
+type BillingTransferRequirement {
+  documentTypeId: String!
+  documentTypeCode: String!
+  documentTypeName: String!
+}
+
+type BillingTransferValidation {
+  field: String!
+  code: String!
+  message: String!
+}
+
+type BillingTransferRunItemEdge {
+  node: BillingTransferRunItem!
+  cursor: String!
+}
+
+type BillingTransferRunItemConnection {
+  edges: [BillingTransferRunItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input StartBillingTransferRunInput {
+  scope: BillingTransferRunScope!
+  "Required when scope is Selected."
+  shipmentIds: [ID!]
+  "The search a scope-AllMatching run replays when it starts."
+  query: String
+  "Narrow to Completed or ReadyToInvoice shipments."
+  status: ShipmentStatus
+  billType: BillType = Invoice
+  "Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it."
+  markCompletedReadyToInvoice: Boolean = false
+}
+
+input BillingTransferRunItemsFilterInput {
+  statuses: [BillingTransferItemStatus!]
+}
+
+extend type Query {
+  billingTransferRun(id: ID!): BillingTransferRun!
+  "The caller's own transfer that has not finished, so a reopened dialog reattaches to it instead of starting a second one."
+  myActiveBillingTransferRun: BillingTransferRun
+  billingTransferRunItems(
+    runId: ID!
+    input: DataTableConnectionInput!
+    filter: BillingTransferRunItemsFilterInput
+  ): BillingTransferRunItemConnection!
+}
+
+extend type Mutation {
+  startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
+  "Asks a transfer to stop. The batch already in flight finishes, so nothing is left half-recorded."
+  cancelBillingTransferRun(id: ID!): BillingTransferRun!
+  "Starts a fresh transfer over the shipments a second attempt could still move."
+  retryBillingTransferRun(id: ID!): BillingTransferRun!
+}

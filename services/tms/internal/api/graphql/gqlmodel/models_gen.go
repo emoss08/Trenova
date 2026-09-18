@@ -442,6 +442,82 @@ type BillingQueueUpdateStatusInput struct {
 	CancelReason        *string                           `json:"cancelReason,omitempty"`
 }
 
+// One bulk transfer of shipments into the billing queue, run in the background.
+type BillingTransferRun struct {
+	ID                          string                    `json:"id"`
+	Status                      billingtransfer.RunStatus `json:"status"`
+	Scope                       billingtransfer.RunScope  `json:"scope"`
+	BillType                    billingqueue.BillType     `json:"billType"`
+	MarkCompletedReadyToInvoice bool                      `json:"markCompletedReadyToInvoice"`
+	// The search a scope-AllMatching run replayed to find its shipments.
+	SearchQuery    *string         `json:"searchQuery,omitempty"`
+	ShipmentStatus *ShipmentStatus `json:"shipmentStatus,omitempty"`
+	// The transfer this one retries, when it is a retry.
+	SourceRunID   *string `json:"sourceRunId,omitempty"`
+	RequestedByID string  `json:"requestedById"`
+	// How many shipments the run is working through. Zero until a scope-AllMatching run has resolved its search.
+	TotalCount int `json:"totalCount"`
+	// How many have been answered for, whatever the answer.
+	ProcessedCount      int `json:"processedCount"`
+	TransferredCount    int `json:"transferredCount"`
+	NotTransferredCount int `json:"notTransferredCount"`
+	// Shipments the run never reached, because it was stopped or it failed.
+	SkippedCount              int `json:"skippedCount"`
+	MarkedReadyToInvoiceCount int `json:"markedReadyToInvoiceCount"`
+	// How many of the failures a retry could still change.
+	RetryableCount int `json:"retryableCount"`
+	// Shipments the search matched beyond the 5000 a single run carries. They were never attempted.
+	UnmatchedCount int `json:"unmatchedCount"`
+	// Why the run as a whole stopped. A shipment's own reason lives on its item.
+	FailureMessage *string `json:"failureMessage,omitempty"`
+	// Set as soon as somebody asks the run to stop; the run keeps going until the batch in flight finishes.
+	CancelRequestedAt   *int    `json:"cancelRequestedAt,omitempty"`
+	CancelRequestedByID *string `json:"cancelRequestedById,omitempty"`
+	QueuedAt            int     `json:"queuedAt"`
+	StartedAt           *int    `json:"startedAt,omitempty"`
+	CompletedAt         *int    `json:"completedAt,omitempty"`
+	CreatedAt           int     `json:"createdAt"`
+	UpdatedAt           int     `json:"updatedAt"`
+}
+
+// One shipment inside a transfer, and what became of it.
+type BillingTransferRunItem struct {
+	ID         string `json:"id"`
+	RunID      string `json:"runId"`
+	ShipmentID string `json:"shipmentId"`
+	// Position in the run, which is the order the shipments were given in.
+	Sequence             int                          `json:"sequence"`
+	ProNumber            *string                      `json:"proNumber,omitempty"`
+	Status               billingtransfer.ItemStatus   `json:"status"`
+	FailureCode          *billingtransfer.FailureCode `json:"failureCode,omitempty"`
+	ErrorMessage         *string                      `json:"errorMessage,omitempty"`
+	MarkedReadyToInvoice bool                         `json:"markedReadyToInvoice"`
+	BillingQueueItemID   *string                      `json:"billingQueueItemId,omitempty"`
+	BillingQueueNumber   *string                      `json:"billingQueueNumber,omitempty"`
+	BillingQueueStatus   *billingqueue.Status         `json:"billingQueueStatus,omitempty"`
+	// Required documents the readiness check found missing, whether or not they blocked the transfer.
+	MissingRequirements []*billingtransfer.MissingRequirement `json:"missingRequirements"`
+	// Readiness validation failures, whether or not they blocked the transfer.
+	ValidationFailures []*billingtransfer.ValidationFailure `json:"validationFailures"`
+	ProcessedAt        *int                                 `json:"processedAt,omitempty"`
+	CreatedAt          int                                  `json:"createdAt"`
+}
+
+type BillingTransferRunItemConnection struct {
+	Edges      []*BillingTransferRunItemEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount int                           `json:"totalCount"`
+}
+
+type BillingTransferRunItemEdge struct {
+	Node   *BillingTransferRunItem `json:"node"`
+	Cursor string                  `json:"cursor"`
+}
+
+type BillingTransferRunItemsFilterInput struct {
+	Statuses []billingtransfer.ItemStatus `json:"statuses,omitempty"`
+}
+
 type BulkAssignTrainingInput struct {
 	WorkerIds []string `json:"workerIds"`
 	CourseIds []string `json:"courseIds"`
@@ -6800,6 +6876,19 @@ type StageFuelPurchaseImportInput struct {
 	// batch (resource type fuel_purchase_import) or staging is refused.
 	DocumentID string         `json:"documentId"`
 	Mapping    map[string]any `json:"mapping,omitempty"`
+}
+
+type StartBillingTransferRunInput struct {
+	Scope billingtransfer.RunScope `json:"scope"`
+	// Required when scope is Selected.
+	ShipmentIds []string `json:"shipmentIds,omitempty"`
+	// The search a scope-AllMatching run replays when it starts.
+	Query *string `json:"query,omitempty"`
+	// Narrow to Completed or ReadyToInvoice shipments.
+	Status   *ShipmentStatus        `json:"status,omitempty"`
+	BillType *billingqueue.BillType `json:"billType,omitempty"`
+	// Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.
+	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
 
 type StartWorkerChecklistInput struct {

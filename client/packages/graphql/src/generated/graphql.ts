@@ -413,6 +413,33 @@ export type BillingQueueUpdateStatusInput = {
   status: BillingQueueStatus;
 };
 
+export type BillingTransferItemStatus =
+  | 'NotTransferred'
+  /** Not reached yet. */
+  | 'Pending'
+  /** The run ended before reaching this shipment. */
+  | 'Skipped'
+  | 'Transferred';
+
+export type BillingTransferRunItemsFilterInput = {
+  statuses?: Array<BillingTransferItemStatus> | null | undefined;
+};
+
+export type BillingTransferRunScope =
+  /** Everything matching a search, resolved when the run starts. */
+  | 'AllMatching'
+  /** A second attempt at an earlier transfer. */
+  | 'Retry'
+  /** The shipments were picked one by one. */
+  | 'Selected';
+
+export type BillingTransferRunStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Failed'
+  | 'Queued'
+  | 'Running';
+
 export type BulkAssignTrainingInput = {
   courseIds: Array<string | number>;
   /** Overrides each course's own due-days default for this rollout. */
@@ -4718,6 +4745,19 @@ export type StageFuelPurchaseImportInput = {
   mapping?: unknown;
 };
 
+export type StartBillingTransferRunInput = {
+  billType?: BillType | null | undefined;
+  /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
+  markCompletedReadyToInvoice?: boolean | null | undefined;
+  /** The search a scope-AllMatching run replays when it starts. */
+  query?: string | null | undefined;
+  scope: BillingTransferRunScope;
+  /** Required when scope is Selected. */
+  shipmentIds?: Array<string | number> | null | undefined;
+  /** Narrow to Completed or ReadyToInvoice shipments. */
+  status?: ShipmentStatus | null | undefined;
+};
+
 export type StartWorkerChecklistInput = {
   startedAt?: number | null | undefined;
   templateId: string | number;
@@ -6063,6 +6103,49 @@ export type BillingTransferCandidateIdsQueryVariables = Exact<{
 
 
 export type BillingTransferCandidateIdsQuery = { shipmentBillingTransferCandidateIds: { ids: Array<string>, totalCount: number, truncated: boolean } };
+
+export type BillingTransferRunQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingTransferRunQuery = { billingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+
+export type MyActiveBillingTransferRunQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyActiveBillingTransferRunQuery = { myActiveBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } | null };
+
+export type BillingTransferRunItemsQueryVariables = Exact<{
+  runId: string | number;
+  input: DataTableConnectionInput;
+  filter?: BillingTransferRunItemsFilterInput | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type BillingTransferRunItemsQuery = { billingTransferRunItems: { totalCount?: number, edges: Array<{ node: { id: string, shipmentId: string, sequence: number, proNumber: string | null, status: BillingTransferItemStatus, failureCode: ShipmentBillingTransferFailureCode | null, errorMessage: string | null, markedReadyToInvoice: boolean, billingQueueNumber: string | null, billingQueueStatus: BillingQueueStatus | null, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string }>, validationFailures: Array<{ field: string, code: string, message: string }> } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type StartBillingTransferRunMutationVariables = Exact<{
+  input: StartBillingTransferRunInput;
+}>;
+
+
+export type StartBillingTransferRunMutation = { startBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+
+export type CancelBillingTransferRunMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelBillingTransferRunMutation = { cancelBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+
+export type RetryBillingTransferRunMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
 
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
@@ -18257,6 +18340,12 @@ export const UpdateBillingQueueStatusDocument = {"__meta__":{"kind":"mutation","
 export const AssignBillingQueueBillerDocument = {"__meta__":{"kind":"mutation","name":"AssignBillingQueueBiller","hash":"sha256:580bb67efadea27d0a830702624819ad9a1c2f93b231afe2587ea899e8bfec3f"}} as unknown as TypedDocumentString<AssignBillingQueueBillerMutation, AssignBillingQueueBillerMutationVariables>;
 export const BillingTransferCandidatesDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidates","hash":"sha256:450580ede6ca95f084bf654b2fe54bcf394a97d7d927989fbea661193da083ee"}} as unknown as TypedDocumentString<BillingTransferCandidatesQuery, BillingTransferCandidatesQueryVariables>;
 export const BillingTransferCandidateIdsDocument = {"__meta__":{"kind":"query","name":"BillingTransferCandidateIds","hash":"sha256:705c57e3782a1890e509966d298df4f97e2f1d2b2aa33b27b1068d98258381a6"}} as unknown as TypedDocumentString<BillingTransferCandidateIdsQuery, BillingTransferCandidateIdsQueryVariables>;
+export const BillingTransferRunDocument = {"__meta__":{"kind":"query","name":"BillingTransferRun","hash":"sha256:58588feabe4231ef9d3694362679f96658de267ce03cbf03d21240d29e50b301"}} as unknown as TypedDocumentString<BillingTransferRunQuery, BillingTransferRunQueryVariables>;
+export const MyActiveBillingTransferRunDocument = {"__meta__":{"kind":"query","name":"MyActiveBillingTransferRun","hash":"sha256:be72da2e57cf4ff1297bb7906ef478c846e6f16d24b623ea598b5332e1586a60"}} as unknown as TypedDocumentString<MyActiveBillingTransferRunQuery, MyActiveBillingTransferRunQueryVariables>;
+export const BillingTransferRunItemsDocument = {"__meta__":{"kind":"query","name":"BillingTransferRunItems","hash":"sha256:3d1d39ba17194ef07629fa9660733c3c6b5754fb3fe34decfb76f00f99e5452f"}} as unknown as TypedDocumentString<BillingTransferRunItemsQuery, BillingTransferRunItemsQueryVariables>;
+export const StartBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"StartBillingTransferRun","hash":"sha256:923c2949ec8c393809aeba369e80aaef0ec093127e63d4ebc8cd6a7763929262"}} as unknown as TypedDocumentString<StartBillingTransferRunMutation, StartBillingTransferRunMutationVariables>;
+export const CancelBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"CancelBillingTransferRun","hash":"sha256:fcc61ac6f50e02597d21790c1ba07ef0ae951e5619c6147fbafa8ee7da06e128"}} as unknown as TypedDocumentString<CancelBillingTransferRunMutation, CancelBillingTransferRunMutationVariables>;
+export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","name":"RetryBillingTransferRun","hash":"sha256:a2e10a17e3e30a7adc54d60318390372f9f31e4cf52553538bd02b5f43d31150"}} as unknown as TypedDocumentString<RetryBillingTransferRunMutation, RetryBillingTransferRunMutationVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;

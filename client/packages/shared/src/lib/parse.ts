@@ -1,6 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import type { ZodSchema } from "zod";
 import { toast } from "sonner";
+import type { ZodSchema } from "zod";
 
 export async function safeParse<T>(
   schema: ZodSchema<T>,
@@ -9,7 +9,7 @@ export async function safeParse<T>(
 ): Promise<T> {
   const result = await schema.safeParseAsync(data);
   if (!result.success) {
-    console.error(`Failed to parse ${label ?? "response"}`, result.error);
+    console.error(`Failed to parse ${label ?? "response"}`, result);
     toast.error(`Failed to parse ${label ?? "response"}`, {
       description: translate("Contact your system administrator for assistance."),
     });

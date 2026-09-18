@@ -27,8 +27,8 @@ func createDateValidationRule() validationframework.TenantedRule[*fiscalyear.Fis
 				return nil
 			}
 
-			startTime := time.Unix(entity.StartDate, 0)
-			endTime := time.Unix(entity.EndDate, 0)
+			startTime := time.Unix(entity.StartDate, 0).UTC()
+			endTime := time.Unix(entity.EndDate, 0).UTC()
 			durationDays := endTime.Sub(startTime).Hours() / 24
 
 			if durationDays < 350 {

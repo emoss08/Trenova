@@ -29,6 +29,7 @@ import {
   queueToolbarSearchParamsParser,
   queueViewSearchParamsParser,
   statementSelectionSearchParamsParser,
+  transferRunSearchParamsParser,
 } from "./use-billing-queue-state";
 import { BillingQueueViewSwitch } from "./_components/billing-queue-view-switch";
 import { BulkBillingTransferAction } from "./_components/bulk-transfer/bulk-billing-transfer-action";
@@ -100,10 +101,24 @@ export function BillingQueuePage() {
     statementSelectionSearchParamsParser,
   );
   const [toolbarParams, setToolbarParams] = useQueryStates(queueToolbarSearchParamsParser);
+  const [transferParams, setTransferParams] = useQueryStates(transferRunSearchParamsParser);
   const { view } = viewParams;
   const { item: selectedItemId } = selectionParams;
   const { customer: selectedCustomerId } = statementParams;
   const { status: statusFilter, includePosted } = toolbarParams;
+  const { transferRun } = transferParams;
+
+  // A run id in the URL means somebody followed the completion toast back to a
+  // report, so the dialog opens on it rather than waiting to be asked.
+  const [transferDialogOpen, setTransferDialogOpen] = useState(() => Boolean(transferRun));
+
+  const handleTransferRunChange = useCallback(
+    (runId: string | null) => {
+      void setTransferParams({ transferRun: runId });
+      if (runId) setTransferDialogOpen(true);
+    },
+    [setTransferParams],
+  );
 
   const nowSeconds = useNowSeconds();
   const { data: statementData, isLoading: statementsLoading } = useQuery(statementListQuery());
@@ -111,7 +126,12 @@ export function BillingQueuePage() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <BulkBillingTransferAction />
+      <BulkBillingTransferAction
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        runId={transferRun}
+        onRunIdChange={handleTransferRunChange}
+      />
       <BillingQueueViewSwitch
         view={view}
         statementCount={statementData ? statements.filter((s) => s.shipmentCount > 0).length : null}

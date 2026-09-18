@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -33,8 +34,8 @@ type BillingTransferRun struct {
 	Status                      RunStatus             `json:"status"                      bun:"status,type:VARCHAR(20),notnull"`
 	Scope                       RunScope              `json:"scope"                       bun:"scope,type:VARCHAR(20),notnull"`
 	SearchQuery                 string                `json:"searchQuery"                 bun:"search_query,type:VARCHAR(200),nullzero"`
-	ShipmentStatus              shipment.Status       `json:"shipmentStatus"              bun:"shipment_status,type:VARCHAR(50),nullzero"`
-	BillType                    billingqueue.BillType `json:"billType"                    bun:"bill_type,type:VARCHAR(50),notnull"`
+	ShipmentStatus              shipment.Status       `json:"shipmentStatus"              bun:"shipment_status,type:shipment_status_enum,nullzero"`
+	BillType                    billingqueue.BillType `json:"billType"                    bun:"bill_type,type:billing_type,notnull"`
 	MarkCompletedReadyToInvoice bool                  `json:"markCompletedReadyToInvoice" bun:"mark_completed_ready_to_invoice,type:BOOLEAN,notnull"`
 	TotalCount                  int                   `json:"totalCount"                  bun:"total_count,type:INTEGER,notnull"`
 	ProcessedCount              int                   `json:"processedCount"              bun:"processed_count,type:INTEGER,notnull"`
@@ -138,9 +139,15 @@ func (r *BillingTransferRun) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&r.BillType, validation.Required.Error("Bill type is required")),
 		validation.Field(&r.TotalCount,
-			validation.Min(1).Error("A transfer must include at least one shipment"),
+			validation.Min(0).Error("Total cannot be negative"),
 			validation.Max(MaxRunShipments).
 				Error("A transfer can include at most 5000 shipments"),
+			// An AllMatching run is created before anything is counted: the
+			// workflow resolves its candidates. Only a run that named its
+			// shipments up front can be judged empty at this point.
+			validation.When(r.Scope == RunScopeSelected,
+				validation.Min(1).Error("A transfer must include at least one shipment"),
+			),
 		),
 		validation.Field(&r.SearchQuery,
 			validation.Length(0, 200).Error("Search cannot be longer than 200 characters"),
@@ -161,7 +168,8 @@ type ValidationFailure struct {
 }
 
 type BillingTransferRunItem struct {
-	bun.BaseModel `bun:"table:billing_transfer_run_items,alias:btri" json:"-"`
+	bun.BaseModel             `bun:"table:billing_transfer_run_items,alias:btri" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
 
 	ID                   pulid.ID             `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID       pulid.ID             `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -176,7 +184,7 @@ type BillingTransferRunItem struct {
 	MarkedReadyToInvoice bool                 `json:"markedReadyToInvoice" bun:"marked_ready_to_invoice,type:BOOLEAN,notnull"`
 	BillingQueueItemID   pulid.ID             `json:"billingQueueItemId"   bun:"billing_queue_item_id,type:VARCHAR(100),nullzero"`
 	BillingQueueNumber   string               `json:"billingQueueNumber"   bun:"billing_queue_number,type:VARCHAR(100),nullzero"`
-	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus"   bun:"billing_queue_status,type:VARCHAR(50),nullzero"`
+	BillingQueueStatus   billingqueue.Status  `json:"billingQueueStatus"   bun:"billing_queue_status,type:billing_queue_status,nullzero"`
 	MissingRequirements  []MissingRequirement `json:"missingRequirements"  bun:"missing_requirements,type:JSONB,notnull"`
 	ValidationFailures   []ValidationFailure  `json:"validationFailures"   bun:"validation_failures,type:JSONB,notnull"`
 	ProcessedAt          *int64               `json:"processedAt"          bun:"processed_at,type:BIGINT,nullzero"`
@@ -208,6 +216,8 @@ func (i *BillingTransferRunItem) BeforeAppendModel(_ context.Context, query bun.
 }
 
 func (i *BillingTransferRunItem) GetID() pulid.ID { return i.ID }
+
+func (i *BillingTransferRunItem) GetCreatedAt() int64 { return i.CreatedAt }
 
 func (i *BillingTransferRunItem) GetOrganizationID() pulid.ID { return i.OrganizationID }
 
