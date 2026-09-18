@@ -114,6 +114,9 @@ function NumberFieldScrubArea({
       <Label className="cursor-ew-resize" htmlFor={context.fieldId}>
         {label}
       </Label>
+      {/* design-tokens-ignore: the scrub cursor floats over arbitrary page
+          content, so its halo stays a neutral black in both themes rather than
+          tracking the surface underneath it. */}
       <NumberFieldPrimitive.ScrubAreaCursor className="drop-shadow-[0_1px_1px_#0008] filter">
         <CursorGrowIcon />
       </NumberFieldPrimitive.ScrubAreaCursor>
