@@ -18,8 +18,8 @@ import {
 import { IFTA_MILES_SCALE } from "@trenova/shared/types/ifta-jurisdiction-mileage";
 
 const LOADED_OPTIONS = [
-  { value: true, label: "Loaded", color: "#15803d" },
-  { value: false, label: "Empty", color: "#6b7280" },
+  { value: true, label: "Loaded", color: "var(--success)" },
+  { value: false, label: "Empty", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<boolean>>;
 
 const SOURCE_VARIANTS: Record<IftaMileageSource, BadgeVariant> = {

@@ -21,9 +21,9 @@ import { InfoIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const POLICY_STATUS_OPTIONS = [
-  { value: "Active", label: "Active", color: "#15803d" },
-  { value: "Inactive", label: "Inactive", color: "#b91c1c" },
-  { value: "Draft", label: "Draft", color: "#6b7280" },
+  { value: "Active", label: "Active", color: "var(--success)" },
+  { value: "Inactive", label: "Inactive", color: "var(--danger)" },
+  { value: "Draft", label: "Draft", color: "var(--foreground-subtle)" },
 ];
 
 const YEAR_BASIS_OPTIONS = (Object.keys(PTO_YEAR_BASIS_LABELS) as PTOYearBasis[]).map((value) => ({

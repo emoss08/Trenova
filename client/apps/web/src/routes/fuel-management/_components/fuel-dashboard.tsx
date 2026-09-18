@@ -20,7 +20,7 @@ import { FuelDashboardEmpty } from "./fuel-management-empty";
 const priceChartConfig = {
   price: {
     label: "Diesel $/gal",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
 } satisfies ChartConfig;
 

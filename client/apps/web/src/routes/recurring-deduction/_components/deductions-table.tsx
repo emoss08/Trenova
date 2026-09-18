@@ -52,13 +52,13 @@ export default function DeductionsTable() {
           {
             value: "Active",
             label: t("Resume"),
-            color: "#15803d",
+            color: "var(--success)",
             description: t("Future settlements withhold the deduction again."),
           },
           {
             value: "Paused",
             label: t("Pause"),
-            color: "#d97706",
+            color: "var(--warning)",
             description: t("Future settlements skip the deduction; history is kept."),
           },
         ],

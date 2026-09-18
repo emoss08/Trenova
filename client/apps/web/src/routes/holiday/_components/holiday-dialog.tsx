@@ -33,7 +33,7 @@ import { toast } from "sonner";
 const KIND_OPTIONS = orgHolidayKindSchema.options.map((value) => ({
   value,
   label: ORG_HOLIDAY_KIND_LABELS[value],
-  color: value === "Blackout" ? "#e11d48" : "#059669",
+  color: value === "Blackout" ? "var(--danger)" : "var(--success)",
 }));
 
 export type HolidayDialogProps = {

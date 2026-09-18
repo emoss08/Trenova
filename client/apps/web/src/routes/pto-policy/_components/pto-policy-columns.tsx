@@ -9,7 +9,7 @@ import { PTO_YEAR_BASIS_LABELS } from "@trenova/shared/types/pto-policy";
 
 const POLICY_STATUS_CHOICES = [
   ...statusChoices,
-  { value: "Draft", label: "Draft", color: "#6b7280" },
+  { value: "Draft", label: "Draft", color: "var(--foreground-subtle)" },
 ];
 
 function ruleSummary(row: PTOPolicyRow): string[] {

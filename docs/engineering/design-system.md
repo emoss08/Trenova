@@ -243,12 +243,43 @@ differently depending on the theme.
 5. Note it here if it introduces a new concept rather than a rung on an existing
    ladder.
 
+## Colours outside the token system
+
+Some colours genuinely cannot be tokens. Roughly 200 hex literals remain, and
+each falls into one of these:
+
+| Category | Why it stays |
+|---|---|
+| Brand marks and national flags | A Microsoft logo and a US flag are specific colours, not themeable ones |
+| Map overlays | The Maps API rasterises a literal; `var(--x)` never resolves there |
+| Print output | Paper has no dark mode |
+| The colour picker | Hex *is* the data the user is choosing |
+| Recharts selector overrides | `[stroke='#ccc']` matches what Recharts writes inline — it is what the token overrides |
+| Devtools console colours | Never rendered in the app |
+
+Everything else is a token. Notably, **a select option's indicator colour is a
+token**, because it renders through `style={{ backgroundColor: color }}` and
+inline styles resolve custom properties — so `var(--success)` follows the theme
+where `#15803d` stayed the same dark green on a near-black surface:
+
+```ts
+export const statusChoices = [
+  { label: "Active", value: "Active", color: "var(--success)" },
+  { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
+];
+```
+
+Where one list needs two colours from the same family, take a different **rung**
+of that family (`--danger` then `--danger-foreground`) rather than a different
+hue, so the options stay distinguishable without a red turning teal.
+
+Chart configs take `color` rather than `theme: { light, dark }` for the same
+reason: the token already themes itself, so the pair cannot drift apart.
+
 ## The escape hatch
 
-Some things genuinely cannot be tokens — a third-party brand mark's hex, a halo
-that must stay neutral over arbitrary content. Put
-`design-tokens-ignore: <reason>` in a comment on or just above the line. It is
-deliberately visible in review; a silent exception is how the last set eroded.
+Put `design-tokens-ignore: <reason>` in a comment on or just above the line. It
+is deliberately visible in review; a silent exception is how the last set eroded.
 
 ## Checking your work
 

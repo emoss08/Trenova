@@ -19,19 +19,19 @@ export const settlementLifecycleChoices = [
   {
     value: "Submit",
     label: "Submit for Approval",
-    color: "#2563eb",
+    color: "var(--info)",
     description: "Moves drafts into the approval queue.",
   },
   {
     value: "Approve",
     label: "Approve",
-    color: "#15803d",
+    color: "var(--success)",
     description: "Approves drafts and pending settlements, applying deduction side effects.",
   },
   {
     value: "Post",
     label: "Post to GL",
-    color: "#9333ea",
+    color: "var(--accent-violet)",
     description: "Journalizes approved settlements to the general ledger.",
   },
 ] as const;

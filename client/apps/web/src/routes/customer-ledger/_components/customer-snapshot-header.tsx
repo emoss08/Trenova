@@ -18,7 +18,7 @@ import { formatUnixDateMedium, formatUnixInUserTimezone } from "@trenova/shared/
 const collectionsChartConfig = {
   collected: {
     label: "Collected",
-    theme: { light: "#10b981", dark: "#34d399" },
+    color: "var(--success)",
   },
 } satisfies ChartConfig;
 

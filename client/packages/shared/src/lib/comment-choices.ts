@@ -24,33 +24,33 @@ export type SharedCommentVisibility =
 export type SharedCommentPriority = "Low" | "Normal" | "High" | "Urgent";
 
 export const commentTypeChoices = [
-  { value: "Internal", label: "Internal", color: "#6b7280" },
-  { value: "Dispatch", label: "Dispatch", color: "#3b82f6" },
-  { value: "DriverUpdate", label: "Driver Update", color: "#0891b2" },
-  { value: "PickupInstruction", label: "Pickup Instruction", color: "#16a34a" },
-  { value: "DeliveryInstruction", label: "Delivery Instruction", color: "#15803d" },
-  { value: "StatusUpdate", label: "Status Update", color: "#6366f1" },
-  { value: "Exception", label: "Exception", color: "#dc2626" },
-  { value: "CustomerUpdate", label: "Customer Update", color: "#a855f7" },
-  { value: "Appointment", label: "Appointment", color: "#f59e0b" },
-  { value: "Document", label: "Document", color: "#64748b" },
-  { value: "Billing", label: "Billing", color: "#0d9488" },
-  { value: "Compliance", label: "Compliance", color: "#db2777" },
+  { value: "Internal", label: "Internal", color: "var(--foreground-subtle)" },
+  { value: "Dispatch", label: "Dispatch", color: "var(--info)" },
+  { value: "DriverUpdate", label: "Driver Update", color: "var(--accent-teal)" },
+  { value: "PickupInstruction", label: "Pickup Instruction", color: "var(--success)" },
+  { value: "DeliveryInstruction", label: "Delivery Instruction", color: "var(--success-foreground)" },
+  { value: "StatusUpdate", label: "Status Update", color: "var(--accent-indigo)" },
+  { value: "Exception", label: "Exception", color: "var(--danger)" },
+  { value: "CustomerUpdate", label: "Customer Update", color: "var(--accent-violet)" },
+  { value: "Appointment", label: "Appointment", color: "var(--warning)" },
+  { value: "Document", label: "Document", color: "var(--foreground-muted)" },
+  { value: "Billing", label: "Billing", color: "var(--accent-teal-on-subtle)" },
+  { value: "Compliance", label: "Compliance", color: "var(--accent-rose)" },
 ] satisfies ReadonlyArray<GenericSelectOption<SharedCommentType>>;
 
 export const commentVisibilityChoices = [
-  { value: "Internal", label: "Internal", color: "#6b7280" },
-  { value: "Operations", label: "Operations", color: "#3b82f6" },
-  { value: "Customer", label: "Customer", color: "#a855f7" },
-  { value: "Driver", label: "Driver", color: "#0891b2" },
-  { value: "Accounting", label: "Accounting", color: "#0d9488" },
+  { value: "Internal", label: "Internal", color: "var(--foreground-subtle)" },
+  { value: "Operations", label: "Operations", color: "var(--info)" },
+  { value: "Customer", label: "Customer", color: "var(--accent-violet)" },
+  { value: "Driver", label: "Driver", color: "var(--accent-teal)" },
+  { value: "Accounting", label: "Accounting", color: "var(--accent-teal-on-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<SharedCommentVisibility>>;
 
 export const commentPriorityChoices = [
-  { value: "Low", label: "Low", color: "#9ca3af" },
-  { value: "Normal", label: "Normal", color: "#3b82f6" },
-  { value: "High", label: "High", color: "#f59e0b" },
-  { value: "Urgent", label: "Urgent", color: "#dc2626" },
+  { value: "Low", label: "Low", color: "var(--foreground-subtle)" },
+  { value: "Normal", label: "Normal", color: "var(--info)" },
+  { value: "High", label: "High", color: "var(--warning)" },
+  { value: "Urgent", label: "Urgent", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<SharedCommentPriority>>;
 
 export function commentTypeLabel(value: string): string {

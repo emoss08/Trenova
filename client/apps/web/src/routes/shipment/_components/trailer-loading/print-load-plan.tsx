@@ -125,7 +125,7 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
 
   const warningItems = allWarnings
     .map((warn) => {
-      const color = warn.severity === "error" ? "#dc2626" : "#d97706";
+      const color = warn.severity === "error" ? "var(--danger)" : "var(--warning)";
       const icon = warn.severity === "error" ? "\u26d4" : "\u26a0";
       return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${esc(warn.message)}</span></div>`;
     })

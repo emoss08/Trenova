@@ -146,6 +146,6 @@ describe("service failure shared schemas", () => {
 describe("findChoice", () => {
   it("returns the matching choice by value", () => {
     expect(findChoice(serviceFailureStatusChoices, "Reviewed")?.label).toBe("Reviewed");
-    expect(findChoice(serviceFailureStatusChoices, "Open")?.color).toBe("#dc2626");
+    expect(findChoice(serviceFailureStatusChoices, "Open")?.color).toBe("var(--danger)");
   });
 });

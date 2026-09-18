@@ -19,8 +19,7 @@ type AgingBucketMeta = {
   key: AgingBucketKey;
   chartKey: string;
   label: string;
-  light: string;
-  dark: string;
+  color: string;
   dotClass: string;
 };
 
@@ -29,40 +28,35 @@ export const AGING_BUCKETS: readonly AgingBucketMeta[] = [
     key: "currentMinor",
     chartKey: "current",
     label: "Current",
-    light: "#10b981",
-    dark: "#34d399",
+    color: "var(--success)",
     dotClass: "bg-success",
   },
   {
     key: "days1To30Minor",
     chartKey: "days1To30",
     label: "1–30",
-    light: "#f59e0b",
-    dark: "#fbbf24",
+    color: "var(--warning)",
     dotClass: "bg-warning",
   },
   {
     key: "days31To60Minor",
     chartKey: "days31To60",
     label: "31–60",
-    light: "#f97316",
-    dark: "#fb923c",
+    color: "var(--warning-foreground)",
     dotClass: "bg-warning",
   },
   {
     key: "days61To90Minor",
     chartKey: "days61To90",
     label: "61–90",
-    light: "#ef4444",
-    dark: "#f87171",
+    color: "var(--danger)",
     dotClass: "bg-danger",
   },
   {
     key: "daysOver90Minor",
     chartKey: "daysOver90",
     label: "90+",
-    light: "#991b1b",
-    dark: "#dc2626",
+    color: "var(--danger-subtle-foreground)",
     dotClass: "bg-danger",
   },
 ] as const;
@@ -71,7 +65,7 @@ export const agingChartConfig = AGING_BUCKETS.reduce<Record<string, ChartConfig[
   (config, bucket) => {
     config[bucket.chartKey] = {
       label: bucket.label,
-      theme: { light: bucket.light, dark: bucket.dark },
+      color: bucket.color,
     };
     return config;
   },

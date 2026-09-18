@@ -18,7 +18,7 @@ import { formatUnixMonthDay } from "@trenova/shared/lib/date";
 const dsoChartConfig = {
   dso: {
     label: "DSO (days)",
-    theme: { light: "#2a78d6", dark: "#3987e5" },
+    color: "var(--info)",
   },
 } satisfies ChartConfig;
 
